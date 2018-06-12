@@ -15,6 +15,7 @@
  */
 package com.intellij.stats.completion
 
+import com.intellij.stats.network.service.GzipBase64Compressor
 import org.apache.commons.codec.binary.Base64InputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test

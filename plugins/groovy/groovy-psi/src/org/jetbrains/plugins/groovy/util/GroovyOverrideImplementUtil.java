@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util;
 
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
@@ -25,7 +11,6 @@ import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.JavaTemplateUtil;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -127,7 +112,7 @@ public class GroovyOverrideImplementUtil {
         final GrModifierList modifierList = parameter.getModifierList();
 
         String qname = annotation.getQualifiedName();
-        if (qname != null && modifierList.findAnnotation(qname) == null) {
+        if (qname != null && !modifierList.hasAnnotation(qname)) {
           if (annotation instanceof GrAnnotation) {
             modifierList.add(annotation);
           }
@@ -235,7 +220,8 @@ public class GroovyOverrideImplementUtil {
 
     Collection<CandidateInfo> candidates = GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, toImplement);
     Collection<CandidateInfo> secondary = toImplement || aClass.isInterface() ? ContainerUtil.newArrayList()
-                                                                              : GroovyOverrideImplementExploreUtil.getMethodsToOverrideImplement(aClass, true);
+                                                                              : GroovyOverrideImplementExploreUtil
+                                            .getMethodsToOverrideImplement(aClass, true);
 
     if (toImplement) {
       for (Iterator<CandidateInfo> iterator = candidates.iterator(); iterator.hasNext(); ) {
@@ -251,19 +237,18 @@ public class GroovyOverrideImplementUtil {
       }
     }
 
-    final MemberChooser<PsiMethodMember> chooser = OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
+    final MemberChooser<PsiMethodMember> chooser =
+      OverrideImplementUtil.showOverrideImplementChooser(editor, aClass, toImplement, candidates, secondary);
     if (chooser == null) return;
 
     final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
     if (selectedElements == null || selectedElements.isEmpty()) return;
 
     LOG.assertTrue(aClass.isValid());
-    new WriteCommandAction(project, aClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(), chooser.isInsertOverrideAnnotation());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, aClass.getContainingFile()).run(() -> {
+      OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, aClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                   chooser.isInsertOverrideAnnotation());
+    });
   }
 
   @NotNull

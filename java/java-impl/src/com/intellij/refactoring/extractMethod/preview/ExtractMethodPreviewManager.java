@@ -9,6 +9,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.extractMethod.ExtractMethodProcessor;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
@@ -33,7 +34,8 @@ public class ExtractMethodPreviewManager {
   }
 
   public void showPreview(ExtractMethodProcessor processor) {
-    String title = processor.getMethodName() + "()";
+    PsiFile psiFile = processor.getElements()[0].getContainingFile();
+    String title = (psiFile != null ? psiFile.getName() + ": " : "") + processor.getMethodName() + "()";
     PreviewPanel panel = new PreviewPanel(processor);
     Content content = myContentManager.getFactory().createContent(panel, title, true);
     myContentManager.addContent(content);

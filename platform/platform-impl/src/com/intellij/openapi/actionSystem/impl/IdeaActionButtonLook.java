@@ -20,10 +20,12 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.geom.Path2D;
 import java.awt.geom.RoundRectangle2D;
 
 /**
@@ -40,7 +42,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
 
   public void paintBackground(Graphics g, JComponent component, int state) {
     if (state != ActionButtonComponent.NORMAL) {
-      paintBackground(g, component.getSize(), state);
+      Rectangle rect = new Rectangle(component.getSize());
+      JBInsets.removeFrom(rect, component.getInsets());
+      paintBackground(g, rect, state);
     }
     // Android Studio: added by Change Ia6abcc69 / commit 0ccfb87
     if (component.hasFocus()) {
@@ -48,10 +52,11 @@ public class IdeaActionButtonLook extends ActionButtonLook {
     }
   }
 
-  protected static void paintBackground(Graphics g, Dimension size, int state) {
+  protected static void paintBackground(Graphics g, Rectangle rect, int state) {
     Graphics2D g2 = (Graphics2D)g.create();
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+    g2.translate(rect.x, rect.y);
 
     try {
       if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDefaultMacTheme()) {
@@ -59,7 +64,9 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       } else {
         g2.setColor(state == ActionButtonComponent.PUSHED ? PRESSED_BG : POPPED_BG);
       }
-      g2.fill(getShape(size));
+
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+      g2.fill(new RoundRectangle2D.Float(0, 0, rect.width, rect.height, arc, arc));
     } finally {
       g2.dispose();
     }
@@ -67,14 +74,17 @@ public class IdeaActionButtonLook extends ActionButtonLook {
 
   public void paintBorder(Graphics g, JComponent component, int state) {
     if (state != ActionButtonComponent.NORMAL) {
-      paintBorder(g, component.getSize(), state);
+      Rectangle rect = new Rectangle(component.getSize());
+      JBInsets.removeFrom(rect, component.getInsets());
+      paintBorder(g, rect, state);
     }
   }
 
-  protected static void paintBorder(Graphics g, Dimension size, int state) {
+  protected static void paintBorder(Graphics g, Rectangle rect, int state) {
     Graphics2D g2 = (Graphics2D)g.create();
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+    g2.translate(rect.x, rect.y);
 
     try {
       if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDefaultMacTheme()) {
@@ -82,13 +92,16 @@ public class IdeaActionButtonLook extends ActionButtonLook {
       } else {
         g2.setColor(state == ActionButtonComponent.PUSHED ? PRESSED_BORDER : POPPED_BORDER);
       }
-      g2.draw(getShape(size));
+
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+      float lw = DarculaUIUtil.LW.getFloat();
+      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+      border.append(new RoundRectangle2D.Float(0, 0, rect.width, rect.height, arc, arc), false);
+      border.append(new RoundRectangle2D.Float(lw, lw, rect.width - lw*2, rect.height- lw*2, arc - lw, arc - lw), false);
+
+      g2.fill(border);
     } finally {
       g2.dispose();
     }
-  }
-
-  private static Shape getShape(Dimension size) {
-    return new RoundRectangle2D.Double(0, 0, size.width - 1, size.height - 1, 4, 4);
   }
 }

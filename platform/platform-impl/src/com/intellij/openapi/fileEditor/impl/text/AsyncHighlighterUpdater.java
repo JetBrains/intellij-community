@@ -16,14 +16,12 @@
 package com.intellij.openapi.fileEditor.impl.text;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -31,54 +29,39 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.Map;
-import java.util.concurrent.*;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 
 /**
  * @author peter
  */
-public class AsyncHighlighterUpdater extends ReadTask {
-  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader pool", 2);
-  private static final Map<Editor, Future<?>> ourHighlighterFutures = ContainerUtil.newConcurrentMap();
-  private final Project myProject;
-  private final Editor myEditor;
-  private final VirtualFile myFile;
-
-  private AsyncHighlighterUpdater(Project project, Editor editor, VirtualFile file) {
-    myProject = project;
-    myEditor = editor;
-    myFile = file;
-  }
-
-  @Override
-  public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-    if (!isEverythingValid()) return null;
-
-    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, myFile);
-    highlighter.setText(myEditor.getDocument().getImmutableCharSequence());
-    return new Continuation(() -> ((EditorEx)myEditor).setHighlighter(highlighter));
-  }
-
-  @Override
-  public void onCanceled(@NotNull ProgressIndicator indicator) {
-    updateHighlighters(myProject, myEditor, myFile);
-  }
-
-  private boolean isEverythingValid() {
-    return !myProject.isDisposed() && !myEditor.isDisposed() && myFile.isValid();
-  }
+public class AsyncHighlighterUpdater {
+  private static final ExecutorService ourExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncEditorLoader Pool", 2);
+  private static final Map<Editor, CancellablePromise<?>> ourHighlighterFutures = ContainerUtil.newConcurrentMap();
 
   public static void updateHighlighters(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
-    AsyncHighlighterUpdater task = new AsyncHighlighterUpdater(project, editor, file);
-    if (task.isEverythingValid()) {
-      CompletableFuture<?> future = ProgressIndicatorUtils.scheduleWithWriteActionPriority(ourExecutor, task);
-      Future<?> prev = ourHighlighterFutures.put(editor, future);
-      if (prev != null) {
-        prev.cancel(false);
-      }
-      future.whenComplete((a, b) -> ourHighlighterFutures.remove(editor, future));
+    CancellablePromise<EditorHighlighter> promise = ReadAction
+      .nonBlocking(() -> updateHighlighter(project, editor, file))
+      .expireWhen(() -> !file.isValid() || editor.isDisposed() || project.isDisposed())
+      .finishOnUiThread(ModalityState.any(), highlighter -> ((EditorEx)editor).setHighlighter(highlighter))
+      .submit(ourExecutor);
+
+    CancellablePromise<?> prev = ourHighlighterFutures.put(editor, promise);
+    if (prev != null) {
+      prev.cancel();
     }
+    promise.onProcessed(__ -> ourHighlighterFutures.remove(editor, promise));
+  }
+
+  @NotNull
+  private static EditorHighlighter updateHighlighter(@NotNull Project project, @NotNull Editor editor, @NotNull VirtualFile file) {
+    EditorHighlighter highlighter = EditorHighlighterFactory.getInstance().createEditorHighlighter(project, file);
+    highlighter.setText(editor.getDocument().getImmutableCharSequence());
+    return highlighter;
   }
 
   @TestOnly
@@ -89,12 +72,12 @@ public class AsyncHighlighterUpdater extends ReadTask {
   }
 
   @TestOnly
-  private static void waitForFuture(Future<?> future) {
+  private static void waitForFuture(CancellablePromise<?> future) {
     int iteration = 0;
     while (!future.isDone() && iteration++ < 1000) {
       UIUtil.dispatchAllInvocationEvents();
       try {
-        future.get(10, TimeUnit.MILLISECONDS);
+        future.blockingGet(10, TimeUnit.MILLISECONDS);
         return;
       }
       catch (TimeoutException ignore) {

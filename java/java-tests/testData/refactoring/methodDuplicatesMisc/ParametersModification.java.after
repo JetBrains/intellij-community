@@ -11,7 +11,7 @@ class Test {
 
   private double ss2(int index, double compVal, int numDays) {
       double aveSlope = dd1(index, compVal, numDays);
-    return aveSlope;
+      return aveSlope;
   }
 
   private boolean condition(int idx, int n, int i){return false;}

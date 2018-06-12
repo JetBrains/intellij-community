@@ -1,9 +1,9 @@
 package com.intellij.json.psi.impl;
 
 import com.intellij.extapi.psi.PsiFileBase;
-import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonFile;
 import com.intellij.json.psi.JsonValue;
+import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -14,8 +14,8 @@ import java.util.List;
 
 public class JsonFileImpl extends PsiFileBase implements JsonFile {
 
-  public JsonFileImpl(FileViewProvider fileViewProvider) {
-    super(fileViewProvider, JsonLanguage.INSTANCE);
+  public JsonFileImpl(FileViewProvider fileViewProvider, Language language) {
+    super(fileViewProvider, language);
   }
 
   @NotNull

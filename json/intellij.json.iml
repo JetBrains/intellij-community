@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.lang.impl" />
-    <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="module" module-name="intellij.spellchecker" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="library" name="gson" level="project" />

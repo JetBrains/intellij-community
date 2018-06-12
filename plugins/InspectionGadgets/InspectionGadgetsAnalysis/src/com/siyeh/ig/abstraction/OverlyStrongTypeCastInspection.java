@@ -167,8 +167,14 @@ public class OverlyStrongTypeCastInspection extends BaseInspection {
       if (castTypeElement == null) {
         return;
       }
-      if (operand instanceof PsiFunctionalExpression && !LambdaUtil.isFunctionalType(expectedType)) {
-        return;
+      if (operand instanceof PsiFunctionalExpression) {
+        if (!LambdaUtil.isFunctionalType(expectedType)) {
+          return;
+        }
+        PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(expectedType);
+        if (interfaceReturnType instanceof PsiPrimitiveType || PsiPrimitiveType.getUnboxedType(interfaceReturnType) != null) {
+          return;
+        }
       }
       registerError(castTypeElement, expectedType);
     }

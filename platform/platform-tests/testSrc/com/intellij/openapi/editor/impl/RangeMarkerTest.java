@@ -16,7 +16,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.lang.FileASTNode;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.UndoManagerImpl;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -40,16 +39,18 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiToDocumentSynchronizer;
-import com.intellij.testFramework.LeakHunter;
-import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.Timings;
+import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ref.GCUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.lang.ref.Reference;
+import java.lang.ref.WeakReference;
 import java.util.*;
 import java.util.concurrent.ThreadLocalRandom;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -891,68 +892,65 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       document = (DocumentEx)EditorFactory.getInstance().createDocument(StringUtil.repeatSymbol(' ', N));
 
       final DocumentEx finalDocument = document;
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
-          List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
-          List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<>();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        List<Pair<RangeMarker, TextRange>> adds = new ArrayList<>();
+        List<Pair<RangeMarker, TextRange>> dels = new ArrayList<>();
+        List<Trinity<Integer, Integer, Integer>> edits = new ArrayList<>();
 
-          try {
-            for (int i = 0; i < 30; i++) {
-              int x = gen.nextInt(N);
-              int y = x + gen.nextInt(N - x);
-              RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
-              adds.add(Pair.create(r, TextRange.create(r)));
-            }
+        try {
+          for (int i = 0; i < 30; i++) {
+            int x = gen.nextInt(N);
+            int y = x + gen.nextInt(N - x);
+            RangeMarkerEx r = (RangeMarkerEx)finalDocument.createRangeMarker(x, y);
+            adds.add(Pair.create(r, TextRange.create(r)));
+          }
 
-            for (int i = 0; i < 10; i++) {
-              int offset = gen.nextInt(finalDocument.getTextLength());
-              if (gen.nextBoolean()) {
-                int length = gen.nextInt(5);
-                edits.add(Trinity.create(offset, 0, length));
-                finalDocument.insertString(offset, StringUtil.repeatSymbol(' ', length));
-              }
-              else {
-                int length = gen.nextInt(finalDocument.getTextLength() - offset);
-                edits.add(Trinity.create(offset, length, 0));
-                finalDocument.deleteString(offset, offset + length);
-              }
+          for (int i = 0; i < 10; i++) {
+            int offset = gen.nextInt(finalDocument.getTextLength());
+            if (gen.nextBoolean()) {
+              int length = gen.nextInt(5);
+              edits.add(Trinity.create(offset, 0, length));
+              finalDocument.insertString(offset, StringUtil.repeatSymbol(' ', length));
             }
-            List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
-            while (!candidates.isEmpty()) {
-              int size = candidates.size();
-              int x = gen.nextInt(size);
-              Pair<RangeMarker, TextRange> c = candidates.remove(x);
-              RangeMarkerEx r = (RangeMarkerEx)c.first;
-              assertEquals(size - 1, candidates.size());
-              dels.add(c);
-              r.dispose();
+            else {
+              int length = gen.nextInt(finalDocument.getTextLength() - offset);
+              edits.add(Trinity.create(offset, length, 0));
+              finalDocument.deleteString(offset, offset + length);
             }
           }
-          catch (AssertionError e) {
-            String s = "adds: ";
-            for (Pair<RangeMarker, TextRange> c : adds) {
-              TextRange t = c.second;
-              s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
-            }
-
-            s += "\nedits: ";
-            for (Trinity<Integer, Integer, Integer> edit : edits) {
-              s += edit.first + "," + edit.second + "," + edit.third + ",  ";
-            }
-            s += "\ndels: ";
-
-            for (Pair<RangeMarker, TextRange> c : dels) {
-              int index = adds.indexOf(c);
-              assertSame(c, adds.get(index));
-              s += index + ", ";
-            }
-            System.err.println(s);
-            throw e;
+          List<Pair<RangeMarker, TextRange>> candidates = new ArrayList<>(adds);
+          while (!candidates.isEmpty()) {
+            int size = candidates.size();
+            int x = gen.nextInt(size);
+            Pair<RangeMarker, TextRange> c = candidates.remove(x);
+            RangeMarkerEx r = (RangeMarkerEx)c.first;
+            assertEquals(size - 1, candidates.size());
+            dels.add(c);
+            r.dispose();
           }
         }
-      }.execute();
+        catch (AssertionError e) {
+          String s = "adds: ";
+          for (Pair<RangeMarker, TextRange> c : adds) {
+            TextRange t = c.second;
+            s += t.getStartOffset() + "," + t.getEndOffset() + ", ";
+          }
+
+          s += "\nedits: ";
+          for (Trinity<Integer, Integer, Integer> edit : edits) {
+            s += edit.first + "," + edit.second + "," + edit.third + ",  ";
+          }
+          s += "\ndels: ";
+
+          for (Pair<RangeMarker, TextRange> c : dels) {
+            int index = adds.indexOf(c);
+            assertSame(c, adds.get(index));
+            s += index + ", ";
+          }
+          System.err.println(s);
+          throw e;
+        }
+      });
     }
   }
 
@@ -1197,7 +1195,7 @@ public class RangeMarkerTest extends LightPlatformTestCase {
     assertValidMarker(marker, 0, 9);
   }
 
-  public void testMoveTextCrashesStress() {
+  public void testMoveTextDoesntCrashStress() {
     AtomicReference<List<Integer>> minOffsets = new AtomicReference<>();
     AtomicInteger failPrinted = new AtomicInteger();
     String text = StringUtil.repeat("blah", 1000);
@@ -1395,5 +1393,54 @@ public class RangeMarkerTest extends LightPlatformTestCase {
       }
     }).assertTiming();
     assertNotEmpty(markers);
+  }
+
+  public void testRangeMarkerContinuesToReceiveEventsFromDocumentAfterItsBeingGcedAndRecreatedAgain_NoCommand() {
+    // need to be physical file
+    VirtualFile vf = VfsTestUtil.createFile(getSourceRoot(), "x.txt", "blah");
+    PsiFile psiFile = ObjectUtils.notNull(getPsiManager().findFile(vf));
+    RangeMarker marker = createMarker(psiFile, 0, 4);
+    RangeMarker persistentMarker = document.createRangeMarker(0, 4, true);
+    Reference<Document> ref = new WeakReference<>(document);
+    int docHash0 = System.identityHashCode(document);
+    this.psiFile = null;
+    fileNode = null;
+    document = null;
+
+    while (ref.get() != null) {
+      GCUtil.tryForceGC();
+      UIUtil.dispatchAllInvocationEvents();
+    }
+    assertTrue(marker.isValid());
+    assertTrue(persistentMarker.isValid());
+
+    Document newDoc = ObjectUtils.notNull(PsiDocumentManager.getInstance(getProject()).getDocument(psiFile));
+    int docHash1 = System.identityHashCode(newDoc);
+    assertNotSame(docHash0, docHash1);
+
+    WriteCommandAction.runWriteCommandAction(getProject(), ()->newDoc.insertString(2,"000"));
+    assertTrue(marker.isValid());
+    assertEquals("bl000ah", TextRange.create(marker).substring(newDoc.getText()));
+    assertTrue(persistentMarker.isValid());
+    assertEquals("bl000ah", TextRange.create(persistentMarker).substring(newDoc.getText()));
+
+    Reference<RangeMarker> markerRef = new WeakReference<>(marker);
+    Reference<RangeMarker> persistentMarkerRef = new WeakReference<>(persistentMarker);
+    //noinspection UnusedAssignment
+    marker = null;
+    //noinspection UnusedAssignment
+    persistentMarker = null;
+    PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    while (markerRef.get() != null || persistentMarkerRef.get() != null) {
+      GCUtil.tryForceGC();
+      UIUtil.dispatchAllInvocationEvents();
+    }
+
+    DocumentImpl.processQueue();
+
+    UIUtil.dispatchAllInvocationEvents();
+
+    assertNull(vf.getUserData(DocumentImpl.RANGE_MARKERS_KEY));
+    assertNull(vf.getUserData(DocumentImpl.PERSISTENT_RANGE_MARKERS_KEY));
   }
 }

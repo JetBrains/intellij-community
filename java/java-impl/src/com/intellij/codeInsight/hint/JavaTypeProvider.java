@@ -15,10 +15,17 @@
  */
 package com.intellij.codeInsight.hint;
 
+import com.intellij.codeInsight.documentation.DocumentationComponent;
+import com.intellij.codeInspection.dataFlow.CommonDataflow;
+import com.intellij.codeInspection.dataFlow.DfaFactMap;
+import com.intellij.codeInspection.dataFlow.DfaFactType;
 import com.intellij.lang.ExpressionTypeProvider;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.ui.ColorUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
@@ -56,5 +63,42 @@ public class JavaTypeProvider extends ExpressionTypeProvider<PsiExpression> {
       return false;
     }
     return true;
+  }
+
+  @Override
+  public boolean hasAdvancedInformation() {
+    return true;
+  }
+
+  @NotNull
+  @Override
+  public String getAdvancedInformationHint(@NotNull PsiExpression expression) {
+    expression = PsiUtil.skipParenthesizedExprDown(expression);
+    if (expression == null) return "<unknown>";
+    CommonDataflow.DataflowResult result = CommonDataflow.getDataflowResult(expression);
+    DfaFactMap map = result == null ? null : result.getAllFacts(expression);
+    String basicTypeEscaped = getInformationHint(expression);
+    PsiType type = expression.getType();
+    String advancedTypeInfo = map == null ? "" : map.facts(new DfaFactMap.FactMapper<String>() {
+      @Override
+      public <T> String apply(DfaFactType<T> factType, T value) {
+        return formatFact(factType, value, type);
+      }
+    }).joining();
+    return advancedTypeInfo.isEmpty()
+           ? basicTypeEscaped
+           : "<table>" + makeHtmlRow("Type", basicTypeEscaped) + advancedTypeInfo + "</table>";
+  }
+
+  private static <T> String formatFact(@NotNull DfaFactType<T> factType, @NotNull T value, @Nullable PsiType type) {
+    String presentationText = factType.getPresentationText(value, type);
+    return presentationText.isEmpty() ? "" : makeHtmlRow(factType.getName(), StringUtil.escapeXml(presentationText));
+  }
+
+  private static String makeHtmlRow(String titleText, String contentHtml) {
+    String titleCell = "<td align='left' valign='top' style='color:" +
+                       ColorUtil.toHtmlColor(DocumentationComponent.SECTION_COLOR) + "'>" + StringUtil.escapeXml(titleText) + ":</td>";
+    String contentCell = "<td>" + contentHtml + "</td>";
+    return "<tr>" + titleCell + contentCell + "</tr>";
   }
 }

@@ -1,12 +1,12 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>interface</title>
-  <circle cx="8" cy="7.99999" r="7" fill="#62b543" opacity="0.5"/>
-  <g opacity="0.6">
-    <path d="M7.05273,5H8v6H7.05273V5Z" fill="#231f20" opacity="0.8" style="isolation: isolate"/>
-    <path d="M8,5H8.94727v6H8V5Z" fill="#231f20"/>
-    <rect x="6" y="4.99999" width="1" height="1" fill="#231f20" opacity="0.8" style="isolation: isolate"/>
-    <polygon points="10 6 9 6 8 5 10 5 10 6" fill="#231f20" opacity="0.5" style="isolation: isolate"/>
-    <rect x="6" y="9.99999" width="1" height="1" fill="#231f20" opacity="0.7" style="isolation: isolate"/>
-    <polygon points="10 11 8 11 9 10 10 10 10 11" fill="#231f20" opacity="0.5" style="isolation: isolate"/>
+  <g>
+    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
+      <circle cx="8" cy="8" r="7" fill="#74bd59"/>
+    </g>
+    <polygon points="9 6 8 5 8 11 9 10 9 6" fill="#231f20" opacity="0.3"/>
+    <polygon points="10 6 9 6 8 5 10 5 10 6" fill="#231f20" opacity="0.7"/>
+    <polygon points="6 5 6 6 7 6 7 10 6 10 6 11 8 11 8 5 6 5" fill="#231f20" opacity="0.7"/>
+    <polygon points="10 11 8 11 9 10 10 10 10 11" fill="#231f20" opacity="0.7"/>
   </g>
 </svg>

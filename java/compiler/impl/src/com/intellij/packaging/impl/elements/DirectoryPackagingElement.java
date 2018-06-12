@@ -36,10 +36,12 @@ public class DirectoryPackagingElement extends CompositeElementWithManifest<Dire
     myDirectoryName = directoryName;
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DirectoryElementPresentation(this); 
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                           @NotNull ArtifactAntGenerationContext generationContext,

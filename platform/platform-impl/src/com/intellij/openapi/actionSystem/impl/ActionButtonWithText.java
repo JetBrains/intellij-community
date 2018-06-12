@@ -120,9 +120,10 @@ public class ActionButtonWithText extends ActionButton {
   }
 
   @Override
-  void updateToolTipText() {
+  protected void updateToolTipText() {
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
+      HelpTooltip.dispose(this);
       if (StringUtil.isNotEmpty(description)) {
         new HelpTooltip().setDescription(description).installOn(this);
       }
@@ -134,7 +135,7 @@ public class ActionButtonWithText extends ActionButton {
   public void paintComponent(Graphics g) {
     Icon icon = getIcon();
     FontMetrics fm = getFontMetrics(getFont());
-    Rectangle viewRect = new Rectangle(getSize());
+    Rectangle viewRect = getButtonRect();
     JBInsets.removeFrom(viewRect, getInsets());
 
     Rectangle iconRect = new Rectangle();
@@ -154,6 +155,10 @@ public class ActionButtonWithText extends ActionButton {
                                               getMnemonicCharIndex(text),
                                               textRect.x,
                                               textRect.y + fm.getAscent());
+  }
+
+  protected Rectangle getButtonRect() {
+    return new Rectangle(getSize());
   }
 
   @Override

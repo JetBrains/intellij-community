@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef;
 
@@ -160,8 +158,7 @@ public class GrEnumTypeDefinitionImpl extends GrTypeDefinitionImpl implements Gr
       GrEnumConstant[] constants = list.getEnumConstants();
       if (constants.length > 0) {
         list.getNode().addLeaf(GroovyTokenTypes.mCOMMA, ",", null);
-        ASTNode elementNode = psiElement.getNode();
-        elementNode.addLeaf(TokenType.WHITE_SPACE, "\n", elementNode.getFirstChildNode());
+        list.getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", null);
         return list.add(psiElement);
       }
     }

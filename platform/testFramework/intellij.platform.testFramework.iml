@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
     <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
-    <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" exported="" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.resources" exported="" scope="RUNTIME" />

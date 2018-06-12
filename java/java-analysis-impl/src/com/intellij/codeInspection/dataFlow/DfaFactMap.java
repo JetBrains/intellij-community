@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.util.keyFMap.KeyFMap;
 import one.util.streamex.StreamEx;
@@ -22,7 +23,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Objects;
 
 /**
  * An immutable collection of facts which are known for some value. Each fact is identified by {@link DfaFactType} and fact value.
@@ -106,7 +106,7 @@ public final class DfaFactMap {
    */
   @Nullable
   public <T> DfaFactMap intersect(@NotNull DfaFactType<T> type, @Nullable T value) {
-    if (value == null) return this;
+    if (value == null || type.isUnknown(value)) return this;
     T curFact = get(type);
     if (curFact == null) return with(type, value);
     T newFact = type.intersectFacts(curFact, value);
@@ -169,9 +169,16 @@ public final class DfaFactMap {
   @SuppressWarnings("unchecked")
   @Override
   public String toString() {
-    return StreamEx.of(myMap.getKeys())
-      .map(key -> ((DfaFactType<Object>)key).toString(Objects.requireNonNull(myMap.get(key))))
-      .joining(", ");
+    return facts(DfaFactType::toString).joining(", ");
+  }
+
+  @SuppressWarnings("unchecked")
+  public <R> StreamEx<R> facts(FactMapper<R> mapper) {
+    return StreamEx.of(myMap.getKeys()).map(f -> {
+      DfaFactType<Object> key = (DfaFactType<Object>)f;
+      Object value = myMap.get(f);
+      return mapper.apply(key, value);
+    });
   }
 
   /**
@@ -187,5 +194,25 @@ public final class DfaFactMap {
 
   private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaVariableValue value) {
     return map.with(factType, factType.calcFromVariable(value));
+  }
+
+  /**
+   * Derives facts which might be known from given DfaValue without knowing the particular memory state
+   *
+   * @param value a value to derive facts from
+   * @return map of facts derived from the value
+   */
+  @NotNull
+  public static DfaFactMap fromDfaValue(DfaValue value) {
+    return StreamEx.of(DfaFactType.getTypes()).foldLeft(EMPTY, (map, type) -> updateMap(map, type, value));
+  }
+
+  private static <T> DfaFactMap updateMap(DfaFactMap map, DfaFactType<T> factType, DfaValue value) {
+    return map.with(factType, factType.fromDfaValue(value));
+  }
+
+  @FunctionalInterface
+  public interface FactMapper<R> {
+    <T> R apply(DfaFactType<T> factType, T factValue);
   }
 }

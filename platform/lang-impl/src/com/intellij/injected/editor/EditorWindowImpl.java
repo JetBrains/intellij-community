@@ -6,12 +6,14 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * @deprecated Use {@link EditorWindow} instead. to be removed in IDEA 2018.1
+ * @deprecated Use {@link EditorWindow} instead. To be removed in IDEA 2018.1
  */
+@Deprecated
 public abstract class EditorWindowImpl extends UserDataHolderBase implements EditorWindow {
   /**
-   * @deprecated Use {@link EditorWindow#getDelegate()} instead. to be removed in IDEA 2018.1
+   * @deprecated Use {@link EditorWindow#getDelegate()} instead. To be removed in IDEA 2018.1
    */
+  @Deprecated
   @NotNull
   @Override
   public Editor getDelegate() {

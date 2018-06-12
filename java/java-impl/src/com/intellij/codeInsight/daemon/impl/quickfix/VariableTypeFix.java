@@ -94,23 +94,21 @@ public class VariableTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement endElement) {
     final PsiVariable myVariable = (PsiVariable)startElement;
     if (changeMethodSignatureIfNeeded(myVariable)) return;
-    new WriteCommandAction.Simple(project, getText(), file) {
-
-      @Override
-      protected void run() {
-        try {
-          myVariable.normalizeDeclaration();
-          final PsiTypeElement typeElement = myVariable.getTypeElement();
-          LOG.assertTrue(typeElement != null, myVariable.getClass());
-          final PsiTypeElement newTypeElement = JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
-          typeElement.replace(newTypeElement);
-          JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
-          UndoUtil.markPsiFileForUndo(file);
-        } catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    WriteCommandAction.writeCommandAction(project, file).withName(getText()).run(() -> {
+      try {
+        myVariable.normalizeDeclaration();
+        final PsiTypeElement typeElement = myVariable.getTypeElement();
+        LOG.assertTrue(typeElement != null, myVariable.getClass());
+        final PsiTypeElement newTypeElement =
+          JavaPsiFacade.getInstance(file.getProject()).getElementFactory().createTypeElement(getReturnType());
+        typeElement.replace(newTypeElement);
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(myVariable);
+        UndoUtil.markPsiFileForUndo(file);
       }
-    }.execute();
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
   }
 
   private boolean changeMethodSignatureIfNeeded(PsiVariable myVariable) {

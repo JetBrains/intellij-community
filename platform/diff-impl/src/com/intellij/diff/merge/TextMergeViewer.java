@@ -880,8 +880,8 @@ public class TextMergeViewer implements MergeTool.MergeViewer {
       MergeLineFragment changeFragment = change.getFragment();
       int baseStartLine = changeFragment.getStartLine(ThreeSide.BASE);
       int baseEndLine = changeFragment.getEndLine(ThreeSide.BASE);
-      DiffContent baseDiffContent = ThreeSide.BASE.select(myMergeRequest.getContents());
-      Document baseDocument = ((DocumentContent)baseDiffContent).getDocument();
+      DocumentContent baseDiffContent = ThreeSide.BASE.select(myMergeRequest.getContents());
+      Document baseDocument = baseDiffContent.getDocument();
 
       int resultStartLine = change.getStartLine();
       int resultEndLine = change.getEndLine();

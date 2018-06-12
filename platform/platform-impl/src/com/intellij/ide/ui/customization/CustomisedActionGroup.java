@@ -84,4 +84,6 @@ public class CustomisedActionGroup extends ActionGroup {
     final AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
+
+  public ActionGroup getOrigin() { return myGroup; }
 }

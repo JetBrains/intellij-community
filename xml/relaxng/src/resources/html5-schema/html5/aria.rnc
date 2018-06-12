@@ -428,6 +428,11 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 		attribute aria-haspopup
 			{	string "true" #REVISIT check owns or descendant
 			|	string "false" #default
+			|	string "menu"
+			|	string "listbox"
+			|	string "tree"
+			|	string "grid"
+			|	string "dialog"
 			}	
 
 ## keyshortcuts
@@ -658,7 +663,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 			attribute role { string "application" }
 
 	common.attrs.aria |= aria.application
-	common.attrs.aria.landmark.application |= aria.application
+	common.attrs.aria.role.application |= aria.application
 
 ## article
 	aria.article =
@@ -1065,7 +1070,11 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 
 ## menuitem
 	aria.menuitem =
-		(	aria.role.menuitem )
+		(	aria.role.menuitem
+		&	aria.state.expanded?
+		&	aria.prop.posinset?
+		&	aria.prop.setsize?
+		)
 		aria.role.menuitem = 
 			attribute role { string "menuitem" }
 	
@@ -1149,6 +1158,7 @@ common.attrs.aria.implicit.navigation |= common.attrs.aria.implicit.landmark
 	
 	common.attrs.aria |= aria.presentation
 	common.attrs.aria.role.presentation |= aria.presentation
+	common.attrs.aria.role.presentation |= aria.none
 
 ## progressbar
 	aria.progressbar =

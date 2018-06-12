@@ -9,6 +9,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.project.DumbAware;
@@ -21,15 +22,20 @@ import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.MouseEvent;
 import java.util.List;
 import java.util.Map;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
+  private static final String BUTTON_MODE = "ButtonMode";
 
   public static final Icon CHECKED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked, 16, 16));
   public static final Icon CHECKED_SELECTED_ICON = JBUI.scale(new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16));
@@ -64,6 +70,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
                                          @Nullable RunnerAndConfigurationSettings settings,
                                          @Nullable Project project,
                                          @NotNull Presentation presentation) {
+    presentation.putClientProperty(BUTTON_MODE, null);
     if (project != null && target != null && settings != null) {
       String name = Executor.shortenNameIfNeed(settings.getName());
       if (target != DefaultExecutionTarget.INSTANCE) {
@@ -77,7 +84,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       setConfigurationIcon(presentation, settings, project);
     }
     else {
-      presentation.setText(""); // IDEA-21657
+      presentation.putClientProperty(BUTTON_MODE, Boolean.TRUE);
+      presentation.setText("Add Configuration...");
+      presentation.setDescription(ActionsBundle.actionDescription(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS));
       presentation.setIcon(null);
     }
   }
@@ -115,9 +124,31 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
         d.width = Math.max(d.width, JBUI.scale(75));
         return d;
       }
+
+      @Override
+      protected void fireActionPerformed(ActionEvent event) {
+        if (Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE))) {
+          ActionManager manager = ActionManager.getInstance();
+          manager.tryToExecute(manager.getAction(IdeActions.ACTION_EDIT_RUN_CONFIGURATIONS),
+                               new MouseEvent(this, MouseEvent.MOUSE_PRESSED, System.currentTimeMillis(), 0, 0, 0, 0,
+                                              false, 0),
+                               this, ActionPlaces.UNKNOWN, true);
+          return;
+        }
+
+        super.fireActionPerformed(event);
+      }
+
+      @Override
+      protected boolean isArrowVisible(@NotNull Presentation presentation) {
+        return !Boolean.TRUE.equals(presentation.getClientProperty(BUTTON_MODE));
+      }
     };
     NonOpaquePanel panel = new NonOpaquePanel(new BorderLayout());
-    panel.setBorder(JBUI.Borders.emptyRight(2));
+    Border border = UIUtil.isUnderDefaultMacTheme() ?
+                    JBUI.Borders.empty(0, 2) : JBUI.Borders.empty(0, 5, 0, 4);
+
+    panel.setBorder(border);
     panel.add(button);
     return panel;
   }

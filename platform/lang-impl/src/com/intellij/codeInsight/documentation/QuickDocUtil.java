@@ -1,22 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
+import com.intellij.codeInsight.hint.HintUtil;
+import com.intellij.codeInsight.navigation.DocPreviewUtil;
 import com.intellij.concurrency.SensitiveProgressWrapper;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -26,10 +14,11 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiQualifiedNamedElement;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.Producer;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,11 +30,6 @@ import static com.intellij.openapi.progress.util.ProgressIndicatorUtils.runInRea
  * @author gregsh
  */
 public class QuickDocUtil {
-
-  public static void updateQuickDocAsync(@NotNull final PsiElement element, @NotNull final Producer<String> docProducer) {
-    final Project project = element.getProject();
-    ApplicationManager.getApplication().executeOnPooledThread(() -> updateQuickDoc(project, element, docProducer.produce()));
-  }
 
   public static void updateQuickDoc(@NotNull final Project project, @NotNull final PsiElement element, @Nullable final String documentation) {
     if (StringUtil.isEmpty(documentation)) return;
@@ -108,4 +92,16 @@ public class QuickDocUtil {
     return result;
   }
 
+  @Contract("_, _, _, null -> null")
+  public static String inferLinkFromFullDocumentation(@NotNull DocumentationProvider provider,
+                                                      PsiElement element,
+                                                      PsiElement originalElement,
+                                                      @Nullable String navigationInfo) {
+    if (navigationInfo != null) {
+      String fqn = element instanceof PsiQualifiedNamedElement ? ((PsiQualifiedNamedElement)element).getQualifiedName() : null;
+      String fullText = provider.generateDoc(element, originalElement);
+      return HintUtil.prepareHintText(DocPreviewUtil.buildPreview(navigationInfo, fqn, fullText), HintUtil.getInformationHint());
+    }
+    return null;
+  }
 }

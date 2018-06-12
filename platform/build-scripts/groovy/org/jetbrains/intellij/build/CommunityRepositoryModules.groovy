@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import groovy.transform.CompileStatic
@@ -168,6 +168,8 @@ class CommunityRepositoryModules {
       ])
     },
     plugin("intellij.gradle") {
+      withModule("intellij.gradle.common")
+      withModule("intellij.gradle.java")
       withModule("intellij.gradle.jps")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
@@ -240,16 +242,17 @@ class CommunityRepositoryModules {
       directoryName = "android"
       mainJarName = "android.jar"
       withModule("intellij.android.common", "android-common.jar", false)
-      /* Android Studio: exclude
-      withModule("intellij.android.buildCommon", "build-common.jar", false)
-      */
       withModule("intellij.android.rt", "android-rt.jar", false)
 
       withModule("android-annotations", "androidAnnotations.jar")  // Android Studio
       withModule("common")  // Android Studio
 
       /* Android Studio: exclude
-      withModule("intellij.android.core", "android.jar", false)
+      withModule("intellij.android.common", "android-common.jar", null)
+      withModule("intellij.android.buildCommon", "build-common.jar", null)
+      withModule("intellij.android.rt", "android-rt.jar", null)
+
+      withModule("intellij.android", "android.jar", null)
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
@@ -270,18 +273,15 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.repository")
       withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
-      withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
       withModule("android.sdktools.manifest-merger")  /* Android Studio:
-      withModule("android.sdktools.manifest-merger", "manifest-merger.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       */
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
       /* Android Studio: exclude
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
-      withModule("intellij.android.analyzer", "sdk-tools.jar")
       withModule("android.sdktools.analyzer", "sdk-tools.jar")
       */
       withModule("android.sdktools.ddmlib", "sdk-tools.jar")
@@ -300,12 +300,8 @@ class CommunityRepositoryModules {
       withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
       withModule("instant-run-common", "sdk-tools.jar")  // Android Studio
       withModule("instant-run-client", "sdk-tools.jar")  // Android Studio
-      /* Android Studio: exclude
-      withModule("android.sdktools.android-annotations", "sdk-tools.jar")
       withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
 
-      withModule("intellij.android.gradle.jps", "jps/android-gradle-jps.jar")
-      */
       withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker") //todo[nik] move to module libraries
@@ -325,7 +321,7 @@ class CommunityRepositoryModules {
       withResource("lib/androidWidgets", "lib/androidWidgets")  // Android Studio
       withResource("device-art-resources", "lib/device-art-resources")  // Android Studio
       /* Android Studio: exclude
-      withResourceFromModule("intellij.android.core","lib/sampleData", "lib/sampleData")
+      withResourceFromModule("intellij.android","lib/sampleData", "lib/sampleData")
       */
       withResourceArchive("annotations", "lib/androidAnnotations.jar") // Android Studio
 
@@ -341,6 +337,9 @@ class CommunityRepositoryModules {
       withProjectLibrary("archive-patcher")
       withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
       withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
+      withProjectLibrary("com.android.tools:annotations:26.0.0")
+      withProjectLibrary("com.android.tools:sdk-common:26.0.0")
+      withProjectLibrary("com.android.tools.build:manifest-merger:26.0.0")
       withProjectLibrary("analytics-protos")
       */
 

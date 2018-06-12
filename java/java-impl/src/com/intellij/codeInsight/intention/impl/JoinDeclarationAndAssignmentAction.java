@@ -120,8 +120,10 @@ public class JoinDeclarationAndAssignmentAction extends PsiElementBaseIntentionA
     }
     WriteAction.run(() -> {
       final PsiExpression initializerExpression = DeclarationJoinLinesHandler.getInitializerExpression(variable, assignmentExpression);
-      variable.setInitializer(initializerExpression);
-      assignmentExpression.delete();
+      if (initializerExpression != null) {
+        variable.setInitializer(initializerExpression);
+        assignmentExpression.delete();
+      }
     });
   }
 }

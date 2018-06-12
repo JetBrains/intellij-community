@@ -28,7 +28,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -126,7 +125,7 @@ public class CreateLocalFromUsageFix extends CreateVarFromUsageFix {
 
     PsiVariable var = (PsiVariable)decl.getDeclaredElements()[0];
     boolean isFinal =
-      CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS &&
+      JavaCodeStyleSettings.getInstance(targetFile).GENERATE_FINAL_LOCALS &&
       !CreateFromUsageUtils.isAccessedForWriting(expressions);
     PsiUtil.setModifierProperty(var, PsiModifier.FINAL, isFinal);
 

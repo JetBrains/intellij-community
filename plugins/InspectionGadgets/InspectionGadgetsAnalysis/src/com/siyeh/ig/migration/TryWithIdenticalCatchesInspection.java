@@ -17,9 +17,9 @@ package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.pom.java.JavaFeature;
 import com.intellij.psi.*;
 import com.intellij.psi.search.LocalSearchScope;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.duplicates.DuplicatesFinder;
@@ -63,7 +63,7 @@ public class TryWithIdenticalCatchesInspection extends BaseInspection {
 
   @Override
   public boolean shouldInspect(PsiFile file) {
-    return PsiUtil.isLanguageLevel7OrHigher(file);
+    return JavaFeature.MULTI_CATCH.isFeatureSupported(file);
   }
 
   @Override

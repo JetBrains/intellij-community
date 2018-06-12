@@ -3,24 +3,18 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
-import com.intellij.psi.scope.NameHint
-import com.intellij.psi.scope.ProcessorWithHints
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.GrResolverProcessor
 
-abstract class FindFirstProcessor<out T : GroovyResolveResult>(protected val name: String) : ProcessorWithHints(), GrResolverProcessor<T> {
+abstract class FindFirstProcessor<T : GroovyResolveResult> : ProcessorWithCommonHints(), GrResolverProcessor<T> {
 
-  init {
-    hint(NameHint.KEY, NameHint { name })
-  }
-
-  private var result: T? = null
+  var result: T? = null
+    private set
 
   final override val results: List<T> get() = result?.let { listOf(it) } ?: emptyList()
 
   final override fun execute(element: PsiElement, state: ResolveState): Boolean {
-    if (shouldStop()) return false
-    assert(result == null)
+    if (result != null || shouldStop()) return false
     result = result(element, state)
     return !shouldStop() && result == null
   }

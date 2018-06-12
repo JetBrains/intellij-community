@@ -55,4 +55,9 @@ public abstract class AbstractTestNGSuiteConfigurationProducer extends TestNGCon
     sourceElement.set(containingFile);
     return true;
   }
+
+  @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return TestType.SUITE.getType().equals(type);
+  }
 }

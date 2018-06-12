@@ -143,11 +143,13 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return getFirstChild() instanceof GrExpression;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement opToken = getOperationToken();

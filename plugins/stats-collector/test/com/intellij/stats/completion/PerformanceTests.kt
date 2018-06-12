@@ -17,8 +17,12 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.openapi.application.ApplicationManager
+import com.intellij.stats.network.service.RequestService
+import com.intellij.stats.network.service.ResponseData
+import com.intellij.stats.sender.StatisticSenderImpl
+import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.UsefulTestCase
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.*
 import org.picocontainer.MutablePicoContainer
 import java.io.File
@@ -67,7 +71,7 @@ class Test {
         val file = pathProvider.getUniqueFile()
         file.writeText("Some existing data to send")
         
-        val sender = StatisticSender(requestService, pathProvider)
+        val sender = StatisticSenderImpl(requestService, pathProvider)
 
         val isSendFinished = AtomicBoolean(false)
 
@@ -89,12 +93,7 @@ class Test {
     private fun slowRequestService(): RequestService {
         return mock(RequestService::class.java).apply {
             `when`(postZipped(anyString(), any() ?: File("."))).then {
-                Thread.sleep(1000)
-                ResponseData(200)
-            }
-
-            `when`(post(Matchers.anyString(), anyMapOf(String::class.java, String::class.java))).then {
-                Thread.sleep(1000)
+                Thread.sleep(10000)
                 ResponseData(200)
             }
         }

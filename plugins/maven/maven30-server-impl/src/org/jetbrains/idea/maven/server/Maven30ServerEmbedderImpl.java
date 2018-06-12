@@ -134,6 +134,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
 
   @Nullable private Properties myUserProperties;
 
+  @NotNull private RepositorySystem myRepositorySystem;
+
   public Maven30ServerEmbedderImpl(MavenServerSettings settings) throws RemoteException {
     super(settings);
 
@@ -229,6 +231,8 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
                     ReflectionUtil.getField(cliRequestClass, cliRequest, Properties.class, "userProperties"));
 
     myLocalRepository = createLocalRepository();
+
+    myRepositorySystem = getComponent(RepositorySystem.class);
   }
 
   private static Settings buildSettings(SettingsBuilder builder,
@@ -1098,6 +1102,11 @@ public class Maven30ServerEmbedderImpl extends Maven3ServerEmbedder {
       catch (InvalidRepositoryException e) {
         Maven3ServerGlobals.getLogger().warn(e);
       }
+    }
+    if (getComponent(LegacySupport.class).getRepositorySession() == null) {
+      myRepositorySystem.injectMirror(result, myMavenSettings.getMirrors());
+      myRepositorySystem.injectProxy(result, myMavenSettings.getProxies());
+      myRepositorySystem.injectAuthentication(result, myMavenSettings.getServers());
     }
     return result;
   }

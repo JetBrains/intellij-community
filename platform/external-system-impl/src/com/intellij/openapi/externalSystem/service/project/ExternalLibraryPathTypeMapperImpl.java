@@ -15,14 +15,15 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.roots.JavadocOrderRootType;
 import com.intellij.openapi.roots.OrderRootType;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 
 import java.util.EnumMap;
 import java.util.Map;
+
+import static java.util.Arrays.stream;
 
 /**
  * @author Denis Zhdanov
@@ -35,7 +36,9 @@ public class ExternalLibraryPathTypeMapperImpl implements ExternalLibraryPathTyp
   static {
     MAPPINGS.put(LibraryPathType.BINARY, OrderRootType.CLASSES);
     MAPPINGS.put(LibraryPathType.SOURCE, OrderRootType.SOURCES);
-    MAPPINGS.put(LibraryPathType.DOC, JavadocOrderRootType.getInstance());
+    OrderRootType docRootType = stream(OrderRootType.getAllTypes()).anyMatch(JavadocOrderRootType.class::isInstance)
+                                ? JavadocOrderRootType.getInstance() : OrderRootType.DOCUMENTATION;
+    MAPPINGS.put(LibraryPathType.DOC, docRootType);
     assert LibraryPathType.values().length == MAPPINGS.size();
   }
 

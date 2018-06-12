@@ -19,6 +19,7 @@ import com.intellij.json.JsonBundle;
 import com.intellij.json.highlighting.JsonSyntaxHighlighterFactory;
 import com.intellij.json.psi.JsonNumberLiteral;
 import com.intellij.json.psi.JsonPsiUtil;
+import com.intellij.json.psi.JsonReferenceExpression;
 import com.intellij.json.psi.JsonStringLiteral;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -29,14 +30,11 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
-import java.util.regex.Pattern;
 
 /**
  * @author Mikhail Golubev
  */
 public class JsonLiteralAnnotator implements Annotator {
-  private static final Pattern VALID_ESCAPE = Pattern.compile("\\\\([\"\\\\/bfnrt]|u[0-9a-fA-F]{4})");
-  private static final Pattern VALID_NUMBER_LITERAL = Pattern.compile("-?(0|[1-9][0-9]*)(\\.[0-9]+)?([eE][+-]?[0-9]+)?");
 
   private static class Holder {
     private static final boolean DEBUG = ApplicationManager.getApplication().isUnitTestMode();
@@ -44,13 +42,15 @@ public class JsonLiteralAnnotator implements Annotator {
 
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
-    if (element instanceof JsonStringLiteral) {
+    JsonLiteralChecker[] extensions = JsonLiteralChecker.EP_NAME.getExtensions();
+    if (element instanceof JsonReferenceExpression) {
+      highlightPropertyKey(element, holder);
+    }
+    else if (element instanceof JsonStringLiteral) {
       final JsonStringLiteral stringLiteral = (JsonStringLiteral)element;
       final int elementOffset = element.getTextOffset();
-      if (JsonPsiUtil.isPropertyKey(element)) {
-        holder.createInfoAnnotation(element, Holder.DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
-      }
+      highlightPropertyKey(element, holder);
+      final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
       final int length = text.length();
 
       // Check that string literal is closed properly
@@ -60,24 +60,35 @@ public class JsonLiteralAnnotator implements Annotator {
 
       // Check escapes
       final List<Pair<TextRange, String>> fragments = stringLiteral.getTextFragments();
-      for (Pair<TextRange, String> fragment : fragments) {
-        final String fragmentText = fragment.getSecond();
-        if (fragmentText.startsWith("\\") && fragmentText.length() > 1 && !VALID_ESCAPE.matcher(fragmentText).matches()) {
-          final TextRange fragmentRange = fragment.getFirst();
-          if (fragmentText.startsWith("\\u")) {
-            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message(
-              "syntax.error.illegal.unicode.escape.sequence"));
-          }
-          else {
-            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), JsonBundle.message("syntax.error.illegal.escape.sequence"));
+      for (Pair<TextRange, String> fragment: fragments) {
+        for (JsonLiteralChecker checker: extensions) {
+          if (!checker.isApplicable(element)) continue;
+          String error = checker.getErrorForStringFragment(fragment.getSecond());
+          if (error != null) {
+            final TextRange fragmentRange = fragment.getFirst();
+            holder.createErrorAnnotation(fragmentRange.shiftRight(elementOffset), error);
           }
         }
       }
     }
     else if (element instanceof JsonNumberLiteral) {
-      if (!VALID_NUMBER_LITERAL.matcher(text).matches()) {
-        holder.createErrorAnnotation(element, JsonBundle.message("syntax.error.illegal.floating.point.literal"));
+      String text = null;
+      for (JsonLiteralChecker checker: extensions) {
+        if (!checker.isApplicable(element)) continue;
+        if (text == null) {
+          text = JsonPsiUtil.getElementTextWithoutHostEscaping(element);
+        }
+        String error = checker.getErrorForNumericLiteral(text);
+        if (error != null) {
+          holder.createErrorAnnotation(element, error);
+        }
       }
+    }
+  }
+
+  private static void highlightPropertyKey(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
+    if (JsonPsiUtil.isPropertyKey(element)) {
+      holder.createInfoAnnotation(element, Holder.DEBUG ? "property key" : null).setTextAttributes(JsonSyntaxHighlighterFactory.JSON_PROPERTY_KEY);
     }
   }
 }

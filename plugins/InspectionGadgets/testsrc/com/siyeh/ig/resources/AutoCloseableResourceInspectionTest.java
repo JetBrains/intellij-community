@@ -215,6 +215,38 @@ public class AutoCloseableResourceInspectionTest extends LightInspectionTestCase
            "}");
   }
 
+  public void testContractParameter() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X {\n" +
+           "  private static void example(Object o) throws IOException {\n" +
+           "    InputStream is = o.getClass().<warning descr=\"'InputStream' used without 'try'-with-resources statement\">getResourceAsStream</warning>(\"\");\n" +
+           "        InputStream is2 = test(is);\n" +
+           "  }\n" +
+           "\n" +
+           "  static <T> T test(T t) {\n" +
+           "    return t;\n" +
+           "  }\n" +
+           "}");
+  }
+
+  public void testContractThis() {
+    doTest("import java.io.*;\n" +
+           "\n" +
+           "class X implements Closeable {\n" +
+           "  @Override\n" +
+           "  public void close() throws IOException {}\n" +
+           "\n" +
+           "  private static void example(Object o) throws IOException {\n" +
+           "        new <warning descr=\"'X' used without 'try'-with-resources statement\">X</warning>().doX();\n" +
+           "  }\n" +
+           "\n" +
+           "  private X doX() {\n" +
+           "    return this;\n" +
+           "  }\n" +
+           "}");
+  }
+
   @Override
   protected LocalInspectionTool getInspection() {
     return new AutoCloseableResourceInspection();

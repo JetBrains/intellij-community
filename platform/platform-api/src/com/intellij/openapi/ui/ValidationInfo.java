@@ -31,6 +31,7 @@ public final class ValidationInfo {
   @NotNull
   public final String message;
   public final JComponent component;
+  public final boolean disableOk;
 
   /**
    * Creates a validation error message associated with a specific component. The component will have an error icon drawn next to it,
@@ -40,8 +41,7 @@ public final class ValidationInfo {
    * @param component the component containing the invalid data.
    */
   public ValidationInfo(@NotNull String message, @Nullable JComponent component) {
-    this.message = message;
-    this.component = component;
+    this(message, component, true);
   }
 
   /**
@@ -53,7 +53,31 @@ public final class ValidationInfo {
     this(message, null);
   }
 
-  @Override public boolean equals(Object o) {
+  /**
+   * Creates a validation error message not associated with a specific component.
+   *
+   * @param message   the error message to display.
+   * @param disableOk whether to disable OK button.
+   */
+  public ValidationInfo(@NotNull String message, boolean disableOk) {
+    this(message, null, disableOk);
+  }
+
+  /**
+   * Creates a validation error message
+   *
+   * @param message   the error message to display.
+   * @param component the component containing the invalid data.
+   * @param disableOk whether to disable OK button.
+   */
+  private ValidationInfo(@NotNull String message, @Nullable JComponent component, boolean disableOk) {
+    this.message = message;
+    this.component = component;
+    this.disableOk = disableOk;
+  }
+
+  @Override
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof ValidationInfo)) return false;
 

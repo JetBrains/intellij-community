@@ -489,11 +489,13 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       myBuilder.addEdge(myBuilder.prevInstruction, instruction);
     }
     myBuilder.checkPending(instruction);
-    myBuilder.prevInstruction = head;
-    if (elsePart != null && !isStaticallyTrue) {
+
+    if (elsePart != null) {
+      myBuilder.prevInstruction = !isStaticallyTrue ? head : null;
       elsePart.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
+
     myBuilder.flowAbrupted();
   }
 

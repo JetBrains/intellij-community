@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.refactoring.convertToStatic;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -191,7 +189,7 @@ public class ConvertToStaticProcessor extends BaseRefactoringProcessor {
   void addAnnotation(@NotNull PsiModifierListOwner owner, boolean isStatic) {
     PsiModifierList modifierList = owner.getModifierList();
     String annotation = isStatic ? GROOVY_TRANSFORM_COMPILE_STATIC : GROOVY_TRANSFORM_COMPILE_DYNAMIC;
-    if (modifierList != null && modifierList.findAnnotation(annotation) == null) {
+    if (modifierList != null && !modifierList.hasAnnotation(annotation)) {
       modifierList.addAnnotation(annotation);
     }
   }

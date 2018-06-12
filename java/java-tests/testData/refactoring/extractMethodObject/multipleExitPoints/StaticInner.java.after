@@ -5,8 +5,8 @@ class Test {
        Inner inner = new Inner(i).invoke();
        int j = inner.getJ();
        int k = inner.getK();
-      
-      int m = k + j;
+
+       int m = k + j;
    }
 
     private class Inner {

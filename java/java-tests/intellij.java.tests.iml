@@ -55,5 +55,7 @@
     <orderEntry type="module" module-name="intellij.platform.builtInServer" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.java.aetherDependencyResolver" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.copyright" scope="TEST" />
   </component>
 </module>

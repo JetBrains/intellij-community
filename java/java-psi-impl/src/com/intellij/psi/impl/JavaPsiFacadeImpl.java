@@ -361,9 +361,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       // (the Kotlin plugin can do that), the Java package takes precedence.
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
       for (PsiPackage aPackage : packages) {
-        if (result.get(aPackage.getName()) == null) {
-          result.put(aPackage.getName(), aPackage);
-        }
+        result.putIfAbsent(aPackage.getName(), aPackage);
       }
     }
     return result.values().toArray(PsiPackage.EMPTY_ARRAY);

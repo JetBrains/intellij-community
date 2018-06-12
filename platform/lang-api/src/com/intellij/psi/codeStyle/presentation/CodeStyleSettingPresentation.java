@@ -136,6 +136,7 @@ public class CodeStyleSettingPresentation {
       new CodeStyleSettingPresentation("BLANK_LINES_AROUND_CLASS", ApplicationBundle.message("editbox.blanklines.around.class")),
       new CodeStyleSettingPresentation("BLANK_LINES_AFTER_CLASS_HEADER",
                                        ApplicationBundle.message("editbox.blanklines.after.class.header")),
+      new CodeStyleSettingPresentation("BLANK_LINES_BEFORE_CLASS_END", ApplicationBundle.message("editbox.blanklines.before.class.end")),
       new CodeStyleSettingPresentation("BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER",
                                        ApplicationBundle.message("editbox.blanklines.after.anonymous.class.header")),
       new CodeStyleSettingPresentation("BLANK_LINES_AROUND_FIELD_IN_INTERFACE", "Around field in interface:"),

@@ -61,23 +61,27 @@ public class DeleteMultiCatchFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    final PsiElement parentType = myTypeElement.getParent();
+    deleteCaughtExceptionType(myTypeElement);
+  }
+
+  public static void deleteCaughtExceptionType(@NotNull PsiTypeElement typeElement) {
+    final PsiElement parentType = typeElement.getParent();
     if (!(parentType instanceof PsiTypeElement)) return;
 
     final PsiElement first;
     final PsiElement last;
-    final PsiElement right = PsiTreeUtil.skipWhitespacesAndCommentsForward(myTypeElement);
+    final PsiElement right = PsiTreeUtil.skipWhitespacesAndCommentsForward(typeElement);
     if (PsiUtil.isJavaToken(right, JavaTokenType.OR)) {
-      first = myTypeElement;
+      first = typeElement;
       last = right;
     }
     else if (right == null) {
-      final PsiElement left = PsiTreeUtil.skipWhitespacesAndCommentsBackward(myTypeElement);
+      final PsiElement left = PsiTreeUtil.skipWhitespacesAndCommentsBackward(typeElement);
       if (!(left instanceof PsiJavaToken)) return;
       final IElementType leftType = ((PsiJavaToken)left).getTokenType();
       if (leftType != JavaTokenType.OR) return;
       first = left;
-      last = myTypeElement;
+      last = typeElement;
     }
     else {
       return;

@@ -20,12 +20,11 @@ import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public ShowLongEdgesAction() {
-    super("Show Long Edges", "Show long branch edges even if commits are invisible in the current view.", VcsLogIcons.ShowHideLongEdges);
+    super("Show Long Edges", "Show long branch edges even if commits are invisible in the current view.", null);
   }
 
   @Override
@@ -37,6 +36,6 @@ public class ShowLongEdgesAction extends BooleanPropertyToggleAction {
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui != null && !ui.areGraphActionsEnabled()) e.getPresentation().setEnabled(false);
+    if (ui != null && ui.getDataPack().isEmpty()) e.getPresentation().setEnabled(false);
   }
 }

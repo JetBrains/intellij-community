@@ -75,18 +75,15 @@ public class DomModelMergingTest extends DomTestCase {
   }
 
   public void testValidity() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final MyElement element = createElement("", MyElement.class);
-        final MyElement bar1 = element.addBar();
-        final MyElement bar2 = element.addBar();
-        final MyElement merged = myMerger.mergeModels(MyElement.class, bar1, bar2);
-        assertTrue(merged.isValid());
-        bar2.undefine();
-        assertFalse(merged.isValid());
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final MyElement element = createElement("", MyElement.class);
+      final MyElement bar1 = element.addBar();
+      final MyElement bar2 = element.addBar();
+      final MyElement merged = myMerger.mergeModels(MyElement.class, bar1, bar2);
+      assertTrue(merged.isValid());
+      bar2.undefine();
+      assertFalse(merged.isValid());
+    });
   }
 
   public interface MyElement extends DomElement {

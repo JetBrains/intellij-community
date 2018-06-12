@@ -2,6 +2,7 @@ from typing import Any
 
 from .message import Message
 
+
 class Error(Exception): ...
 class TypeTransformationError(Error): ...
 
@@ -82,7 +83,7 @@ class FieldDescriptor(DescriptorBase):
     MAX_FIELD_NUMBER = ...  # type: Any
     FIRST_RESERVED_FIELD_NUMBER = ...  # type: Any
     LAST_RESERVED_FIELD_NUMBER = ...  # type: Any
-    def __new__(cls, name, full_name, index, number, type, cpp_type, label, default_value, message_type, enum_type, containing_type, is_extension, extension_scope, options=..., has_default_value=..., containing_oneof=...): ...
+    def __new__(cls, name, full_name, index, number, type, cpp_type, label, default_value, message_type, enum_type, containing_type, is_extension, extension_scope, options=..., file=..., has_default_value=..., containing_oneof=...): ...
     name = ...  # type: Any
     full_name = ...  # type: Any
     index = ...  # type: Any
@@ -98,7 +99,7 @@ class FieldDescriptor(DescriptorBase):
     is_extension = ...  # type: Any
     extension_scope = ...  # type: Any
     containing_oneof = ...  # type: Any
-    def __init__(self, name, full_name, index, number, type, cpp_type, label, default_value, message_type, enum_type, containing_type, is_extension, extension_scope, options=..., has_default_value=..., containing_oneof=...) -> None: ...
+    def __init__(self, name, full_name, index, number, type, cpp_type, label, default_value, message_type, enum_type, containing_type, is_extension, extension_scope, options=..., file=..., has_default_value=..., containing_oneof=...) -> None: ...
     @staticmethod
     def ProtoTypeToCppProtoType(proto_type): ...
 

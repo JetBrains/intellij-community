@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
 import com.intellij.openapi.util.text.StringUtil;
@@ -18,12 +16,14 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.Type;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 
 abstract class AbstractCollectionBinding extends NotNullDeserializeBinding implements MultiNodeBinding {
   private List<Binding> itemBindings;
 
   protected final Class<?> itemType;
+  @SuppressWarnings("deprecation")
   @Nullable
   private final AbstractCollection annotation;
   @Nullable
@@ -37,6 +37,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
 
     itemType = elementType;
     newAnnotation = accessor == null ? null : accessor.getAnnotation(XCollection.class);
+    //noinspection deprecation
     annotation = newAnnotation == null ? (accessor == null ? null : accessor.getAnnotation(AbstractCollection.class)) : null;
   }
 
@@ -105,17 +106,14 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @NotNull
-  abstract Object processResult(@NotNull Collection result, @Nullable Object target);
-
-  @NotNull
   abstract Collection<Object> getIterable(@NotNull Object o);
 
   @Nullable
   @Override
-  public Object serialize(@NotNull Object o, @Nullable Object context, @Nullable SerializationFilter filter) {
-    Collection<Object> collection = getIterable(o);
+  public Object serialize(@NotNull Object object, @Nullable Object context, @Nullable SerializationFilter filter) {
+    Collection<Object> collection = getIterable(object);
 
-    String tagName = getTagName(o);
+    String tagName = isSurroundWithTag() ? getCollectionTagName(object) : null;
     if (tagName == null) {
       List<Object> result = new SmartList<Object>();
       if (!ContainerUtil.isEmpty(collection)) {
@@ -139,33 +137,30 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     }
   }
 
+  @Override
+  @NotNull
+  public Object deserialize(@Nullable Object context, @NotNull Element element) {
+    if (!isSurroundWithTag()) {
+      return doDeserializeList(context, Collections.singletonList(element));
+    }
+
+    return doDeserializeList(context, element.getChildren());
+  }
+
   @Nullable
   @Override
   public Object deserializeList(@Nullable Object context, @NotNull List<Element> elements) {
-    Collection result;
-    if (getTagName(context) == null) {
-      if (context instanceof Collection) {
-        result = (Collection)context;
-        result.clear();
-      }
-      else {
-        result = new SmartList();
-      }
-      for (Element node : elements) {
-        //noinspection unchecked
-        result.add(deserializeItem(node, context));
-      }
+    if (!isSurroundWithTag()) {
+      return doDeserializeList(context, elements);
+    }
 
-      if (result == context) {
-        return result;
-      }
-    }
-    else {
-      assert elements.size() == 1;
-      result = deserializeSingle(context, elements.get(0));
-    }
-    return processResult(result, context);
+    assert elements.size() == 1;
+    Element element = elements.get(0);
+    return doDeserializeList(context == null && element.getName().equals(Constants.SET) ? new HashSet<Object>() : context, element.getChildren());
   }
+
+  @NotNull
+  protected abstract Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements);
 
   @Nullable
   private Object serializeItem(@Nullable Object value, Object context, @Nullable SerializationFilter filter) {
@@ -199,7 +194,7 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     }
   }
 
-  private Object deserializeItem(@NotNull Element node, @Nullable Object context) {
+  protected final Object deserializeItem(@NotNull Element node, @Nullable Object context) {
     Binding binding = getElementBinding(node);
     if (binding == null) {
       String attributeName = getValueAttributeName();
@@ -234,54 +229,11 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
   }
 
   @Override
-  @NotNull
-  public Object deserialize(@Nullable Object context, @NotNull Element element) {
-    Collection result;
-    if (getTagName(context) == null) {
-      if (context instanceof Collection) {
-        result = (Collection)context;
-        result.clear();
-      }
-      else {
-        result = new SmartList();
-      }
-
-      //noinspection unchecked
-      result.add(deserializeItem(element, context));
-
-      if (result == context) {
-        return result;
-      }
-    }
-    else {
-      result = deserializeSingle(context, element);
-    }
-    //noinspection unchecked
-    return processResult(result, context);
-  }
-
-  @NotNull
-  private Collection deserializeSingle(Object context, @NotNull Element node) {
-    Collection result = createCollection(node.getName());
-    for (Element child : node.getChildren()) {
-      //noinspection unchecked
-      result.add(deserializeItem(child, context));
-    }
-    return result;
-  }
-
-  protected Collection createCollection(@NotNull String tagName) {
-    return new SmartList();
-  }
-
-  @Override
   public boolean isBoundTo(@NotNull Element element) {
-    String tagName = getTagName(element);
-    if (tagName != null) {
-      return element.getName().equals(tagName);
+    if (isSurroundWithTag()) {
+      return element.getName().equals(getCollectionTagName(null));
     }
-
-    if (getElementBindings().isEmpty()) {
+    else if (getElementBindings().isEmpty()) {
       return element.getName().equals(getElementName());
     }
     else {
@@ -289,10 +241,6 @@ abstract class AbstractCollectionBinding extends NotNullDeserializeBinding imple
     }
   }
 
-  @Nullable
-  private String getTagName(@Nullable Object target) {
-    return isSurroundWithTag() ? getCollectionTagName(target) : null;
-  }
-
+  @NotNull
   protected abstract String getCollectionTagName(@Nullable Object target);
 }

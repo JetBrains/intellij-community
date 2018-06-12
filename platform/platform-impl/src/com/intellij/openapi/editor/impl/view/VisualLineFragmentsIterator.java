@@ -247,7 +247,7 @@ class VisualLineFragmentsIterator implements Iterator<VisualLineFragmentsIterato
       myFoldRegion = null;
       myCurrentStartLogicalLine = myCurrentEndLogicalLine;
       Inlay inlay = myInlays.get(myCurrentInlayIndex);
-      myCurrentX += PaintUtil.alignToInt(inlay.getWidthInPixels(), myScaleContext, null, null);
+      myCurrentX += PaintUtil.alignToInt(inlay.getWidthInPixels(), myScaleContext);
       myCurrentVisualColumn++;
       myCurrentInlayIndex++;
       if (myCurrentInlayIndex >= myInlays.size() || myInlays.get(myCurrentInlayIndex).getOffset() > inlay.getOffset()) {

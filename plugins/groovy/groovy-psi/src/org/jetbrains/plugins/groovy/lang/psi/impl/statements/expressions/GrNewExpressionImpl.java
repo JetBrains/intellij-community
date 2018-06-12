@@ -221,11 +221,13 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       return GrNewExpressionImpl.this.multiResolve(incompleteCode);
     }
 
+    @NotNull
     @Override
     public GrNewExpressionImpl getElement() {
       return GrNewExpressionImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return TextRange.EMPTY_RANGE;

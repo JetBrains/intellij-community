@@ -20,9 +20,10 @@ task downloadJdk18 {
   outputs.file(outputFile)
   doLast {
     logger.info("Downloading up JDK 1.8 to compile (using $jdkRepo repo)")
-    downloadWrapper {
+    download {
       src "$jdkRepo/intellij-jdk/${artifactName}"
       dest outputFile
+      tempAndMove true
     }
   }
 }
@@ -112,11 +113,12 @@ task setupJdk16(dependsOn: configurations.jdk16) {
     logger.info("Setting up JDK 1.6 to compile")
     unpackJdk(jdkArchive.call(), outputDir)
     deleteBrokenSymlink(outputDir)
+    createMissingLauncher(outputDir)
   }
 }
 
 // Gradle dies on trying to process broken links: https://issues.gradle.org/browse/GRADLE-1843
-private void deleteBrokenSymlink(def outputDir) {
+private void deleteBrokenSymlink(String outputDir) {
   if (org.gradle.internal.os.OperatingSystem.current().isMacOsX()) {
     def pluginJar = file("$outputDir/Contents/Home/lib/plugin.jar")
     if (!pluginJar.exists()) {
@@ -127,11 +129,28 @@ private void deleteBrokenSymlink(def outputDir) {
   }
 }
 
+// some JPS builders rely on a launcher presence in <JDK>/bin directory
+private void createMissingLauncher(String outputDir) {
+  if (!new File(outputDir, "bin").exists() && new File(outputDir, "jre/bin").exists()) {
+    copy {
+      from file(new File(outputDir, "jre/bin"))
+      into file(new File(outputDir, "bin"))
+      include 'java*'
+    }
+  }
+}
+
 setupJdk16.onlyIf { inJetBrainsNetwork }
 
 def intellijProjectDir() {
-  def communityDir = project.file("../..")
-  communityDir.name == 'community' ? communityDir.parent : communityDir
+  def projectDir = project.file("../..")
+  if (projectDir.name == 'community') {
+    while (new File(projectDir.parentFile, ".idea").exists() && !new File(projectDir.parentFile, '.idea/.notIdeaProject').exists()) {
+      projectDir = projectDir.parentFile
+    }
+    return projectDir
+  }
+  return projectDir
 }
 
 static def jdk16Version() {

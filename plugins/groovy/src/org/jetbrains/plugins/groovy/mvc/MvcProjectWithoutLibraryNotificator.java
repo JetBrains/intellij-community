@@ -19,18 +19,16 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbAware;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -44,10 +42,8 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
   @Override
   public void runActivity(@NotNull final Project project) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(new ReadTask() {
-      @Override
-      public void computeInReadAction(@NotNull ProgressIndicator indicator) {
-        if (project.isDisposed()) return;
+
+    ReadAction.nonBlocking(() -> {
         final Pair<Module, MvcFramework> pair = findModuleWithoutLibrary(project);
         if (pair == null) return;
 
@@ -76,20 +72,7 @@ public class MvcProjectWithoutLibraryNotificator implements StartupActivity, Dum
             }
           }
         ).notify(project);
-      }
-
-      @Override
-      public Continuation runBackgroundProcess(@NotNull final ProgressIndicator indicator) {
-        return DumbService.getInstance(project).runReadActionInSmartMode(() -> performInReadAction(indicator));
-      }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        if (!project.isDisposed()) {
-          ProgressIndicatorUtils.scheduleWithWriteActionPriority(this);
-        }
-      }
-    });
+      }).inSmartMode(project).submit(AppExecutorUtil.getAppExecutorService());
   }
 
   @Nullable

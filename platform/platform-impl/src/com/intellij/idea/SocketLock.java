@@ -11,11 +11,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.NotNullProducer;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import io.netty.buffer.ByteBuf;
@@ -37,6 +35,7 @@ import java.net.InetAddress;
 import java.net.Socket;
 import java.nio.channels.FileChannel;
 import java.nio.channels.FileLock;
+import java.nio.charset.StandardCharsets;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
@@ -145,17 +144,17 @@ public final class SocketLock {
 
       myToken = UUID.randomUUID().toString();
       String[] lockedPaths = {myConfigPath, mySystemPath};
-      int workerCount = PlatformUtils.isIdeaCommunity() || PlatformUtils.isDataGrip() || PlatformUtils.isCidr() ? 1 : 2;
       NotNullProducer<ChannelHandler> handler = () -> new MyChannelInboundHandler(lockedPaths, myActivateListener, myToken);
-      myServer = BuiltInServer.startNioOrOio(workerCount, 6942, 50, false, handler);
+      myServer = BuiltInServer.startNioOrOio(2, 6942, 50, false, handler);
 
-      byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(CharsetToolkit.UTF8_CHARSET);
+      byte[] portBytes = Integer.toString(myServer.getPort()).getBytes(StandardCharsets.UTF_8);
       FileUtil.writeToFile(portMarkerC, portBytes);
       FileUtil.writeToFile(portMarkerS, portBytes);
 
-      File tokenFile = new File(mySystemPath, TOKEN_FILE);
-      FileUtil.writeToFile(tokenFile, myToken.getBytes(CharsetToolkit.UTF8_CHARSET));
-      PosixFileAttributeView view = Files.getFileAttributeView(tokenFile.toPath(), PosixFileAttributeView.class);
+      Path tokenFile = Paths.get(mySystemPath, TOKEN_FILE);
+      // parent directories are already created (see underLocks)
+      Files.write(tokenFile, myToken.getBytes(StandardCharsets.UTF_8));
+      PosixFileAttributeView view = Files.getFileAttributeView(tokenFile, PosixFileAttributeView.class);
       if (view != null) {
         try {
           view.setPermissions(ContainerUtil.newHashSet(PosixFilePermission.OWNER_READ, PosixFilePermission.OWNER_WRITE));

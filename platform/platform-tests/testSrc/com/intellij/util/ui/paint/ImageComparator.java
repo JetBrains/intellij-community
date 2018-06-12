@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.paint;
 
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,54 +9,79 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.awt.image.DataBufferInt;
 
+import static junit.framework.TestCase.assertTrue;
+
 /**
  * @author tav
  */
 public class ImageComparator {
-  private ColorComparator colorComparator;
+  private final ColorComparator colorComparator;
 
   public interface ColorComparator {
     boolean compare(int argb1, int argb2);
   }
 
   /**
-   * Smooths difference in greyscale antialiasing.
+   * Used to smooth difference b/w antialiased images.
    */
-  public static class GreyscaleAASmoother implements ColorComparator {
-    private static final int FG_COLOR = Color.WHITE.getRGB();
-    private static final int BG_COLOR = Color.BLACK.getRGB();
-
-    private float boundaryColorsDist;
-    private float medianColorsDist;
+  public static class AASmootherComparator implements ColorComparator {
+    private final double backgroundColorsDist;
+    private final double inputColorsDist;
+    private final int backgroundRGB;
 
     /**
-     * The distance b/w two colors are in [0..1]. It's assumed {@code boundaryColorDist} is relatively small,
-     * whereas {@code medianColorDist} is larger.
+     * The distance b/w two colors is in [0..1]. It's assumed {@code backgroundColorsDist} is less tolerant,
+     * whereas {@code inputColorDist} is more tolerant.
      *
-     * @param boundaryColorsDist tolerant distance b/w the input color and the boundary (BG or FG) color
-     * @param medianColorsDist tolerant distance b/w the input colors on the median values (b/w the boundaries)
+     * @param backgroundColorsDist tolerant distance b/w the input color and the background color
+     * @param inputColorsDist tolerant distance b/w the input colors
      */
-    public GreyscaleAASmoother(float boundaryColorsDist, float medianColorsDist) {
-      this.boundaryColorsDist = boundaryColorsDist;
-      this.medianColorsDist = medianColorsDist;
+    public AASmootherComparator(double backgroundColorsDist, double inputColorsDist, Color background) {
+      this.backgroundColorsDist = backgroundColorsDist;
+      this.inputColorsDist = inputColorsDist;
+      this.backgroundRGB = background.getRGB();
     }
 
     @Override
     public boolean compare(int argb1, int argb2) {
       if (argb1 == argb2) return true;
-      if (FG_COLOR == argb1 || FG_COLOR == argb2 || BG_COLOR == argb1 || BG_COLOR == argb2) {
-        return dist(argb1, argb2) <= boundaryColorsDist;
+      if (argb1 == backgroundRGB || argb2 == backgroundRGB) {
+        return dist(argb1, argb2) <= backgroundColorsDist;
       }
-      else {
-        return dist(argb1, argb2) <= medianColorsDist;
-      }
+      return dist(argb1, argb2) <= inputColorsDist;
     }
 
-    private float dist(int argb1, int argb2) {
-      int a1 = (argb1 >> 24 & 0xff) / 0xff;
-      int a2 = (argb2 >> 24 & 0xff) / 0xff;
-      // colors are grey
-      return Math.abs((argb1 & 0xff) * a1 - (argb2 & 0xff) * a2) / 255f;
+    private static double dist(int argb1, int argb2) {
+      double[] comp = diff(argb1, argb2);
+      // normalize dist to [0..1]
+      return Math.sqrt((comp[0] * comp[0] + comp[1] * comp[1] + comp[2] * comp[2] + comp[3] * comp[3]) / comp.length);
+    }
+
+    private static double[] diff(int argb1, int argb2) {
+      double a1 = a(argb1);
+      double a2 = a(argb2);
+      return new double[] {
+        Math.abs(a1 * a1 - a2 * a2),
+        Math.abs(r(argb1) * a1 - r(argb2) * a2),
+        Math.abs(g(argb1) * a1 - g(argb2) * a2),
+        Math.abs(b(argb1) * a1 - b(argb2) * a2)
+      };
+    }
+
+    protected static double a(int argb) {
+      return ((argb >> 24) & 0xFF) / 255d;
+    }
+
+    protected static double r(int argb) {
+      return ((argb >> 16) & 0xFF) / 255d;
+    }
+
+    protected static double g(int argb) {
+      return ((argb >> 8) & 0xFF) / 255d;
+    }
+
+    protected static double b(int argb) {
+      return (argb & 0xFF) / 255d;
     }
   }
 
@@ -70,25 +96,42 @@ public class ImageComparator {
   /**
    * BufferedImage.TYPE_INT_ARGB is expected
    */
-  public boolean compare(@NotNull BufferedImage img1, @NotNull BufferedImage img2) {
-    return compare(img1, img2, null);
+  public static void compareAndAssert(@Nullable ColorComparator colorComparator,
+                                      @NotNull BufferedImage img1, @NotNull BufferedImage img2,
+                                      @Nullable String errMsgPrefix)
+  {
+    new ImageComparator(colorComparator).compareAndAssert(img1, img2, errMsgPrefix);
   }
 
+  /**
+   * BufferedImage.TYPE_INT_ARGB is expected
+   */
+  public void compareAndAssert(@NotNull BufferedImage img1, @NotNull BufferedImage img2, @Nullable String errMsgPrefix) {
+    StringBuilder sb = new StringBuilder(ObjectUtils.notNull(errMsgPrefix, "images mismatch: "));
+    boolean equal = compare(img1, img2, sb);
+    assertTrue(sb.toString(), equal);
+  }
+
+  /**
+   * BufferedImage.TYPE_INT_ARGB is expected
+   */
   public boolean compare(@NotNull BufferedImage img1, @NotNull BufferedImage img2, @Nullable /*OUT*/StringBuilder reason) {
     int[] d1 = ((DataBufferInt)img1.getRaster().getDataBuffer()).getData();
     int[] d2 = ((DataBufferInt)img2.getRaster().getDataBuffer()).getData();
     if  (d1.length != d2.length) {
-      if (reason != null) reason.append("size mismatch: " +
-                                        "[" + img1.getWidth() + "x" + img1.getHeight() + "] vs " +
-                                        "[" + img2.getWidth() + "x" + img2.getHeight() + "]");
+      if (reason != null) //noinspection StringConcatenationInsideStringBufferAppend
+        reason.append("size mismatch: " +
+                      "[" + img1.getWidth() + "x" + img1.getHeight() + "] vs " +
+                      "[" + img2.getWidth() + "x" + img2.getHeight() + "]");
       return false;
     }
     for (int i = 0; i < d1.length; i++) {
       if (!colorComparator.compare(d1[i], d2[i])) {
         int y = i / img1.getWidth();
         int x = i - y * img1.getWidth();
-        if (reason != null) reason.append("colors differ at [" + x + "," + y + "]; " +
-                                          "0x" + Integer.toHexString(d1[i]) + " vs 0x" + Integer.toHexString(d2[i]));
+        if (reason != null)  //noinspection StringConcatenationInsideStringBufferAppend
+          reason.append("colors differ at [" + x + "," + y + "]; " +
+                        "0x" + Integer.toHexString(d1[i]) + " vs 0x" + Integer.toHexString(d2[i]));
         return false;
       }
     }

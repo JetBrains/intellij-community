@@ -34,6 +34,15 @@ public class PluginBean {
   @Tag("id")
   public String id;
 
+  @Tag("productCode")
+  public String productCode;
+
+  @Tag("releaseDate")
+  public String releaseDate;
+
+  @Tag("releaseVersion")
+  public int releaseVersion;
+
   @Tag("description")
   public String description;
 

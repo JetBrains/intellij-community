@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve.references
 
 import com.intellij.psi.PsiElement
@@ -10,7 +8,6 @@ import com.intellij.util.SmartList
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult.EMPTY_ARRAY
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrOperatorExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.HardcodedGroovyMethodConstants.*
@@ -68,10 +65,10 @@ object GrOperatorResolver : DependentResolver<GrOperatorExpression>() {
     return result
   }
 
-  override fun doResolve(ref: GrOperatorExpression, incomplete: Boolean): Array<out GroovyResolveResult> {
-    val operatorName = operatorNames[ref.operator] ?: return EMPTY_ARRAY
-    val leftType = ref.leftType ?: return EMPTY_ARRAY
+  override fun doResolve(ref: GrOperatorExpression, incomplete: Boolean): Collection<GroovyResolveResult> {
+    val operatorName = operatorNames[ref.operator] ?: return emptyList()
+    val leftType = ref.leftType ?: return emptyList()
     val rightType = ref.rightType
-    return getMethodCandidates(leftType, operatorName, ref, incomplete, rightType)
+    return getMethodCandidates(leftType, operatorName, ref, incomplete, rightType).toList()
   }
 }

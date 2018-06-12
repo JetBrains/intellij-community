@@ -34,16 +34,19 @@ import java.util.List;
 public abstract class PackagingElement<S> implements PersistentStateComponent<S> {
   private final PackagingElementType myType;
 
-  protected PackagingElement(PackagingElementType type) {
+  protected PackagingElement(@NotNull PackagingElementType type) {
     myType = type;
   }
 
+  @NotNull
   public abstract PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
+  @NotNull
   public final PackagingElementType getType() {
     return myType;
   }
 
+  @NotNull
   public abstract List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext, @NotNull AntCopyInstructionCreator creator,
                                                                    @NotNull ArtifactAntGenerationContext generationContext,
                                                                    @NotNull ArtifactType artifactType);

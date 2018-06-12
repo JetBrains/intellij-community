@@ -50,6 +50,7 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
     return myModule.hashCode();
   }
 
+  @NotNull
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);

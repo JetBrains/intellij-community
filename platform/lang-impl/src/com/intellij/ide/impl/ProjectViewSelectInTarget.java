@@ -9,7 +9,6 @@ import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
 import com.intellij.ide.projectView.impl.ProjectViewImpl;
-import com.intellij.ide.scratch.ScratchFileType;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
 import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;

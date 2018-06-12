@@ -27,6 +27,7 @@ import com.intellij.notification.impl.ui.NotificationsUtil;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.actions.ScrollToTheEndToolbarAction;
 import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -184,6 +185,9 @@ class EventLogConsole {
                                                        EditorMouseEvent event) {
     AnAction[] children = ((ActionGroup)actionManager.getAction(IdeActions.GROUP_CONSOLE_EDITOR_POPUP)).getChildren(null);
     DefaultActionGroup group = new DefaultActionGroup();
+    group.add(new EventLogToolWindowFactory.ToggleSoftWraps(editor));
+    group.add(new ScrollToTheEndToolbarAction(editor));
+    group.addSeparator();
     addConfigureNotificationAction(editor, event, group);
     group.addAll(children);
     group.addSeparator();

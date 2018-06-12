@@ -18,7 +18,9 @@ package com.intellij.openapi.externalSystem.test;
 import com.intellij.compiler.artifacts.ArtifactsTestUtil;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.server.BuildManager;
-import com.intellij.openapi.application.*;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.compiler.CompilerMessage;
@@ -30,7 +32,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -47,6 +48,7 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.PathKt;
 import com.intellij.util.io.TestFileSystemItem;
@@ -225,12 +227,12 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected void runTest() throws Throwable {
     try {
       if (runInWriteAction()) {
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            ExternalSystemTestCase.super.runTest();
-          }
-        }.executeSilently().throwException();
+        try {
+          WriteAction.runAndWait(()-> super.runTest());
+        }
+        catch (Throwable throwable) {
+          ExceptionUtil.rethrowAllAsUnchecked(throwable);
+        }
       }
       else {
         super.runTest();
@@ -290,15 +292,17 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   protected Module createModule(final String name, final ModuleType type) {
-    return new WriteCommandAction<Module>(myProject) {
-      @Override
-      protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
+    try {
+      return WriteCommandAction.writeCommandAction(myProject).compute(() -> {
         VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
         Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
         PsiTestUtil.addContentRoot(module, f.getParent());
-        moduleResult.setResult(module);
-      }
-    }.execute().getResultObject();
+        return module;
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected VirtualFile createProjectConfig(@NonNls String config) {
@@ -308,15 +312,17 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   protected VirtualFile createConfigFile(final VirtualFile dir, String config) {
     final String configFileName = getExternalSystemConfigFileName();
     VirtualFile f = dir.findChild(configFileName);
-    if (f == null) {
-      f = new WriteAction<VirtualFile>() {
-        @Override
-        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+    try {
+      if (f == null) {
+        f = WriteAction.computeAndWait(() -> {
           VirtualFile res = dir.createChildData(null, configFileName);
-          result.setResult(res);
-        }
-      }.execute().getResultObject();
-      myAllConfigs.add(f);
+          return res;
+        });
+        myAllConfigs.add(f);
+      }
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
     }
     setFileContent(f, config, true);
     return f;
@@ -348,7 +354,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     FileUtil.ensureExists(f.getParentFile());
     FileUtil.ensureCanCreateFile(f);
     final boolean created = f.createNewFile();
-    if(!created) {
+    if(!created && !f.exists()) {
       throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
@@ -494,17 +500,19 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
-    new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+    try {
+      WriteAction.runAndWait(() -> {
         if (advanceStamps) {
           file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET), -1, file.getTimeStamp() + 4000);
         }
         else {
           file.setBinaryContent(content.getBytes(CharsetToolkit.UTF8_CHARSET), file.getModificationStamp(), file.getTimeStamp());
         }
-      }
-    }.execute().getResultObject();
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {
@@ -556,7 +564,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   public static void deleteBuildSystemDirectory() {
-    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
+    BuildManager buildManager = BuildManager.getInstance();
+    if(buildManager == null) return;
+    Path buildSystemDirectory = buildManager.getBuildSystemDirectory();
     try {
       PathKt.delete(buildSystemDirectory);
       return;

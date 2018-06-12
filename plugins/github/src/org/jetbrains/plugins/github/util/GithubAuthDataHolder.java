@@ -15,10 +15,12 @@
  */
 package org.jetbrains.plugins.github.util;
 
-import com.intellij.openapi.util.ThrowableComputable;
 import org.jetbrains.annotations.NotNull;
 
-
+/**
+ * @deprecated {@link org.jetbrains.plugins.github.authentication.GithubAuthenticationManager}
+ */
+@Deprecated
 public class GithubAuthDataHolder {
   @NotNull private GithubAuthData myAuthData;
 
@@ -29,18 +31,5 @@ public class GithubAuthDataHolder {
   @NotNull
   public synchronized GithubAuthData getAuthData() {
     return myAuthData;
-  }
-
-  public synchronized <T extends Throwable> void runTransaction(@NotNull GithubAuthData expected,
-                                                                @NotNull ThrowableComputable<GithubAuthData, T> task) throws T {
-    if (expected != myAuthData) {
-      return;
-    }
-
-    myAuthData = task.compute();
-  }
-
-  public static GithubAuthDataHolder createFromSettings() {
-    return new GithubAuthDataHolder(GithubSettings.getInstance().getAuthData());
   }
 }

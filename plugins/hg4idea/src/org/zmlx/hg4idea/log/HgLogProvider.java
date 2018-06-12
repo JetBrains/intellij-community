@@ -65,7 +65,7 @@ public class HgLogProvider implements VcsLogProvider {
   public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myRepositoryManager = repositoryManager;
-    myRefSorter = new HgRefManager();
+    myRefSorter = new HgRefManager(project, repositoryManager);
     myVcsObjectsFactory = factory;
   }
 

@@ -88,7 +88,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
     @abstractmethod
     @coroutine
     def run_in_executor(self, executor: Any,
-        callback: Callable[..., _T], *args: Any) -> Generator[Any, None, _T]: ...
+        func: Callable[..., _T], *args: Any) -> Generator[Any, None, _T]: ...
     @abstractmethod
     def set_default_executor(self, executor: Any) -> None: ...
     # Network I/O methods returning Futures.
@@ -96,7 +96,7 @@ class AbstractEventLoop(metaclass=ABCMeta):
     @coroutine
     # TODO the "Tuple[Any, ...]" should be "Union[Tuple[str, int], Tuple[str, int, int, int]]" but that triggers
     # https://github.com/python/mypy/issues/2509
-    def getaddrinfo(self, host: str, port: int, *,
+    def getaddrinfo(self, host: Optional[str], port: Union[str, int, None], *,
         family: int = ..., type: int = ..., proto: int = ..., flags: int = ...) -> Generator[Any, None, List[Tuple[int, int, int, str, Tuple[Any, ...]]]]: ...
     @abstractmethod
     @coroutine

@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.cvsCheckOut;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.connections.CvsRootProvider;
@@ -23,11 +24,8 @@ import com.intellij.cvsSupport2.cvsoperations.common.CvsCommandOperation;
 import com.intellij.cvsSupport2.cvsoperations.common.CvsExecutionEnvironment;
 import com.intellij.cvsSupport2.javacvsImpl.io.SendTextFilePreprocessor;
 import com.intellij.cvsSupport2.keywordSubstitution.KeywordSubstitutionWrapper;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.util.ThrowableRunnable;
 import org.netbeans.lib.cvsclient.command.Command;
 import org.netbeans.lib.cvsclient.command.GlobalOptions;
-import org.netbeans.lib.cvsclient.command.IOCommandException;
 import org.netbeans.lib.cvsclient.command.KeywordSubstitution;
 import org.netbeans.lib.cvsclient.command.checkout.CheckoutCommand;
 import org.netbeans.lib.cvsclient.file.ILocalFileReader;
@@ -60,7 +58,7 @@ public class CheckoutProjectOperation extends CvsCommandOperation {
                                  boolean pruneEmptyDirectories,
                                  KeywordSubstitution keywordSubstitution) {
     super(new CheckoutAdminReader(),
-      new CheckoutAdminWriter(CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
+      new CheckoutAdminWriter(CodeStyle.getDefaultSettings().getLineSeparator(),
         CvsApplicationLevelConfiguration.getCharset()));
     myModuleNames = moduleNames;
     myEnvironment = environment;

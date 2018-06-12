@@ -55,10 +55,10 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
         if (index < 0) {
           break;
         }
-        replacement.append(text.substring(anchor, index));
+        replacement.append(text, anchor, index);
         anchor = appendUnicodeEscape(text, index, replacement);
       }
-      replacement.append(text.substring(anchor, textLength));
+      replacement.append(text, anchor, textLength);
       document.replaceString(start, end, replacement);
     }
     else if (element instanceof PsiLiteralExpression) {
@@ -70,9 +70,9 @@ public class ReplaceOctalEscapeWithUnicodeEscapeIntention extends Intention {
       final int index1 = indexOfOctalEscape(text, offset);
       final int index2 = indexOfOctalEscape(text, offset + 1);
       final int escapeStart = index2 == offset ? index2 : index1;
-      newLiteralText.append(text.substring(0, escapeStart));
+      newLiteralText.append(text, 0, escapeStart);
       final int escapeEnd = appendUnicodeEscape(text, escapeStart, newLiteralText);
-      newLiteralText.append(text.substring(escapeEnd, text.length()));
+      newLiteralText.append(text.substring(escapeEnd));
       PsiReplacementUtil.replaceExpression(literalExpression, newLiteralText.toString());
     }
   }

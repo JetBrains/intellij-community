@@ -1,16 +1,11 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>javaOutsideSource</title>
   <g>
     <g>
-      <polygon points="6 0 2 4 6 4 6 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <path d="M7,0V5H2V8.76172A4.48672,4.48672,0,0,1,7.29346,16H13V0H7Z" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="7 1 3 5 7 5 7 1" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+      <circle cx="3.5" cy="12.5" r="3.5" fill="#f26522" opacity="0.7"/>
+      <path d="M8,1V6H3V8.04639A4.1177,4.1177,0,0,1,3.5,8,4.50491,4.50491,0,0,1,8,12.5,4.39729,4.39729,0,0,1,7.21729,15H13V1Z" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     </g>
-    <g>
-      <circle cx="4.5" cy="12.5" r="3.5" fill="#f26522" opacity="0.6"/>
-      <g opacity="0.6">
-        <path d="M2.83012,14.20413l0.55808-.59174a1.18477,1.18477,0,0,0,.97089.58486,0.8,0.8,0,0,0,.765-0.9719V10H5.99854v3.25344a1.81349,1.81349,0,0,1-.45431,1.30963A1.5894,1.5894,0,0,1,4.37311,15,1.8047,1.8047,0,0,1,2.83012,14.20413Z" fill="#231f20"/>
-      </g>
-    </g>
-    <rect x="3.00146" y="13" width="1" height="1" fill="#231f20" opacity="0.4"/>
+    <path d="M4.12549,10v3.22559A1.24032,1.24032,0,0,1,4,13.792V14H3.85889a.69676.69676,0,0,1-.49854.19727,1.18455,1.18455,0,0,1-.9707-.585l-.55811.5918A1.80469,1.80469,0,0,0,3.37451,15a1.58977,1.58977,0,0,0,1.17139-.437A1.81488,1.81488,0,0,0,5,13.25342V10Z" fill="#231f20" opacity="0.7"/>
   </g>
 </svg>

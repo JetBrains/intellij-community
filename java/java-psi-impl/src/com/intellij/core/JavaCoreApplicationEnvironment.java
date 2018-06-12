@@ -100,7 +100,7 @@ public class JavaCoreApplicationEnvironment extends CoreApplicationEnvironment {
       }
 
       @Override
-      protected boolean isBelowRightMargin(@NotNull Project project, int lineLength) {
+      protected boolean isBelowRightMargin(@NotNull PsiFile file, int lineLength) {
         return false;
       }
     });

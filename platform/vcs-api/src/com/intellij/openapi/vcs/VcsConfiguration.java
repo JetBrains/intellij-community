@@ -69,6 +69,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean SHOW_UNVERSIONED_FILES_WHILE_COMMIT = true;
   public boolean LOCAL_CHANGES_DETAILS_PREVIEW_SHOWN = false;
   public boolean SHELVE_DETAILS_PREVIEW_SHOWN = false;
+  public boolean VCS_LOG_DETAILS_PREVIEW_SHOWN = false;
   public boolean RELOAD_CONTEXT = true;
 
   @XCollection(elementName = "path", propertyElementName = "ignored-roots")
@@ -129,6 +130,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   public boolean UPDATE_GROUP_BY_CHANGELIST = false;
   public boolean UPDATE_FILTER_BY_SCOPE = false;
   public boolean SHOW_FILE_HISTORY_AS_TREE = false;
+  public boolean GROUP_MULTIFILE_MERGE_BY_DIRECTORY = false;
 
   private static final int MAX_STORED_MESSAGES = 25;
 
@@ -137,6 +139,7 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
   private final PerformInBackgroundOption myEditOption = new EditInBackgroundOption();
   private final PerformInBackgroundOption myCheckoutOption = new CheckoutInBackgroundOption();
   private final PerformInBackgroundOption myAddRemoveOption = new AddRemoveInBackgroundOption();
+  private final PerformInBackgroundOption myRollbackOption = new RollbackInBackgroundOption();
 
   @Override
   public VcsConfiguration getState() {
@@ -201,6 +204,10 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     return myAddRemoveOption;
   }
 
+  public PerformInBackgroundOption getRollbackOption() {
+    return myRollbackOption;
+  }
+
   private class UpdateInBackgroundOption implements PerformInBackgroundOption {
     @Override
     public boolean shouldStartInBackground() {
@@ -225,7 +232,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public void processSentToBackground() {
       PERFORM_EDIT_IN_BACKGROUND = true;
     }
-
   }
 
   private class CheckoutInBackgroundOption implements PerformInBackgroundOption {
@@ -238,7 +244,6 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public void processSentToBackground() {
       PERFORM_CHECKOUT_IN_BACKGROUND = true;
     }
-
   }
 
   private class AddRemoveInBackgroundOption implements PerformInBackgroundOption {
@@ -251,7 +256,18 @@ public final class VcsConfiguration implements PersistentStateComponent<VcsConfi
     public void processSentToBackground() {
       PERFORM_ADD_REMOVE_IN_BACKGROUND = true;
     }
+  }
 
+  private class RollbackInBackgroundOption implements PerformInBackgroundOption {
+    @Override
+    public boolean shouldStartInBackground() {
+      return PERFORM_ROLLBACK_IN_BACKGROUND;
+    }
+
+    @Override
+    public void processSentToBackground() {
+      PERFORM_ROLLBACK_IN_BACKGROUND = true;
+    }
   }
 
   public String getPatchFileExtension() {

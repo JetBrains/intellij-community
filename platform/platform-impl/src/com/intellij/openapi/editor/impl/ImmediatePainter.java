@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -61,20 +59,22 @@ class ImmediatePainter {
     });
   }
 
-  void paint(final Graphics g, final EditorActionPlan plan) {
+  boolean paint(final Graphics g, final EditorActionPlan plan) {
     if (ENABLED.asBoolean() && canPaintImmediately(myEditor)) {
-      if (plan.getCaretShift() != 1) return;
+      if (plan.getCaretShift() != 1) return false;
 
       final List<EditorActionPlan.Replacement> replacements = plan.getReplacements();
-      if (replacements.size() != 1) return;
+      if (replacements.size() != 1) return false;
 
       final EditorActionPlan.Replacement replacement = replacements.get(0);
-      if (replacement.getText().length() != 1) return;
+      if (replacement.getText().length() != 1) return false;
 
       final int caretOffset = replacement.getBegin();
       final char c = replacement.getText().charAt(0);
       paintImmediately(g, caretOffset, c);
+      return true;
     }
+    return false;
   }
 
   private static boolean canPaintImmediately(final EditorImpl editor) {

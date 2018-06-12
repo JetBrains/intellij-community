@@ -3,6 +3,8 @@ package com.siyeh.ig.fixes.style;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
 import com.siyeh.ig.style.StringBufferReplaceableByStringInspection;
@@ -14,44 +16,56 @@ public class StringBufferReplaceableByStringFixTest extends IGQuickFixesTestCase
     super.setUp();
     myFixture.enableInspections(new StringBufferReplaceableByStringInspection());
     myRelativePath = "style/replace_with_string";
-    myDefaultHint = InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.quickfix");
   }
 
-  public void testSimpleStringBuffer() { doTest(); }
-  public void testStringBuilderAppend() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testStringBufferVariable() { doTest(); }
-  public void testStringBufferVariable2() { doTest(); }
-  public void testStartsWithPrimitive() { doTest(); }
-  public void testPrecedence() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testPrecedence2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testPrecedence3() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testPrecedence4() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testNonString1() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testNonString2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testMarathon() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testArray() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testArray2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testConstructorArgument() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testConstructorArgument2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testNoConstructorArgument() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testCharLiteral() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testEscape() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testUnescape() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testMethodCallOnString() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testComplex1() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testComplex2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testLinebreaks() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testSlashSlashInLiteral() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testHelperVariable() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testComment1() { doTest(); }
-  public void testComment2() { doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")); }
-  public void testComment3() { doTest(); }
+  @Override
+  protected void tuneFixture(JavaModuleFixtureBuilder builder) throws Exception {
+    super.tuneFixture(builder);
+    builder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
+  }
+
+  private void doTestFor(String builderClassName) {
+    doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix", builderClassName));
+  }
+
+  public void testSimpleStringBuffer() { doTestFor("StringBuffer"); }
+  public void testStringBuilderAppend() { doTestFor("StringBuilder"); }
+  public void testStringBufferVariable() { doTestFor("StringBuffer"); }
+  public void testStringBufferVariable2() { doTestFor("StringBuffer"); }
+  public void testStartsWithPrimitive() { doTestFor("StringBuffer"); }
+  public void testPrecedence() { doTestFor("StringBuilder"); }
+  public void testPrecedence2() { doTestFor("StringBuilder"); }
+  public void testPrecedence3() { doTestFor("StringBuilder"); }
+  public void testPrecedence4() { doTestFor("StringBuilder"); }
+  public void testNonString1() { doTestFor("StringBuilder"); }
+  public void testNonString2() { doTestFor("StringBuilder"); }
+  public void testMarathon() { doTestFor("StringBuilder"); }
+  public void testArray() { doTestFor("StringBuilder"); }
+  public void testArray2() { doTestFor("StringBuilder"); }
+  public void testConstructorArgument() { doTestFor("StringBuilder"); }
+  public void testConstructorArgument2() { doTestFor("StringBuilder"); }
+  public void testNoConstructorArgument() { doTestFor("StringBuilder"); }
+  public void testCharLiteral() { doTestFor("StringBuilder"); }
+  public void testEscape() { doTestFor("StringBuilder"); }
+  public void testUnescape() { doTestFor("StringBuilder"); }
+  public void testMethodCallOnString() { doTestFor("StringBuilder"); }
+  public void testComplex1() { doTestFor("StringBuilder"); }
+  public void testComplex2() { doTestFor("StringBuilder"); }
+  public void testLinebreaks() { doTestFor("StringBuilder"); }
+  public void testSlashSlashInLiteral() { doTestFor("StringBuilder"); }
+  public void testHelperVariable() { doTestFor("StringBuilder"); }
+  public void testComment1() { doTestFor("StringBuffer"); }
+  public void testComment2() { doTestFor("StringBuilder"); }
+  public void testComment3() { doTestFor("StringBuffer"); }
+  public void testComment4() { doTestFor("StringBuilder"); }
+  public void testJoiner() { doTestFor("StringJoiner"); }
+  public void testJoiner2() { doTestFor("StringJoiner"); }
 
   public void testComplexSignOnNextLine() {
     final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE);
     settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = true;
     try {
-      doTest(InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix"));
+      doTestFor("StringBuilder");
     }
     finally {
       settings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = false;

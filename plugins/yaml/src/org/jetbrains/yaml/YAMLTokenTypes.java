@@ -8,6 +8,7 @@ public interface YAMLTokenTypes {
   YAMLElementType WHITESPACE = new YAMLElementType("whitespace");
   YAMLElementType INDENT = new YAMLElementType("indent");
   YAMLElementType EOL = new YAMLElementType("Eol");
+  YAMLElementType SCALAR_EOL = new YAMLElementType("block scalar EOL");
 
   YAMLElementType LBRACE = new YAMLElementType("{");
   YAMLElementType RBRACE = new YAMLElementType("}");

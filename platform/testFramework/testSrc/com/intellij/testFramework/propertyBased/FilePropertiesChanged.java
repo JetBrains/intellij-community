@@ -15,31 +15,24 @@
  */
 package com.intellij.testFramework.propertyBased;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater;
 import com.intellij.openapi.util.Conditions;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class FilePropertiesChanged implements MadTestingAction {
-  private final VirtualFile myFile;
-  private final Project myProject;
+public class FilePropertiesChanged extends ActionOnFile {
 
   public FilePropertiesChanged(PsiFile file) {
-    myFile = file.getVirtualFile();
-    myProject = file.getProject();
+    super(file);
   }
 
   @Override
-  public void performAction() {
-    PushedFilePropertiesUpdater.getInstance(myProject).filePropertiesChanged(myFile, Conditions.alwaysTrue());
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    PushedFilePropertiesUpdater.getInstance(getProject()).filePropertiesChanged(getVirtualFile(), Conditions.alwaysTrue());
   }
 
-  @Override
-  public String toString() {
-    return "FilePropertiesChanged[" + myFile.getPath() + ']';
-  }
 }

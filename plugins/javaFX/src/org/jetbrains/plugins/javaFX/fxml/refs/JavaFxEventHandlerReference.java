@@ -79,6 +79,7 @@ public class JavaFxEventHandlerReference extends PsiReferenceBase<XmlAttributeVa
     return false;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final TextRange range = super.getRangeInElement();

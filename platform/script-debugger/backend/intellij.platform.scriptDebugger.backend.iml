@@ -11,6 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.scriptDebugger.protocolReaderRuntime" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>

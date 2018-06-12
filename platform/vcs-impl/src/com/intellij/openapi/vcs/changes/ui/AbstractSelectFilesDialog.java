@@ -19,8 +19,8 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.CommonBundle;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MultiLineLabelUI;
@@ -91,9 +91,15 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
 
   @Nullable
   protected JComponent createCenterPanel() {
-    JPanel panel = new JPanel(new BorderLayout());
-    panel.add(createToolbar(), BorderLayout.NORTH);
+    DefaultActionGroup group = createToolbarActions();
+    group.add(Separator.getInstance());
+    group.add(ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP));
+    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsSelectFilesDialog", group, true);
 
+    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(toolbar, getFileList());
+
+    JPanel panel = new JPanel(new BorderLayout());
+    panel.add(toolbarPanel, BorderLayout.NORTH);
     panel.add(ScrollPaneFactory.createScrollPane(getFileList()), BorderLayout.CENTER);
 
     if (myShowDoNotAskOption) {
@@ -103,19 +109,8 @@ public abstract class AbstractSelectFilesDialog<T> extends DialogWrapper {
     return panel;
   }
 
-  private JComponent createToolbar() {
-    DefaultActionGroup group = createToolbarActions();
-    ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("VcsSelectFilesDialog", group, true);
-    return toolbar.getComponent();
-  }
-
   @NotNull
   protected DefaultActionGroup createToolbarActions() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    final AnAction[] actions = getFileList().getTreeActions();
-    for(AnAction action: actions) {
-      group.add(action);
-    }
-    return group;
+    return new DefaultActionGroup();
   }
 }

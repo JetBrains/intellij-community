@@ -21,10 +21,14 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.List;
+import java.util.Optional;
 import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
@@ -112,6 +116,12 @@ public final class PyTypeUtil {
       return StreamEx.of(((PyUnionType)type).getMembers());
     }
     return StreamEx.of(type);
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public static Ref<PyType> notNullToRef(@Nullable PyType type) {
+    return type == null ? null : Ref.create(type);
   }
 
   /**

@@ -3,13 +3,11 @@ package com.intellij.module;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.module.impl.ModulePointerManagerImpl;
 import com.intellij.testFramework.PlatformTestCase;
 import org.assertj.core.util.Maps;
-import org.jetbrains.annotations.NotNull;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
@@ -108,6 +106,15 @@ public class ModulePointerTest extends PlatformTestCase {
     assertSame(module, pointer.getModule());
   }
 
+  public void testUpdateRenamingSchemeOnModuleRename() throws ModuleWithNameAlreadyExists {
+    ((ModulePointerManagerImpl)getPointerManager()).setRenamingScheme(Maps.newHashMap("oldName", "newName"));
+    Module module = addModule("newName");
+    renameModule(module, "updatedNewName");
+    ModulePointer pointer = getPointerManager().create("oldName");
+    assertEquals("updatedNewName", pointer.getModuleName());
+    assertSame(module, pointer.getModule());
+  }
+
   public void testUpdateUnresolvedPointerWhenRenamingSchemeIsApplied() {
     Module module = addModule("oldName");
     ModulePointer pointer = getPointerManager().create(module);
@@ -172,12 +179,7 @@ public class ModulePointerTest extends PlatformTestCase {
   }
 
   private static void commitModel(final ModifiableModuleModel model) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> model.commit());
   }
 
   private ModulePointerManager getPointerManager() {

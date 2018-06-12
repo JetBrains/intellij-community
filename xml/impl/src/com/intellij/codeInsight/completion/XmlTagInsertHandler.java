@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.impl.quickfix.EmptyExpression;
 import com.intellij.codeInsight.editorActions.XmlEditUtil;
+import com.intellij.codeInsight.editorActions.XmlTagNameSynchronizer;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupItem;
@@ -23,14 +25,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.formatter.xml.HtmlCodeStyleSettings;
 import com.intellij.psi.formatter.xml.XmlCodeStyleSettings;
 import com.intellij.psi.html.HtmlTag;
@@ -50,7 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
-  public static final Key<Boolean> ENFORCING_TAG = Key.create("xml.insert.handler.enforcing.tag");
   public static final XmlTagInsertHandler INSTANCE = new XmlTagInsertHandler();
 
   @Override
@@ -58,13 +57,13 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
     Project project = context.getProject();
     Editor editor = context.getEditor();
     // Need to insert " " to prevent creating tags like <tagThis is my text
-    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(ENFORCING_TAG, Boolean.TRUE);
+    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(XmlTagNameSynchronizer.SKIP_COMMAND, Boolean.TRUE);
     final int offset = editor.getCaretModel().getOffset();
     editor.getDocument().insertString(offset, " ");
     PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
     PsiElement current = context.getFile().findElementAt(context.getStartOffset());
     editor.getDocument().deleteString(offset, offset + 1);
-    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(ENFORCING_TAG, null);
+    InjectedLanguageUtil.getTopLevelEditor(editor).getDocument().putUserData(XmlTagNameSynchronizer.SKIP_COMMAND, null);
 
     final XmlTag tag = PsiTreeUtil.getContextOfType(current, XmlTag.class, true);
 
@@ -88,7 +87,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
       int caretOffset = editor.getCaretModel().getOffset();
 
-      PsiElement otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
+      XmlTag otherTag = PsiTreeUtil.getParentOfType(context.getFile().findElementAt(caretOffset), XmlTag.class);
 
       PsiElement endTagStart = XmlUtil.getTokenOfType(otherTag, XmlTokenType.XML_END_TAG_START);
 
@@ -103,7 +102,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
           int eOffset = sibling.getTextRange().getEndOffset();
 
           editor.getDocument().deleteString(sOffset, eOffset);
-          editor.getDocument().insertString(sOffset, ((XmlTag)otherTag).getName());
+          editor.getDocument().insertString(sOffset, otherTag.getName());
         }
       }
 
@@ -154,12 +153,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (chooseAttributeName && offset > 0) {
           char c = editor.getDocument().getCharsSequence().charAt(offset - 1);
           if (c == '/' || (c == ' ' && brokenOff)) {
-            new WriteCommandAction.Simple(project) {
-              @Override
-              protected void run() throws Throwable {
-                editor.getDocument().replaceString(offset, offset + 3, ">");
-              }
-            }.execute();
+            WriteCommandAction.writeCommandAction(project).run(() -> editor.getDocument().replaceString(offset, offset + 3, ">"));
           }
         }
       }
@@ -178,12 +172,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
         if (chooseAttributeName && myAttrValueMarker.isValid()) {
           final int startOffset = myAttrValueMarker.getStartOffset();
           final int endOffset = myAttrValueMarker.getEndOffset();
-          new WriteCommandAction.Simple(project) {
-            @Override
-            protected void run() throws Throwable {
-              editor.getDocument().replaceString(startOffset, endOffset, ">");
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project).run(() -> editor.getDocument().replaceString(startOffset, endOffset, ">"));
         }
       }
     });
@@ -313,7 +302,7 @@ public class XmlTagInsertHandler implements InsertHandler<LookupElement> {
 
   @NotNull
   private static String closeTag(XmlTag tag) {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(tag.getProject());
+    CodeStyleSettings settings = CodeStyle.getSettings(tag.getContainingFile());
     boolean html = HtmlUtil.isHtmlTag(tag);
     boolean needsSpace = (html && settings.getCustomSettings(HtmlCodeStyleSettings.class).HTML_SPACE_INSIDE_EMPTY_TAG) ||
                          (!html && settings.getCustomSettings(XmlCodeStyleSettings.class).XML_SPACE_INSIDE_EMPTY_TAG);

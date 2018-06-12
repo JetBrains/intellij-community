@@ -21,6 +21,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   private static final long serialVersionUID = 1L;
 
   @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtil.newHashMap();
+  @Nullable private Map<String, String> myProperties;
   @NotNull private final String myId;
   @NotNull private final String myModuleTypeId;
   @NotNull private final String myExternalConfigPath;
@@ -220,6 +221,18 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
 
   public void setSdkName(@Nullable String sdkName) {
     mySdkName = sdkName;
+  }
+
+  @Nullable
+  public String getProperty(String key) {
+    return myProperties != null ? myProperties.get(key) : null;
+  }
+
+  public void setProperty(String key, String value) {
+    if (myProperties == null) {
+      myProperties = ContainerUtil.newHashMap();
+    }
+    myProperties.put(key, value);
   }
 
   @Override

@@ -23,7 +23,6 @@ import com.intellij.debugger.DebuggerManagerEx;
 import com.intellij.debugger.engine.evaluation.DefaultCodeFragmentFactory;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -34,7 +33,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.util.IncorrectOperationException;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
@@ -82,29 +80,28 @@ public class JavaWithRuntimeCastSurrounder extends JavaExpressionSurrounder {
 
       hold();
       final Project project = myElement.getProject();
-      DebuggerInvocationUtil.invokeLater(project, () -> new WriteCommandAction(project, CodeInsightBundle.message("command.name.surround.with.runtime.cast")) {
-        protected void run(@NotNull Result result) throws Throwable {
-          try {
-            PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
-            PsiParenthesizedExpression parenth =
-              (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type.getCanonicalText() + ")expr)", null);
-            //noinspection ConstantConditions
-            ((PsiTypeCastExpression)parenth.getExpression()).getOperand().replace(myElement);
-            parenth = (PsiParenthesizedExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(parenth);
-            PsiExpression expr = (PsiExpression)myElement.replace(parenth);
-            TextRange range = expr.getTextRange();
-            myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-            myEditor.getCaretModel().moveToOffset(range.getEndOffset());
-            myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
-          }
-          catch (IncorrectOperationException e) {
-            // OK here. Can be caused by invalid type like one for proxy starts with . '.Proxy34'
-          }
-          finally {
-            release();
-          }
+      DebuggerInvocationUtil.invokeLater(project, () -> WriteCommandAction.writeCommandAction(project).withName(
+        CodeInsightBundle.message("command.name.surround.with.runtime.cast")).run(() -> {
+        try {
+          PsiElementFactory factory = JavaPsiFacade.getInstance(myElement.getProject()).getElementFactory();
+          PsiParenthesizedExpression parenth =
+            (PsiParenthesizedExpression)factory.createExpressionFromText("((" + type.getCanonicalText() + ")expr)", null);
+          //noinspection ConstantConditions
+          ((PsiTypeCastExpression)parenth.getExpression()).getOperand().replace(myElement);
+          parenth = (PsiParenthesizedExpression)JavaCodeStyleManager.getInstance(project).shortenClassReferences(parenth);
+          PsiExpression expr = (PsiExpression)myElement.replace(parenth);
+          TextRange range = expr.getTextRange();
+          myEditor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
+          myEditor.getCaretModel().moveToOffset(range.getEndOffset());
+          myEditor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         }
-      }.execute(), myProgressIndicator.getModalityState());
+        catch (IncorrectOperationException e) {
+          // OK here. Can be caused by invalid type like one for proxy starts with . '.Proxy34'
+        }
+        finally {
+          release();
+        }
+      }), myProgressIndicator.getModalityState());
     }
 
   }

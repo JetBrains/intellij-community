@@ -45,8 +45,14 @@ public class JsonSchemaPatternComparator {
   }
 
   private ThreeState comparePaths(UserDefinedJsonSchemaConfiguration.Item left, UserDefinedJsonSchemaConfiguration.Item right) {
-    final File leftFile = new File(myProject.getBasePath(), left.getPath());
-    final File rightFile = new File(myProject.getBasePath(), right.getPath());
+    String leftPath = left.getPath();
+    String rightPath = right.getPath();
+
+    if (leftPath.startsWith("mock:///") || rightPath.startsWith("mock:///")) {
+      return leftPath.equals(rightPath) ? ThreeState.YES : ThreeState.NO;
+    }
+    final File leftFile = new File(myProject.getBasePath(), leftPath);
+    final File rightFile = new File(myProject.getBasePath(), rightPath);
 
     if (left.isDirectory()) {
       if (FileUtil.isAncestor(leftFile, rightFile, true)) return ThreeState.YES;
@@ -102,6 +108,6 @@ public class JsonSchemaPatternComparator {
     final int firstIdx = pattern.indexOf('*');
     final int lastIdx = pattern.lastIndexOf('*');
     if (firstIdx < 0 || lastIdx < 0) return null;
-    return new BeforeAfter<>(pattern.substring(0, firstIdx), pattern.substring(lastIdx + 1, pattern.length()));
+    return new BeforeAfter<>(pattern.substring(0, firstIdx), pattern.substring(lastIdx + 1));
   }
 }

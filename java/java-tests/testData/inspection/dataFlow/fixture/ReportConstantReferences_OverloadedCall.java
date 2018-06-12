@@ -7,7 +7,7 @@ class Test {
 
   private void test(String foo) {
     if (foo == null) {
-      method(<warning descr="Value 'foo' is always 'null'"><caret>foo</warning>);
+      method(<weak_warning descr="Value 'foo' is always 'null'"><caret>foo</weak_warning>);
     }
   }
 

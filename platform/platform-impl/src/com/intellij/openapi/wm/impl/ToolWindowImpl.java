@@ -79,8 +79,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
     }
   ));
 
-  @NotNull
-  private ActionCallback myActivation = ActionCallback.DONE;
   private final BusyObject.Impl myShowing = new BusyObject.Impl() {
     @Override
     public boolean isReady() {
@@ -190,13 +188,12 @@ public final class ToolWindowImpl implements ToolWindowEx {
     UiActivityMonitor.getInstance().addActivity(myToolWindowManager.getProject(), activity, ModalityState.NON_MODAL);
 
     myToolWindowManager.activateToolWindow(myId, forced, autoFocusContents);
-
-    getActivation().doWhenDone(() -> myToolWindowManager.invokeLater(() -> {
+    myToolWindowManager.invokeLater(() -> {
       if (runnable != null) {
         runnable.run();
       }
       UiActivityMonitor.getInstance().removeActivity(myToolWindowManager.getProject(), activity);
-    }));
+    });
   }
 
   @Override
@@ -242,7 +239,7 @@ public final class ToolWindowImpl implements ToolWindowEx {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myToolWindowManager.showToolWindow(myId);
     if (runnable != null) {
-      getActivation().doWhenDone(() -> myToolWindowManager.invokeLater(runnable));
+      myToolWindowManager.invokeLater(runnable);
     }
   }
 
@@ -434,7 +431,8 @@ public final class ToolWindowImpl implements ToolWindowEx {
   }
 
   @Override
-  public final void setIcon(final Icon icon) {
+  public final void setIcon(Icon icon) {
+    //icon = IconUtil.filterIcon(icon, new UIUtil.GrayFilter(), myComponent);
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Icon oldIcon = getIcon();
     if (!EventLog.LOG_TOOL_WINDOW_ID.equals(getId())) {
@@ -539,22 +537,6 @@ public final class ToolWindowImpl implements ToolWindowEx {
 
   void setPlaceholderMode(final boolean placeholderMode) {
     myPlaceholderMode = placeholderMode;
-  }
-
-  @Override
-  @NotNull
-  public ActionCallback getActivation() {
-    return myActivation;
-  }
-
-  @NotNull
-  ActionCallback setActivation(@NotNull ActionCallback activation) {
-    if (!myActivation.isProcessed() && !myActivation.equals(activation)) {
-      myActivation.setRejected();
-    }
-
-    myActivation = activation;
-    return myActivation;
   }
 
   public void setContentFactory(ToolWindowFactory contentFactory) {

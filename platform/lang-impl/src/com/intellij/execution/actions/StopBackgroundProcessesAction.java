@@ -34,7 +34,6 @@ import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.list.GroupedItemsListRenderer;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,13 +46,8 @@ import java.util.Collections;
 import java.util.List;
 
 public class StopBackgroundProcessesAction extends DumbAwareAction implements AnAction.TransparentUpdate{
-  private Icon wrappee = null;
   @Override
   public void update(AnActionEvent e) {
-    if (wrappee == null) {
-      wrappee = IconUtil.toSize(getTemplatePresentation().getIcon(), 16, 16);
-    }
-    e.getPresentation().setIcon(wrappee);
     e.getPresentation().setEnabled(!getCancellableProcesses(e.getProject()).isEmpty());
   }
 
@@ -90,7 +84,7 @@ public class StopBackgroundProcessesAction extends DumbAwareAction implements An
     JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
       .setMovable(true)
       .setTitle(handlerItems.size() == 1 ? "Confirm background process stop" : "Stop background process")
-      .setFilteringEnabled(o -> ((StopAction.HandlerItem)o).displayName)
+      .setNamerForFiltering(o -> ((StopAction.HandlerItem)o).displayName)
       .setItemChoosenCallback(() -> {
         List valuesList = list.getSelectedValuesList();
         for (Object o : valuesList) {

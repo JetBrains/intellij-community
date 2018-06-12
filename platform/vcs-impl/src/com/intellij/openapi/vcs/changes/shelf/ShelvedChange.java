@@ -224,9 +224,9 @@ public class ShelvedChange {
       if (patch.isDeletedFile()) {
         return null;
       }
-      final GenericPatchApplier applier = new GenericPatchApplier(getBaseContent(), patch.getHunks());
-      if (applier.execute()) {
-        return applier.getAfter();
+      GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(getBaseContent(), patch.getHunks());
+      if (appliedPatch != null) {
+        return appliedPatch.patchedText;
       }
       throw new ApplyPatchException("Apply patch conflict");
     }

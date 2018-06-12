@@ -210,11 +210,9 @@ public class MigrationPanel extends JPanel implements Disposable {
                   ensureFilesWritable(VfsUtilCore.toVirtualFileArray(files)).hasReadonlyFiles()) {
                   return;
                 }
-                new WriteCommandAction(myProject) {
-                  protected void run(@NotNull Result result) throws Throwable {
-                    TypeMigrationProcessor.change(usages, myLabeler, myProject);
-                  }
-                }.execute();
+                WriteCommandAction.writeCommandAction(myProject).run(() -> {
+                  TypeMigrationProcessor.change(usages, myLabeler, myProject);
+                });
               }, myProject.getDisposed());
             }, "Type Migration", false, myProject);
           }

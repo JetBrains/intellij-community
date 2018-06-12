@@ -5,6 +5,7 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
@@ -18,6 +19,7 @@ import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -336,6 +338,22 @@ public class FileEditorFixture extends EditorFixture {
   public FileEditorFixture selectTab(@NotNull final String tabName) {
     tabs.waitTab(tabName, 5).selectTab(tabName);
     return this;
+  }
+
+  /**
+   * Clicks to the editor's center to get focus to the editor
+   */
+  public void clickCenter() {
+    Editor selectedTextEditor = execute(new GuiQuery<Editor>() {
+                                          @Override
+                                          protected Editor executeInEDT() throws Throwable {
+                                            return myManager.getSelectedTextEditor();
+                                          }
+                                        }
+    );
+    assert selectedTextEditor != null;
+    JComponent contentComponent = selectedTextEditor.getContentComponent();
+    robot.click(contentComponent);
   }
 
   /**

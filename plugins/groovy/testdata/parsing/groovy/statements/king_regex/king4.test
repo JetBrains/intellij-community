@@ -3,7 +3,7 @@
 Groovy script
   Compound regular expression
     PsiElement(regex begin)('/')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('abcde $2$$  ')
     GString injection
       PsiElement($)('$')
@@ -13,22 +13,22 @@ Groovy script
           <empty list>
         Compound regular expression
           PsiElement(regex begin)('/')
-          GrStringContentImpl(GString content element)
+          GrStringContentImpl(STRING_CONTENT)
             PsiElement(regex content)('asdc $$ asdd ')
           GString injection
             PsiElement($)('$')
             Reference expression
               PsiElement(identifier)('ident3')
-          GrStringContentImpl(GString content element)
+          GrStringContentImpl(STRING_CONTENT)
             PsiElement(regex content)(' 123')
           PsiElement(regex end)('/')
         PsiElement(})('}')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('  $$ ')
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('ident2')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)(' asd')
     PsiElement(regex end)('/')

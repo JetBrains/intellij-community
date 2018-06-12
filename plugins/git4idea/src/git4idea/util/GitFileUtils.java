@@ -23,7 +23,10 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsFileUtil;
 import git4idea.GitUtil;
-import git4idea.commands.*;
+import git4idea.commands.Git;
+import git4idea.commands.GitBinaryHandler;
+import git4idea.commands.GitCommand;
+import git4idea.commands.GitLineHandler;
 import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
@@ -126,7 +129,7 @@ public class GitFileUtils {
         continue;
       }
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.ADD);
-      handler.addParameters("--ignore-errors");
+      handler.addParameters("--ignore-errors", "-A");
       handler.endOptions();
       handler.addParameters(paths);
       Git.getInstance().runCommand(handler).getOutputOrThrow();

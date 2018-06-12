@@ -31,8 +31,8 @@ Groovy script
             <empty list>
           PsiElement(identifier)('Const2')
         PsiElement(,)(',')
+        PsiElement(new line)('\n  ')
         Enumeration constant
-          PsiElement(new line)('\n  ')
           Modifiers
             <empty list>
           PsiElement(identifier)('Const3')

@@ -30,6 +30,9 @@ public interface CommandListener extends EventListener {
   default void undoTransparentActionStarted() {
   }
 
+  default void beforeUndoTransparentActionFinished() {
+  }
+
   default void undoTransparentActionFinished() {
   }
 }

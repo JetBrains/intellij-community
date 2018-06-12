@@ -10,4 +10,12 @@ class B {
   private double method() {
     return 1;
   }
+
+  private boolean foo() {return false;}
+  private boolean foo1() {return false;}
+
+  {
+    Runnable r = this::foo;
+    Runnable r1 = () -> foo1();
+  }
 }

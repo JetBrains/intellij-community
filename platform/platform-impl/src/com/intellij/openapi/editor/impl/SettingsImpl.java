@@ -3,7 +3,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.CodeStyle;
-import com.intellij.codeStyle.CodeStyleFacade;
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -19,7 +18,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.NotNull;
@@ -212,8 +210,10 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public int getRightMargin(Project project) {
-    return myRightMargin != null ? myRightMargin.intValue() :
-           CodeStyleFacade.getInstance(project).getRightMargin(myLanguage);
+    if (myRightMargin != null) return myRightMargin.intValue();
+    return myEditor != null
+           ? CodeStyle.getSettings(myEditor).getRightMargin(myLanguage)
+           : CodeStyle.getProjectOrDefaultSettings(project).getRightMargin(myLanguage);
   }
 
   @Nullable
@@ -231,9 +231,10 @@ public class SettingsImpl implements EditorSettings {
 
   @Override
   public boolean isWrapWhenTypingReachesRightMargin(Project project) {
-    return myWrapWhenTypingReachesRightMargin != null ?
-           myWrapWhenTypingReachesRightMargin.booleanValue() :
-           CodeStyleFacade.getInstance(project).isWrapOnTyping(myLanguage);
+    if (myWrapWhenTypingReachesRightMargin != null) return myWrapWhenTypingReachesRightMargin.booleanValue();
+    return myEditor == null ?
+           CodeStyle.getDefaultSettings().isWrapOnTyping(myLanguage) :
+           CodeStyle.getSettings(myEditor).isWrapOnTyping(myLanguage);
   }
 
   @Override
@@ -379,7 +380,7 @@ public class SettingsImpl implements EditorSettings {
     final PsiFile file = psiManager.getPsiFile(document);
     if (file == null) return;
 
-    CodeStyleSettingsManager.updateDocumentIndentOptions(project, document);
+    CodeStyle.updateDocumentIndentOptions(project, document);
   }
 
   @Override

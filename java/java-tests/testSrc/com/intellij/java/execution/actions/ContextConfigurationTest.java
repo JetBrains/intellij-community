@@ -6,7 +6,10 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.junit.*;
+import com.intellij.execution.junit.AllInPackageConfigurationProducer;
+import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestInClassConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
@@ -200,7 +203,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
   public void testJUnitGeneratedName() {
     PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
     PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
-    JUnitConfiguration configuration = new JUnitConfiguration(null, myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration(null, myProject);
     JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = psiPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;

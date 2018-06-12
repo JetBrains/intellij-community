@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.ext.spock;
 
 import com.intellij.ide.fileTemplates.FileTemplateDescriptor;
+import com.intellij.openapi.roots.ExternalLibraryDescriptor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -24,12 +25,22 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.testIntegration.GroovyTestFramework;
 
+import java.util.Collections;
+import java.util.List;
+
 import static com.intellij.psi.util.InheritanceUtil.isInheritor;
 
 /**
  * @author Sergey Evdokimov
  */
 public class SpockTestFramework extends GroovyTestFramework {
+  private static final ExternalLibraryDescriptor SPOCK_DESCRIPTOR = new ExternalLibraryDescriptor("org.spockframework", "spock-core") {
+    @NotNull
+    @Override
+    public List<String> getLibraryClassesRoots() {
+      return Collections.emptyList();
+    }
+  };
 
   @NotNull
   @Override
@@ -40,6 +51,11 @@ public class SpockTestFramework extends GroovyTestFramework {
   @Override
   public String getLibraryPath() {
     return null;
+  }
+
+  @Override
+  public ExternalLibraryDescriptor getFrameworkLibraryDescriptor() {
+    return SPOCK_DESCRIPTOR;
   }
 
   @Nullable

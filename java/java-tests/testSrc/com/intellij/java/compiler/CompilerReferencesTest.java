@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.compiler;
 
 import com.intellij.JavaTestUtil;
@@ -9,6 +7,7 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -17,12 +16,14 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.util.containers.ContainerUtil;
+import one.util.streamex.MoreCollectors;
 
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
 import java.util.Set;
 import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 @SkipSlowTestLocally
 public class CompilerReferencesTest extends CompilerReferencesTestBase {
@@ -108,6 +109,37 @@ public class CompilerReferencesTest extends CompilerReferencesTestBase {
     CompilerDirectHierarchyInfo directInheritorInfo = getDirectInheritorsFor(myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_LIST));
     PsiClass inheritor = assertOneElement(directInheritorInfo.getHierarchyChildren().map(PsiClass.class::cast).collect(Collectors.toList()));
     assertEquals("Foo.ListImpl", inheritor.getQualifiedName());
+  }
+
+
+  public void testNestedAnonymousInheritors() {
+    myFixture.configureByFiles(getName() + "/Anonymouses.java",
+                               getName() + "/Foo1.java",
+                               getName() + "/Foo2.java",
+                               getName() + "/Foo3.java",
+                               getName() + "/Foo4.java",
+                               getName() + "/Foo5.java",
+                               getName() + "/Foo6.java");
+    rebuildProject();
+
+    PsiClass[] classes = IntStream
+      .range(1, 7)
+      .mapToObj(idx -> "Foo" + idx)
+      .map(className -> myFixture.findClass(className))
+      .filter(Objects::nonNull)
+      .toArray(PsiClass[]::new);
+
+    assertSize(6, classes);
+    for (PsiClass aClass : classes) {
+      PsiClass inheritor = getDirectInheritorsFor(aClass)
+        .getHierarchyChildren()
+        .map(PsiClass.class::cast)
+        .collect(MoreCollectors.onlyOne())
+        .orElse(null);
+      PsiAnonymousClass anonymousInheritor = assertInstanceOf(inheritor, PsiAnonymousClass.class);
+      PsiClass superFromReference = PsiUtil.resolveClassInType(anonymousInheritor.getBaseClassType());
+      assertEquals(superFromReference, aClass);
+    }
   }
 
   public void testExtensionRename() {

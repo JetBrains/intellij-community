@@ -21,6 +21,9 @@ import javax.swing.*;
 public class X {
   void f(JFrame frame) {
     frame.setDefaultCloseOperation(2);  // there is beanInfo in in JFrame.java, have to parse (but added to exceptions, so ok)
+
+    // despite JFrame.EXIT_ON_CLOSE (incorrectly) not mentioned in beaninfo, we override it in our annotations.xml, see IDEA-186767
+    frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
   }
 
   void f(Frame frame) {

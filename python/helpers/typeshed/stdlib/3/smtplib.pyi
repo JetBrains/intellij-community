@@ -1,9 +1,17 @@
 from email.message import Message as _Message
 from typing import (
-    Any, AnyStr, Dict, Generic, List, Optional, Sequence, Tuple, Union)
+    Any, AnyStr, Dict, Generic, List, Optional, Sequence, Tuple, Union,
+    Pattern)
 
 _Reply = Tuple[int, bytes]
 _SendErrs = Dict[str, _Reply]
+
+SMTP_PORT: int
+SMTP_SSL_PORT: int
+CRLF: str
+bCRLF: bytes
+
+OLDSTYLE_AUTH: Pattern[str]
 
 class SMTPException(OSError): ...
 class SMTPServerDisconnected(SMTPException): ...

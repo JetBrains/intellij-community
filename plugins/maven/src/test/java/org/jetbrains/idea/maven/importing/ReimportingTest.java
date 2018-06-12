@@ -59,14 +59,11 @@ public class ReimportingTest extends MavenImportingTestCase {
   public void testKeepingModuleGroups() {
     final Module m = getModule("project");
 
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() {
-        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-        model.setModuleGroupPath(m, new String[]{"group"});
-        model.commit();
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+      model.setModuleGroupPath(m, new String[]{"group"});
+      model.commit();
+    });
 
 
     importProject();

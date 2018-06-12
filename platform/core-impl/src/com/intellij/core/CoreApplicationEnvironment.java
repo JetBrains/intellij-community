@@ -2,8 +2,6 @@
 package com.intellij.core;
 
 import com.intellij.codeInsight.folding.CodeFoldingSettings;
-import com.intellij.concurrency.AsyncFuture;
-import com.intellij.concurrency.AsyncUtil;
 import com.intellij.concurrency.Job;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.ide.plugins.PluginManagerCore;
@@ -51,6 +49,7 @@ import com.intellij.psi.meta.MetaDataRegistrar;
 import com.intellij.psi.stubs.CoreStubTreeLoader;
 import com.intellij.psi.stubs.StubTreeLoader;
 import com.intellij.util.Consumer;
+import com.intellij.util.KeyedLazyInstanceEP;
 import com.intellij.util.Processor;
 import com.intellij.util.graph.GraphAlgorithms;
 import com.intellij.util.graph.impl.GraphAlgorithmsImpl;
@@ -105,6 +104,9 @@ public class CoreApplicationEnvironment {
                              : new VirtualFileSystem[]{myLocalFileSystem, myJarFileSystem};
     VirtualFileManagerImpl virtualFileManager = new VirtualFileManagerImpl(fs, myApplication.getMessageBus());
     registerComponentInstance(appContainer, VirtualFileManager.class, virtualFileManager);
+    
+    //fake EP for cleaning resources after area disposing (otherwise KeyedExtensionCollector listener will be copied to the next area) 
+    registerApplicationExtensionPoint(new ExtensionPointName<>("com.intellij.virtualFileSystem"), KeyedLazyInstanceEP.class);
 
     registerApplicationService(EncodingManager.class, new CoreEncodingRegistry());
     registerApplicationService(VirtualFilePointerManager.class, createVirtualFilePointerManager());
@@ -156,15 +158,6 @@ public class CoreApplicationEnvironment {
             return false;
         }
         return true;
-      }
-
-      @NotNull
-      @Override
-      public <T> AsyncFuture<Boolean> invokeConcurrentlyUnderProgressAsync(@NotNull List<T> things,
-                                                                           ProgressIndicator progress,
-                                                                           boolean failFastOnAcquireReadAction,
-                                                                           @NotNull Processor<? super T> thingProcessor) {
-        return AsyncUtil.wrapBoolean(invokeConcurrentlyUnderProgress(things, progress, failFastOnAcquireReadAction, thingProcessor));
       }
 
       @NotNull

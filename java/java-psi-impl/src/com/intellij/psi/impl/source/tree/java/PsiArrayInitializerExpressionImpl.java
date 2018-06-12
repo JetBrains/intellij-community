@@ -76,7 +76,7 @@ public class PsiArrayInitializerExpressionImpl extends ExpressionPsiElement impl
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.COMMA) {

@@ -24,6 +24,8 @@ import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import java.util.HashMap;
+
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ModifierListElement extends CompositeElement {
@@ -46,7 +48,7 @@ public class ModifierListElement extends CompositeElement {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == JavaElementType.ANNOTATION) return ChildRole.ANNOTATION;
     return ChildRoleBase.NONE;

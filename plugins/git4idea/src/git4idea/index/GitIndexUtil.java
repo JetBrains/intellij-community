@@ -27,7 +27,6 @@ import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUtil;
-import git4idea.GitVcs;
 import git4idea.commands.*;
 import git4idea.config.GitVersionSpecialty;
 import git4idea.repo.GitRepository;
@@ -134,7 +133,7 @@ public class GitIndexUtil {
     String path = VcsFileUtil.relativePath(repository.getRoot(), filePath);
 
     GitLineHandler h = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.UPDATE_INDEX);
-    if (GitVersionSpecialty.CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM.existsIn(GitVcs.getInstance(repository.getProject()).getVersion())) {
+    if (GitVersionSpecialty.CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM.existsIn(repository)) {
       h.addParameters("--cacheinfo", mode + "," + blobHash.asString() + "," + path);
     }
     else {

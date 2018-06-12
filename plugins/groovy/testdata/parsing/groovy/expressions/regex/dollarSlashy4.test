@@ -12,13 +12,13 @@ Groovy script
       PsiWhiteSpace(' ')
       Compound regular expression
         PsiElement($/ regex begin)('$/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           PsiElement($/ regex content)('$/')
         GString injection
           PsiElement($)('$')
           PsiErrorElement:Identifier or code block expected
             <empty list>
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           ASTWrapperPsiElement($/ regex content)
             <empty list>
         PsiErrorElement:Dollar slash ending expected

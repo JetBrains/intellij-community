@@ -32,6 +32,7 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -920,9 +921,9 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
   private static class Win10MenuArrowIcon extends MenuArrowIcon {
     private static final String NAME = "menuTriangle";
     private Win10MenuArrowIcon() {
-      super(IconCache.getIcon(NAME, false, false, true),
-            IconCache.getIcon(NAME, true, false, true),
-            IconCache.getIcon(NAME, false, false, false));
+      super(LafIconLookup.getIcon(NAME),
+            LafIconLookup.getSelectedIcon(NAME),
+            LafIconLookup.getDisabledIcon(NAME));
     }
   }
 }

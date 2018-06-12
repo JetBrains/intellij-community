@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Predicate;
 
 import static com.intellij.psi.SyntaxTraverser.psiTraverser;
 
@@ -311,7 +312,7 @@ public class PsiTreeUtil {
    * @param strict  if false the {@code element} is also included in the search.
    * @param classes element types to search for.
    * @param <T>     type to cast found elements to.
-   * @return first found element, or {@code null} if nothing found.
+   * @return {@code Collection<T>} of all found elements, or empty {@code List<T>} if nothing found.
    */
   @SafeVarargs
   @NotNull
@@ -697,6 +698,24 @@ public class PsiTreeUtil {
     return aClass.cast(element);
   }
 
+  @NotNull
+  public static <T extends PsiElement> List<T> collectParents(@NotNull PsiElement element,
+                                                              @NotNull Class<T> parent,
+                                                              boolean includeMyself, @NotNull Predicate<PsiElement> stopCondition) {
+    if (!includeMyself) {
+      element = element.getParent();
+    }
+    List<T> parents = new SmartList<>();
+    while (element != null) {
+      if (stopCondition.test(element)) break;
+      if (parent.isInstance(element)) {
+        parents.add(parent.cast(element));
+      }
+      element = element.getParent();
+    }
+    return parents;
+  }
+
   @Nullable
   public static PsiElement findSiblingForward(@NotNull final PsiElement element,
                                               @NotNull final IElementType elementType,
@@ -1060,7 +1079,7 @@ public class PsiTreeUtil {
   }
 
   @Nullable
-  public static PsiElement nextLeaf(final PsiElement element, final boolean skipEmptyElements) {
+  public static PsiElement nextLeaf(@NotNull PsiElement element, final boolean skipEmptyElements) {
     PsiElement nextLeaf = nextLeaf(element);
     while (skipEmptyElements && nextLeaf != null && nextLeaf.getTextLength() == 0) nextLeaf = nextLeaf(nextLeaf);
     return nextLeaf;
@@ -1129,7 +1148,7 @@ public class PsiTreeUtil {
 
   public static boolean treeWalkUp(@NotNull final PsiElement entrance,
                                    @Nullable final PsiElement maxScope,
-                                   PairProcessor<PsiElement, PsiElement> eachScopeAndLastParent) {
+                                   @NotNull PairProcessor<PsiElement, PsiElement> eachScopeAndLastParent) {
     PsiElement prevParent = null;
     PsiElement scope = entrance;
 

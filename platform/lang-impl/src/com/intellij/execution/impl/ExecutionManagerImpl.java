@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.impl;
 
 import com.intellij.CommonBundle;
@@ -28,7 +14,6 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunContentManager;
-import com.intellij.execution.ui.RunContentManagerImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
@@ -46,7 +31,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.docking.DockManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,7 +52,6 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   private final Map<RunProfile, ExecutionEnvironment> myAwaitingRunProfiles = ContainerUtil.newHashMap();
   protected final List<Trinity<RunContentDescriptor, RunnerAndConfigurationSettings, Executor>> myRunningConfigurations =
     ContainerUtil.createLockFreeCopyOnWriteList();
-  private RunContentManagerImpl myContentManager;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @NotNull
@@ -247,19 +230,20 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
   @NotNull
   @Override
   public RunContentManager getContentManager() {
-    if (myContentManager == null) {
-      myContentManager = new RunContentManagerImpl(myProject, DockManager.getInstance(myProject));
-      Disposer.register(myProject, myContentManager);
-    }
-    return myContentManager;
+    return RunContentManager.getInstance(myProject);
+  }
+
+  @NotNull
+  public static List<RunContentDescriptor> getAllDescriptors(@NotNull Project project) {
+    RunContentManager contentManager = ServiceManager.getServiceIfCreated(project, RunContentManager.class);
+    return contentManager == null ? Collections.emptyList() : contentManager.getAllDescriptors();
   }
 
   @NotNull
   @Override
   public ProcessHandler[] getRunningProcesses() {
-    if (myContentManager == null) return EMPTY_PROCESS_HANDLERS;
     List<ProcessHandler> handlers = null;
-    for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
+    for (RunContentDescriptor descriptor : getAllDescriptors(myProject)) {
       ProcessHandler processHandler = descriptor.getProcessHandler();
       if (processHandler != null) {
         if (handlers == null) {
@@ -359,7 +343,7 @@ public abstract class ExecutionManagerImpl extends ExecutionManager implements D
                                 @Nullable ProcessHandler processHandler) {
     ExecutionEnvironmentBuilder builder = createEnvironmentBuilder(project, executor, configuration);
     if (processHandler != null) {
-      for (RunContentDescriptor descriptor : getContentManager().getAllDescriptors()) {
+      for (RunContentDescriptor descriptor : getAllDescriptors(project)) {
         if (descriptor.getProcessHandler() == processHandler) {
           builder.contentToReuse(descriptor);
           break;

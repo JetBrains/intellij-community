@@ -9,12 +9,12 @@ Groovy script
             Reference expression
               PsiElement(identifier)('a')
             PsiElement(.)('.')
-            GroovyASTPsiElementImpl($/ regex literal)
+            GroovyASTPsiElementImpl(DOLLAR_SLASHY_LITERAL)
               PsiElement($/ regex begin)('$/')
               PsiElement($/ regex content)('dfg')
               PsiElement($/ regex end)('/$')
           PsiElement(.)('.')
-          GroovyASTPsiElementImpl(regex literal)
+          GroovyASTPsiElementImpl(SLASHY_LITERAL)
             PsiElement(regex begin)('/')
             PsiElement(regex content)('fg')
             PsiElement(regex end)('/')
@@ -23,7 +23,7 @@ Groovy script
       PsiElement(.)('.')
       Compound regular expression
         PsiElement(regex begin)('/')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           ASTWrapperPsiElement(regex content)
             <empty list>
         GString injection
@@ -35,20 +35,20 @@ Groovy script
             Reference expression
               PsiElement(identifier)('a')
             PsiElement(})('}')
-        GrStringContentImpl(GString content element)
+        GrStringContentImpl(STRING_CONTENT)
           ASTWrapperPsiElement(regex content)
             <empty list>
         PsiElement(regex end)('/')
     PsiElement(.)('.')
     Compound regular expression
       PsiElement($/ regex begin)('$/')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         PsiElement($/ regex content)('df')
       GString injection
         PsiElement($)('$')
         Reference expression
           PsiElement(identifier)('g')
-      GrStringContentImpl(GString content element)
+      GrStringContentImpl(STRING_CONTENT)
         ASTWrapperPsiElement($/ regex content)
           <empty list>
       PsiElement($/ regex end)('/$')

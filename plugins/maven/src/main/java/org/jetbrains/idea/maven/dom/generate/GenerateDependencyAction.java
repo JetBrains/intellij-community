@@ -16,7 +16,6 @@
 package org.jetbrains.idea.maven.dom.generate;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -56,9 +55,7 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
 
           XmlFile psiFile = DomUtil.getFile(mavenModel);
-          return new WriteCommandAction<MavenDomDependency>(psiFile.getProject(), "Generate Dependency", psiFile) {
-            @Override
-            protected void run(@NotNull Result<MavenDomDependency> result) throws Throwable {
+          return WriteCommandAction.writeCommandAction(psiFile.getProject(), psiFile).withName("Generate Dependency").compute(() -> {
               boolean isInsideManagedDependencies;
 
               MavenDomDependencyManagement dependencyManagement = mavenModel.getDependencyManagement();
@@ -91,10 +88,10 @@ public class GenerateDependencyAction extends GenerateDomElementAction {
                     res = MavenDomUtil.createDomDependency(mavenModel.getDependencies(), editor, each);
                   }
                 }
-                result.setResult(res);
+                return (res);
               }
-            }
-          }.execute().getResultObject();
+              return null;
+            });
         }
       }, AllIcons.Nodes.PpLib);
   }

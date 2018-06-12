@@ -8,7 +8,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.reference.RefUtil;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.patterns.PsiJavaPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.siyeh.ig.psiutils.MethodUtils;
@@ -57,10 +56,17 @@ public class UnusedReturnValueLocalInspection extends AbstractBaseJavaLocalInspe
     final boolean[] atLeastOneUsageExists = new boolean[]{false};
     if (UnusedSymbolUtil.processUsages(manager.getProject(), method.getContainingFile(), method, new EmptyProgressIndicator(), null, u -> {
       if (!atLeastOneUsageExists[0]) atLeastOneUsageExists[0] = true;
-      return PsiJavaPatterns.psiElement(PsiReferenceExpression.class)
-        .withParent(PsiJavaPatterns.psiElement(PsiMethodCallExpression.class)
-                                   .withParent(PsiExpressionStatement.class))
-        .accepts(u.getElement());
+      PsiElement element = u.getElement();
+      if (element instanceof PsiReferenceExpression) {
+        PsiElement parent = element.getParent();
+        if (parent instanceof PsiMethodCallExpression) {
+          PsiElement gParent = parent.getParent();
+          return gParent instanceof PsiExpressionStatement ||
+                 gParent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)gParent));
+        }
+      }
+      return element instanceof PsiMethodReferenceExpression &&
+             PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiFunctionalExpression)element));
     })) {
       if (atLeastOneUsageExists[0]) {
         return new ProblemDescriptor[]{UnusedReturnValue.createProblemDescriptor(method, manager, null, false)};

@@ -542,25 +542,21 @@ public class FileManagerImpl implements FileManager {
     VirtualFile vFile = file.getVirtualFile();
     assert vFile != null;
 
-    if (file instanceof PsiBinaryFile) return;
-    FileDocumentManager fileDocumentManager = myFileDocumentManager;
-    Document document = fileDocumentManager.getCachedDocument(vFile);
+    Document document = myFileDocumentManager.getCachedDocument(vFile);
     if (document != null) {
-      fileDocumentManager.reloadFromDisk(document);
+      myFileDocumentManager.reloadFromDisk(document);
     }
     else {
-      reloadPsiAfterTextChange(file, vFile);
+      reloadPsiAfterTextChange(file.getViewProvider(), vFile);
     }
   }
 
-  void reloadPsiAfterTextChange(@NotNull PsiFile file, @NotNull VirtualFile vFile) {
-    FileViewProvider latestProvider = createFileViewProvider(vFile, false);
-    PsiFile psi = latestProvider.getPsi(latestProvider.getBaseLanguage());
-    if (psi instanceof PsiLargeFile || psi instanceof PsiBinaryFile) {
+  void reloadPsiAfterTextChange(@NotNull FileViewProvider viewProvider, @NotNull VirtualFile vFile) {
+    if (!areViewProvidersEquivalent(viewProvider, createFileViewProvider(vFile, false))) {
       forceReload(vFile);
       return;
     }
 
-    ((AbstractFileViewProvider)file.getViewProvider()).onContentReload();
+    ((AbstractFileViewProvider)viewProvider).onContentReload();
   }
 }

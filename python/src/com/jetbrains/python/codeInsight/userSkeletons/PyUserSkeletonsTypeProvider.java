@@ -23,6 +23,7 @@ import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyTargetExpression;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -67,14 +68,14 @@ public class PyUserSkeletonsTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement target, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement target, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (PyiUtil.isInsideStub(target)) {
       return null;
     }
     if (target instanceof PyTargetExpression) {
       final PyTargetExpression targetSkeleton = PyUserSkeletonsUtil.getUserSkeletonWithContext((PyTargetExpression)target, context);
       if (targetSkeleton != null) {
-        return context.getType(targetSkeleton);
+        return PyTypeUtil.notNullToRef(context.getType(targetSkeleton));
       }
     }
     return null;

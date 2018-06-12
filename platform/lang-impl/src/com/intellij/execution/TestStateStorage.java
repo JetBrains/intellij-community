@@ -22,6 +22,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.DataExternalizer;
@@ -45,7 +46,7 @@ public class TestStateStorage implements Disposable {
   
   private static final File TEST_HISTORY_PATH = new File(PathManager.getSystemPath(), "testHistory");
 
-  private static final int CURRENT_VERSION = 1; 
+  private static final int CURRENT_VERSION = 5;
   
   private final File myFile;
 
@@ -57,11 +58,19 @@ public class TestStateStorage implements Disposable {
     public final int magnitude;
     public final long configurationHash;
     public final Date date;
+    public int failedLine;
+    public final String failedMethod;
+    public final String errorMessage;
+    public final String topStacktraceLine;
 
-    public Record(int magnitude, Date date, long configurationHash) {
+    public Record(int magnitude, Date date, long configurationHash, int failLine, String method, String errorMessage, String topStacktraceLine) {
       this.magnitude = magnitude;
       this.date = date;
       this.configurationHash = configurationHash;
+      this.failedLine = failLine;
+      failedMethod = method;
+      this.errorMessage = errorMessage;
+      this.topStacktraceLine = topStacktraceLine;
     }
   }
 
@@ -105,11 +114,15 @@ public class TestStateStorage implements Disposable {
         out.writeInt(value.magnitude);
         out.writeLong(value.date.getTime());
         out.writeLong(value.configurationHash);
+        out.writeInt(value.failedLine);
+        out.writeUTF(StringUtil.notNullize(value.failedMethod));
+        out.writeUTF(StringUtil.notNullize(value.errorMessage));
+        out.writeUTF(StringUtil.notNullize(value.topStacktraceLine));
       }
 
       @Override
       public Record read(@NotNull DataInput in) throws IOException {
-        return new Record(in.readInt(), new Date(in.readLong()), in.readLong());
+        return new Record(in.readInt(), new Date(in.readLong()), in.readLong(), in.readInt(), in.readUTF(), in.readUTF(), in.readUTF());
       }
     }, 4096, CURRENT_VERSION);
   }

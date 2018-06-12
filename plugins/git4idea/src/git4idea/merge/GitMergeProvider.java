@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.merge;
 
 import com.intellij.dvcs.DvcsUtil;
@@ -21,30 +7,32 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
-import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vcs.merge.MergeProvider;
-import com.intellij.openapi.vcs.merge.MergeProvider2;
-import com.intellij.openapi.vcs.merge.MergeSession;
+import com.intellij.openapi.vcs.merge.*;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitFileRevision;
+import git4idea.GitLocalBranch;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.*;
 import git4idea.history.GitHistoryUtils;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepository;
+import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
 import git4idea.util.StringScanner;
+import one.util.streamex.MoreCollectors;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,6 +81,11 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
+  @NotNull
   private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
     Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
@@ -125,38 +118,33 @@ public class GitMergeProvider implements MergeProvider2 {
         GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
         GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
+          mergeData.ORIGINAL = original.getContent();
+        }
+        catch (Exception ex) {
+          /// unable to load original revision, use the current instead
+          /// This could happen in case if rebasing.
           try {
-            mergeData.ORIGINAL = original.getContent();
+            mergeData.ORIGINAL = file.contentsToByteArray();
           }
-          catch (Exception ex) {
-            /// unable to load original revision, use the current instead
-            /// This could happen in case if rebasing.
-            try {
-              mergeData.ORIGINAL = file.contentsToByteArray();
-            }
-            catch (IOException e) {
-              LOG.error(e);
-              mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
-            }
+          catch (IOException e) {
+            LOG.error(e);
+            mergeData.ORIGINAL = ArrayUtil.EMPTY_BYTE_ARRAY;
           }
-          mergeData.CURRENT = loadRevisionCatchingErrors(current);
-          mergeData.LAST = loadRevisionCatchingErrors(last);
-
-          // TODO: can be done once for a root
-          mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(root);
-          mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(root);
-          mergeData.ORIGINAL_REVISION_NUMBER = findOriginalRevisionNumber(root, mergeData.CURRENT_REVISION_NUMBER, mergeData.LAST_REVISION_NUMBER);
-
-
-          Trinity<String, String, String> blobs = getAffectedBlobs(root, file);
-
-          mergeData.CURRENT_FILE_PATH = getBlobPathInRevision(root, file, blobs.getFirst(), mergeData.CURRENT_REVISION_NUMBER);
-          mergeData.ORIGINAL_FILE_PATH = getBlobPathInRevision(root, file, blobs.getSecond(), mergeData.ORIGINAL_REVISION_NUMBER);
-          mergeData.LAST_FILE_PATH = getBlobPathInRevision(root, file, blobs.getThird(), mergeData.LAST_REVISION_NUMBER);
         }
-        catch (IOException e) {
-          throw new IllegalStateException("Failed to load file content", e);
-        }
+        mergeData.CURRENT = loadRevisionCatchingErrors(current);
+        mergeData.LAST = loadRevisionCatchingErrors(last);
+
+        // TODO: can be done once for a root
+        mergeData.CURRENT_REVISION_NUMBER = findCurrentRevisionNumber(root);
+        mergeData.LAST_REVISION_NUMBER = findLastRevisionNumber(root);
+        mergeData.ORIGINAL_REVISION_NUMBER = findOriginalRevisionNumber(root, mergeData.CURRENT_REVISION_NUMBER, mergeData.LAST_REVISION_NUMBER);
+
+
+        Trinity<String, String, String> blobs = getAffectedBlobs(root, file);
+
+        mergeData.CURRENT_FILE_PATH = getBlobPathInRevision(root, file, blobs.getFirst(), mergeData.CURRENT_REVISION_NUMBER);
+        mergeData.ORIGINAL_FILE_PATH = getBlobPathInRevision(root, file, blobs.getSecond(), mergeData.ORIGINAL_REVISION_NUMBER);
+        mergeData.LAST_FILE_PATH = getBlobPathInRevision(root, file, blobs.getThird(), mergeData.LAST_REVISION_NUMBER);
       }
     };
     VcsUtil.runVcsProcessWithProgress(runnable, GitBundle.message("merge.load.files"), false, myProject);
@@ -331,6 +319,52 @@ public class GitMergeProvider implements MergeProvider2 {
   }
 
   @Nullable
+  public String resolveMergeBranch(@NotNull VirtualFile file) {
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+    if (repository == null) {
+      return null;
+    }
+    return resolveMergeBranch(repository);
+  }
+
+  @Nullable
+  public String resolveMergeBranchOrCherryPick(@NotNull VirtualFile file) {
+    GitRepository repository = GitRepositoryManager.getInstance(myProject).getRepositoryForFile(file);
+    if (repository == null) {
+      return null;
+    }
+    String mergeBranch = resolveMergeBranch(repository);
+    if (mergeBranch != null) {
+      return mergeBranch;
+    }
+
+    try {
+      GitRevisionNumber.resolve(myProject, repository.getRoot(), CHERRY_PICK_HEAD);
+      return "cherry-pick";
+    }
+    catch (VcsException e) {
+      return null;
+    }
+  }
+
+  @Nullable
+  public String resolveMergeBranch(GitRepository repository) {
+    GitRevisionNumber mergeHeadRevisionNumber;
+    try {
+      mergeHeadRevisionNumber = GitRevisionNumber.resolve(myProject, repository.getRoot(), MERGE_HEAD);
+    }
+    catch (VcsException e) {
+      return null;
+    }
+    Collection<GitLocalBranch>
+      localBranchesByHash = repository.getBranches().findLocalBranchesByHash(HashImpl.build(mergeHeadRevisionNumber.asString()));
+    if (localBranchesByHash.size() == 1) {
+      return localBranchesByHash.iterator().next().getName();
+    }
+    return null;
+  }
+
+  @Nullable
   private GitRevisionNumber readRevisionFromFile(@NotNull VirtualFile root, @NotNull File file) {
     if (!file.exists()) return null;
     String revision = DvcsUtil.tryLoadFileOrReturn(file, null, CharsetToolkit.UTF8);
@@ -356,7 +390,7 @@ public class GitMergeProvider implements MergeProvider2 {
     }
   }
 
-  private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException, IOException {
+  private static byte[] loadRevisionCatchingErrors(@NotNull GitFileRevision revision) throws VcsException {
     try {
       return revision.getContent();
     } catch (VcsException e) {
@@ -410,6 +444,46 @@ public class GitMergeProvider implements MergeProvider2 {
     return new MyMergeSession(files);
   }
 
+  @Override
+  public void mergeDone(@NotNull List<VirtualFile> files) {
+    for (GitRepository repository : GitUtil.getRepositoriesForFiles(myProject, files)) {
+      repository.update();
+    }
+  }
+
+  @Override
+  public MergeDialogCustomizer createDefaultMergeDialogCustomizer() {
+    return new GitDefaultMergeDialogCustomizer(this);
+  }
+
+  private static String calcName(boolean isTheirs, @Nullable String branchName) {
+    String title = isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status");
+    return branchName != null
+           ? title + " (" + StringUtil.shortenTextWithEllipsis(branchName, 15, 7, true) + ")"
+           : title;
+  }
+
+  @Nullable
+  public String getSingleMergeBranchName(Collection<VirtualFile> roots) {
+    return roots
+      .stream()
+      .map(root -> resolveMergeBranchOrCherryPick(root))
+      .filter(branch -> branch != null)
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
+  }
+
+  @Nullable
+  public String getSingleCurrentBranchName(Collection<VirtualFile> roots) {
+    return roots
+      .stream()
+      .map(root -> GitRepositoryManager.getInstance(myProject).getRepositoryForFile(root))
+      .map(repo -> repo == null ? null : repo.getCurrentBranchName())
+      .filter(branch -> branch != null)
+      .collect(MoreCollectors.onlyOne())
+      .orElse(null);
+  }
+
   /**
    * The conflict descriptor
    */
@@ -431,11 +505,14 @@ public class GitMergeProvider implements MergeProvider2 {
    */
   private class MyMergeSession implements MergeSession {
     Map<VirtualFile, Conflict> myConflicts = new HashMap<>();
+    String currentBranchName;
+    String mergeHeadBranchName;
 
     MyMergeSession(List<VirtualFile> filesToMerge) {
       // get conflict type by the file
       try {
-        for (Map.Entry<VirtualFile, List<VirtualFile>> e : GitUtil.sortFilesByGitRoot(filesToMerge).entrySet()) {
+        Map<VirtualFile, List<VirtualFile>> filesByRoot = GitUtil.sortFilesByGitRoot(filesToMerge);
+        for (Map.Entry<VirtualFile, List<VirtualFile>> e : filesByRoot.entrySet()) {
           Map<String, Conflict> cs = new HashMap<>();
           VirtualFile root = e.getKey();
           List<VirtualFile> files = e.getValue();
@@ -489,6 +566,8 @@ public class GitMergeProvider implements MergeProvider2 {
             myConflicts.put(f, c);
           }
         }
+        currentBranchName = getSingleCurrentBranchName(filesByRoot.keySet());
+        mergeHeadBranchName = getSingleMergeBranchName(filesByRoot.keySet());
       }
       catch (VcsException ex) {
         throw new IllegalStateException("The git operation should not fail in this context", ex);
@@ -498,7 +577,7 @@ public class GitMergeProvider implements MergeProvider2 {
     @NotNull
     @Override
     public ColumnInfo[] getMergeInfoColumns() {
-      return new ColumnInfo[]{new StatusColumn(false), new StatusColumn(true)};
+      return new ColumnInfo[]{new StatusColumn(false, currentBranchName), new StatusColumn(true, mergeHeadBranchName)};
     }
 
     @Override
@@ -588,8 +667,8 @@ public class GitMergeProvider implements MergeProvider2 {
        */
       private final boolean myIsTheirs;
 
-      public StatusColumn(boolean isTheirs) {
-        super(isTheirs ? GitBundle.message("merge.tool.column.theirs.status") : GitBundle.message("merge.tool.column.yours.status"));
+      public StatusColumn(boolean isTheirs, @Nullable String branchName) {
+        super(calcName(isTheirs, branchName));
         myIsTheirs = isTheirs;
       }
 

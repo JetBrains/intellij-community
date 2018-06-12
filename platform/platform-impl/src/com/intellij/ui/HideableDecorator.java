@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.icons.AllIcons;
@@ -27,14 +13,15 @@ import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.util.Locale;
 
 /**
  * @author evgeny zakrevsky
  */
 public class HideableDecorator {
+  private static final String ACTION_KEY = "Collapse/Expand on mnemonic";
 
   private final JPanel myPanel;
-
   private final TitledSeparator myTitledSeparator;
   private final boolean myAdjustWindow;
 
@@ -56,6 +43,7 @@ public class HideableDecorator {
         registerMnemonic();
       }
     };
+
     JPanel northPanel = new JPanel(new BorderLayout());
     northPanel.add(myTitledSeparator, BorderLayout.CENTER);
     if (northEastComponent != null) {
@@ -79,7 +67,7 @@ public class HideableDecorator {
   }
 
   private void updateIcon() {
-    final Icon icon = myOn ? AllIcons.General.SplitDown : AllIcons.General.SplitRight;
+    Icon icon = myOn ? AllIcons.General.SplitDown : AllIcons.General.SplitRight;
     myTitledSeparator.getLabel().setIcon(icon);
     myTitledSeparator.getLabel().setDisabledIcon(IconLoader.getTransparentIcon(icon, 0.5f));
   }
@@ -97,12 +85,7 @@ public class HideableDecorator {
 
   public void setOn(boolean on) {
     myOn = on;
-    if (myOn) {
-      on();
-    }
-    else {
-      off();
-    }
+    if (myOn) on(); else off();
   }
 
   public boolean isExpanded() {
@@ -142,26 +125,30 @@ public class HideableDecorator {
   }
 
   private void adjustWindow() {
-    if (!myAdjustWindow) return;
-    final Window window = SwingUtilities.getWindowAncestor(myPanel);
-    if (window == null) return;
-    final Dimension size = window.getSize();
-    final Dimension contentSize = myPreviousContentSize != null && myPreviousContentSize.width > 0 && myPreviousContentSize.height > 0
-                                  ? myPreviousContentSize
-                                  : myContent.getPreferredSize();
-    final Dimension newSize;
-    if (myOn) {
-      newSize = new Dimension(Math.max(size.width, myContent.getSize().width), size.height + contentSize.height);
-    }
-    else {
-      newSize = new Dimension(size.width, size.height - contentSize.height);
-    }
-    if (!newSize.equals(size)) {
-      SwingUtilities.invokeLater(() -> {
-        if (window.isShowing()) {
-          window.setSize(newSize);
+    if (myAdjustWindow) {
+      Window window = SwingUtilities.getWindowAncestor(myPanel);
+      if (window != null) {
+        Dimension contentSize = myPreviousContentSize;
+        if (contentSize == null || contentSize.width <= 0 || contentSize.height <= 0) {
+          contentSize = myContent.getPreferredSize();
         }
-      });
+
+        Dimension size = window.getSize(), newSize;
+        if (myOn) {
+          newSize = new Dimension(Math.max(size.width, myContent.getSize().width), size.height + contentSize.height);
+        }
+        else {
+          newSize = new Dimension(size.width, size.height - contentSize.height);
+        }
+
+        if (!newSize.equals(size)) {
+          UIUtil.invokeLaterIfNeeded(() -> {
+            if (window.isShowing()) {
+              window.setSize(newSize);
+            }
+          });
+        }
+      }
     }
   }
 
@@ -171,22 +158,16 @@ public class HideableDecorator {
   }
 
   private void registerMnemonic() {
-    final int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
+    int mnemonicIndex = UIUtil.getDisplayMnemonicIndex(getTitle());
     if (mnemonicIndex != -1) {
-      myPanel.getActionMap().put("Collapse/Expand on mnemonic", new AbstractAction() {
+      myPanel.getActionMap().put(ACTION_KEY, new AbstractAction() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          if (myOn) {
-            off();
-          }
-          else {
-            on();
-          }
+          if (myOn) off(); else on();
         }
       });
-      final Character mnemonicCharacter = UIUtil.removeMnemonic(getTitle()).toUpperCase().charAt(mnemonicIndex);
-      myPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW)
-        .put(KeyStroke.getKeyStroke(mnemonicCharacter, InputEvent.ALT_MASK, false), "Collapse/Expand on mnemonic");
+      Character c = UIUtil.removeMnemonic(getTitle()).toUpperCase(Locale.getDefault()).charAt(mnemonicIndex);
+      myPanel.getInputMap(JComponent.WHEN_IN_FOCUSED_WINDOW).put(KeyStroke.getKeyStroke(c, InputEvent.ALT_MASK, false), ACTION_KEY);
     }
   }
 }

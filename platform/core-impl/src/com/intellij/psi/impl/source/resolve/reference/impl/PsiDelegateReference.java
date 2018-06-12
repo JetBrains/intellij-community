@@ -18,11 +18,13 @@ public class PsiDelegateReference implements PsiReference {
     myDelegate = delegate;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myDelegate.getElement();
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myDelegate.getRangeInElement();

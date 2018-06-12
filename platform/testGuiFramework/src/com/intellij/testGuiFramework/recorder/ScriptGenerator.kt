@@ -20,18 +20,20 @@ import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.wm.impl.FocusManagerImpl
 import com.intellij.testGuiFramework.generators.ComponentCodeGenerator
+import com.intellij.testGuiFramework.generators.ComponentSelectionCodeGenerator
 import com.intellij.testGuiFramework.generators.Generators
 import com.intellij.testGuiFramework.recorder.ui.KeyUtil
+import com.intellij.testGuiFramework.util.Key
+import com.intellij.testGuiFramework.util.Modifier
+import com.intellij.testGuiFramework.util.resolveKey
 import com.intellij.ui.KeyStrokeAdapter
 import java.awt.Component
 import java.awt.Point
 import java.awt.event.KeyEvent
 import java.awt.event.MouseEvent
+import javax.swing.KeyStroke
 import javax.swing.KeyStroke.getKeyStrokeForEvent
 
-/**
- * @author Sergey Karashevich
- */
 object ScriptGenerator {
   private val generators: List<ComponentCodeGenerator<*>> = Generators.getGenerators()
 
@@ -51,7 +53,7 @@ object ScriptGenerator {
     val keyStroke = getKeyStrokeForEvent(keyEvent)
     val keyStrokeStr = KeyStrokeAdapter.toString(keyStroke)
     if (ignore(keyStrokeStr)) return
-    addToScript("""shortcut("$keyStrokeStr")""")
+    addToScript("""shortcut(${convertKeyStrokeToEnums(keyStroke)})""")
   }
 
   fun clickComponent(component: Component, convertedPoint: Point, mouseEvent: MouseEvent) {
@@ -74,7 +76,8 @@ object ScriptGenerator {
       addToScript("//invokeAction(\"$actionId\")")
       return
     }
-    addToScript("""invokeMainMenu("$actionId")""")
+    val normalizedActionId = actionId.replace("\$","\\$")
+    addToScript("""invokeMainMenu("$normalizedActionId")""")
   }
 
   fun addToScript(code: String) {
@@ -89,6 +92,37 @@ object ScriptGenerator {
     val ignoreShortcuts = listOf("space")
     return ignoreActions.contains(actionOrShortCut) || ignoreShortcuts.contains(actionOrShortCut)
   }
+
+  fun selectInComponent(component: Component,
+                        firstPoint: Point,
+                        lastPoint: Point,
+                        lastEvent: MouseEvent) {
+    ContextChecker.checkContext(component, lastEvent)
+
+    val suitableGenerator = generators.filter { generator ->
+      generator.accept(component) && generator is ComponentSelectionCodeGenerator
+    }.sortedByDescending(ComponentCodeGenerator<*>::priority).firstOrNull() ?: return
+
+    if (suitableGenerator is ComponentSelectionCodeGenerator) {
+      val code = suitableGenerator.generateSelectionCode(component, firstPoint, lastPoint)
+      addToScript(code)
+    }
+  }
+}
+
+private fun convertKeyStrokeToEnums(keyStroke: KeyStroke): String {
+  val hasModifiers = keyStroke.modifiers != 0
+  val modifiersAndKeys = KeyStrokeAdapter.toString(keyStroke).toUpperCase().split(" ")
+  val modifiers = arrayListOf<Modifier>()
+  var key: Key? = null
+  modifiersAndKeys.forEach {
+    if (hasModifiers) try { modifiers.add(Modifier.valueOf(it)) } catch (e: IllegalArgumentException) {}
+    try { key = resolveKey(it) } catch (e: IllegalArgumentException) {}
+  }
+  val sb = StringBuffer()
+  modifiers.forEach { sb.append(it.name); sb.append(" + ") }
+  sb.append(key ?: "NULL")
+  return sb.toString()
 }
 
 private object Typer {

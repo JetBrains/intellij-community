@@ -623,8 +623,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
       final AntBuildModelBase model = (AntBuildModelBase)buildFile.getModel();
       String defaultTargetActionId = model.getDefaultTargetActionId();
       if (defaultTargetActionId != null) {
-        final TargetAction action =
-          new TargetAction(buildFile, TargetAction.DEFAULT_TARGET_NAME, new String[]{TargetAction.DEFAULT_TARGET_NAME}, null);
+        final TargetAction action = new TargetAction(
+          buildFile, TargetAction.DEFAULT_TARGET_NAME, Collections.singletonList(TargetAction.DEFAULT_TARGET_NAME), null
+        );
         actionList.add(new Pair<>(defaultTargetActionId, action));
       }
 
@@ -665,8 +666,9 @@ public class AntConfigurationImpl extends AntConfigurationBase implements Persis
     for (final AntBuildTarget target : targets) {
       final String actionId = ((AntBuildTargetBase)target).getActionId();
       if (actionId != null) {
-        final TargetAction action =
-          new TargetAction(buildFile, target.getName(), new String[]{target.getName()}, target.getNotEmptyDescription());
+        final TargetAction action = new TargetAction(
+          buildFile, target.getName(), target.getTargetNames(), target.getNotEmptyDescription()
+        );
         actionList.add(new Pair<>(actionId, action));
       }
     }

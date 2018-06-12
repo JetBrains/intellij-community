@@ -4,15 +4,11 @@ package org.jetbrains.plugins.groovy.annotator.intentions.elements
 import com.intellij.lang.java.beans.PropertyKind
 import com.intellij.lang.jvm.JvmClass
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.CreateMethodRequest
-import com.intellij.lang.jvm.actions.ExpectedType
-import com.intellij.lang.jvm.actions.ExpectedTypes
-import com.intellij.lang.jvm.actions.expectedType
+import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.openapi.project.Project
 import com.intellij.psi.*
 import com.intellij.psi.PsiModifier.ModifierConstant
-import com.intellij.psi.codeStyle.SuggestedNameInfo
 import com.intellij.psi.impl.compiled.ClsClassImpl
 import com.intellij.psi.impl.light.LightElement
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -21,7 +17,7 @@ import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass
 
-internal typealias ExpectedParameters = List<Pair<SuggestedNameInfo, List<ExpectedType>>>
+internal typealias ExpectedParameters = List<ExpectedParameter>
 
 @ModifierConstant
 internal fun JvmModifier.toPsiModifier(): String = when (this) {
@@ -73,19 +69,14 @@ private fun toTypeConstraint(project: Project, expectedType: ExpectedType): Type
   return if (expectedType.theKind == ExpectedType.Kind.SUPERTYPE) SupertypeConstraint.create(psiType) else SubtypeConstraint.create(psiType)
 }
 
-internal fun extractNames(suggestedNames: SuggestedNameInfo?, defaultName: () -> String): Array<out String> {
-  val names = (suggestedNames ?: SuggestedNameInfo.NULL_INFO).names
-  return if (names.isEmpty()) arrayOf(defaultName()) else names
-}
-
 internal fun JvmSubstitutor.toPsiSubstitutor(project: Project): PsiSubstitutor {
   return JvmPsiConversionHelper.getInstance(project).convertSubstitutor(this)
 }
 
-internal fun CreateMethodRequest.createPropertyTypeConstraints(kind: PropertyKind) : ExpectedTypes {
-  return when(kind) {
+internal fun CreateMethodRequest.createPropertyTypeConstraints(kind: PropertyKind): ExpectedTypes {
+  return when (kind) {
     PropertyKind.GETTER -> returnType
     PropertyKind.BOOLEAN_GETTER -> listOf(expectedType(PsiType.BOOLEAN))
-    PropertyKind.SETTER -> parameters.single().second
+    PropertyKind.SETTER -> expectedParameters.single().expectedTypes
   }
 }

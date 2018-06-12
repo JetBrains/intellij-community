@@ -13,6 +13,7 @@ else:
 _ParamsMappingValueType = Union[_Text, bytes, int, float, Iterable[Union[_Text, bytes, int, float]]]
 _Data = Union[
     None,
+    _Text,
     bytes,
     MutableMapping[str, str],
     MutableMapping[str, Text],

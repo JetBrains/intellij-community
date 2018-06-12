@@ -35,28 +35,30 @@ class FoldingAnchorsOverlayStrategy {
   Collection<DisplayedFoldingAnchor> getAnchorsToDisplay(int firstVisibleOffset, int lastVisibleOffset, FoldRegion activeFoldRegion) {
     Map<Integer, DisplayedFoldingAnchor> result = new HashMap<>();
     FoldRegion[] visibleFoldRegions = myEditor.getFoldingModel().fetchVisible();
-    for (FoldRegion region : visibleFoldRegions) {
-      if (!region.isValid()) continue;
-      final int startOffset = region.getStartOffset();
-      if (startOffset > lastVisibleOffset) continue;
-      final int endOffset = getEndOffset(region);
-      if (endOffset < firstVisibleOffset) continue;
-      if (!isFoldingPossible(startOffset, endOffset)) continue;
+    if (visibleFoldRegions != null) {
+      for (FoldRegion region : visibleFoldRegions) {
+        if (!region.isValid()) continue;
+        final int startOffset = region.getStartOffset();
+        if (startOffset > lastVisibleOffset) continue;
+        final int endOffset = getEndOffset(region);
+        if (endOffset < firstVisibleOffset) continue;
+        if (!isFoldingPossible(startOffset, endOffset)) continue;
 
-      final FoldingGroup group = region.getGroup();
-      if (group != null && myEditor.getFoldingModel().getFirstRegion(group, region) != region) continue;
+        final FoldingGroup group = region.getGroup();
+        if (group != null && myEditor.getFoldingModel().getFirstRegion(group, region) != region) continue;
 
-      //offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
-      int foldStart = myEditor.offsetToVisualLine(startOffset);
-
-      if (!region.isExpanded()) {
-        tryAdding(result, region, foldStart, 0, DisplayedFoldingAnchor.Type.COLLAPSED, activeFoldRegion);
-      }
-      else {
         //offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
-        int foldEnd = myEditor.offsetToVisualLine(endOffset);
-        tryAdding(result, region, foldStart, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_TOP, activeFoldRegion);
-        tryAdding(result, region, foldEnd, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_BOTTOM, activeFoldRegion);
+        int foldStart = myEditor.offsetToVisualLine(startOffset);
+
+        if (!region.isExpanded()) {
+          tryAdding(result, region, foldStart, 0, DisplayedFoldingAnchor.Type.COLLAPSED, activeFoldRegion);
+        }
+        else {
+          //offset = Math.min(myEditor.getDocument().getTextLength() - 1, offset);
+          int foldEnd = myEditor.offsetToVisualLine(endOffset);
+          tryAdding(result, region, foldStart, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_TOP, activeFoldRegion);
+          tryAdding(result, region, foldEnd, foldEnd - foldStart, DisplayedFoldingAnchor.Type.EXPANDED_BOTTOM, activeFoldRegion);
+        }
       }
     }
     return result.values();

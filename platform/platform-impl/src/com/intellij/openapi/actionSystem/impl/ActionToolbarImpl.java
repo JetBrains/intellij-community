@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -22,7 +22,6 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
@@ -35,6 +34,7 @@ import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -177,7 +177,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
     myUpdater.updateActions(updateActionsNow, false);
@@ -251,6 +251,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   protected Graphics getComponentGraphics(Graphics graphics) {
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
+  }
+
+  @Nullable
+  public String getGroupId() {
+    return myActionManager.getId(myActionGroup);
   }
 
   @Override
@@ -359,6 +364,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     if (customComponent == null) {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
       presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
+      customComponent.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY, action);
     }
     tweakActionComponentUI(customComponent);
 
@@ -960,50 +966,31 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class MySeparator extends JComponent {
-    private final JBDimension mySize;
-
-    public MySeparator() {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
-        mySize = JBUI.size(6, 24);
-      }
-      else {
-        mySize = JBUI.size(24, 6);
-      }
-    }
-
     @Override
     public Dimension getPreferredSize() {
-      return mySize.size();
+      return (myOrientation == SwingConstants.HORIZONTAL) ? JBUI.size(7, 24) : JBUI.size(24, 7);
     }
 
     @Override
     protected void paintComponent(final Graphics g) {
-      final Insets i = getInsets();
-      int gap = JBUI.scale(2);
-      int offset = JBUI.scale(3);
+      if (getParent() == null) return;
 
-      if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
-        if (getParent() != null) {
-          final JBColor col = new JBColor(Gray._128, Gray._111);
-          final Graphics2D g2 = (Graphics2D)g;
-          if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.top + gap, getParent().getSize().height - gap - i.top - i.bottom, offset, col, false);
-          } else {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.left + gap, getParent().getSize().width - gap - i.left - i.right, offset, col, true);
-          }
-        }
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
+      int offset;
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        offset = ActionToolbarImpl.this.getHeight() - getMaxButtonHeight() - 1;
+      } else {
+        offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
       }
-      else {
+
         g.setColor(UIUtil.getSeparatorColor());
-        if (getParent() != null) {
-          if (myOrientation == SwingConstants.HORIZONTAL) {
-            LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap);
-          }
-          else {
-            LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap, offset);
-          }
+        if (myOrientation == SwingConstants.HORIZONTAL) {
+          LinePainter2D.paint((Graphics2D)g, center, gap, center, ActionToolbarImpl.this.getHeight() - gap * 2 - offset);
         }
-      }
+        else {
+          LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+        }
     }
   }
 
@@ -1035,6 +1022,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       throw new IllegalArgumentException("wrong orientation: " + orientation);
     }
     myOrientation = orientation;
+  }
+
+  int getOrientation() {
+    return myOrientation;
   }
 
   @Override
@@ -1297,6 +1288,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
       myParent = parent;
+      if (myParent != null) {
+        setBorder(myParent.getBorder());
+      }
     }
 
     @Override
@@ -1377,13 +1371,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setBorder(JBUI.Borders.empty());
       setOpaque(false);
     } else {
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        setBorder(JBUI.Borders.empty(0));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 22) : JBUI.size(25, 22));
-      } else {
-        setBorder(JBUI.Borders.empty(3));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
-      }
+      setBorder(JBUI.Borders.empty(2));
+      setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }

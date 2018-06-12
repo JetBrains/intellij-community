@@ -16,7 +16,6 @@
 package com.intellij.ide.hierarchy.type;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -43,18 +42,14 @@ public final class TypeHierarchyNodeDescriptor extends HierarchyNodeDescriptor {
   public final boolean update() {
     boolean changes = super.update();
 
-    if (getPsiElement() == null){
-      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
-      if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
-        myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
-      }
-      return true;
+    if (getPsiElement() == null) {
+      return invalidElement();
     }
 
     if (changes && myIsBase) {
       final LayeredIcon icon = new LayeredIcon(2);
       icon.setIcon(getIcon(), 0);
-      icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
+      icon.setIcon(AllIcons.Actions.Forward, 1, -AllIcons.Actions.Forward.getIconWidth() / 2, 0);
       setIcon(icon);
     }
 

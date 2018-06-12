@@ -912,7 +912,7 @@ abstract class IntervalTreeImpl<T> extends RedBlackTree<T> implements IntervalTr
     return root;
   }
 
-  protected void checkBelongsToTheTree(@NotNull T interval, boolean assertInvalid) {
+  private void checkBelongsToTheTree(@NotNull T interval, boolean assertInvalid) {
     IntervalNode<T> root = lookupNode(interval);
     if (root == null) return;
     //noinspection NumberEquality

@@ -38,8 +38,8 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.search.searches.DeepestSuperMethodsSearch;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -175,34 +175,31 @@ public class SuperMethodWarningUtil {
     final PsiMethod[] methods = {superMethods[0], method};
     final String renameBase = actionString + " base method" + (superMethods.length > 1 ? "s" : "");
     final String renameCurrent = actionString + " only current method";
-    final JBList<String> list = new JBList<>(renameBase, renameCurrent);
     String title = method.getName() +
-                   (superMethods.length > 1 ? " has super methods" 
-                                            : (containingClass.isInterface() && !aClass.isInterface() ? " implements" 
-                                                                                                      : " overrides") + 
+                   (superMethods.length > 1 ? " has super methods"
+                                            : (containingClass.isInterface() && !aClass.isInterface() ? " implements"
+                                                                                                      : " overrides") +
                                               " method of " + SymbolPresentationUtil.getSymbolPresentableText(containingClass));
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
+    JBPopupFactory.getInstance().createPopupChooserBuilder(ContainerUtil.newArrayList(renameBase, renameCurrent))
       .setTitle(title)
       .setMovable(false)
       .setResizable(false)
       .setRequestFocus(true)
-      .setItemChoosenCallback(() -> {
-        final Object value = list.getSelectedValue();
-        if (value != null) {
-          if (value.equals(renameBase)) {
-            try {
-              methods[0].putUserData(SIBLINGS, superMethods);
-              processor.execute(methods[0]);
-            }
-            finally {
-              methods[0].putUserData(SIBLINGS, null);
-            }
+      .setItemChosenCallback((value) -> {
+        if (value.equals(renameBase)) {
+          try {
+            methods[0].putUserData(SIBLINGS, superMethods);
+            processor.execute(methods[0]);
           }
-          else {
-            processor.execute(methods[1]);
+          finally {
+            methods[0].putUserData(SIBLINGS, null);
           }
         }
-      }).createPopup().showInBestPositionFor(editor);
+        else {
+          processor.execute(methods[1]);
+        }
+      })
+      .createPopup().showInBestPositionFor(editor);
   }
 
   @Messages.YesNoCancelResult

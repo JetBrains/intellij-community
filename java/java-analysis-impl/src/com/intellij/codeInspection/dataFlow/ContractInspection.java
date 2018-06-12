@@ -25,8 +25,11 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
       @Override
       public void visitMethod(PsiMethod method) {
-        for (StandardMethodContract contract : ControlFlowAnalyzer.getMethodContracts(method)) {
-          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract);
+        PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
+        if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return;
+        boolean ownContract = annotation.getOwner() == method.getModifierList();
+        for (StandardMethodContract contract : JavaMethodContractUtil.getMethodContracts(method)) {
+          Map<PsiElement, String> errors = ContractChecker.checkContractClause(method, contract, ownContract);
           for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
             PsiElement element = entry.getKey();
             holder.registerProblem(element, entry.getValue());
@@ -36,7 +39,7 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
 
       @Override
       public void visitAnnotation(PsiAnnotation annotation) {
-        if (!ControlFlowAnalyzer.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
+        if (!JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT.equals(annotation.getQualifiedName())) return;
 
         PsiMethod method = PsiTreeUtil.getParentOfType(annotation, PsiMethod.class);
         if (method == null) return;
@@ -85,15 +88,12 @@ public class ContractInspection extends AbstractBaseJavaLocalInspectionTool {
     int paramCount = method.getParameterList().getParametersCount();
     for (int i = 0; i < contracts.size(); i++) {
       StandardMethodContract contract = contracts.get(i);
-      if (contract.arguments.length != paramCount) {
-        return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.arguments.length;
+      if (contract.getParameterCount() != paramCount) {
+        return "Method takes " + paramCount + " parameters, while contract clause number " + (i + 1) + " expects " + contract.getParameterCount();
       }
-      PsiType returnType = method.getReturnType();
-      if (returnType != null && !InferenceFromSourceUtil.isReturnTypeCompatible(returnType, contract.returnValue)) {
-        return "Method returns " + returnType.getPresentableText() + " but the contract specifies " + contract.returnValue;
-      }
-      if (method.isConstructor() && contract.returnValue != MethodContract.ValueConstraint.THROW_EXCEPTION) {
-        return "Invalid contract return value for a constructor: " + contract.returnValue;
+      String problem = contract.getReturnValue().getMethodCompatibilityProblem(method);
+      if (problem != null) {
+        return problem;
       }
     }
     return null;

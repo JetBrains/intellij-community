@@ -18,17 +18,19 @@
 
 package org.intellij.images.vfs;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.reference.SoftReference;
-import com.intellij.util.IconUtil;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import com.intellij.util.SVGLoader;
+import com.intellij.util.ui.JBUI.ScaleContext;
 import org.apache.commons.imaging.ImageReadException;
 import org.apache.commons.imaging.common.bytesource.ByteSourceArray;
 import org.apache.commons.imaging.formats.ico.IcoImageParser;
@@ -40,14 +42,17 @@ import javax.imageio.ImageIO;
 import javax.imageio.ImageReadParam;
 import javax.imageio.ImageReader;
 import javax.imageio.stream.ImageInputStream;
-import javax.swing.*;
+import java.awt.*;
 import java.awt.image.BufferedImage;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
+import java.net.URL;
 import java.util.Iterator;
+
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 
 /**
  * Image loader utility.
@@ -55,6 +60,8 @@ import java.util.Iterator;
  * @author <a href="mailto:aefimov.box@gmail.com">Alexey Efimov</a>
  */
 public final class IfsUtil {
+  private static final Logger LOG = Logger.getInstance("#org.intellij.images.vfs.IfsUtil");
+
   public static final String ICO_FORMAT = "ico";
   public static final String SVG_FORMAT = "svg";
 
@@ -76,28 +83,49 @@ public final class IfsUtil {
     if (loadedTimeStamp == null || loadedTimeStamp.longValue() != file.getTimeStamp() || SoftReference.dereference(imageProviderRef) == null) {
       try {
         final byte[] content = file.contentsToByteArray();
+        file.putUserData(IMAGE_PROVIDER_REF_KEY, null);
 
         if (ICO_FORMAT.equalsIgnoreCase(file.getExtension())) {
           try {
             final BufferedImage image = ICO_IMAGE_PARSER.getBufferedImage(new ByteSourceArray(content), null);
             file.putUserData(FORMAT_KEY, ICO_FORMAT);
-            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> image));
+            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((scale, ancestor) -> image));
             return true;
           }
           catch (ImageReadException ignore) { }
         }
 
         if (isScalableImage(file)) {
+          final Ref<URL> url = Ref.create();
           try {
-            Icon icon = IconLoader.findIcon(new File(file.getPath()).toURI().toURL(), false);
-            file.putUserData(FORMAT_KEY, SVG_FORMAT);
-            file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> {
-              Icon scaledIcon = IconUtil.scale(icon, null, zoom.floatValue());
-              return (BufferedImage)IconLoader.toImage(scaledIcon);
-            }));
-            return true;
+            url.set(new File(file.getPath()).toURI().toURL());
           }
-          catch (MalformedURLException ignore) {}
+          catch (MalformedURLException ex) {
+            LOG.warn(ex.getMessage());
+          }
+
+          try {
+            // ensure svg can be displayed
+            SVGLoader.load(url.get(), new ByteArrayInputStream(content), 1.0f);
+          }
+          catch (Throwable t) {
+            LOG.warn(url.get() + " " + t.getMessage());
+            return false;
+          }
+
+          file.putUserData(FORMAT_KEY, SVG_FORMAT);
+          file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((zoom, ancestor) -> {
+            try {
+              final ScaleContext ctx = ScaleContext.create(ancestor);
+              ctx.update(OBJ_SCALE.of(zoom));
+              return SVGLoader.loadHiDPI(url.get(), new ByteArrayInputStream(content), ctx);
+            }
+            catch (Throwable t) {
+              LOG.warn(url.get() + " " + t.getMessage());
+              return null;
+            }
+          }));
+          return true;
         }
 
         InputStream inputStream = new ByteArrayInputStream(content, 0, content.length);
@@ -112,7 +140,7 @@ public final class IfsUtil {
               imageReader.setInput(imageInputStream, true, true);
               int minIndex = imageReader.getMinIndex();
               BufferedImage image = imageReader.read(minIndex, param);
-              file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>(zoom -> image));
+              file.putUserData(IMAGE_PROVIDER_REF_KEY, new SoftReference<>((zoom, ancestor) -> image));
               return true;
             } finally {
               imageReader.dispose();
@@ -131,9 +159,14 @@ public final class IfsUtil {
 
   @Nullable
   public static BufferedImage getImage(@NotNull VirtualFile file) throws IOException {
+    return getImage(file, null);
+  }
+
+  @Nullable
+  public static BufferedImage getImage(@NotNull VirtualFile file, @Nullable Component ancestor) throws IOException {
     ScaledImageProvider imageProvider = getImageProvider(file);
     if (imageProvider == null) return null;
-    return imageProvider.apply(1d);
+    return imageProvider.apply(1d, ancestor);
   }
 
   @Nullable

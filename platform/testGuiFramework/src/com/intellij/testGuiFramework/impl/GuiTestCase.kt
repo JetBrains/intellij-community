@@ -20,7 +20,6 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.cellReader.ExtendedJTableCellReader
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
@@ -102,7 +101,8 @@ open class GuiTestCase {
   var defaultTimeout = 120L
 
   val settingsTitle: String = if (isMac()) "Preferences" else "Settings"
-  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+//  val defaultSettingsTitle: String = if (isMac()) "Default Preferences" else "Default Settings"
+  val defaultSettingsTitle: String = if (isMac()) "Preferences for New Projects" else "Settings for New Projects"
   val slash: String = File.separator
 
 
@@ -358,6 +358,22 @@ open class GuiTestCase {
     }
     else throw unableToFindComponent("""ActionButton by action name "$actionName"""")
 
+
+  /**
+   * Finds a InplaceButton component in hierarchy of context component by icon and returns InplaceButtonFixture.
+   *
+   * @icon of InplaceButton component.
+   * @timeout in seconds to find InplaceButton component. It is better to use static cached icons from (@see com.intellij.openapi.util.IconLoader.AllIcons)
+   * @throws ComponentLookupException if component has not been found or timeout exceeded
+   */
+  fun <S, C : Component> ComponentFixture<S, C>.inplaceButton(icon: Icon, timeout: Long = defaultTimeout): InplaceButtonFixture {
+    val target = target()
+    return if (target is Container) {
+      InplaceButtonFixture.findInplaceButtonFixture(target, guiTestRule.robot(), icon, timeout)
+    }
+    else throw unableToFindComponent("""InplaceButton by icon "$icon"""")
+  }
+
   /**
    * Finds a ActionButton component in hierarchy of context component by action class name and returns ActionButtonFixture.
    *
@@ -443,20 +459,20 @@ open class GuiTestCase {
    * @timeout in seconds to find JTable component
    * @throws ComponentLookupException if component has not been found or timeout exceeded
    */
-  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): JTableFixture =
+  fun <S, C : Component> ComponentFixture<S, C>.table(cellText: String, timeout: Long = defaultTimeout): ExtendedTableFixture =
     if (target() is Container) {
-      val jTable = waitUntilFound(target() as Container, JTable::class.java, timeout) {
-        val jTableFixture = JTableFixture(guiTestRule.robot(), it)
-        jTableFixture.replaceCellReader(ExtendedJTableCellReader())
+      var tableFixture: ExtendedTableFixture? = null
+      waitUntilFound(target() as Container, JTable::class.java, timeout) {
+        tableFixture = ExtendedTableFixture(guiTestRule.robot(), it)
         try {
-          jTableFixture.cell(cellText)
-          true
+          tableFixture?.cell(cellText)
+          tableFixture != null
         }
         catch (e: ActionFailedException) {
           false
         }
       }
-      JTableFixture(guiTestRule.robot(), jTable)
+      tableFixture ?: throw unableToFindComponent("""JTable with cell text "$cellText"""")
     }
     else throw unableToFindComponent("""JTable with cell text "$cellText"""")
 
@@ -603,14 +619,19 @@ open class GuiTestCase {
     func(this.runConfigurationList)
   }
 
+  fun IdeFrameFixture.gutter(func: GutterFixture.() -> Unit) {
+    func(this.gutter)
+  }
+
   /**
    * Extension function for IDE to iterate through the menu.
    *
    * @path items like: popup("New", "File")
    */
-  fun IdeFrameFixture.popup(vararg path: String)
-    = this.invokeMenuPath(*path)
+  @Deprecated(message = "Should be replaced with menu(*path).click()", replaceWith = ReplaceWith("menu(*path).click()"))
+  fun IdeFrameFixture.popup(vararg path: String) = this.invokeMenuPath(*path)
 
+  fun IdeFrameFixture.menu(vararg path: String): MenuFixture.MenuItemFixture = this.getMenuPath(*path)
 
   fun CustomToolWindowFixture.ContentFixture.editor(func: EditorFixture.() -> Unit) {
     func(this.editor())
@@ -631,6 +652,11 @@ open class GuiTestCase {
   fun shortcut(keyStroke: String) = GuiTestUtil.invokeActionViaShortcut(guiTestRule.robot(), keyStroke)
 
   fun shortcut(shortcut: Shortcut) = shortcut(shortcut.getKeystroke())
+
+  fun shortcut(winShortcut: Shortcut, macShortcut: Shortcut) {
+    if (SystemInfo.isMac()) shortcut(macShortcut)
+    else shortcut(winShortcut)
+  }
 
   fun shortcut(key: Key) = shortcut(key.name)
 
@@ -657,7 +683,7 @@ open class GuiTestCase {
     if (screenshotFilePath.isFile) {
       val format = SimpleDateFormat("MM-dd-yyyy.HH.mm.ss")
       val now = format.format(GregorianCalendar().time)
-      screenshotFilePath = File(fileWithTestFolder, screenshotName + "." + now + extension)
+      screenshotFilePath = File(fileWithTestFolder, "$screenshotName.$now$extension")
     }
     ScreenshotTaker().saveComponentAsPng(component, screenshotFilePath.path)
     println(message = "Screenshot for a component \"$component\" taken and stored at ${screenshotFilePath.path}")
@@ -693,17 +719,21 @@ open class GuiTestCase {
 
   private fun Long.toFestTimeout(): Timeout = if (this == 0L) timeout(50, TimeUnit.MILLISECONDS) else timeout(this, TimeUnit.SECONDS)
 
-
   private fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
     val myTree: JTree?
     val pathList = pathStrings.toList()
-    myTree = if (pathList.isEmpty()) {
-      waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+    try {
+      myTree = if (pathList.isEmpty()) {
+        waitUntilFound(guiTestRule.robot(), container, typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
+      }
+      else {
+        waitUntilFound(guiTestRule.robot(), container,
+                       typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
+                       timeout.toFestTimeout())
+      }
     }
-    else {
-      waitUntilFound(guiTestRule.robot(), container,
-                     typeMatcher(JTree::class.java) { ExtendedTreeFixture(guiTestRule.robot(), it).hasPath(pathList) },
-                     timeout.toFestTimeout())
+    catch (e: WaitTimedOutError){
+      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
     }
     return ExtendedTreeFixture(guiTestRule.robot(), myTree)
   }
@@ -757,11 +787,43 @@ open class GuiTestCase {
 
   fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
     val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
-    return RowFixture(rowIndex, fixture).values()
+    return RowFixture(guiTestRule.robot(), rowIndex, fixture).values()
   }
 
   fun tableRowCount(table: JTableFixture): Int {
     val fixture = ExtendedTableFixture(guiTestRule.robot(), table.target())
     return fixture.rowCount()
   }
+
+  fun waitForPanelToDisappear(panelTitle: String, timeout: Long = 300000) {
+    Pause.pause(object : Condition("Wait for $panelTitle panel appears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return false
+        }
+        return true
+      }
+    }, timeout)
+
+    Pause.pause(object : Condition("Wait for $panelTitle panel disappears") {
+      override fun test(): Boolean {
+        try {
+          robot().finder().find(guiTestRule.findIdeFrame().target()) {
+            it is JLabel && it.text == panelTitle
+          }
+        }
+        catch (cle: ComponentLookupException) {
+          return true
+        }
+        return false
+      }
+    })
+
+  }
+
 }

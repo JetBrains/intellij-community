@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.properties.editor;
 
 import com.intellij.codeInsight.FileModificationService;
@@ -9,7 +7,6 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.lang.properties.*;
 import com.intellij.lang.properties.psi.PropertiesFile;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -36,7 +33,6 @@ import com.intellij.refactoring.copy.CopyHandlerDelegateBase;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.components.JBTextField;
-import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,14 +135,16 @@ public class PropertiesCopyHandler extends CopyHandlerDelegateBase {
       LOG.assertTrue(representativeFromSourceBundle != null);
       final ResourceBundle sourceResourceBundle = representativeFromSourceBundle.getPropertiesFile().getResourceBundle();
       if (sourceResourceBundle.equals(targetResourceBundle)) {
-        DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)context -> {
-          final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
-          if (fileEditor instanceof ResourceBundleEditor) {
-            final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)fileEditor;
-            resourceBundleEditor.updateTreeRoot();
-            resourceBundleEditor.selectProperty(newName);
-          }
-        });
+        DataManager.getInstance()
+                   .getDataContextFromFocusAsync()
+                   .onSuccess(context -> {
+                     final FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(context);
+                     if (fileEditor instanceof ResourceBundleEditor) {
+                       final ResourceBundleEditor resourceBundleEditor = (ResourceBundleEditor)fileEditor;
+                       resourceBundleEditor.updateTreeRoot();
+                       resourceBundleEditor.selectProperty(newName);
+                     }
+                   });
       } else {
         for (FileEditor editor : FileEditorManager.getInstance(project).openFile(new ResourceBundleAsVirtualFile(targetResourceBundle), true)) {
           ((ResourceBundleEditor) editor).updateTreeRoot();

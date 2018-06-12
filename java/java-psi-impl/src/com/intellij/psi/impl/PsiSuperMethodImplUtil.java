@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -37,7 +23,6 @@ import com.intellij.util.containers.hash.EqualityPolicy;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -159,14 +144,14 @@ public class PsiSuperMethodImplUtil {
     final Map<MethodSignature, List<PsiMethod>> sameParameterErasureMethods =
       new THashMap<>(MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY);
 
-    Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new THashMap<>(new TObjectHashingStrategy<MethodSignature>() {
+    Map<MethodSignature, HierarchicalMethodSignatureImpl> map = new LinkedHashMap<>(new EqualityPolicy<MethodSignature>() {
       @Override
-      public int computeHashCode(MethodSignature signature) {
+      public int getHashCode(MethodSignature signature) {
         return MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.computeHashCode(signature);
       }
 
       @Override
-      public boolean equals(MethodSignature o1, MethodSignature o2) {
+      public boolean isEqual(MethodSignature o1, MethodSignature o2) {
         if (!MethodSignatureUtil.METHOD_PARAMETERS_ERASURE_EQUALITY.equals(o1, o2)) return false;
         List<PsiMethod> list = sameParameterErasureMethods.get(o1);
         boolean toCheckReturnType = list != null && list.size() > 1;

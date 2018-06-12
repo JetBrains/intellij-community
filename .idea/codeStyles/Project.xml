@@ -1,5 +1,11 @@
 <component name="ProjectCodeStyleConfiguration">
   <code_scheme name="Project" version="173">
+    <option name="OTHER_INDENT_OPTIONS">
+      <value>
+        <option name="INDENT_SIZE" value="2" />
+        <option name="TAB_SIZE" value="2" />
+      </value>
+    </option>
     <option name="LINE_SEPARATOR" value="&#10;" />
     <option name="RIGHT_MARGIN" value="140" />
     <option name="FORMATTER_TAGS_ENABLED" value="true" />
@@ -116,7 +122,7 @@
       <option name="WHILE_ON_NEW_LINE" value="true" />
       <option name="CATCH_ON_NEW_LINE" value="true" />
       <option name="FINALLY_ON_NEW_LINE" value="true" />
-      <option name="ALIGN_MULTILINE_CHAINED_METHODS" value="true"/>
+      <option name="ALIGN_MULTILINE_CHAINED_METHODS" value="true" />
       <option name="ALIGN_MULTILINE_PARAMETERS_IN_CALLS" value="true" />
       <option name="ALIGN_MULTILINE_BINARY_OPERATION" value="true" />
       <option name="ALIGN_MULTILINE_ASSIGNMENT" value="true" />
@@ -465,6 +471,7 @@
       </indentOptions>
     </codeStyleSettings>
     <codeStyleSettings language="kotlin">
+      <option name="KEEP_FIRST_COLUMN_COMMENT" value="false" />
       <option name="ELSE_ON_NEW_LINE" value="true" />
       <option name="WHILE_ON_NEW_LINE" value="true" />
       <option name="CATCH_ON_NEW_LINE" value="true" />

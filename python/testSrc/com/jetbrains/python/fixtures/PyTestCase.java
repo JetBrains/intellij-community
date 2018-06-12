@@ -205,10 +205,10 @@ public abstract class PyTestCase extends UsefulTestCase {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
   }
 
-  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable action) {
+  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
     setLanguageLevel(languageLevel);
     try {
-      action.run();
+      runnable.run();
     }
     finally {
       setLanguageLevel(null);
@@ -224,6 +224,16 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     finally {
       settings.setFormat(oldFormat);
+    }
+  }
+
+  protected void runWithSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable runnable) {
+    final Module module = myFixture.getModule();
+    sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
+    try {
+      runnable.run();
+    } finally {
+      sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
     }
   }
 

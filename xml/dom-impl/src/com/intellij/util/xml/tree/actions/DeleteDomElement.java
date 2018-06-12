@@ -57,12 +57,9 @@ public class DeleteDomElement extends BaseDomTreeAction {
       final int ret = Messages.showOkCancelDialog(getPresentationText(selectedNode, "Remove") + "?", "Remove",
                                                   Messages.getQuestionIcon());
       if (ret == Messages.OK) {
-      new WriteCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
+        WriteCommandAction.writeCommandAction(domElement.getManager().getProject(), DomUtil.getFile(domElement)).run(() -> {
           domElement.undefine();
-        }
-      }.execute();
+        });
       }
     }
   }

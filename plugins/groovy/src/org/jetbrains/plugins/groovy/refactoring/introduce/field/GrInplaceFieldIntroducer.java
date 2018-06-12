@@ -310,16 +310,14 @@ public class GrInplaceFieldIntroducer extends GrAbstractInplaceIntroducer<GrIntr
       myDeclareFinalCB.addActionListener(new ActionListener() {
         @Override
         public void actionPerformed(ActionEvent e) {
-          new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-            @Override
-            protected void run(@NotNull Result result) throws Throwable {
-              PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-              final GrVariable variable = getVariable();
-              if (variable != null) {
-                finalListener.perform(myDeclareFinalCB.isSelected(), variable);
-              }
+          WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+            final GrVariable variable = getVariable();
+            if (variable != null) {
+              finalListener.perform(myDeclareFinalCB.isSelected(), variable);
             }
-          }.execute();
+            ;
+          });
         }
       });
     }

@@ -17,6 +17,7 @@
 
 package com.intellij.testGuiFramework.generators
 
+import com.intellij.icons.AllIcons
 import com.intellij.ide.plugins.PluginTable
 import com.intellij.ide.projectView.impl.ProjectViewTree
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -52,6 +53,7 @@ import com.intellij.testGuiFramework.impl.GuiTestUtilKt.onHeightCenter
 import com.intellij.ui.CheckboxTree
 import com.intellij.ui.EditorNotificationPanel
 import com.intellij.ui.HyperlinkLabel
+import com.intellij.ui.InplaceButton
 import com.intellij.ui.components.JBCheckBox
 import com.intellij.ui.components.JBList
 import com.intellij.ui.components.labels.ActionLink
@@ -67,10 +69,7 @@ import org.fest.swing.core.ComponentMatcher
 import org.fest.swing.core.GenericTypeMatcher
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
-import java.awt.Component
-import java.awt.Container
-import java.awt.Point
-import java.awt.Rectangle
+import java.awt.*
 import java.awt.event.MouseEvent
 import java.io.File
 import java.net.URI
@@ -81,10 +80,6 @@ import javax.swing.*
 import javax.swing.plaf.basic.BasicArrowButton
 import javax.swing.tree.TreeNode
 import javax.swing.tree.TreePath
-
-/**
- * @author Sergey Karashevich
- */
 
 //**********COMPONENT GENERATORS**********
 
@@ -97,6 +92,16 @@ private fun MouseEvent.isRightButton() = (this.button == rightButton)
 class JButtonGenerator : ComponentCodeGenerator<JButton> {
   override fun accept(cmp: Component) = cmp is JButton
   override fun generate(cmp: JButton, me: MouseEvent, cp: Point) = """button("${cmp.text}").click()"""
+}
+
+class InplaceButtonGenerator: ComponentCodeGenerator<InplaceButton> {
+  override fun accept(cmp: Component) = cmp is InplaceButton
+  override fun generate(cmp: InplaceButton, me: MouseEvent, cp: Point) = """inplaceButton(${getIconClassName(cmp)}).click()"""
+  private fun getIconClassName(inplaceButton: InplaceButton): String {
+    val icon = inplaceButton.icon
+    val iconField = AllIcons::class.java.classes.flatMap { it.fields.filter { it.type == Icon::class.java } }.firstOrNull { it.get(null) is Icon && (it.get(null) as Icon) == icon } ?: return "REPLACE IT WITH ICON $icon"
+    return "${iconField.declaringClass?.canonicalName}.${iconField.name}"
+  }
 }
 
 class JSpinnerGenerator : ComponentCodeGenerator<JButton> {
@@ -310,7 +315,14 @@ class PluginTableGenerator : ComponentCodeGenerator<PluginTable> {
   }
 }
 
-class EditorComponentGenerator : ComponentCodeGenerator<EditorComponentImpl> {
+class EditorComponentGenerator : ComponentSelectionCodeGenerator<EditorComponentImpl> {
+  override fun generateSelection(cmp: EditorComponentImpl, firstPoint: Point, lastPoint: Point): String {
+    val editor = cmp.editor
+    val firstOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(firstPoint))
+    val lastOffset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(lastPoint))
+    return "select($firstOffset, $lastOffset)"
+  }
+
   override fun accept(cmp: Component) = cmp is EditorComponentImpl
 
   override fun generate(cmp: EditorComponentImpl, me: MouseEvent, cp: Point): String {
@@ -330,7 +342,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
   override fun accept(cmp: Component) = cmp is ActionMenuItem
 
   override fun generate(cmp: ActionMenuItem, me: MouseEvent, cp: Point) =
-    "popup(${buildPath(activatedActionMenuItem = cmp).joinToString(separator = ", ") { str -> "\"$str\"" }})"
+    "menu(${buildPath(activatedActionMenuItem = cmp).joinToString(separator = ", ") { str -> "\"$str\"" }}).click()"
 
 
   //for buildnig a path of actionMenus and actionMenuItem we need to scan all JBPopup and find a consequence of actions from a tail. Each discovered JBPopupMenu added to hashSet to avoid double sacnning and multiple component finding results
@@ -388,7 +400,7 @@ class ActionMenuItemGenerator : ComponentCodeGenerator<ActionMenuItem> {
 
 class WelcomeFrameGenerator : GlobalContextCodeGenerator<FlatWelcomeFrame>() {
   override fun priority() = 1
-  override fun accept(cmp: Component) = (cmp as JComponent).rootPane.parent is FlatWelcomeFrame
+  override fun accept(cmp: Component) = cmp is JComponent && cmp.rootPane.parent is FlatWelcomeFrame
   override fun generate(cmp: FlatWelcomeFrame): String {
     return "welcomeFrame {"
   }
@@ -437,9 +449,9 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
     return rectangle.contains(locationOnScreen)
   }
 
-  private fun Component.centerOnScreen(): Point {
+  private fun Component.centerOnScreen(): Point? {
     val rectangle = this.bounds
-    rectangle.location = this.locationOnScreen
+    rectangle.location = try { this.locationOnScreen } catch (e: IllegalComponentStateException) { return null }
     return Point(rectangle.centerX.toInt(), rectangle.centerY.toInt())
   }
 
@@ -455,11 +467,17 @@ class ToolWindowGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
-    val tw = getToolWindow(component.centerOnScreen()); tw != null && component == tw.component
+    val centerOnScreen = component.centerOnScreen()
+    if (centerOnScreen != null) {
+      val tw = getToolWindow(centerOnScreen)
+      tw != null && component == tw.component
+    } else false
+
   }
 
   override fun generate(cmp: Component): String {
-    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
+    val pointOnScreen = cmp.centerOnScreen() ?: throw IllegalComponentStateException("Unable to get center on screen for component: $cmp")
+    val toolWindow: ToolWindowImpl = getToolWindow(pointOnScreen)!!
     return """toolwindow(id = "${toolWindow.id}") {"""
   }
 
@@ -475,9 +493,9 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
     return rectangle.contains(locationOnScreen)
   }
 
-  private fun Component.centerOnScreen(): Point {
+  private fun Component.centerOnScreen(): Point? {
     val rectangle = this.bounds
-    rectangle.location = this.locationOnScreen
+    rectangle.location = try { this.locationOnScreen } catch (e: IllegalComponentStateException) { return null }
     return Point(rectangle.centerX.toInt(), rectangle.centerY.toInt())
   }
 
@@ -498,11 +516,15 @@ class ToolWindowContextGenerator : LocalContextCodeGenerator<Component>() {
   }
 
   override fun acceptor(): (Component) -> Boolean = { component ->
-    val tw = getToolWindow(component.centerOnScreen()); tw != null && tw.contentManager.selectedContent!!.component == component
+    val pointOnScreen = component.centerOnScreen()
+    if (pointOnScreen != null) {
+      val tw = getToolWindow(pointOnScreen)
+      tw != null && tw.contentManager.selectedContent!!.component == component
+    } else false
   }
 
   override fun generate(cmp: Component): String {
-    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen())!!
+    val toolWindow: ToolWindowImpl = getToolWindow(cmp.centerOnScreen()!!)!!
     val tabName = toolWindow.contentManager.selectedContent?.tabName
     return if (tabName != null) """content(tabName = "${tabName}") {"""
     else "content {"
@@ -598,7 +620,7 @@ object Generators {
     val classLoader = Generators.javaClass.classLoader
     return generatorClassPaths
       .map { clzPath -> classLoader.loadClass("${Generators.javaClass.`package`.name}.${File(clzPath).nameWithoutExtension}") }
-      .filter { clz -> clz.interfaces.contains(ComponentCodeGenerator::class.java) }
+      .filter { clz -> ComponentCodeGenerator::class.java.isAssignableFrom(clz) && !clz.isInterface }
       .map(Class<*>::newInstance)
       .filterIsInstance(ComponentCodeGenerator::class.java)
   }

@@ -37,7 +37,7 @@ public class TemplateProjectSettingsGroup extends DefaultActionGroup {
 
     add(withTextAndIcon(new TemplateProjectPropertiesAction(), "Settings", AllIcons.General.TemplateProjectSettings));
     add(withTextAndIcon(new TemplateProjectStructureAction(), "Project Structure", AllIcons.General.TemplateProjectStructure));
-    add(withTextAndIcon(new EditRunConfigurationsAction(), "Run Configurations", AllIcons.General.CreateNewProjectfromExistingFiles));
+    add(withTextAndIcon(new EditRunConfigurationsAction(), "Run Configurations", AllIcons.ToolbarDecorator.Import));
   }
 
   private static AnAction withTextAndIcon(AnAction action, String text, Icon icon) {

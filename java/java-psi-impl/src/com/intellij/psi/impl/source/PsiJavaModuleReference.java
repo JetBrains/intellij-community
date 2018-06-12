@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source;
 
 import com.intellij.core.JavaCoreBundle;
@@ -107,7 +107,7 @@ public class PsiJavaModuleReference extends PsiReferenceBase.Poly<PsiJavaModuleR
   }
 
   @NotNull
-  public static Collection<PsiJavaModule> multiResolve(@NotNull final PsiElement refOwner, final String refText, final boolean incompleteCode) {
+  public static Collection<PsiJavaModule> multiResolve(@NotNull PsiElement refOwner, String refText, boolean incompleteCode) {
     if (StringUtil.isEmpty(refText)) return Collections.emptyList();
     CachedValuesManager manager = CachedValuesManager.getManager(refOwner.getProject());
     Key<CachedValue<Collection<PsiJavaModule>>> key = incompleteCode ? K_INCOMPLETE : K_COMPLETE;

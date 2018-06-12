@@ -43,15 +43,22 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   private Reference<E> myElement;
   private final SmartPointerElementInfo myElementInfo;
+  protected final SmartPointerManagerImpl myManager;
   private byte myReferenceCount = 1;
   @Nullable SmartPointerTracker.PointerReference pointerReference;
 
-  SmartPsiElementPointerImpl(@NotNull Project project, @NotNull E element, @Nullable PsiFile containingFile, boolean forInjected) {
-    this(element, createElementInfo(project, element, containingFile, forInjected));
+  SmartPsiElementPointerImpl(SmartPointerManagerImpl manager, 
+                             @NotNull E element,
+                             @Nullable PsiFile containingFile,
+                             boolean forInjected) {
+    this(manager, element, createElementInfo(manager, element, containingFile, forInjected));
   }
-  SmartPsiElementPointerImpl(@NotNull E element, @NotNull SmartPointerElementInfo elementInfo) {
+  SmartPsiElementPointerImpl(SmartPointerManagerImpl manager,
+                             @NotNull E element,
+                             @NotNull SmartPointerElementInfo elementInfo) {
     ApplicationManager.getApplication().assertReadAccessAllowed();
     myElementInfo = elementInfo;
+    myManager = manager;
     cacheElement(element);
   }
 
@@ -68,7 +75,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @Override
   @NotNull
   public Project getProject() {
-    return myElementInfo.getProject();
+    return myManager.getProject();
   }
 
   @Override
@@ -85,7 +92,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
   @Nullable
   E doRestoreElement() {
     //noinspection unchecked
-    E element = (E)myElementInfo.restoreElement();
+    E element = (E)myElementInfo.restoreElement(myManager);
     if (element != null && !element.isValid()) {
       return null;
     }
@@ -105,7 +112,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Override
   public PsiFile getContainingFile() {
-    PsiFile file = getElementInfo().restoreFile();
+    PsiFile file = getElementInfo().restoreFile(myManager);
 
     if (file != null) {
       return file;
@@ -126,22 +133,23 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
   @Override
   public Segment getRange() {
-    return myElementInfo.getRange();
+    return myElementInfo.getRange(myManager);
   }
 
   @Nullable
   @Override
   public Segment getPsiRange() {
-    return myElementInfo.getPsiRange();
+    return myElementInfo.getPsiRange(myManager);
   }
 
   @NotNull
-  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(@NotNull Project project,
+  private static <E extends PsiElement> SmartPointerElementInfo createElementInfo(SmartPointerManagerImpl manager, 
                                                                                   @NotNull E element,
-                                                                                  PsiFile containingFile, boolean forInjected) {
-    SmartPointerElementInfo elementInfo = doCreateElementInfo(project, element, containingFile, forInjected);
+                                                                                  PsiFile containingFile,
+                                                                                  boolean forInjected) {
+    SmartPointerElementInfo elementInfo = doCreateElementInfo(manager.getProject(), element, containingFile, forInjected);
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      PsiElement restored = elementInfo.restoreElement();
+      PsiElement restored = elementInfo.restoreElement(manager);
       if (!element.equals(restored)) {
         // likely cause: PSI having isPhysical==true, but which can't be restored by containing file and range. To fix, make isPhysical return false
         LOG.error("Cannot restore " + element + " of " + element.getClass() + " from " + elementInfo + "; restored=" + restored + " in " + element.getProject());
@@ -167,7 +175,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
           return new ClsElementInfo(stubReference);
         }
       }
-      return new HardElementInfo(project, element);
+      return new HardElementInfo(element);
     }
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
@@ -197,17 +205,17 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
 
     TextRange elementRange = element.getTextRange();
     if (elementRange == null) {
-      return new HardElementInfo(project, element);
+      return new HardElementInfo(element);
     }
     Identikit.ByType identikit = Identikit.fromPsi(element, LanguageUtil.getRootLanguage(element));
     if (elementRange.isEmpty() && 
         identikit.findPsiElement(containingFile, elementRange.getStartOffset(), elementRange.getEndOffset()) != element) {
       // PSI has empty range, no text, but complicated structure (e.g. PSI built on C-style macro expansions). It can't be reliably
       // restored by just one offset in a file, so hold it on a hard reference
-      return new HardElementInfo(project, element);
+      return new HardElementInfo(element);
     }
     ProperTextRange proper = ProperTextRange.create(elementRange);
-    return new SelfElementInfo(project, proper, identikit, containingFile, forInjected);
+    return new SelfElementInfo(proper, identikit, containingFile, forInjected);
   }
 
   @Nullable
@@ -242,7 +250,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
       SmartPsiElementPointerImpl impl2 = (SmartPsiElementPointerImpl)pointer2;
       SmartPointerElementInfo elementInfo1 = impl1.getElementInfo();
       SmartPointerElementInfo elementInfo2 = impl2.getElementInfo();
-      if (!elementInfo1.pointsToTheSameElementAs(elementInfo2)) return false;
+      if (!elementInfo1.pointsToTheSameElementAs(elementInfo2, ((SmartPsiElementPointerImpl)pointer1).myManager)) return false;
       PsiElement cachedElement1 = impl1.getCachedElement();
       PsiElement cachedElement2 = impl2.getCachedElement();
       return cachedElement1 == null || cachedElement2 == null || Comparing.equal(cachedElement1, cachedElement2);

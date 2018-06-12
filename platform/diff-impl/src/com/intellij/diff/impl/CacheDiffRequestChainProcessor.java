@@ -22,6 +22,7 @@ import com.intellij.diff.chains.DiffRequestProducerException;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.util.DiffUserDataKeysEx.ScrollToPolicy;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.Separator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -87,6 +88,8 @@ public abstract class CacheDiffRequestChainProcessor extends CacheDiffRequestPro
     return ContainerUtil.list(
       new MyPrevDifferenceAction(),
       new MyNextDifferenceAction(),
+      new MyOpenInEditorAction(),
+      Separator.getInstance(),
       new MyPrevChangeAction(),
       new MyNextChangeAction(),
       createGoToChangeAction()

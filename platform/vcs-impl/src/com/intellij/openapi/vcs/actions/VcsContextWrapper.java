@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.ui.Refreshable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,7 +169,7 @@ public class VcsContextWrapper implements VcsContext {
     FilePath path = VcsDataKeys.FILE_PATH.getData(myContext);
 
     return concat(
-      path != null ? Stream.of(path) : Stream.empty(),
+      StreamEx.ofNullable(path),
       stream(VcsDataKeys.FILE_PATH_ARRAY.getData(myContext)),
       getSelectedFilesStream().map(VcsUtil::getFilePath),
       stream(getSelectedIOFiles()).map(VcsUtil::getFilePath)

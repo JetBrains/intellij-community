@@ -34,6 +34,8 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 public class ManualArrayToCollectionCopyInspection extends BaseInspection {
 
   @Override
@@ -194,38 +196,18 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
     @Nullable
     private static String getCollectionsAddAllText(PsiForStatement forStatement) {
       final PsiExpression expression = forStatement.getCondition();
-      final PsiBinaryExpression condition =
-        (PsiBinaryExpression)ParenthesesUtils.stripParentheses(
-          expression);
-      if (condition == null) {
-        return null;
-      }
-      final PsiStatement initialization =
-        forStatement.getInitialization();
-      if (initialization == null) {
-        return null;
-      }
-      if (!(initialization instanceof PsiDeclarationStatement)) {
-        return null;
-      }
-      final PsiDeclarationStatement declaration =
-        (PsiDeclarationStatement)initialization;
-      final PsiElement[] declaredElements =
-        declaration.getDeclaredElements();
-      if (declaredElements.length != 1) {
-        return null;
-      }
-      final PsiElement declaredElement = declaredElements[0];
-      if (!(declaredElement instanceof PsiLocalVariable)) {
-        return null;
-      }
-      final PsiLocalVariable variable = (PsiLocalVariable)declaredElement;
+      final PsiBinaryExpression condition = tryCast(ParenthesesUtils.stripParentheses(expression), PsiBinaryExpression.class);
+      if (condition == null) return null;
+      final PsiDeclarationStatement declaration = tryCast(forStatement.getInitialization(), PsiDeclarationStatement.class);
+      if (declaration == null) return null;
+      final PsiElement[] declaredElements = declaration.getDeclaredElements();
+      if (declaredElements.length != 1) return null;
+      final PsiLocalVariable variable = tryCast(declaredElements[0], PsiLocalVariable.class);
+      if (variable == null) return null;
       final String collectionText = buildCollectionText(forStatement);
-      final PsiArrayAccessExpression arrayAccessExpression =
-        getArrayAccessExpression(forStatement);
-      if (arrayAccessExpression == null) {
-        return null;
-      }
+      final PsiArrayAccessExpression arrayAccessExpression = getArrayAccessExpression(forStatement);
+      if (arrayAccessExpression == null) return null;
+
       final PsiExpression arrayExpression =
         arrayAccessExpression.getArrayExpression();
       final String arrayText = arrayExpression.getText();
@@ -297,26 +279,11 @@ public class ManualArrayToCollectionCopyInspection extends BaseInspection {
           return null;
         }
       }
-      if (!(body instanceof PsiExpressionStatement)) {
-        return null;
-      }
-      final PsiExpressionStatement expressionStatement =
-        (PsiExpressionStatement)body;
-      final PsiExpression expression =
-        expressionStatement.getExpression();
-      if (!(expression instanceof PsiMethodCallExpression)) {
-        return null;
-      }
-      final PsiMethodCallExpression methodCallExpression =
-        (PsiMethodCallExpression)expression;
-      final PsiReferenceExpression methodExpression =
-        methodCallExpression.getMethodExpression();
-      final PsiElement qualifier = methodExpression.getQualifier();
-      if (qualifier == null) {
-        // fixme for when the array is added to 'this'
-        return null;
-      }
-      return qualifier.getText();
+      if (!(body instanceof PsiExpressionStatement)) return null;
+      final PsiExpression expression = PsiUtil.skipParenthesizedExprDown(((PsiExpressionStatement)body).getExpression());
+      if (!(expression instanceof PsiMethodCallExpression)) return null;
+      final PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
+      return ExpressionUtils.getQualifierOrThis(call.getMethodExpression()).getText();
     }
 
     @Nullable

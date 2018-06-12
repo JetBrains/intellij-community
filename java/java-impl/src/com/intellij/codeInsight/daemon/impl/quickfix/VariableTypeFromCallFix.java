@@ -1,6 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-// Use of this source code is governed by the Apache 2.0 license that can be
-// found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
@@ -55,7 +53,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) throws IncorrectOperationException {
     final TypeMigrationRules rules = new TypeMigrationRules(project);
-    rules.setBoundScope(PsiSearchHelper.SERVICE.getInstance(project).getUseScope(myVar));
+    rules.setBoundScope(PsiSearchHelper.getInstance(project).getUseScope(myVar));
 
     TypeMigrationProcessor.runHighlightingTypeMigration(project, editor, rules, myVar, myExpressionType);
   }
@@ -105,8 +103,8 @@ public class VariableTypeFromCallFix implements IntentionAction {
             final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
             if (!varType.equals(appropriateVarType)) {
               actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
+              break;
             }
-            break;
           }
         }
       }

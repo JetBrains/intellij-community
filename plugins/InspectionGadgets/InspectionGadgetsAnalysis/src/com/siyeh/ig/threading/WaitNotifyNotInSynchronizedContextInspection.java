@@ -88,11 +88,10 @@ public class WaitNotifyNotInSynchronizedContextInspection extends BaseInspection
     }
 
     private static boolean isSynchronizedOn(@NotNull PsiElement element, @NotNull PsiExpression target) {
-      final PsiElement context = PsiTreeUtil.getParentOfType(element, PsiSynchronizedStatement.class);
-      if (context == null) {
+      final PsiSynchronizedStatement synchronizedStatement = PsiTreeUtil.getParentOfType(element, PsiSynchronizedStatement.class);
+      if (synchronizedStatement == null) {
         return false;
       }
-      final PsiSynchronizedStatement synchronizedStatement = (PsiSynchronizedStatement)context;
       final PsiExpression lockExpression = ParenthesesUtils.stripParentheses(synchronizedStatement.getLockExpression());
       final EquivalenceChecker checker = EquivalenceChecker.getCanonicalPsiEquivalence();
       return checker.expressionsAreEquivalent(lockExpression, target) || isSynchronizedOn(synchronizedStatement, target);

@@ -94,7 +94,7 @@ public class GenerateEqualsHelper implements Runnable {
   }
 
   private static boolean shouldAddOverrideAnnotation(PsiElement context) {
-    JavaCodeStyleSettings style = CodeStyleSettingsManager.getSettings(context.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings style = JavaCodeStyleSettings.getInstance(context.getContainingFile());
 
     return style.INSERT_OVERRIDE_ANNOTATION && PsiUtil.isLanguageLevel5OrHigher(context);
   }
@@ -170,7 +170,7 @@ public class GenerateEqualsHelper implements Runnable {
   
   private PsiMethod createEquals() throws IncorrectOperationException {
     @NonNls StringBuilder buffer = new StringBuilder();
-    JavaCodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(myClass.getContainingFile());
     ArrayList<PsiField> equalsFields = new ArrayList<>();
     ContainerUtil.addAll(equalsFields, myEqualsFields);
     Collections.sort(equalsFields, EqualsFieldsComparator.INSTANCE);

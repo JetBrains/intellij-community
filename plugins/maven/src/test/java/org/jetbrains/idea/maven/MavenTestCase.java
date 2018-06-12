@@ -5,7 +5,6 @@ package org.jetbrains.idea.maven;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
@@ -24,6 +23,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.ExceptionUtil;
 import gnu.trove.THashSet;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
@@ -188,12 +188,12 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected void runTest() throws Throwable {
     try {
       if (runInWriteAction()) {
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            MavenTestCase.super.runTest();
-          }
-        }.executeSilently().throwException();
+        try {
+          WriteAction.runAndWait(()-> super.runTest());
+        }
+        catch (Throwable throwable) {
+          ExceptionUtil.rethrowAllAsUnchecked(throwable);
+        }
       }
       else {
         super.runTest();
@@ -282,14 +282,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return f;
   }
 
-  protected void deleteSettingsXml() {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
-        if (f != null) f.delete(this);
-      }
-    }.execute().throwException();
+  protected void deleteSettingsXml() throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myDir, "settings.xml"));
+      if (f != null) f.delete(this);
+    });
   }
 
   private static String createSettingsXmlContent(String content) {
@@ -318,35 +315,39 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected Module createModule(final String name, final ModuleType type) {
-    return new WriteCommandAction<Module>(myProject) {
-      @Override
-      protected void run(@NotNull Result<Module> moduleResult) throws Throwable {
+    try {
+      return WriteCommandAction.writeCommandAction(myProject).compute(() -> {
         VirtualFile f = createProjectSubFile(name + "/" + name + ".iml");
         Module module = ModuleManager.getInstance(myProject).newModule(f.getPath(), type.getId());
         PsiTestUtil.addContentRoot(module, f.getParent());
-        moduleResult.setResult(module);
-      }
-    }.execute().getResultObject();
+        return module;
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
-  protected VirtualFile createProjectPom(@NotNull @Language("xml") String xml) {
+  protected VirtualFile createProjectPom(@NotNull @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
-  protected VirtualFile createModulePom(String relativePath, String xml) {
+  protected VirtualFile createModulePom(String relativePath, @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 
-  protected VirtualFile createPomFile(final VirtualFile dir, String xml) {
+  protected VirtualFile createPomFile(final VirtualFile dir, @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     VirtualFile f = dir.findChild("pom.xml");
     if (f == null) {
-      f = new WriteAction<VirtualFile>() {
-        @Override
-        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+      try {
+        f = WriteAction.computeAndWait(() -> {
           VirtualFile res = dir.createChildData(null, "pom.xml");
-          result.setResult(res);
-        }
-      }.execute().getResultObject();
+          return res;
+        });
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
       myAllPoms.add(f);
     }
     setFileContent(f, createPomXml(xml), true);
@@ -354,7 +355,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   @NonNls @Language(value="XML")
-  public static String createPomXml(@NonNls @Language(value="XML", prefix="<xml>", suffix="</xml>") String xml) {
+  public static String createPomXml(@NonNls @Language(value="XML", prefix="<project>", suffix="</project>") String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -395,13 +396,15 @@ public abstract class MavenTestCase extends UsefulTestCase {
   private static VirtualFile createProfilesFile(final VirtualFile dir, String content) {
     VirtualFile f = dir.findChild("profiles.xml");
     if (f == null) {
-      f = new WriteAction<VirtualFile>() {
-        @Override
-        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+      try {
+        f = WriteAction.computeAndWait(() -> {
           VirtualFile res = dir.createChildData(null, "profiles.xml");
-          result.setResult(res);
-        }
-      }.execute().getResultObject();
+          return res;
+        });
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
     }
     setFileContent(f, content, true);
     return f;
@@ -423,14 +426,11 @@ public abstract class MavenTestCase extends UsefulTestCase {
            "</profilesXml>";
   }
 
-  protected void deleteProfilesXml() {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        VirtualFile f = myProjectRoot.findChild("profiles.xml");
-        if (f != null) f.delete(this);
-      }
-    }.execute().throwException();
+  protected void deleteProfilesXml() throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      VirtualFile f = myProjectRoot.findChild("profiles.xml");
+      if (f != null) f.delete(this);
+    });
   }
 
   protected void createStdProjectFolders() {
@@ -466,17 +466,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   private static void setFileContent(final VirtualFile file, final String content, final boolean advanceStamps) {
-    new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+    try {
+      WriteAction.runAndWait(() -> {
         if (advanceStamps) {
           file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
         }
         else {
           file.setBinaryContent(content.getBytes(), file.getModificationStamp(), file.getTimeStamp());
         }
-      }
-    }.execute().getResultObject();
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static <T, U> void assertOrderedElementsAreEqual(Collection<U> actual, Collection<T> expected) {

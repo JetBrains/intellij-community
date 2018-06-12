@@ -81,7 +81,7 @@ public class GitPushResultNotificationTest extends GitPlatformTest {
     }});
     assertNotification(NotificationType.ERROR, "Push partially failed",
                        "ultimate: pushed 1 commit to origin/master<br/>" +
-                       "community: failed with error: Permission denied", notification);
+                       "community: Permission denied", notification);
   }
 
   public void test_success_and_reject() {

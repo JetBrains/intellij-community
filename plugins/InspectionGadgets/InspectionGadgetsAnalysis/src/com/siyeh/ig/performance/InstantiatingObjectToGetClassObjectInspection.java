@@ -120,12 +120,7 @@ public class InstantiatingObjectToGetClassObjectInspection
         expression.getMethodExpression();
       @NonNls final String methodName =
         methodExpression.getReferenceName();
-      if (!"getClass".equals(methodName)) {
-        return;
-      }
-      final PsiExpressionList argumentList = expression.getArgumentList();
-      final PsiExpression[] args = argumentList.getExpressions();
-      if (args.length != 0) {
+      if (!"getClass".equals(methodName) || !expression.getArgumentList().isEmpty()) {
         return;
       }
       final PsiExpression qualifier =

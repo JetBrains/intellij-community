@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.ide.BrowserUtil;
@@ -280,8 +280,8 @@ public abstract class AbstractExternalFilter {
   }
 
   private static boolean skipBlockList(String read) {
-    return StringUtil.toUpperCase(read).contains(HR) || 
-           StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") || 
+    return StringUtil.toUpperCase(read).contains(HR) ||
+           StringUtil.containsIgnoreCase(read, "<ul class=\"blockList\">") ||
            StringUtil.containsIgnoreCase(read, "<li class=\"blockList\">");
   }
 
@@ -361,6 +361,7 @@ public abstract class AbstractExternalFilter {
         else {
           URL parsedUrl = BrowserUtil.getURL(url);
           if (parsedUrl != null) {
+            // gzip is disabled because in any case compressed JAR is downloaded
             HttpRequests.request(parsedUrl.toString()).gzip(false).connect(new HttpRequests.RequestProcessor<Void>() {
               @Override
               public Void process(@NotNull HttpRequests.Request request) throws IOException {

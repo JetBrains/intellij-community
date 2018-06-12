@@ -212,7 +212,8 @@ public class ExternalToolPass extends ProgressableTextEditorHighlightingPass {
     assert editor != null;
     ApplicationManager.getApplication().invokeLater(() -> {
       if (!documentChanged(modificationStampBefore) && !myProject.isDisposed()) {
-        int start = myRestrictRange.getStartOffset(), end = myRestrictRange.getEndOffset();
+        int start = myRestrictRange.getStartOffset();
+        int end = myRestrictRange.getEndOffset();
         UpdateHighlightersUtil.setHighlightersToEditor(myProject, myDocument, start, end, highlights, getColorsScheme(), getId());
         DaemonCodeAnalyzerEx.getInstanceEx(myProject).getFileStatusMap().markFileUpToDate(myDocument, getId());
       }

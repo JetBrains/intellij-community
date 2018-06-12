@@ -2,7 +2,6 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.FoldRegion;
@@ -18,8 +17,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 abstract class FoldRegionsTree {
-  private static final Logger LOG = Logger.getInstance(FoldRegionsTree.class);
-
   private final RangeMarkerTree<FoldRegionImpl> myMarkerTree;
   @NotNull private volatile CachedData myCachedData = new CachedData();
 
@@ -234,6 +231,7 @@ abstract class FoldRegionsTree {
     return null;
   }
 
+  @Nullable
   FoldRegion[] fetchVisible() {
     if (!isFoldingEnabled()) return null;
     CachedData cachedData = ensureAvailableData();

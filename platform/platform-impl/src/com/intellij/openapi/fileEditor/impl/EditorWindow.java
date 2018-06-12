@@ -48,7 +48,9 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.LinkedHashSet;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -193,7 +195,7 @@ public class EditorWindow {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     final Integer second = info.getSecond();
     if (file != null) {
-      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue());
+      getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
     }
   }
 
@@ -204,7 +206,7 @@ public class EditorWindow {
       final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
       final Integer second = info.getSecond();
       if (file != null) {
-        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue());
+        getManager().openFileImpl4(this, file, null, true, true, null, second == null ? -1 : second.intValue(), false);
       }
     }
   }
@@ -334,9 +336,9 @@ public class EditorWindow {
     UISettings uiSettings = UISettings.getInstance();
     if (uiSettings.getActiveMruEditorOnClose()) {
       // try to open last visited file
-      final VirtualFile[] histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFiles();
-      for (int idx = histFiles.length - 1; idx >= 0; idx--) {
-        final VirtualFile histFile = histFiles[idx];
+      final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager ().getProject()).getFileList();
+      for (int idx = histFiles.size() - 1; idx >= 0; idx--) {
+        final VirtualFile histFile = histFiles.get(idx);
         if (histFile.equals(fileBeingClosed)) {
           continue;
         }
@@ -499,12 +501,6 @@ public class EditorWindow {
     return myPanel.isShowing();
   }
 
-  public void setPaintBlocked(boolean blocked) {
-    if (myTabbedPane != null) {
-      myTabbedPane.setPaintBlocked(blocked);
-    }
-  }
-
   protected static class TComp extends JPanel implements DataProvider, EditorWindowHolder {
     @NotNull final EditorWithProviderComposite myEditor;
     protected final EditorWindow myWindow;
@@ -527,7 +523,7 @@ public class EditorWindow {
             if (!hasFocus()) return;
             final JComponent focus = myEditor.getSelectedEditorWithProvider().getFirst().getPreferredFocusedComponent();
             if (focus != null && !focus.hasFocus()) {
-              IdeFocusManager.getGlobalInstance().requestFocus(focus, true);
+              getGlobalInstance().requestFocus(focus, true);
             }
           });
         }
@@ -783,7 +779,8 @@ public class EditorWindow {
           }
 
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
+          HistoryEntry currentState = selectedEditor.currentStateAsHistoryEntry();
+          final FileEditor[] editors = fileEditorManager.openFileImpl4(res, nextFile, currentState, true, focusNew, null, -1, true).first;
           syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
@@ -804,9 +801,14 @@ public class EditorWindow {
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
           HistoryEntry currentState = firstEC.currentStateAsHistoryEntry();
 
-          final FileEditor[] firstEditors = fileEditorManager.openFileImpl3(this, firstFile, !focusNew, currentState, true).first;
+          fileEditorManager.disposeComposite(firstEC);
+
+          final boolean focusEditor = !focusNew;
+          final FileEditor[] firstEditors = fileEditorManager.openFileImpl4(this, firstFile, currentState,
+                                                                            true, focusEditor, null, -1, true).first;
           syncCaretIfPossible(firstEditors);
-          final FileEditor[] secondEditors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, currentState, true).first;
+          final FileEditor[] secondEditors = fileEditorManager.openFileImpl4(res, nextFile, currentState,
+                                                                             true, focusNew, null, -1, true).first;
           syncCaretIfPossible(secondEditors);
         }
         return res;
@@ -1138,7 +1140,7 @@ public class EditorWindow {
 
   private LinkedHashSet<VirtualFile> getTabClosingOrder(boolean closeNonModifiedFilesFirst) {
     final VirtualFile[] allFiles = getFiles();
-    final Set<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileSet();
+    final List<VirtualFile> histFiles = EditorHistoryManager.getInstance(getManager().getProject()).getFileList();
 
     LinkedHashSet<VirtualFile> closingOrder = ContainerUtil.newLinkedHashSet();
 

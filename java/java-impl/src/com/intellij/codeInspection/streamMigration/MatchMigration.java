@@ -22,9 +22,6 @@ import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 class MatchMigration extends BaseStreamApiMigration {
   private static final Logger LOG = Logger.getInstance(MatchMigration.class);
 

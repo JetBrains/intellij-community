@@ -117,13 +117,14 @@ public class JavaExecutionStack extends XExecutionStack {
       }
 
       @Override
-      public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+      public void contextAction(@NotNull SuspendContextImpl suspendContext) {
         if (container.isObsolete()) return;
-        if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
-          int status = myThreadProxy.status();
-          if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) &&
-              !(status == ThreadReference.THREAD_STATUS_NOT_STARTED) &&
-              !(status == ThreadReference.THREAD_STATUS_ZOMBIE)) {
+        int status = myThreadProxy.status();
+        if (status == ThreadReference.THREAD_STATUS_ZOMBIE) {
+          container.errorOccurred(DebuggerBundle.message("frame.panel.thread.finished"));
+        }
+        else if (!myThreadProxy.isCollected() && myDebugProcess.getSuspendManager().isSuspended(myThreadProxy)) {
+          if (!(status == ThreadReference.THREAD_STATUS_UNKNOWN) && !(status == ThreadReference.THREAD_STATUS_NOT_STARTED)) {
             try {
               int added = 0;
               Iterator<StackFrameProxyImpl> iterator = myThreadProxy.frames().iterator();
@@ -169,7 +170,7 @@ public class JavaExecutionStack extends XExecutionStack {
     }
 
     @Override
-    public void contextAction(@NotNull SuspendContextImpl suspendContext) throws Exception {
+    public void contextAction(@NotNull SuspendContextImpl suspendContext) {
       if (myContainer.isObsolete()) return;
       if (myStackFramesIterator.hasNext()) {
         StackFrameProxyImpl frameProxy;

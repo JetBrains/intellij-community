@@ -60,11 +60,17 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   private final PsiElement mySubstituted;
   private RangeMarker mySubstitutedRange;
 
-  public MemberInplaceRenamer(@NotNull PsiNamedElement elementToRename, PsiElement substituted, Editor editor) {
+  public MemberInplaceRenamer(@NotNull PsiNamedElement elementToRename,
+                              @Nullable PsiElement substituted,
+                              @NotNull Editor editor) {
     this(elementToRename, substituted, editor, elementToRename.getName(), elementToRename.getName());
   }
 
-  public MemberInplaceRenamer(@NotNull PsiNamedElement elementToRename, PsiElement substituted, Editor editor, String initialName, String oldName) {
+  public MemberInplaceRenamer(@NotNull PsiNamedElement elementToRename,
+                              @Nullable PsiElement substituted,
+                              @NotNull Editor editor,
+                              @Nullable String initialName,
+                              @Nullable String oldName) {
     super(elementToRename, editor, elementToRename.getProject(), initialName, oldName);
     mySubstituted = substituted;
     if (mySubstituted != null && mySubstituted != myElementToRename && mySubstituted.getTextRange() != null) {

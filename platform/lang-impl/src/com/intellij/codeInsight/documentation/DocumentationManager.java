@@ -4,6 +4,7 @@ package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
@@ -150,7 +151,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
     }
     super.restorePopupBehavior();
-    updateComponent();
+    updateComponent(true);
   }
 
   @Override
@@ -577,7 +578,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return _short ? "for `" + (title != null ? title : element.getText()) + "`": CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+    return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
   public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
@@ -614,9 +615,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    */
   @Nullable
   private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+    if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
+      return assertSameProject(getElementFromLookup(editor, file));
+    }
+
     TargetElementUtil util = TargetElementUtil.getInstance();
-    PsiElement element = assertSameProject(getElementFromLookup(editor, file));
-    if (element == null && file != null) {
+    PsiElement element = null;
+    if (file != null) {
       final DocumentationProvider documentationProvider = getProviderFromElement(file);
       if (documentationProvider instanceof DocumentationProviderEx) {
         element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
@@ -658,8 +663,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
-
-
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
         PsiReference ref = TargetElementUtil.findReference(editor, offset);
@@ -670,9 +673,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
-
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        return documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        PsiElement fromProvider = documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
       }
     }
     return null;
@@ -1057,8 +1060,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
   
   @Override
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) {
+    showJavaDocInfo(editor, psiFile, requestFocus, null);
+  }
+
+  @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    showJavaDocInfo(editor, psiFile, false, null);
+    doUpdateComponent(editor, psiFile, false);
   }
 
   @Override
@@ -1203,18 +1211,17 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
     catch (Exception ignored) { }
     if (attr == null) return null;
-    FileType type = psiFile.getFileType();
+    FileType type = file.getFileType();
     String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
                       type == PlainTextFileType.INSTANCE ? "Text" :
                       type == ArchiveFileType.INSTANCE ? "Archive" :
                       type.getName();
-    String text =
-      (withUrl ? file.getPresentableUrl() : "") +
-      "\n" +
-      "\n" + StringUtil.formatFileSize(attr.size()) + ", " + typeName + (type.isBinary() ? "" : " (" + psiFile.getLanguage().getDisplayName() + ")") +
-      "\nModified on " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-      "\nCreated on " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
-      "\n";
-    return StringUtil.replace(StringUtil.escapeXml(text) + "&nbsp;", "\n", "<p>");
+    String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
+    return (withUrl ? DocumentationMarkup.DEFINITION_START + file.getPresentableUrl() + DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START : "") +
+         "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
+         "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
+         "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
+         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
+         (withUrl ? DocumentationMarkup.CONTENT_END : "");
   }
 }

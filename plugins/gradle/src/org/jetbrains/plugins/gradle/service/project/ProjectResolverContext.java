@@ -80,4 +80,7 @@ public interface ProjectResolverContext extends UserDataHolderEx {
   void checkCancelled() throws ProcessCanceledException;
 
   String getProjectGradleVersion();
+
+  @Nullable
+  String getDefaultGroupId();
 }

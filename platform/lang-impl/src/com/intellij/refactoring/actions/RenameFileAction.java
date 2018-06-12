@@ -17,7 +17,6 @@ package com.intellij.refactoring.actions;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -27,7 +26,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author ven
  */
-public class RenameFileAction extends AnAction implements DumbAware {
+public class RenameFileAction extends AnAction {
   public static final String RENAME_FILE = "Rename File...";
 
   public void actionPerformed(final AnActionEvent e) {

@@ -15,7 +15,10 @@
  */
 package git4idea.config;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import git4idea.GitVcs;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -225,4 +228,11 @@ public enum GitVersionSpecialty {
 
   public abstract boolean existsIn(@NotNull GitVersion version);
 
+  public boolean existsIn(@NotNull Project project) {
+    return existsIn(GitVcs.getInstance(project).getVersion());
+  }
+
+  public boolean existsIn(@NotNull GitRepository repository) {
+    return existsIn(repository.getVcs().getVersion());
+  }
 }

@@ -10,11 +10,18 @@ import com.intellij.codeInsight.completion.CompletionParameters
 import com.intellij.codeInsight.completion.CompletionResultSet
 import com.intellij.codeInsight.lookup.LookupElementBuilder
 import com.intellij.codeInsight.lookup.TailTypeDecorator
+import com.intellij.openapi.util.io.FileUtil
+import com.intellij.psi.PsiDirectory
+import com.intellij.psi.PsiFile
+import com.intellij.psi.PsiFileSystemItem
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
 import com.jetbrains.python.psi.PyClass
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
+import com.jetbrains.python.psi.resolve.QualifiedNameFinder
 import com.jetbrains.python.psi.types.TypeEvalContext
+import com.jetbrains.python.sdk.PythonSdkType
 import icons.PythonIcons
 
 /**
@@ -75,4 +82,22 @@ fun addFunctionToResult(result: CompletionResultSet,
 
   val item = LookupElementBuilder.create(functionName + functionParentheses).withIcon(PythonIcons.Python.Nodes.Cyan_dot)
   result.addElement(TailTypeDecorator.withTail(builderPostprocessor?.invoke(item) ?: item, TailType.CASE_COLON))
+}
+
+/**
+ * Create [LookupElementBuilder] for [element] in the [file].
+ *
+ * Can be used to create lookup elements for packages and modules.
+ * Uses canonical import path for item representation.
+ */
+fun createLookupElementBuilder(file: PsiFile, element: PsiFileSystemItem): LookupElementBuilder? {
+  val name = FileUtil.getNameWithoutExtension(element.name)
+  if (!PyNames.isIdentifier(name)) return null
+
+  val importPath = QualifiedNameFinder.findCanonicalImportPath(element, file)?.removeLastComponent()
+  val tailText = if (importPath != null && importPath.componentCount > 0) " ($importPath)" else null
+
+  return LookupElementBuilder.create(element, name)
+    .withTailText(tailText, true)
+    .withIcon(element.getIcon(0))
 }

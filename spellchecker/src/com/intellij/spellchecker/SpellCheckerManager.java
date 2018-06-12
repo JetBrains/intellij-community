@@ -345,8 +345,9 @@ public class SpellCheckerManager implements Disposable {
       return myName;
     }
 
+    @NotNull
     public static DictionaryLevel getLevelByName(@NotNull String name) {
-      return DICTIONARY_LEVELS.get(name);
+      return DICTIONARY_LEVELS.getOrDefault(name, NOT_SPECIFIED);
     }
   }
 

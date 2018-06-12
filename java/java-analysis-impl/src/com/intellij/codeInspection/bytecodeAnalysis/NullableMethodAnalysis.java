@@ -119,9 +119,7 @@ interface NullableMethodAnalysisData {
 
 class NullableMethodAnalysis {
 
-  static Result FinalNull = new Final(Value.Null);
-  static Result FinalBot = new Final(Value.Bot);
-  static BasicValue lNull = new LabeledNull(0);
+  static final BasicValue lNull = new LabeledNull(0);
 
   static Result analyze(MethodNode methodNode, boolean[] origins, boolean jsr) throws AnalyzerException {
     InsnList insns = methodNode.instructions;
@@ -143,7 +141,7 @@ class NullableMethodAnalysis {
       }
     }
     if (result instanceof LabeledNull) {
-      return FinalNull;
+      return Value.Null;
     }
     if (result instanceof Calls) {
       Calls calls = ((Calls)result);
@@ -163,7 +161,7 @@ class NullableMethodAnalysis {
         }
       }
     }
-    return FinalBot;
+    return Value.Bot;
   }
 
   @NotNull

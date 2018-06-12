@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.ui;
 
 import com.intellij.debugger.engine.DebugProcessImpl;
@@ -41,7 +39,7 @@ class StackFrameList extends XDebuggerFramesList {
     if (!items.isEmpty()) {
       myDebugProcess.getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
-        protected void action() throws Exception {
+        protected void action() {
           boolean separator = false;
           for (StackFrameItem frameInfo : items) {
             if (frameInfo == null) {

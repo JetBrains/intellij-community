@@ -3,7 +3,9 @@ package com.jetbrains.python.psi.types
 
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyCallSiteExpression
+import com.jetbrains.python.psi.PyReferenceExpression
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 
 data class PyTypingNewType(internal val classType: PyClassType, internal val isDefinition: Boolean, internal val myName: String?) : PyClassTypeImpl(
@@ -27,7 +29,7 @@ data class PyTypingNewType(internal val classType: PyClassType, internal val isD
 
   override fun isCallable() = classType.isCallable || isDefinition
 
-  override fun toString() = "TypingNewType: " + myName
+  override fun toString() = "TypingNewType: $myName"
 
   override fun getParameters(context: TypeEvalContext): List<PyCallableParameter>? {
     return if (isCallable) {
@@ -45,27 +47,9 @@ data class PyTypingNewType(internal val classType: PyClassType, internal val isD
   }
 
   companion object {
-    private fun getImportedQualifiedName(referenceExpression: PyReferenceExpression): QualifiedName? {
-      val qualifier = referenceExpression.qualifier
-      if (qualifier is PyReferenceExpression) {
-        PyResolveUtil.resolveLocally(qualifier)
-          .filterIsInstance<PyImportElement>()
-          .firstOrNull { return it.importedQName?.append(referenceExpression.name) }
-      }
-      for (element in PyResolveUtil.resolveLocally(referenceExpression)) {
-        if (element is PyImportElement) {
-          val importStatement = element.containingImportStatement
-          if (importStatement is PyFromImportStatement) {
-            return importStatement.importSourceQName?.append(element.importedQName)
-          }
-        }
-      }
-      return null
-    }
-
     fun isTypingNewType(callExpression: PyCallExpression): Boolean {
-      val calleeReference = callExpression.callee as? PyReferenceExpression ?: return false
-      return getImportedQualifiedName(calleeReference) == QualifiedName.fromDottedString(PyTypingTypeProvider.NEW_TYPE)
+      val callee = callExpression.callee as? PyReferenceExpression ?: return false
+      return QualifiedName.fromDottedString(PyTypingTypeProvider.NEW_TYPE) in PyResolveUtil.resolveImportedElementQNameLocally(callee)
     }
   }
 }

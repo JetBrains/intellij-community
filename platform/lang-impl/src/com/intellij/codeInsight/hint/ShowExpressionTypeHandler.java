@@ -32,13 +32,18 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.IntroduceTargetChooser;
+import com.intellij.ui.LightweightHint;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.JBIterable;
+import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
+import java.awt.*;
 import java.util.Collections;
 import java.util.Map;
+import java.util.Objects;
 import java.util.Set;
 
 public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
@@ -64,15 +69,12 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
     Pass<PsiElement> callback = new Pass<PsiElement>() {
       @Override
       public void pass(@NotNull PsiElement expression) {
+        ExpressionTypeProvider provider = ObjectUtils.assertNotNull(map.get(expression));
         //noinspection unchecked
-        ExpressionTypeProvider<PsiElement> provider = ObjectUtils.assertNotNull(map.get(expression));
         final String informationHint = provider.getInformationHint(expression);
         TextRange range = expression.getTextRange();
         editor.getSelectionModel().setSelection(range.getStartOffset(), range.getEndOffset());
-        ApplicationManager.getApplication().invokeLater(() -> {
-          HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
-          HintManager.getInstance().showInformationHint(editor, informationHint);
-        });
+        displayHint(new DisplayedTypeInfo(expression, provider, editor), informationHint);
       }
     };
     if (map.isEmpty()) {
@@ -82,14 +84,31 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       });
     }
     else if (map.size() == 1) {
-      callback.pass(ObjectUtils.assertNotNull(ContainerUtil.getFirstItem(map.keySet())));
+      Map.Entry<PsiElement, ExpressionTypeProvider> entry = map.entrySet().iterator().next();
+      PsiElement expression = entry.getKey();
+      ExpressionTypeProvider provider = entry.getValue();
+      DisplayedTypeInfo typeInfo = new DisplayedTypeInfo(expression, provider, editor);
+      if (typeInfo.isRepeating() && provider.hasAdvancedInformation()) {
+        //noinspection unchecked
+        String informationHint = provider.getAdvancedInformationHint(expression);
+        displayHint(typeInfo, informationHint);
+      } else {
+        callback.pass(expression);
+      }
     }
     else {
       IntroduceTargetChooser.showChooser(
         editor, ContainerUtil.newArrayList(map.keySet()), callback,
-        expression -> expression.getText()
+        PsiElement::getText
       );
     }
+  }
+
+  private void displayHint(@NotNull DisplayedTypeInfo typeInfo, String informationHint) {
+    ApplicationManager.getApplication().invokeLater(() -> {
+      HintManager.getInstance().setRequestFocusForNextHint(myRequestFocus);
+      typeInfo.showHint(informationHint);
+    });
   }
 
   @NotNull
@@ -130,5 +149,50 @@ public class ShowExpressionTypeHandler implements CodeInsightActionHandler {
       language -> DumbService.getInstance(project).filterByDumbAwareness(LanguageExpressionTypes.INSTANCE.allForLanguage(language))).addAllTo(ContainerUtil.newLinkedHashSet());
   }
 
+  static final class DisplayedTypeInfo {
+    private static volatile DisplayedTypeInfo ourCurrentInstance;
+    final @NotNull PsiElement myElement;
+    final @NotNull ExpressionTypeProvider<?> myProvider;
+    final @NotNull Editor myEditor;
+
+    DisplayedTypeInfo(@NotNull PsiElement element, @NotNull ExpressionTypeProvider<?> provider, @NotNull Editor editor) {
+      myElement = element;
+      myProvider = provider;
+      myEditor = editor;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DisplayedTypeInfo info = (DisplayedTypeInfo)o;
+      return Objects.equals(myElement, info.myElement) &&
+             Objects.equals(myProvider, info.myProvider) &&
+             Objects.equals(myEditor, info.myEditor);
+    }
+
+    /**
+     * @return true if the same hint (i.e. on the same PsiElement, with the same provider, in the same editor) is displayed currently.
+     */
+    boolean isRepeating() {
+      return this.equals(ourCurrentInstance);
+    }
+
+    void showHint(String informationHint) {
+      JComponent label = HintUtil.createInformationLabel(informationHint);
+      setInstance(this);
+      AccessibleContextUtil.setName(label, "Expression type hint");
+      HintManagerImpl hintManager = (HintManagerImpl)HintManager.getInstance();
+      LightweightHint hint = new LightweightHint(label);
+      hint.addHintListener(e -> ApplicationManager.getApplication().invokeLater(() -> setInstance(null)));
+      Point p = hintManager.getHintPosition(hint, myEditor, HintManager.ABOVE);
+      int flags = HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING;
+      hintManager.showEditorHint(hint, myEditor, p, flags, 0, false);
+    }
+
+    private static void setInstance(DisplayedTypeInfo typeInfo) {
+      ourCurrentInstance = typeInfo;
+    }
+  }
 }
 

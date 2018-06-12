@@ -39,43 +39,44 @@ import org.jetbrains.annotations.Nullable;
 class PersistentRangeMarker extends RangeMarkerImpl {
   private LinesCols myLinesCols;
 
-  PersistentRangeMarker(DocumentEx document, int startOffset, int endOffset, boolean register) {
+  PersistentRangeMarker(@NotNull DocumentEx document, int startOffset, int endOffset, boolean register) {
     super(document, startOffset, endOffset, register);
     myLinesCols = ObjectUtils.assertNotNull(storeLinesAndCols(document, getStartOffset(), getEndOffset()));
   }
 
   @Nullable
-  static LinesCols storeLinesAndCols(Document myDocument, int startOffset, int endOffset) {
-    int myStartLine;
-    int myStartColumn;
-    int myEndLine;
-    int myEndColumn;
+  static LinesCols storeLinesAndCols(@NotNull Document myDocument, int startOffset, int endOffset) {
+    LineCol start = calcLineCol(myDocument, startOffset);
+    LineCol end = calcLineCol(myDocument, endOffset);
 
-    // document might have been changed already
-    if (startOffset <= myDocument.getTextLength()) {
-      myStartLine = myDocument.getLineNumber(startOffset);
-      myStartColumn = startOffset - myDocument.getLineStartOffset(myStartLine);
-      if (myStartColumn < 0) {
-        return null;
-      }
-    }
-    else {
+    if (start == null || end == null) {
       return null;
     }
-    if (endOffset <= myDocument.getTextLength()) {
-      myEndLine = myDocument.getLineNumber(endOffset);
-      myEndColumn = endOffset - myDocument.getLineStartOffset(myEndLine);
-      if (myEndColumn < 0) {
-        return null;
-      }
-    }
-    else {
-      return null;
-    }
-
-    return new LinesCols(myStartLine, myStartColumn, myEndLine, myEndColumn);
+    return new LinesCols(start.line, start.col, end.line, end.col);
   }
 
+  private static LineCol calcLineCol(@NotNull Document document, int offset) {
+    // document might have been changed already
+    if (offset <= document.getTextLength()) {
+      int line = document.getLineNumber(offset);
+      int col = offset - document.getLineStartOffset(line);
+      if (col < 0) {
+        return null;
+      }
+      return new LineCol(line, col);
+    }
+    return null;
+  }
+
+  private static class LineCol {
+    private final int line;
+    private final int col;
+
+    LineCol(int line, int col) {
+      this.line = line;
+      this.col = col;
+    }
+  }
   @Nullable
   static Pair<TextRange, LinesCols> translateViaDiff(@NotNull final DocumentEventImpl event, @NotNull LinesCols linesCols) {
     try {
@@ -162,7 +163,7 @@ class PersistentRangeMarker extends RangeMarkerImpl {
     private final int myEndLine;
     private final int myEndColumn;
 
-    LinesCols(int startLine, int startColumn, int endLine, int endColumn) {
+    private LinesCols(int startLine, int startColumn, int endLine, int endColumn) {
       myStartLine = startLine;
       myStartColumn = startColumn;
       myEndLine = endLine;

@@ -11,6 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -36,12 +37,12 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
   public void testProjectWithMockRootUnderIt() throws IOException {
     cd(projectRoot);
     mkdir("src");
-    mkdir(".idea");
+    mkdir(PathMacroUtil.DIRECTORY_STORE_NAME);
     doTest(new VcsRootConfiguration().vcsRoots("community"), projectRoot, "community");
   }
 
   public void testProjectWithAllSubdirsUnderMockRootShouldStillBeNotFullyControlled() throws IOException {
-    String[] dirNames = {".idea", "src", "community"};
+    String[] dirNames = {PathMacroUtil.DIRECTORY_STORE_NAME, "src", "community"};
     doTest(new VcsRootConfiguration().vcsRoots(dirNames), projectRoot, dirNames);
   }
 

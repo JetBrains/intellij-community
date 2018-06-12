@@ -42,7 +42,7 @@ import java.util.List;
  */
 public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   @Override
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     final PsiElement element = getElement(dataContext);
     if (element instanceof GrField && ((GrField)element).isProperty()) return true;
     if (element instanceof GrAccessorMethod) return true;
@@ -56,7 +56,7 @@ public class PropertyRenameHandler implements RenameHandler, TitledHandler {
   }
 
   @Override
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

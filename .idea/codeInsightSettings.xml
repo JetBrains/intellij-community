@@ -8,10 +8,14 @@
       <name>com.google.api.client.repackaged</name>
       <name>com.google.api.client.util</name>
       <name>com.sun</name>
+      <name>io.netty.util.concurrent.Promise</name>
       <name>java.awt.List</name>
       <name>javax.annotation.Nullable</name>
       <name>javax.annotation.RegEx</name>
+      <name>kotlin.reflect.jvm.internal</name>
       <name>org.gradle.api.Nullable</name>
+      <name>org.jetbrains.concurrency.InternalPromiseUtil</name>
+      <name>sun.reflect.generics.reflectiveObjects.NotImplementedException</name>
     </excluded-names>
   </component>
 </project>

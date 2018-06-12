@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
@@ -67,7 +50,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{"4.5"}});
+    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
   @Before
@@ -125,40 +108,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertFalse(scheme.isDefault());
 
     assertEquals(200, settings.getDefaultRightMargin());
-  }
-
-  @Test
-  public void testCompilerConfigurationSettingsImport() throws Exception {
-
-    importProject(
-      withGradleIdeaExtPlugin(
-      "idea {\n" +
-      "  project.settings {\n" +
-      "    compiler {\n" +
-      "      resourcePatterns '!*.java;!*.class'\n" +
-      "      clearOutputDirectory false\n" +
-      "      addNotNullAssertions false\n" +
-      "      autoShowFirstErrorInEditor false\n" +
-      "      displayNotificationPopup false\n" +
-      "      enableAutomake false\n" +
-      "      parallelCompilation true\n" +
-      "      rebuildModuleOnDependencyChange false\n" +
-      "    }\n" +
-      "  }\n" +
-      "}")
-    );
-
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-    final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
-
-    assertSameElements(compilerConfiguration.getResourceFilePatterns(), "!*.class", "!*.java");
-    assertFalse(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
-    assertFalse(compilerConfiguration.isAddNotNullAssertions());
-    assertFalse(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    assertFalse(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
-    assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
-    assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
   }
 
   @Test
@@ -368,7 +317,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   }
 
   @NotNull
-  private String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
+  protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
     return "buildscript {\n" +
            "  repositories {\n" +
            "    mavenLocal()\n" +
@@ -408,14 +357,13 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
-    return UnknownConfigurationType.FACTORY;
+    return UnknownConfigurationType.getFactory();
   }
 
   public Map<String, Map<String, Object>> getConfigs() {
     return myConfigs;
   }
 }
-
 
 class TestFacetConfigurationImporter implements FacetConfigurationImporter<Facet> {
 

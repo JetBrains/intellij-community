@@ -17,7 +17,7 @@ from teamcity.messages import TeamcityServiceMessages
 
 def _step_name(step):
     assert isinstance(step, Step)
-    return step.step_type.capitalize() + " " + step.name.strip()
+    return step.keyword + " " + step.name.strip()
 
 
 def _suite_name(suite):

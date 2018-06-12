@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
@@ -72,20 +73,13 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       val xEnd = r.x + r.width
       val y = r.y + ascent
       val font = editor.getColorsScheme().getFont(EditorFontType.PLAIN)
-      if (effectType == EffectType.LINE_UNDERSCORE) {
-        EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
-      }
-      else if (effectType == EffectType.BOLD_LINE_UNDERSCORE) {
-        EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
-      }
-      else if (effectType == EffectType.STRIKEOUT) {
-        EffectPainter.STRIKE_THROUGH.paint(g2d, xStart, y, xEnd - xStart, editor.charHeight, font)
-      }
-      else if (effectType == EffectType.WAVE_UNDERSCORE) {
-        EffectPainter.WAVE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
-      }
-      else if (effectType == EffectType.BOLD_DOTTED_LINE) {
-        EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
+      @Suppress("NON_EXHAUSTIVE_WHEN")
+      when (effectType) {
+        EffectType.LINE_UNDERSCORE -> EffectPainter.LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
+        EffectType.BOLD_LINE_UNDERSCORE -> EffectPainter.BOLD_LINE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
+        EffectType.STRIKEOUT -> EffectPainter.STRIKE_THROUGH.paint(g2d, xStart, y, xEnd - xStart, editor.charHeight, font)
+        EffectType.WAVE_UNDERSCORE -> EffectPainter.WAVE_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
+        EffectType.BOLD_DOTTED_LINE -> EffectPainter.BOLD_DOTTED_UNDERSCORE.paint(g2d, xStart, y, xEnd - xStart, descent, font)
       }
     }
   }
@@ -98,7 +92,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       get() = metrics.font
 
     init {
-      val font = Font(familyName, Font.PLAIN, size)
+      val font = UIUtil.getFontWithFallback(familyName, Font.PLAIN, size)
       val context = getCurrentContext(editor)
       metrics = FontInfo.getFontMetrics(font, context)
       // We assume this will be a better approximation to a real line height for a given font
@@ -147,6 +141,6 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
 
   companion object {
     private val HINT_FONT_METRICS = Key.create<MyFontMetrics>("ParameterHintFontMetrics")
-    private val BACKGROUND_ALPHA = 0.55f
+    private const val BACKGROUND_ALPHA = 0.55f
   }
 }

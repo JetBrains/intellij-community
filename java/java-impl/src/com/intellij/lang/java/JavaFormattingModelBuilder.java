@@ -19,9 +19,7 @@
  */
 package com.intellij.lang.java;
 
-import com.intellij.formatting.Block;
-import com.intellij.formatting.FormattingModel;
-import com.intellij.formatting.FormattingModelBuilder;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -43,19 +41,35 @@ import com.intellij.psi.impl.source.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class JavaFormattingModelBuilder implements FormattingModelBuilder {
+public class JavaFormattingModelBuilder implements FormattingModelBuilderEx {
   private static final Logger LOG = Logger.getInstance("#com.intellij.lang.java.JavaFormattingModelBuilder");
 
   @Override
   @NotNull
-  public FormattingModel createModel(final PsiElement element, final CodeStyleSettings settings) {
+  public FormattingModel createModel(@NotNull final PsiElement element,
+                                     @NotNull final CodeStyleSettings settings,
+                                     @NotNull final FormattingMode formattingMode) {
     final FileElement fileElement = TreeUtil.getFileElement((TreeElement)SourceTreeToPsiMap.psiElementToTree(element));
     LOG.assertTrue(fileElement != null, "File element should not be null for " + element);
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
     JavaCodeStyleSettings customJavaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
-    Block block = AbstractJavaBlock.newJavaBlock(fileElement, commonSettings, customJavaSettings);
+    Block block = AbstractJavaBlock.newJavaBlock(fileElement, commonSettings, customJavaSettings, formattingMode);
     FormattingDocumentModelImpl model = FormattingDocumentModelImpl.createOn(element.getContainingFile());
     return new PsiBasedFormatterModelWithShiftIndentInside (element.getContainingFile(), block, model);
+  }
+
+  @Nullable
+  @Override
+  public CommonCodeStyleSettings.IndentOptions getIndentOptionsToUse(@NotNull PsiFile file,
+                                                                     @NotNull FormatTextRanges ranges,
+                                                                     @NotNull CodeStyleSettings settings) {
+    return null;
+  }
+
+  @NotNull
+  @Override
+  public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
+    return createModel(element, settings, FormattingMode.REFORMAT);
   }
 
   @Override

@@ -10,7 +10,6 @@ import com.intellij.openapi.ui.popup.ListSeparator;
 import com.intellij.openapi.ui.popup.PopupStep;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -170,23 +169,24 @@ public class SelectBranchPopup {
       List<Object> items = new ArrayList<>(branches);
       items.add(REFRESH_MESSAGE);
 
-      JBList<Object> branchList = new JBList<>(items);
-      branchList.setCellRenderer(new BranchRenderer());
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-        .setTitle(branchLocation.getTail())
-        .setResizable(true)
-        .setItemChoosenCallback(() -> {
-          if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-            loadBranches(branchLocation, () -> showBranchPopup(branchLocation));
-            return;
-          }
-          SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();
-          if (item != null) {
-            myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
-          }
-        })
-        .setFilteringEnabled(item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
-        .createPopup();
+      JBPopup popup =
+        JBPopupFactory.getInstance().createPopupChooserBuilder(items)
+                      .setTitle(branchLocation.getTail())
+                      .setRenderer(new BranchRenderer())
+                      .setResizable(true)
+                      .setItemChosenCallback((v) -> {
+                        if (REFRESH_MESSAGE.equals(v)) {
+                          loadBranches(branchLocation, () -> showBranchPopup(branchLocation));
+                          return;
+                        }
+                        SvnBranchItem item = (SvnBranchItem)v;
+                        if (item != null) {
+                          myCallback.branchSelected(myProject, myConfiguration, item.getUrl(), item.getRevision());
+                        }
+                      })
+                      .setNamerForFiltering(
+                        item -> item instanceof SvnBranchItem ? getBranchName((SvnBranchItem)item) : null)
+                      .createPopup();
       showPopupAt(popup);
     }
 

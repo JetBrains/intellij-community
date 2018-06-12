@@ -41,6 +41,7 @@ import org.jetbrains.jetCheck.PropertyChecker
  */
 @SkipSlowTestLocally
 class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
+
   fun testFuzzActions() {
     val genAction: Generator<Action> = Generator.frequency(
       10, Generator.sampledFrom(
@@ -52,7 +53,7 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
       1, Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
                                                    data.generate(Generator.booleans()),
                                                    data.generate(Generator.booleans())) })
-    PropertyChecker.forAll(Generator.listsOf(genAction)).shouldHold { actions ->
+    PropertyChecker.customized().forAll(Generator.listsOf(genAction)) { actions ->
       val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
       try {
         PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())

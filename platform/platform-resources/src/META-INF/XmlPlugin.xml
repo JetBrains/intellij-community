@@ -109,7 +109,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 

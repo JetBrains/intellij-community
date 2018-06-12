@@ -58,7 +58,7 @@ public class LanguagePanel extends AbstractInjectionPanel<BaseInjection> {
       final Set<String> IDs = new HashSet<>(Arrays.asList(languageIDs));
 
       @Override
-      protected void customizeCellRenderer(JList list, String s, int index, boolean selected, boolean hasFocus) {
+      protected void customizeCellRenderer(@NotNull JList list, String s, int index, boolean selected, boolean hasFocus) {
         final SimpleTextAttributes attributes =
             IDs.contains(s) ? SimpleTextAttributes.REGULAR_ATTRIBUTES : SimpleTextAttributes.ERROR_ATTRIBUTES;
         append(s, attributes);

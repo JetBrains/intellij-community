@@ -73,11 +73,11 @@ class JpsCompilationRunner {
 
   void buildModules(List<JpsModule> modules) {
     Set<String> names = new LinkedHashSet<>()
-    context.messages.info("Collecting dependencies for ${modules.size()} modules")
+    context.messages.debug("Collecting dependencies for ${modules.size()} modules")
     for (JpsModule module : modules) {
       for (String dependency : getModuleDependencies(module, false)) {
         if (names.add(dependency)) {
-          context.messages.info(" adding $dependency required for $module.name")
+          context.messages.debug(" adding $dependency required for $module.name")
         }
       }
     }

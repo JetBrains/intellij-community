@@ -65,6 +65,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     "  <for_removal>Deprecated symbol marked for removal</for_removal>\n" +
     "  <unused>Unused symbol</unused>\n"+
     "  <wrong_ref>Unknown symbol</wrong_ref>\n" +
+    "  <runtime_error>Runtime problem</runtime_error>\n" +
     "  <server_error>Problem from server</server_error>\n" +
     "  <server_duplicate>Duplicate from server</server_duplicate>\n" +
     getCustomSeveritiesDemoText();
@@ -168,6 +169,7 @@ public class GeneralColorsPage implements ColorSettingsPage, InspectionColorSett
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("weak_warning", CodeInsightColors.WEAK_WARNING_ATTRIBUTES);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_error", CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING);
     ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("server_duplicate", CodeInsightColors.DUPLICATE_FROM_SERVER);
+    ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put("runtime_error", CodeInsightColors.RUNTIME_ERROR);
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {
         ADDITIONAL_HIGHLIGHT_DESCRIPTORS.put(getHighlightDescTagName(highlightInfoType),

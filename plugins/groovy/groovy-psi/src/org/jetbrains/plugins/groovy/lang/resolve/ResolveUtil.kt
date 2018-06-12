@@ -94,8 +94,6 @@ fun PsiScopeProcessor.shouldProcessProperties(): Boolean {
   return this is GroovyResolverProcessor && isPropertyResolve
 }
 
-fun PsiScopeProcessor.shouldProcessPackages(): Boolean = shouldProcess(GroovyResolveKind.PACKAGE)
-
 private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   val resolveKindHint = getHint(GroovyResolveKind.HINT_KEY)
   if (resolveKindHint != null) return resolveKindHint.shouldProcess(kind)

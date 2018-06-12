@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.JBColor;
 import com.intellij.util.EventDispatcher;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.frame.*;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
@@ -46,7 +47,7 @@ import java.util.stream.Collectors;
 public class CollectionTree extends XDebuggerTree implements TraceContainer {
   private static final TreePath[] EMPTY_PATHS = new TreePath[0];
   private static final Map<Integer, Color> COLORS_CACHE = new HashMap<>();
-  private static final Object NULL_MARKER = new Object();
+  private static final Object NULL_MARKER = ObjectUtils.sentinel("CollectionTree.NULL_MARKER");
 
   private final NodeManagerImpl myNodeManager;
   private final Project myProject;

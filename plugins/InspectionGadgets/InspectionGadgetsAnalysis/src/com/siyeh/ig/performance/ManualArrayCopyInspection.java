@@ -16,6 +16,7 @@
 package com.siyeh.ig.performance;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.dataFlow.DfaUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
@@ -84,7 +85,13 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (newExpression == null) {
         return;
       }
-      PsiReplacementUtil.replaceStatement(forStatement, newExpression, commentTracker);
+      PsiIfStatement ifStatement = (PsiIfStatement)commentTracker.replaceAndRestoreComments(forStatement, newExpression);
+      if (Boolean.TRUE.equals(DfaUtil.evaluateCondition(ifStatement.getCondition())))  {
+        PsiStatement copyStatement = ControlFlowUtils.stripBraces(ifStatement.getThenBranch());
+        assert copyStatement != null;
+        CommentTracker ct = new CommentTracker();
+        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(copyStatement));
+      }
     }
 
     @Nullable
@@ -161,7 +168,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       final String toOffsetText = buildOffsetText(strippedLhsIndexExpression, variable,
                                                   limitExpression, decrement && (JavaTokenType.LT.equals(tokenType) || JavaTokenType.GT.equals(tokenType)),
                                                   commentTracker);
-      return "System.arraycopy(" + fromArrayText + ", " + fromOffsetText + ", " + toArrayText + ", " + toOffsetText + ", " + lengthText + ");";
+      return "if(" + lengthText + ">=0)" + "System.arraycopy(" + fromArrayText + ", " + fromOffsetText + ", " + toArrayText + ", " + toOffsetText + ", " + lengthText + ");";
     }
 
     @Nullable
@@ -311,25 +318,7 @@ public class ManualArrayCopyInspection extends BaseInspection {
       if (!plusOne) {
         return commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE);
       }
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
-        if (tokenType == JavaTokenType.MINUS) {
-          final PsiExpression rhs = binaryExpression.getROperand();
-          if (ExpressionUtils.isOne(rhs)) {
-            return commentTracker.text(binaryExpression.getLOperand());
-          }
-        }
-      }
-      else if (expression instanceof PsiLiteralExpression) {
-        final PsiLiteralExpression literalExpression = (PsiLiteralExpression)expression;
-        final Object value = literalExpression.getValue();
-        if (value instanceof Integer) {
-          final Integer integer = (Integer)value;
-          return String.valueOf(integer.intValue() + 1);
-        }
-      }
-      return commentTracker.text(expression, ParenthesesUtils.ADDITIVE_PRECEDENCE) + "+1";
+      return JavaPsiMathUtil.add(expression, 1, commentTracker);
     }
 
     @NonNls

@@ -7,9 +7,9 @@ class Test10 {
 
     private void newMethod() {
         new Object() {
-          int get() {
-            return 0;
-          }
+            int get() {
+                return 0;
+            }
         };
     }
 }

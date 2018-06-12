@@ -5,6 +5,7 @@ package org.jetbrains.jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -16,6 +17,7 @@ import static org.jetbrains.jetCheck.Generator.*;
  * @author peter
  */
 public class StatefulGeneratorTest extends PropertyCheckerTestCase {
+  static final String DELETING = "deleting";
 
   public void testShrinkingIntsWithDistributionsDependingOnListSize() {
     Generator<List<InsertChar>> gen = from(data -> {
@@ -29,12 +31,12 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     });
     List<InsertChar> minCmds = checkGeneratesExample(gen,
                                                      cmds -> InsertChar.performOperations(cmds).contains("ab"),
-                                                     36);
+                                                     17);
     assertEquals(minCmds.toString(), 2, minCmds.size());
   }
 
   public void testImperativeInsertDeleteCheckCommands() {
-    Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+    Scenario minHistory = checkFalsified(Scenario.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
     }), Scenario::ensureSuccessful, 33).getMinimalCounterexample().getExampleValue();
@@ -46,7 +48,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testImperativeInsertReplaceDeleteCommands() {
-    Scenario minHistory = checkFalsified(ImperativeCommand.scenarios(() -> env -> {
+    Scenario minHistory = checkFalsified(Scenario.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       ImperativeCommand replace = env1 -> {
         if (sb.length() == 0) return;
@@ -56,7 +58,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       };
 
       env.executeCommands(withRecursion(insertStringCmd(sb), replace, deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 56).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 58).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
@@ -73,16 +75,18 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       }
     };
     try {
-      ImperativeCommand.checkScenarios(command);
+      PropertyChecker.customized().silent().checkScenarios(command);
       fail();
     }
     catch (PropertyFalsified e) {
-      assertFalse(e.getMessage(), e.getMessage().contains("rechecking"));
-      assertTrue(e.getMessage(), e.getMessage().contains("checkScenario"));
+      assertFalse(e.getMessage(), e.getMessage().contains("forAll(..."));
+      assertTrue(e.getMessage(), e.getMessage().contains("rechecking("));
+      assertTrue(e.getMessage(), e.getMessage().contains("checkScenarios(..."));
 
       PropertyFailure<?> failure = e.getFailure();
       try {
-        ImperativeCommand.checkScenario(failure.getIterationSeed(), failure.getSizeHint(), command);
+        //noinspection deprecation
+        PropertyChecker.customized().silent().rechecking(failure.getMinimalCounterexample().getSerializedData()).checkScenarios(command);
         fail();
       }
       catch (PropertyFalsified fromRecheck) {
@@ -92,7 +96,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   @NotNull
-  private static Generator<ImperativeCommand> withRecursion(ImperativeCommand... commands) {
+  static Generator<ImperativeCommand> withRecursion(ImperativeCommand... commands) {
     return recursive(rec -> {
       ImperativeCommand group = env -> {
         env.logMessage("Group");
@@ -112,7 +116,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   @NotNull
-  private static ImperativeCommand insertStringCmd(StringBuilder sb) {
+  static ImperativeCommand insertStringCmd(StringBuilder sb) {
     return env -> {
       int index = env.generateValue(integers(0, sb.length()), null);
       String toInsert = env.generateValue(stringsOf(asciiLetters()), "insert %s at " + index);
@@ -121,13 +125,33 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
   }
 
   @NotNull
-  private static ImperativeCommand deleteStringCmd(StringBuilder sb) {
+  static ImperativeCommand deleteStringCmd(StringBuilder sb) {
     return env -> {
       int start = env.generateValue(integers(0, sb.length()), null);
-      int end = env.generateValue(integers(start, sb.length()), "deleting (" + start + ", %s)");
+      int end = env.generateValue(integers(start, sb.length()), DELETING + " (" + start + ", %s)");
       sb.delete(start, end);
     };
   }
+
+  private ImperativeCommand heavyCommand() {
+    Object[] heavyObject = new Object[100_000];
+    heavyObject[42] = new Object();
+    return new ImperativeCommand() {
+      @Override
+      public void performCommand(@NotNull Environment env) {}
+
+      @Override
+      public String toString() {
+        return super.toString() + Arrays.toString(heavyObject);
+      }
+    };
+  }
+
+  public void testDontFailByOutOfMemoryDueToLeakingObjectsPassedIntoGenerators() {
+    PropertyChecker.customized().checkScenarios(() -> env -> 
+      env.executeCommands(from(data -> data.generate(sampledFrom(heavyCommand(), heavyCommand(), heavyCommand())))));
+  }
+
 }
 
 class InsertChar {

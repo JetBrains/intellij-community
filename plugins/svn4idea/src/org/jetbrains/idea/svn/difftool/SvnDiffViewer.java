@@ -27,7 +27,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.EditorNotificationPanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.panels.Wrapper;
-import java.util.HashMap;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,10 +42,8 @@ import java.awt.*;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
-import java.util.ArrayList;
-import java.util.Collections;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class SvnDiffViewer implements DiffViewer {
   private static final Logger LOG = Logger.getInstance(SvnDiffViewer.class);
@@ -327,13 +324,13 @@ public class SvnDiffViewer implements DiffViewer {
     }
 
     @Override
-    public boolean isFocused() {
-      return DiffUtil.isFocusedComponent(getProject(), myPropertiesViewer.getComponent());
+    public boolean isFocusedInWindow() {
+      return DiffUtil.isFocusedComponentInWindow(myPropertiesViewer.getComponent());
     }
 
     @Override
-    public void requestFocus() {
-      DiffUtil.requestFocus(getProject(), myPropertiesViewer.getPreferredFocusedComponent());
+    public void requestFocusInWindow() {
+      DiffUtil.requestFocusInWindow(myPropertiesViewer.getPreferredFocusedComponent());
     }
   }
 

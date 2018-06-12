@@ -120,5 +120,13 @@ public class SegmentArrayWithData extends SegmentArray {
     return newArray;
   }
 
+  public SegmentArrayWithData copy() {
+    final SegmentArrayWithData sa = new SegmentArrayWithData();
+    sa.mySegmentCount = this.mySegmentCount;
+    sa.myStarts = this.myStarts.clone();
+    sa.myEnds = this.myEnds.clone();
+    sa.myData = this.myData.clone();
+    return sa;
+  }
 }
 

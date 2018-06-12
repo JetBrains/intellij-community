@@ -51,12 +51,12 @@ class BaseLayoutSpec {
    *
    * @param relativeJarPath target JAR path relative to 'lib' directory of the plugin; different modules may be packed into the same JAR,
    * but <strong>don't use this for new plugins</strong>; this parameter is temporary added to keep layout of old plugins.
-   * @param localizableResourcesInCommonJar if {@code true} the translatable resources from the module (messages, inspection descriptions, etc) will be
-   * placed into a separate 'resources_en.jar'. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
+   * @param localizableResourcesJar specifies relative path to the JAR where translatable resources from the module (messages, inspection descriptions, etc) will be
+   * placed. If {@code null}, the resources will be placed into the JAR specified by {@code relativeJarPath}. <strong>Do not use this for new plugins, this parameter is temporary added to keep layout of old plugins</strong>.
    */
-  void withModule(String moduleName, String relativeJarPath, String localizableResourcesInJar = "resources_en.jar") {
-    if (localizableResourcesInJar != null) {
-      layout.modulesWithLocalizableResourcesInCommonJar.put(moduleName, localizableResourcesInJar)
+  void withModule(String moduleName, String relativeJarPath, String localizableResourcesJar = "resources_en.jar") {
+    if (localizableResourcesJar != null) {
+      layout.localizableResourcesJars.put(moduleName, localizableResourcesJar)
     }
     layout.moduleJars.put(relativeJarPath, moduleName)
     layout.explicitlySetJarPaths.add(relativeJarPath)

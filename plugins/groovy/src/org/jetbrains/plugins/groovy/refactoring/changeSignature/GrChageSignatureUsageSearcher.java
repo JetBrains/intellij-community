@@ -32,7 +32,6 @@ import com.intellij.refactoring.util.usageInfo.NoConstructorClassUsageInfo;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTagValueToken;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
@@ -41,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.Set;
 
 /**
@@ -57,10 +57,8 @@ class GrChageSignatureUsageSearcher {
 
   public UsageInfo[] findUsages() {
     ArrayList<UsageInfo> result = new ArrayList<>();
-    final PsiElement element = myChangeInfo.getMethod();
-    if (element instanceof PsiMethod) {
-      final PsiMethod method = (PsiMethod)element;
-
+    final PsiMethod method = myChangeInfo.getMethod();
+    if (method != null) {
       findSimpleUsages(method, result);
 
       final UsageInfo[] usageInfos = result.toArray(UsageInfo.EMPTY_ARRAY);

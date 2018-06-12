@@ -16,8 +16,9 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
@@ -32,6 +33,8 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.util.registry.Registry
@@ -56,7 +59,6 @@ import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.collections.HashSet
@@ -82,7 +84,6 @@ class PartialLocalLineStatusTracker(project: Project,
   private var lastKnownTrackerChangeListId: String? = null
   private val affectedChangeLists = HashSet<String>()
 
-  private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
   private var hasUndoInCommand: Boolean = false
 
   private var shouldInitializeWithExcludedFromCommit: Boolean = false
@@ -92,9 +93,6 @@ class PartialLocalLineStatusTracker(project: Project,
   init {
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
-
-    val connection = application.messageBus.connect(disposable)
-    connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
 
     if (undoStateRecordingEnabled) {
       document.addDocumentListener(MyUndoDocumentListener(), disposable)
@@ -287,13 +285,42 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyUndoCommandListener : CommandListener {
-    override fun beforeCommandFinished(event: CommandEvent?) {
-      if (hasUndoInCommand) {
+    override fun commandStarted(event: CommandEvent?) {
+      if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
+      }
+    }
 
-        if (redoStateRecordingEnabled) {
-          registerUndoAction(false)
-        }
+    override fun commandFinished(event: CommandEvent?) {
+      if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
+        hasUndoInCommand = false
+      }
+    }
+
+    override fun undoTransparentActionStarted() {
+      if (CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+      }
+    }
+
+    override fun undoTransparentActionFinished() {
+      if (CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+      }
+    }
+
+
+    override fun beforeCommandFinished(event: CommandEvent?) {
+      registerRedoAction()
+    }
+
+    override fun beforeUndoTransparentActionFinished() {
+      registerRedoAction()
+    }
+
+    private fun registerRedoAction() {
+      if (hasUndoInCommand && redoStateRecordingEnabled) {
+        registerUndoAction(false)
       }
     }
   }
@@ -311,27 +338,6 @@ class PartialLocalLineStatusTracker(project: Project,
     val action = MyUndoableAction(project, document, undoState, undo)
     undoManager.undoableActionPerformed(action)
     undoableActions.add(action)
-  }
-
-  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
-      if (eventProject != project) return
-      if (batchChangeTaskCounter.getAndIncrement() == 0) {
-        documentTracker.freeze(Side.LEFT)
-        documentTracker.freeze(Side.RIGHT)
-      }
-    }
-
-    override fun batchChangeCompleted(eventProject: Project) {
-      if (eventProject != project) return
-      application.invokeLater(
-        {
-          if (batchChangeTaskCounter.decrementAndGet() == 0) {
-            documentTracker.unfreeze(Side.LEFT)
-            documentTracker.unfreeze(Side.RIGHT)
-          }
-        }, ModalityState.any())
-    }
   }
 
   private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
@@ -515,7 +521,10 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?): JComponent? {
+    override fun createAdditionalInfoPanel(editor: Editor,
+                                           range: Range,
+                                           mousePosition: Point?,
+                                           disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
@@ -524,8 +533,7 @@ class PartialLocalLineStatusTracker(project: Project,
       val group = DefaultActionGroup()
       if (changeLists.size > 1) {
         group.add(Separator("Changelists"))
-        val comparator = compareBy<LocalChangeList> { if (it.isDefault) 0 else 1 }.thenBy { it.name }
-        for (changeList in changeLists.sortedWith(comparator)) {
+        for (changeList in changeLists) {
           group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
         }
         group.add(Separator.getInstance())
@@ -534,6 +542,18 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
       val link = ActionGroupLink(rangeList.name, null, group)
+
+      val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent?) {
+          link.linkLabel.doClick()
+        }
+      }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
+
+      val shortcuts = moveChangesShortcutSet.shortcuts
+      if (shortcuts.isNotEmpty()) {
+        link.linkLabel.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
+      }
 
       val panel = JPanel(BorderLayout())
       panel.add(link, BorderLayout.CENTER)

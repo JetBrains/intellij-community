@@ -18,12 +18,11 @@ package com.intellij.lang.ant.config.impl;
 import com.intellij.lang.ant.config.ExecutionEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.StringTokenizer;
 
@@ -31,7 +30,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
   @NonNls public static final String TYPE_ID = "compositeTask";
   private final String myCompositeName;
   private String myPresentableName;
-  private final String[] myTargetNames;
+  private final List<String> myTargetNames;
   @NonNls public static final String PRESENTABLE_NAME = "presentableName";
 
 
@@ -45,27 +44,31 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     while (tokenizer.hasMoreTokens()) {
       targetNames.add(tokenizer.nextToken().trim());
     }
-    myTargetNames = ArrayUtil.toStringArray(targetNames);
+    myTargetNames = targetNames;
     myPresentableName = compositeName;
   }
 
+  @Deprecated
   public ExecuteCompositeTargetEvent(String[] targetNames) {
+    this(Arrays.asList(targetNames));
+  }
+  
+  public ExecuteCompositeTargetEvent(List<String> targetNames) {
     myTargetNames = targetNames;
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append("[");
-      for (int idx = 0; idx < targetNames.length; idx++) {
-        if (idx > 0) {
-          builder.append(",");
-        }
-        builder.append(targetNames[idx]);
+    final StringBuilder builder = new StringBuilder();
+    boolean first = true;
+    builder.append("[");
+    for (String name : targetNames) {
+      if (first) {
+        first = false;
       }
-      builder.append("]");
-      myCompositeName = builder.toString();
+      else {
+        builder.append(",");
+      }
+      builder.append(name);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    builder.append("]");
+    myCompositeName = builder.toString();
     myPresentableName = myCompositeName;
   }
 
@@ -85,7 +88,7 @@ public final class ExecuteCompositeTargetEvent extends ExecutionEvent {
     return myCompositeName;
   }
 
-  public String[] getTargetNames() {
+  public List<String> getTargetNames() {
     return myTargetNames;
   }
 

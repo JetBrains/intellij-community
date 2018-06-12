@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.tree.JavaJspElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -96,7 +96,7 @@ public class ForStatementFixer implements Fixer {
   {
     final Project project = editor.getProject();
     int offset = lastValidForPart.getTextRange().getEndOffset();
-    if (project != null && CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) {
+    if (project != null && CodeStyle.getSettings(editor).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA) {
       if (editor.getDocument().getCharsSequence().charAt(lastValidForPart.getTextRange().getEndOffset() - 1) != ';') {
         offset++;
       }

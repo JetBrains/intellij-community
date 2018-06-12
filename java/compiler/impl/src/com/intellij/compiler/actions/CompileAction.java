@@ -146,7 +146,7 @@ public class CompileAction extends CompileActionBase {
         buffer.append("'");
       }
       buffer.append("...");
-      buffer.append(elementDescription.substring(length - 20, length));
+      buffer.append(elementDescription, length - 20, length);
     }
     else {
       buffer.append(elementDescription);

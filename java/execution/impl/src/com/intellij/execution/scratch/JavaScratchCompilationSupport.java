@@ -153,6 +153,9 @@ public class JavaScratchCompilationSupport implements CompileTask {
         options.add(langLevel);
         options.add("-target");
         options.add(langLevel);
+        if (sdkVersion.isAtLeast(JavaSdkVersion.JDK_11)) {
+          options.add("--enable-preview");
+        }
       }
       options.add("-proc:none"); // disable annotation processing
 

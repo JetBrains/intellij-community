@@ -115,6 +115,11 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
           if (parent instanceof PsiFunctionalExpression) {
             refElement = PsiUtil.resolveClassInType(((PsiFunctionalExpression)parent).getFunctionalInterfaceType());
           }
+          else if (element instanceof PsiKeyword && 
+                   parent instanceof PsiTypeElement && 
+                   ((PsiTypeElement)parent).isInferredType()) {
+            refElement = PsiUtil.resolveClassInType(((PsiTypeElement)parent).getType());
+          }
         } 
       }
     }

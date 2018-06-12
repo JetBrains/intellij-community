@@ -4,7 +4,7 @@ public class RenameInInitializer {
       int aValue = inner.getValue();
       int result = inner.getResult();
       int a = inner.getA();
-    System.out.println(aValue + result + a);
+      System.out.println(aValue + result + a);
   }
 
     private static class Inner {

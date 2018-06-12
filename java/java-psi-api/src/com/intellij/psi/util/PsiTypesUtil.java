@@ -165,7 +165,7 @@ public class PsiTypesUtil {
     if (lub instanceof PsiClassType) {
       return (PsiClassType)lub;
     }
-    else if (lub instanceof PsiIntersectionType) {
+    if (lub instanceof PsiIntersectionType) {
       for (PsiType subType : ((PsiIntersectionType)lub).getConjuncts()) {
         if (subType instanceof PsiClassType) {
           final PsiClass aClass = ((PsiClassType)subType).resolve();
@@ -319,10 +319,7 @@ public class PsiTypesUtil {
   }
 
   public static boolean isDenotableType(PsiType type) {
-    if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType) {
-      return false;
-    }
-    return true;
+    return !(type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType);
   }
   
   public static boolean hasUnresolvedComponents(@NotNull PsiType type) {
@@ -395,7 +392,7 @@ public class PsiTypesUtil {
     return filterUnusedTypeParameters(typeParameters, superReturnTypeInBaseClassType);
   }
 
-  public static boolean isAccessibleAt(PsiTypeParameter parameter, PsiElement context) {
+  private static boolean isAccessibleAt(PsiTypeParameter parameter, PsiElement context) {
     PsiTypeParameterListOwner owner = parameter.getOwner();
     if(owner instanceof PsiMethod) {
       return PsiTreeUtil.isAncestor(owner, context, false);
@@ -428,14 +425,17 @@ public class PsiTypesUtil {
       return myTypeParams;
     }
 
+    @Override
     public Boolean visitType(final PsiType type) {
       return false;
     }
 
+    @Override
     public Boolean visitArrayType(final PsiArrayType arrayType) {
       return arrayType.getComponentType().accept(this);
     }
 
+    @Override
     public Boolean visitClassType(final PsiClassType classType) {
       PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
@@ -455,6 +455,7 @@ public class PsiTypesUtil {
       return false;
     }
 
+    @Override
     public Boolean visitWildcardType(final PsiWildcardType wildcardType) {
       final PsiType bound = wildcardType.getBound();
       if (bound != null) {

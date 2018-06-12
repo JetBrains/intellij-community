@@ -1,24 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("PropertyName")
+
 package com.intellij.configurationStore.xml
 
 import com.intellij.configurationStore.StoredPropertyStateTest
+import com.intellij.configurationStore.clearBindingCache
 import com.intellij.configurationStore.deserialize
 import com.intellij.configurationStore.serialize
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.testFramework.UsefulTestCase
 import com.intellij.testFramework.assertConcurrent
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.loadElement
@@ -40,10 +30,13 @@ import java.util.*
   XmlSerializerCollectionTest::class,
   StoredPropertyStateTest::class,
   KotlinXmlSerializerTest::class,
-  XmlSerializerConversionTest::class
+  XmlSerializerConversionTest::class,
+  XmlSerializerListTest::class,
+  XmlSerializerSetTest::class
 )
 class XmlSerializerTestSuite
 
+@Suppress("PropertyName")
 internal class XmlSerializerTest {
   @Test fun annotatedInternalVar() {
     class Bean {
@@ -59,6 +52,13 @@ internal class XmlSerializerTest {
         <entry key="foo" value="bar" />
       </option>
     </Bean>""", data)
+  }
+
+  @Test
+  fun testClearBindingCache() {
+    if (!UsefulTestCase.IS_UNDER_TEAMCITY) {
+      clearBindingCache()
+    }
   }
 
   @Test fun emptyBeanSerialization() {
@@ -120,7 +120,7 @@ internal class XmlSerializerTest {
     testSerializer("<BeanWithSubBean>\n" + "  <option name=\"BEAN1\">\n" + "    <Bean />\n" + "  </option>\n" + "  <option name=\"BEAN2\">\n" + "    <BeanWithPublicFields>\n" + "      <option name=\"INT_V\" value=\"2\" />\n" + "      <option name=\"STRING_V\" value=\"bye\" />\n" + "    </BeanWithPublicFields>\n" + "  </option>\n" + "</BeanWithSubBean>", bean)
   }
 
-  @Test fun SubBeanSerializationAndSkipDefaults() {
+  @Test fun subBeanSerializationAndSkipDefaults() {
     val bean = BeanWithSubBean()
     testSerializer("<BeanWithSubBean />", bean, SkipDefaultsSerializationFilter())
   }
@@ -131,22 +131,25 @@ internal class XmlSerializerTest {
 
     override fun equals(other: Any?): Boolean {
       // any instance of this class is equal
+      @Suppress("SuspiciousEqualsCombination")
       return this === other || (other != null && javaClass == other.javaClass)
     }
   }
 
-  private class BeanWithSubBeanWithEquals {
-    var BEAN1: EmptyBeanWithCustomName = EmptyBeanWithCustomName()
-    var BEAN2: BeanWithEquals = BeanWithEquals()
-  }
-
   @Test fun subBeanWithEqualsSerializationAndSkipDefaults() {
+    @Tag("bean")
+    class BeanWithSubBeanWithEquals {
+      @Suppress("unused")
+      var bean1: EmptyBeanWithCustomName = EmptyBeanWithCustomName()
+      var bean2: BeanWithEquals = BeanWithEquals()
+    }
+
     val bean = BeanWithSubBeanWithEquals()
     val filter = SkipDefaultsSerializationFilter()
-    testSerializer("<BeanWithSubBeanWithEquals />", bean, filter)
+    testSerializer("<bean />", bean, filter)
 
-    bean.BEAN2.STRING_V = "new"
-    testSerializer("<BeanWithSubBeanWithEquals />", bean, filter)
+    bean.bean2.STRING_V = "new"
+    testSerializer("<bean />", bean, filter)
   }
 
   @Test fun nullFieldValue() {
@@ -247,7 +250,7 @@ internal class XmlSerializerTest {
     element.removeContent(node)
     element.addContent(node)
 
-    bean = element.deserialize<BeanWithPublicFields>()
+    bean = element.deserialize()
     assertThat(bean.INT_V).isEqualTo(987)
     assertThat(bean.STRING_V).isEqualTo("1234")
   }
@@ -259,18 +262,22 @@ internal class XmlSerializerTest {
 
   @Test fun transient() {
     class Bean {
+      @Suppress("unused")
       var INT_V: Int = 1
         @Transient
         get
 
-      @Transient fun getValue(): String = "foo"
+      @Suppress("unused")
+      @Transient
+      fun getValue(): String = "foo"
     }
 
     testSerializer("<Bean />", Bean())
   }
 
-  @Test fun PropertyWithoutTagWithPrimitiveType() {
+  @Test fun propertyWithoutTagWithPrimitiveType() {
     class BeanWithPropertyWithoutTagOnPrimitiveValue {
+      @Suppress("unused")
       @Property(surroundWithTag = false)
       var INT_V = 1
     }
@@ -319,7 +326,7 @@ internal class XmlSerializerTest {
   @Tag("bean")
   private class BeanWithArrayWithoutAllTag {
     @Property(surroundWithTag = false)
-    @XCollection(elementName = "vvalue", valueAttributeName = "v")
+    @XCollection(elementName = "vValue", valueAttributeName = "v")
     var v = arrayOf("a", "b")
 
     var intV = 1
@@ -330,8 +337,8 @@ internal class XmlSerializerTest {
 
     testSerializer("""<bean>
   <option name="intV" value="1" />
-  <vvalue v="a" />
-  <vvalue v="b" />
+  <vValue v="a" />
+  <vValue v="b" />
 </bean>""", bean)
 
     bean.intV = 2
@@ -339,9 +346,9 @@ internal class XmlSerializerTest {
 
     testSerializer("""<bean>
   <option name="intV" value="2" />
-  <vvalue v="1" />
-  <vvalue v="2" />
-  <vvalue v="3" />
+  <vValue v="1" />
+  <vValue v="2" />
+  <vValue v="3" />
 </bean>""", bean)
   }
 
@@ -349,7 +356,7 @@ internal class XmlSerializerTest {
     @Tag("bean")
     class BeanWithArrayWithoutAllTag2 {
       @Property(surroundWithTag = false)
-      @XCollection(elementName = "vvalue", valueAttributeName = "")
+      @XCollection(elementName = "vValue", valueAttributeName = "")
       var v = arrayOf("a", "b")
       var intV = 1
     }
@@ -358,8 +365,8 @@ internal class XmlSerializerTest {
 
     testSerializer("""<bean>
   <option name="intV" value="1" />
-  <vvalue>a</vvalue>
-  <vvalue>b</vvalue>
+  <vValue>a</vValue>
+  <vValue>b</vValue>
 </bean>""", bean)
 
     bean.intV = 2
@@ -367,14 +374,20 @@ internal class XmlSerializerTest {
 
     testSerializer("""<bean>
   <option name="intV" value="2" />
-  <vvalue>1</vvalue>
-  <vvalue>2</vvalue>
-  <vvalue>3</vvalue>
+  <vValue>1</vValue>
+  <vValue>2</vValue>
+  <vValue>3</vValue>
 </bean>""", bean)
   }
 
   @Test fun deserializeFromFormattedXML() {
-    val bean = loadElement("<bean>\n" + "  <option name=\"intV\" value=\"2\"/>\n" + "  <vvalue v=\"1\"/>\n" + "  <vvalue v=\"2\"/>\n" + "  <vvalue v=\"3\"/>\n" + "</bean>").deserialize<BeanWithArrayWithoutAllTag>()
+    val bean = loadElement("""
+    <bean>
+    <option name="intV" value="2"/>
+    <vValue v="1"/>
+    <vValue v="2"/>
+    <vValue v="3"/>
+  </bean>""").deserialize<BeanWithArrayWithoutAllTag>()
     assertThat(bean.intV).isEqualTo(2)
     assertThat("[1, 2, 3]").isEqualTo(Arrays.asList(*bean.v).toString())
   }
@@ -384,11 +397,12 @@ internal class XmlSerializerTest {
     var COUNT = 3
     @Attribute("name")
     var name = "James"
+    @Suppress("unused")
     @Attribute("occupation")
     var occupation: String? = null
   }
 
-  @Test fun BeanWithPrimitivePropertyBoundToAttribute() {
+  @Test fun beanWithPrimitivePropertyBoundToAttribute() {
     val bean = BeanWithPropertiesBoundToAttribute()
 
     testSerializer("<BeanWithPropertiesBoundToAttribute count=\"3\" name=\"James\" />", bean)
@@ -443,7 +457,7 @@ internal class XmlSerializerTest {
     val bean = loadElement("<BeanWithJDOMElement><option name=\"STRING_V\" value=\"bye\"/><actions><action/><action/></actions></BeanWithJDOMElement>").deserialize<BeanWithJDOMElement>()
 
     assertThat(bean.STRING_V).isEqualTo("bye")
-    assertThat(bean.actions).isNotNull()
+    assertThat(bean.actions).isNotNull
     assertThat(bean.actions!!.getChildren("action")).hasSize(2)
   }
 
@@ -555,8 +569,10 @@ internal class XmlSerializerTest {
 
   @Test fun defaultAttributeName() {
     class BeanWithDefaultAttributeName {
+      @Suppress("unused")
       @Attribute fun getFoo() = "foo"
 
+      @Suppress("unused")
       fun setFoo(@Suppress("UNUSED_PARAMETER") value: String) {
       }
     }
@@ -571,6 +587,7 @@ internal class XmlSerializerTest {
     @Attribute
     var module: String? = null
 
+    @Suppress("unused")
     @Attribute
     var ac: String? = null
   }
@@ -652,8 +669,7 @@ internal class BeanWithTextAnnotation {
     this.STRING_V = STRING_V
   }
 
-  constructor() {
-  }
+  constructor()
 }
 
 internal class BeanWithProperty {

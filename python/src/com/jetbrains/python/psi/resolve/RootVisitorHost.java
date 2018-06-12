@@ -15,15 +15,15 @@
  */
 package com.jetbrains.python.psi.resolve;
 
-import com.google.common.collect.Sets;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleManager;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.Processor;
+import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -37,11 +37,16 @@ import java.util.Set;
 public class RootVisitorHost {
   public static void visitRoots(@NotNull final PsiElement elt, @NotNull final RootVisitor visitor) {
     // real search
-    final Module module = ModuleUtil.findModuleForPsiElement(elt);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(elt);
     if (module != null) {
       visitRoots(module, false, visitor);
     }
     else {
+      if (PyUtil.isInScratchFile(elt)) {
+        for (Module mod : ModuleManager.getInstance(elt.getProject()).getModules()) {
+          visitRoots(mod, true, visitor);
+        }
+      }
       final PsiFile containingFile = elt.getContainingFile();
       if (containingFile != null) {
         visitSdkRoots(containingFile, visitor);
@@ -100,12 +105,10 @@ public class RootVisitorHost {
 
   private static boolean visitModuleContentEntries(ModuleRootModel rootModel, RootVisitor visitor) {
     // look in module sources
-    Set<VirtualFile> contentRoots = Sets.newHashSet();
     for (ContentEntry entry : rootModel.getContentEntries()) {
       VirtualFile rootFile = entry.getFile();
 
       if (rootFile != null && !visitor.visitRoot(rootFile, null, null, true)) return false;
-      contentRoots.add(rootFile);
       for (VirtualFile folder : entry.getSourceFolderFiles()) {
         if (!visitor.visitRoot(folder, rootModel.getModule(), null, true)) return false;
       }

@@ -12,6 +12,7 @@ import java.awt.*;
  * line marker, gutter icon, error stripe marker or line separator).
  *
  * @see MarkupModel#addRangeHighlighter(int, int, int, TextAttributes, HighlighterTargetArea)
+ * @see MarkupModel#addLineHighlighter(int, int, TextAttributes)
  * @see com.intellij.lang.annotation.Annotation
  */
 public interface RangeHighlighter extends RangeMarker {

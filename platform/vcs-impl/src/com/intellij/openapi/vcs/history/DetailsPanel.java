@@ -22,6 +22,7 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.HtmlPanel;
 import com.intellij.util.ui.JBDimension;
@@ -85,7 +86,7 @@ class DetailsPanel extends HtmlPanel implements DataProvider, CopyProvider {
       }
       if (addRevisionInfo) {
         String revisionInfo = FileHistoryPanelImpl.getPresentableText(revision.getRevision(), false);
-        html.append("<font color=\"#").append(Integer.toHexString(JBColor.gray.getRGB()).substring(2)).append("\">")
+        html.append("<font color=\"").append(ColorUtil.toHtmlColor(JBColor.gray).substring(2)).append("\">")
             .append(getHtmlWithFonts(revisionInfo)).append("</font><br/>");
       }
       html.append(getHtmlWithFonts(formatTextWithLinks(myProject, message)));

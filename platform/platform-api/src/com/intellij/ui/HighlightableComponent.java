@@ -327,7 +327,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
         offset += fontMetrics.stringWidth(text);
       }
 
-      String text = myText.substring(endIndex, myText.length());
+      String text = myText.substring(endIndex);
 
       if (text.length() != 0){
         g.setColor(fgColor);
@@ -431,7 +431,7 @@ public class HighlightableComponent extends JComponent implements Accessible {
 
           width += fontMetrics.stringWidth(text);
         }
-        width += defFontMetrics.stringWidth(myText.substring(endIndex, myText.length()));
+        width += defFontMetrics.stringWidth(myText.substring(endIndex));
       }
     }
 

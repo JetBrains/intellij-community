@@ -71,7 +71,7 @@ class SmartPointerTracker {
     return true;
   }
 
-  boolean isActual(VirtualFile file, Key<SmartPointerTracker> key) {
+  private boolean isActual(@NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> key) {
     return file.getUserData(key) == this;
   }
 
@@ -110,20 +110,20 @@ class SmartPointerTracker {
     }
   }
 
-  private void assertActual(Key<SmartPointerTracker> expectedKey, VirtualFile file, Key<SmartPointerTracker> refKey) {
+  private void assertActual(@NotNull Key<SmartPointerTracker> expectedKey, @NotNull VirtualFile file, @NotNull Key<SmartPointerTracker> refKey) {
     assert isActual(file, refKey) : "Smart pointer list mismatch mismatch:" +
                                     " ref.key=" + expectedKey +
                                     ", manager.key=" + refKey +
                                     (file.getUserData(refKey) != null ? "; has another pointer list" : "");
   }
 
-  private void processAlivePointers(@NotNull Processor<SmartPsiElementPointerImpl<?>> processor) {
+  private void processAlivePointers(@NotNull Processor<? super SmartPsiElementPointerImpl<?>> processor) {
     for (int i = 0; i < nextAvailableIndex; i++) {
       PointerReference ref = references[i];
       if (ref == null) continue;
 
       assert isActual(ref.file, ref.key);
-      SmartPsiElementPointerImpl pointer = ref.get();
+      SmartPsiElementPointerImpl<?> pointer = ref.get();
       if (pointer == null) {
         removeReference(ref, ref.key);
         continue;
@@ -154,7 +154,7 @@ class SmartPointerTracker {
     }
   }
 
-  synchronized void updateMarkers(FrozenDocument frozen, List<DocumentEvent> events) {
+  synchronized void updateMarkers(@NotNull FrozenDocument frozen, @NotNull List<DocumentEvent> events) {
     boolean stillSorted = markerCache.updateMarkers(frozen, events);
     if (!stillSorted) {
       mySorted = false;
@@ -162,7 +162,7 @@ class SmartPointerTracker {
   }
 
   @Nullable
-  synchronized Segment getUpdatedRange(SelfElementInfo info, FrozenDocument document, List<DocumentEvent> events) {
+  synchronized Segment getUpdatedRange(@NotNull SelfElementInfo info, @NotNull FrozenDocument document, @NotNull List<DocumentEvent> events) {
     return markerCache.getUpdatedRange(info, document, events);
   }
   @Nullable
@@ -170,16 +170,16 @@ class SmartPointerTracker {
     return MarkerCache.getUpdatedRange(containingFile, segment, isSegmentGreedy, frozen, events);
   }
 
-  synchronized void switchStubToAst(AnchorElementInfo info, PsiElement element) {
+  synchronized void switchStubToAst(@NotNull AnchorElementInfo info, @NotNull PsiElement element) {
     info.switchToTreeRange(element);
     markerCache.rangeChanged();
     mySorted = false;
   }
 
-  synchronized void fastenBelts() {
+  synchronized void fastenBelts(@NotNull SmartPointerManagerImpl manager) {
     processQueue();
     processAlivePointers(pointer -> {
-      pointer.getElementInfo().fastenBelt();
+      pointer.getElementInfo().fastenBelt(manager);
       return true;
     });
   }
@@ -212,7 +212,10 @@ class SmartPointerTracker {
       }
     }
 
-    pointer.cacheElement(pointer.doRestoreElement());
+    E actual = pointer.doRestoreElement();
+    if (actual != cachedElement) {
+      pointer.cacheElement(actual);
+    }
   }
 
   private static void storePointerReference(PointerReference[] references, int index, PointerReference ref) {
@@ -239,7 +242,7 @@ class SmartPointerTracker {
     return size;
   }
 
-  static class PointerReference extends WeakReference<SmartPsiElementPointerImpl> {
+  static class PointerReference extends WeakReference<SmartPsiElementPointerImpl<?>> {
     @NotNull private final VirtualFile file;
     @NotNull private final Key<SmartPointerTracker> key;
     private int index = -2;

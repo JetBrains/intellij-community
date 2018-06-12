@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.ide.CutProvider;
@@ -219,6 +219,7 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void paintComponent(Graphics g) {
+    myEditor.measureTypingLatency();
     myApplication.editorPaintStart();
 
     try {
@@ -242,6 +243,10 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   public void repaintEditorComponent() {
     repaint();
+  }
+
+  public void repaintEditorComponentExact(int x, int y, int width, int height) {
+    repaint(x, y, width, height);
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {
@@ -898,13 +903,12 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
     public AccessibleEditorComponentImpl() {
       if (myEditor.isDisposed()) return;
 
-      myEditor.getCaretModel().addCaretListener(this);
+      myEditor.getCaretModel().addCaretListener(this, myEditor.getDisposable());
       myEditor.getDocument().addDocumentListener(this);
 
       Disposer.register(myEditor.getDisposable(), new Disposable() {
         @Override
         public void dispose() {
-          myEditor.getCaretModel().removeCaretListener(AccessibleEditorComponentImpl.this);
           myEditor.getDocument().removeDocumentListener(AccessibleEditorComponentImpl.this);
         }
       });

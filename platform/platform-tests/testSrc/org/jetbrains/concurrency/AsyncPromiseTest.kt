@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
 import com.intellij.testFramework.assertConcurrent
@@ -16,6 +16,17 @@ class AsyncPromiseTest {
   }
 
   @Test
+  fun cancel() {
+    val promise = AsyncPromise<Boolean>()
+    assertThat(promise.isCancelled).isFalse()
+    assertThat(promise.cancel(true)).isTrue()
+    assertThat(promise.isCancelled).isTrue()
+    assertThat(promise.cancel(true)).isFalse()
+    assertThat(promise.isCancelled).isTrue()
+    assertThat(promise.blockingGet(1)).isNull()
+  }
+
+  @Test
   fun rejected() {
     doHandlerTest(true)
   }
@@ -26,7 +37,8 @@ class AsyncPromiseTest {
     val count = AtomicInteger()
 
     val r = {
-      promise.done { count.incrementAndGet() }
+      promise
+        .onSuccess { count.incrementAndGet() }
     }
 
     val s = {
@@ -49,18 +61,29 @@ class AsyncPromiseTest {
   fun blockingGet() {
     val promise = AsyncPromise<String>()
     assertConcurrent(
-        { assertThat(promise.blockingGet(1000)).isEqualTo("test") },
-        {
-          Thread.sleep(100)
-          promise.setResult("test")
-        })
+      { assertThat(promise.blockingGet(1000)).isEqualTo("test") },
+      {
+        Thread.sleep(100)
+        promise.setResult("test")
+      })
   }
 
   @Test
-  fun `ignoreErrors`() {
+  fun `get from Future`() {
+    val promise = AsyncPromise<String>()
+    assertConcurrent(
+      { assertThat(promise.get(1000, TimeUnit.MILLISECONDS)).isEqualTo("test") },
+      {
+        Thread.sleep(100)
+        promise.setResult("test")
+      })
+  }
+
+  @Test
+  fun `ignore errors`() {
     val a = resolvedPromise("foo")
     val b = rejectedPromise<String>()
-    assertThat(collectResults(listOf(a, b), ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
+    assertThat(listOf(a, b).collectResults(ignoreErrors = true).blockingGet(100, TimeUnit.MILLISECONDS)).containsExactly("foo")
   }
 
   @Test
@@ -80,10 +103,10 @@ class AsyncPromiseTest {
 
     val r = {
       if (reject) {
-        promise.rejected { count.incrementAndGet() }
+        promise.onError { count.incrementAndGet() }
       }
       else {
-        promise.done { count.incrementAndGet() }
+        promise.onSuccess { count.incrementAndGet() }
       }
     }
 
@@ -101,6 +124,8 @@ class AsyncPromiseTest {
     if (!reject) {
       assertThat(promise.get()).isEqualTo("test")
     }
+    assertThat(promise.isDone).isTrue()
+    assertThat(promise.isCancelled).isFalse()
 
     r()
     assertThat(count.get()).isEqualTo(numThreads + 1)

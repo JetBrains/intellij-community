@@ -1,4 +1,3 @@
-// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.util.JDOMUtil
@@ -10,13 +9,6 @@ import org.junit.Test
 class BinaryXmlOutputterTest {
   @Test fun noAttributes() {
     test("""<foo />""")
-  }
-
-  @Test fun textWithSpaces() {
-    test("""
-      <foo>
-        <bar>Hello world</bar>
-      </foo>""".trimMargin())
   }
 
   @Test fun attributes() {

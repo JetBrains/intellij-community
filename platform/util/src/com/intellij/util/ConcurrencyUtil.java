@@ -23,6 +23,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.util.*;
 import java.util.concurrent.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 import java.util.concurrent.locks.ReentrantLock;
 
@@ -203,13 +204,32 @@ public class ConcurrencyUtil {
   }
 
   public static void runUnderThreadName(@NotNull String name, @NotNull Runnable runnable) {
-    String oldThreadName = Thread.currentThread().getName();
-    Thread.currentThread().setName(name);
-    try {
+    Thread currentThread = Thread.currentThread();
+    String oldThreadName = currentThread.getName();
+    if (name.equals(oldThreadName)) {
       runnable.run();
     }
-    finally {
-      Thread.currentThread().setName(oldThreadName);
+    else {
+      currentThread.setName(name);
+      try {
+        runnable.run();
+      }
+      finally {
+        currentThread.setName(oldThreadName);
+      }
     }
+  }
+
+  @NotNull
+  public static Runnable once(@NotNull final Runnable delegate) {
+    final AtomicBoolean done = new AtomicBoolean(false);
+    return new Runnable() {
+      @Override
+      public void run() {
+        if (done.compareAndSet(false, true)) {
+          delegate.run();
+        }
+      }
+    };
   }
 }

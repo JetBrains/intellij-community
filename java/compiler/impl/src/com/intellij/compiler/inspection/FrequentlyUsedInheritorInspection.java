@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.SystemProperties;
 import one.util.streamex.MoreCollectors;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.backwardRefs.LightRef;
@@ -97,8 +98,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
       return isInSourceContent(aClass) ? Pair.create(superClass, aClass.getExtendsList()) : null;
     }
 
-    PsiClass anInterface = Arrays
-      .stream(aClass.getInterfaces())
+    PsiClass anInterface = StreamEx.of(aClass.getInterfaces())
       .filter(c -> !CommonClassNames.JAVA_LANG_OBJECT.equals(c.getQualifiedName()))
       .filter(c -> isInSourceContent(c))
       .collect(MoreCollectors.onlyOne())
@@ -180,7 +180,7 @@ public class FrequentlyUsedInheritorInspection extends AbstractBaseJavaLocalInsp
     return directInheritorStats
       .stream()
       .filter(c -> resolveHelper.isAccessible(c.psi, place, null))
-      .flatMap(c -> Stream.concat(Stream.of(c), getClassesIfInterface(c, finalHierarchyCardinality, searchScope, place, project, compilerRefService).stream()))
+      .flatMap(c -> StreamEx.of(getClassesIfInterface(c, finalHierarchyCardinality, searchScope, place, project, compilerRefService)).prepend(c))
       .sorted()
       .limit(MAX_RESULT)
       .collect(Collectors.toList());

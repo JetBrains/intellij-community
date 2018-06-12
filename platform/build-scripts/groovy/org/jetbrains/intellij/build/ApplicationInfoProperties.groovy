@@ -36,6 +36,7 @@ class ApplicationInfoProperties {
   final String minorVersionMainPart
   final String productName
   final String edition
+  final String motto
   final String companyName
   final String shortCompanyName
   final boolean isEAP
@@ -51,6 +52,7 @@ class ApplicationInfoProperties {
     shortProductName = root.names.first().@product
     productName = root.names.first().@fullname ?: shortProductName
     edition = root.names.first().@edition
+    motto = root.names.first().@motto
     companyName = root.company.first().@name
     minorVersionMainPart = minorVersion.takeWhile { it != '.' }
     isEAP = Boolean.parseBoolean(root.version.first().@eap)

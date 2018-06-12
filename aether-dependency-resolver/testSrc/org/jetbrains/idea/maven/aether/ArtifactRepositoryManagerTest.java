@@ -44,4 +44,9 @@ public class ArtifactRepositoryManagerTest extends UsefulTestCase {
     Collection<File> files = myRepositoryManager.resolveDependency("junit", "junit", "4.12", false);
     assertSameElements(ContainerUtil.map(files, File::getName), "junit-4.12.jar");
   }
+
+  public void testResolveRuntimeDependencies() throws Exception {
+    Collection<File> files = myRepositoryManager.resolveDependency("com.netflix.feign", "feign-jackson", "8.18.0", true);
+    assertContainsElements(ContainerUtil.map(files, File::getName), "feign-core-8.18.0.jar");
+  }
 }

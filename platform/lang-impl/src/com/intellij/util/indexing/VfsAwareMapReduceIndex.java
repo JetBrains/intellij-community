@@ -18,7 +18,7 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.UserDataHolder;
@@ -55,6 +55,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
   private final AtomicBoolean myInMemoryMode = new AtomicBoolean();
   private final TIntObjectHashMap<Collection<Key>> myInMemoryKeys = new TIntObjectHashMap<>();
+  //private final TIntObjectHashMap<InputDataDiffBuilder<Key, Value>> myInMemoryInitialState= new TIntObjectHashMap<>();
   private final SnapshotInputMappings<Key, Value, Input> mySnapshotInputMappings;
 
   public VfsAwareMapReduceIndex(@NotNull IndexExtension<Key, Value, Input> extension,
@@ -219,7 +220,7 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     Application application = ApplicationManager.getApplication();
     if (application.isUnitTestMode() || application.isHeadlessEnvironment()) {
       // avoid deadlock due to synchronous update in DumbServiceImpl#queueTask
-      application.invokeLater(action, ModalityState.any());
+      TransactionGuard.getInstance().submitTransactionLater(application, action);
     } else {
       action.run();
     }

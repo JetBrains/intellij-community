@@ -71,16 +71,14 @@ public class AnnotateCapitalizationIntention implements IntentionAction {
       new BaseListPopupStep<Nls.Capitalization>(null, Nls.Capitalization.Title, Nls.Capitalization.Sentence) {
         @Override
         public PopupStep onChosen(final Nls.Capitalization selectedValue, boolean finalChoice) {
-          new WriteCommandAction.Simple(project) {
-            @Override
-            protected void run() throws Throwable {
-              String nls = Nls.class.getName();
-              PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
-                .createAnnotationFromText("@" + nls + "(capitalization = " +
-                                          nls + ".Capitalization." + selectedValue.toString() + ")", modifierListOwner);
-              new AddAnnotationFix(Nls.class.getName(), modifierListOwner, annotation.getParameterList().getAttributes()).applyFix();
-            }
-          }.execute();
+          WriteCommandAction.writeCommandAction(project).run(() -> {
+            String nls = Nls.class.getName();
+            PsiAnnotation annotation = JavaPsiFacade.getInstance(project).getElementFactory()
+                                                    .createAnnotationFromText("@" + nls + "(capitalization = " +
+                                                                              nls + ".Capitalization." + selectedValue.toString() + ")",
+                                                                              modifierListOwner);
+            new AddAnnotationFix(Nls.class.getName(), modifierListOwner, annotation.getParameterList().getAttributes()).applyFix();
+          });
           return FINAL_CHOICE;
         }
       };

@@ -15,7 +15,7 @@ public class MethodReferenceConstantValue {
   }
 
   public void test(Optional<String> opt) {
-    X x = <warning descr="Method reference result is always 'false'">MethodReferenceConstantValue::strangeMethod</warning>;
+    X x = <warning descr="Method reference invocation 'MethodReferenceConstantValue::strangeMethod' may produce 'java.lang.NullPointerException'"><warning descr="Method reference result is always 'false'">MethodReferenceConstantValue::strangeMethod</warning></warning>;
     Boolean aBoolean = opt.map(<warning descr="Method reference result is always 'false'">this::strangeMethod</warning>)
       .map(<warning descr="Method reference result is always 'true'">Objects::nonNull</warning>)
       .map(<warning descr="Method reference result is always 'false'">Objects::isNull</warning>)

@@ -8,7 +8,7 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
-import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
+import com.intellij.codeInsight.navigation.BackgroundUpdaterTask;
 import com.intellij.ide.util.*;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
@@ -354,11 +354,11 @@ public class MarkerType {
     PsiElementListNavigator.openTargets(e, inheritors.toArray(NavigatablePsiElement.EMPTY_NAVIGATABLE_ELEMENT_ARRAY), subclassUpdater.getCaption(inheritors.size()), CodeInsightBundle.message("goto.implementation.findUsages.title", aClass.getName()), renderer, subclassUpdater);
   }
 
-  private static class SubclassUpdater extends ListBackgroundUpdaterTask {
+  private static class SubclassUpdater extends BackgroundUpdaterTask {
     private final PsiClass myClass;
 
     private SubclassUpdater(@NotNull PsiClass aClass, @NotNull PsiElementListCellRenderer<NavigatablePsiElement> renderer) {
-      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper((Comparator)renderer.getComparator()));
+      super(aClass.getProject(), SEARCHING_FOR_OVERRIDDEN_METHODS, createComparatorWrapper(renderer.getComparator()));
       myClass = aClass;
     }
 
@@ -407,7 +407,7 @@ public class MarkerType {
     }
   }
 
-  private static class OverridingMethodsUpdater extends ListBackgroundUpdaterTask {
+  private static class OverridingMethodsUpdater extends BackgroundUpdaterTask {
     private final PsiMethod myMethod;
 
     private OverridingMethodsUpdater(@NotNull PsiMethod method, @NotNull PsiElementListCellRenderer renderer) {

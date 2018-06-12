@@ -74,9 +74,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	caption.elem =
 		element caption { caption.inner & caption.attrs }
 	caption.attrs =
-		(	common.attrs
-		&	common.attrs.aria?
-		)
+		common.attrs
 	caption.inner =
 		( common.inner.flow )
 
@@ -88,9 +86,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	colgroup.elem =
 		element colgroup { colgroup.inner & colgroup.attrs }
 	colgroup.attrs =
-		(	common.attrs
-		&	common.attrs.aria?
-		)
+		common.attrs
 		colgroup.attrs.span =
 			attribute span {
 				common.data.integer.positive
@@ -109,7 +105,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 	col.attrs =
 		(	common.attrs
 		&	col.attrs.span?
-		&	common.attrs.aria?
 		)
 		col.attrs.span =
 			attribute span {

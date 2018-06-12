@@ -122,7 +122,7 @@ public class ExternalSystemKeymapExtension implements KeymapExtension {
         systemGroup.addActionId(actionId);
       }
       if (systemGroup instanceof Group) {
-        Icon icon = SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add;
+        Icon icon = AllIcons.General.Add;
         ((Group)systemGroup).addHyperlink(new Hyperlink(icon, "Choose a task to assign a shortcut") {
           @Override
           public void onClick(MouseEvent e) {

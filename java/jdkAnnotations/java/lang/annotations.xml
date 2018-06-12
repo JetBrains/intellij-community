@@ -721,7 +721,7 @@
   </item>
   <item name='java.lang.Thread int enumerate(java.lang.Thread[])'>
     <annotation name='org.jetbrains.annotations.Contract'>
-      <val name="mutates" val="&quot;arg&quot;"/>
+      <val name="mutates" val="&quot;param&quot;"/>
     </annotation>
   </item>
   <item name='java.lang.Thread java.lang.StackTraceElement[] getStackTrace()'>

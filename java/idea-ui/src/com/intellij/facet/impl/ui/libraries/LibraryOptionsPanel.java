@@ -23,7 +23,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.frameworkSupport.OldCustomLibraryDescription;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -322,11 +321,7 @@ public class LibraryOptionsPanel implements Disposable {
           EditLibraryDialog dialog = new EditLibraryDialog(myPanel, mySettings, (LibraryEditor)item);
           dialog.show();
           if (item instanceof ExistingLibraryEditor) {
-            new WriteAction() {
-              protected void run(@NotNull final Result result) {
-                ((ExistingLibraryEditor)item).commit();
-              }
-            }.execute();
+            WriteAction.run(() -> ((ExistingLibraryEditor)item).commit());
           }
         }
         break;

@@ -54,7 +54,6 @@ class EditVariableDialog extends DialogWrapper {
   public EditVariableDialog(Editor editor, Component parent, ArrayList<Variable> variables, List<TemplateContextType> contextTypes) {
     super(parent, true);
     myContextTypes = contextTypes;
-    setButtonsMargin(null);
     myVariables = variables;
     myEditor = editor;
     init();

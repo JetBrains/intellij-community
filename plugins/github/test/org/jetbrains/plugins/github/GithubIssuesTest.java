@@ -18,7 +18,6 @@ package org.jetbrains.plugins.github;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.data.GithubIssue;
 import org.jetbrains.plugins.github.test.GithubTest;
 
@@ -32,7 +31,8 @@ public class GithubIssuesTest extends GithubTest {
   private static final String REPO_NAME = "IssuesTest";
 
   public void testAssigneeIssues1() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(new GithubConnection(myAuth), myLogin2, REPO_NAME, myLogin1, 100, false);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesAssigned(c, myUsername2, REPO_NAME, myUsername, 100, false));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(6L, 7L, 8L);
@@ -41,7 +41,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues2() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(new GithubConnection(myAuth), myLogin2, REPO_NAME, myLogin2, 100, false);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesAssigned(c, myUsername2, REPO_NAME, myUsername2, 100, false));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(1L, 2L);
@@ -50,7 +51,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues3() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(new GithubConnection(myAuth), myLogin2, REPO_NAME, "", 100, false);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesAssigned(c, myUsername2, REPO_NAME, "", 100, false));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(1L, 2L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 13L, 14L);
@@ -59,7 +61,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues4() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(new GithubConnection(myAuth), myLogin2, REPO_NAME, myLogin1, 100, true);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesAssigned(c, myUsername2, REPO_NAME, myUsername, 100, true));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(3L, 6L, 7L, 8L);
@@ -68,7 +71,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues5() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(new GithubConnection(myAuth), myLogin2, REPO_NAME, myLogin2, 100, true);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesAssigned(c, myUsername2, REPO_NAME, myUsername2, 100, true));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(1L, 2L);
@@ -77,7 +81,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testAssigneeIssues6() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesAssigned(new GithubConnection(myAuth), myLogin2, REPO_NAME, "", 100, true);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesAssigned(c, myUsername2, REPO_NAME, "", 100, true));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(1L, 2L, 3L, 4L, 5L, 6L, 7L, 8L, 9L, 10L, 11L, 12L, 13L, 14L);
@@ -86,7 +91,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues1() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, null, "abracadabra", true);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesQueried(c, myUsername2, REPO_NAME, null, "abracadabra", true));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(10L, 12L);
@@ -95,7 +101,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues2() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, null, "commentary", true);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesQueried(c, myUsername2, REPO_NAME, null, "commentary", true));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(11L);
@@ -104,7 +111,8 @@ public class GithubIssuesTest extends GithubTest {
   }
 
   public void testQueriedIssues3() throws Exception {
-    List<GithubIssue> result = GithubApiUtil.getIssuesQueried(new GithubConnection(myAuth), myLogin2, REPO_NAME, null, "abracadabra", false);
+    List<GithubIssue> result = myApiTaskExecutor.execute(myAccount, c ->
+      GithubApiUtil.getIssuesQueried(c, myUsername2, REPO_NAME, null, "abracadabra", false));
     List<Long> issues = ContainerUtil.map(result, githubIssue -> githubIssue.getNumber());
 
     List<Long> expected = Arrays.asList(10L);

@@ -28,7 +28,6 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerSettingListener;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,10 +42,6 @@ import java.util.Collection;
 public class ChangelistConflictConfigurable extends BindableConfigurable implements SearchableConfigurable, Configurable.NoScroll {
 
   private JPanel myPanel;
-  private JPanel myOptionsPanel;
-
-  @BindControl("TRACKING_ENABLED")
-  private JCheckBox myEnableConflictTrackingCheckBox;
 
   @BindControl("SHOW_DIALOG")
   private JCheckBox myShowDialogCheckBox;
@@ -69,11 +64,6 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     super(new ControlBinder(manager.getConflictTracker().getOptions()));
     myVcsApplicationSettings = VcsApplicationSettings.getInstance();
 
-    myEnableConflictTrackingCheckBox.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        UIUtil.setEnabled(myOptionsPanel, myEnableConflictTrackingCheckBox.isSelected(), true);
-      }
-    });
     myConflictTracker = manager.getConflictTracker();
 
     myClearButton.addActionListener(new ActionListener() {
@@ -100,7 +90,6 @@ public class ChangelistConflictConfigurable extends BindableConfigurable impleme
     Collection<String> conflicts = myConflictTracker.getIgnoredConflicts();
     myIgnoredFiles.setListData(ArrayUtil.toStringArray(conflicts));
     myClearButton.setEnabled(!conflicts.isEmpty());
-    UIUtil.setEnabled(myOptionsPanel, myEnableConflictTrackingCheckBox.isSelected(), true);
   }
 
   @Override

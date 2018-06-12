@@ -46,9 +46,7 @@ public class IconDeferrerImpl extends IconDeferrer {
   };
   private long myLastClearTimestamp;
 
-  protected IconDeferrerImpl() {}
-
-  public IconDeferrerImpl(MessageBus bus) {
+  public IconDeferrerImpl(@NotNull MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiModificationTracker.TOPIC, this::clear);
     // update "locked" icon
@@ -105,12 +103,6 @@ public class IconDeferrerImpl extends IconDeferrer {
       }
 
       return result;
-    }
-  }
-
-  protected void cacheIcon(Object key,Icon value) {
-    synchronized (LOCK) {
-      myIconsCache.put(key, value);
     }
   }
 

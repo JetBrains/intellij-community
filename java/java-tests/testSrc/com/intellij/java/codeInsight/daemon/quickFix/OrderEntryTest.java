@@ -21,8 +21,10 @@ import com.intellij.codeInsight.daemon.quickFix.ActionHint;
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -93,7 +95,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
       if (afterAction != null) {
         fail("Action '" + text + "' is still available after its invocation in test " + testFullPath);
       }
-      assertEquals(infosBefore.size() - 1, infosAfter.size());
+      assertTrue(infosBefore.size() > infosAfter.size());
     }
   }
 
@@ -108,7 +110,19 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
   }
 
   public void testAddDependency() {
+    removeModule();
     doTest("B/src/y/AddDependency.java");
+  }
+
+  public void testAddAmbiguousDependency() {
+    doTest("B/src/y/AddAmbiguous.java");
+  }
+
+  private void removeModule() {
+    ModuleManager manager = ModuleManager.getInstance(getProject());
+    ModifiableModuleModel model = manager.getModifiableModel();
+    model.disposeModule(manager.findModuleByName("C"));
+    WriteAction.run(() -> model.commit());
   }
 
   public void testAddLibrary() {
@@ -119,6 +133,7 @@ public class OrderEntryTest extends DaemonAnalyzerTestCase {
     final Module a = ModuleManager.getInstance(getProject()).findModuleByName("A");
     final Module b = ModuleManager.getInstance(getProject()).findModuleByName("B");
     ModuleRootModificationUtil.addDependency(a, b);
+    removeModule();
 
     try {
       doTest("B/src/y/AddDependency.java");

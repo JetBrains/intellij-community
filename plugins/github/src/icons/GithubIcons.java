@@ -28,5 +28,6 @@ public class GithubIcons {
     return IconLoader.getIcon(path, GithubIcons.class);
   }
 
+  public static final Icon DefaultAvatar_40 = load("/org/jetbrains/plugins/github/defaultAvatar_40.svg"); // 40x40
   public static final Icon Github_icon = load("/org/jetbrains/plugins/github/github_icon.png"); // 16x16
 }

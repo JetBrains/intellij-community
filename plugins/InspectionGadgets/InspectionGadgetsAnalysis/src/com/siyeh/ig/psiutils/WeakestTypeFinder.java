@@ -363,7 +363,7 @@ public class WeakestTypeFinder {
             continue;
           }
           final PsiClassType expectedClassType = (PsiClassType)expectedType;
-          expectedClassType.rawType().isAssignableFrom(returnType);
+          if (!expectedClassType.rawType().isAssignableFrom(returnType)) continue;
         }
         else if (expectedType != null && returnType != null && !expectedType.isAssignableFrom(returnType)) {
           continue;

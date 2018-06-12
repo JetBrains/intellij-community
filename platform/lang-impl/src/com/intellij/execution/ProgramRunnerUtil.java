@@ -1,8 +1,7 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.impl.RunDialog;
 import com.intellij.execution.impl.RunManagerImpl;
@@ -201,16 +200,13 @@ public class ProgramRunnerUtil {
   }
 
   @NotNull
-  public static Icon getRawIcon(RunnerAndConfigurationSettings settings) {
-    RunConfiguration configuration = settings.getConfiguration();
-    ConfigurationFactory factory = settings.getFactory();
-    Icon icon =  factory != null ? factory.getIcon(configuration) : null;
-    if (icon == null) icon = AllIcons.RunConfigurations.Unknown;
-    return icon;
+  public static Icon getRawIcon(@NotNull RunnerAndConfigurationSettings settings) {
+    Icon icon = settings.getFactory().getIcon(settings.getConfiguration());
+    return icon == null ? AllIcons.RunConfigurations.Unknown : icon;
   }
 
   public static Icon getTemporaryIcon(@NotNull Icon rawIcon) {
-     return IconLoader.getTransparentIcon(rawIcon, 0.3f);
+    return IconLoader.getTransparentIcon(rawIcon, 0.3f);
   }
 
   public static String shortenName(@Nullable String name, final int toBeAdded) {

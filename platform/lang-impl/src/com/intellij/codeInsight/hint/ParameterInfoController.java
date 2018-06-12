@@ -16,6 +16,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -66,6 +67,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   private final CaretListener myEditorCaretListener;
   @NotNull private final ParameterInfoHandler<Object, Object> myHandler;
   private final MyBestLocationPointProvider myProvider;
+  private final ParameterInfoListener[] myListeners;
 
   private final Alarm myAlarm = new Alarm();
   private static final int DELAY = 200;
@@ -86,6 +88,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       if (controller.myLbraceMarker.getStartOffset() == offset) {
         if (controller.myKeepOnHintHidden || controller.myHint.isVisible()) return controller;
         Disposer.dispose(controller);
+        //noinspection AssignmentToForLoopParameter
         --i;
       }
     }
@@ -127,6 +130,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     myEditor = editor;
     myHandler = handler;
     myProvider = new MyBestLocationPointProvider(editor);
+    myListeners = ParameterInfoListener.EP_NAME.getExtensions();
     myLbraceMarker = editor.getDocument().createRangeMarker(lbraceOffset, lbraceOffset);
     myComponent = new ParameterInfoComponent(descriptors, editor, handler, requestFocus, true);
     myHint = createHint();
@@ -195,7 +199,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   public void dispose(){
     if (myDisposed) return;
     myDisposed = true;
-    myHint.hide();
+    hideHint();
     myHandler.dispose(new MyDeleteParameterInfoContext());
     List<ParameterInfoController> allControllers = getAllControllers(myEditor);
     allControllers.remove(this);
@@ -211,17 +215,18 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   public void showHint(boolean requestFocus, boolean singleParameterInfo) {
     if (myHint.isVisible()) {
       myHint.getComponent().remove(myComponent);
-      myHint.hide();
+      hideHint();
       myHint = createHint();
     }
 
     mySingleParameterInfo = singleParameterInfo && myKeepOnHintHidden;
     
-    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(), 
-                                                             null, true, HintManager.ABOVE);
+    Pair<Point, Short> pos = myProvider.getBestPointPosition(myHint, myComponent.getParameterOwner(), myLbraceMarker.getStartOffset(),
+                                                             null, HintManager.ABOVE);
     HintHint hintHint = HintManagerImpl.createHintHint(myEditor, pos.getFirst(), myHint, pos.getSecond());
     hintHint.setExplicitClose(true);
     hintHint.setRequestFocus(requestFocus);
+    hintHint.setShowImmediately(true);
 
     int flags = HintManager.HIDE_BY_ESCAPE | HintManager.UPDATE_BY_SCROLLING;
     if (!singleParameterInfo && myKeepOnHintHidden) flags |= HintManager.HIDE_BY_TEXT_CHANGE;
@@ -288,7 +293,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
   }
 
   public void updateComponent(){
-    if (!myKeepOnHintHidden && !myHint.isVisible() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
+    if (!myKeepOnHintHidden && !myHint.isVisible() && !ApplicationManager.getApplication().isHeadlessEnvironment() || myEditor instanceof EditorWindow && !((EditorWindow)myEditor).isValid()) {
       Disposer.dispose(this);
       return;
     }
@@ -307,26 +312,34 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       boolean knownParameter = (myComponent.getObjects().length == 1 || myComponent.getHighlighted() != null) && 
                                myComponent.getCurrentParameterIndex() != -1;
       if (mySingleParameterInfo && !knownParameter && myHint.isVisible()) {
-        myHint.hide();
+        hideHint();
       }
       if (myKeepOnHintHidden && knownParameter && !myHint.isVisible()) {
         AutoPopupController.getInstance(myProject).autoPopupParameterInfo(myEditor, null);
       }
-      if (!myDisposed && myHint.isVisible() && !myEditor.isDisposed() &&
-          (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode())) {
-        myComponent.update(mySingleParameterInfo);
+      if (!myDisposed && (myHint.isVisible() && !myEditor.isDisposed() &&
+          (myEditor.getComponent().getRootPane() != null || ApplicationManager.getApplication().isUnitTestMode()) ||
+          ApplicationManager.getApplication().isHeadlessEnvironment())) {
+        Model result = myComponent.update(mySingleParameterInfo);
+        result.project = myProject;
+        result.range = myComponent.getParameterOwner().getTextRange();
+        result.editor = myEditor;
+        for (ParameterInfoListener listener : myListeners) {
+          listener.hintUpdated(result);
+        }
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
         IdeTooltip tooltip = myHint.getCurrentIdeTooltip();
         short position = tooltip != null
                          ? toShort(tooltip.getPreferredPosition())
                          : HintManager.ABOVE;
         Pair<Point, Short> pos = myProvider.getBestPointPosition(
           myHint, elementForUpdating instanceof PsiElement ? (PsiElement)elementForUpdating : null,
-          caretOffset, myEditor.getCaretModel().getVisualPosition(), true, position);
+          caretOffset, myEditor.getCaretModel().getVisualPosition(), position);
         HintManagerImpl.adjustEditorHintPosition(myHint, myEditor, pos.getFirst(), pos.getSecond());
       }
     }
     else {
-      myHint.hide();
+      hideHint();
       if (!myKeepOnHintHidden) {
         Disposer.dispose(this);
       }
@@ -462,10 +475,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     return myComponent.getHighlighted();
   }
 
-  public void resetHighlighted() {
-    myComponent.setHighlightedParameter(null);
-  }
-
   public void setPreservedOnHintHidden(boolean value) {
     myKeepOnHintHidden = value;
   }
@@ -494,14 +503,14 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
   /**
    * Returned Point is in layered pane coordinate system.
-   * Second value is a {@link com.intellij.codeInsight.hint.HintManager.PositionFlags position flag}.
+   * Second value is a {@link HintManager.PositionFlags position flag}.
    */
-  static Pair<Point, Short> chooseBestHintPosition(Project project,
-                                                   Editor editor,
+  static Pair<Point, Short> chooseBestHintPosition(Editor editor,
                                                    VisualPosition pos,
                                                    LightweightHint hint,
-                                                   boolean awtTooltip, short preferredPosition, boolean showLookupHint) {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return Pair.pair(new Point(), HintManager.DEFAULT);
+                                                   short preferredPosition, boolean showLookupHint) {
+    if (ApplicationManager.getApplication().isUnitTestMode() ||
+        ApplicationManager.getApplication().isHeadlessEnvironment()) return Pair.pair(new Point(), HintManager.DEFAULT);
 
     HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
     Dimension hintSize = hint.getComponent().getPreferredSize();
@@ -517,13 +526,6 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     else {
       p1 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.UNDER);
       p2 = HintManagerImpl.getHintPosition(hint, editor, pos, HintManager.ABOVE);
-    }
-
-    if (!awtTooltip) {
-      p1.x = Math.min(p1.x, layeredPane.getWidth() - hintSize.width);
-      p1.x = Math.max(p1.x, 0);
-      p2.x = Math.min(p2.x, layeredPane.getWidth() - hintSize.width);
-      p2.x = Math.max(p2.x, 0);
     }
 
     boolean p1Ok = p1.y + hintSize.height < layeredPane.getHeight();
@@ -589,7 +591,7 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     @Override
     public void removeHint() {
-      myHint.hide();
+      hideHint();
       if (!myKeepOnHintHidden) Disposer.dispose(ParameterInfoController.this);
     }
 
@@ -668,6 +670,41 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
     }
   }
 
+  protected void hideHint() {
+    myHint.hide();
+    for (ParameterInfoListener listener : myListeners) {
+      listener.hintHidden(myProject);
+    }
+  }
+
+  public static class SignatureItem {
+    public final String text;
+    public final boolean deprecated;
+    public final boolean disabled;
+    public final List<Integer> startOffsets;
+    public final List<Integer> endOffsets;
+
+    public SignatureItem(String text,
+                         boolean deprecated,
+                         boolean disabled,
+                         List<Integer> startOffsets,
+                         List<Integer> endOffsets) {
+      this.text = text;
+      this.deprecated = deprecated;
+      this.disabled = disabled;
+      this.startOffsets = startOffsets;
+      this.endOffsets = endOffsets;
+    }
+  }
+
+  public static class Model {
+    public final List<SignatureItem> signatures = new ArrayList<>();
+    public int current = -1;
+    public TextRange range;
+    public Editor editor;
+    public Project project;
+  }
+
   private static class MyBestLocationPointProvider  {
     private final Editor myEditor;
     private int previousOffset = -1;
@@ -680,11 +717,10 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
 
     @NotNull
     private Pair<Point, Short> getBestPointPosition(LightweightHint hint,
-                                                   final PsiElement list,
-                                                   int offset,
-                                                   VisualPosition pos,
-                                                   final boolean awtTooltip,
-                                                   short preferredPosition) {
+                                                    final PsiElement list,
+                                                    int offset,
+                                                    VisualPosition pos,
+                                                    short preferredPosition) {
       if (list != null) {
         TextRange range = list.getTextRange();
         TextRange rangeWithoutParens = TextRange.from(range.getStartOffset() + 1, Math.max(range.getLength() - 2, 0));
@@ -699,11 +735,11 @@ public class ParameterInfoController extends UserDataHolderBase implements Visib
       if (previousOffset == offset) return Pair.create(previousBestPoint, previousBestPosition);
 
       final boolean isMultiline = list != null && StringUtil.containsAnyChar(list.getText(), "\n\r");
-      if (pos == null) pos = myEditor.logicalToVisualPosition(myEditor.offsetToLogicalPosition(offset).leanForward(true));
+      if (pos == null) pos = EditorUtil.inlayAwareOffsetToVisualPosition(myEditor, offset);
       Pair<Point, Short> position;
 
       if (!isMultiline) {
-        position = chooseBestHintPosition(myEditor.getProject(), myEditor, pos, hint, awtTooltip, preferredPosition, false);
+        position = chooseBestHintPosition(myEditor, pos, hint, preferredPosition, false);
       }
       else {
         Point p = HintManagerImpl.getHintPosition(hint, myEditor, pos, HintManager.ABOVE);

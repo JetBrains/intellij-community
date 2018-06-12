@@ -26,12 +26,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.lang.annotation.Annotation;
 
 /**
  * @author max
  * @author Konstantin Bulenkov
  */
+@SuppressWarnings("UseJBColor")
 public class ColorUtil {
   private ColorUtil() {
   }
@@ -126,6 +126,26 @@ public class ColorUtil {
     return toAlpha(c, (int)(255 * a));
   }
 
+  public static Color srcOver(Color c, Color b) {
+    float [] rgba = new float[4];
+    float [] brgba = new float[4];
+
+    rgba = c.getRGBComponents(rgba);
+    brgba = b.getRGBComponents(brgba);
+    float dsta = 1.0f - rgba[3];
+    // Applying SrcOver rule
+    return new Color(rgba[0]*rgba[3] + dsta*brgba[0],
+                     rgba[1]*rgba[3] + dsta*brgba[1],
+                     rgba[2]*rgba[3] + dsta*brgba[2], 1.0f);
+  }
+
+  public static Color withPreAlpha(Color c, double a) {
+    float [] rgba = new float[4];
+
+    rgba = withAlpha(c, a).getRGBComponents(rgba);
+    return new Color(rgba[0]*rgba[3], rgba[1]*rgba[3], rgba[2]*rgba[3], 1.0f);
+  }
+
   public static Color toAlpha(Color color, int a) {
     Color c = color != null ? color : Color.black;
     return new Color(c.getRed(), c.getGreen(), c.getBlue(), a);
@@ -140,6 +160,10 @@ public class ColorUtil {
     final String G = Integer.toHexString(c.getGreen());
     final String B = Integer.toHexString(c.getBlue());
     return (R.length() < 2 ? "0" : "") + R + (G.length() < 2 ? "0" : "") + G + (B.length() < 2 ? "0" : "") + B;
+  }
+
+  public static String toHtmlColor(@NotNull final Color c) {
+    return "#"+toHex(c);
   }
 
   /**
@@ -180,9 +204,8 @@ public class ColorUtil {
 
   @Nullable
   public static Color getColor(@NotNull Class<?> cls) {
-    final Annotation annotation = cls.getAnnotation(Colored.class);
-    if (annotation instanceof Colored) {
-      final Colored colored = (Colored)annotation;
+    final Colored colored = cls.getAnnotation(Colored.class);
+    if (colored != null) {
       return fromHex(UIUtil.isUnderDarcula() ? colored.darkVariant() : colored.color(), null);
     }
     return null;

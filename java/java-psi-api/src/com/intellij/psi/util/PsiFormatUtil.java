@@ -104,7 +104,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
         int index2 = text.lastIndexOf('\r');
         if (index2 < 0) index2 = text.length();
         int index = Math.min(index1, index2);
-        buffer.append(text.substring(0, index));
+        buffer.append(text, 0, index);
         if (index < text.length()) {
           buffer.append(" ...");
         }

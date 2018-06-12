@@ -804,6 +804,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureSameSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignaturePlusOneFolding() throws Exception {
     doDuplicatesTest();
   }
@@ -870,6 +874,46 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testParametrizedDuplicateNestedSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateDeclaredOutputVariable() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateDeclaredReusedVariable() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testExactDuplicateDeclaredReusedVariable() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testExactDuplicateTwoDeclaredReusedVariables() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateUnfoldArrayArgument() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldListElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldArrayElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedMultiDuplicatesFoldArrayElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldArrayElementTwoUsages() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testTripleParametrizedDuplicate() throws Exception {
     doDuplicatesTest();
   }
 

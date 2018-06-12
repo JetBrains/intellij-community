@@ -9,6 +9,7 @@ import org.jetbrains.java.decompiler.main.extern.IResultSaver;
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
 
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 import java.util.jar.JarOutputStream;
 import java.util.jar.Manifest;
@@ -27,8 +28,8 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     }
 
     Map<String, Object> mapOptions = new HashMap<>();
-    List<File> lstSources = new ArrayList<>();
-    List<File> lstLibraries = new ArrayList<>();
+    List<File> sources = new ArrayList<>();
+    List<File> libraries = new ArrayList<>();
 
     boolean isOption = true;
     for (int i = 0; i < args.length - 1; ++i) { // last parameter - destination
@@ -49,15 +50,15 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
         isOption = false;
 
         if (arg.startsWith("-e=")) {
-          addPath(lstLibraries, arg.substring(3));
+          addPath(libraries, arg.substring(3));
         }
         else {
-          addPath(lstSources, arg);
+          addPath(sources, arg);
         }
       }
     }
 
-    if (lstSources.isEmpty()) {
+    if (sources.isEmpty()) {
       System.out.println("error: no sources given");
       return;
     }
@@ -71,11 +72,11 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     PrintStreamLogger logger = new PrintStreamLogger(System.out);
     ConsoleDecompiler decompiler = new ConsoleDecompiler(destination, mapOptions, logger);
 
-    for (File source : lstSources) {
-      decompiler.addSpace(source, true);
+    for (File source : sources) {
+      decompiler.addSource(source);
     }
-    for (File library : lstLibraries) {
-      decompiler.addSpace(library, false);
+    for (File library : libraries) {
+      decompiler.addLibrary(library);
     }
 
     decompiler.decompileContext();
@@ -106,13 +107,12 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
     engine = new Fernflower(this, this, options, logger);
   }
 
-  public void addSpace(File file, boolean isOwn) {
-    if (isOwn) {
-      engine.addSource(file);
-    }
-    else {
-      engine.addLibrary(file);
-    }
+  public void addSource(File source) {
+    engine.addSource(source);
+  }
+
+  public void addLibrary(File library) {
+    engine.addLibrary(library);
   }
 
   public void decompileContext() {
@@ -239,7 +239,7 @@ public class ConsoleDecompiler implements IBytecodeProvider, IResultSaver {
       ZipOutputStream out = mapArchiveStreams.get(file);
       out.putNextEntry(new ZipEntry(entryName));
       if (content != null) {
-        out.write(content.getBytes("UTF-8"));
+        out.write(content.getBytes(StandardCharsets.UTF_8));
       }
     }
     catch (IOException ex) {

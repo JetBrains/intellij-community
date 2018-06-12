@@ -160,6 +160,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return myJavaClassReferenceSet.canReferencePackage(myIndex);
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myJavaClassReferenceSet.getElement();
@@ -170,6 +171,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return (element instanceof PsiMember || element instanceof PsiPackage) && super.isReferenceTo(element);
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRange;

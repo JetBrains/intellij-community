@@ -10,6 +10,6 @@
     <orderEntry type="library" exported="" name="gson" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
-    <orderEntry type="library" name="Netty" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
   </component>
 </module>

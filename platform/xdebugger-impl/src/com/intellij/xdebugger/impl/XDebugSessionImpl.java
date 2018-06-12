@@ -395,6 +395,9 @@ public class XDebugSessionImpl implements XDebugSession {
       if (active) {
         synchronized (myRegisteredBreakpoints) {
           myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
+          if (b instanceof XLineBreakpoint) {
+            updateBreakpointPresentation((XLineBreakpoint)b, b.getType().getPendingIcon(), null);
+          }
         }
         handler.registerBreakpoint(b);
       }
@@ -570,6 +573,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
+
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
     }
   }
@@ -601,11 +605,12 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = executionStack;
     myCurrentStackFrame = frame;
     myIsTopFrame = isTopFrame;
-    activateSession();
 
     if (frameChanged) {
       myDispatcher.getMulticaster().stackFrameChanged();
     }
+
+    activateSession();
   }
 
   void activateSession() {
@@ -831,9 +836,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private void enableBreakpoints() {
     if (myBreakpointsDisabled) {
       myBreakpointsDisabled = false;
-      ReadAction.run(() -> {
-        processAllBreakpoints(true, false);
-      });
+      ReadAction.run(() -> processAllBreakpoints(true, false));
     }
   }
 
@@ -860,7 +863,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
     finally {
       //noinspection unchecked
-      myDebugProcess.stopAsync().done(aVoid -> {
+      myDebugProcess.stopAsync().onSuccess(aVoid -> {
         if (!myProject.isDisposed()) {
           myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
         }

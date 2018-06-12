@@ -75,11 +75,13 @@ public class PsiMultiReference implements PsiPolyVariantReference {
     return myReferences[0];
   }
 
+  @NotNull
   @Override
   public PsiElement getElement(){
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     TextRange range = getRangeInElementIfSameForAll();

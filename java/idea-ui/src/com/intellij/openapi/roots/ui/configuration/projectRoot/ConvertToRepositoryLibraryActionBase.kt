@@ -20,7 +20,6 @@ import com.intellij.jarRepository.RepositoryAttachDialog
 import com.intellij.jarRepository.RepositoryLibraryType
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.application.ApplicationManager
-import com.intellij.openapi.application.Result
 import com.intellij.openapi.application.WriteAction
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.logger
@@ -41,6 +40,7 @@ import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditor
 import com.intellij.openapi.roots.ui.configuration.libraryEditor.LibraryEditorBase
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.openapi.ui.Messages
+import com.intellij.openapi.util.ThrowableComputable
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.*
 import com.intellij.openapi.vfs.newvfs.RefreshQueue
@@ -233,21 +233,19 @@ private class ComparingJarFilesTask(project: Project, private val downloadedFile
         filesToDelete += downloadedIoFileToCompare
       }
 
-      object : WriteAction<Unit>() {
-        override fun run(result: Result<Unit>) {
-          libraryFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryIoFileToCompare)!!
-          downloadedFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(downloadedIoFileToCompare)!!
-        }
-      }.execute()
+      WriteAction.computeAndWait(ThrowableComputable<Unit, RuntimeException> {
+        libraryFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(libraryIoFileToCompare)!!
+        downloadedFileToCompare = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(downloadedIoFileToCompare)!!
+      })
+
       RefreshQueue.getInstance().refresh(false, false, null, libraryFileToCompare, downloadedFileToCompare)
 
       val jarFilesToRefresh = ArrayList<VirtualFile>()
-      object : WriteAction<Unit>() {
-        override fun run(result: Result<Unit>) {
-          collectNestedJars(libraryFileToCompare, jarFilesToRefresh)
-          collectNestedJars(downloadedFileToCompare, jarFilesToRefresh)
-        }
-      }.execute()
+      WriteAction.computeAndWait(ThrowableComputable<Unit, RuntimeException> {
+        collectNestedJars(libraryFileToCompare, jarFilesToRefresh)
+        collectNestedJars(downloadedFileToCompare, jarFilesToRefresh)
+      })
+
       RefreshQueue.getInstance().refresh(false, true, null, jarFilesToRefresh)
     }
   }

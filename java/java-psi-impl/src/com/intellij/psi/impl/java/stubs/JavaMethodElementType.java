@@ -39,7 +39,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -138,11 +137,11 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
   @NotNull
   @Override
   public PsiMethodStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    StringRef name = dataStream.readName();
+    String name = dataStream.readNameString();
     final TypeInfo type = TypeInfo.readTYPE(dataStream);
     byte flags = dataStream.readByte();
-    final StringRef defaultMethodValue = PsiMethodStubImpl.isAnnotationMethod(flags) ? dataStream.readName() : null;
-    return new PsiMethodStubImpl(parentStub, StringRef.toString(name), type, flags, StringRef.toString(defaultMethodValue));
+    String defaultMethodValue = PsiMethodStubImpl.isAnnotationMethod(flags) ? dataStream.readNameString() : null;
+    return new PsiMethodStubImpl(parentStub, name, type, flags, defaultMethodValue);
   }
 
   @Override
@@ -196,9 +195,9 @@ public abstract class JavaMethodElementType extends JavaStubElementType<PsiMetho
 
   private static boolean isStatic(@NotNull StubElement<?> stub) {
     if (stub instanceof PsiMemberStub) {
-      StubElement<PsiModifierList> modList = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-      if (modList instanceof PsiModifierListStub) {
-        return BitUtil.isSet(((PsiModifierListStub)modList).getModifiersMask(),
+      PsiModifierListStub modList = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+      if (modList != null) {
+        return BitUtil.isSet(modList.getModifiersMask(),
                              ModifierFlags.NAME_TO_MODIFIER_FLAG_MAP.get(PsiModifier.STATIC));
       }
     }

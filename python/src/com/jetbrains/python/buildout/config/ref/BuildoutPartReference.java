@@ -41,6 +41,7 @@ public class BuildoutPartReference extends PsiReferenceBase<PsiElement> {
     myOffsetInElement = offsetInElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return TextRange.from(myOffsetInElement, myPartName.length());

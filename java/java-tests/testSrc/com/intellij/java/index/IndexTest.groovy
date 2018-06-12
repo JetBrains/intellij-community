@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.index
 
 import com.intellij.ide.todo.TodoConfiguration
@@ -78,6 +64,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
 
 import java.util.concurrent.CountDownLatch
+
 /**
  * @author Eugene Zhuravlev
  * @since Dec 12, 2007
@@ -294,7 +281,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
   void testSkipUnknownFileTypes() throws IOException {
     final VirtualFile vFile = myFixture.addFileToProject("Foo.test", "Foo").getVirtualFile()
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType())
-    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getProject())
+    final PsiSearchHelper helper = PsiSearchHelper.getInstance(getProject())
     assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile)
@@ -601,7 +588,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
 
-    GCUtil.tryGcSoftlyReachableObjects() // clears cache in findClass
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
     assertNull(findClass("Foo"))
 
     // check invalidation of transient indices state
@@ -612,7 +599,7 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(findClass("Foo2") != null)
 
     runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
-    GCUtil.tryGcSoftlyReachableObjects() // clears cache in findClass
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
     assertNull(findClass("Foo2"))
   }
 
@@ -1089,6 +1076,21 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
+    }
+  }
+
+  void "test IDEA-188028" () {
+    def file = myFixture.addFileToProject('a.java', 'class Foo {}') as PsiJavaFileImpl
+    WriteCommandAction.runWriteCommandAction(project) {
+      def document = file.viewProvider.document
+      document.setText('')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      PsiManager.getInstance(project).reloadFromDisk(file)
+      document.setText('')
+      assert !findClass('Foo')
+      file.virtualFile.rename(this, 'a1.java')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      assert !findClass('Foo')
     }
   }
 }

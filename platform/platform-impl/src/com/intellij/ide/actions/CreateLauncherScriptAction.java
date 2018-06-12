@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -25,6 +11,8 @@ import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -96,12 +84,17 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       }
     }
 
-    try {
-      createLauncherScript(target.getAbsolutePath());
-    }
-    catch (Exception e) {
-      reportFailure(e, project);
-    }
+    new Task.Backgroundable(project, ApplicationBundle.message("launcher.script.title")) {
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        try {
+          createLauncherScript(target.getAbsolutePath());
+        }
+        catch (Exception e) {
+          reportFailure(e, project);
+        }
+      }
+    }.queue();
   }
 
   public static void createLauncherScript(@NotNull String pathName) throws Exception {
@@ -140,9 +133,9 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
     }
   }
 
-  public static void reportFailure(@NotNull Exception e, @Nullable final Project project) {
+  public static void reportFailure(@NotNull Exception e, @Nullable Project project) {
     LOG.warn(e);
-    final String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
+    String message = ExceptionUtil.getNonEmptyMessage(e, "Internal error");
     Notifications.Bus.notify(
       new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "Launcher Script Creation Failed", message, NotificationType.ERROR),
       project);

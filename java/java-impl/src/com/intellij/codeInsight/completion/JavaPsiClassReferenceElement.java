@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.JavaElementLookupRenderer;
@@ -23,7 +24,6 @@ import com.intellij.openapi.util.ClassConditionKey;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ObjectUtils;
@@ -217,7 +217,7 @@ public class JavaPsiClassReferenceElement extends LookupItem<Object> implements 
   }
 
   private static boolean showSpaceAfterComma(PsiClass element) {
-    return CodeStyleSettingsManager.getSettings(element.getProject()).getCommonSettings(JavaLanguage.INSTANCE).SPACE_AFTER_COMMA;
+    return CodeStyle.getLanguageSettings(element.getContainingFile(), JavaLanguage.INSTANCE).SPACE_AFTER_COMMA;
   }
 
 }

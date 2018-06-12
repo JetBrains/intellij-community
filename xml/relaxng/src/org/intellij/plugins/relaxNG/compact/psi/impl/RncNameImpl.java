@@ -84,11 +84,13 @@ public class RncNameImpl extends RncElementImpl implements RncName, PsiReference
     return getPrefix() == null ? null : this;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return TextRange.from(0, getText().indexOf(':'));

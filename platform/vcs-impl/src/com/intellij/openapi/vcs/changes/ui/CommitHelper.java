@@ -128,6 +128,7 @@ public class CommitHelper {
       notNull(resultHandler, new DefaultCommitResultHandler(myProject, myIncludedChanges, myCommitMessage, myCommitProcessor, myFeedback));
   }
 
+  @SuppressWarnings("UnusedReturnValue")
   public boolean doCommit() {
     Task.Backgroundable task = new Task.Backgroundable(myProject, myActionName, true, myConfiguration.getCommitOption()) {
       public void run(@NotNull ProgressIndicator indicator) {
@@ -152,7 +153,7 @@ public class CommitHelper {
       }
     };
     ProgressManager.getInstance().run(task);
-    return hasOnlyWarnings(myCommitProcessor.getVcsExceptions());
+    return true;
   }
 
   private void delegateCommitToVcsThread() {

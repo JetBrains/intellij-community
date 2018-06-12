@@ -25,6 +25,8 @@ public abstract class PathReferenceProviderBase implements PathReferenceProvider
     int offset = range.getStartOffset();
     int endOffset = range.getEndOffset();
     final String elementText = psiElement.getText();
+    if (elementText == null)
+      return false;
     for (DynamicContextProvider provider: Extensions.getExtensions(DynamicContextProvider.EP_NAME)) {
       final int dynamicOffset = provider.getOffset(psiElement, offset, elementText);
       if (dynamicOffset == -1) {

@@ -17,7 +17,6 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -119,14 +118,11 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
 
   @Override
   protected void setValue(final String value) {
-    CommandProcessor.getInstance().runUndoTransparentAction(() -> new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final T component = getComponent();
-        final Document document = getEditorTextField(component).getDocument();
-        document.replaceString(0, document.getTextLength(), value == null ? "" : value);
-      }
-    }.execute());
+    CommandProcessor.getInstance().runUndoTransparentAction(() -> WriteAction.run(() -> {
+      final T component = getComponent();
+      final Document document = getEditorTextField(component).getDocument();
+      document.replaceString(0, document.getTextLength(), value == null ? "" : value);
+    }));
   }
 
   @Override

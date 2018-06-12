@@ -124,7 +124,7 @@ class IntKeyWeakValueHashMap<V> implements IntObjectMap<V> {
     return values().contains(value);
   }
 
-  private static final Object GCED = new Object();
+  private static final Object GCED = ObjectUtils.sentinel("GCED");
   @NotNull
   @Override
   public Iterable<Entry<V>> entries() {

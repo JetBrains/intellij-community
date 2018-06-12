@@ -24,7 +24,6 @@ import com.intellij.psi.PsiAnnotation;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
@@ -50,7 +49,7 @@ public class MakeAnnotationExternal extends BaseIntentionAction {
       PsiModifierListOwner modifierListOwner = PsiTreeUtil.getParentOfType(annotation, PsiModifierListOwner.class);
       if (modifierListOwner != null && ExternalAnnotationsManagerImpl.areExternalAnnotationsApplicable(modifierListOwner)) {
         VirtualFile virtualFile = PsiUtilCore.getVirtualFile(modifierListOwner);
-        if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).USE_EXTERNAL_ANNOTATIONS ||
+        if (JavaCodeStyleSettings.getInstance(file).USE_EXTERNAL_ANNOTATIONS ||
             virtualFile != null && ExternalAnnotationsManager.getInstance(project).hasAnnotationRootsForFile(virtualFile)) {
           setText("Annotate externally");
           return true;

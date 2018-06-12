@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2015 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -80,9 +80,7 @@ class ThreadingUtils {
     if (!"signal".equals(methodName) && !"signalAll".equals(methodName)) {
       return false;
     }
-    final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression[] args = argumentList.getExpressions();
-    if (args.length != 0) {
+    if (!expression.getArgumentList().isEmpty()) {
       return false;
     }
     final PsiMethod method = expression.resolveMethod();

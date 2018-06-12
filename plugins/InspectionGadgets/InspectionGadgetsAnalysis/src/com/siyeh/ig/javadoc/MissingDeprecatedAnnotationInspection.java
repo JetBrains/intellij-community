@@ -171,7 +171,7 @@ public class MissingDeprecatedAnnotationInspection extends BaseInspection {
 
     private boolean hasDeprecatedAnnotation(PsiModifierListOwner element) {
       final PsiModifierList modifierList = element.getModifierList();
-      return modifierList != null && modifierList.findAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED) != null;
+      return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_DEPRECATED);
     }
 
     private boolean hasDeprecatedComment(PsiJavaDocumentedElement element, boolean checkContent) {

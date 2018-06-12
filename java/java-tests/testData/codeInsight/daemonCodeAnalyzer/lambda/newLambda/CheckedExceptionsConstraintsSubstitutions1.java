@@ -32,7 +32,7 @@ class Test1 {
   }
 
   {
-    bar(l -> <error descr="Unhandled exception: Test1.MyEx">baz(l)</error>);
+    bar(l -> <error descr="Unhandled exception: Test1.MyEx">baz</error>(l));
     bar(<error descr="Unhandled exception: Test1.MyEx">this::baz</error>);
   }
 }

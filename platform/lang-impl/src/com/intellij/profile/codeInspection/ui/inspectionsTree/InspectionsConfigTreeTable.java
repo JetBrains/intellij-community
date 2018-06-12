@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.profile.codeInspection.ui.inspectionsTree;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -169,6 +169,18 @@ public class InspectionsConfigTreeTable extends TreeTable {
                            }, KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), JComponent.WHEN_FOCUSED);
 
     getEmptyText().setText("No enabled inspections available");
+  }
+
+  @Nullable
+  public InspectionConfigTreeNode.Tool getStrictlySelectedToolNode() {
+    TreePath[] paths = getTree().getSelectionPaths();
+    return paths != null && paths.length == 1 && paths[0].getLastPathComponent() instanceof InspectionConfigTreeNode.Tool
+           ? (InspectionConfigTreeNode.Tool)paths[0].getLastPathComponent()
+           : null;
+  }
+
+  public Collection<InspectionConfigTreeNode.Tool> getSelectedToolNodes() {
+    return InspectionsAggregationUtil.getInspectionsNodes(getTree().getSelectionPaths());
   }
 
   @Override

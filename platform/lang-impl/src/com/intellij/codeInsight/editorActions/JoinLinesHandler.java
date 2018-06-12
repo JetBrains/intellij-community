@@ -295,6 +295,11 @@ public class JoinLinesHandler extends EditorActionHandler {
       if (commentElement.getNode().getElementType() == docCommenter.getLineCommentTokenType() &&
         blockCommentPrefix != null && blockCommentSuffix != null && lineCommentPrefix != null) {
         String commentText = StringUtil.trimStart(commentElement.getText(), lineCommentPrefix);
+        String suffix = docCommenter.getBlockCommentSuffix();
+        if (suffix != null && suffix.length() > 1) {
+          String fixedSuffix = suffix.charAt(0)+" "+suffix.substring(1);
+          commentText = commentText.replace(suffix, fixedSuffix);
+        }
         try {
           Project project = commentElement.getProject();
           PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);

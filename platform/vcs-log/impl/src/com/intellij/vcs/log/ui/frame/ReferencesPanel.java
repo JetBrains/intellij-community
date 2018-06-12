@@ -22,7 +22,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.VcsRef;
 import com.intellij.vcs.log.VcsRefType;
 import com.intellij.vcs.log.ui.render.LabelIcon;
@@ -59,6 +58,8 @@ public class ReferencesPanel extends JPanel {
   }
 
   public void setReferences(@NotNull List<VcsRef> references) {
+    if (myReferences.equals(references)) return;
+    
     myReferences = references;
 
     List<VcsRef> visibleReferences = (myRefsLimit > 0) ? myReferences.subList(0, Math.min(myReferences.size(), myRefsLimit)) : myReferences;

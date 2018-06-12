@@ -2,7 +2,6 @@
 package com.intellij.ui.popup;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.PresentationFactory;
@@ -13,6 +12,7 @@ import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.SizedIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.LafIconLookup;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -161,12 +161,12 @@ public class ActionStepBuilder extends PresentationFactory {
       if (icon == null && selectedIcon == null) {
         @NonNls final String actionId = ActionManager.getInstance().getId(action);
         if (actionId != null && actionId.startsWith("QuickList.")) {
-          icon = AllIcons.Actions.QuickList;
+          icon =  AllIcons.Actions.QuickList;
         }
         else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-          icon = IconCache.getIcon("checkmark", false, false, true);
-          selectedIcon = IconCache.getIcon("checkmark", true, false, true);
-          disabledIcon = IconCache.getIcon("checkmark", false, false, false);
+          icon = LafIconLookup.getIcon("checkmark");
+          selectedIcon = LafIconLookup.getSelectedIcon("checkmark");
+          disabledIcon = LafIconLookup.getDisabledIcon("checkmark");
         }
       }
       if (!enabled) {

@@ -304,6 +304,12 @@ public class MoveFilesOrDirectoriesProcessor extends BaseRefactoringProcessor {
     return RefactoringBundle.message("move.title");
   }
 
+  @Override
+  protected boolean shouldDisableAccessChecks() {
+    // No need to check access for files before move
+    return true;
+  }
+
   static class MyUsageInfo extends UsageInfo {
     int myIndex;
     PsiReference myReference;

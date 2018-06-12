@@ -1,7 +1,8 @@
 <component name="libraryTable">
-  <library name="nekohtml">
+  <library name="nekohtml" type="repository">
+    <properties include-transitive-deps="false" maven-id="net.sourceforge.nekohtml:nekohtml:1.9.22" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/nekohtml-1.9.14.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/net/sourceforge/nekohtml/nekohtml/1.9.22/nekohtml-1.9.22.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

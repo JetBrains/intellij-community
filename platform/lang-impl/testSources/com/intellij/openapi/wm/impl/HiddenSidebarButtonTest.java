@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.extensions.Extensions;
@@ -30,7 +28,6 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
     layout.readExternal(JdomKt.loadElement(LAYOUT));
     for (String ID : IDS) {
       assertFalse(layout.isToolWindowRegistered(ID));
-      assertTrue(layout.isToolWindowUnregistered(ID));
     }
 
     ToolWindowEP[] extensions = Extensions.getExtensions(ToolWindowEP.EP_NAME);
@@ -43,7 +40,6 @@ public class HiddenSidebarButtonTest extends ToolWindowManagerTestCase {
 
     for (int i = 0; i < IDS.length; i++) {
       assertTrue(layout.isToolWindowRegistered(IDS[i]));
-      assertFalse(layout.isToolWindowUnregistered(IDS[i]));
       assertEquals(ESTIMATED_TO_SHOW[i], layout.getInfo(IDS[i], true).isShowStripeButton());
       assertEquals(ESTIMATED_VISIBILITY[i], myManager.getStripeButton(IDS[i]).isVisible());
     }

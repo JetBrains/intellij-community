@@ -67,31 +67,37 @@ public class JavaDebuggerEvaluator extends XDebuggerEvaluator implements XDebugg
 
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
-        if (DebuggerUIUtil.isObsolete(callback)) {
-          return;
-        }
+        try {
+          if (DebuggerUIUtil.isObsolete(callback)) {
+            return;
+          }
 
-        JavaDebugProcess process = myDebugProcess.getXdebugProcess();
-        if (process == null) {
-          callback.errorOccurred("No debug process");
-          return;
+          JavaDebugProcess process = myDebugProcess.getXdebugProcess();
+          if (process == null) {
+            callback.errorOccurred("No debug process");
+            return;
+          }
+          TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
+          NodeManagerImpl nodeManager = process.getNodeManager();
+          WatchItemDescriptor descriptor = nodeManager.getWatchItemDescriptor(null, text, null);
+          EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext()).createEvaluationContext();
+          if (evalContext == null) {
+            callback.errorOccurred("Context is not available");
+            return;
+          }
+          descriptor.setContext(evalContext);
+          @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+          EvaluateException exception = descriptor.getEvaluateException();
+          if (exception != null && descriptor.getValue() == null) {
+            callback.errorOccurred(exception.getMessage());
+            return;
+          }
+          callback.evaluated(JavaValue.create(null, descriptor, evalContext, nodeManager, true));
         }
-        TextWithImports text = TextWithImportsImpl.fromXExpression(expression);
-        NodeManagerImpl nodeManager = process.getNodeManager();
-        WatchItemDescriptor descriptor = nodeManager.getWatchItemDescriptor(null, text, null);
-        EvaluationContextImpl evalContext = myStackFrame.getFrameDebuggerContext(getDebuggerContext()).createEvaluationContext();
-        if (evalContext == null) {
-          callback.errorOccurred("Context is not available");
-          return;
+        catch (Throwable e) {
+          callback.errorOccurred("Internal error");
+          throw e;
         }
-        descriptor.setContext(evalContext);
-        @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-        EvaluateException exception = descriptor.getEvaluateException();
-        if (exception != null && descriptor.getValue() == null) {
-          callback.errorOccurred(exception.getMessage());
-          return;
-        }
-        callback.evaluated(JavaValue.create(null, descriptor, evalContext, nodeManager, true));
       }
     });
   }

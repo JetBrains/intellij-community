@@ -34,6 +34,7 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.Magnificator;
+import com.intellij.util.LazyInitializer.MutableNotNullValue;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.intellij.images.ImagesBundle;
@@ -366,22 +367,25 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   private class ImageZoomModelImpl implements ImageZoomModel {
     private boolean myZoomLevelChanged;
-    private Double zoomFactor = null;
-
-    public double getZoomFactor() {
-      if (zoomFactor == null) {
+    private final MutableNotNullValue<Double> zoomFactor = new MutableNotNullValue<Double>() {
+      @NotNull
+      @Override
+      public Double initialize() {
         Dimension size = imageComponent.getCanvasSize();
         BufferedImage image = imageComponent.getDocument().getValue();
-        zoomFactor = image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+        return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
       }
-      return zoomFactor;
+    };
+
+    public double getZoomFactor() {
+      return zoomFactor.get();
     }
 
     public void setZoomFactor(double zoomFactor) {
       double oldZoomFactor = getZoomFactor();
 
       if (Double.compare(oldZoomFactor, zoomFactor) == 0) return;
-      this.zoomFactor = zoomFactor;
+      this.zoomFactor.set(zoomFactor);
 
       // Change current size
       updateImageComponentSize();

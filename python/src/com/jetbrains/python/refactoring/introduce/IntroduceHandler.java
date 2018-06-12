@@ -21,7 +21,6 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Document;
@@ -617,16 +616,15 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
                                     final IntroduceOperation operation) {
     final PyExpression expression = operation.getInitializer();
     final Project project = operation.getProject();
-    return new WriteCommandAction<PsiElement>(project, expression.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result<PsiElement> result) throws Throwable {
-        try {
+    return WriteCommandAction.writeCommandAction(project, expression.getContainingFile()).compute(() -> {
+      PsiElement result;
+      try {
           final RefactoringEventData afterData = new RefactoringEventData();
           afterData.addElement(declaration);
           project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
             .refactoringStarted(getRefactoringId(), afterData);
 
-          result.setResult(addDeclaration(operation, declaration));
+          result = (addDeclaration(operation, declaration));
 
           PyExpression newExpression = createExpression(project, operation.getName(), declaration);
 
@@ -653,8 +651,8 @@ abstract public class IntroduceHandler implements RefactoringActionHandler {
           project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC)
             .refactoringDone(getRefactoringId(), afterData);
         }
-      }
-    }.execute().getResultObject();
+        return result;
+      });
   }
 
   protected abstract String getRefactoringId();

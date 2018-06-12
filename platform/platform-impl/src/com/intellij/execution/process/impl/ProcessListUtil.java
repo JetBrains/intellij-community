@@ -173,9 +173,8 @@ public class ProcessListUtil {
                                                         full -> parseMacOutput(commandOnly, full)));
   }
 
-
   @Nullable
-  static List<ProcessInfo> parseMacOutput(String commandOnly, String full) {
+  public static List<ProcessInfo> parseMacOutput(@NotNull String commandOnly, @NotNull String full) {
     List<MacProcessInfo> commands = doParseMacOutput(commandOnly);
     List<MacProcessInfo> fulls = doParseMacOutput(full);
     if (commands == null || fulls == null) return null;
@@ -334,7 +333,7 @@ public class ProcessListUtil {
     for (int i = 1; i < lines.length; i++) {
       String line = lines[i];
 
-      int pid = StringUtil.parseInt(line.substring(pidStart, line.length()).trim(), -1);
+      int pid = StringUtil.parseInt(line.substring(pidStart).trim(), -1);
       if (pid == -1 || pid == 0) continue;
 
       String executablePath = line.substring(executablePathStart, pidStart).trim();

@@ -153,8 +153,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return true;
       }
       else if ("package-info.java".equals(file.getName())) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
-                                            getRefactoringName(), getHelpID());
+        CommonRefactoringUtil
+          .showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+                         getRefactoringName(), getHelpID());
         return true;
       }
       else {
@@ -207,12 +208,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
-    new WriteCommandAction(project, getRefactoringName()){
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        runnable.run();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> {
+      runnable.run();
+    });
     return false;
   }
 

@@ -39,7 +39,8 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
   @NotNull
   @Override
   public VirtualFile[] getExcludeRootsForProject() {
-    VirtualFile outputPath = CompilerProjectExtension.getInstance(myProject).getCompilerOutput();
+    CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
+    VirtualFile outputPath = projectExtension == null ? null : projectExtension.getCompilerOutput();
     if (outputPath != null) {
       return new VirtualFile[] { outputPath };
     }
@@ -55,7 +56,10 @@ public class ExcludeCompilerOutputPolicy implements DirectoryIndexExcludePolicy 
       return VirtualFilePointer.EMPTY_ARRAY;
     }
     if (extension.isCompilerOutputPathInherited()) {
-      ContainerUtil.addIfNotNull(result, CompilerProjectExtension.getInstance(myProject).getCompilerOutputPointer());
+      CompilerProjectExtension projectExtension = CompilerProjectExtension.getInstance(myProject);
+      if (projectExtension != null) {
+        ContainerUtil.addIfNotNull(result, projectExtension.getCompilerOutputPointer());
+      }
     }
     else {
       if (!extension.isExcludeOutput()) return VirtualFilePointer.EMPTY_ARRAY;

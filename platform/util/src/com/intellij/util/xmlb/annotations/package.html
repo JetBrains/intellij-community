@@ -1,0 +1,66 @@
+<p>Please consider to use annotation parameters only to achieve backward compatibility. Otherwise feel free to file issues about serialization cosmetics.</p>
+<h2>Lists and Sets</h2>
+<p><code>XCollection</code> annotation intended to customize list and set serialization.</p>
+<p>Two styles are provided:</p>
+<ul>
+<li>
+<p><code>v1</code>:</p>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;propertyName&quot;</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span>/&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span>/&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
+</pre>
+</li>
+<li>
+<p><code>v2</code>:</p>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;$value&quot; </span>/&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+</pre>
+</li>
+</ul>
+<p>Where second-level <code>option</code> it is item element (use <code>elementName</code> to customize element name) and
+<code>value</code> it is value attribute (use <code>valueAttributeName</code> to customize attribute name).</p>
+<p>Because of backward compatibility, <code>v1</code> style is used by default. In the examples <code>v2</code> style is used.</p>
+<h3>Custom List Item Value Attribute Name</h3>
+<p>Value of primitive type wrapped into element named <code>option</code>. <code>valueAttributeName</code> allows you to customize name of value attribute.</p>
+<p>Empty name is allowed — in this case value will be serialized as element text.</p>
+<ul>
+<li><code>valueAttributeName = &quot;name&quot;</code>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;$value1&quot; </span>/&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;$valueN&quot; </span>/&gt; 
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+</pre>
+</li>
+<li><code>valueAttributeName = &quot;&quot;</code>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option</span>&gt;$value1&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">option</span>&gt;$valueN&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+</pre>
+</li>
+</ul>
+<h2>Maps</h2>
+<p><code>XMap</code> annotation intended to customize map serialization and to enable new serialization format.</p>
+<ul>
+<li>
+<p>With <code>XMap</code> annotation:</p>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;key1&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span>/&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;keyN&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span>/&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">propertyName</span>&gt;
+</pre>
+</li>
+<li>
+<p>Without <code>XMap</code> annotation:</p>
+<pre>&lt;<span style="color: #000080; font-weight: bold;">option </span><span style="color: #0000ff; font-weight: bold;">name</span><span style="color: #008000; font-weight: bold;">=&quot;propertyName&quot;</span>&gt;
+  &lt;<span style="color: #000080; font-weight: bold;">map</span>&gt;
+    &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;key1&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;value1&quot; </span>/&gt;
+    &lt;<span style="color: #000080; font-weight: bold;">entry </span><span style="color: #0000ff; font-weight: bold;">key</span><span style="color: #008000; font-weight: bold;">=&quot;keyN&quot; </span><span style="color: #0000ff; font-weight: bold;">value</span><span style="color: #008000; font-weight: bold;">=&quot;valueN&quot; </span>/&gt;
+  &lt;/<span style="color: #000080; font-weight: bold;">map</span>&gt;
+&lt;/<span style="color: #000080; font-weight: bold;">option</span>&gt;
+</pre>
+</li>
+</ul>
+<p>So, it is recommended to always specify <code>XMap</code> annotation.</p>

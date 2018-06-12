@@ -15,8 +15,10 @@
  */
 package com.intellij.openapi.diagnostic;
 
-public interface ApplicationInfoProvider {
+import org.jetbrains.annotations.NotNull;
 
+public interface ApplicationInfoProvider {
+  @NotNull
   String getInfo();
 
 }

@@ -128,6 +128,10 @@ class ReadMostlyRWLock {
     }
   }
 
+  boolean isInImpatientReader() {
+    return R.get().impatientReads;
+  }
+
   /**
    * Executes a {@code runnable} in an "impatient" mode.
    * In this mode any attempt to grab read lock

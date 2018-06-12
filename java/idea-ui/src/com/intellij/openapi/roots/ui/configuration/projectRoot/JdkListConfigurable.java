@@ -27,18 +27,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
+
 public class JdkListConfigurable extends BaseStructureConfigurable {
   @NotNull
   private final ProjectSdksModel myJdksTreeModel;
   private final SdkModel.Listener myListener = new SdkModel.Listener() {
-    @Override
-    public void sdkAdded(Sdk sdk) {
-    }
-
-    @Override
-    public void beforeSdkRemove(Sdk sdk) {
-    }
-
     @Override
     public void sdkChanged(Sdk sdk, String previousName) {
       updateName();
@@ -171,7 +165,7 @@ public class JdkListConfigurable extends BaseStructureConfigurable {
       @Override
       public AnAction[] getChildren(@Nullable final AnActionEvent e) {
         DefaultActionGroup group = new DefaultActionGroup(ProjectBundle.message("add.new.jdk.text"), true);
-        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true));
+        myJdksTreeModel.createAddActions(group, myTree, projectJdk -> addJdkNode(projectJdk, true), notSimpleJavaSdkType());
         return group.getChildren(null);
       }
     };

@@ -155,8 +155,9 @@ public class ImplementAbstractMethodAction extends BaseIntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     PsiMethod method = findMethod(file, editor.getCaretModel().getOffset());
     if (method == null) return;
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getContentComponent().isShowing()) return;
-    invokeHandler(project, editor, method);
+    if (ApplicationManager.getApplication().isHeadlessEnvironment() || editor.getContentComponent().isShowing()) {
+      invokeHandler(project, editor, method);
+    }
   }
 
   protected void invokeHandler(final Project project, final Editor editor, final PsiMethod method) {

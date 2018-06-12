@@ -11,8 +11,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.testFramework.LightPlatformTestCase;
-import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
@@ -87,7 +87,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     myTemplateManager.setTemplates(FileTemplateManager.DEFAULT_TEMPLATES_CATEGORY, Arrays.asList(myTemplateManager.getAllTemplates()));
     assertNotNull(myTemplateManager.getTemplate("foo.txt"));
 
-    File foo = PlatformTestCase.createTempDir("foo");
+    File foo = FileUtilRt.createTempDirectory("foo", null, false);
     final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
     try {
       assertNotNull(project);
@@ -95,11 +95,12 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
     finally {
       closeProject(project);
+      FileUtilRt.delete(foo);
     }
   }
 
   public void testSurviveOnProjectReopen() throws Exception {
-    File foo = PlatformTestCase.createTempDir("foo");
+    File foo = FileUtilRt.createTempDirectory("foo", null, false);
     Project reloaded = null;
     final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
     try {
@@ -127,11 +128,12 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     finally {
       closeProject(project);
       closeProject(reloaded);
+      FileUtilRt.delete(foo);
     }
   }
 
   public void testAddRemoveShared() throws Exception {
-    File foo = PlatformTestCase.createTempDir("foo");
+    File foo = FileUtilRt.createTempDirectory("foo", null, false);
     final Project project = ProjectManager.getInstance().createProject("foo", foo.getPath());
     try {
       assertThat(project).isNotNull();
@@ -169,6 +171,7 @@ public class LightFileTemplatesTest extends LightPlatformTestCase {
     }
     finally {
       closeProject(project);
+      FileUtilRt.delete(foo);
     }
   }
 

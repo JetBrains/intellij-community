@@ -22,7 +22,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.*;
-import com.intellij.xml.util.HtmlUtil;
 import com.maddyhome.idea.copyright.CopyrightProfile;
 import com.maddyhome.idea.copyright.options.LanguageOptions;
 import com.maddyhome.idea.copyright.options.XmlOptions;
@@ -91,7 +90,7 @@ public class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider {
           }
 
           int location = getLanguageOptions().getFileLocation();
-          if (doctype != null && !isHtml5DoctypeIEFix(doc))
+          if (doctype != null)
           {
               checkComments(first, doctype, location == XmlOptions.LOCATION_BEFORE_DOCTYPE);
               first = doctype;
@@ -112,13 +111,6 @@ public class UpdateXmlCopyrightsProvider extends UpdateCopyrightsProvider {
           }
       }
 
-      private boolean isHtml5DoctypeIEFix(XmlDocument doc) {
-          if (HtmlUtil.isHtml5Document(doc)) {
-              return true; // IE goes quirks mode if comment before doc type so pardon the setting we will not handle you then
-          }
-          return false;
-      }
-  
       protected PsiElement getPreviousSibling(PsiElement element)
       {
           if (element == null) return null;

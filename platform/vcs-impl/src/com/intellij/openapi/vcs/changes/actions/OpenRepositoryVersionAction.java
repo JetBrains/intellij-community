@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -39,9 +38,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public class OpenRepositoryVersionAction extends AnAction implements DumbAware {
   public OpenRepositoryVersionAction() {
-    // TODO[yole]: real icon
-    super(VcsBundle.message("open.repository.version.text"), VcsBundle.message("open.repository.version.description"),
-          AllIcons.ObjectBrowser.ShowEditorHighlighting);
+    super(VcsBundle.message("open.repository.version.text"), VcsBundle.message("open.repository.version.description"), null);
   }
 
   public void actionPerformed(@NotNull AnActionEvent e) {

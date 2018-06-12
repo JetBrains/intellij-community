@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.ui.search.BooleanOptionDescription;
@@ -28,7 +14,7 @@ import java.util.Collection;
  * @author Konstantin Bulenkov
  */
 public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
-  private static final String ID = "editor";
+  public static final String ID = "editor";
 
   private static final Collection<OptionDescription> ourOptions = ContainerUtil.immutableList(
     editorUI("Appearance: " + messageIde("checkbox.use.antialiased.font.in.editor"), "ANTIALIASING_IN_EDITOR"),
@@ -37,7 +23,6 @@ public class EditorOptionsTopHitProvider extends OptionsTopHitProvider {
     editorApp("Appearance: " + messageApp("checkbox.use.block.caret"), "IS_BLOCK_CURSOR"),
     editorApp("Appearance: Show right margin", "IS_RIGHT_MARGIN_SHOWN"),
     editorCode("Appearance: " + messageApp("checkbox.show.method.separators"), "SHOW_METHOD_SEPARATORS"),
-    editorApp("Appearance: " + messageApp("checkbox.show.parameter.name.hints"), "SHOW_PARAMETER_NAME_HINTS"),
     editorApp("Appearance: " + messageApp("checkbox.show.whitespaces"), "IS_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show leading whitespaces", "IS_LEADING_WHITESPACES_SHOWN"),
     editorApp("Appearance: Show inner whitespaces", "IS_INNER_WHITESPACES_SHOWN"),

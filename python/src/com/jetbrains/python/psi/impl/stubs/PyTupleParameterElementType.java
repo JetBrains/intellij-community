@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.psi.PyStubElementType;
 import com.jetbrains.python.psi.PyTupleParameter;
 import com.jetbrains.python.psi.impl.PyTupleParameterImpl;
@@ -58,8 +57,7 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
   @Override
   @NotNull
   public PyTupleParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    final StringRef defaultValueText = dataStream.readName();
-    return new PyTupleParameterStubImpl(defaultValueText == null ? null : defaultValueText.getString(), parentStub);
+    return new PyTupleParameterStubImpl(dataStream.readNameString(), parentStub);
   }
 
   @Override

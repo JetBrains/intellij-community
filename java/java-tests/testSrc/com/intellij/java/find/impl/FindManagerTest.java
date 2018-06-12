@@ -336,17 +336,14 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
 
     // don't use createFile here because it creates PsiFile and runs file type autodetection
     // in real life some files might not be autodetected as plain text until the search starts 
-    VirtualFile custom = new WriteCommandAction<VirtualFile>(myProject) {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        File dir = createTempDirectory();
-        File file = new File(dir.getPath(), "A.test1234");
-        file.createNewFile();
-        FileUtil.writeToFile(file, "foo fo foo");
-        addSourceContentToRoots(myModule, VfsUtil.findFileByIoFile(dir, true));
-        result.setResult(VfsUtil.findFileByIoFile(file, true));
-      }
-    }.execute().getResultObject();
+    VirtualFile custom = WriteCommandAction.writeCommandAction(myProject).compute(() -> {
+      File dir = createTempDirectory();
+      File file = new File(dir.getPath(), "A.test1234");
+      file.createNewFile();
+      FileUtil.writeToFile(file, "foo fo foo");
+      addSourceContentToRoots(myModule, VfsUtil.findFileByIoFile(dir, true));
+      return VfsUtil.findFileByIoFile(file, true);
+    });
     
     assertNull(FileDocumentManager.getInstance().getCachedDocument(custom));
     assertEquals(PlainTextFileType.INSTANCE, custom.getFileType());

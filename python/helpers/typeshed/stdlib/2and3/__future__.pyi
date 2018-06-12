@@ -18,4 +18,7 @@ if sys.version_info >= (3, 0):
 if sys.version_info >= (3, 5):
     generator_stop: _Feature
 
+if sys.version_info >= (3, 7):
+    annotations: _Feature
+
 all_feature_names: List[str]

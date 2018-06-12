@@ -372,10 +372,12 @@ public class UpdateHighlightersUtil {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
-    boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
-    assert attributesSet : "Info: " + infoAttributes +
-                           "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
-                           "; highlighter:" + highlighter.getTextAttributes();
+    if (infoAttributes != null) {
+      boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
+      assert attributesSet : "Info: " + infoAttributes +
+                             "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
+                             "; highlighter:" + highlighter.getTextAttributes();
+    }
   }
 
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {
@@ -476,11 +478,8 @@ public class UpdateHighlightersUtil {
     RangeHighlighter[] allHighlighters = markup.getAllHighlighters();
     for (RangeHighlighter highlighter : allHighlighters) {
       if (!highlighter.isValid()) continue;
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (!(tooltip instanceof HighlightInfo)) {
-        continue;
-      }
-      final HighlightInfo info = (HighlightInfo)tooltip;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info == null) continue;
       boolean contains = !DaemonCodeAnalyzerEx
         .processHighlights(document, project, null, info.getActualStartOffset(), info.getActualEndOffset(),
                            highlightInfo -> BY_START_OFFSET_NODUPS.compare(highlightInfo, info) != 0);

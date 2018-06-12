@@ -1,4 +1,4 @@
-// "Remove explicit type arguments" "false"
+// "Remove type arguments" "false"
 class Test {
 
   public void valueOfPasses() {

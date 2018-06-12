@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui
 
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.bw
-import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.lw
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil.*
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getDisabledTextColor
-import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI.getTextColor
 import com.intellij.ide.ui.laf.darcula.ui.DarculaComboBoxUI.getArrowButtonPreferredSize
 import com.intellij.ui.components.BasicOptionButtonUI
 import com.intellij.util.ui.JBUI
@@ -55,7 +53,7 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
     g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON)
     g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE)
 
-    g.color = if (b.isEnabled) getTextColor(b) else getDisabledTextColor()
+    g.color = if (b.isEnabled) getButtonTextColor(b) else getDisabledTextColor()
     g.fill(DarculaComboBoxUI.getArrowShape(b))
   }
 
@@ -83,11 +81,11 @@ open class DarculaOptionButtonUI : BasicOptionButtonUI() {
   }
 
   protected open fun paintSeparator(g: Graphics2D, c: JComponent) {
-    val yOffset = bw() + lw(g) + scale(1)
+    val yOffset = BW.getFloat() + LW.getFloat() + scale(1)
     val x = mainButton.width.toFloat()
 
-    g.color = (mainButton.border as DarculaButtonPainter).getBorderColor(c)
-    g.fill(Rectangle2D.Float(x, yOffset, lw(g), mainButton.height - yOffset * 2))
+    g.paint = (mainButton.border as DarculaButtonPainter).getBorderPaint(c)
+    g.fill(Rectangle2D.Float(x, yOffset, LW.getFloat(), mainButton.height - yOffset * 2))
   }
 
   override fun updateOptions() = super.updateOptions().also {

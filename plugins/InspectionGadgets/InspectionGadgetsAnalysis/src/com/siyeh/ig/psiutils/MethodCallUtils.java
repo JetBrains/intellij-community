@@ -22,7 +22,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.HardcodedMethodConstants;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -424,7 +424,7 @@ public class MethodCallUtils {
         // we've already seen this method -> circular call chain
         return false;
       }
-      final PsiMethodCallExpression call = MethodUtils.findSuperOrThisCall(method);
+      final PsiMethodCallExpression call = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(method);
       if (call == null) {
         return false;
       }
@@ -440,7 +440,7 @@ public class MethodCallUtils {
       if (method == null) {
         return false;
       }
-      if (RefactoringChangeUtil.isSuperMethodCall(call) && (!superMustBeLibrary || method instanceof PsiCompiledElement)) {
+      if (JavaPsiConstructorUtil.isSuperConstructorCall(call) && (!superMustBeLibrary || method instanceof PsiCompiledElement)) {
         return true;
       }
       parameter = method.getParameterList().getParameters()[index];

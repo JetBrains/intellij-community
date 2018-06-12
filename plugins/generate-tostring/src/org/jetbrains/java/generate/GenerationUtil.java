@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.generate;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.generation.PsiElementClassMember;
 import com.intellij.codeInsight.generation.PsiFieldMember;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -27,9 +14,9 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMember;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.apache.velocity.VelocityContext;
 import org.apache.velocity.app.VelocityEngine;
@@ -44,7 +31,7 @@ import java.io.StringWriter;
 import java.util.*;
 
 public class GenerationUtil {
-  private static final Logger logger = Logger.getInstance(GenerationUtil.class);
+  private static final Logger LOG = Logger.getInstance(GenerationUtil.class);
 
   /**
      * Handles any exception during the executing on this plugin.
@@ -54,7 +41,7 @@ public class GenerationUtil {
      * @throws RuntimeException is thrown for severe exceptions
      */
     public static void handleException(Project project, Exception e) throws RuntimeException {
-        logger.info(e);
+        LOG.info(e);
 
         if (e instanceof GenerateCodeException) {
             // code generation error - display velocity error in error dialog so user can identify problem quicker
@@ -99,9 +86,9 @@ public class GenerationUtil {
   }
 
   /**
-   * Converts the list of {@link com.intellij.codeInsight.generation.PsiElementClassMember} to {PsiMember} objects.
+   * Converts the list of {@link PsiElementClassMember} to {PsiMember} objects.
    *
-   * @param classMemberList  list of {@link com.intellij.codeInsight.generation.PsiElementClassMember}
+   * @param classMemberList  list of {@link PsiElementClassMember}
    * @return a list of {PsiMember} objects.
    */
   public static List<PsiMember> convertClassMembersToPsiMembers(@Nullable List<PsiElementClassMember> classMemberList) {
@@ -127,13 +114,11 @@ public class GenerationUtil {
    * <p>
    * This is used to create the {@code toString} method body and it's javadoc.
    *
-   * @param clazz
    * @param selectedMembers       the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param params                additional parameters stored with key/value in the map.
    * @param templateMacro         the velocity macro template
-   * @param sortElements
-   * @param useFullyQualifiedName @return code (usually javacode). Returns null if templateMacro is null.
-   * @throws GenerateCodeException is thrown when there is an error generating the javacode.
+   * @return code (usually Java). Returns null if templateMacro is null.
+   * @throws GenerateCodeException is thrown when there is an error generating the code.
    */
   public static String velocityGenerateCode(PsiClass clazz,
                                             Collection<? extends PsiMember> selectedMembers,
@@ -153,9 +138,9 @@ public class GenerationUtil {
    * @param selectedMembers the selected members as both {@link PsiField} and {@link PsiMethod}.
    * @param params          additional parameters stored with key/value in the map.
    * @param templateMacro   the velocity macro template
-   * @param useAccessors    if true, accessor property for FieldElement bean would be assigned to field getter name append with () 
-   * @return code (usually javacode). Returns null if templateMacro is null.
-   * @throws GenerateCodeException is thrown when there is an error generating the javacode.
+   * @param useAccessors    if true, accessor property for FieldElement bean would be assigned to field getter name append with ()
+   * @return code (usually Java). Returns null if templateMacro is null.
+   * @throws GenerateCodeException is thrown when there is an error generating the code.
    */
   public static String velocityGenerateCode(@Nullable PsiClass clazz,
                                             Collection<? extends PsiMember> selectedMembers,
@@ -164,7 +149,7 @@ public class GenerationUtil {
                                             Map<String, Object> contextMap,
                                             String templateMacro,
                                             int sortElements,
-                                            boolean useFullyQualifiedName, 
+                                            boolean useFullyQualifiedName,
                                             boolean useAccessors)
     throws GenerateCodeException {
     if (templateMacro == null) {
@@ -176,7 +161,7 @@ public class GenerationUtil {
       VelocityContext vc = new VelocityContext();
 
       // field information
-      logger.debug("Velocity Context - adding fields");
+      LOG.debug("Velocity Context - adding fields");
       final List<FieldElement> fieldElements = ElementUtils.getOnlyAsFieldElements(selectedMembers, selectedNotNullMembers, useAccessors);
       vc.put("fields", fieldElements);
       if (fieldElements.size() == 1) {
@@ -186,11 +171,11 @@ public class GenerationUtil {
       PsiMember member = clazz != null ? clazz : ContainerUtil.getFirstItem(selectedMembers);
 
       // method information
-      logger.debug("Velocity Context - adding methods");
+      LOG.debug("Velocity Context - adding methods");
       vc.put("methods", ElementUtils.getOnlyAsMethodElements(selectedMembers));
 
       // element information (both fields and methods)
-      logger.debug("Velocity Context - adding members (fields and methods)");
+      LOG.debug("Velocity Context - adding members (fields and methods)");
       List<Element> elements = ElementUtils.getOnlyAsFieldAndMethodElements(selectedMembers, selectedNotNullMembers, useAccessors);
       // sort elements if enabled and not using chooser dialog
       if (sortElements != 0 && sortElements < 3) {
@@ -202,7 +187,7 @@ public class GenerationUtil {
       if (clazz != null) {
         ClassElement ce = ElementFactory.newClassElement(clazz);
         vc.put("class", ce);
-        if (logger.isDebugEnabled()) logger.debug("Velocity Context - adding class: " + ce);
+        if (LOG.isDebugEnabled()) LOG.debug("Velocity Context - adding class: " + ce);
 
         // information to keep as it is to avoid breaking compatibility with prior releases
         vc.put("classname", useFullyQualifiedName ? ce.getQualifiedName() : ce.getName());
@@ -211,9 +196,9 @@ public class GenerationUtil {
       }
 
       if (member != null) {
-        vc.put("java_version", PsiAdapter.getJavaVersion(member));
+        vc.put("java_version", PsiUtil.getLanguageLevel(member).toJavaVersion().feature);
         final Project project = member.getProject();
-        vc.put("settings", CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class));
+        vc.put("settings", CodeStyle.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class));
         vc.put("project", project);
       }
 
@@ -225,13 +210,13 @@ public class GenerationUtil {
         vc.put(paramName, contextMap.get(paramName));
       }
 
-      if (logger.isDebugEnabled()) logger.debug("Velocity Macro:\n" + templateMacro);
+      if (LOG.isDebugEnabled()) LOG.debug("Velocity Macro:\n" + templateMacro);
 
       // velocity
       VelocityEngine velocity = VelocityFactory.getVelocityEngine();
-      logger.debug("Executing velocity +++ START +++");
+      LOG.debug("Executing velocity +++ START +++");
       velocity.evaluate(vc, sw, GenerateToStringWorker.class.getName(), templateMacro);
-      logger.debug("Executing velocity +++ END +++");
+      LOG.debug("Executing velocity +++ END +++");
 
       // any additional packages to import returned from velocity?
       if (vc.get("autoImportPackages") != null) {

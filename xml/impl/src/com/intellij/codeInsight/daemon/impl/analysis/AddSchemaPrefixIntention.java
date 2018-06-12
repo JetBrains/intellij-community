@@ -71,69 +71,68 @@ public class AddSchemaPrefixIntention extends PsiElementBaseIntentionAction {
 
     if (tag != null) {
       final Set<String> ns = tag.getLocalNamespaceDeclarations().keySet();
-      final String nsPrefix = Messages.showInputDialog(project, "Namespace Prefix:", StringUtil.capitalize(NAME), Messages.getInformationIcon(), "",
-                               new InputValidator() {
-                                 @Override
-                                 public boolean checkInput(String inputString) {
-                                   return !ns.contains(inputString);
-                                 }
+      final String nsPrefix =
+        Messages.showInputDialog(project, "Namespace Prefix:", StringUtil.capitalize(NAME), Messages.getInformationIcon(), "",
+                                 new InputValidator() {
+                                   @Override
+                                   public boolean checkInput(String inputString) {
+                                     return !ns.contains(inputString);
+                                   }
 
-                                 @Override
-                                 public boolean canClose(String inputString) {
-                                   return checkInput(inputString);
-                                 }
-                               });
+                                   @Override
+                                   public boolean canClose(String inputString) {
+                                     return checkInput(inputString);
+                                   }
+                                 });
       if (nsPrefix == null) return;
       final List<XmlTag> tags = new ArrayList<>();
       final List<XmlAttributeValue> values = new ArrayList<>();
-      new WriteCommandAction(project, NAME, tag.getContainingFile()) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          tag.accept(new XmlRecursiveElementVisitor() {
-            @Override
-            public void visitXmlTag(XmlTag tag) {
-              if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
-                tags.add(tag);
-              }
-              super.visitXmlTag(tag);
+      WriteCommandAction.writeCommandAction(project, tag.getContainingFile()).withName(NAME).run(() -> {
+        tag.accept(new XmlRecursiveElementVisitor() {
+          @Override
+          public void visitXmlTag(XmlTag tag) {
+            if (tag.getNamespace().equals(namespace) && tag.getNamespacePrefix().isEmpty()) {
+              tags.add(tag);
             }
+            super.visitXmlTag(tag);
+          }
 
-            @Override
-            public void visitXmlAttributeValue(XmlAttributeValue value) {
-              PsiReference ref = null;
-              boolean skip = false;
-              for (PsiReference reference : value.getReferences()) {
-                if (reference instanceof TypeOrElementOrAttributeReference) {
-                  ref = reference;
-                } else if (reference instanceof SchemaPrefixReference) {
-                  skip = true;
-                  break;
-                }
+          @Override
+          public void visitXmlAttributeValue(XmlAttributeValue value) {
+            PsiReference ref = null;
+            boolean skip = false;
+            for (PsiReference reference : value.getReferences()) {
+              if (reference instanceof TypeOrElementOrAttributeReference) {
+                ref = reference;
               }
-              if (!skip && ref != null) {
-                final PsiElement xmlElement = ref.resolve();
-                if (xmlElement instanceof XmlElement) {
-                  final XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
-                  if (tag != null) {
-                    if (tag.getNamespace().equals(namespace)) {
-                      if (ref.getRangeInElement().getLength() == value.getValue().length()) { //no ns prefix
-                        values.add(value);
-                      }
+              else if (reference instanceof SchemaPrefixReference) {
+                skip = true;
+                break;
+              }
+            }
+            if (!skip && ref != null) {
+              final PsiElement xmlElement = ref.resolve();
+              if (xmlElement instanceof XmlElement) {
+                final XmlTag tag = PsiTreeUtil.getParentOfType(xmlElement, XmlTag.class, false);
+                if (tag != null) {
+                  if (tag.getNamespace().equals(namespace)) {
+                    if (ref.getRangeInElement().getLength() == value.getValue().length()) { //no ns prefix
+                      values.add(value);
                     }
                   }
                 }
               }
             }
-          });
-          for (XmlAttributeValue value : values) {
-            ((XmlAttribute)value.getParent()).setValue(nsPrefix + ":" + value.getValue());
           }
-          for (XmlTag xmlTag : tags) {
-            xmlTag.setName(nsPrefix + ":" + xmlTag.getLocalName());
-          }
-          xmlns.setName("xmlns:" + nsPrefix);
+        });
+        for (XmlAttributeValue value : values) {
+          ((XmlAttribute)value.getParent()).setValue(nsPrefix + ":" + value.getValue());
         }
-      }.execute();
+        for (XmlTag xmlTag : tags) {
+          xmlTag.setName(nsPrefix + ":" + xmlTag.getLocalName());
+        }
+        xmlns.setName("xmlns:" + nsPrefix);
+      });
     }
   }
 

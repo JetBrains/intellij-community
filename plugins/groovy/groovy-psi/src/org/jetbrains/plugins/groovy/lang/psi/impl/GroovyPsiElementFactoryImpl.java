@@ -72,8 +72,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @Override
   @NotNull
   public PsiElement createReferenceNameFromText(@NotNull String refName) {
-    PsiFile file = createGroovyFileChecked("a." + refName);
-    GrTopStatement statement = ((GroovyFileBase) file).getTopStatements()[0];
+    GroovyFileBase file = createGroovyFileChecked("a." + refName);
+    GrTopStatement statement = file.getTopStatements()[0];
     if (!(statement instanceof GrReferenceExpression)) {
       throw new IncorrectOperationException("Incorrect reference name: " + refName);
     }
@@ -125,8 +125,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
   @NotNull
   @Override
   public GrReferenceExpression createReferenceExpressionFromText(@NotNull String idText) {
-    PsiFile file = createGroovyFileChecked(idText);
-    final GrTopStatement[] statements = ((GroovyFileBase)file).getTopStatements();
+    GroovyFileBase file = createGroovyFileChecked(idText);
+    final GrTopStatement[] statements = file.getTopStatements();
     if (!(statements.length == 1 && statements[0] instanceof GrReferenceExpression)) throw new IncorrectOperationException(idText);
     return (GrReferenceExpression) statements[0];
   }

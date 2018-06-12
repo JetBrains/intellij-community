@@ -19,6 +19,7 @@ public class SelectInCoverageView implements  SelectInTarget {
     return CoverageViewManager.TOOLWINDOW_ID;
   }
 
+  @Override
   public boolean canSelect(final SelectInContext context) {
     final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (suitesBundle != null) {
@@ -31,6 +32,7 @@ public class SelectInCoverageView implements  SelectInTarget {
     return false;
   }
 
+  @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final CoverageSuitesBundle suitesBundle = CoverageDataManager.getInstance(myProject).getCurrentSuitesBundle();
     if (suitesBundle != null) {
@@ -45,6 +47,7 @@ public class SelectInCoverageView implements  SelectInTarget {
     return CoverageViewManager.TOOLWINDOW_ID;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }

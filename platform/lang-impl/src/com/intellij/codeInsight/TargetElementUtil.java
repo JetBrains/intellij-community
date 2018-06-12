@@ -453,10 +453,10 @@ public class TargetElementUtil extends TargetElementUtilBase {
     if (result != null) return result;
 
     PsiFile file = element.getContainingFile();
-    return PsiSearchHelper.SERVICE.getInstance(element.getProject()).getUseScope(file != null ? file : element);
+    return PsiSearchHelper.getInstance(element.getProject()).getUseScope(file != null ? file : element);
   }
 
-  protected final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
+  protected static final LanguageExtension<TargetElementEvaluator> targetElementEvaluator =
     new LanguageExtension<>("com.intellij.targetElementEvaluator");
   @Nullable
   private TargetElementEvaluatorEx getElementEvaluatorsEx(@NotNull Language language) {

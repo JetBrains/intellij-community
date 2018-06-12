@@ -25,6 +25,7 @@ import java.util.*;
 
 class UndoableGroup implements Dumpable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.impl.UndoableGroup");
+  private static final int BULK_MODE_ACTION_THRESHOLD = 50;
 
   private final String myCommandName;
   private final boolean myGlobal;
@@ -121,45 +122,72 @@ class UndoableGroup implements Dumpable {
   }
 
   private void doUndoOrRedo(final boolean isUndo) {
-    final boolean wrapInBulkUpdate = myActions.size() > 50;
     // perform undo action by action, setting bulk update flag if possible
     // if multiple consecutive actions share a document, then set the bulk flag only once
     final UnexpectedUndoException[] exception = {null};
     ApplicationManager.getApplication().runWriteAction(() -> {
-      final Set<DocumentEx> bulkDocuments = new THashSet<>();
       try {
-        for (final UndoableAction action : isUndo ? ContainerUtil.iterateBackward(myActions) : myActions) {
-          if (wrapInBulkUpdate) {
-            DocumentEx newDocument = getDocumentToSetBulkMode(action);
-            if (newDocument == null) {
-              for (DocumentEx document : bulkDocuments) {
-                document.setInBulkUpdate(false);
-              }
-              bulkDocuments.clear();
+        List<UndoableAction> actionsList = isUndo ? ContainerUtil.reverse(myActions) : myActions;
+        int toProcess = 0; // index of first action not yet performed
+        int toProcessInBulk = 0; // index of first action that can be executed in bulk mode
+        int actionCount = actionsList.size();
+        for (int i = 0; i < actionCount; i++) {
+          UndoableAction action = actionsList.get(i);
+          DocumentEx newDocument = getDocumentToSetBulkMode(action);
+          if (newDocument == null) {
+            if (i - toProcessInBulk > BULK_MODE_ACTION_THRESHOLD) {
+              performActions(actionsList.subList(toProcess, toProcessInBulk), isUndo, false);
+              performActions(actionsList.subList(toProcessInBulk, i), isUndo, true);
+              toProcess = i;
             }
-            else if (bulkDocuments.add(newDocument)) {
-              newDocument.setInBulkUpdate(true);
-            }
+            toProcessInBulk = i + 1;
           }
-
-          if (isUndo) {
-            action.undo();
-          }
-          else {
-            action.redo();
-          }
+        }
+        if (actionCount - toProcessInBulk > BULK_MODE_ACTION_THRESHOLD) {
+          performActions(actionsList.subList(toProcess, toProcessInBulk), isUndo, false);
+          performActions(actionsList.subList(toProcessInBulk, actionCount), isUndo, true);
+        }
+        else {
+          performActions(actionsList.subList(toProcess, actionCount), isUndo, false);
         }
       }
       catch (UnexpectedUndoException e) {
         exception[0] = e;
       }
-      finally {
-        for (DocumentEx bulkDocument : bulkDocuments) {
-          bulkDocument.setInBulkUpdate(false);
-        }
-      }
     });
     if (exception[0] != null) reportUndoProblem(exception[0], isUndo);
+  }
+
+  private static void performActions(@NotNull Collection<UndoableAction> actions, boolean isUndo, boolean useBulkMode)
+    throws UnexpectedUndoException {
+    Set<DocumentEx> bulkDocuments = new THashSet<>();
+    try {
+      for (UndoableAction action : actions) {
+        if (useBulkMode) {
+          DocumentEx newDocument = getDocumentToSetBulkMode(action);
+          if (newDocument == null) {
+            for (DocumentEx document : bulkDocuments) {
+              document.setInBulkUpdate(false);
+            }
+            bulkDocuments.clear();
+          }
+          else if (bulkDocuments.add(newDocument)) {
+            newDocument.setInBulkUpdate(true);
+          }
+        }
+        if (isUndo) {
+          action.undo();
+        }
+        else {
+          action.redo();
+        }
+      }
+    }
+    finally {
+      for (DocumentEx bulkDocument : bulkDocuments) {
+        bulkDocument.setInBulkUpdate(false);
+      }
+    }
   }
 
   @NotNull

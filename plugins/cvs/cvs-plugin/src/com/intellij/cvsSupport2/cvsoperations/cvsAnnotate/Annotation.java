@@ -68,7 +68,7 @@ public class Annotation {
   public static String createMessageOn(String message) {
     final int index = message.indexOf(CONTENT_SEPARATOR);
     if (index < 0) return "";
-    return message.substring(index + CONTENT_SEPARATOR.length(), message.length()).replaceAll("\r", "");
+    return message.substring(index + CONTENT_SEPARATOR.length()).replaceAll("\r", "");
   }
 
   public void setUser(String user) {

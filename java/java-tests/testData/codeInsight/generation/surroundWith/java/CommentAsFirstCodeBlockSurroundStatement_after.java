@@ -3,7 +3,6 @@ class Test {
         {
             // This is comment"
             int i = 1;
-        }<caret>
-
+        }
     }
 }

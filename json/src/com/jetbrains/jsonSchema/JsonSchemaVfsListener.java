@@ -84,12 +84,12 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
         Arrays.stream(editors).filter(editor -> editor instanceof EditorEx)
               .map(editor -> ((EditorEx)editor).getVirtualFile())
               .filter(file -> file != null && file.isValid())
-              .forEach(file -> {
-            final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
-            if (schemaFiles.stream().anyMatch(finalScope::contains)) {
-              ReadAction.run(() -> Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart));
-            }
-          });
+              .forEach(file -> ReadAction.run(() -> {
+                final Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
+                if (schemaFiles.stream().anyMatch(finalScope::contains)) {
+                  Optional.ofNullable(psiManager.findFile(file)).ifPresent(analyzer::restart);
+                }
+              }));
       };
     }
 

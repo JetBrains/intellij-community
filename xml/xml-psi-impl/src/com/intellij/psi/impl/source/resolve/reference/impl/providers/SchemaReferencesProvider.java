@@ -71,11 +71,13 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
       myElement = element;
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return ElementManipulators.getValueTextRange(myElement);

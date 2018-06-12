@@ -21,7 +21,6 @@ import com.intellij.execution.testframework.sm.runner.ui.SMTRunnerConsoleView;
 import com.intellij.execution.testframework.sm.runner.ui.TestResultsViewer;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.RunContentDescriptor;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -177,15 +176,12 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
 
     configure(config);
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        RunManager runManager = RunManager.getInstance(project);
-        runManager.addConfiguration(settings);
-        runManager.setSelectedConfiguration(settings);
-        Assert.assertSame(settings, runManager.getSelectedConfiguration());
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      RunManager runManager = RunManager.getInstance(project);
+      runManager.addConfiguration(settings);
+      runManager.setSelectedConfiguration(settings);
+      Assert.assertSame(settings, runManager.getSelectedConfiguration());
+    });
 
     runConfiguration(settings, config);
   }

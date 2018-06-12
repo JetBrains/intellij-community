@@ -276,7 +276,7 @@ public class SimpleEditorPreview implements PreviewPanel {
         for (final TextAttributesKey tokenHighlight : tokenHighlights) {
           String type = tokenHighlight.getExternalName();
           if (type != null && type.equals(attrKey)) {
-            HighlightData highlightData = new HighlightData(iterator.getStart(), iterator.getEnd(), BLINKING_HIGHLIGHTS_ATTRIBUTES, null);
+            HighlightData highlightData = new HighlightData(iterator.getStart(), iterator.getEnd(), BLINKING_HIGHLIGHTS_ATTRIBUTES);
             highlights.add(highlightData);
             matchingHighlights.add(highlightData);
           }
@@ -358,8 +358,7 @@ public class SimpleEditorPreview implements PreviewPanel {
       final boolean rainbowType = page.isRainbowType(highlightKey);
       final boolean rainbowDemoType = highlightKey == RainbowHighlighter.RAINBOW_GRADIENT_DEMO;
       if (rainbowType || rainbowDemoType) {
-        final HighlightData rainbowAnchor = new HighlightData(d.getStartOffset(), d.getEndOffset(), RainbowHighlighter.RAINBOW_ANCHOR, 
-                                                              null);
+        final HighlightData rainbowAnchor = new HighlightData(d.getStartOffset(), d.getEndOffset(), RainbowHighlighter.RAINBOW_ANCHOR);
         if (isRainbowOn) {
           // rainbow on
           HighlightData rainbowTemp;
@@ -367,7 +366,7 @@ public class SimpleEditorPreview implements PreviewPanel {
             rainbowTemp = getRainbowTemp(rainbowTempKeys, d.getStartOffset(), d.getEndOffset());
           }
           else {
-            rainbowTemp = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[tempKeyIndex % colorCount], null);
+            rainbowTemp = new HighlightData(d.getStartOffset(), d.getEndOffset(), rainbowTempKeys[tempKeyIndex % colorCount]);
             if (repeatAnchor && tempKeyIndex == colorCount/2) {
               // anchor [Color#3] colored twice: it the end and in the beginning of rainbow-demo string
               repeatAnchor = false;
@@ -411,6 +410,6 @@ public class SimpleEditorPreview implements PreviewPanel {
                                        int startOffset, int endOffset) {
     String id = myEditor.getDocument().getText(TextRange.create(startOffset, endOffset));
     int index = UsedColors.getOrAddColorIndex((EditorImpl)myEditor, id, rainbowTempKeys.length);
-    return new HighlightData(startOffset, endOffset, rainbowTempKeys[index], null);
+    return new HighlightData(startOffset, endOffset, rainbowTempKeys[index]);
   }
 }

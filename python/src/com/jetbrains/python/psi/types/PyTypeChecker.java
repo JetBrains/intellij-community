@@ -296,6 +296,16 @@ public class PyTypeChecker {
         }
       }
 
+      final PyType originalProtocolGenericType = StreamEx
+        .of(Extensions.getExtensions(PyTypeProvider.EP_NAME))
+        .map(provider -> provider.getGenericType(superClass, context.context))
+        .findFirst(Objects::nonNull)
+        .orElse(null);
+
+      // actual was matched against protocol definition above
+      // and here protocol usage is matched against its definition to update substitutions
+      match(expected, originalProtocolGenericType, context);
+
       return Optional.of(true);
     }
 
@@ -754,13 +764,21 @@ public class PyTypeChecker {
       for (PyClassType type : toPossibleClassTypes(qualifierType)) {
         for (PyTypeProvider provider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           final PyType genericType = provider.getGenericType(type.getPyClass(), context);
+          final Set<PyGenericType> providedTypeGenerics = new LinkedHashSet<>();
+
           if (genericType != null) {
             match(genericType, type, context, substitutions);
+            collectGenerics(genericType, context, providedTypeGenerics, new HashSet<>());
           }
+
           for (Map.Entry<PyType, PyType> entry : provider.getGenericSubstitutions(type.getPyClass(), context).entrySet()) {
             final PyGenericType genericKey = as(entry.getKey(), PyGenericType.class);
             final PyType value = entry.getValue();
-            if (genericKey != null && value != null && !substitutions.containsKey(genericKey)) {
+
+            if (genericKey != null &&
+                value != null &&
+                !substitutions.containsKey(genericKey) &&
+                !providedTypeGenerics.contains(genericKey)) {
               substitutions.put(genericKey, value);
             }
           }

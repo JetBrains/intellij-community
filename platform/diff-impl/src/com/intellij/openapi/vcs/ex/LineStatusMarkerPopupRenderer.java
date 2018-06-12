@@ -28,7 +28,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighterFactory;
@@ -47,10 +46,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vcs.VcsApplicationSettings;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.EditorTextField;
-import com.intellij.ui.HintHint;
-import com.intellij.ui.HintListener;
-import com.intellij.ui.LightweightHint;
+import com.intellij.ui.*;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,7 +93,10 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
   }
 
   @Nullable
-  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor, @NotNull Range range, @Nullable Point mousePosition) {
+  protected JComponent createAdditionalInfoPanel(@NotNull Editor editor,
+                                                 @NotNull Range range,
+                                                 @Nullable Point mousePosition,
+                                                 @NotNull Disposable disposable) {
     return null;
   }
 
@@ -142,7 +141,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     toolbar.updateActionsImmediately(); // we need valid ActionToolbar.getPreferredSize() to calc size of popup
     toolbar.setReservePlaceAutoPopupIcon(false);
 
-    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition);
+    JComponent additionalInfoPanel = createAdditionalInfoPanel(editor, range, mousePosition, disposable);
 
     PopupPanel popupPanel = new PopupPanel(editor, toolbar, editorComponent, additionalInfoPanel);
 
@@ -324,17 +323,14 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
       myEditorComponent = editorComponent;
       boolean isEditorVisible = myEditorComponent != null;
 
-      Color background = ((EditorEx)editor).getBackgroundColor();
-      Color borderColor = editor.getColorsScheme().getColor(EditorColors.SELECTED_TEARLINE_COLOR);
+      Color borderColor = new JBColor(Gray._206, Gray._75);
 
       JComponent toolbarComponent = toolbar.getComponent();
-      toolbarComponent.setBackground(background);
       toolbarComponent.setBorder(null);
 
       JComponent toolbarPanel = JBUI.Panels.simplePanel(toolbarComponent);
-      toolbarPanel.setBackground(background);
       Border outsideToolbarBorder = JBUI.Borders.customLine(borderColor, 1, 1, isEditorVisible ? 0 : 1, 1);
-      Border insideToolbarBorder = JBUI.Borders.empty(1, 5, 1, 5);
+      Border insideToolbarBorder = JBUI.Borders.empty(1, 5);
       toolbarPanel.setBorder(BorderFactory.createCompoundBorder(outsideToolbarBorder, insideToolbarBorder));
 
       if (additionalInfo != null) {
@@ -550,7 +546,7 @@ public abstract class LineStatusMarkerPopupRenderer extends LineStatusMarkerRend
     public ToggleByWordDiffAction(@NotNull Editor editor,
                                   @NotNull Range range,
                                   @Nullable Point position) {
-      super("Show Detailed Differences", null, AllIcons.Actions.PreviewDetails);
+      super("Highlight Words", null, AllIcons.Actions.Highlighting);
       myEditor = editor;
       myRange = range;
       myMousePosition = position;

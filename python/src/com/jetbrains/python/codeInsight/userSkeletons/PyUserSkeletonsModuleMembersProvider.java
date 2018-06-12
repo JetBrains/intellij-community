@@ -32,12 +32,6 @@ public class PyUserSkeletonsModuleMembersProvider extends PyModuleMembersProvide
   }
 
   @Override
-  protected Collection<PyCustomMember> getMembersByQName(PyFile module, String qName) {
-    // This method will be removed in 2018.2
-    return getMembersByQName(module, qName, TypeEvalContext.codeInsightFallback(module.getProject()));
-  }
-
-  @Override
   @NotNull
   protected Collection<PyCustomMember> getMembersByQName(@NotNull PyFile module, @NotNull String qName, @NotNull TypeEvalContext context) {
    final PyFile moduleSkeleton = PyUserSkeletonsUtil.getUserSkeletonForModuleQName(qName, module);

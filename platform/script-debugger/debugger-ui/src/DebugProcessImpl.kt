@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger
 
 import com.intellij.execution.ExecutionResult
@@ -26,7 +12,6 @@ import com.intellij.xdebugger.DefaultDebugProcessHandler
 import com.intellij.xdebugger.XDebugProcess
 import com.intellij.xdebugger.XDebugSession
 import com.intellij.xdebugger.breakpoints.XBreakpointHandler
-import com.intellij.xdebugger.breakpoints.XBreakpointType
 import com.intellij.xdebugger.breakpoints.XLineBreakpoint
 import com.intellij.xdebugger.evaluation.XDebuggerEditorsProvider
 import com.intellij.xdebugger.frame.XSuspendContext
@@ -55,11 +40,11 @@ interface MultiVmDebugProcess {
     }
 }
 
-abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
-                                                     val connection: C,
-                                                     private val editorsProvider: XDebuggerEditorsProvider,
-                                                     private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
-                                                     protected val executionResult: ExecutionResult? = null) : XDebugProcess(session), MultiVmDebugProcess {
+abstract class DebugProcessImpl<out C : VmConnection<*>>(session: XDebugSession,
+                                                         val connection: C,
+                                                         private val editorsProvider: XDebuggerEditorsProvider,
+                                                         private val smartStepIntoHandler: XSmartStepIntoHandler<*>? = null,
+                                                         protected val executionResult: ExecutionResult? = null) : XDebugProcess(session), MultiVmDebugProcess {
   protected val repeatStepInto: AtomicBoolean = AtomicBoolean()
   @Volatile var lastStep: StepAction? = null
   @Volatile protected var lastCallFrame: CallFrame? = null
@@ -205,7 +190,8 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   override final fun startPausing() {
-    activeOrMainVm!!.suspendContextManager.suspend().rejected(RejectErrorReporter(session, "Cannot pause"))
+    activeOrMainVm!!.suspendContextManager.suspend()
+      .onError(RejectErrorReporter(session, "Cannot pause"))
   }
 
   override final fun getCurrentStateMessage() = connection.state.message
@@ -249,14 +235,14 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
   }
 
   protected open fun doInitBreakpoints() {
-    beforeInitBreakpoints(mainVm!!)
+    mainVm?.let(::beforeInitBreakpoints)
     runReadAction { session.initBreakpoints() }
   }
 
   protected open fun beforeInitBreakpoints(vm: Vm) {
   }
 
-  protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection) {
+  protected fun addChildVm(vm: Vm, childConnection: RemoteVmConnection<*>) {
     mainVm?.childVMs?.add(vm)
     childConnection.stateChanged {
       if (it.status == ConnectionStatus.CONNECTION_FAILED || it.status == ConnectionStatus.DISCONNECTED || it.status == ConnectionStatus.DETACHED) {
@@ -265,21 +251,5 @@ abstract class DebugProcessImpl<C : VmConnection<*>>(session: XDebugSession,
     }
 
     mainVm?.debugListener?.childVmAdded(vm)
-  }
-}
-
-@Suppress("UNCHECKED_CAST")
-class LineBreakpointHandler(breakpointTypeClass: Class<out XBreakpointType<out XLineBreakpoint<*>, *>>, val manager: LineBreakpointManager)
-    : XBreakpointHandler<XLineBreakpoint<*>>(breakpointTypeClass as Class<out XBreakpointType<XLineBreakpoint<*>, *>>) {
-  override fun registerBreakpoint(breakpoint: XLineBreakpoint<*>) {
-    manager.debugProcess.collectVMs.forEach {
-      manager.setBreakpoint(it, breakpoint)
-    }
-  }
-
-  override fun unregisterBreakpoint(breakpoint: XLineBreakpoint<*>, temporary: Boolean) {
-    manager.debugProcess.collectVMs.forEach {
-      manager.removeBreakpoint(it, breakpoint, temporary)
-    }
   }
 }

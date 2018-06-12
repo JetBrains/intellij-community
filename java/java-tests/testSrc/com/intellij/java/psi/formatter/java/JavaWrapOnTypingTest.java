@@ -28,7 +28,7 @@ public class JavaWrapOnTypingTest extends LightCodeInsightFixtureTestCase {
       "    /**\n"                                                                                                                +
       "     * @return index for the given relative path. Never {@code null}, but returned index may not exist (in which case,\n" +
       "     *\n"                                                                                                                 +
-      "     * {@link Index#exists()} returns {@code false}). If the index do not exist, it may or may not be read-only (see \n" +
+      "     * {@link Index#exists()} returns {@code false}). If the index do not exist, it may or may not be read-only (see\n" +
       "     * {@<caret>})\n" +
       "     */\n"                                                                                                                +
       "    public static void test() {\n"                                                                                        +
@@ -57,10 +57,11 @@ public class JavaWrapOnTypingTest extends LightCodeInsightFixtureTestCase {
                                     "    void other() { m(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2 <caret>); }\n" +
                                     "}");
     myFixture.type(" ");
+    myFixture.doHighlighting();
     myFixture.checkResultWithInlays("public class C {\n" +
                                     "    void m(int a, int b) {}\n" +
-                                    "    void other() { m(<hint text=\"a:\"/>1, <hint text=\"b:\"/>2  <caret>\n" +
-                                    "    ); }\n" +
+                                    "    void other() { m(<hint text=\"a:\"/>1,\n" +
+                                    "            <hint text=\"b:\"/>2  <caret>); }\n" +
                                     "}");
   }
 }

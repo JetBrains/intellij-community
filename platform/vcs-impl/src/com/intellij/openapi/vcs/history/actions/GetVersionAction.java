@@ -202,18 +202,15 @@ public class GetVersionAction extends AnAction implements DumbAware {
             return;
           }
 
-          new WriteCommandAction.Simple(myProject) {
-            @Override
-            protected void run() {
-              try {
-                write(myFilePath, revisionContent, myProject);
-              }
-              catch (IOException e) {
-                Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
-                                           VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
-              }
+          WriteCommandAction.writeCommandAction(myProject).run(() -> {
+            try {
+              write(myFilePath, revisionContent, myProject);
             }
-          }.execute();
+            catch (IOException e) {
+              Messages.showMessageDialog(VcsBundle.message("message.text.cannot.save.content", e.getLocalizedMessage()),
+                                         VcsBundle.message("message.title.get.revision.content"), Messages.getErrorIcon());
+            }
+          });
           if (myFile != null) {
             VcsDirtyScopeManager.getInstance(myProject).fileDirty(myFile);
           }

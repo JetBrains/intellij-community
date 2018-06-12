@@ -166,12 +166,8 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     final TextRange range = state.getCurrentVariableRange();
     assert range != null;
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject())
+                      .run(() -> getEditor().getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName));
 
     state.gotoEnd(false);
     checkResultByFile(BASE_PATH + name + "_after.java");

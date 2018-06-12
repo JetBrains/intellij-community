@@ -12,4 +12,7 @@
     <option name="coroutinesState" value="enable" />
     <option name="languageVersion" value="1.2" />
   </component>
+  <component name="KotlinCompilerSettings">
+    <option name="additionalArguments" value="-version -Xstrict-java-nullability-assertions" />
+  </component>
 </project>

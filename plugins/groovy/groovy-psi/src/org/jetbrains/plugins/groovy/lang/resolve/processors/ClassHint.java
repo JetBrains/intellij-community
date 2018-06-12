@@ -16,7 +16,7 @@ import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
 public interface ClassHint {
   Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
 
-  ElementClassHint CLASSES = kind -> kind == CLASS;
+  ElementClassHint EMPTY = kind -> false;
 
   EnumSet<DeclarationKind> RESOLVE_KINDS_CLASS = EnumSet.of(CLASS);
   EnumSet<DeclarationKind> RESOLVE_KINDS_METHOD = EnumSet.of(METHOD);

@@ -167,12 +167,6 @@ public class SvnUtil {
     }
   }
 
-  @Nullable
-  public static String getExactLocation(final SvnVcs vcs, File path) {
-    Info info = vcs.getInfo(path);
-    return info != null && info.getURL() != null ? info.getURL().toString() : null;
-  }
-
   @NotNull
   public static File[] toIoFiles(@NotNull VirtualFile[] files) {
     return map2Array(files, File.class, VfsUtilCore::virtualToIoFile);
@@ -415,6 +409,11 @@ public class SvnUtil {
     return FileUtil.filesEqual(file, getWorkingCopyRoot(file));
   }
 
+  public static boolean isWorkingCopyRoot(@NotNull VirtualFile file) {
+    VirtualFile adminDir = file.findChild(SVN_ADMIN_DIR_NAME);
+    return adminDir != null && adminDir.findChild(WC_DB_FILE_NAME) != null;
+  }
+
   @NotNull
   public static File fileFromUrl(final File baseDir, final String baseUrl, final String fullUrl) {
     assert fullUrl.startsWith(baseUrl);
@@ -552,6 +551,17 @@ public class SvnUtil {
     WorkingCopyFormat format = getFormat(current);
 
     return format.isOrGreater(WorkingCopyFormat.ONE_DOT_SEVEN) ? current : null;
+  }
+
+  @Nullable
+  public static VirtualFile getWorkingCopyRoot(@NotNull VirtualFile file) {
+    do {
+      if (isWorkingCopyRoot(file)) return file;
+      file = file.getParent();
+    }
+    while (file != null);
+
+    return null;
   }
 
   /**

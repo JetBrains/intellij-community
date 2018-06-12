@@ -71,7 +71,7 @@ public class EditorPlaybackCall {
 
     WindowSystemPlaybackCall.findProject().doWhenDone((Consumer<Project>)project -> {
       final MessageBusConnection bus = project.getMessageBus().connect(connection);
-      bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
+      bus.subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
         @Override
         public void daemonFinished() {
           context.flushAwtAndRunInEdt(result.createSetDoneRunnable());

@@ -114,12 +114,12 @@ public class TestDiffRequestProcessor extends DiffRequestProcessor {
 
   @Override
   protected boolean hasNextChange() {
-    return true; // TODO: disable looping ?
+    return myIndex + 1 < myRequests.size();
   }
 
   @Override
   protected boolean hasPrevChange() {
-    return true;
+    return myIndex > 0;
   }
 
   @Override

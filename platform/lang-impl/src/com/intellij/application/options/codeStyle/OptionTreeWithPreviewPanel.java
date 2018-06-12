@@ -642,6 +642,6 @@ public abstract class OptionTreeWithPreviewPanel extends CustomizableLanguageCod
   }
 
   private String getRemappedGroup(String fieldName, String defaultName) {
-    return myRemappedGroups.containsKey(fieldName) ? myRemappedGroups.get(fieldName) : defaultName;
+    return myRemappedGroups.getOrDefault(fieldName, defaultName);
   }
 }

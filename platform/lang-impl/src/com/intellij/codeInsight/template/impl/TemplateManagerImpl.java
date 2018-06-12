@@ -42,7 +42,7 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ConcurrentFactoryMap;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
+import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
@@ -53,12 +53,14 @@ import java.util.concurrent.ConcurrentMap;
 public class TemplateManagerImpl extends TemplateManager implements Disposable {
   private static final TemplateContextType[] ourContextTypes = Extensions.getExtensions(TemplateContextType.EP_NAME);
   private final Project myProject;
+  private final MessageBus myMessageBus;
   private boolean myTemplateTesting;
 
   private static final Key<TemplateState> TEMPLATE_STATE_KEY = Key.create("TEMPLATE_STATE_KEY");
 
-  public TemplateManagerImpl(Project project) {
+  public TemplateManagerImpl(Project project, MessageBus messageBus) {
     myProject = project;
+    myMessageBus = messageBus;
     final EditorFactoryListener myEditorFactoryListener = new EditorFactoryAdapter() {
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
@@ -187,6 +189,7 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         editor.getSelectionModel().removeSelection();
       }
       templateState.start((TemplateImpl)template, processor, predefinedVarValues);
+      fireTemplateStarted(templateState);
     };
     if (inSeparateCommand) {
       CommandProcessor.getInstance().executeCommand(myProject, r, CodeInsightBundle.message("insert.code.template.command"), null);
@@ -447,7 +450,12 @@ public class TemplateManagerImpl extends TemplateManager implements Disposable {
         predefinedVarValues.put(TemplateImpl.ARG, argument);
       }
       templateState.start(template, processor, predefinedVarValues);
+      fireTemplateStarted(templateState);
     }, CodeInsightBundle.message("insert.code.template.command"), null);
+  }
+
+  private void fireTemplateStarted(TemplateState templateState) {
+    myMessageBus.syncPublisher(TEMPLATE_STARTED_TOPIC).templateStarted(templateState);
   }
 
   private static List<TemplateImpl> filterApplicableCandidates(PsiFile file, int caretOffset, List<TemplateImpl> candidates) {

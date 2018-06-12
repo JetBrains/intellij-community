@@ -1,4 +1,4 @@
-from typing import Any
+from typing import Any, Dict
 
 class HTTPException(Exception):
     code = ...  # type: Any
@@ -14,6 +14,8 @@ class HTTPException(Exception):
     def get_headers(self, environ=None): ...
     def get_response(self, environ=None): ...
     def __call__(self, environ, start_response): ...
+
+default_exceptions: Dict[int, HTTPException]
 
 class BadRequest(HTTPException):
     code = ...  # type: Any

@@ -1,6 +1,6 @@
 public class Test {
   public static void test() {
-    Number n = new Interface2<Long,Void>() {
+    Number n = new Interface2<Long, Void>() {
       @Override
       public Long invoke(Void v) {
         return null;

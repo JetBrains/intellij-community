@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.dvcs.push;
 
 import com.intellij.CommonBundle;
@@ -11,6 +9,7 @@ import com.intellij.dvcs.repo.VcsRepositoryManager;
 import com.intellij.dvcs.ui.DvcsBundle;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
@@ -26,7 +25,7 @@ import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.EdtInvocationManager;
 import com.intellij.vcs.log.VcsFullCommitDetails;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.CalledInAny;
@@ -50,6 +49,7 @@ import java.util.stream.Collectors;
 import static com.intellij.openapi.ui.Messages.OK;
 
 public class PushController implements Disposable {
+  private static final Logger LOG = Logger.getInstance(PushController.class);
 
   @NotNull private final Project myProject;
   @NotNull private final List<? extends Repository> myPreselectedRepositories;
@@ -306,52 +306,60 @@ public class PushController implements Disposable {
       OutgoingResult outgoing = support.getOutgoingCommitsProvider()
         .getOutgoingCommits(repository, new PushSpec<>(model.getSource(), model.getTarget()), initial);
       result.compareAndSet(null, outgoing);
-      UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
-        OutgoingResult outgoing1 = result.get();
-        List<VcsError> errors = outgoing1.getErrors();
-        boolean shouldBeSelected;
-        if (!errors.isEmpty()) {
-          shouldBeSelected = false;
-          model.setLoadedCommits(ContainerUtil.emptyList());
-          myPushLog.setChildren(node, ContainerUtil.map(errors, (Function<VcsError, DefaultMutableTreeNode>)error -> {
-            VcsLinkedTextComponent errorLinkText = new VcsLinkedTextComponent(error.getText(), new VcsLinkListener() {
-              @Override
-              public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
-                error.handleError(new CommitLoader() {
-                  @Override
-                  public void reloadCommits() {
-                    node.setChecked(true);
-                    loadCommits(model, node, false);
-                  }
-                });
-              }
-            });
-            return new TextWithLinkNode(errorLinkText);
-          }));
-          if (node.isChecked()) {
+      try {
+        EdtInvocationManager.getInstance().invokeAndWait((Runnable)() -> {
+          OutgoingResult outgoing1 = result.get();
+          List<VcsError> errors = outgoing1.getErrors();
+          boolean shouldBeSelected;
+          if (!errors.isEmpty()) {
+            shouldBeSelected = false;
+            model.setLoadedCommits(ContainerUtil.emptyList());
+            myPushLog.setChildren(node, ContainerUtil.map(errors, (Function<VcsError, DefaultMutableTreeNode>)error -> {
+              VcsLinkedTextComponent errorLinkText = new VcsLinkedTextComponent(error.getText(), new VcsLinkListener() {
+                @Override
+                public void hyperlinkActivated(@NotNull DefaultMutableTreeNode sourceNode, @NotNull MouseEvent event) {
+                  error.handleError(new CommitLoader() {
+                    @Override
+                    public void reloadCommits() {
+                      node.setChecked(true);
+                      loadCommits(model, node, false);
+                    }
+                  });
+                }
+              });
+              return new TextWithLinkNode(errorLinkText);
+            }));
+            if (node.isChecked()) {
+              node.setChecked(false);
+            }
+          }
+          else {
+            List<? extends VcsFullCommitDetails> commits = outgoing1.getCommits();
+            model.setLoadedCommits(commits);
+            shouldBeSelected = shouldSelectNodeAfterLoad(model);
+            myPushLog.setChildren(node, getPresentationForCommits(myProject, model.getLoadedCommits(), model.getNumberOfShownCommits()));
+            if (!commits.isEmpty() && shouldBeSelected) {
+              myPushLog.selectIfNothingSelected(node);
+            }
+          }
+          node.stopLoading();
+          updateLoadingPanel();
+          if (shouldBeSelected) {
+            node.setChecked(true);
+          }
+          else if (initial) {
+            //do not un-check if user checked manually and no errors occurred, only initial check may be changed
             node.setChecked(false);
           }
-        }
-        else {
-          List<? extends VcsFullCommitDetails> commits = outgoing1.getCommits();
-          model.setLoadedCommits(commits);
-          shouldBeSelected = shouldSelectNodeAfterLoad(model);
-          myPushLog.setChildren(node, getPresentationForCommits(myProject, model.getLoadedCommits(), model.getNumberOfShownCommits()));
-          if (!commits.isEmpty() && shouldBeSelected) {
-            myPushLog.selectIfNothingSelected(node);
-          }
-        }
-        node.stopLoading();
-        updateLoadingPanel();
-        if (shouldBeSelected) {
-          node.setChecked(true);
-        }
-        else if (initial) {
-          //do not un-check if user checked manually and no errors occurred, only initial check may be changed
-          node.setChecked(false);
-        }
-        myDialog.updateOkActions();
-      });
+          myDialog.updateOkActions();
+        });
+      }
+      catch (InterruptedException e) {
+        // ignore
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     };
     node.startLoading(myPushLog.getTree(), myExecutorService.submit(task, result), initial);
     updateLoadingPanel();

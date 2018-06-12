@@ -52,9 +52,9 @@ public class LazyPatchContentRevision implements ContentRevision {
         return null;
       }
 
-      final GenericPatchApplier applier = new GenericPatchApplier(localContext, myPatch.getHunks());
-      if (applier.execute()) {
-        myContent = applier.getAfter();
+      GenericPatchApplier.AppliedPatch appliedPatch = GenericPatchApplier.apply(localContext, myPatch.getHunks());
+      if (appliedPatch != null) {
+        myContent = appliedPatch.patchedText;
       } else {
         myPatchApplyFailed = true;
       }

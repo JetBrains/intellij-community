@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.playback.commands;
 
 import com.intellij.ide.DataManager;
@@ -23,30 +9,32 @@ import com.intellij.openapi.ui.playback.PlaybackContext;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import java.awt.*;
 import java.awt.event.InputEvent;
 
 public class ToggleActionCommand extends AbstractCommand {
-  
+
   public static final String PREFIX = CMD_PREFIX + "toggle";
 
   public static final String ON = "on";
   public static final String OFF = "off";
-  
+
   public ToggleActionCommand(String text, int line) {
     super(text, line, true);
   }
 
   @Override
-  protected ActionCallback _execute(PlaybackContext context) {
+  protected Promise<Object> _execute(PlaybackContext context) {
     String[] args = getText().substring(PREFIX.length()).trim().split(" ");
     String syntaxText = "Syntax error, expected: " + PREFIX + " " + ON + "|" + OFF + " actionName";
     if (args.length != 2) {
       context.error(syntaxText, getLine());
-      return ActionCallback.REJECTED;
+      return Promises.rejectedPromise(new RuntimeException(syntaxText));
     }
-    
+
     final boolean on;
     if (ON.equalsIgnoreCase(args[0])) {
       on = true;
@@ -54,19 +42,20 @@ public class ToggleActionCommand extends AbstractCommand {
       on = false;
     } else {
       context.error(syntaxText, getLine());
-      return ActionCallback.REJECTED;
+      return Promises.rejectedPromise(new RuntimeException(syntaxText));
     }
-    
+
     String actionId = args[1];
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) {
       context.error("Unknown action id=" + actionId, getLine());
-      return ActionCallback.REJECTED;
+      return Promises.rejectedPromise(new RuntimeException("Unknown action id=" + actionId));
     }
 
     if (!(action instanceof ToggleAction)) {
-      context.error("Action is not a toggle action id=" + actionId, getLine());
-      return ActionCallback.REJECTED;
+      String text = "Action is not a toggle action id=" + actionId;
+      context.error(text, getLine());
+      return Promises.rejectedPromise(text);
     }
 
     final InputEvent inputEvent = ActionCommand.getInputEvent(actionId);
@@ -76,7 +65,7 @@ public class ToggleActionCommand extends AbstractCommand {
 
     IdeFocusManager fm = IdeFocusManager.getGlobalInstance();
     fm.doWhenFocusSettlesDown(() -> {
-      final Presentation presentation = (Presentation)action.getTemplatePresentation().clone();
+      final Presentation presentation = action.getTemplatePresentation().clone();
       AnActionEvent event =
           new AnActionEvent(inputEvent, DataManager.getInstance()
               .getDataContext(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner()), ActionPlaces.UNKNOWN,
@@ -94,6 +83,6 @@ public class ToggleActionCommand extends AbstractCommand {
     });
 
 
-    return result;
+    return Promises.toPromise(result);
   }
 }

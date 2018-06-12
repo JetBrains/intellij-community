@@ -127,11 +127,9 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
   }
 
   private void performSmartEnterAction() {
-    new WriteCommandAction(getProject()) {
-      protected void run(@NotNull final Result result) throws Throwable {
-        new XmlSmartEnterProcessor().process(getProject(), getEditor(), getFile());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      new XmlSmartEnterProcessor().process(getProject(), getEditor(), getFile());
+    });
   }
 
   private void performCompletionAction() {

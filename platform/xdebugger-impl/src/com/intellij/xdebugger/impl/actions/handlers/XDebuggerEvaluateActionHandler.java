@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.actions.handlers;
 
 import com.intellij.lang.Language;
@@ -62,9 +60,9 @@ public class XDebuggerEvaluateActionHandler extends XDebuggerActionHandler {
 
     EvaluationMode finalMode = mode;
     XValue value = XDebuggerTreeActionBase.getSelectedValue(dataContext);
-    expressionTextPromise.done(expressionText -> {
+    expressionTextPromise.onSuccess(expressionText -> {
       if (expressionText == null && value != null) {
-          value.calculateEvaluationExpression().done(
+          value.calculateEvaluationExpression().onSuccess(
             expression -> AppUIUtil.invokeOnEdt(() -> showDialog(session, file, editorsProvider, stackFrame, evaluator, expression)));
       }
       else {

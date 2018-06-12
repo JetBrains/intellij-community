@@ -15,10 +15,11 @@
  */
 package com.intellij.java.codeInsight.intention;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.impl.SplitIfAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 
 /**
@@ -26,7 +27,7 @@ import com.intellij.testFramework.LightCodeInsightTestCase;
  */
 public class SplitIfActionTest extends LightCodeInsightTestCase {
   public void test1() {
-    CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ELSE_ON_NEW_LINE= true;
+    CodeStyle.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE).ELSE_ON_NEW_LINE = true;
     doTest();
   }
 
@@ -58,12 +59,26 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
     doTest();
   }
 
+  public void testCommentInside() { doTest(); }
+
+  public void testCommentBeforeElse() { doTest(); }
+
+  public void testCommentBeforeElse2() { doTest(); }
+
+  public void testChain() { doTest(); }
+
+  public void testChain2() { doTest(); }
+
+  public void testChain3() { doTest(); }
+
   public void testWithoutSpaces() {
     doTest();
   }
 
   private void doTest() {
     configureByFile("/codeInsight/splitIfAction/before" + getTestName(false)+ ".java");
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(getFile()).getCommonSettings(JavaLanguage.INSTANCE);
+    settings.IF_BRACE_FORCE = CommonCodeStyleSettings.FORCE_BRACES_IF_MULTILINE;
     perform();
     checkResultByFile("/codeInsight/splitIfAction/after" + getTestName(false) + ".java");
   }
@@ -75,7 +90,7 @@ public class SplitIfActionTest extends LightCodeInsightTestCase {
   }
 
 
-  private void perform() {
+  private static void perform() {
     SplitIfAction action = new SplitIfAction();
     assertTrue(action.isAvailable(getProject(), getEditor(), getFile()));
     ApplicationManager.getApplication().runWriteAction(() -> action.invoke(getProject(), getEditor(), getFile()));

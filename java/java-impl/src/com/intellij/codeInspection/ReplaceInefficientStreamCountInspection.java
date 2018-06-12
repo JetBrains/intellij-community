@@ -18,9 +18,6 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.siyeh.ig.psiutils.MethodCallUtils.getQualifierMethodCall;
 
-/**
- * @author Tagir Valeev
- */
 public class ReplaceInefficientStreamCountInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final CallMatcher STREAM_COUNT =
     CallMatcher.instanceCall(CommonClassNames.JAVA_UTIL_STREAM_STREAM, "count").parameterCount(0);

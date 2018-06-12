@@ -15,8 +15,8 @@
     <orderEntry type="library" name="Trove4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.extensions" exported="" />
     <orderEntry type="module" module-name="intellij.platform.icons" />
-    <orderEntry type="library" exported="" name="NanoXML" level="project" />
-    <orderEntry type="library" exported="" name="microba" level="project" />
+    <orderEntry type="library" name="NanoXML" level="project" />
+    <orderEntry type="library" name="microba" level="project" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />
     <orderEntry type="module" module-name="intellij.xml" exported="" />
     <orderEntry type="module" module-name="intellij.platform.ide" exported="" />

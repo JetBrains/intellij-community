@@ -19,6 +19,7 @@ import com.intellij.dvcs.repo.Repository;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.NewBranchAction;
 import com.intellij.dvcs.ui.PopupElementWithAdditionalInfo;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -408,7 +409,8 @@ class GitBranchPopupActions {
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, DvcsImplIcons.FavoriteOnHover, DvcsImplIcons.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
+               AllIcons.Vcs.NotFavoriteOnHover);
     }
 
     @NotNull

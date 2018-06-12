@@ -124,15 +124,7 @@ public class ProblemDescriptorUtil {
   public static HighlightInfoType highlightTypeFromDescriptor(@NotNull ProblemDescriptor problemDescriptor,
                                                               @NotNull HighlightSeverity severity,
                                                               @NotNull SeverityRegistrar severityRegistrar) {
-    final ProblemHighlightType highlightType = problemDescriptor.getHighlightType();
-    final HighlightInfoType highlightInfoType = getHighlightInfoType(highlightType, severity, severityRegistrar);
-    if (highlightInfoType == HighlightSeverity.INFORMATION) {
-      final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
-      if (attributes != null) {
-        return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
-      }
-    }
-    return highlightInfoType;
+    return getHighlightInfoType(problemDescriptor.getHighlightType(), severity, severityRegistrar);
   }
 
   public static HighlightInfoType getHighlightInfoType(@NotNull ProblemHighlightType highlightType,

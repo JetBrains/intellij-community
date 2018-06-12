@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.impl;
 
 import com.intellij.ide.actions.CloseTabToolbarAction;
@@ -42,6 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -59,6 +46,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
+import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog2;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -508,10 +496,18 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                            @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
     VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(files, VirtualFile.class));
-    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
-    AppIcon.getInstance().requestAttention(myProject, true);
-    fileMergeDialog.show();
-    return fileMergeDialog.getProcessedFiles();
+    if (Registry.is("vcs.new.multiple.file.merge")) {
+      final MultipleFileMergeDialog2 fileMergeDialog = new MultipleFileMergeDialog2(myProject, files, provider, mergeDialogCustomizer);
+      AppIcon.getInstance().requestAttention(myProject, true);
+      fileMergeDialog.show();
+      return fileMergeDialog.getProcessedFiles();
+    }
+    else {
+      final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
+      AppIcon.getInstance().requestAttention(myProject, true);
+      fileMergeDialog.show();
+      return fileMergeDialog.getProcessedFiles();
+    }
   }
 
   public void openCommittedChangesTab(final AbstractVcs vcs,

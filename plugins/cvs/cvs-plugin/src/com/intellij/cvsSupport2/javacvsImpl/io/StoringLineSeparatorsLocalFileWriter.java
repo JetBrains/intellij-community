@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.javacvsImpl.io;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.cvsoperations.common.UpdatedFilesManager;
 import com.intellij.cvsSupport2.cvsoperations.cvsErrors.ErrorProcessor;
@@ -26,7 +27,6 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import org.jetbrains.annotations.NonNls;
 import org.netbeans.lib.cvsclient.file.*;
 
@@ -179,7 +179,7 @@ public class StoringLineSeparatorsLocalFileWriter implements ILocalFileWriter {
       return FileDocumentManager.getInstance().getLineSeparator(virtualFile, null);
     }
     catch (Exception ex) {
-      return CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator();
+      return CodeStyle.getDefaultSettings().getLineSeparator();
     }
 
   }

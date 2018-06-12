@@ -23,7 +23,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.concurrency.SwingWorker;
@@ -35,8 +34,6 @@ import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 
 import static java.awt.GridBagConstraints.*;
 
@@ -52,13 +49,14 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   private JLabel myTitleLabel;
   private JLabel myProgressLabel;
   private JLabel myProgressLabel2;
-  private ProgressIndicator myProgressIndicator = null;
+  private ProgressIndicator myProgressIndicator;
   private final String myPromptStopSearch;
 
   public AbstractStepWithProgress(final String promptStopSearching) {
     myPromptStopSearch = promptStopSearching;
   }
 
+  @Override
   public final JComponent getComponent() {
     if (myPanel == null) {
       myPanel = new JPanel(new CardLayout());
@@ -98,11 +96,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     progressPanel.add(myProgressLabel2, new GridBagConstraints(0, RELATIVE, 1, 1, 1.0, 1.0, NORTHWEST, HORIZONTAL, JBUI.insets(8, 10, 0, 10), 0, 0));
 
     JButton stopButton = new JButton(IdeBundle.message("button.stop.searching"));
-    stopButton.addActionListener(new ActionListener() {
-      public void actionPerformed(ActionEvent e) {
-        cancelSearch();
-      }
-    });
+    stopButton.addActionListener(__ -> cancelSearch());
     progressPanel.add(stopButton, new GridBagConstraints(1, RELATIVE, 1, 2, 0.0, 1.0, NORTHWEST, NONE, JBUI.insets(10, 0, 0, 10), 0, 0));
     return progressPanel;
   }
@@ -126,6 +120,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   }
   
   
+  @Override
   public void updateStep() {
     if (shouldRunProgress()) {
       runProgress();
@@ -135,7 +130,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     }
   }
 
-  protected void runProgress() {
+  private void runProgress() {
     final MyProgressIndicator progress = new MyProgressIndicator();
     progress.setModalityProgress(null);
     final String title = getProgressText();
@@ -153,12 +148,14 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     }
 
     UiNotifyConnector.doWhenFirstShown(myPanel, () -> new SwingWorker() {
+      @Override
       public Object construct() {
         final Ref<Result> result = Ref.create(null);
         ProgressManager.getInstance().runProcess(() -> result.set(calculate()), progress);
         return result.get();
       }
 
+      @Override
       public void finished() {
         myProgressIndicator = null;
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -175,6 +172,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     myPanel.revalidate();
   }
 
+  @Override
   public boolean validate() throws ConfigurationException {
     if (isProgressRunning()) {
       final int answer = Messages.showOkCancelDialog(getComponent(), myPromptStopSearch,
@@ -187,6 +185,7 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
     return true;
   }
 
+  @Override
   public void onStepLeaving() {
     if (isProgressRunning()) {
       cancelSearch();
@@ -194,11 +193,13 @@ public abstract class AbstractStepWithProgress<Result> extends ModuleWizardStep 
   }
 
   protected class MyProgressIndicator extends ProgressIndicatorBase {
+    @Override
     public void setText(String text) {
       updateLabel(myProgressLabel, text);
       super.setText(text);
     }
 
+    @Override
     public void setText2(String text) {
       updateLabel(myProgressLabel2, text);
       super.setText2(text);

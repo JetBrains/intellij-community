@@ -116,4 +116,25 @@ public class LambdaHighlightingUtil {
     }
     return functionalInterfaceType.getPresentableText() + " is not a functional interface";
   }
+
+  public static HighlightInfo checkConsistentParameterDeclaration(PsiLambdaExpression expression) {
+    PsiParameter[] parameters = expression.getParameterList().getParameters();
+    if (parameters.length < 2) return null;
+    boolean hasExplicitParameterTypes = hasExplicitType(parameters[0]);
+    for (int i = 1; i < parameters.length; i++) {
+      if (hasExplicitParameterTypes != hasExplicitType(parameters[i])) {
+        return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
+                            .descriptionAndTooltip("Cannot mix 'var' and explicitly typed parameters in lambda expression")
+                            .range(expression.getParameterList())
+                            .create();
+      }
+    }
+
+    return null;
+  }
+
+  private static boolean hasExplicitType(PsiParameter parameter) {
+    PsiTypeElement typeElement = parameter.getTypeElement();
+    return typeElement != null && !typeElement.isInferredType();
+  }
 }

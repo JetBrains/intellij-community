@@ -60,12 +60,9 @@ public class MetaRegistryTest extends LightPlatformTestCase {
     final XmlTag tag = ((XmlFile)LightPlatformTestCase.createFile("a.xml", "<a/>")).getDocument().getRootTag();
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyFalseMetaData.class);
     flag[0] = true;
-    new WriteCommandAction(LightPlatformTestCase.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        tag.setName("b");
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(LightPlatformTestCase.getProject(), () -> {
+      tag.setName("b");
+    });
     UsefulTestCase.assertInstanceOf(tag.getMetaData(), MyTrueMetaData.class);
   }
 

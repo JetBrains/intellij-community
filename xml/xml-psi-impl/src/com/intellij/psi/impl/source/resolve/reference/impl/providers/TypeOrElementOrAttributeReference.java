@@ -111,11 +111,13 @@ public class TypeOrElementOrAttributeReference implements PsiReference {
     return null;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRange;

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,7 @@ class ReplacementInfoImpl implements ReplacementInfo {
 
   private void init(Project project) {
     fillPointerList(project);
-    fillVariableMap(matchResult);
+    fillVariableMap(matchResult.getRoot());
     for(Map.Entry<String, MatchResult> entry : variableMap.entrySet()) {
       fillElementToVariableNameMap(entry.getKey(), entry.getValue());
     }
@@ -81,7 +81,7 @@ class ReplacementInfoImpl implements ReplacementInfo {
     final SmartPointerManager manager = SmartPointerManager.getInstance(project);
 
     if (MatchResult.MULTI_LINE_MATCH.equals(matchResult.getName())) {
-      final Iterator<MatchResult> i = matchResult.getAllSons().iterator();
+      final Iterator<MatchResult> i = matchResult.getChildren().iterator();
       while (i.hasNext()) {
         final MatchResult r = i.next();
 
@@ -110,8 +110,8 @@ class ReplacementInfoImpl implements ReplacementInfo {
 
   private void fillElementToVariableNameMap(final String name, final MatchResult matchResult) {
     final boolean multiMatch = matchResult.isMultipleMatch() || matchResult.isScopeMatch();
-    if (matchResult.hasSons() && multiMatch) {
-      for (MatchResult r : matchResult.getAllSons()) {
+    if (matchResult.hasChildren() && multiMatch) {
+      for (MatchResult r : matchResult.getChildren()) {
         fillElementToVariableNameMap(name, r);
       }
     } else if (!multiMatch && matchResult.getMatchRef() != null)  {
@@ -131,14 +131,11 @@ class ReplacementInfoImpl implements ReplacementInfo {
     }
 
     if (!r.isScopeMatch() || !r.isMultipleMatch()) {
-      for (final MatchResult matchResult : r.getAllSons()) {
+      for (final MatchResult matchResult : r.getChildren()) {
         fillVariableMap(matchResult);
       }
-    } else if (r.hasSons()) {
-      final List<MatchResult> allSons = r.getAllSons();
-      if (allSons.size() > 0) {
-        fillVariableMap(allSons.get(0));
-      }
+    } else if (r.hasChildren()) {
+      fillVariableMap(r.getChildren().get(0));
     }
   }
 }

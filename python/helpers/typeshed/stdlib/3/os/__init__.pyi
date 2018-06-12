@@ -4,10 +4,9 @@
 from io import TextIOWrapper as _TextIOWrapper
 import sys
 from typing import (
-    Mapping, MutableMapping, Dict, List, Any, Tuple, IO, Iterable, Iterator, overload, Union, AnyStr,
+    Mapping, MutableMapping, Dict, List, Any, Tuple, IO, Iterable, Iterator, NoReturn, overload, Union, AnyStr,
     Optional, Generic, Set, Callable, Text, Sequence, NamedTuple, TypeVar, ContextManager
 )
-from mypy_extensions import NoReturn
 
 # Re-exported names from other modules.
 from builtins import OSError as error
@@ -383,7 +382,16 @@ if sys.version_info >= (3, 3):
 else:
     def link(src: _PathType, link_name: _PathType) -> None: ...
 
-if sys.version_info >= (3, 3):
+if sys.version_info >= (3, 6):
+    @overload
+    def listdir(path: Optional[str] = ...) -> List[str]: ...
+    @overload
+    def listdir(path: bytes) -> List[bytes]: ...
+    @overload
+    def listdir(path: int) -> List[str]: ...
+    @overload
+    def listdir(path: PathLike[str]) -> List[str]: ...
+elif sys.version_info >= (3, 3):
     @overload
     def listdir(path: Optional[str] = ...) -> List[str]: ...
     @overload
@@ -446,7 +454,16 @@ if sys.version_info >= (3, 3):
     def rmdir(path: _PathType, *, dir_fd: Optional[int] = ...) -> None: ...
 else:
     def rmdir(path: _PathType) -> None: ...
-if sys.version_info >= (3, 6):
+if sys.version_info >= (3, 7):
+    class _ScandirIterator(Iterator[DirEntry[AnyStr]], ContextManager[_ScandirIterator[AnyStr]]):
+        def close(self) -> None: ...
+    @overload
+    def scandir() -> _ScandirIterator[str]: ...
+    @overload
+    def scandir(path: int) -> _ScandirIterator[str]: ...
+    @overload
+    def scandir(path: Union[AnyStr, PathLike[AnyStr]]) -> _ScandirIterator[AnyStr]: ...
+elif sys.version_info >= (3, 6):
     class _ScandirIterator(Iterator[DirEntry[AnyStr]], ContextManager[_ScandirIterator[AnyStr]]):
         def close(self) -> None: ...
     @overload
@@ -463,10 +480,11 @@ if sys.version_info >= (3, 3):
              follow_symlinks: bool = ...) -> stat_result: ...
 else:
     def stat(path: _PathType) -> stat_result: ...
-@overload
-def stat_float_times() -> bool: ...
-@overload
-def stat_float_times(__newvalue: bool) -> None: ...
+if sys.version_info < (3, 7):
+    @overload
+    def stat_float_times() -> bool: ...
+    @overload
+    def stat_float_times(__newvalue: bool) -> None: ...
 def statvfs(path: _FdOrPathType) -> statvfs_result: ...  # Unix only
 if sys.version_info >= (3, 3):
     def symlink(source: _PathType, link_name: _PathType,
@@ -494,9 +512,23 @@ else:
              followlinks: bool = ...) -> Iterator[Tuple[AnyStr, List[AnyStr],
                                                         List[AnyStr]]]: ...
 if sys.version_info >= (3, 3):
-    def fwalk(top: _PathType = ..., topdown: bool = ...,
-              onerror: Optional[Callable] = ..., *, follow_symlinks: bool = ...,
-              dir_fd: Optional[int] = ...) -> Iterator[Tuple[str, List[str], List[str], int]]: ...  # Unix only
+    if sys.version_info >= (3, 7):
+        @overload
+        def fwalk(top: Union[str, PathLike[str]] = ..., topdown: bool = ...,
+                  onerror: Optional[Callable] = ..., *, follow_symlinks: bool = ...,
+                  dir_fd: Optional[int] = ...) -> Iterator[Tuple[str, List[str], List[str], int]]: ...  # Unix only
+        @overload
+        def fwalk(top: bytes, topdown: bool = ...,
+                  onerror: Optional[Callable] = ..., *, follow_symlinks: bool = ...,
+                  dir_fd: Optional[int] = ...) -> Iterator[Tuple[bytes, List[bytes], List[bytes], int]]: ...  # Unix only
+    elif sys.version_info >= (3, 6):
+        def fwalk(top: Union[str, PathLike[str]] = ..., topdown: bool = ...,
+                  onerror: Optional[Callable] = ..., *, follow_symlinks: bool = ...,
+                  dir_fd: Optional[int] = ...) -> Iterator[Tuple[str, List[str], List[str], int]]: ...  # Unix only
+    else:
+        def fwalk(top: str = ..., topdown: bool = ...,
+                  onerror: Optional[Callable] = ..., *, follow_symlinks: bool = ...,
+                  dir_fd: Optional[int] = ...) -> Iterator[Tuple[str, List[str], List[str], int]]: ...  # Unix only
     def getxattr(path: _FdOrPathType, attribute: _PathType, *, follow_symlinks: bool = ...) -> bytes: ...  # Linux only
     def listxattr(path: _FdOrPathType, *, follow_symlinks: bool = ...) -> List[str]: ...  # Linux only
     def removexattr(path: _FdOrPathType, attribute: _PathType, *, follow_symlinks: bool = ...) -> None: ...  # Linux only
@@ -600,3 +632,6 @@ if sys.version_info >= (3, 6):
     def urandom(size: int) -> bytes: ...
 else:
     def urandom(n: int) -> bytes: ...
+
+if sys.version_info >= (3, 7):
+    def register_at_fork(func: Callable[..., object], when: str) -> None: ...

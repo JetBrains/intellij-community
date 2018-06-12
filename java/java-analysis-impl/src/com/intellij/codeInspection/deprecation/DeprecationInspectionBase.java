@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -13,11 +13,11 @@ import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -333,6 +333,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static PsiMethod findReplacementInJavaDoc(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression call) {
     if (method instanceof PsiConstructorCall) return null;
+    if (method instanceof ClsMethodImpl) {
+      PsiMethod sourceMethod = ((ClsMethodImpl)method).getSourceMirrorMethod();
+      return sourceMethod == null ? null : findReplacementInJavaDoc(sourceMethod, call);
+    }
     PsiDocComment doc = method.getDocComment();
     if (doc == null) return null;
 
@@ -353,7 +357,6 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
       .map(resolved -> (PsiMethod)(resolved instanceof PsiMethod ? resolved : null))
       .filter(Objects::nonNull)
       .filter(tagMethod -> !tagMethod.isDeprecated())
-      .filter(tagMethod -> !StringUtil.equals(tagMethod.getName(), method.getName()))
       .filter(tagMethod -> !tagMethod.isEquivalentTo(method))
       .filter(tagMethod -> areReplaceable(method, tagMethod, call))
       .collect(MoreCollectors.onlyOne())

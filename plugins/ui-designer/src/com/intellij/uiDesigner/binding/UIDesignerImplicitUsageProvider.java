@@ -17,11 +17,14 @@
 package com.intellij.uiDesigner.binding;
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.uiDesigner.compiler.AsmCodeGenerator;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.stream.Stream;
 
 /**
  * @author yole
@@ -50,5 +53,10 @@ public class UIDesignerImplicitUsageProvider implements ImplicitUsageProvider {
   @Override
   public boolean isImplicitlyNotNullInitialized(@NotNull PsiElement element) {
     return isImplicitWrite(element);
+  }
+
+  @Override
+  public boolean isClassWithCustomizedInitialization(@NotNull PsiElement element) {
+    return element instanceof PsiClass && Stream.of(((PsiClass)element).getMethods()).anyMatch(this::isImplicitUsage);
   }
 }

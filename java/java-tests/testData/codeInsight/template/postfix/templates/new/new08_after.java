@@ -1,6 +1,6 @@
 public abstract class Foo {
     void m() {
-        new FooBar(<caret>);
+        new FooBar(<caret>)
     }
     class FooBar { private FooBar(int x) { } }
 }

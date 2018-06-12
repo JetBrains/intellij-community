@@ -69,6 +69,7 @@ public class ProductionModuleOutputPackagingElement extends ModuleOutputPackagin
     return rootModel.getSourceRoots(JavaModuleSourceRootTypes.PRODUCTION);
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, false));
   }

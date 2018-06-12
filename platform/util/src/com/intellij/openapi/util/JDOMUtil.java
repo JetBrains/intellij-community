@@ -122,7 +122,7 @@ public class JDOMUtil {
   }
 
   /**
-   * @deprecated Use Element.getChildren() directly
+   * @deprecated Use {@link Element#getChildren} instead
    */
   @NotNull
   @Deprecated

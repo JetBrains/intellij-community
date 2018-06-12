@@ -26,6 +26,7 @@ import org.jetbrains.intellij.build.ProductProperties
 class VmOptionsGenerator {
   private static final String COMMON_VM_OPTIONS = "-XX:+UseConcMarkSweepGC -XX:SoftRefLRUPolicyMSPerMB=50 " +
                                           "-Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true " +
+                                          "-Djdk.http.auth.tunneling.disabledSchemes=\"\" " +
                                           "-Djna.nosys=true -Djna.boot.library.path= "
 
   static String computeVmOptions(JvmArchitecture arch, boolean isEAP, ProductProperties productProperties, String yourkitSessionName = null) {

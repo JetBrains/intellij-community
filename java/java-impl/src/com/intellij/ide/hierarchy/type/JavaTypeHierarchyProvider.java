@@ -80,7 +80,7 @@ public class JavaTypeHierarchyProvider implements HierarchyProvider {
   }
 
   @NotNull
-  public HierarchyBrowser createHierarchyBrowser(final PsiElement target) {
+  public HierarchyBrowser createHierarchyBrowser(@NotNull PsiElement target) {
     return new TypeHierarchyBrowser(target.getProject(), (PsiClass) target);
   }
 

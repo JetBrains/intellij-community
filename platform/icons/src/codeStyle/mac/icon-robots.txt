@@ -1,0 +1,1 @@
+deprecated: AddNewSectionRule.png -> /codeStyle/AddNewSectionRule.svg; to be removed in IDEA 2020 - use AllIcons.CodeStyle.AddNewSectionRule

@@ -49,8 +49,8 @@ public class PyDecoratorImpl extends StubBasedPsiElementBase<PyDecoratorStub> im
 
   @Override
   @Nullable
-  public PyFunction getTarget() {
-    return PsiTreeUtil.getParentOfType(this, PyFunction.class);
+  public final PyFunction getTarget() {
+    return PsiTreeUtil.getStubOrPsiParentOfType(this, PyFunction.class);
   }
 
   @Override

@@ -116,6 +116,6 @@ public class BuildArtifactsBeforeRunTaskProvider extends BuildArtifactsBeforeRun
 
   @Override
   protected ProjectTask createProjectTask(Project project, List<Artifact> artifacts) {
-    return ProjectTaskManager.getInstance(project).createArtifactsBuildTask(true, artifacts.toArray(new Artifact[0]));
+    return ProjectTaskManager.getInstance(project).createBuildTask(true, artifacts.toArray(new Artifact[0]));
   }
 }

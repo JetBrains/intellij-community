@@ -24,7 +24,6 @@ import javax.swing.*;
 import java.awt.*;
 
 public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
-  private boolean myLayingOut;
   private int myMinLength = 20;
 
   public ComboBoxWithWidePopup() {
@@ -55,7 +54,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
       scc.getIpad().top = scc.getIpad().bottom = 0;
     }
 
-    super.setRenderer(new AdjustingListCellRenderer(this, renderer));
+    super.setRenderer(new AdjustingListCellRenderer(renderer));
   }
 
   public void setMinLength(int minLength) {
@@ -69,56 +68,32 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
     return myMinLength;
   }
 
-  @Override
-  public void doLayout() {
-    try {
-      myLayingOut = true;
-      super.doLayout();
-    }
-    finally {
-      myLayingOut = false;
-    }
-  }
-
-  @Override
-  public Dimension getSize() {
-    Dimension size = super.getSize();
-    if (!myLayingOut) {
-      size.width = Math.max(size.width, getOriginalPreferredSize().width);
-    }
-    return size;
-  }
-
-  private Dimension _getSuperSize() {
-    return super.getSize();
-  }
-
   /**
-   * @return preferred size of JComboBox. To show wide popup, default preferred size of JComboBox is what's needed:
-   *         it's calculated as max of all pref sizes of its items (javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()).
+   * @return minimum width of a popup that is wide enough to show all the combobox's items horizontally
    */
-  private Dimension getOriginalPreferredSize() {
-    return super.getPreferredSize();
+  public int getMinimumPopupWidth() {
+    // Original preferred size of JComboBox is calculated as max of all pref sizes of combobox's items.
+    // See javax.swing.plaf.basic.BasicComboBoxUI#getDisplaySize()
+    //
+    // Please note that "getPreferredSize().width" cannot be used as getPreferredSize might be overridden
+    // to return a value different to "max of all pref sizes of comboBox's items".
+    return super.getPreferredSize().width;
   }
 
   private class AdjustingListCellRenderer implements ListCellRenderer<E> {
-    private final ListCellRenderer<? super E> myOldRenderer;
-    private final ComboBoxWithWidePopup myComboBox;
+    private final ListCellRenderer<? super E> delegate;
 
-    AdjustingListCellRenderer(ComboBoxWithWidePopup<E> comboBox, ListCellRenderer<? super E> oldRenderer) {
-      myComboBox = comboBox;
-      myOldRenderer = oldRenderer;
+    AdjustingListCellRenderer(ListCellRenderer<? super E> delegate) {
+      this.delegate = delegate;
     }
 
     @Override
     public Component getListCellRendererComponent(JList<? extends E> list, E value, int index, boolean isSelected, boolean cellHasFocus) {
-      if (index == -1 && value instanceof String && !myComboBox.isValid()) {
+      if (index == -1 && value instanceof String && !isValid()) {
         int minLength = getMinLength();
-
-        Dimension size = myComboBox._getSuperSize();
         String stringValue = (String)value;
 
-        if (size.width == 0) {
+        if (getSize().width == 0) {
           if (stringValue.length() > minLength) {
             @SuppressWarnings("unchecked") E e = (E)stringValue.substring(0, minLength);
             value = e;
@@ -126,7 +101,7 @@ public class ComboBoxWithWidePopup<E> extends JComboBox<E> {
         }
       }
 
-      return myOldRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+      return delegate.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
   }
 }

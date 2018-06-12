@@ -15,6 +15,7 @@
  */
 package com.intellij.json.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.JsonLanguage;
 import com.intellij.json.psi.JsonArray;
@@ -24,7 +25,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.ObjectUtils;
@@ -41,9 +41,7 @@ public class JsonTrailingCommaRemover implements PreFormatProcessor {
     if (rootPsi.getLanguage() != JsonLanguage.INSTANCE) {
       return range;
     }
-    JsonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(rootPsi.getProject())
-      .getCurrentSettings()
-      .getCustomSettings(JsonCodeStyleSettings.class);
+    JsonCodeStyleSettings settings = CodeStyle.getCustomSettings(rootPsi.getContainingFile(), JsonCodeStyleSettings.class);
     if (settings.KEEP_TRAILING_COMMA) {
       return range;
     }

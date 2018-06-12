@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.uast
 
 import com.intellij.psi.*
@@ -66,7 +64,7 @@ class GrUMethod(val grElement: GrMethod,
 
   override val uastParameters: List<UParameter> by lazy { grElement.parameters.map { GrUParameter(it, { this }) } }
 
-  override val isOverride: Boolean by lazy { psi.modifierList.findAnnotation("java.lang.Override") != null }
+  override val isOverride: Boolean by lazy { psi.modifierList.hasAnnotation("java.lang.Override") }
 
   override val uastAnchor: UIdentifier
     get() = UIdentifier(grElement.nameIdentifierGroovy, this)

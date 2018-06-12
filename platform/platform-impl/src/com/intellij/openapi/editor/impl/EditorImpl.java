@@ -2,16 +2,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.application.options.EditorFontsConstants;
-import com.intellij.codeInsight.hint.DocumentFragmentTooltipRenderer;
 import com.intellij.codeInsight.hint.EditorFragmentComponent;
-import com.intellij.codeInsight.hint.TooltipController;
-import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.Dumpable;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
+import com.intellij.internal.performance.LatenciometerKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
@@ -134,7 +132,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   public static final Key<Boolean> DO_DOCUMENT_UPDATE_TEST = Key.create("DoDocumentUpdateTest");
   public static final Key<Boolean> FORCED_SOFT_WRAPS = Key.create("forced.soft.wraps");
   public static final Key<Boolean> SOFT_WRAPS_EXIST = Key.create("soft.wraps.exist");
-  private static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
+  @SuppressWarnings("WeakerAccess")
+  public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION = Key.create("editor.disable.caret.shift.on.whitespace.insertion");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
@@ -145,6 +144,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull private final EditorComponentImpl myEditorComponent;
   @NotNull private final EditorGutterComponentImpl myGutterComponent;
   private final TraceableDisposable myTraceableDisposable = new TraceableDisposable(true);
+  private long myLastTypedActionTimestamp = -1;
+  private String myLastTypedAction;
 
   private static final Cursor EMPTY_CURSOR;
 
@@ -513,6 +514,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     EditorHighlighter highlighter = new NullEditorHighlighter();
     setHighlighter(highlighter);
+
+    new FoldingPopupManager(this);
 
     myEditorComponent = new EditorComponentImpl(this);
     myScrollPane.putClientProperty(JBScrollPane.BRIGHTNESS_FROM_VIEW, true);
@@ -1114,7 +1117,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     Rectangle visibleArea = myScrollingModel.getVisibleArea();
     Point zoomCenterRelative = zoomCenter == null ? new Point() : zoomCenter;
     Point zoomCenterAbsolute = new Point(visibleArea.x + zoomCenterRelative.x, visibleArea.y + zoomCenterRelative.y);
-    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute).withoutVisualPositionInfo();
+    LogicalPosition zoomCenterLogical = xyToLogicalPosition(zoomCenterAbsolute);
     int oldLineHeight = getLineHeight();
     int intraLineOffset = zoomCenterAbsolute.y % oldLineHeight;
 
@@ -1185,7 +1188,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   void processKeyTypedImmediately(char c, Graphics graphics, DataContext dataContext) {
     EditorActionPlan plan = new EditorActionPlan(this);
     EditorActionManager.getInstance().getTypedAction().beforeActionPerformed(this, c, dataContext, plan);
-    myImmediatePainter.paint(graphics, plan);
+    if (myImmediatePainter.paint(graphics, plan)) {
+      myLastTypedActionTimestamp = -1;
+    }
   }
 
   void processKeyTypedNormally(char c, DataContext dataContext) {
@@ -1726,7 +1731,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
    * {@link #stopDumbLater} or {@link #stopDumb} must be performed in finally
    */
   public void startDumb() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) return;
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) return;
     if (!Registry.is("editor.dumb.mode.available")) return;
     putUserData(BUFFER, null);
     Rectangle rect = ((JViewport)myEditorComponent.getParent()).getViewRect();
@@ -2325,7 +2330,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       dy = y - visibleArea.y;
     }
     else {
-      if (y > visibleArea.y + visibleArea.height) {
+      if (y > visibleArea.y + visibleArea.height && visibleArea.y + visibleArea.height < myEditorComponent.getHeight()) {
         dy = y - visibleArea.y - visibleArea.height;
       }
     }
@@ -2548,7 +2553,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void run() {
-      if (myEditor != null) {
+      if (myEditor != null && !myEditor.myUpdateCursor) {
         CaretCursor activeCursor = myEditor.myCaretCursor;
 
         long time = System.currentTimeMillis();
@@ -2572,8 +2577,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
   }
 
+  // The caller should also request repainting of caret region
   void updateCaretCursor() {
     myUpdateCursor = true;
+    myCaretCursor.myIsShown = true;
   }
 
   private void setCursorPosition() {
@@ -2715,7 +2722,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     private void setPositions(CaretRectangle[] locations) {
       myStartTime = System.currentTimeMillis();
       myLocations = locations;
-      myIsShown = true;
     }
 
     private void repaint() {
@@ -3204,15 +3210,31 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public boolean processKeyTyped(@NotNull KeyEvent e) {
-
+    myLastTypedActionTimestamp = -1;
     if (e.getID() != KeyEvent.KEY_TYPED) return false;
     char c = e.getKeyChar();
     if (UIUtil.isReallyTypedEvent(e)) { // Hack just like in javax.swing.text.DefaultEditorKit.DefaultKeyTypedAction
+      myLastTypedActionTimestamp = e.getWhen();
+      myLastTypedAction = Character.toString(c);
       processKeyTyped(c);
       return true;
     }
     else {
       return false;
+    }
+  }
+
+  public void recordLatencyAwareAction(String actionId, AnActionEvent event) {
+    InputEvent inputEvent = event.getInputEvent();
+    if (inputEvent == null) return;
+    myLastTypedActionTimestamp = inputEvent.getWhen();
+    myLastTypedAction = actionId;
+  }
+
+  void measureTypingLatency() {
+    if (myLastTypedActionTimestamp != -1) {
+      LatenciometerKt.recordTypingLatency(this, myLastTypedAction, System.currentTimeMillis() - myLastTypedActionTimestamp);
+      myLastTypedActionTimestamp = -1;
     }
   }
 
@@ -3550,8 +3572,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       if (event.getArea() == EditorMouseEventArea.LINE_MARKERS_AREA) {
         myGutterComponent.mouseExited(e);
       }
-
-      TooltipController.getInstance().cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
     }
 
     private void runMousePressedCommand(@NotNull final MouseEvent e) {
@@ -3568,6 +3588,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       try {
         for (EditorMouseListener mouseListener : myMouseListeners) {
           mouseListener.mousePressed(event);
+          if (isReleased) return;
         }
       }
       finally {
@@ -3607,6 +3628,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseClicked(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3630,6 +3652,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseReleased(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3651,6 +3674,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseEntered(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3662,6 +3686,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       EditorMouseEvent event = new EditorMouseEvent(EditorImpl.this, e, getMouseEventArea(e));
       for (EditorMouseListener listener : myMouseListeners) {
         listener.mouseExited(event);
+        if (isReleased) return;
         if (event.isConsumed()) {
           e.consume();
           return;
@@ -3977,8 +4002,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myUseEditorAntialiasing = value;
   }
 
-  private static final TooltipGroup FOLDING_TOOLTIP_GROUP = new TooltipGroup("FOLDING_TOOLTIP_GROUP", 10);
-
   private class MyMouseMotionListener implements MouseMotionListener {
     @Override
     public void mouseDragged(@NotNull MouseEvent e) {
@@ -3992,6 +4015,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseDragged(event);
+        if (isReleased) return;
       }
     }
 
@@ -4021,38 +4045,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         myGutterComponent.mouseMoved(e);
       }
 
-      if (event.getArea() == EditorMouseEventArea.EDITING_AREA) {
-        FoldRegion fold = myFoldingModel.getFoldingPlaceholderAt(e.getPoint());
-        TooltipController controller = TooltipController.getInstance();
-        if (fold != null && !fold.shouldNeverExpand()) {
-          DocumentFragment range = createDocumentFragment(fold);
-          final Point p =
-            SwingUtilities.convertPoint((Component)e.getSource(), e.getPoint(), getComponent().getRootPane().getLayeredPane());
-          controller.showTooltip(EditorImpl.this, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
-        }
-        else {
-          controller.cancelTooltip(FOLDING_TOOLTIP_GROUP, e, true);
-        }
-      }
-
       for (EditorMouseMotionListener listener : myMouseMotionListeners) {
         listener.mouseMoved(event);
+        if (isReleased) return;
       }
-    }
-
-    @NotNull
-    private DocumentFragment createDocumentFragment(@NotNull FoldRegion fold) {
-      final FoldingGroup group = fold.getGroup();
-      final int foldStart = fold.getStartOffset();
-      if (group != null) {
-        final int endOffset = myFoldingModel.getEndOffset(group);
-        if (offsetToVisualLine(endOffset) == offsetToVisualLine(foldStart)) {
-          return new DocumentFragment(myDocument, foldStart, endOffset);
-        }
-      }
-
-      final int oldEnd = fold.getEndOffset();
-      return new DocumentFragment(myDocument, foldStart, oldEnd);
     }
   }
 
@@ -4408,8 +4404,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public boolean canImport(@NotNull JComponent comp, @NotNull DataFlavor[] transferFlavors) {
-      Editor editor = getEditor(comp);
-      final EditorDropHandler dropHandler = ((EditorImpl)editor).getDropHandler();
+      EditorImpl editor = getEditor(comp);
+      final EditorDropHandler dropHandler = editor.getDropHandler();
       if (dropHandler != null && dropHandler.canHandleDrop(transferFlavors)) {
         return true;
       }

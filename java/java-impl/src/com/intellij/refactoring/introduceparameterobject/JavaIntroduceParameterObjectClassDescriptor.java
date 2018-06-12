@@ -253,6 +253,7 @@ public class JavaIntroduceParameterObjectClassDescriptor extends IntroduceParame
     final ParameterObjectBuilder beanClassBuilder = new ParameterObjectBuilder();
     beanClassBuilder.setVisibility(isCreateInnerClass() ? PsiModifier.PRIVATE : PsiModifier.PUBLIC);
     beanClassBuilder.setProject(method.getProject());
+    beanClassBuilder.setFile(method.getContainingFile());
     beanClassBuilder.setTypeArguments(getTypeParameters());
     beanClassBuilder.setClassName(getClassName());
     beanClassBuilder.setPackageName(getPackageName());

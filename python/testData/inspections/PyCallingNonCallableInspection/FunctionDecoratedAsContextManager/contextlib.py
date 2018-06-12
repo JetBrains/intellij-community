@@ -1,0 +1,2 @@
+def contextmanager(func):
+    pass

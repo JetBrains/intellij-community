@@ -74,7 +74,7 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
           VirtualFile parent = root.getParent();
           if (parent != null) {
             DirectoryInfo parentInfo = getInfoForFileOrDirectory(parent);
-            if (parentInfo.isInProject(parent) && parentInfo.getModule() != null) continue;
+            if (isFileInContent(parent, parentInfo)) continue;
           }
           result.add(root);
         }
@@ -119,16 +119,22 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public VirtualFile getClassRootForFile(@NotNull VirtualFile file) {
-    final DirectoryInfo info = getInfoForFileOrDirectory(file);
-    if (!info.isInProject(file)) return null;
-    return info.getLibraryClassRoot();
+    return getClassRootForFile(file, getInfoForFileOrDirectory(file));
+  }
+
+  @Nullable
+  public static VirtualFile getClassRootForFile(@NotNull VirtualFile file, DirectoryInfo info) {
+    return info.isInProject(file) ? info.getLibraryClassRoot() : null;
   }
 
   @Override
   public VirtualFile getSourceRootForFile(@NotNull VirtualFile file) {
-    final DirectoryInfo info = getInfoForFileOrDirectory(file);
-    if (!info.isInProject(file)) return null;
-    return info.getSourceRoot();
+    return getSourceRootForFile(file, getInfoForFileOrDirectory(file));
+  }
+
+  @Nullable
+  public static VirtualFile getSourceRootForFile(@NotNull VirtualFile file, DirectoryInfo info) {
+    return info.isInProject(file) ? info.getSourceRoot() : null;
   }
 
   @Override
@@ -138,7 +144,11 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public VirtualFile getContentRootForFile(@NotNull VirtualFile file, final boolean honorExclusion) {
-    final DirectoryInfo info = getInfoForFileOrDirectory(file);
+    return getContentRootForFile(getInfoForFileOrDirectory(file), file, honorExclusion);
+  }
+
+  @Nullable
+  public static VirtualFile getContentRootForFile(DirectoryInfo info, @NotNull VirtualFile file, boolean honorExclusion) {
     if (info.isInProject(file) || !honorExclusion && info.isExcluded(file)) {
       return info.getContentRoot();
     }
@@ -189,7 +199,10 @@ public class ProjectFileIndexImpl extends FileIndexBase implements ProjectFileIn
 
   @Override
   public boolean isInContent(@NotNull VirtualFile fileOrDir) {
-    DirectoryInfo info = getInfoForFileOrDirectory(fileOrDir);
+    return isFileInContent(fileOrDir, getInfoForFileOrDirectory(fileOrDir));
+  }
+
+  public static boolean isFileInContent(@NotNull VirtualFile fileOrDir, @NotNull DirectoryInfo info) {
     return info.isInProject(fileOrDir) && info.getModule() != null;
   }
 

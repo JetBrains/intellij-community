@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.lexer;
 
@@ -75,12 +61,12 @@ public interface GroovyTokenTypes {
   IElementType mREGEX_BEGIN = new GroovyElementType("regex begin");
   IElementType mREGEX_CONTENT = new GroovyElementType("regex content");
   IElementType mREGEX_END = new GroovyElementType("regex end");
-  IElementType mREGEX_LITERAL = new GroovyElementType("regex literal");
+  IElementType mREGEX_LITERAL = new GroovyElementType("SLASHY_LITERAL");
 
   IElementType mDOLLAR_SLASH_REGEX_BEGIN = new GroovyElementType("$/ regex begin");
   IElementType mDOLLAR_SLASH_REGEX_CONTENT = new GroovyElementType("$/ regex content");
   IElementType mDOLLAR_SLASH_REGEX_END = new GroovyElementType("$/ regex end");
-  IElementType mDOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("$/ regex literal");
+  IElementType mDOLLAR_SLASH_REGEX_LITERAL = new GroovyElementType("DOLLAR_SLASHY_LITERAL");
 
 
   /* **************************************************************************************************

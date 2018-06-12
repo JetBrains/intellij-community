@@ -205,6 +205,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
         if (KEY.getName().equals(dataId)) {
           return RunDashboardContent.this;
         }
+        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
+        }
         Content content = myContentManager.getSelectedContent();
         if (content != null && content.getComponent() != null) {
           DataProvider dataProvider = DataManagerImpl.getDataProviderEx(content.getComponent());
@@ -268,10 +271,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
                                     .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
                                     .collect(Collectors.toList()));
     }
-
-    // TODO [konstantin.aleev] provide context help ID
-    //myContentActionGroup.addSeparator();
-    //myContentActionGroup.add(new ContextHelpAction(HELP_ID));
   }
 
   private void onSelectionChanged() {

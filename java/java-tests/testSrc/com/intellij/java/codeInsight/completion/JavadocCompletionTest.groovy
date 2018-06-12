@@ -22,6 +22,7 @@ import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInspection.javaDoc.JavaDocLocalInspection
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.patterns.PlatformPatterns
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.psi.PsiReferenceBase
@@ -610,7 +611,7 @@ class Foo {
       }
     }
     try {
-      registrar.registerReferenceProvider(PsiDocTag.class, provider)
+      registrar.registerReferenceProvider(PlatformPatterns.psiElement(PsiDocTag.class), provider)
       configureByFile("ReferenceProvider.java")
       assertStringItems("1", "2", "3")
     }
@@ -671,6 +672,12 @@ class Foo {
     myFixture.configureByText 'a.java', "/** {@code nul<caret>} */"
     myFixture.completeBasic()
     myFixture.checkResult "/** {@code null<caret>} */"
+  }
+  
+  void "test no link inside code tag"() {
+    myFixture.configureByText 'a.java', "/** {@code FBG<caret>} */ interface FooBarGoo {}"
+    myFixture.completeBasic()
+    myFixture.checkResult "/** {@code FooBarGoo<caret>} */ interface FooBarGoo {}"
   }
 
   void "test completing inside qualified name"() {

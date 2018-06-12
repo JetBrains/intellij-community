@@ -1,29 +1,15 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
+import java.util.stream.Stream;
 
 public class SelectInManager  {
   private final Project myProject;
@@ -42,7 +28,7 @@ public class SelectInManager  {
   }
 
   /**
-   * "Select In" targets should be registered as extension points ({@link com.intellij.ide.SelectInTarget#EP_NAME}).
+   * "Select In" targets should be registered as extension points ({@link SelectInTarget#EP_NAME}).
    */
   @Deprecated
   public void addTarget(SelectInTarget target) {
@@ -55,15 +41,11 @@ public class SelectInManager  {
 
   public SelectInTarget[] getTargets() {
     checkLoadExtensions();
-    SelectInTarget[] targets = myTargets.toArray(new SelectInTarget[0]);
-    Arrays.sort(targets, new SelectInTargetComparator());
-
+    Stream<SelectInTarget> stream = myTargets.stream();
     if (DumbService.getInstance(myProject).isDumb()) {
-      final List<SelectInTarget> awareList = (List)ContainerUtil.findAll(targets, DumbAware.class);
-      return awareList.toArray(new SelectInTarget[0]);
+      stream = stream.filter(target -> DumbService.isDumbAware(target));
     }
-
-    return targets;
+    return stream.sorted(SelectInTargetComparator.INSTANCE).toArray(SelectInTarget[]::new);
   }
 
   private void checkLoadExtensions() {
@@ -77,11 +59,24 @@ public class SelectInManager  {
     return ServiceManager.getService(project, SelectInManager.class);
   }
 
+  public static SelectInTarget findSelectInTarget(@NotNull String id, Project project) {
+    SelectInManager manager = project == null || project.isDisposed() ? null : SelectInManager.getInstance(project);
+    SelectInTarget[] targets = manager == null ? null : manager.getTargets();
+    if (targets != null) {
+      for (SelectInTarget target : targets) {
+        if (target != null && Objects.equals(id, target.getToolWindowId())) {
+          return target;
+        }
+      }
+    }
+    return null;
+  }
+
   public static class SelectInTargetComparator implements Comparator<SelectInTarget> {
+    public static final Comparator<SelectInTarget> INSTANCE = new SelectInTargetComparator();
+
     public int compare(final SelectInTarget o1, final SelectInTarget o2) {
-      if (o1.getWeight() < o2.getWeight()) return -1;
-      if (o1.getWeight() > o2.getWeight()) return 1;
-      return 0;
+      return Float.compare(o1.getWeight(), o2.getWeight());
     }
   }
 }

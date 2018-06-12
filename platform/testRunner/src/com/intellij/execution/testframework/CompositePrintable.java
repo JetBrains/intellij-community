@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +45,8 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
   private int myCurrentSize = 0;
   private String myOutputFile = null;
   private String myFrameworkOutputFile;
-  private static final ExecutorService ourTestExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("tests", 1);
+  private static final ExecutorService ourTestExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "Tests Executor");
 
   public void flush() {
     synchronized (myNestedPrintables) {

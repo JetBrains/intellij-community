@@ -237,6 +237,11 @@ public class ScopeImpl implements Scope {
       }
 
       @Override
+      public void visitPyNamedParameter(PyNamedParameter node) {
+        processNamedElement(node);
+      }
+
+      @Override
       public void visitPyClass(PyClass node) {
         visitDecorators(node.getDecoratorList());
         super.visitPyClass(node);
@@ -249,11 +254,7 @@ public class ScopeImpl implements Scope {
       @Override
       public void visitPyElement(PyElement node) {
         if (node instanceof PsiNamedElement && !(node instanceof PyKeywordArgument)) {
-          final String name = node.getName();
-          if (!namedElements.containsKey(name)) {
-            namedElements.put(name, Sets.newLinkedHashSet());
-          }
-          namedElements.get(name).add((PsiNamedElement)node);
+          processNamedElement((PsiNamedElement)node);
         }
         if (node instanceof PyImportedNameDefiner) {
           importedNameDefiners.add((PyImportedNameDefiner)node);
@@ -273,6 +274,10 @@ public class ScopeImpl implements Scope {
             decorator.accept(this);
           }
         }
+      }
+
+      private void processNamedElement(@NotNull PsiNamedElement element) {
+        namedElements.computeIfAbsent(element.getName(), __ -> Sets.newLinkedHashSet()).add(element);
       }
     });
 

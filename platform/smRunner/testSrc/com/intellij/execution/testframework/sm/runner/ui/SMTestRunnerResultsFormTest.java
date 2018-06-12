@@ -17,11 +17,13 @@ package com.intellij.execution.testframework.sm.runner.ui;
 
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.TestConsoleProperties;
+import com.intellij.execution.testframework.actions.ViewAssertEqualsDiffAction;
 import com.intellij.execution.testframework.sm.Marker;
 import com.intellij.execution.testframework.sm.runner.BaseSMTRunnerTestCase;
 import com.intellij.execution.testframework.sm.runner.GeneralToSMTRunnerEventsConvertor;
 import com.intellij.execution.testframework.sm.runner.SMTestProxy;
 import com.intellij.execution.testframework.sm.runner.events.*;
+import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.openapi.progress.util.ColorProgressBar;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
@@ -571,5 +573,31 @@ public class SMTestRunnerResultsFormTest extends BaseSMTRunnerTestCase {
     assertEquals(3, myResultsViewer.getStartedTestCount());
     myResultsViewer.onTestStarted(createTestProxy("some_test1", myTestsRootNode));
     assertEquals(4, myResultsViewer.getStartedTestCount());
+  }
+
+  public void testDiffOnNonLeafNode() {
+    SMTestProxy suite1 = createSuiteProxy(myTestsRootNode);
+    suite1.setStarted();
+    SMTestProxy test1 = createTestProxy("test1", suite1);
+    test1.setStarted();
+    test1.setTestComparisonFailed("m1", "m1", "m2", "m1");
+    test1.setFinished();
+    suite1.setFinished();
+
+    SMTestProxy suite2 = createSuiteProxy(myTestsRootNode);
+    suite2.setStarted();
+    SMTestProxy test2 = createTestProxy("test2", suite2);
+    test2.setStarted();
+    test2.setTestComparisonFailed("m2", "m2", "m1", "m2");
+    test2.setFinished();
+    suite2.setFinished();
+
+    ViewAssertEqualsDiffAction.showDiff(suite2, myResultsViewer, (providers, idx) -> {
+      assertEquals(2, providers.size());
+      assertEquals(Integer.valueOf(1), idx);
+      DiffHyperlink selectedProvider = providers.get(0);
+      assertEquals("m1", selectedProvider.getLeft());
+      assertEquals("m2", selectedProvider.getRight());
+    });
   }
 }

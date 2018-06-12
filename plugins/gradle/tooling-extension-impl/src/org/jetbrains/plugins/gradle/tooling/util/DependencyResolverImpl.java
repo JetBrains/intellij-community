@@ -904,7 +904,9 @@ public class DependencyResolverImpl implements DependencyResolver {
           projectDependency.setScope(scope);
           projectDependency.setProjectPath(project.getPath());
           projectDependency.setConfigurationName(targetConfiguration.getName());
-          projectDependency.setProjectDependencyArtifacts(targetConfiguration.getAllArtifacts().getFiles().getFiles());
+          Set<File> artifacts = targetConfiguration.getAllArtifacts().getFiles().getFiles();
+          projectDependency.setProjectDependencyArtifacts(artifacts);
+          setProjectDependencyArtifactsSources(projectDependency, artifacts, mySourceSetFinder);
 
           result.add(projectDependency);
         } else if (it != null) {
@@ -1034,7 +1036,9 @@ public class DependencyResolverImpl implements DependencyResolver {
                   dependency.setSelectionReason(selectionReason);
                   dependency.setProjectPath(((ProjectComponentSelector)componentSelector).getProjectPath());
                   dependency.setConfigurationName(it.getName());
-                  dependency.setProjectDependencyArtifacts(it.getAllArtifacts().getFiles().getFiles());
+                  Set<File> artifacts = it.getAllArtifacts().getFiles().getFiles();
+                  dependency.setProjectDependencyArtifacts(artifacts);
+                  setProjectDependencyArtifactsSources(dependency, artifacts, mySourceSetFinder);
 
                   resolvedDepsFiles.addAll(dependency.getProjectDependencyArtifacts());
 
@@ -1060,7 +1064,9 @@ public class DependencyResolverImpl implements DependencyResolver {
                   dependency.setSelectionReason(selectionReason);
                   dependency.setProjectPath(((ProjectComponentSelector)componentSelector).getProjectPath());
                   dependency.setConfigurationName(it.getName());
-                  dependency.setProjectDependencyArtifacts(it.getAllArtifacts().getFiles().getFiles());
+                  Set<File> artifactsFiles = it.getAllArtifacts().getFiles().getFiles();
+                  dependency.setProjectDependencyArtifacts(artifactsFiles);
+                  setProjectDependencyArtifactsSources(dependency, artifactsFiles, mySourceSetFinder);
 
                   resolvedDepsFiles.addAll(dependency.getProjectDependencyArtifacts());
 
@@ -1164,9 +1170,9 @@ public class DependencyResolverImpl implements DependencyResolver {
                       files.add(resolvedArtifact.getFile());
                     }
                     dDep.setProjectDependencyArtifacts(files);
+                    setProjectDependencyArtifactsSources(dDep, files, mySourceSetFinder);
                     resolvedDepsFiles.addAll(dDep.getProjectDependencyArtifacts());
                   }
-
                   else {
                     dependency = new DefaultExternalLibraryDependency();
                     DefaultExternalLibraryDependency dDep = (DefaultExternalLibraryDependency)dependency;
@@ -1226,6 +1232,19 @@ public class DependencyResolverImpl implements DependencyResolver {
 
       return dependencies;
     }
+  }
+
+  private static void setProjectDependencyArtifactsSources(DefaultExternalProjectDependency projectDependency,
+                                                           Collection<File> artifactFiles,
+                                                           SourceSetCachedFinder sourceSetFinder) {
+    List<File> artifactSources = new ArrayList<File>();
+    for (File artifactFile : artifactFiles) {
+      SourceSet sourceSet = sourceSetFinder.findByArtifact(artifactFile.getPath());
+      if (sourceSet != null) {
+        artifactSources.addAll(sourceSet.getAllJava().getSrcDirs());
+      }
+    }
+    projectDependency.setProjectDependencyArtifactsSources(artifactSources);
   }
 
   @Nullable

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.struct.attr.StructLineNumberTableAttribute;
@@ -28,9 +28,7 @@ public class BytecodeMappingTracer {
   }
 
   public void addMapping(int bytecode_offset) {
-    if (!mapping.containsKey(bytecode_offset)) {
-      mapping.put(bytecode_offset, currentSourceLine);
-    }
+    mapping.putIfAbsent(bytecode_offset, currentSourceLine);
   }
 
   public void addMapping(Set<Integer> bytecode_offsets) {
@@ -44,9 +42,7 @@ public class BytecodeMappingTracer {
   public void addTracer(BytecodeMappingTracer tracer) {
     if (tracer != null) {
       for (Entry<Integer, Integer> entry : tracer.mapping.entrySet()) {
-        if (!mapping.containsKey(entry.getKey())) {
-          mapping.put(entry.getKey(), entry.getValue());
-        }
+        mapping.putIfAbsent(entry.getKey(), entry.getValue());
       }
     }
   }

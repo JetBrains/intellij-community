@@ -55,7 +55,7 @@ public class PatchFileType implements FileType {
 
   @Nullable
   public Icon getIcon() {
-    return AllIcons.Vcs.Patch;
+    return AllIcons.Vcs.Patch_file;
   }
 
   @Override

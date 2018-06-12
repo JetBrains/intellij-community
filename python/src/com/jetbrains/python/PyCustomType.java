@@ -53,24 +53,29 @@ public final class PyCustomType implements PyClassLikeType {
 
   private final boolean myInstanceType;
 
+  private final boolean myTypesToMimicAsSuperTypes;
+
   @Nullable
   private final String myQualifiedName;
 
 
   /**
-   * @param filter       filter to filter methods from classes (may be null to do no filtering)
-   * @param instanceType if true, then this class implements instance (it reports it is not definition and returns "this
-   *                     for {@link #toInstance()} call). If false, <strong>calling this type creates similar type with instance=true</strong>
-   *                     (like ctor)
-   * @param typesToMimic types to "mimic": delegate calls to  (must be one at least!)
+   * @param filter                   filter to filter methods from classes (may be null to do no filtering)
+   * @param instanceType             if true, then this class implements instance (it reports it is not definition and returns "this
+   *                                 for {@link #toInstance()} call). If false, <strong>calling this type creates similar type with instance=true</strong>
+   *                                 (like ctor)
+   * @param typesToMimicAsSuperTypes if true, types to mimic are considered as supertypes
+   * @param typesToMimic             types to "mimic": delegate calls to  (must be one at least!)
    */
   public PyCustomType(@Nullable String qualifiedName,
                       @Nullable Processor<PyElement> filter,
                       boolean instanceType,
+                      boolean typesToMimicAsSuperTypes,
                       @NotNull PyClassLikeType... typesToMimic) {
     myQualifiedName = qualifiedName;
     myFilter = filter;
     myInstanceType = instanceType;
+    myTypesToMimicAsSuperTypes = typesToMimicAsSuperTypes;
     myTypesToMimic = StreamEx
       .of(typesToMimic)
       .nonNull()
@@ -96,7 +101,7 @@ public final class PyCustomType implements PyClassLikeType {
   public PyClassLikeType toInstance() {
     return myInstanceType
            ? this
-           : new PyCustomType(myQualifiedName, myFilter, true, myTypesToMimic.toArray(new PyClassLikeType[0]));
+           : new PyCustomType(myQualifiedName, myFilter, true, myTypesToMimicAsSuperTypes, myTypesToMimic.toArray(new PyClassLikeType[0]));
   }
 
 
@@ -104,7 +109,7 @@ public final class PyCustomType implements PyClassLikeType {
   @Override
   public PyClassLikeType toClass() {
     return myInstanceType
-           ? new PyCustomType(myQualifiedName, myFilter, false, myTypesToMimic.toArray(new PyClassLikeType[0]))
+           ? new PyCustomType(myQualifiedName, myFilter, false, myTypesToMimicAsSuperTypes, myTypesToMimic.toArray(new PyClassLikeType[0]))
            : this;
   }
 
@@ -117,7 +122,7 @@ public final class PyCustomType implements PyClassLikeType {
   @NotNull
   @Override
   public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
-    return myTypesToMimic;
+    return myTypesToMimicAsSuperTypes ? myTypesToMimic : Collections.emptyList();
   }
 
   @NotNull
@@ -182,6 +187,8 @@ public final class PyCustomType implements PyClassLikeType {
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
+    if (!myTypesToMimicAsSuperTypes) return Collections.emptyList();
+
     final Set<PyClassLikeType> result = new LinkedHashSet<>();
 
     for (PyClassLikeType type : myTypesToMimic) {

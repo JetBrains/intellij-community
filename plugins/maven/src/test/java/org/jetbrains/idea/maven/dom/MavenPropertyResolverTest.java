@@ -93,6 +93,7 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<properties>" +
                      " <parentProp>parent.value</parentProp>" +
@@ -163,7 +164,7 @@ public class MavenPropertyResolverTest extends MavenImportingTestCase {
 
                      "</properties>");
 
-    importProject();
+    importProjectWithErrors(true);
     assertEquals("${prop1}", resolve("${prop1}", myProjectPom));
     assertEquals("${prop3}", resolve("${prop3}", myProjectPom));
     assertEquals("${prop5}", resolve("${prop5}", myProjectPom));

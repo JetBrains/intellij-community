@@ -36,6 +36,9 @@ import java.util.List;
 public abstract class CopyPastePostProcessor<T extends TextBlockTransferableData> {
   public static final ExtensionPointName<CopyPastePostProcessor<? extends TextBlockTransferableData>> EP_NAME = ExtensionPointName.create("com.intellij.copyPastePostProcessor");
 
+  /**
+   * This method will be run in the dispatch thread with alternative resolve enabled
+   */
   @NotNull
   public abstract List<T> collectTransferableData(final PsiFile file, final Editor editor, final int[] startOffsets, final int[] endOffsets);
 

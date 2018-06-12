@@ -27,11 +27,13 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
   public ThumbnailSelectInTarget() {
   }
 
+  @Override
   public boolean canSelect(SelectInContext context) {
     VirtualFile virtualFile = context.getVirtualFile();
     return ImageFileTypeManager.getInstance().isImage(virtualFile) && virtualFile.getParent() != null;
   }
 
+  @Override
   public void selectIn(SelectInContext context, final boolean requestFocus) {
     VirtualFile virtualFile = context.getVirtualFile();
     VirtualFile parent = virtualFile.getParent();
@@ -53,6 +55,7 @@ final class ThumbnailSelectInTarget implements SelectInTarget {
     return ThumbnailView.TOOLWINDOW_ID;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }

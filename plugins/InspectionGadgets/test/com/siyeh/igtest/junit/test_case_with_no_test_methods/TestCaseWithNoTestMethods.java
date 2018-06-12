@@ -40,6 +40,15 @@ class <warning descr="Test class 'TestCaseWithInner' has no tests">TestCaseWithI
 }
 
 class Test5WithInner {
+  @org.junit.jupiter.api.Nested
+  class Inner {
+    @org.junit.jupiter.api.Test
+    void test1() {}
+  }
+}
+
+class <warning descr="Test class 'Test5WithInner1' has no tests">Test5WithInner1</warning> {
+  @org.junit.jupiter.api.Nested
   static class Inner {
     @org.junit.jupiter.api.Test
     void test1() {}

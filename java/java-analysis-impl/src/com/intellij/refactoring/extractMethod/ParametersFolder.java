@@ -18,7 +18,6 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
@@ -354,7 +353,7 @@ public class ParametersFolder {
     if (psiExpression != null) {
       final PsiExpression expression = findEquivalent(psiExpression, element);
       if (expression != null) {
-        expression.putUserData(DuplicatesFinder.PARAMETER, Pair.create(data.variable, expression.getType()));
+        expression.putUserData(DuplicatesFinder.PARAMETER, new DuplicatesFinder.Parameter(data.variable, expression.getType(), true));
         return true;
       }
     }

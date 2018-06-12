@@ -95,6 +95,7 @@ public abstract class FacetBasedPackagingSourceItemsProvider<F extends Facet, E 
       return myFacet.hashCode() + 31*myProvider.hashCode();
     }
 
+    @NotNull
     @Override
     public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
       return new DelegatedSourceItemPresentation(myProvider.createPresentation(myFacet));

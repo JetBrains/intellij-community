@@ -70,7 +70,7 @@ public class MethodReferenceElementType extends FunctionalExpressionElementType<
 
 
       @Override
-      public int getChildRole(ASTNode child) {
+      public int getChildRole(@NotNull ASTNode child) {
         final IElementType elType = child.getElementType();
         if (elType == JavaTokenType.DOUBLE_COLON) {
           return ChildRole.DOUBLE_COLON;

@@ -19,7 +19,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.vcs.annotate.AnnotationGutterActionProvider;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.github.GithubOpenCommitInBrowserFromAnnotateAction;
+import org.jetbrains.plugins.github.GithubOpenInBrowserFromAnnotationActionGroup;
 
 /**
  * @author Kirill Likhodedov
@@ -29,7 +29,6 @@ public class GithubAnnotationGutterActionProvider implements AnnotationGutterAct
   @NotNull
   @Override
   public AnAction createAction(@NotNull FileAnnotation annotation) {
-    return new GithubOpenCommitInBrowserFromAnnotateAction(annotation);
+    return new GithubOpenInBrowserFromAnnotationActionGroup(annotation);
   }
-
 }

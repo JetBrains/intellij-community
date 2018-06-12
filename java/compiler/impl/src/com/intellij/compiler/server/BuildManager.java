@@ -139,9 +139,11 @@ public class BuildManager implements Disposable {
   private final Map<String, RequestFuture> myBuildsInProgress = Collections.synchronizedMap(new HashMap<>());
   private final Map<String, Future<Pair<RequestFuture<PreloadedProcessMessageHandler>, OSProcessHandler>>> myPreloadedBuilds = Collections.synchronizedMap(new HashMap<>());
   private final BuildProcessClasspathManager myClasspathManager = new BuildProcessClasspathManager();
-  private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager requestProcessor pool");
+  private final ExecutorService myRequestsProcessor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "BuildManager RequestProcessor Pool");
   private final List<VFileEvent> myUnprocessedEvents = new ArrayList<>();
-  private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager auto-make trigger");
+  private final ExecutorService myAutomakeTrigger = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "BuildManager Auto-Make Trigger");
   private final Map<String, ProjectData> myProjectDataMap = Collections.synchronizedMap(new HashMap<String, ProjectData>());
   private volatile int myFileChangeCounter;
 
@@ -154,6 +156,11 @@ public class BuildManager implements Disposable {
     @Override
     protected void runTask() {
       runAutoMake();
+    }
+
+    @Override
+    protected boolean shouldPostpone() {
+      return shouldPostponeAutomake();
     }
   };
 
@@ -314,11 +321,13 @@ public class BuildManager implements Disposable {
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        final Document document = e.getDocument();
-        if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
-          final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
-          if (file != null && file.isInLocalFileSystem()) {
-            scheduleProjectSave();
+        if (Registry.is("compiler.document.save.enabled", true)) {
+          final Document document = e.getDocument();
+          if (FileDocumentManager.getInstance().isDocumentUnsaved(document)) {
+            final VirtualFile file = FileDocumentManager.getInstance().getFile(document);
+            if (file != null && file.isInLocalFileSystem()) {
+              scheduleProjectSave();
+            }
           }
         }
       }
@@ -527,8 +536,7 @@ public class BuildManager implements Disposable {
     final List<TargetTypeBuildScope> scopes = CmdlineProtoUtil.createAllModulesScopes(false);
     final AutoMakeMessageHandler handler = new AutoMakeMessageHandler(project);
     final TaskFuture future = scheduleBuild(
-      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(),
-      handler
+      project, false, true, false, scopes, Collections.emptyList(), Collections.emptyMap(), handler
     );
     if (future != null) {
       myAutomakeFutures.put(future, project);
@@ -543,7 +551,7 @@ public class BuildManager implements Disposable {
       }
     }
   }
-
+  
   private static boolean canStartAutoMake(@NotNull Project project) {
     if (project.isDisposed()) {
       return false;
@@ -553,6 +561,18 @@ public class BuildManager implements Disposable {
       return false;
     }
     return config.allowAutoMakeWhileRunningApplication() || !hasRunningProcess(project);
+  }
+
+  private static boolean shouldPostponeAutomake() {
+    // Heuristics for postpone-decision:
+    // 1. There are unsaved documents OR
+    // 2. The IDE is not idle: the last activity happened less than 3 seconds ago (registry-configurable)
+    if (FileDocumentManager.getInstance().getUnsavedDocuments().length > 0) {
+      return true;
+    }
+    final long threshold = (long)Registry.intValue("compiler.automake.postpone.when.idle.less.than", 3000); // todo: UI option instead of registry?
+    final long idleSinceLastActivity = ApplicationManager.getApplication().getIdleTime();
+    return idleSinceLastActivity < threshold;
   }
 
   @Nullable
@@ -909,7 +929,7 @@ public class BuildManager implements Disposable {
   private ProjectData getProjectData(String projectPath) {
     synchronized (myProjectDataMap) {
       return myProjectDataMap.computeIfAbsent(projectPath, k -> new ProjectData(
-        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager pool")));
+        SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildManager Pool")));
     }
   }
 
@@ -1426,13 +1446,17 @@ public class BuildManager implements Disposable {
       myAlarm.cancelAllRequests();
     }
 
+    protected boolean shouldPostpone() {
+      return false;
+    }
+
     protected abstract int getDelay();
 
     protected abstract void runTask();
 
     @Override
     public final void run() {
-      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFileChangeCounter <= 0 && !myInProgress.getAndSet(true)) {
+      if (!HeavyProcessLatch.INSTANCE.isRunning() && myFileChangeCounter <= 0 && !shouldPostpone() && !myInProgress.getAndSet(true)) {
         try {
           ApplicationManager.getApplication().executeOnPooledThread(myTaskRunnable);
         }

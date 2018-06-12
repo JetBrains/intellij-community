@@ -23,4 +23,10 @@ import groovy.transform.CompileStatic
 @CompileStatic
 abstract class BuildMessageLogger {
   abstract void processMessage(LogMessage message)
+
+  /**
+   * Called for a logger of a forked task when the task is completed (i.e. {@link #processMessage} method won't be called anymore.
+   */
+  void dispose() {
+  }
 }

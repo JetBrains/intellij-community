@@ -6,7 +6,6 @@ import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.compiler.impl.ExitStatus;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.ide.highlighter.ModuleFileType;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.compiler.*;
@@ -24,7 +23,10 @@ import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
-import com.intellij.testFramework.*;
+import com.intellij.testFramework.ModuleTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.VfsTestUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.TestFileSystemBuilder;
 import com.intellij.util.ui.UIUtil;
@@ -108,14 +110,11 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     catch (IOException e) {
       throw new RuntimeException(e);
     }
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
-        assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
-        virtualDir.refresh(false, true);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      VirtualFile virtualDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(target);
+      assertNotNull(target.getAbsolutePath() + " not found", virtualDir);
+      virtualDir.refresh(false, true);
+    });
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
@@ -123,20 +122,17 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot, final @Nullable VirtualFile testRoot) {
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull final Result<Module> result) {
-        final Module module = createModule(moduleName);
-        if (sourceRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
-        }
-        if (testRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
-        }
-        ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
-        result.setResult(module);
+    return WriteAction.computeAndWait(() -> {
+      final Module module = createModule(moduleName);
+      if (sourceRoot != null) {
+        PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
       }
-    }.execute().getResultObject();
+      if (testRoot != null) {
+        PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
+      }
+      ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
+      return module;
+    });
   }
 
   protected VirtualFile createFile(final String path) {
@@ -290,17 +286,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected void deleteFile(final VirtualFile file) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        try {
-          file.delete(this);
-        }
-        catch (IOException e) {
-          throw new AssertionError(e);
-        }
-      }
-    }.execute();
+    try {
+      WriteAction.runAndWait(() -> file.delete(this));
+    }
+    catch (IOException e) {
+      throw new AssertionError(e);
+    }
   }
 
   @Override
@@ -316,16 +307,13 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
     //todo[nik] reuse code from PlatformTestCase
     final VirtualFile baseDir = getOrCreateProjectBaseDir();
     final File moduleFile = new File(baseDir.getPath().replace('/', File.separatorChar), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
-    PlatformTestCase.myFilesToDelete.add(moduleFile);
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
-        Module module = ModuleManager.getInstance(myProject)
-          .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
-        module.getModuleFile();
-        result.setResult(module);
-      }
-    }.execute().getResultObject();
+    myFilesToDelete.add(moduleFile);
+    return WriteAction.computeAndWait(() -> {
+      Module module = ModuleManager.getInstance(myProject)
+                                   .newModule(FileUtil.toSystemIndependentName(moduleFile.getAbsolutePath()), getModuleType().getId());
+      module.getModuleFile();
+      return module;
+    });
   }
 
   protected CompilationLog buildAllModules() {

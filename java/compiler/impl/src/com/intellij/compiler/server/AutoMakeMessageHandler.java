@@ -1,23 +1,11 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server;
 
 import com.intellij.compiler.CompilerMessageImpl;
 import com.intellij.compiler.ProblemsView;
+import com.intellij.compiler.impl.CompileDriver;
 import com.intellij.notification.Notification;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
@@ -28,7 +16,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.CmdlineRemoteProto;
 import org.jetbrains.jps.api.GlobalOptions;
 
@@ -40,7 +27,7 @@ import java.util.UUID;
 * @author Eugene Zhuravlev
 */
 class AutoMakeMessageHandler extends DefaultMessageHandler {
-  private static final Key<Notification> LAST_AUTO_MAKE_NOFITICATION = Key.create("LAST_AUTO_MAKE_NOFITICATION");
+  private static final Key<Notification> LAST_AUTO_MAKE_NOTIFICATION = Key.create("LAST_AUTO_MAKE_NOTIFICATION");
   private CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.Status myBuildStatus;
   private final Project myProject;
   private final WolfTheProblemSolver myWolf;
@@ -124,34 +111,22 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       }
     }
     else {
-      final CompilerMessageCategory category = convertToCategory(kind);
+      final CompilerMessageCategory category = CompileDriver.convertToCategory(kind, null);
       if (category != null) { // only process supported kinds of messages
         final String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
         final String url = sourceFilePath != null ? VirtualFileManager.constructUrl(LocalFileSystem.PROTOCOL, FileUtil.toSystemIndependentName(sourceFilePath)) : null;
         final long line = message.hasLine() ? message.getLine() : -1;
         final long column = message.hasColumn() ? message.getColumn() : -1;
         final CompilerMessage msg = myContext.createAndAddMessage(category, message.getText(), url, (int)line, (int)column, null);
-        if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
-          if (kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR) {
-            informWolf(myProject, message);
+        if (category == CompilerMessageCategory.ERROR || kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.JPS_INFO) {
+          if (category == CompilerMessageCategory.ERROR) {
+            ReadAction.run(() -> informWolf(myProject, message));
           }
           if (msg != null) {
             ProblemsView.SERVICE.getInstance(myProject).addMessage(msg, sessionId);
           }
         }
       }
-    }
-  }
-
-  @Nullable
-  private static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind) {
-    switch(kind) {
-      case ERROR: return CompilerMessageCategory.ERROR;
-      case WARNING: return CompilerMessageCategory.WARNING;
-      case INFO: return CompilerMessageCategory.INFORMATION;
-      case JPS_INFO: return CompilerMessageCategory.INFORMATION;
-      case OTHER: return CompilerMessageCategory.INFORMATION;
-      default: return null;
     }
   }
 
@@ -191,13 +166,13 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
       if (!myProject.isDisposed()) {
         notification.notify(myProject);
       }
-      myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, notification);
-    } 
+      myProject.putUserData(LAST_AUTO_MAKE_NOTIFICATION, notification);
+    }
     else {
-      Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOFITICATION);
+      Notification notification = myProject.getUserData(LAST_AUTO_MAKE_NOTIFICATION);
       if (notification != null) {
         notification.expire();
-        myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, null);
+        myProject.putUserData(LAST_AUTO_MAKE_NOTIFICATION, null);
       }
     }
     if (!myProject.isDisposed()) {

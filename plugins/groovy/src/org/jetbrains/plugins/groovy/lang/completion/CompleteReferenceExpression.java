@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.CompletionParameters;
@@ -23,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyLanguage;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
@@ -54,6 +53,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.SubstitutorComputer;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.resolve.ReferencesKt.resolvePackageFqn;
 import static org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint.RESOLVE_CONTEXT;
 
 /**
@@ -284,8 +284,13 @@ public class CompleteReferenceExpression {
     final ResolveState state = ResolveState.initial();
     if (qualifierType == null || PsiType.VOID.equals(qualifierType)) {
       if (qualifier instanceof GrReferenceExpression) {
+        PsiPackage aPackage = resolvePackageFqn((GrReferenceElement<?>)qualifier);
+        if (aPackage != null) {
+          aPackage.processDeclarations(myProcessor, state, null, myRefExpr);
+          return;
+        }
         PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
-        if (resolved instanceof PsiPackage || resolved instanceof PsiVariable) {
+        if (resolved instanceof PsiVariable) {
           resolved.processDeclarations(myProcessor, state, null, myRefExpr);
           return;
         }

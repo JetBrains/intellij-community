@@ -27,6 +27,8 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.Url
+import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
@@ -34,22 +36,17 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import org.apache.http.client.utils.URIBuilder
+import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.nio.charset.Charset
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
 import kotlin.collections.set
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
- *
- * @author mike
- * @since Oct 31, 2002
  */
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
@@ -61,11 +58,14 @@ object UpdateChecker {
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
-  private val ourAdditionalRequestOptions = hashMapOf<String, String>()
+  private val ourAdditionalRequestOptions = THashMap<String, String>()
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
-  /** A special property for making users suffer by excluding some plugins from a normal update process. Better avoid. */
+  /**
+   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
+   */
   @Suppress("MemberVisibilityCanBePrivate")
   val excludedFromUpdateCheckPlugins = hashSetOf<String>()
 
@@ -137,7 +137,7 @@ object UpdateChecker {
     val externalUpdates: Collection<ExternalUpdate>?
     try {
       updatedPlugins = checkPluginsUpdate(updateSettings, indicator, incompatiblePlugins, buildNumber)
-      externalUpdates = updateExternal(manualCheck, updateSettings, indicator)
+      externalUpdates = checkExternalUpdates(manualCheck, updateSettings, indicator)
     }
     catch (e: IOException) {
       showErrorMessage(manualCheck, IdeBundle.message("updates.error.connection.failed", e.message))
@@ -156,24 +156,22 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (!settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
     val updateInfo: UpdatesInfo?
     try {
-      val uriBuilder = URIBuilder(updateUrl)
-      if (URLUtil.FILE_PROTOCOL != uriBuilder.scheme) {
-        prepareUpdateCheckArgs(uriBuilder)
+      var updateUrl = Urls.newFromEncoded(updateUrl)
+      if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
+        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
       }
-      val updateUrl = uriBuilder.build().toString()
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
       updateInfo = HttpRequests.request(updateUrl)
           .forceHttps(settings.canUseSecureConnection())
           .connect {
             try {
-              UpdatesInfo(loadElement(it.reader))
+              if (settings.isPlatformUpdateEnabled)
+                UpdatesInfo(loadElement(it.reader))
+              else
+                null
             }
             catch (e: JDOMException) {
               // corrupted content, don't bother telling user
@@ -203,7 +201,6 @@ object UpdateChecker {
     return strategy.checkForUpdates()
   }
 
-  @JvmStatic
   private fun checkPluginsUpdate(updateSettings: UpdateSettings,
                                  indicator: ProgressIndicator?,
                                  incompatiblePlugins: MutableCollection<IdeaPluginDescriptor>?,
@@ -211,12 +208,10 @@ object UpdateChecker {
     val updateable = collectUpdateablePlugins()
     if (updateable.isEmpty()) return null
 
-    // check custom repositories and the main one for updates
     val toUpdate = ContainerUtil.newTroveMap<PluginId, PluginDownloader>()
 
     val hosts = RepositoryHelper.getPluginHosts()
     val state = InstalledPluginsState.getInstance()
-
     outer@ for (host in hosts) {
       try {
         val forceHttps = host == null && updateSettings.canUseSecureConnection()
@@ -277,17 +272,23 @@ object UpdateChecker {
     if (!excludedFromUpdateCheckPlugins.isEmpty()) {
       val required = ProjectManager.getInstance().openProjects
         .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
-        .map { it.pluginId }
+        .map { PluginId.getId(it.pluginId) }
         .toSet()
-      excludedFromUpdateCheckPlugins
-        .filter { it !in required }
-        .forEach { updateable.remove(PluginId.getId(it)) }
+      excludedFromUpdateCheckPlugins.forEach {
+        val excluded = PluginId.getId(it)
+        if (excluded !in required) {
+          val plugin = updateable[excluded]
+          if (plugin != null && plugin.isBundled) {
+            updateable.remove(excluded)
+          }
+        }
+      }
     }
 
     return updateable
   }
 
-  private fun updateExternal(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
+  private fun checkExternalUpdates(manualCheck: Boolean, updateSettings: UpdateSettings, indicator: ProgressIndicator?) : Collection<ExternalUpdate> {
     val result = arrayListOf<ExternalUpdate>()
     val manager = ExternalComponentManager.getInstance()
     indicator?.text = IdeBundle.message("updates.external.progress")
@@ -344,7 +345,7 @@ object UpdateChecker {
         descriptor = oldDownloader.descriptor
       }
 
-      if (descriptor != null && PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
+      if (PluginManagerCore.isCompatible(descriptor, downloader.buildNumber) && !state.wasUpdated(descriptor.pluginId)) {
         toUpdate[PluginId.getId(pluginId)] = downloader
       }
     }
@@ -352,8 +353,8 @@ object UpdateChecker {
     // collect plugins which were not updated and would be incompatible with new version
     if (incompatiblePlugins != null && installedPlugin != null && installedPlugin.isEnabled &&
         !toUpdate.containsKey(installedPlugin.pluginId) &&
-        PluginManagerCore.isIncompatible(installedPlugin, downloader.buildNumber)) {
-      incompatiblePlugins.add(installedPlugin)
+        !PluginManagerCore.isCompatible(installedPlugin, downloader.buildNumber)) {
+      incompatiblePlugins += installedPlugin
     }
   }
 
@@ -454,17 +455,17 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
+  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (packageManagerName != null) {
+      addUpdateRequestParameter("manager", packageManagerName)
+    }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }
-
-    for ((name, value) in ourAdditionalRequestOptions) {
-      uriBuilder.addParameter(name, if (StringUtil.isEmpty(value)) null else value)
-    }
+    return url.addParameters(ourAdditionalRequestOptions)
   }
 
   /* Android Studio: replaced by custom implementation below

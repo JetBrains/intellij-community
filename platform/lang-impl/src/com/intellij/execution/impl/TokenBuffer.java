@@ -54,7 +54,7 @@ class TokenBuffer {
       }
       int crIndex = text.indexOf('\r', start);
       if (crIndex == -1 || crIndex == text.length() - 1) {
-        TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start, text.length()), info);
+        TokenInfo tokenInfo = new TokenInfo(contentType, text.substring(start), info);
         tokens.addLast(tokenInfo);
         size += tokenInfo.length();
         break;

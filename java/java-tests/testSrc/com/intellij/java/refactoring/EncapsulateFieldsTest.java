@@ -61,6 +61,10 @@ public class EncapsulateFieldsTest extends MultiFileTestCase {
     doTest("i", "B.A", null);
   }
 
+  public void testInaccessibleSuperMethod() {
+    doTest("foo", "b.B", null);
+  }
+
   public void testHideOuterclassMethod() {
     doTest("i", "A.B", "There is already a method <b><code>A.getI()</code></b> which would be hidden by generated getter");
   }

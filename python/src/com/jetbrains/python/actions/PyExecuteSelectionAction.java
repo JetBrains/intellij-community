@@ -24,6 +24,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;

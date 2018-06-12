@@ -328,6 +328,9 @@ public class JavaPullUpHelper implements PullUpHelper<MemberInfo> {
       if (qualifierExpression instanceof PsiReferenceExpression && ((PsiReferenceExpression)qualifierExpression).resolve() == mySourceClass) {
         ((PsiReferenceExpression)qualifierExpression).bindToElement(myTargetSuperClass);
       }
+      else if (qualifierExpression == null && myTargetSuperClass.isInterface()) {
+        ((PsiReferenceExpression)element).setQualifierExpression(JavaPsiFacade.getElementFactory(myProject).createReferenceExpression(myTargetSuperClass));
+      }
     }
   }
 

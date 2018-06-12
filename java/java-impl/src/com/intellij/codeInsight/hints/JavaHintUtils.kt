@@ -24,17 +24,26 @@ object JavaInlayHintsProvider {
 
       val params = method.parameterList.parameters
       val arguments = argumentList.expressions
-      
-      return  params.mapIndexedNotNull { i, parameter -> 
-        val paramName = parameter.name ?: return@mapIndexedNotNull null
-        val varargHint = parameter.type is PsiEllipsisType && params.size > 1 && 
-                         (arguments.size == params.size - 1 || params.size == 2 && arguments.isEmpty())
-        val paramToShow = (if (varargHint) ", " else "") + paramName
-        val offset = if (i < arguments.size) inlayOffset(arguments[i]) 
-                        else if (varargHint && i == arguments.size) callExpression.textRange.endOffset - 1
-                        else argumentList.textOffset + 1
-        InlayInfo(paramToShow, offset, false, params.size == 1, varargHint)
-      }.toSet()
+      val limit = JavaMethodCallElement.getCompletionHintsLimit()
+      val trailingOffset = argumentList.textRange.endOffset - 1
+
+      val infos = ArrayList<InlayInfo>()
+      (if (arguments.isEmpty()) listOf(trailingOffset) else arguments.map { inlayOffset(it) }).forEachIndexed { i, offset ->
+        if (i < params.size) {
+          params[i].name?.let {
+            infos.add(InlayInfo(it, offset, false, params.size == 1, false))
+          }
+        }
+      }
+      if (method.isVarArgs && (arguments.isEmpty() && params.size == 2 || !arguments.isEmpty() && arguments.size == params.size - 1)) {
+        params[params.size - 1].name?.let {
+          infos.add(InlayInfo(", $it", trailingOffset, false, false, true))
+        }
+      }
+      else if (limit == 1 && arguments.isEmpty() && params.size > 1 || limit <= arguments.size && arguments.size < params.size) {
+        infos.add(InlayInfo("...more", trailingOffset, false, false, true))
+      }
+      return infos.toSet()
     }
     
     if (!EditorSettingsExternalizable.getInstance().isShowParameterNameHints) return emptySet()

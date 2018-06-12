@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
@@ -23,7 +9,10 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
-import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.editor.markup.HighlighterLayer;
+import com.intellij.openapi.editor.markup.HighlighterTargetArea;
+import com.intellij.openapi.editor.markup.MarkupEditorFilter;
+import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
@@ -57,7 +46,7 @@ class LineMarkersUtil {
   static void setLineMarkersToEditor(@NotNull Project project,
                                      @NotNull Document document,
                                      @NotNull Segment bounds,
-                                     @NotNull Collection<LineMarkerInfo> markers,
+                                     @NotNull Collection<LineMarkerInfo<PsiElement>> markers,
                                      int group) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -94,38 +83,54 @@ class LineMarkersUtil {
     }
   }
 
-  private static final Key<LineMarkerInfo> LINE_MARKER_INFO = Key.create("LINE_MARKER_INFO");
   @NotNull
   private static RangeHighlighter createOrReuseLineMarker(@NotNull LineMarkerInfo info,
-                                                          @NotNull MarkupModel markupModel,
+                                                          @NotNull MarkupModelEx markupModel,
                                                           @Nullable HighlightersRecycler toReuse) {
+    LineMarkerInfo.LineMarkerGutterIconRenderer newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
+
     RangeHighlighter highlighter = toReuse == null ? null : toReuse.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX);
+    boolean newHighlighter = false;
     if (highlighter == null) {
-      highlighter = markupModel.addRangeHighlighter(info.startOffset, info.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.LINES_IN_RANGE);
+      newHighlighter = true;
+      highlighter = markupModel.addRangeHighlighterAndChangeAttributes(
+        info.startOffset, info.endOffset,
+        HighlighterLayer.ADDITIONAL_SYNTAX, null, HighlighterTargetArea.LINES_IN_RANGE, false,
+        markerEx -> {
+          markerEx.setGutterIconRenderer(newRenderer);
+          markerEx.setLineSeparatorColor(info.separatorColor);
+          markerEx.setLineSeparatorPlacement(info.separatorPlacement);
+
+          markerEx.putUserData(LINE_MARKER_INFO, info);
+        });
+
       MarkupEditorFilter editorFilter = info.getEditorFilter();
       if (editorFilter != MarkupEditorFilter.EMPTY) {
         highlighter.setEditorFilter(editorFilter);
       }
     }
-    highlighter.putUserData(LINE_MARKER_INFO, info);
-    LineMarkerInfo.LineMarkerGutterIconRenderer newRenderer = (LineMarkerInfo.LineMarkerGutterIconRenderer)info.createGutterRenderer();
-    LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = highlighter.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)highlighter.getGutterIconRenderer() : null;
-    boolean rendererChanged = oldRenderer == null || newRenderer == null || !newRenderer.equals(oldRenderer);
-    boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), info.separatorColor);
-    boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
 
-    if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
-      ((MarkupModelEx)markupModel).changeAttributesInBatch((RangeHighlighterEx)highlighter, markerEx -> {
-        if (rendererChanged) {
-          markerEx.setGutterIconRenderer(newRenderer);
-        }
-        if (lineSeparatorColorChanged) {
-          markerEx.setLineSeparatorColor(info.separatorColor);
-        }
-        if (lineSeparatorPlacementChanged) {
-          markerEx.setLineSeparatorPlacement(info.separatorPlacement);
-        }
-      });
+    if (!newHighlighter) {
+      highlighter.putUserData(LINE_MARKER_INFO, info);
+
+      LineMarkerInfo.LineMarkerGutterIconRenderer oldRenderer = highlighter.getGutterIconRenderer() instanceof LineMarkerInfo.LineMarkerGutterIconRenderer ? (LineMarkerInfo.LineMarkerGutterIconRenderer)highlighter.getGutterIconRenderer() : null;
+      boolean rendererChanged = oldRenderer == null || newRenderer == null || !newRenderer.equals(oldRenderer);
+      boolean lineSeparatorColorChanged = !Comparing.equal(highlighter.getLineSeparatorColor(), info.separatorColor);
+      boolean lineSeparatorPlacementChanged = !Comparing.equal(highlighter.getLineSeparatorPlacement(), info.separatorPlacement);
+
+      if (rendererChanged || lineSeparatorColorChanged || lineSeparatorPlacementChanged) {
+        markupModel.changeAttributesInBatch((RangeHighlighterEx)highlighter, markerEx -> {
+          if (rendererChanged) {
+            markerEx.setGutterIconRenderer(newRenderer);
+          }
+          if (lineSeparatorColorChanged) {
+            markerEx.setLineSeparatorColor(info.separatorColor);
+          }
+          if (lineSeparatorPlacementChanged) {
+            markerEx.setLineSeparatorPlacement(info.separatorPlacement);
+          }
+        });
+      }
     }
     info.highlighter = highlighter;
     return highlighter;
@@ -151,4 +156,6 @@ class LineMarkersUtil {
   private static LineMarkerInfo getLineMarkerInfo(@NotNull RangeHighlighter highlighter) {
     return highlighter.getUserData(LINE_MARKER_INFO);
   }
+
+  private static final Key<LineMarkerInfo> LINE_MARKER_INFO = Key.create("LINE_MARKER_INFO");
 }

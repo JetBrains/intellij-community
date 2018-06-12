@@ -17,7 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.AppTopics;
 import com.intellij.CommonBundle;
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
@@ -31,6 +31,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
+import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorFactoryImpl;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.extensions.Extensions;
@@ -113,7 +114,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
       Project project = currentCommand == null ? null : CommandProcessor.getInstance().getCurrentCommandProject();
       if (project == null)
         project = ProjectUtil.guessProjectForFile(getFile(document));
-      String lineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
+      String lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
       document.putUserData(LINE_SEPARATOR_KEY, lineSeparator);
 
       // avoid documents piling up during batch processing
@@ -230,10 +231,13 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
     return false;
   }
 
-  private static Document createDocument(final CharSequence text, VirtualFile file) {
+  @NotNull
+  private static Document createDocument(@NotNull CharSequence text, @NotNull VirtualFile file) {
     boolean acceptSlashR = file instanceof LightVirtualFile && StringUtil.indexOf(text, '\r') >= 0;
     boolean freeThreaded = Boolean.TRUE.equals(file.getUserData(AbstractFileViewProvider.FREE_THREADED));
-    return ((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
+    DocumentImpl document = (DocumentImpl)((EditorFactoryImpl)EditorFactory.getInstance()).createDocument(text, acceptSlashR, freeThreaded);
+    document.documentCreatedFrom(file);
+    return document;
   }
 
   @Override
@@ -493,10 +497,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Virt
   public String getLineSeparator(@Nullable VirtualFile file, @Nullable Project project) {
     String lineSeparator = file == null ? null : LoadTextUtil.getDetectedLineSeparator(file);
     if (lineSeparator == null) {
-      CodeStyleFacade settingsManager = project == null
-                                        ? CodeStyleFacade.getInstance()
-                                        : CodeStyleFacade.getInstance(project);
-      lineSeparator = settingsManager.getLineSeparator();
+      lineSeparator = CodeStyle.getProjectOrDefaultSettings(project).getLineSeparator();
     }
     return lineSeparator;
   }

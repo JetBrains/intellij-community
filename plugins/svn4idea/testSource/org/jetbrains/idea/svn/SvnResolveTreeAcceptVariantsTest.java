@@ -73,7 +73,7 @@ public class SvnResolveTreeAcceptVariantsTest extends Svn17TestCase {
     myTraceClient = true;
   }
 
-  private void clearWc(final boolean withSvn) {
+  private void clearWc(final boolean withSvn) throws Exception {
     myWorkingCopyDir.refresh(false, true);
     /*VfsUtil.processFilesRecursively(myWorkingCopyDir, new Processor<VirtualFile>() {
       @Override

@@ -364,6 +364,14 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
                 .withInsertHandler(ParenthesesInsertHandler.NO_PARAMETERS));
     }
 
+    if (element instanceof PsiField && ((PsiField)element).hasModifierProperty(PsiModifier.STATIC) &&
+        ourClassParent.equals(PsiUtil.resolveClassInClassTypeOnly(((PsiField)element).getType()))) {
+      set.add(LookupElementBuilder.create("getInstance")
+                                  .withIcon(PlatformIcons.METHOD_ICON)
+                                  .withTailText("()")
+                                  .withInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS));
+
+    }
     addLookupItems(set, null, matcher, element.getProject(), getUnresolvedReferences(ourClassParent, true));
 
     addLookupItems(set, null, matcher, element.getProject(), getPropertiesHandlersNames(

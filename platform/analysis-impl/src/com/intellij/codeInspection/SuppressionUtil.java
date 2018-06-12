@@ -20,16 +20,14 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiParserFacade;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,8 +97,7 @@ public class SuppressionUtil extends SuppressionUtilCore {
   public static boolean isSuppressedInStatement(@NotNull final PsiElement place,
                                                 @NotNull final String toolId,
                                                 @NotNull final Class<? extends PsiElement> statementClass) {
-    return ApplicationManager.getApplication().runReadAction(
-      (NullableComputable<PsiElement>)() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
+    return ReadAction.compute(() -> getStatementToolSuppressedIn(place, toolId, statementClass)) != null;
   }
 
   @NotNull

@@ -83,8 +83,8 @@ public class JUnit4TestListener extends RunListener {
     }
     finally {
       for (int i = myStartedSuites.size() - 1; i>= 0; i--) {
-        Object parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
-        myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName((String)parent)) + "\']");
+        String parent = JUnit4ReflectionUtil.getClassName((Description)myStartedSuites.get(i));
+        myPrintStream.println("\n##teamcity[testSuiteFinished name=\'" + escapeName(getShortName(parent)) + "\']");
       }
       myStartedSuites.clear();
     }

@@ -25,7 +25,7 @@ import __builtin__ as builtins
 import ConfigParser as configparser
 # import copy_reg as copyreg
 # import gdbm as dbm_gnu
-# import dummy_thread as _dummy_thread
+import dummy_thread as _dummy_thread
 import cookielib as http_cookiejar
 import Cookie as http_cookies
 import htmlentitydefs as html_entities
@@ -62,5 +62,5 @@ import six.moves.urllib.parse as urllib_parse
 import six.moves.urllib.error as urllib_error
 import six.moves.urllib as urllib
 import robotparser as urllib_robotparser
-# import xmlrpclib as xmlrpc_client
+import xmlrpclib as xmlrpc_client
 # import SimpleXMLRPCServer as xmlrpc_server

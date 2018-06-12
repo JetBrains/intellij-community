@@ -18,7 +18,11 @@ package com.intellij.java.codeInsight.daemon;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.redundantCast.RedundantCastInspection;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
@@ -83,7 +87,25 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     finally {
       myFixture.disableInspections(inspection);
     }
+  }
 
+  public void testReferenceThroughInheritance() {
+    myFixture.addClass("package test;\n" +
+                       "public class A {\n" +
+                       "  public static class B {}\n" +
+                       "}");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testReferenceThroughInheritance1() {
+    myFixture.addClass("package me;\n" +
+                       "import me.Serializer.Format;\n" +
+                       "public interface Serializer<F extends Format> {\n" +
+                       "    public static interface Format {}\n" +
+                       "}\n");
+    myFixture.configureByFile(getTestName(false) + ".java");
+    myFixture.checkHighlighting();
   }
 
   public void testUsageOfProtectedAnnotationOutsideAPackage() {
@@ -152,6 +174,23 @@ public class LightAdvHighlightingFixtureTest extends LightCodeInsightFixtureTest
     myFixture.addClass("package c.d; public class a {}");
     myFixture.configureByFile(getTestName(false) + ".java");
     myFixture.checkHighlighting();
+  }
+
+  public void testTypeAnnotations() {
+    myFixture.addClass("import java.lang.annotation.ElementType;\n" +
+                     "import java.lang.annotation.Target;\n" +
+                     "@Target({ElementType.TYPE_USE})\n" +
+                     "@interface Nullable {}\n");
+    myFixture.addClass("class Middle<R> extends Base<@Nullable R, String>{}");
+    myFixture.addClass("class Child<R> extends Middle<R>{}");
+    PsiClass baseClass = myFixture.addClass("class Base<R, C> {}");
+    PsiClass fooClass = myFixture.addClass("class Foo {\n" +
+                                           "  Child<String> field;\n" +
+                                           "}");
+    PsiField fooField = fooClass.findFieldByName("field", false);
+    PsiType substituted = TypeConversionUtil.getSuperClassSubstitutor(baseClass, (PsiClassType)fooField.getType())
+                                            .substitute(baseClass.getTypeParameters()[0]);
+    assertEquals(1, substituted.getAnnotations().length);
   }
 
   @Override

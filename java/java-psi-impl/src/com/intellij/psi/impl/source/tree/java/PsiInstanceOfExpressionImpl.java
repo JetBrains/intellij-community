@@ -66,7 +66,7 @@ public class PsiInstanceOfExpressionImpl extends ExpressionPsiElement implements
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == TYPE) {

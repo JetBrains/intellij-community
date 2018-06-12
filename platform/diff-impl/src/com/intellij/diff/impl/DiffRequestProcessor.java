@@ -92,14 +92,14 @@ public abstract class DiffRequestProcessor implements Disposable {
   @NotNull private final List<DiffTool> myToolOrder;
   @Nullable private final DiffTool myForcedDiffTool;
 
-  @NotNull private final OpenInEditorAction myOpenInEditorAction;
   @NotNull private final DefaultActionGroup myToolbarGroup;
   @NotNull private final DefaultActionGroup myPopupActionGroup;
 
   @NotNull private final JPanel myPanel;
   @NotNull private final MyPanel myMainPanel;
-  @NotNull private final Wrapper myContentPanel;
+  @NotNull protected final Wrapper myContentPanel;
   @NotNull private final ActionToolbar myToolbar;
+  @NotNull protected final Wrapper myToolbarWrapper;
   @NotNull private final Wrapper myToolbarStatusPanel;
   @NotNull private final MyProgressBar myProgressBar;
 
@@ -139,11 +139,12 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, myToolbarGroup, true);
     myToolbar.setTargetComponent(myMainPanel);
+    myToolbarWrapper = new Wrapper(myToolbar.getComponent());
 
     myPanel = JBUI.Panels.simplePanel(myMainPanel);
 
     JPanel statusPanel = JBUI.Panels.simplePanel(myToolbarStatusPanel).addToLeft(myProgressBar);
-    JPanel topPanel = JBUI.Panels.simplePanel(myToolbar.getComponent()).addToRight(statusPanel);
+    JPanel topPanel = JBUI.Panels.simplePanel(myToolbarWrapper).addToRight(statusPanel);
 
     Splitter bottomContentSplitter = new JBSplitter(true, "DiffRequestProcessor.BottomComponentSplitter", 0.8f);
     bottomContentSplitter.setFirstComponent(myContentPanel);
@@ -160,8 +161,6 @@ public abstract class DiffRequestProcessor implements Disposable {
 
     myState = EmptyState.INSTANCE;
     myContentPanel.setContent(DiffUtil.createMessagePanel(((LoadingDiffRequest)myActiveRequest).getMessage()));
-
-    myOpenInEditorAction = new OpenInEditorAction(() -> onAfterNavigate());
   }
 
   //
@@ -354,6 +353,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     return ContainerUtil.list(
       new MyPrevDifferenceAction(),
       new MyNextDifferenceAction(),
+      new MyOpenInEditorAction(),
+      Separator.getInstance(),
       new MyPrevChangeAction(),
       new MyNextChangeAction()
     );
@@ -368,14 +369,13 @@ public abstract class DiffRequestProcessor implements Disposable {
     return window != null && window.isFocused();
   }
 
-  protected boolean isFocused() {
-    return DiffUtil.isFocusedComponent(myProject, myContentPanel) ||
-           DiffUtil.isFocusedComponent(myProject, myToolbar.getComponent());
+  private boolean isFocusedInWindow() {
+    return DiffUtil.isFocusedComponentInWindow(myContentPanel) ||
+           DiffUtil.isFocusedComponentInWindow(myToolbar.getComponent());
   }
 
-  private void requestFocusInternal() {
-    JComponent component = getPreferredFocusedComponent();
-    if (component != null) component.requestFocusInWindow();
+  private void requestFocusInWindow() {
+    DiffUtil.requestFocusInWindow(getPreferredFocusedComponent());
   }
 
   @NotNull
@@ -431,7 +431,6 @@ public abstract class DiffRequestProcessor implements Disposable {
     myToolbarGroup.removeAll();
 
     List<AnAction> navigationActions = new ArrayList<>(getNavigationActions());
-    navigationActions.add(myOpenInEditorAction);
     navigationActions.add(new MyChangeDiffToolAction());
     DiffUtil.addActionBlock(myToolbarGroup,
                             navigationActions);
@@ -849,6 +848,13 @@ public abstract class DiffRequestProcessor implements Disposable {
   // Helpers
   //
 
+  protected class MyOpenInEditorAction extends OpenInEditorAction {
+    @Override
+    protected void onAfterEditorOpened() {
+      onAfterNavigate();
+    }
+  }
+
   private class MyPanel extends JBPanelWithEmptyText implements DataProvider {
     public MyPanel() {
       super(new BorderLayout());
@@ -873,7 +879,7 @@ public abstract class DiffRequestProcessor implements Disposable {
       }
 
       if (OpenInEditorAction.KEY.is(dataId)) {
-        return myOpenInEditorAction;
+        return new MyOpenInEditorAction();
       }
       else if (DiffDataKeys.DIFF_REQUEST.is(dataId)) {
         return myActiveRequest;
@@ -979,8 +985,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public boolean isFocused() {
-      return DiffRequestProcessor.this.isFocused();
+    public boolean isFocusedInWindow() {
+      return DiffRequestProcessor.this.isFocusedInWindow();
     }
 
     @Override
@@ -989,8 +995,8 @@ public abstract class DiffRequestProcessor implements Disposable {
     }
 
     @Override
-    public void requestFocus() {
-      DiffRequestProcessor.this.requestFocusInternal();
+    public void requestFocusInWindow() {
+      DiffRequestProcessor.this.requestFocusInWindow();
     }
 
     @Nullable

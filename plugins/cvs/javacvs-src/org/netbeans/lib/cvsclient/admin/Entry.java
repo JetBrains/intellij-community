@@ -64,8 +64,9 @@ public final class Entry implements Cloneable {
 
   public static SyncDateFormat getLastModifiedDateFormatter() {
     if (lastModifiedDateFormatter == null) {
-      lastModifiedDateFormatter = new SyncDateFormat(new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US));
-      lastModifiedDateFormatter.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+      SimpleDateFormat delegate = new SimpleDateFormat(LAST_MODIFIED_DATE_FORMAT_ATR, Locale.US);
+      delegate.setTimeZone(TimeZone.getTimeZone(TIME_ZONE_FORMAT_STR));
+      lastModifiedDateFormatter = new SyncDateFormat(delegate);
     }
     return lastModifiedDateFormatter;
   }

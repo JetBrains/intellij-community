@@ -73,6 +73,7 @@ public class LibraryPackagingElement extends ComplexPackagingElement<LibraryPack
     return library != null ? getKindForLibrary(library) : PackagingElementOutputKind.OTHER;
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new LibraryElementPresentation(myLibraryName, myLevel, myModuleName, findLibrary(context), context);
   }

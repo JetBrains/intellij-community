@@ -62,6 +62,7 @@ public class PyKnownDecoratorUtil {
 
     TYPING_OVERLOAD("typing." + PyNames.OVERLOAD),
     TYPING_RUNTIME("typing.runtime"),
+    TYPING_RUNTIME_EXT("typing_extensions.runtime"),
 
     REPRLIB_RECURSIVE_REPR("reprlib.recursive_repr"),
 
@@ -216,7 +217,12 @@ public class PyKnownDecoratorUtil {
 
   public static boolean hasUnknownOrChangingReturnTypeDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
     final List<KnownDecorator> decorators = getKnownDecorators(decoratable, context);
-    return !allDecoratorsAreKnown(decoratable, decorators) || decorators.contains(UNITTEST_MOCK_PATCH);
+
+    if (!allDecoratorsAreKnown(decoratable, decorators)) {
+      return true;
+    }
+
+    return ContainerUtil.exists(decorators, d -> d == UNITTEST_MOCK_PATCH || d == CONTEXTLIB_CONTEXTMANAGER);
   }
 
   public static boolean hasUnknownOrUpdatingAttributesDecorator(@NotNull PyDecoratable decoratable, @NotNull TypeEvalContext context) {
@@ -236,6 +242,8 @@ public class PyKnownDecoratorUtil {
 
   private static boolean allDecoratorsAreKnown(@NotNull PyDecoratable element, @NotNull List<KnownDecorator> decorators) {
     final PyDecoratorList decoratorList = element.getDecoratorList();
-    return decoratorList == null ? decorators.isEmpty() : decoratorList.getDecorators().length == decorators.size();
+    return decoratorList == null
+           ? decorators.isEmpty()
+           : decoratorList.getDecorators().length == StreamEx.of(decorators).groupingBy(KnownDecorator::getShortName).size();
   }
 }

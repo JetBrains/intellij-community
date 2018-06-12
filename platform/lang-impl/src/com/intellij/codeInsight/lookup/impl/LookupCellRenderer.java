@@ -261,7 +261,7 @@ public class LookupCellRenderer implements ListCellRenderer {
                                 Color foreground,
                                 int allowedWidth,
                                 boolean nonFocusedSelection, FontMetrics fontMetrics) {
-    int style = getStyle(false, presentation.isStrikeout(), false);
+    int style = getStyle(false, presentation.isStrikeout(), false, false);
 
     for (LookupElementPresentation.TextFragment fragment : presentation.getTailFragments()) {
       if (allowedWidth < 0) {
@@ -341,7 +341,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     Font customItemFont = myLookup.getCustomFont(item, bold);
     myNameComponent.setFont(customItemFont != null ? customItemFont : bold ? myBoldFont : myNormalFont);
-    int style = getStyle(bold, presentation.isStrikeout(), presentation.isItemTextUnderlined());
+    int style = getStyle(bold, presentation.isStrikeout(), presentation.isItemTextUnderlined(), presentation.isItemTextItalic());
 
     final FontMetrics metrics = getRealFontMetrics(item, bold);
     final String name = trimLabelText(presentation.getItemText(), allowedWidth, metrics);
@@ -361,13 +361,16 @@ public class LookupCellRenderer implements ListCellRenderer {
   }
 
   @SimpleTextAttributes.StyleAttributeConstant
-  private static int getStyle(boolean bold, boolean strikeout, boolean underlined) {
+  private static int getStyle(boolean bold, boolean strikeout, boolean underlined, boolean italic) {
     int style = bold ? SimpleTextAttributes.STYLE_BOLD : SimpleTextAttributes.STYLE_PLAIN;
     if (strikeout) {
       style |= SimpleTextAttributes.STYLE_STRIKEOUT;
     }
     if (underlined) {
       style |= SimpleTextAttributes.STYLE_UNDERLINE;
+    }
+    if (italic) {
+      style |= SimpleTextAttributes.STYLE_ITALIC;
     }
     return style;
   }

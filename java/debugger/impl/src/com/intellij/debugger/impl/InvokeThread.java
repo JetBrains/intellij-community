@@ -151,10 +151,10 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
           if(e.getCause() instanceof InterruptedException) {
             break;
           }
-          LOG.error(e);
+          reportCommandError(e);
         }
         catch (Throwable e) {
-          LOG.error(e);
+          reportCommandError(e);
         }
       }
     }
@@ -175,6 +175,15 @@ public abstract class InvokeThread<E extends PrioritizedTask> {
       Thread.currentThread().setName(oldThreadName);
     }
 
+  }
+
+  private static void reportCommandError(Throwable e) {
+    try {
+      LOG.error(e);
+    }
+    catch (AssertionError ignored) {
+       //do not destroy commands processing
+    }
   }
 
   protected static InvokeThread currentThread() {

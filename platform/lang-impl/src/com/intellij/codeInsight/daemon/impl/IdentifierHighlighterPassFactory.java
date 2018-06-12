@@ -35,7 +35,7 @@ import org.jetbrains.annotations.TestOnly;
 public class IdentifierHighlighterPassFactory extends AbstractProjectComponent implements TextEditorHighlightingPassFactory {
   private static final int[] AFTER_PASSES = {Pass.UPDATE_ALL};
 
-  private static boolean ourTestingIdentifierHighlighting = false;
+  private static boolean ourTestingIdentifierHighlighting;
   
   public IdentifierHighlighterPassFactory(Project project, TextEditorHighlightingPassRegistrar highlightingPassRegistrar) {
     super(project);

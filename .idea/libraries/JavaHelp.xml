@@ -1,11 +1,12 @@
 <component name="libraryTable">
-  <library name="JavaHelp">
+  <library name="JavaHelp" type="repository">
+    <properties maven-id="javax.help:javahelp:2.0.02" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/jh.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/javax/help/javahelp/2.0.02/javahelp-2.0.02.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/jhsrc.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/javax/help/javahelp/2.0.02/javahelp-2.0.02-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

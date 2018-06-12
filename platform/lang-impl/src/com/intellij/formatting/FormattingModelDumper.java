@@ -36,6 +36,12 @@ public class FormattingModelDumper {
     stream.print(builder.toString());
   }
 
+  public static String dumpFormattingModelToString(final Block block) {
+    StringBuilder builder = new StringBuilder();
+    dumpFormattingModel(block, 0, builder);
+    return builder.toString();
+  }
+
   public static void dumpFormattingModel(final Block block, int indent, final StringBuilder builder) {
     if (indent == 0) {
       builder.append("--- FORMATTING MODEL ---\n");

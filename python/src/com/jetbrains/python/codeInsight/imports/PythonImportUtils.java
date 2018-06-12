@@ -242,7 +242,7 @@ public final class PythonImportUtils {
     // Add modules
     FilenameIndex.processFilesByName(refText + ".py", false, true, item -> {
       ProgressManager.checkCanceled();
-      if (isImportableModule(targetFile, item)) {
+      if (isImportable(targetFile, item)) {
         result.add(item);
       }
       return true;
@@ -251,12 +251,15 @@ public final class PythonImportUtils {
     return result;
   }
 
-  public static boolean isImportableModule(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
+  /**
+   * Checks whether {@param file} representing Python module or package can be imported into {@param file}.
+   */
+  public static boolean isImportable(PsiFile targetFile, @NotNull PsiFileSystemItem file) {
     PsiDirectory parent = (PsiDirectory)file.getParent();
     return parent != null && file != targetFile &&
-           (parent.findFile(PyNames.INIT_DOT_PY) != null ||
-            ImportFromExistingAction.isRoot(parent) ||
-            parent == targetFile.getParent());
+           (ImportFromExistingAction.isRoot(parent) ||
+            parent == targetFile.getParent() ||
+            PyUtil.isPackage(parent, false, null));
   }
 
   private static boolean isIndexableTopLevel(PsiElement symbol) {

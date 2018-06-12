@@ -30,6 +30,8 @@ import java.util.function.Consumer;
 import java.util.function.Function;
 import java.util.function.Predicate;
 
+import static java.lang.Integer.min;
+
 /**
  * @author Rustam Vishnyakov
  */
@@ -86,6 +88,22 @@ public class SemanticEditorPosition {
   public boolean isAtMultiline() {
     if (!myIterator.atEnd()) {
       return CharArrayUtil.containLineBreaks(myChars, myIterator.getStart(), myIterator.getEnd());
+    }
+    return false;
+  }
+
+  /**
+   * Checks if there are line breaks strictly after the given offset till the end of the current element.
+   *
+   * @param offset The offset to search line breaks after.
+   * @return True if there are line breaks after the given offset.
+   */
+  public boolean hasLineBreaksAfter(int offset) {
+    if (!myIterator.atEnd() && offset >= 0) {
+      int offsetAfter = offset + 1;
+      if (offsetAfter < myIterator.getEnd()) {
+        return CharArrayUtil.containLineBreaks(myChars, offsetAfter, myIterator.getEnd());
+      }
     }
     return false;
   }
@@ -176,6 +194,7 @@ public class SemanticEditorPosition {
       }
       if (rightParenthesis.equals(map(myIterator.getTokenType()))) {
         moveBeforeParentheses(leftParenthesis, rightParenthesis);
+        continue;
       }
       else if (leftParenthesis.equals(map(myIterator.getTokenType()))) {
         break; 
@@ -304,7 +323,11 @@ public class SemanticEditorPosition {
 
   @Override
   public String toString() {
-    return myIterator.getTokenType().toString();
+    return myIterator.atEnd() 
+       ? "atEnd"
+       : myIterator.getTokenType().toString() 
+         + "=>" 
+         + getChars().subSequence(getStartOffset(), min(getStartOffset() + 255, getChars().length()));
   }
 
   public SemanticEditorPosition copy() {

@@ -60,12 +60,9 @@ public class DomTableView extends AbstractTableView<DomElement> {
   @Override
   protected void wrapValueSetting(@NotNull final DomElement domElement, final Runnable valueSetter) {
     if (domElement.isValid()) {
-      new WriteCommandAction(getProject(), DomUtil.getFile(domElement)) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
-          valueSetter.run();
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(getProject(), DomUtil.getFile(domElement)).run(() -> {
+        valueSetter.run();
+      });
       fireChanged();
     }
   }

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -64,7 +65,7 @@ public interface Computable <T> {
    */
   @Deprecated
   abstract class NullableCachedComputable<T> implements NullableComputable<T> {
-    private static final Object NULL_VALUE = new Object();
+    private static final Object NULL_VALUE = ObjectUtils.sentinel("NullableCachedComputable.NULL_VALUE");
     private Object myValue;
 
     @Nullable

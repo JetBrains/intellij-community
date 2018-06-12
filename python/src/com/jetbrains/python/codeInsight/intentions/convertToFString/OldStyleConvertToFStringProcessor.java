@@ -18,12 +18,11 @@ package com.jetbrains.python.codeInsight.intentions.convertToFString;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.codeInsight.PySubstitutionChunkReference;
 import com.jetbrains.python.inspections.PyStringFormatParser;
-import com.jetbrains.python.inspections.PyStringFormatParser.SubstitutionChunk;
-import com.jetbrains.python.inspections.PyStringFormatParser.PercentSubstitutionChunk;
 import com.jetbrains.python.inspections.PyStringFormatParser.NewStyleSubstitutionChunk;
+import com.jetbrains.python.inspections.PyStringFormatParser.PercentSubstitutionChunk;
+import com.jetbrains.python.inspections.PyStringFormatParser.SubstitutionChunk;
 import com.jetbrains.python.psi.PyBinaryExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
@@ -52,7 +51,7 @@ public class OldStyleConvertToFStringProcessor extends BaseConvertToFStringProce
   @NotNull
   @Override
   protected PySubstitutionChunkReference createReference(@NotNull SubstitutionChunk chunk) {
-    return new PySubstitutionChunkReference(myPyString, chunk, ObjectUtils.chooseNotNull(chunk.getAutoPosition(), 0));
+    return new PySubstitutionChunkReference(myPyString, chunk);
   }
 
   @Override

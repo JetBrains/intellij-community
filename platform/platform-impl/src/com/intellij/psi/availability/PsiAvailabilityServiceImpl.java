@@ -88,6 +88,8 @@ public class PsiAvailabilityServiceImpl extends PsiAvailabilityService {
       myOriginalIndicator = indicator == null ? new ProgressIndicatorBase() : indicator;
     }
 
+    // If the document wasn't changed, but we're canceled by some write action, we should restart and try again
+    //If the document is changed, we shouldn't restart, the caller will call us again independently.
     private boolean isObsolete(ProgressIndicator indicator) {
       return myProject.isDisposed() || indicator.isCanceled() || myDocument.getModificationStamp() != myOriginalStamp;
     }
@@ -105,6 +107,13 @@ public class PsiAvailabilityServiceImpl extends PsiAvailabilityService {
           break;
       }
 
+      // So we can bail out early:
+      //  - If everything is OK already, call back right away (without invokeLater)
+      //  - If after the commit the FileAstNode is parsed, invokeLater and call back (possibly retrying, if something has changed)
+      //  - And only if after the commit (which could be a no-op) the FileAstNode is not parsed, spawn a thread for ensureParsed()
+      //
+      // So, for sane languages, usually no extra background thread is spawned after the commit,
+      // which eventually is an ultimate goal of doing all of this.
       myDocumentManager.performForCommittedDocument(myDocument, () -> ApplicationManager.getApplication().invokeLater(() -> {
         switch (getParsedState(myOriginalIndicator)) {
           case Obsolete:

@@ -15,14 +15,14 @@
  */
 package com.intellij.refactoring.wrapreturnvalue;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiTypeParameter;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -33,6 +33,7 @@ class ReturnValueBeanBuilder {
   private String myClassName;
   private String myPackageName;
   private Project myProject;
+  private PsiFile myFile;
   private PsiType myValueType;
   private boolean myStatic;
 
@@ -51,6 +52,10 @@ class ReturnValueBeanBuilder {
 
   public void setProject(Project project) {
     myProject = project;
+  }
+
+  public void setFile(@NotNull PsiFile file) {
+    myFile = file;
   }
 
   public void setValueType(PsiType valueType) {
@@ -108,7 +113,7 @@ class ReturnValueBeanBuilder {
     final String fieldName = getFieldName(name);
     out.append("\tpublic ").append(myClassName).append('(');
     out.append(
-      CodeStyleSettingsManager.getSettings(myProject).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
+      getSettings().getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS ?
       "final " : "");
     out.append(typeText).append(' ').append(parameterName);
     out.append(") {\n");
@@ -119,6 +124,10 @@ class ReturnValueBeanBuilder {
       out.append("\t\t").append(fieldName).append(" = ").append(parameterName).append(";\n");
     }
     out.append("\t}");
+  }
+
+  private CodeStyleSettings getSettings() {
+    return myFile != null ? CodeStyle.getSettings(myFile) : CodeStyle.getProjectOrDefaultSettings(myProject);
   }
 
   private void outputGetter(StringBuilder out) {

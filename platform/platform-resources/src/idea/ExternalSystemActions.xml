@@ -19,7 +19,7 @@
               use-shortcut-of="EditSource"/>
       <action id="ExternalSystem.ShowSettings"
               class="com.intellij.openapi.externalSystem.action.ShowExternalSystemSettingsAction"
-              icon="AllIcons.General.ProjectSettings">
+              icon="AllIcons.General.Settings">
       </action>
 
       <action id="ExternalSystem.ToggleAutoImport"

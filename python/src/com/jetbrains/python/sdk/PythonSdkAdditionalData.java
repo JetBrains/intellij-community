@@ -66,8 +66,8 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myExcludedPaths = from.myExcludedPaths.clone(ApplicationManager.getApplication());
   }
 
-  @Override
-  public Object clone() {
+  @NotNull
+  public PythonSdkAdditionalData copy() {
     return new PythonSdkAdditionalData(this);
   }
 

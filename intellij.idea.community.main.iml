@@ -29,7 +29,6 @@
     <orderEntry type="module" module-name="intellij.java.ui" />
     <orderEntry type="module" module-name="intellij.java.impl" />
     <orderEntry type="module" module-name="intellij.java.rt" />
-    <orderEntry type="module" module-name="intellij.commander" />
     <orderEntry type="module" module-name="intellij.jsp" />
     <orderEntry type="module" module-name="intellij.jsp.spi" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
@@ -82,7 +81,7 @@
     <orderEntry type="module" module-name="intellij.vcs.hg" />
     <orderEntry type="module" module-name="intellij.android.adt.branding" />
     <orderEntry type="module" module-name="intellij.relaxng" />
-    <orderEntry type="module" module-name="intellij.gradle" />
+    <orderEntry type="module" module-name="intellij.gradle.java" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" />
     <orderEntry type="module" module-name="intellij.xml.dom.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.colorSchemes" />
@@ -132,6 +131,9 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
+    <orderEntry type="module" module-name="intellij.tools.jetCheck" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
     <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
     <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />

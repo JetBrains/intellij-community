@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
@@ -25,6 +11,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -218,6 +205,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
       myPresentation.removePropertyChangeListener(myPresentationListener);
       myPresentationListener = null;
     }
+    myRollover = false;
+    myMouseDown = false;
     super.removeNotify();
   }
 
@@ -240,7 +229,8 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
   }
 
   @Override public Insets getInsets() {
-    return myLook.getInsets();
+    ActionToolbarImpl owner = UIUtil.getParentOfType(ActionToolbarImpl.class, this);
+    return owner != null && owner.getOrientation() == SwingConstants.VERTICAL ? JBUI.insets(2, 1) : JBUI.insets(1, 2);
   }
 
   @Override public void updateUI() {
@@ -293,12 +283,16 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     if (myPresentation.getDisabledIcon() != null) { // set disabled icon if it is specified
       myDisabledIcon = myPresentation.getDisabledIcon();
     }
-    else {
+    else if (myIcon == null || IconLoader.isGoodSize(myIcon)) {
       myDisabledIcon = IconLoader.getDisabledIcon(myIcon);
+    }
+    else {
+      myDisabledIcon = null;
+      Logger.getInstance(ActionButton.class).error("invalid icon for action " + myAction);
     }
   }
 
-  void updateToolTipText() {
+  protected void updateToolTipText() {
     String text = myPresentation.getText();
     String description = myPresentation.getDescription();
     if (Registry.is("ide.helptooltip.enabled")) {
@@ -326,7 +320,7 @@ public class ActionButton extends JComponent implements ActionButtonComponent, A
     paintButtonLook(g);
 
     if (myAction instanceof ActionGroup && ((ActionGroup)myAction).isPopup()) {
-      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(4));
+      AllIcons.General.Dropdown.paintIcon(this, g, JBUI.scale(5), JBUI.scale(6));
     }
   }
 

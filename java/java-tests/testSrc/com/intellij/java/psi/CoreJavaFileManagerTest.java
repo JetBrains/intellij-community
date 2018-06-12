@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi;
 
 import com.intellij.core.CoreJavaFileManager;
@@ -25,7 +11,6 @@ import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PsiTestCase;
-import com.intellij.testFramework.PsiTestUtil;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 
@@ -189,7 +174,7 @@ public class CoreJavaFileManagerTest extends PsiTestCase {
 
   @NotNull
   private CoreJavaFileManager configureManager(@Language("JAVA") @NotNull String text, @NotNull String className) throws Exception {
-    VirtualFile root = PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+    VirtualFile root = createTestProjectStructure();
     VirtualFile pkg = createChildDirectory(root, "foo");
     PsiDirectory dir = myPsiManager.findDirectory(pkg);
     assertNotNull(dir);

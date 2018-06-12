@@ -46,7 +46,7 @@ class IdeaLogger : IFernflowerLogger() {
   private fun extendMessage(message: String) = if (myClass != null) "$message [$myClass]" else message
 
   override fun startReadingClass(className: String) {
-    LOG.debug("decompiling class " + className)
+    LOG.debug("decompiling class $className")
     myClass = className
   }
 
@@ -55,15 +55,15 @@ class IdeaLogger : IFernflowerLogger() {
     myClass = null
   }
 
-  override fun startClass(className: String) = LOG.debug("processing class " + className)
+  override fun startClass(className: String) = LOG.debug("processing class $className")
 
   override fun endClass() = LOG.debug("... class processed")
 
-  override fun startMethod(methodName: String) = LOG.debug("processing method " + methodName)
+  override fun startMethod(methodName: String) = LOG.debug("processing method $methodName")
 
   override fun endMethod() = LOG.debug("... method processed")
 
-  override fun startWriteClass(className: String) = LOG.debug("writing class " + className)
+  override fun startWriteClass(className: String) = LOG.debug("writing class $className")
 
   override fun endWriteClass() = LOG.debug("... class written")
 }

@@ -34,9 +34,9 @@ import java.util.List;
  *
  * @see git4idea.push.GitPushNativeResult
  */
-class GitPushRepoResult {
+public class GitPushRepoResult {
 
-  enum Type {
+  public enum Type {
     SUCCESS,
     NEW_BRANCH,
     UP_TO_DATE,
@@ -59,24 +59,25 @@ class GitPushRepoResult {
   @Nullable private final GitUpdateResult myUpdateResult;
 
   @NotNull
-  static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
+  public static GitPushRepoResult convertFromNative(@NotNull GitPushNativeResult result,
                                              @NotNull List<GitPushNativeResult> tagResults,
                                              int commits,
                                              @NotNull GitLocalBranch source,
                                              @NotNull GitRemoteBranch target) {
     List<String> tags = ContainerUtil.map(tagResults, result1 -> result1.getSourceRef());
+    String error = result.getType() == GitPushNativeResult.Type.ERROR ? result.getReason() : null;
     return new GitPushRepoResult(convertType(result), commits, source.getFullName(), target.getFullName(),
-                                 target.getRemote().getName(), tags, null, null);
+                                 target.getRemote().getName(), tags, error, null);
   }
 
   @NotNull
-  static GitPushRepoResult error(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch target, @NotNull String error) {
+  public static GitPushRepoResult error(@NotNull GitLocalBranch source, @NotNull GitRemoteBranch target, @NotNull String error) {
     return new GitPushRepoResult(Type.ERROR, -1, source.getFullName(), target.getFullName(),
                                  target.getRemote().getName(), Collections.emptyList(), error, null);
   }
 
   @NotNull
-  static GitPushRepoResult notPushed(GitLocalBranch source, GitRemoteBranch target) {
+  public static GitPushRepoResult notPushed(GitLocalBranch source, GitRemoteBranch target) {
     return new GitPushRepoResult(Type.NOT_PUSHED, -1, source.getFullName(), target.getFullName(),
                                  target.getRemote().getName(), Collections.emptyList(), null, null);
   }
@@ -102,7 +103,7 @@ class GitPushRepoResult {
   }
 
   @NotNull
-  Type getType() {
+  public Type getType() {
     return myType;
   }
 

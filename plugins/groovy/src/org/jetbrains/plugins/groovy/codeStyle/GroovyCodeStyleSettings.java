@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -170,5 +173,15 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings implements 
     METHODS_ORDER_WEIGHT = rootSettings.METHODS_ORDER_WEIGHT;
     STATIC_INNER_CLASSES_ORDER_WEIGHT = rootSettings.STATIC_INNER_CLASSES_ORDER_WEIGHT;
     INNER_CLASSES_ORDER_WEIGHT = rootSettings.INNER_CLASSES_ORDER_WEIGHT;
+  }
+
+  @NotNull
+  public static GroovyCodeStyleSettings getInstance(@NotNull PsiFile file) {
+    return CodeStyle.getCustomSettings(file, GroovyCodeStyleSettings.class);
+  }
+
+  @NotNull
+  public static GroovyCodeStyleSettings getInstance(@NotNull Editor editor) {
+    return CodeStyle.getSettings(editor).getCustomSettings(GroovyCodeStyleSettings.class);
   }
 }

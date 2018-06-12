@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2017 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2018 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -301,10 +301,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
           contentVariableName = createNewVariableName(forStatement,
                                                       contentType, null);
         }
-        final Project project = forStatement.getProject();
-        final CodeStyleSettings codeStyleSettings =
-          CodeStyleSettingsManager.getSettings(project);
-        if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+        if (JavaCodeStyleSettings.getInstance(forStatement.getContainingFile()).GENERATE_FINAL_LOCALS) {
           finalString = "final ";
         }
         else {
@@ -407,9 +404,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
         if (VariableAccessUtils.variableIsAssigned(variable, forStatement)) {
           final String collectionName = arrayReference.getReferenceName();
           contentVariableName = createNewVariableName(forStatement, componentType, collectionName);
-          final Project project = forStatement.getProject();
-          final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+          if (JavaCodeStyleSettings.getInstance(forStatement.getContainingFile()).GENERATE_FINAL_LOCALS) {
             finalString = "final ";
           }
           else {
@@ -431,9 +426,7 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
       else {
         final String collectionName = arrayReference.getReferenceName();
         contentVariableName = createNewVariableName(forStatement, componentType, collectionName);
-        final Project project = forStatement.getProject();
-        final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-        if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+        if (JavaCodeStyleSettings.getInstance(forStatement.getContainingFile()).GENERATE_FINAL_LOCALS) {
           finalString = "final ";
         }
         else {
@@ -749,12 +742,8 @@ public class ForCanBeForeachInspection extends ForCanBeForeachInspectionBase {
     if (!(element instanceof PsiMethodCallExpression)) {
       return false;
     }
-    final PsiMethodCallExpression callExpression =
-      (PsiMethodCallExpression)element;
-    final PsiExpressionList argumentList =
-      callExpression.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length != 0) {
+    final PsiMethodCallExpression callExpression = (PsiMethodCallExpression)element;
+    if (!callExpression.getArgumentList().isEmpty()) {
       return false;
     }
     final PsiReferenceExpression reference =

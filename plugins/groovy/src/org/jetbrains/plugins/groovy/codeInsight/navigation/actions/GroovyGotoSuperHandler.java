@@ -23,9 +23,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -117,7 +117,7 @@ public class GroovyGotoSuperHandler extends GotoTargetHandler implements Languag
   @NotNull
   private static PsiMethod[] getSupers(PsiMethod method) {
     if (method.isConstructor()) {
-      PsiMethod constructorInSuper = PsiSuperMethodUtil.findConstructorInSuper(method);
+      PsiMethod constructorInSuper = JavaPsiConstructorUtil.findConstructorInSuper(method);
       if (constructorInSuper != null) {
         return new PsiMethod[]{constructorInSuper};
       }

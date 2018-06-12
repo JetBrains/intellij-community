@@ -38,7 +38,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 
 public class MagicConstantInspectionTest extends InspectionTestCase {
-
   private FileTreeAccessFilter myFilter;
 
   @Override
@@ -66,6 +65,10 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
   @Override
   protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
     super.setupRootModel(testDir, sourceDir, sdkName);
+
+    PsiClass jframe = getJavaFacade().findClass("javax.swing.JFrame", GlobalSearchScope.allScope(getProject()));
+    assertNotNull("configure decent JDK for testsake", jframe);
+
     VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
     // allow to load AST for all files to highlight
     VfsUtilCore.visitChildrenRecursively(projectDir, new VirtualFileVisitor() {

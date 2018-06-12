@@ -6,6 +6,8 @@ package org.jetbrains.jetCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.List;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -23,8 +25,17 @@ abstract class ShrinkStep {
   @Nullable
   abstract ShrinkStep onFailure();
 
-  @NotNull 
-  abstract NodeId getNodeAfter();
+  abstract List<?> getEqualityObjects();
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj != null && obj.getClass().equals(getClass()) && getEqualityObjects().equals(((ShrinkStep)obj).getEqualityObjects());
+  }
+
+  @Override
+  public int hashCode() {
+    return getEqualityObjects().hashCode();
+  }
 
   static ShrinkStep create(@NotNull NodeId replaced,
                            @NotNull StructureElement replacement,
@@ -49,15 +60,14 @@ abstract class ShrinkStep {
         return onFailure == null ? null : onFailure.get();
       }
 
-      @NotNull
-      @Override
-      NodeId getNodeAfter() {
-        return replacement.id;
-      }
-
       @Override
       public String toString() {
         return "replace " + replaced + " with " + replacement;
+      }
+
+      @Override
+      List<?> getEqualityObjects() {
+        return Arrays.asList(replaced, replacement);
       }
     };
   }

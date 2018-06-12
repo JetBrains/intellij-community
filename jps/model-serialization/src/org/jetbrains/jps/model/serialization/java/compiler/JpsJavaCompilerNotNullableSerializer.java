@@ -33,9 +33,13 @@ public class JpsJavaCompilerNotNullableSerializer extends JpsProjectExtensionSer
   public static final List<String> DEFAULT_NOT_NULLS = Arrays.asList(
     NotNull.class.getName(),
     "javax.annotation.Nonnull",
+    "javax.validation.constraints.NotNull",
     "edu.umd.cs.findbugs.annotations.NonNull",
     "android.support.annotation.NonNull",
-    "androidx.annotation.NonNull"
+    "androidx.annotation.NonNull",
+    "org.checkerframework.checker.nullness.qual.NonNull",
+    "org.checkerframework.checker.nullness.compatqual.NonNullDecl",
+    "org.checkerframework.checker.nullness.compatqual.NonNullType"
   );
 
   public JpsJavaCompilerNotNullableSerializer() {

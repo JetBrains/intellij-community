@@ -23,7 +23,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.*;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
 import com.intellij.openapi.editor.Editor;
@@ -78,12 +77,9 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
           final Lexer lexer = LanguageParserDefinitions.INSTANCE.forLanguage(expr.getLanguage()).createLexer(project);
           if (LanguageUtil.canStickTokensTogetherByLexer(prev, prev, lexer) == ParserDefinition.SpaceRequirements.MUST) {
             PostprocessReformattingAspect.getInstance(project).disablePostprocessFormattingInside(
-              (Runnable)() -> new WriteCommandAction<Object>(project, "Normalize declaration") {
-                @Override
-                protected void run(@NotNull Result<Object> result) throws Throwable {
-                  node.getTreeParent().addChild(astNode, node);
-                }
-              }.execute());
+              (Runnable)() -> WriteCommandAction.writeCommandAction(project).withName("Normalize declaration").run(() -> {
+                node.getTreeParent().addChild(astNode, node);
+              }));
           }
         }
       }

@@ -17,6 +17,7 @@
 package com.intellij.psi;
 
 import com.intellij.openapi.util.TextRange;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,19 +25,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends PsiReferenceBase<T> implements PsiPolyVariantReference {
 
-  public PsiPolyVariantReferenceBase(final T psiElement) {
+  public PsiPolyVariantReferenceBase(@NotNull final T psiElement) {
     super(psiElement);
   }
 
-  public PsiPolyVariantReferenceBase(T element, TextRange range) {
+  public PsiPolyVariantReferenceBase(@NotNull T element, TextRange range) {
     super(element, range);
   }
 
-  public PsiPolyVariantReferenceBase(final T psiElement, final boolean soft) {
+  public PsiPolyVariantReferenceBase(@NotNull final T psiElement, final boolean soft) {
     super(psiElement, soft);
   }
 
-  public PsiPolyVariantReferenceBase(final T element, final TextRange range, final boolean soft) {
+  public PsiPolyVariantReferenceBase(@NotNull final T element, final TextRange range, final boolean soft) {
     super(element, range, soft);
   }
 

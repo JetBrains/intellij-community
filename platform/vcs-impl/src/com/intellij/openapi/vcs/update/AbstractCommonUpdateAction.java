@@ -432,7 +432,7 @@ public abstract class AbstractCommonUpdateAction extends AbstractVcsAction {
         type = NotificationType.WARNING;
       }
       else {
-        title = allFiles + " Project " + pluralize("File", allFiles) + " Updated";
+        title = allFiles + " " + pluralize("File", allFiles) + " Updated";
         content = notNullize(prepareScopeUpdatedText(tree));
         type = NotificationType.INFORMATION;
       }

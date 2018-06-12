@@ -64,6 +64,8 @@
                         serviceImplementation="com.intellij.ide.ui.search.SearchableOptionsRegistrarImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"
                         serviceImplementation="com.intellij.openapi.fileEditor.impl.EditorEmptyTextPainter"/>
+    <applicationService serviceInterface="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"
+                        serviceImplementation="com.intellij.openapi.fileEditor.impl.FileOffsetsManager"/>
 
     <applicationService serviceInterface="com.intellij.openapi.editor.EditorCopyPasteHelper"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorCopyPasteHelperImpl"/>
@@ -83,6 +85,10 @@
                         serviceImplementation="com.intellij.ui.TreeUIHelperImpl"/>
     <applicationService serviceInterface="com.intellij.ui.ExpandableItemsHandlerFactory"
                         serviceImplementation="com.intellij.ui.ExpandTipHandlerFactoryImpl"/>
+    <applicationService
+        serviceInterface="com.intellij.openapi.ui.messages.MessagesService"
+        serviceImplementation="com.intellij.ui.messages.MessagesServiceImpl"/>
+
 
     <applicationService serviceInterface="com.intellij.openapi.diff.DiffRequestFactory"
                         serviceImplementation="com.intellij.openapi.diff.impl.mergeTool.DiffRequestFactoryImpl"/>
@@ -107,7 +113,6 @@
       <configurable id="diff.external" displayName="External Diff Tools"
                     instance="com.intellij.diff.settings.ExternalDiffSettingsConfigurable"/>
     </applicationConfigurable>
-    <statistics.usagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
     <colorAndFontPanelFactory implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <colorAndFontDescriptorProvider implementation="com.intellij.openapi.diff.impl.settings.DiffColorsPageFactory"/>
     <getDataRule key="diff_navigatable_array" implementationClass="com.intellij.diff.actions.impl.DiffNavigatableArrayRule"/>
@@ -141,6 +146,8 @@
                         serviceImplementation="com.intellij.codeInsight.hint.TooltipController"/>
     <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.EditorActionManager"
                         serviceImplementation="com.intellij.openapi.editor.impl.EditorActionManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.editor.actionSystem.LatencyRecorder"
+                        serviceImplementation="com.intellij.internal.performance.LatencyRecorderImpl"/>
 
     <applicationService serviceInterface="com.intellij.openapi.updateSettings.impl.UpdateSettings"
                         serviceImplementation="com.intellij.openapi.updateSettings.impl.UpdateSettings"/>
@@ -201,13 +208,17 @@
                         serviceImplementation="com.intellij.openapi.roots.ui.FileAppearanceServiceImpl"/>
 
     <applicationService serviceImplementation="com.intellij.internal.statistic.UsageTrigger"/>
-    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSUsageTrigger"/>
+
+    <projectService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger"/>
+
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.ui.persistence.ShortcutsCollector"/>
     <applicationService serviceInterface="com.intellij.ide.actions.ActionsCollector"
         serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ActionsCollectorImpl"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector"/>
+    <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"
@@ -288,6 +299,8 @@
 
     <postStartupActivity implementation="com.intellij.internal.IconsLoadTime$StartupLoadTime"/>
 
+    <applicationService serviceImplementation="com.intellij.ui.IdeUICustomization"/>
+
     <!-- General -->
     <applicationConfigurable groupId="appearance" groupWeight="120" key="title.general" bundle="messages.IdeBundle" id="preferences.general"
                              instance="com.intellij.ide.GeneralSettingsConfigurable"/>
@@ -315,6 +328,8 @@
     <search.optionContributor implementation="com.intellij.notification.impl.NotificationSearchableOptionContributor"/>
 
     <!-- Plugins -->
+    <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurableNew" id="preferences.pluginManagerNew"
+                             displayName="Plugins2"/>
     <applicationConfigurable groupId="root" groupWeight="55" instance="com.intellij.ide.plugins.PluginManagerConfigurable" id="preferences.pluginManager"
                              displayName="Plugins"/>
     <actionFromOptionDescriptorProvider implementation="com.intellij.ide.plugins.InstalledPluginsManagerMain$PluginsActionFromOptionDescriptorProvider"/>
@@ -328,6 +343,10 @@
     <postStartupActivity implementation="com.intellij.openapi.fileTypes.impl.ApproveRemovedMappingsActivity"/>
     <applicationService serviceInterface="com.intellij.openapi.options.colors.ColorSettingsPages"
                         serviceImplementation="com.intellij.openapi.options.colors.pages.ColorSettingsPagesImpl"/>
+
+    <postStartupActivity implementation="com.intellij.externalDependencies.impl.CheckRequiredPluginsActivity"/>
+    <projectConfigurable groupId="build" provider="com.intellij.externalDependencies.impl.ExternalDependenciesConfigurableProvider"
+                         id="preferences.externalDependencies" displayName="Required Plugins"/>
 
     <applicationConfigurable parentId="preferences.general" instance="com.intellij.openapi.updateSettings.impl.UpdateSettingsConfigurable" id="preferences.updates"
                              key="updates.settings.title" bundle="messages.IdeBundle"/>
@@ -392,6 +411,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ToolbarClicksUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.EditorColorSchemesUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ActionUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.ToolWindowUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.IntentionUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.actions.MainMenuUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.jdk.JdkInfoUsageCollector"/>
@@ -404,6 +424,7 @@
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.ShortcutUsagesCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.UiInfoUsageCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.ui.A11YUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.diff.statistics.DiffUsagesCollector"/>
 
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.productivity.LegacyProductivityFeaturesUsageCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.plugins.LegacyDisabledPluginsUsagesCollector"/>
@@ -411,6 +432,7 @@
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyToolbarClicksUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.ui.LegacyEditorColorSchemesUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyActionUsagesCollector"/>
+    <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyToolWindowUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyIntentionUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.actions.LegacyMainMenuUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.internal.statistic.collectors.legacy.jdk.LegacyJdkInfoUsageCollector"/>
@@ -464,6 +486,9 @@
 
     <applicationService serviceInterface="com.intellij.ide.TypePresentationService"
                         serviceImplementation="com.intellij.ide.TypePresentationServiceImpl"/>
+
+    <applicationService serviceInterface="com.intellij.openapi.application.AsyncExecutionService"
+                        serviceImplementation="com.intellij.openapi.application.impl.AsyncExecutionServiceImpl"/>
 
     <preloadingActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
     <postStartupActivity implementation="com.intellij.ide.ui.OptionsTopHitProvider$Activity"/>
@@ -553,6 +578,8 @@
     <projectService
         serviceInterface="com.intellij.psi.availability.PsiAvailabilityService"
         serviceImplementation="com.intellij.psi.availability.PsiAvailabilityServiceImpl"/>
+
+    <sdkType implementation="com.intellij.openapi.projectRoots.SimpleJavaSdkType"/>
 
     <!--context providers-->
     <tasks.contextProvider implementation="com.intellij.tasks.context.OpenEditorsContextProvider"/>

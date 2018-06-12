@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.ide;
 
 import com.intellij.idea.StartupUtil;
@@ -14,7 +15,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.BuiltinWebServerAccess;
 import com.intellij.util.Url;
-import com.intellij.util.UrlImpl;
+import com.intellij.util.Urls;
 import com.intellij.util.net.NetUtils;
 import io.netty.channel.EventLoopGroup;
 import io.netty.channel.oio.OioEventLoopGroup;
@@ -30,6 +31,8 @@ import java.io.IOException;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.URLConnection;
+import java.util.Collections;
+import java.util.Objects;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;

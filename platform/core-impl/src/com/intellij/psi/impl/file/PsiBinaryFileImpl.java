@@ -39,15 +39,12 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
   private final PsiManagerImpl myManager;
   private String myName; // for myFile == null only
   private byte[] myContents; // for myFile == null only
-  private final long myModificationStamp;
   private final FileViewProvider myViewProvider;
   private boolean myInvalidated;
 
   public PsiBinaryFileImpl(PsiManagerImpl manager, FileViewProvider viewProvider) {
     myViewProvider = viewProvider;
     myManager = manager;
-    final VirtualFile virtualFile = myViewProvider.getVirtualFile();
-    myModificationStamp = virtualFile.getModificationStamp();
   }
 
   @Override
@@ -108,7 +105,7 @@ public class PsiBinaryFileImpl extends PsiElementBase implements PsiBinaryFile, 
 
   @Override
   public long getModificationStamp() {
-    return myModificationStamp;
+    return getVirtualFile().getModificationStamp();
   }
 
   @Override

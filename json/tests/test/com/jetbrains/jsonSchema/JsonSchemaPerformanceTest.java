@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema;
 
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 
 import java.util.Collections;
 
@@ -18,17 +19,26 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
   }
 
   public void testSwaggerHighlighting() {
+    doPerformanceTest(8000, "swagger");
+  }
+
+  public void testTsLintSchema() {
+    doPerformanceTest(7000, "tslint-schema");
+  }
+
+  private void doPerformanceTest(int expectedMs, String jsonFileNameWithoutExtension) {
     final ThrowableRunnable<Exception> test = () -> skeleton(new Callback() {
       @Override
       public void registerSchemes() {
         final String moduleDir = getModuleDir(getProject());
-        addSchema(new UserDefinedJsonSchemaConfiguration("swagger", moduleDir + "/swagger.json", false, Collections.emptyList()));
+        addSchema(new UserDefinedJsonSchemaConfiguration(jsonFileNameWithoutExtension, JsonSchemaVersion.SCHEMA_4,
+                                                         moduleDir + "/" + jsonFileNameWithoutExtension +  ".json", false, Collections.emptyList()));
         myDoCompletion = false;
       }
 
       @Override
       public void configureFiles() {
-        configureByFiles(null, "/swagger.json");
+        configureByFiles(null, "/" + jsonFileNameWithoutExtension + ".json");
       }
 
       @Override
@@ -36,6 +46,6 @@ public class JsonSchemaPerformanceTest extends JsonSchemaHeavyAbstractTest {
         doHighlighting();
       }
     });
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 20000, test).attempts(1).usesAllCPUCores().assertTiming();
+    PlatformTestUtil.startPerformanceTest(getTestName(false), expectedMs, test).attempts(1).usesAllCPUCores().assertTiming();
   }
 }

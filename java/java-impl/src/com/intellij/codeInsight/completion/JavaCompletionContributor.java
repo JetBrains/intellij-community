@@ -526,7 +526,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return isSecondCompletion;
 
     if (parent instanceof PsiJavaCodeReferenceElementImpl &&
-        ((PsiJavaCodeReferenceElementImpl)parent).getKind(parent.getContainingFile()) == PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND) {
+        ((PsiJavaCodeReferenceElementImpl)parent).getKindEnum(parent.getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.PACKAGE_NAME_KIND) {
       return false;
     }
 

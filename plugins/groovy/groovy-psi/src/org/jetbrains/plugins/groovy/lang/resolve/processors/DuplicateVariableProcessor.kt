@@ -15,13 +15,16 @@ import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint
 import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
-class DuplicateVariableProcessor(private val variable: GrVariable) : FindFirstProcessor<ElementGroovyResult<GrVariable>>(variable.name) {
+class DuplicateVariableProcessor(private val variable: GrVariable) : FindFirstProcessor<ElementGroovyResult<GrVariable>>() {
 
   companion object {
     private fun GrVariable.hasExplicitVisibilityModifiers(): Boolean = modifierList?.hasExplicitVisibilityModifiers() ?: false
   }
 
+  private val name = variable.name
+
   init {
+    nameHint(name)
     hint(CompilationPhaseHint.HINT_KEY, CompilationPhaseHint { CompilationPhaseHint.Phase.CONVERSION })
   }
 

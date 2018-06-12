@@ -413,23 +413,23 @@ public class PyStringFormatParserTest extends TestCase {
     assertSize(5, topLevelFields);
 
     assertEquals("foo", topLevelFields.get(0).getMappingKey());
-    assertNull(topLevelFields.get(0).getPosition());
+    assertNull(topLevelFields.get(0).getManualPosition());
     assertNull(topLevelFields.get(0).getAutoPosition());
 
     assertNull(topLevelFields.get(1).getMappingKey());
-    assertNull(topLevelFields.get(1).getPosition());
+    assertNull(topLevelFields.get(1).getManualPosition());
     assertEquals(0, (int)topLevelFields.get(1).getAutoPosition());
 
     assertEquals("bar", topLevelFields.get(2).getMappingKey());
-    assertNull(topLevelFields.get(2).getPosition());
+    assertNull(topLevelFields.get(2).getManualPosition());
     assertNull(topLevelFields.get(2).getAutoPosition());
 
     assertNull(topLevelFields.get(3).getMappingKey());
-    assertEquals(0, (int)topLevelFields.get(3).getPosition());
+    assertEquals(0, (int)topLevelFields.get(3).getManualPosition());
     assertNull(topLevelFields.get(3).getAutoPosition());
 
     assertNull(topLevelFields.get(4).getMappingKey());
-    assertNull(topLevelFields.get(4).getPosition());
+    assertNull(topLevelFields.get(4).getManualPosition());
     assertEquals(1, (int)topLevelFields.get(4).getAutoPosition());
   }
 

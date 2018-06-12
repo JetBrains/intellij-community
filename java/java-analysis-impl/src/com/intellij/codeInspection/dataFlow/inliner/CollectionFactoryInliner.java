@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
 import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiVariable;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.MethodCallUtils;
@@ -104,15 +103,11 @@ public class CollectionFactoryInliner implements CallInliner {
     if (factoryInfo.mySize == -1) {
       builder.push(result);
     } else {
-      PsiVariable variable = builder.createTempVariable(call.getType());
-      DfaVariableValue variableValue = factory.getVarFactory().createVariableValue(variable, false);
-      builder.pushVariable(variable) // tmpVar = <Value of collection type>
-        .push(result)
-        .assign() // leave tmpVar on stack: it's result of method call
-        .push(factoryInfo.mySizeField.createValue(factory, variableValue)) // tmpVar.size = <size>
-        .push(factory.getInt(factoryInfo.mySize))
-        .assign()
-        .pop();
+      DfaVariableValue variableValue = builder.createTempVariable(call.getType());
+      // tmpVar = <Value of collection type>; leave tmpVar on stack: it's result of method call
+      builder.assign(variableValue, result);
+      // tmpVar.size = <size>
+      builder.assignAndPop(factoryInfo.mySizeField.createValue(factory, variableValue), factory.getInt(factoryInfo.mySize));
     }
     return true;
   }

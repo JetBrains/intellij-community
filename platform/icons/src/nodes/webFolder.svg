@@ -1,7 +1,11 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>webFolder</title>
-  <g opacity="0.7">
-    <path d="M7.98462,5L6.69629,3.71142A2.79832,2.79832,0,0,0,4.979,3H1.05127A0.05126,0.05126,0,0,0,1,3.05124V14H15V5H7.98462Z" fill="#9aa7b0"/>
+  <g>
+    <g opacity="0.8">
+      <path d="M7.98462,4,6.69629,2.71143A2.79829,2.79829,0,0,0,4.979,2H1.05127A.05126.05126,0,0,0,1,2.05127V13H15V4Z" fill="#9aa7b0"/>
+    </g>
+    <g opacity="0.9">
+      <path d="M6.00031,10.49487A1.99719,1.99719,0,1,1,7.99789,8.49756,1.99967,1.99967,0,0,1,6.00031,10.49487Z" fill="#40b6e0"/>
+    </g>
   </g>
-  <circle cx="5.9989" cy="9.49767" r="1.99807" fill="#40b6e0"/>
 </svg>

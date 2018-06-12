@@ -1,7 +1,7 @@
 <idea-plugin>
   <application-components>
     <component>
-      <implementation-class>com.intellij.debugger.memory.component.MemoryViewManager</implementation-class>
+      <implementation-class>com.intellij.xdebugger.memory.component.MemoryViewManager</implementation-class>
     </component>
   </application-components>
 
@@ -27,7 +27,7 @@
     </component>
 
     <component>
-      <implementation-class>com.intellij.debugger.memory.component.InstancesTracker</implementation-class>
+      <implementation-class>com.intellij.xdebugger.memory.component.InstancesTracker</implementation-class>
     </component>
   </project-components>
 

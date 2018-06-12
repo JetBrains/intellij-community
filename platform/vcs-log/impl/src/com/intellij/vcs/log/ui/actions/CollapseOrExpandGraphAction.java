@@ -17,18 +17,15 @@ package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
 import com.intellij.vcs.log.graph.PermanentGraph;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
-import com.intellij.vcs.log.util.VcsLogUtil;
 import com.intellij.vcs.log.ui.VcsLogInternalDataKeys;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
+import com.intellij.vcs.log.util.VcsLogUtil;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
   private static final String LINEAR_BRANCHES = "Linear Branches";
@@ -53,7 +50,7 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
     VcsLogUiProperties properties = e.getData(VcsLogInternalDataKeys.LOG_UI_PROPERTIES);
 
-    if (ui != null && ui.areGraphActionsEnabled() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
+    if (ui != null && !ui.getDataPack().isEmpty() && properties != null && properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE)) {
       e.getPresentation().setEnabled(true);
       if (!ui.getFilterUi().getFilters().getDetailsFilters().isEmpty()) {
         e.getPresentation().setEnabled(false);
@@ -74,29 +71,10 @@ abstract class CollapseOrExpandGraphAction extends DumbAwareAction {
 
     e.getPresentation().setText(getPrefix() + LINEAR_BRANCHES);
     e.getPresentation().setDescription(getPrefix() + LINEAR_BRANCHES_DESCRIPTION);
-    if (isIconHidden(e)) {
-      e.getPresentation().setIcon(null);
-    }
-    else {
-      e.getPresentation().setIcon(
-        properties != null &&
-        properties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE) &&
-        properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE) == PermanentGraph.SortType.LinearBek ? getMergesIcon() : getBranchesIcon());
-    }
   }
 
   protected abstract void executeAction(@NotNull VcsLogUiImpl vcsLogUi);
 
   @NotNull
-  protected abstract Icon getMergesIcon();
-
-  @NotNull
-  protected abstract Icon getBranchesIcon();
-
-  @NotNull
   protected abstract String getPrefix();
-
-  private static boolean isIconHidden(@NotNull AnActionEvent e) {
-    return e.getPlace().equals(ToolWindowContentUi.POPUP_PLACE);
-  }
 }

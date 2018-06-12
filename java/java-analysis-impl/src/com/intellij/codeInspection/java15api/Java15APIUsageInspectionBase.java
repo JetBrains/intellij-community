@@ -56,7 +56,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_X;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_10;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");

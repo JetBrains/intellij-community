@@ -509,6 +509,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
     final VcsInvalidated invalidated = myDirtyScopeManager.retrieveScopes();
     if (checkScopeIsEmpty(invalidated)) {
+      LOG.debug("[update] - dirty scope is empty");
       myDirtyScopeManager.changesProcessed();
       return;
     }
@@ -536,6 +537,8 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
         if (LOG.isDebugEnabled()) {
           String scopeInString = StringUtil.join(scopes, scope -> scope.toString(), "->\n");
           LOG.debug("refresh procedure started, everything: " + wasEverythingDirty + " dirty scope: " + scopeInString +
+                    "\nignored: " + myComposite.getIgnoredFileHolder().values().size() +
+                    "\nunversioned: " + myComposite.getVFHolder(FileHolder.HolderType.UNVERSIONED).getFiles().size() +
                     "\ncurrent changes: " + myWorker);
         }
       }
@@ -582,9 +585,11 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             if (statusChanged) {
               myDelayedNotificator.unchangedFileStatusChanged();
             }
+            LOG.debug("[update] - success");
           }
           else {
             myModifier.finishUpdate(null);
+            LOG.debug("[update] - aborted");
           }
           myShowLocalChangesInvalidated = false;
         }
@@ -1356,16 +1361,16 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
     doCommit(changeList, changes, false);
   }
 
-  private boolean doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
+  private void doCommit(final LocalChangeList changeList, final List<Change> changes, final boolean synchronously) {
     FileDocumentManager.getInstance().saveAllDocuments();
-    return new CommitHelper(myProject, changeList, changes, changeList.getName(),
-                            StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
-                            false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
+    new CommitHelper(myProject, changeList, changes, changeList.getName(),
+                     StringUtil.isEmpty(changeList.getComment()) ? changeList.getName() : changeList.getComment(), new ArrayList<>(),
+                     false, synchronously, FunctionUtil.nullConstant(), null, false, null).doCommit();
   }
 
   @TestOnly
-  public boolean commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
-    return doCommit(changeList, changes, true);
+  public void commitChangesSynchronouslyWithResult(@NotNull LocalChangeList changeList, @NotNull List<Change> changes) {
+    doCommit(changeList, changes, true);
   }
 
   @Override
@@ -1685,7 +1690,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   static class Scheduler {
     private final AtomicReference<Future> myLastTask = new AtomicReference<>(); // @TestOnly
     private final ScheduledExecutorService myExecutor =
-      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl pool", 1);
+      AppExecutorUtil.createBoundedScheduledExecutorService("ChangeListManagerImpl Pool", 1);
 
     public void schedule(@NotNull Runnable command, long delay, @NotNull TimeUnit unit) {
       myLastTask.set(myExecutor.schedule(command, delay, unit));

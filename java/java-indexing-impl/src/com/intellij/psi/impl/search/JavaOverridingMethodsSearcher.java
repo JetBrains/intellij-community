@@ -31,7 +31,7 @@ import java.util.LinkedHashSet;
  */
 public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters parameters, @NotNull final Processor<PsiMethod> consumer) {
+  public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiMethod> consumer) {
     final PsiMethod method = parameters.getMethod();
 
     Project project = ReadAction.compute(method::getProject);
@@ -72,7 +72,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
                                            @NotNull PsiMethod method,
                                            @NotNull Project project,
-                                           @NotNull final Processor<PsiMethod> consumer) {
+                                           @NotNull final Processor<? super PsiMethod> consumer) {
     // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();

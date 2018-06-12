@@ -446,7 +446,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return file != null ? myEditorManager.getSelectedEditorWithProvider(file) : null;
   }
 
-  private PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
+  protected PlaceInfo createPlaceInfo(@NotNull final FileEditor fileEditor, final FileEditorProvider fileProvider) {
     if (!fileEditor.isValid()) return null;
 
     final VirtualFile file = myEditorManager.getFile(fileEditor);
@@ -485,13 +485,13 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     return myFileDocumentManager;
   }
 
-  private static final class PlaceInfo {
+  protected static final class PlaceInfo {
     private final VirtualFile myFile;
     private final FileEditorState myNavigationState;
     private final String myEditorTypeId;
     private final Reference<EditorWindow> myWindow;
 
-    PlaceInfo(@NotNull VirtualFile file,
+    public PlaceInfo(@NotNull VirtualFile file,
               @NotNull FileEditorState navigationState,
               @NotNull String editorTypeId,
               @Nullable EditorWindow window) {

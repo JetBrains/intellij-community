@@ -47,7 +47,7 @@ public class PyTypeProviderBase implements PyTypeProvider {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     return null;
   }
 

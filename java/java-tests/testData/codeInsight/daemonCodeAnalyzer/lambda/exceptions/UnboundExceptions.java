@@ -12,18 +12,18 @@ class Test {
     <K extends ClassNotFoundException> void foo2(F<K> f) throws K { }
 
     {
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2(()->{});</error>
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2(()->{ throw new ClassNotFoundException(); });</error>
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2</error>(()->{});
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2</error>(()->{ throw new ClassNotFoundException(); });
 
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2(this::m1);</error>
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2(this::m2);</error>
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2</error>(this::m1);
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo2</error>(this::m2);
 
 
 
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo1(()->{ throw new ClassNotFoundException(); });</error>
-        <error descr="Unhandled exception: java.lang.Exception">foo1(()->{ throw new Exception(); });</error>
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo1</error>(()->{ throw new ClassNotFoundException(); });
+        <error descr="Unhandled exception: java.lang.Exception">foo1</error>(()->{ throw new Exception(); });
 
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo1(this::m2);</error>
-        <error descr="Unhandled exception: java.lang.Exception">foo1(this::m3);</error>
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo1</error>(this::m2);
+        <error descr="Unhandled exception: java.lang.Exception">foo1</error>(this::m3);
     }
 }

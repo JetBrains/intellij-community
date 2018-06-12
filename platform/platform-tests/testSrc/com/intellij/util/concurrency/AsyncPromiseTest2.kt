@@ -4,10 +4,12 @@ package com.intellij.util.concurrency
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.util.TimeoutUtil.sleep
 import org.jetbrains.concurrency.AsyncPromise
+import org.jetbrains.concurrency.InternalPromiseUtil
 import org.junit.Test
 import java.awt.EventQueue.invokeLater
 import java.awt.EventQueue.isDispatchThread
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.ExecutionException
 import java.util.concurrent.TimeUnit
 
 private const val PRINT = false
@@ -15,7 +17,7 @@ private const val PRINT = false
 private class CheckedException : Exception()
 
 private fun isMessageError(exception: Exception): Boolean {
-  return exception.javaClass.name == "org.jetbrains.concurrency.MessageError"
+  return exception is InternalPromiseUtil.MessageError
 }
 
 private fun log(message: String) {
@@ -41,7 +43,7 @@ private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<
         }
         AsyncPromiseTest2.State.ERROR -> {
           log("notify promise about error to preserve a cause")
-          promise.rejected { /* add empty error handler to ensure that promise will not call LOG.error */ }
+          promise.onError { /* add empty error handler to ensure that promise will not call LOG.error */ }
           promise.setError(CheckedException())
         }
       }
@@ -70,7 +72,7 @@ private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<
   }
 
   log("add processing handlers")
-  promise.processed { log("promise is processed") }
+  promise.onProcessed { log("promise is processed") }
   try {
     log("wait for task completion")
     latch.await(100, TimeUnit.MILLISECONDS)
@@ -151,7 +153,7 @@ class AsyncPromiseTest2 {
     try {
       assertThat(promise.blockingGet(100)).isNull()
     }
-    catch (ignored: CheckedException) {
+    catch (ignored: ExecutionException) {
     }
   }
 
@@ -159,9 +161,9 @@ class AsyncPromiseTest2 {
   fun testErrorAfterHandlerSet() {
     val promise = promise(State.ERROR, When.AFTER)
     try {
-      assert(null == promise.blockingGet(100))
+      assertThat(promise.blockingGet(100)).isNull()
     }
-    catch (ignored: CheckedException) {
+    catch (ignored: ExecutionException) {
     }
   }
 
@@ -169,9 +171,9 @@ class AsyncPromiseTest2 {
   fun testErrorBeforeHandlerSet() {
     val promise = promise(State.ERROR, When.BEFORE)
     try {
-      assert(null == promise.blockingGet(100))
+      assertThat(promise.blockingGet(100)).isNull()
     }
-    catch (ignored: CheckedException) {
+    catch (ignored: ExecutionException) {
     }
   }
 }

@@ -8,7 +8,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
@@ -25,7 +25,7 @@ class GroovyStaticImportsTest extends LightGroovyTestCase {
   protected GroovyResolveResult[] multiResolveByText(String text) {
     def file = configureByText(text)
     def reference = file.findReferenceAt(fixture.editor.caretModel.offset)
-    if (reference instanceof GroovyPolyVariantReference) {
+    if (reference instanceof GroovyReference) {
       reference.multiResolve(false)
     }
     else {

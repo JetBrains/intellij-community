@@ -6,8 +6,8 @@ import java.io.*;
 class Java9 {
   void test() throws FileNotFoundException {
     PrintStream printStream = new PrintStream("one");
-    printStream.print("dffd");
       try (printStream) {
+          printStream.print("dffd");
           printStream.print(true);
       }
 

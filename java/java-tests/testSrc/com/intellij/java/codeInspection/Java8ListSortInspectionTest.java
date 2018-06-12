@@ -20,9 +20,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.java18api.Java8ListSortInspection;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8ListSortInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

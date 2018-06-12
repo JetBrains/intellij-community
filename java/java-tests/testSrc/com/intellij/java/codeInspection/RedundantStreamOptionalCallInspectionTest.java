@@ -24,9 +24,6 @@ import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class RedundantStreamOptionalCallInspectionTest extends LightInspectionTestCase {
   public static final String TEST_DATA_DIR = "/inspection/redundantStreamOptionalCall/";
 

@@ -89,7 +89,7 @@ public class JavaConstantExpressionEvaluator extends JavaRecursiveElementWalking
   }
 
   private static final CachedValueProvider<ConcurrentMap<PsiElement,Object>> PROVIDER = () -> {
-    ConcurrentMap<PsiElement, Object> value = ContainerUtil.createConcurrentSoftMap();
+    ConcurrentMap<PsiElement, Object> value = ContainerUtil.createConcurrentWeakMap();
     return CachedValueProvider.Result.create(value, PsiModificationTracker.MODIFICATION_COUNT);
   };
 

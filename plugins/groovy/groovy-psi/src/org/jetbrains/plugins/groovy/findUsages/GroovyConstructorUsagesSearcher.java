@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.findUsages;
 
@@ -63,14 +49,14 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   }
 
   @Override
-  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull MethodReferencesSearch.SearchParameters p, @NotNull Processor<? super PsiReference> consumer) {
     processConstructorUsages(p.getMethod(), p.getEffectiveSearchScope(), consumer, p.getOptimizer(), !p.isStrictSignatureSearch());
   }
 
   public static final Key<Set<PsiClass>> LITERALLY_CONSTRUCTED_CLASSES = Key.create("LITERALLY_CONSTRUCTED_CLASSES");
   static void processConstructorUsages(final PsiMethod constructor,
                                        final SearchScope searchScope,
-                                       final Processor<PsiReference> consumer,
+                                       final Processor<? super PsiReference> consumer,
                                        final SearchRequestCollector collector,
                                        final boolean includeOverloads) {
     if (!constructor.isConstructor()) return;
@@ -210,7 +196,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     return true;
   }
 
-  private static boolean processConstructors(final PsiMethod searchedConstructor, final Processor<PsiReference> consumer, final PsiClass clazz,
+  private static boolean processConstructors(final PsiMethod searchedConstructor, final Processor<? super PsiReference> consumer, final PsiClass clazz,
                                              final boolean processThisRefs) {
     final PsiMethod[] constructors = clazz.getConstructors();
     if (constructors.length == 0) {
@@ -238,7 +224,7 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
   }
 
   private static void processImplicitConstructorCall(@NotNull final PsiMember usage,
-                                                     final Processor<PsiReference> processor,
+                                                     final Processor<? super PsiReference> processor,
                                                      final PsiMethod constructor) {
     if (constructor instanceof GrMethod) {
       GrParameter[] grParameters = (GrParameter[])constructor.getParameterList().getParameters();
@@ -250,11 +236,13 @@ public class GroovyConstructorUsagesSearcher extends QueryExecutorBase<PsiRefere
     PsiManager manager = constructor.getManager();
     if (manager.areElementsEquivalent(usage, constructor) || manager.areElementsEquivalent(constructor.getContainingClass(), usage.getContainingClass())) return;
     processor.process(new LightMemberReference(manager, usage, PsiSubstitutor.EMPTY) {
+      @NotNull
       @Override
       public PsiElement getElement() {
         return usage;
       }
 
+      @NotNull
       @Override
       public TextRange getRangeInElement() {
         if (usage instanceof PsiClass) {

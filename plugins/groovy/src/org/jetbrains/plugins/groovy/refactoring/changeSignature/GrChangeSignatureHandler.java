@@ -99,7 +99,7 @@ public class GrChangeSignatureHandler implements ChangeSignatureHandler {
 
   @Override
   @Nullable
-  public PsiElement findTargetMember(PsiFile file, Editor editor) {
+  public PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor) {
     final PsiElement element = file.findElementAt(editor.getCaretModel().getOffset());
     final PsiElement targetMember = findTargetMember(element);
     if (targetMember != null) return targetMember;

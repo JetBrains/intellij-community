@@ -17,9 +17,12 @@ package com.intellij.task.impl;
 
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.task.ArtifactBuildTask;
+import com.intellij.task.ProjectModelBuildTask;
 import org.jetbrains.annotations.NotNull;
 
 /**
+ * @deprecated to be removed, use {@link ProjectModelBuildTask}
+ *
  * @author Vladislav.Soroka
  * @since 5/14/2016
  */

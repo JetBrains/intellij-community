@@ -15,23 +15,27 @@
  */
 package com.intellij.execution.ui;
 
+import com.intellij.execution.process.ProcessOutputType;
 import com.intellij.execution.process.ProcessOutputTypes;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.ColorKey;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
-import java.util.HashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
  * @author Alexey Kudravtsev
  */
 public class ConsoleViewContentType {
+  private static final Logger LOG = Logger.getInstance(ConsoleViewContentType.class);
+
   private final String myName;
   private final TextAttributes myTextAttributes;
   private final TextAttributesKey myTextAttributesKey;
@@ -91,20 +95,29 @@ public class ConsoleViewContentType {
     return myTextAttributes;
   }
 
+  @NotNull
   public static ConsoleViewContentType registerNewConsoleViewType(@NotNull Key key, @NotNull TextAttributesKey attributesKey) {
     ConsoleViewContentType type = new ConsoleViewContentType(key.toString(), attributesKey);
     registerNewConsoleViewType(key, type);
     return type;
   }
 
-  public static synchronized void registerNewConsoleViewType(final Key processOutputType, final ConsoleViewContentType attributes) {
+  public static synchronized void registerNewConsoleViewType(@NotNull Key processOutputType, @NotNull ConsoleViewContentType attributes) {
     ourRegisteredTypes.put(processOutputType, attributes);
   }
 
-  public static synchronized ConsoleViewContentType getConsoleViewType(final Key processOutputType) {
-    return ourRegisteredTypes.getOrDefault(processOutputType, SYSTEM_OUTPUT);
+  @NotNull
+  public static synchronized ConsoleViewContentType getConsoleViewType(@NotNull Key processOutputType) {
+    ConsoleViewContentType type = ourRegisteredTypes.get(processOutputType);
+    if (type != null) {
+      return type;
+    }
+    LOG.warn("Unregistered " + processOutputType.getClass().getName() + ": " +
+             ProcessOutputType.getKeyNameForLogging(processOutputType));
+    return SYSTEM_OUTPUT;
   }
 
+  @NotNull
   public static synchronized Collection<ConsoleViewContentType> getRegisteredTypes() {
     return ourRegisteredTypes.values();
   }

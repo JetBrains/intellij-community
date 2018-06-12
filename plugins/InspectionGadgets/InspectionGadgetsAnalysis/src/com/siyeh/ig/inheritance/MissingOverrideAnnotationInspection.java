@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.*;
@@ -32,11 +32,11 @@ import java.util.stream.Stream;
 public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalInspectionTool implements CleanupLocalInspectionTool{
   private static final String OVERRIDE_SHORT_NAME = StringUtil.getShortName(CommonClassNames.JAVA_LANG_OVERRIDE);
 
-  @SuppressWarnings({"PublicField"})
+  @SuppressWarnings("PublicField")
   public boolean ignoreObjectMethods = true;
 
-  @SuppressWarnings({"PublicField"})
-  public boolean ignoreAnonymousClassMethods = false;
+  @SuppressWarnings("PublicField")
+  public boolean ignoreAnonymousClassMethods;
 
   @Override
   @NotNull
@@ -75,7 +75,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
   }
 
   /**
-   * @deprecated. To be removed in 2019.1.
+   * @deprecated To be removed in 2019.1.
    */
   @Deprecated
   @SuppressWarnings("unused")
@@ -84,7 +84,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
   }
 
   /**
-   * @deprecated. To be removed in 2019.1.
+   * @deprecated  To be removed in 2019.1.
    */
   @Deprecated
   protected BaseInspectionVisitor buildVisitor() {
@@ -137,17 +137,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
                                  InspectionGadgetsBundle.message(result.requireAnnotation
                                                                  ? "missing.override.annotation.problem.descriptor"
                                                                  : "missing.override.annotation.in.overriding.problem.descriptor"),
-                                 new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
-                                   @Override
-                                   protected boolean annotateSelf() {
-                                     return result.requireAnnotation;
-                                   }
-
-                                   @Override
-                                   protected boolean annotateOverriddenMethods() {
-                                     return result.hierarchyAnnotated == ThreeState.NO;
-                                   }
-                                 });
+                                 createAnnotateFix(result.requireAnnotation, result.hierarchyAnnotated));
         }
       }
 
@@ -191,7 +181,7 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
 
       private boolean hasOverrideAnnotation(PsiModifierListOwner element) {
         final PsiModifierList modifierList = element.getModifierList();
-        return modifierList != null && modifierList.findAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE) != null;
+        return modifierList != null && modifierList.hasAnnotation(CommonClassNames.JAVA_LANG_OVERRIDE);
       }
 
       private boolean isJdk6Override(PsiMethod method, PsiClass methodClass) {
@@ -236,8 +226,23 @@ public class MissingOverrideAnnotationInspection extends AbstractBaseJavaLocalIn
     };
   }
 
+  @NotNull
+  private static AnnotateMethodFix createAnnotateFix(final boolean requireAnnotation, final ThreeState hierarchyAnnotated) {
+    return new AnnotateMethodFix(CommonClassNames.JAVA_LANG_OVERRIDE) {
+      @Override
+      protected boolean annotateSelf() {
+        return requireAnnotation;
+      }
+
+      @Override
+      protected boolean annotateOverriddenMethods() {
+        return hierarchyAnnotated == ThreeState.NO;
+      }
+    };
+  }
+
   private static class InspectionResult {
-    private boolean requireAnnotation = false;
+    private boolean requireAnnotation;
     private ThreeState hierarchyAnnotated = ThreeState.UNSURE;
   }
 

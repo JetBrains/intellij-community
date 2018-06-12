@@ -1,7 +1,7 @@
 class C <T extends Exception> {
     void foo () throws T {}
     void bar () {
-        <error descr="Unhandled exception: T">foo ();</error>
+        <error descr="Unhandled exception: T">foo</error> ();
     }
 
     <T extends Error> void goo() {

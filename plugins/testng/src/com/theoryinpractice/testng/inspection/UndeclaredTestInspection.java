@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.theoryinpractice.testng.inspection;
 
@@ -73,7 +73,7 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       for (final String name : names) {
         final boolean isFullName = qName.equals(name);
         final boolean[] found = new boolean[]{false};
-        PsiSearchHelper.SERVICE.getInstance(project)
+        PsiSearchHelper.getInstance(project)
           .processUsagesInNonJavaFiles(name, (file, startOffset, endOffset) -> {
             if (file.findReferenceAt(startOffset) != null) {
               if (!isFullName) { //special package tag required
@@ -131,11 +131,9 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
       final PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
       LOG.assertTrue(psiFile instanceof XmlFile);
       final XmlFile testngXML = (XmlFile)psiFile;
-      new WriteCommandAction(project, getName(), testngXML) {
-        protected void run(@NotNull final Result result) {
-          patchTestngXml(testngXML, psiClass);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project, testngXML).withName(getName()).run(() -> {
+        patchTestngXml(testngXML, psiClass);
+      });
     }
 
     @Override
@@ -182,20 +180,19 @@ public class UndeclaredTestInspection extends AbstractBaseJavaLocalInspectionToo
         final PsiManager psiManager = PsiManager.getInstance(project);
         final PsiDirectory directory = psiManager.findDirectory(file);
         LOG.assertTrue(directory != null);
-        new WriteCommandAction(project, getName(), PsiFile.EMPTY_ARRAY) {
-          protected void run(@NotNull final Result result) {
-            XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
-              .createFileFromText("testng.xml", "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
-            try {
-              testngXml = (XmlFile)directory.add(testngXml);
-            }
-            catch (IncorrectOperationException e) {
-              //todo suggest new name
-              return;
-            }
-            patchTestngXml(testngXml, psiClass);
+        WriteCommandAction.writeCommandAction(project, PsiFile.EMPTY_ARRAY).withName(getName()).run(() -> {
+          XmlFile testngXml = (XmlFile)PsiFileFactory.getInstance(psiManager.getProject())
+                                                     .createFileFromText("testng.xml",
+                                                                         "<!DOCTYPE suite SYSTEM \"http://testng.org/testng-1.0.dtd\">\n<suite></suite>");
+          try {
+            testngXml = (XmlFile)directory.add(testngXml);
           }
-        }.execute();
+          catch (IncorrectOperationException e) {
+            //todo suggest new name
+            return;
+          }
+          patchTestngXml(testngXml, psiClass);
+        });
       }
     }
 

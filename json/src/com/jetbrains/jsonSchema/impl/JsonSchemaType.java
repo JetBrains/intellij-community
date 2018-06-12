@@ -37,4 +37,9 @@ public enum JsonSchemaType {
       return false;
     }
   }
+
+  public String getDescription() {
+    if (this == _any) return "*";
+    return getName();
+  }
 }

@@ -154,7 +154,7 @@ class VisiblePackBuilderTest {
           return null
         }
       }
-      val builder = VcsLogFilterer(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
+      val builder = VcsLogFiltererImpl(providers, hashMap, detailsCache, commitDetailsGetter, EmptyIndex())
 
       return builder.filter(dataPack, PermanentGraph.SortType.Normal, filters, CommitCountStage.INITIAL).first
     }

@@ -72,10 +72,10 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                                               boolean searchInNonJavaFiles);
 
   @Override
-  public boolean isAvailableOnDataContext(final DataContext dataContext) {
-    PsiElement directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
+  public boolean isAvailableOnDataContext(@NotNull final DataContext dataContext) {
+    PsiDirectory directory = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     if (directory != null) {
-      final VirtualFile virtualFile = ((PsiDirectory)directory).getVirtualFile();
+      final VirtualFile virtualFile = directory.getVirtualFile();
       final Project project = directory.getProject();
       if (Comparing.equal(project.getBaseDir(), virtualFile)) return false;
       if (ProjectRootManager.getInstance(project).getFileIndex().isInContent(virtualFile)) {
@@ -98,7 +98,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
   }
 
   @Override
-  public boolean isRenaming(final DataContext dataContext) {
+  public boolean isRenaming(@NotNull final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

@@ -34,8 +34,6 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Query;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.IntObjectMap;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -110,25 +108,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private RootIndex getRootIndex() {
     RootIndex rootIndex = myRootIndex;
     if (rootIndex == null) {
-      myRootIndex = rootIndex = new RootIndex(myProject, createRootInfoCache());
+      myRootIndex = rootIndex = new RootIndex(myProject);
     }
     return rootIndex;
-  }
-
-  protected RootIndex.InfoCache createRootInfoCache() {
-    return new RootIndex.InfoCache() {
-      // Upsource can't use int-mapping because different files may have the same id there
-      private final IntObjectMap<DirectoryInfo> myInfoCache = ContainerUtil.createConcurrentIntObjectMap();
-      @Override
-      public void cacheInfo(@NotNull VirtualFile dir, @NotNull DirectoryInfo info) {
-        myInfoCache.put(((NewVirtualFile)dir).getId(), info);
-      }
-
-      @Override
-      public DirectoryInfo getCachedInfo(@NotNull VirtualFile dir) {
-        return myInfoCache.get(((NewVirtualFile)dir).getId());
-      }
-    };
   }
 
   @Override

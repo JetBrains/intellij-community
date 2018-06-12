@@ -87,8 +87,8 @@ public class StubSerializationHelper {
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
     boolean doDefaultSerialization = true;
 
-    if (rootStub instanceof PsiFileStub) {
-      final PsiFileStub[] roots = ((PsiFileStub)rootStub).getStubRoots();
+    if (rootStub instanceof PsiFileStubImpl) {
+      final PsiFileStub[] roots = ((PsiFileStubImpl<?>)rootStub).getStubRoots();
       if (roots.length == 0) {
         Logger.getInstance(getClass()).error("Incorrect stub files count during serialization:" + rootStub + "," + rootStub.getStubType());
       } else {
@@ -128,6 +128,7 @@ public class StubSerializationHelper {
   }
 
   private final RecentStringInterner myStringInterner;
+  private static final ThreadLocal<ObjectStubSerializer> ourRootStubSerializer = new ThreadLocal<>();
 
   @NotNull
   public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
@@ -190,7 +191,8 @@ public class StubSerializationHelper {
         externalId = myNameStorage.valueOf(id);
       } catch (Throwable ignore) {}
       throw new SerializerNotFoundException(
-        "No serializer registered for stub: ID=" + id + ", externalId:" + externalId +
+        "Broken stub format, most likely version of " + ourRootStubSerializer.get() + " was not updated after serialization changes\n" +
+        "Internal details, no serializer registered for stub: ID=" + id + ", externalId:" + externalId +
         "; parent stub class=" + (parentStub != null? parentStub.getClass().getName() +", parent stub type:" + parentStub.getStubType() : "null"));
     }
 
@@ -198,9 +200,26 @@ public class StubSerializationHelper {
     if (dangling) {
       ((ObjectStubBase) stub).markDangling();
     }
-    int childCount = DataInputOutputUtil.readINT(stream);
-    for (int i = 0; i < childCount; i++) {
-      deserialize(stream, stub);
+    
+    boolean rootStubSerializerWasSet = false;
+    if (parentStub == null && ourRootStubSerializer.get() == null) {
+      ourRootStubSerializer.set(stub instanceof PsiFileStub ? ((PsiFileStub)stub).getType() : null);
+      rootStubSerializerWasSet = true;
+    }
+    try {
+      int childCount = DataInputOutputUtil.readINT(stream);
+      if (stub instanceof StubBase) {
+        ((StubBase)stub).myStubList.prepareForChildren((StubBase<?>)stub, childCount);
+      }
+      for (int i = 0; i < childCount; i++) {
+        deserialize(stream, stub);
+      }
+    } finally {
+      if (rootStubSerializerWasSet) ourRootStubSerializer.set(null);
+    }
+
+    if (parentStub == null && stub instanceof StubBase<?>) {
+      assert ((StubBase<?>)stub).myStubList.isChildrenLayoutOptimal();
     }
     return stub;
   }
@@ -220,7 +239,7 @@ public class StubSerializationHelper {
     }
 
     @Override
-    public int enumerate(@Nullable String value) throws IOException {
+    public int enumerate(@Nullable String value) {
       if (value == null) return 0;
       assert myEnumerates != null; // enumerate possible only when writing stub
       int i = myEnumerates.get(value);
@@ -232,7 +251,7 @@ public class StubSerializationHelper {
     }
 
     @Override
-    public String valueOf(int idx) throws IOException {
+    public String valueOf(int idx) {
       if (idx == 0) return null;
       return myStrings.get(idx - 1);
     }

@@ -19,7 +19,6 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -159,13 +158,12 @@ public class GroovyTrivialIfInspection extends BaseInspection {
         throws IncorrectOperationException {
       final PsiElement prevStatement =
         PsiTreeUtil.skipWhitespacesBackward(statement);
-      final GrCondition condition = statement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = statement.getCondition();
+      if (condition == null) {
         return;
       }
-      final GrExpression expression = (GrExpression) condition;
       final String conditionText =
-          BoolUtils.getNegatedExpressionText(expression);
+          BoolUtils.getNegatedExpressionText(condition);
       final GrStatement thenBranch = statement.getThenBranch();
       final GrAssignmentExpression assignmentExpression =
           (GrAssignmentExpression) ConditionalUtils.stripBraces(thenBranch);
@@ -182,13 +180,12 @@ public class GroovyTrivialIfInspection extends BaseInspection {
 
     private static void replaceSimplifiableImplicitReturnNegated(GrIfStatement statement)
         throws IncorrectOperationException {
-      final GrCondition condition = statement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = statement.getCondition();
+      if (condition == null) {
         return;
       }
-      final GrExpression expression = (GrExpression) condition;
       final String conditionText =
-          BoolUtils.getNegatedExpressionText(expression);
+          BoolUtils.getNegatedExpressionText(condition);
       final PsiElement nextStatement =
         PsiTreeUtil.skipWhitespacesForward(statement);
       if (nextStatement == null) {
@@ -201,26 +198,24 @@ public class GroovyTrivialIfInspection extends BaseInspection {
 
     private static void repaceSimplifiableReturnNegated(GrIfStatement statement)
         throws IncorrectOperationException {
-      final GrCondition condition = statement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = statement.getCondition();
+      if (condition == null) {
         return;
       }
-      final GrExpression expression = (GrExpression) condition;
       final String conditionText =
-          BoolUtils.getNegatedExpressionText(expression);
+          BoolUtils.getNegatedExpressionText(condition);
       @NonNls final String newStatement = "return " + conditionText + ';';
       replaceStatement(statement, newStatement);
     }
 
     private static void replaceSimplifiableAssignmentNegated(GrIfStatement statement)
         throws IncorrectOperationException {
-      final GrCondition condition = statement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = statement.getCondition();
+      if (condition == null) {
         return;
       }
-      final GrExpression expression = (GrExpression) condition;
       final String conditionText =
-          BoolUtils.getNegatedExpressionText(expression);
+          BoolUtils.getNegatedExpressionText(condition);
       final GrStatement thenBranch = statement.getThenBranch();
       final GrAssignmentExpression assignmentExpression =
           (GrAssignmentExpression) ConditionalUtils.stripBraces(thenBranch);
@@ -239,11 +234,11 @@ public class GroovyTrivialIfInspection extends BaseInspection {
     @Override
     public void visitIfStatement(@NotNull GrIfStatement ifStatement) {
       super.visitIfStatement(ifStatement);
-      final GrCondition condition = ifStatement.getCondition();
-      if (!(condition instanceof GrExpression)) {
+      final GrExpression condition = ifStatement.getCondition();
+      if (condition == null) {
         return;
       }
-      final PsiType type = ((GrExpression)condition).getType();
+      final PsiType type = condition.getType();
       if (type == null || !(PsiType.BOOLEAN.isAssignableFrom(type))) {
         return;
       }

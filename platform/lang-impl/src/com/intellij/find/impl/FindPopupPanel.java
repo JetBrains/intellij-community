@@ -416,7 +416,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         }
       };
     myShowFilterPopupAction.registerCustomShortcutSet(myShowFilterPopupAction.getShortcutSet(), this);
-    ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.AutohideOff) {
+    ToggleAction pinAction = new ToggleAction(null, null, AllIcons.General.Pin_tab) {
       @Override
       public boolean isDumbAware() {
         return true;
@@ -740,21 +740,19 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     scopesPanel.add(myScopeSelectionToolbar.getComponent());
     scopesPanel.add(myScopeDetailsPanel, "growx, pushx");
     setLayout(new MigLayout("flowx, ins 4, gap 0, fillx, hidemode 3"));
-    int cbGapLeft = myCbCaseSensitive.getInsets().left;
-    int cbGapRight = myCbCaseSensitive.getInsets().right;
     myTitlePanel = new JPanel(new MigLayout("flowx, ins 0, gap 0, fillx, filly"));
     myTitlePanel.add(myTitleLabel);
     myTitlePanel.add(myLoadingDecorator.getComponent(), "w 24, wmin 24");
     myTitlePanel.add(Box.createHorizontalGlue(), "growx, pushx");
-    int gap = Math.max(0, JBUI.scale(16) - cbGapLeft - cbGapRight);
-    JPanel regexpPanel = new JPanel(new BorderLayout(4, 5));
+    int gap = JBUI.scale(16);
+    JPanel regexpPanel = new JPanel(new BorderLayout(JBUI.scale(4), 0));
     regexpPanel.add(myCbRegularExpressions, BorderLayout.CENTER);
     regexpPanel.add(RegExHelpPopup.createRegExLink("<html><body><b>?</b></body></html>", myCbRegularExpressions, LOG), BorderLayout.EAST);
     AnAction[] actions = {
-      new DefaultCustomComponentAction(myCbCaseSensitive),
-      new DefaultCustomComponentAction(JBUI.Borders.emptyLeft(gap).wrap(myCbPreserveCase)),
-      new DefaultCustomComponentAction(JBUI.Borders.emptyLeft(gap).wrap(myCbWholeWordsOnly)),
-      new DefaultCustomComponentAction(JBUI.Borders.emptyLeft(gap).wrap(regexpPanel)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyRight(gap).wrap(myCbCaseSensitive)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyRight(gap).wrap(myCbPreserveCase)),
+      new DefaultCustomComponentAction(() -> JBUI.Borders.emptyRight(gap).wrap(myCbWholeWordsOnly)),
+      new DefaultCustomComponentAction(() -> regexpPanel),
     };
 
     @SuppressWarnings("InspectionUniqueToolbarId")
@@ -1082,7 +1080,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         ThreadLocal<VirtualFile> lastUsageFileRef = new ThreadLocal<>();
         ThreadLocal<Usage> recentUsageRef = new ThreadLocal<>();
 
-        FindInProjectUtil.findUsages(findModel, myProject, info -> {
+        FindInProjectUtil.findUsages(findModel, myProject, processPresentation, filesToScanInitially, info -> {
           if(isCancelled()) {
             onStop(hash);
             return false;
@@ -1153,7 +1151,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
             onStop(hash);
           }
           return continueSearch;
-        }, processPresentation, filesToScanInitially);
+        });
 
         return new Continuation(() -> {
           if (!isCancelled()) {
@@ -1249,14 +1247,11 @@ public class FindPopupPanel extends JBPanel implements FindUI {
         return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", toFind, e.getDescription()),
                                   mySearchComponent);
       }
-      if (model.isReplaceState()) {
-        try {
-          Pattern.compile(getStringToReplace());
-        }
-        catch (PatternSyntaxException e) {
-          return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),
-                                    myReplaceComponent);
-        }
+      try {
+        Pattern.compile(getStringToReplace());
+      } catch (PatternSyntaxException e) {
+        return new ValidationInfo(FindBundle.message("find.invalid.regular.expression.error", getStringToReplace(), e.getDescription()),
+                                  myReplaceComponent);
       }
     }
 

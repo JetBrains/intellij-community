@@ -145,6 +145,12 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     if (allowedDependencies.isEmpty()) {
       return result;
     }
+    if (reference instanceof PsiJavaCodeReferenceElement) {
+      String qualifiedName = getQualifiedName((PsiJavaCodeReferenceElement)reference, shortReferenceName, containingFile);
+      if (qualifiedName != null) {
+        allowedDependencies.removeIf(aClass -> !qualifiedName.equals(aClass.getQualifiedName()));
+      }
+    }
 
     OrderEntryFix moduleDependencyFix = new AddModuleDependencyFix(reference, currentModule, scope, allowedDependencies);
     registrar.register(moduleDependencyFix);
@@ -184,6 +190,27 @@ public abstract class OrderEntryFix implements IntentionAction, LocalQuickFix {
     }
 
     return result;
+  }
+
+  @Nullable
+  private static String getQualifiedName(@NotNull PsiJavaCodeReferenceElement reference,
+                                         String shortReferenceName,
+                                         PsiFile containingFile) {
+    String qualifiedName = null;
+    if (reference.isQualified()) {
+      qualifiedName = reference.getQualifiedName();
+    }
+    else if (containingFile instanceof PsiJavaFile) {
+      PsiImportList list = ((PsiJavaFile)containingFile).getImportList();
+      if (list != null) {
+        PsiImportStatementBase statement = list.findSingleImportStatement(shortReferenceName);
+        if (statement != null) {
+          //noinspection ConstantConditions
+          qualifiedName = statement.getImportReference().getQualifiedName();
+        }
+      }
+    }
+    return qualifiedName;
   }
 
   private static void createModuleFixes(PsiJavaModuleReference reference,

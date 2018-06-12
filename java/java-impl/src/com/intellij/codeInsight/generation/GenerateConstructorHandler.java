@@ -102,8 +102,8 @@ public class GenerateConstructorHandler extends GenerateMembersHandlerBase {
           if (elements == null || elements.isEmpty()) return null;
           baseConstructors = new PsiMethod[elements.size()];
           for (int i = 0; i < elements.size(); i++) {
-            final ClassMember member = elements.get(i);
-            baseConstructors[i] = ((PsiMethodMember)member).getElement();
+            final PsiMethodMember member = elements.get(i);
+            baseConstructors[i] = member.getElement();
           }
           myCopyJavadoc = chooser.isCopyJavadoc();
         }

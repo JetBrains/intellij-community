@@ -198,18 +198,17 @@ public class InplaceChangeSignature implements DocumentListener {
     String methodSignature = myDetector.getMethodSignaturePreview(changeInfo, deleteRanges, newRanges);
 
     myPreview.getMarkupModel().removeAllHighlighters();
-    new WriteCommandAction(null) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
-      }
-    }.execute();
-    TextAttributes deprecatedAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    WriteCommandAction.writeCommandAction(null).run(() -> {
+      myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
+    });
+    TextAttributes deprecatedAttributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     for (TextRange range : deleteRanges) {
       myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
                                                      deprecatedAttributes, HighlighterTargetArea.EXACT_RANGE);
     }
-    TextAttributes todoAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
+    TextAttributes todoAttributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
     for (TextRange range : newRanges) {
       myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
                                                      todoAttributes, HighlighterTargetArea.EXACT_RANGE);

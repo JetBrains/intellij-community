@@ -152,12 +152,12 @@ class DiffPreviewPanel implements PreviewPanel {
     }
 
     @Override
-    public boolean isFocused() {
+    public boolean isFocusedInWindow() {
       return false;
     }
 
     @Override
-    public void requestFocus() {
+    public void requestFocusInWindow() {
     }
   }
 

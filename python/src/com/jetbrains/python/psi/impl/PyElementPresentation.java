@@ -53,7 +53,8 @@ public class PyElementPresentation implements ColoredItemPresentation {
   @Nullable
   @Override
   public String getLocationString() {
-    return "(" + getPackageForFile(myElement.getContainingFile()) + ")";
+    String packageForFile = getPackageForFile(myElement.getContainingFile());
+    return packageForFile != null ? String.format("(%s)", packageForFile) : null;
   }
 
   @Nullable
@@ -62,15 +63,13 @@ public class PyElementPresentation implements ColoredItemPresentation {
     return myElement.getIcon(0);
   }
 
+  @Nullable
   public static String getPackageForFile(@NotNull PsiFile containingFile) {
     final VirtualFile vFile = containingFile.getVirtualFile();
 
     if (vFile != null) {
-      final String importableName = QualifiedNameFinder.findShortestImportableName(containingFile, vFile);
-      if (importableName != null) {
-        return importableName;
-      }
+      return QualifiedNameFinder.findShortestImportableName(containingFile, vFile);
     }
-    return "";
+    return null;
   }
 }

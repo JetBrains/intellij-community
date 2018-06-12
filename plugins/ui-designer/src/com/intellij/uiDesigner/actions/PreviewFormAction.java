@@ -60,7 +60,7 @@ import com.intellij.uiDesigner.designSurface.GuiEditor;
 import com.intellij.uiDesigner.lw.*;
 import com.intellij.uiDesigner.make.PreviewNestedFormLoader;
 import com.intellij.util.PathsList;
-import java.util.HashSet;
+import com.jgoodies.forms.layout.CellConstraints;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -70,10 +70,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Locale;
-import java.util.StringTokenizer;
+import java.util.*;
 
 /**
  * @author Anton Katilin
@@ -293,7 +290,7 @@ public final class PreviewFormAction extends AnAction{
     // 3. Now we are ready to launch Java process
     final JavaParameters parameters = new JavaParameters();
     parameters.getClassPath().add(tempPath);
-    parameters.getClassPath().add(PathManager.findFileInLibDirectory("jgoodies-forms.jar").getAbsolutePath());
+    parameters.getClassPath().add(PathManager.getJarPathForClass(CellConstraints.class));
     final List<String> paths = sources.getPathList();
     for (final String path : paths) {
       parameters.getClassPath().add(path);

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.psi;
 
+import com.google.common.base.Predicates;
 import com.intellij.psi.PsiPolyVariantReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedRatedResolveResult;
@@ -22,6 +23,7 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.function.Predicate;
 
 public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenceOwner {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
@@ -48,8 +50,24 @@ public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenc
    * <i>Note: the returned list does not contain null values.</i>
    */
   @NotNull
-  List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext);
+  default List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext) {
+    return multiFollowAssignmentsChain(resolveContext, Predicates.alwaysTrue());
+  }
 
+  /**
+   * Goes through a chain of assignment statements until a non-assignment expression is encountered.
+   * Starts at this, expecting it to resolve to a target of an assignment.
+   *
+   * @param resolveContext resolve context
+   * @param follow predicate to test if target should be followed
+   * @return the values that could be assigned to this element via a chain of assignments, or an empty list.
+   * <i>Note: the returned list does not contain null values.</i>
+   */
+  @NotNull
+  List<QualifiedRatedResolveResult> multiFollowAssignmentsChain(@NotNull PyResolveContext resolveContext,
+                                                                @NotNull Predicate<? super PyTargetExpression> follow);
+
+  @Override
   @NotNull
   PsiPolyVariantReference getReference();
 }

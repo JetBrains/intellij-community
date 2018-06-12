@@ -21,7 +21,6 @@ import com.intellij.openapi.diff.impl.patch.FilePatch;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.shelf.ShelveChangesManager;
 import com.intellij.openapi.vcs.changes.shelf.ShelvedBinaryFilePatch;
@@ -41,7 +40,6 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 
-import static com.intellij.openapi.vcs.changes.patch.AutoMatchStrategy.processStipUp;
 import static com.intellij.util.containers.ContainerUtil.mapNotNull;
 
 public class MatchPatchPaths {
@@ -92,27 +90,33 @@ public class MatchPatchPaths {
     for (FilePatch patch : newOrWithoutMatches) {
       String afterName = patch.getAfterName();
       final String[] strings = afterName != null ? afterName.replace('\\', '/').split("/") : ArrayUtil.EMPTY_STRING_ARRAY;
-      Pair<VirtualFile, Integer> best = null;
+      FileBaseMatch best = null;
+      boolean bestIsUnique = true;
       for (int i = strings.length - 2; i >= 0; --i) {
         final String name = strings[i];
         final Collection<VirtualFile> files = findFilesFromIndex(directoryDetector, name);
         if (!files.isEmpty()) {
           // check all candidates
           for (VirtualFile file : files) {
-            Pair<VirtualFile, Integer> pair = compareNamesImpl(strings, file, i);
-            if (pair != null && pair.getSecond() < i) {
-              if (best == null || pair.getSecond() < best.getSecond() || isGoodAndProjectBased(best, pair)) {
-                best = pair;
+            FileBaseMatch match = compareNamesImpl(strings, file, i);
+            if (match != null && match.score < i) {
+              if (best == null || isBetterMatch(match, best)) {
+                best = match;
+                bestIsUnique = true;
+              }
+              else if (!match.file.equals(best.file) &&
+                       !isBetterMatch(best, match)) {
+                bestIsUnique = false;
               }
             }
           }
         }
       }
-      if (best != null) {
-        final AbstractFilePatchInProgress patchInProgress = createPatchInProgress(patch, best.getFirst());
+      if (best != null && bestIsUnique) {
+        final AbstractFilePatchInProgress patchInProgress = createPatchInProgress(patch, best.file);
         if (patchInProgress == null) break;
-        processStipUp(patchInProgress, best.getSecond());
-        result.putValue(best.getFirst(), patchInProgress);
+        processStipUp(patchInProgress, best.score);
+        result.putValue(best.file, patchInProgress);
       }
       else {
         final AbstractFilePatchInProgress patchInProgress = createPatchInProgress(patch, myBaseDir);
@@ -122,9 +126,9 @@ public class MatchPatchPaths {
     }
   }
 
-  private boolean isGoodAndProjectBased(@NotNull Pair<VirtualFile, Integer> bestVariant,
-                                        @NotNull Pair<VirtualFile, Integer> currentVariant) {
-    return currentVariant.getSecond().equals(bestVariant.getSecond()) && myBaseDir.equals(currentVariant.getFirst());
+  private boolean isBetterMatch(@NotNull FileBaseMatch match, @NotNull FileBaseMatch best) {
+    return match.score < best.score ||
+           match.score == best.score && myBaseDir.equals(match.file);
   }
 
   private static void selectByContextOrByStrip(@NotNull List<PatchAndVariants> candidates,
@@ -283,33 +287,33 @@ public class MatchPatchPaths {
     return variant.getCurrentStrip() == 0 && myProject.getBaseDir().equals(variant.getBase());
   }
 
-  private static Pair<VirtualFile, Integer> compareNames(final String beforeName, final VirtualFile file) {
+  @Nullable
+  private static FileBaseMatch compareNames(final String beforeName, final VirtualFile file) {
     if (beforeName == null) return null;
     final String[] parts = beforeName.replace('\\', '/').split("/");
     return compareNamesImpl(parts, file.getParent(), parts.length - 2);
   }
 
-  private static Pair<VirtualFile, Integer> compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
+  @Nullable
+  private static FileBaseMatch compareNamesImpl(String[] parts, VirtualFile parent, int idx) {
     while ((parent != null) && (idx >= 0)) {
       if (!parent.getName().equals(parts[idx])) {
-        return new Pair<>(parent, idx + 1);
+        return new FileBaseMatch(parent, idx + 1);
       }
       parent = parent.getParent();
       --idx;
     }
-    return new Pair<>(parent, idx + 1);
+    return parent != null ? new FileBaseMatch(parent, idx + 1) : null;
   }
 
   @Nullable
   private static AbstractFilePatchInProgress processMatch(final FilePatch patch, final VirtualFile file) {
     final String beforeName = patch.getBeforeName();
-    final Pair<VirtualFile, Integer> pair = compareNames(beforeName, file);
-    if (pair == null) return null;
-    final VirtualFile parent = pair.getFirst();
-    if (parent == null) return null;
-    final AbstractFilePatchInProgress result = createPatchInProgress(patch, parent);
+    final FileBaseMatch match = compareNames(beforeName, file);
+    if (match == null) return null;
+    final AbstractFilePatchInProgress result = createPatchInProgress(patch, match.file);
     if (result != null) {
-      processStipUp(result, pair.getSecond());
+      processStipUp(result, match.score);
     }
     return result;
   }
@@ -320,5 +324,21 @@ public class MatchPatchPaths {
     if (patch instanceof ShelvedBinaryFilePatch) return new ShelvedBinaryFilePatchInProgress((ShelvedBinaryFilePatch)patch, null, dir);
     if (patch instanceof BinaryFilePatch) return new BinaryFilePatchInProgress((BinaryFilePatch)patch, null, dir);
     return null;
+  }
+
+  private static void processStipUp(AbstractFilePatchInProgress patchInProgress, int num) {
+    for (int i = 0; i < num; i++) {
+      patchInProgress.up();
+    }
+  }
+
+  private static class FileBaseMatch {
+    @NotNull public final VirtualFile file;
+    public final int score;
+
+    public FileBaseMatch(@NotNull VirtualFile file, int score) {
+      this.file = file;
+      this.score = score;
+    }
   }
 }

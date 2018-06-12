@@ -1,13 +1,11 @@
 package com.intellij.compiler;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.io.TestFileSystemBuilder;
-import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
@@ -110,10 +108,6 @@ public class ChangeSourceFileSetTest extends BaseCompilerTestCase {
   }
 
   private static void setIgnoredFiles(final String patterns) {
-    new WriteAction() {
-      protected void run(@NotNull final Result result) {
-        FileTypeManager.getInstance().setIgnoredFilesList(patterns);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> FileTypeManager.getInstance().setIgnoredFilesList(patterns));
   }
 }

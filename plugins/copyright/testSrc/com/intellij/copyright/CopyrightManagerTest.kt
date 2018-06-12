@@ -1,10 +1,9 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.copyright
 
 import com.intellij.configurationStore.SchemeManagerFactoryBase
 import com.intellij.testFramework.ProjectRule
 import com.intellij.testFramework.assertions.Assertions.assertThat
-import com.intellij.testFramework.assertions.Assertions.catchThrowable
 import com.intellij.testFramework.rules.InMemoryFsRule
 import com.intellij.util.io.write
 import com.maddyhome.idea.copyright.CopyrightProfile
@@ -34,7 +33,7 @@ internal class CopyrightManagerTest {
   }
 
   @Test
-  fun serializeEmpy() {
+  fun serializeEmpty() {
     val scheme = CopyrightProfile()
     assertThat(scheme.writeScheme()).isEqualTo("""<copyright />""")
   }
@@ -66,20 +65,21 @@ internal class CopyrightManagerTest {
   }
 
   @Test
-  fun empty() {
-    val schemeFile = fsRule.fs.getPath("copyright/openapi.xml")
+  fun `use file name if scheme name missed`() {
+    val schemeFile = fsRule.fs.getPath("copyright/FooBar.xml")
     val schemeData = """
       <component name="CopyrightManager">
-        <copyright />
+        <copyright>
+          <option name="notice" value="Copyright (C) &amp;#36;{today.year} - present by FooBar Inc. and the FooBar group of companies&#10;&#10;Please see distribution for license." />
+        </copyright>
       </component>""".trimIndent()
     schemeFile.write(schemeData)
     val schemeManagerFactory = SchemeManagerFactoryBase.TestSchemeManagerFactory(fsRule.fs.getPath(""))
     val profileManager = CopyrightManager(projectRule.project, schemeManagerFactory,
                                           isSupportIprProjects = false /* otherwise scheme will be not loaded from our memory fs */)
-    val catchThrowable = catchThrowable { profileManager.loadSchemes() }
-    assertThat(catchThrowable)
-      .isInstanceOf(AssertionError::class.java)
-      .hasMessageStartingWith("Cannot read scheme openapi.xml")
-      .hasCauseExactlyInstanceOf(RuntimeException::class.java)
+    profileManager.loadSchemes()
+    val copyrights = profileManager.getCopyrights()
+    assertThat(copyrights).hasSize(1)
+    assertThat(copyrights.first().name).isEqualTo("FooBar")
   }
 }

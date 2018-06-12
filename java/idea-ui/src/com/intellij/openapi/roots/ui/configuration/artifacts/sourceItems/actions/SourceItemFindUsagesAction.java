@@ -18,7 +18,6 @@ package com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.action
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.artifacts.ArtifactsStructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.artifacts.actions.ArtifactEditorFindUsagesActionBase;
-import com.intellij.openapi.roots.ui.configuration.artifacts.nodes.ArtifactsTreeNode;
 import com.intellij.openapi.roots.ui.configuration.artifacts.sourceItems.*;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.daemon.LibraryProjectStructureElement;
@@ -43,12 +42,12 @@ public class SourceItemFindUsagesAction extends ArtifactEditorFindUsagesActionBa
   protected ProjectStructureElement getSelectedElement() {
     final List<SourceItemNode> nodes = myTree.getSelectedSourceItemNodes();
     if (nodes.size() != 1) return null;
-    ArtifactsTreeNode node = nodes.get(0);
-    if (!(node instanceof SourceItemNode)) {
+    SourceItemNode node = nodes.get(0);
+    if (node == null) {
       return null;
     }
 
-    PackagingSourceItem sourceItem = ((SourceItemNode)node).getSourceItem();
+    PackagingSourceItem sourceItem = node.getSourceItem();
     if (sourceItem == null) return null;
 
     final StructureConfigurableContext context = getContext();

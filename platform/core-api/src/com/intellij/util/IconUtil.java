@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
 import com.intellij.ide.presentation.VirtualFilePresentation;
@@ -25,7 +26,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.geom.AffineTransform;
 import java.awt.image.BufferedImage;
+import java.awt.image.RGBImageFilter;
+import java.lang.ref.WeakReference;
 
+import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 import static java.lang.Math.round;
 
@@ -229,67 +233,67 @@ public class IconUtil {
 
   @NotNull
   public static Icon getAddIcon() {
-    return getToolbarDecoratorIcon("add.png");
+    return AllIcons.General.Add;
   }
 
   @NotNull
   public static Icon getRemoveIcon() {
-    return getToolbarDecoratorIcon("remove.png");
+    return AllIcons.General.Remove;
   }
 
   @NotNull
   public static Icon getMoveUpIcon() {
-    return getToolbarDecoratorIcon("moveUp.png");
+    return AllIcons.Actions.MoveUp;
   }
 
   @NotNull
   public static Icon getMoveDownIcon() {
-    return getToolbarDecoratorIcon("moveDown.png");
+    return AllIcons.Actions.MoveDown;
   }
 
   @NotNull
   public static Icon getEditIcon() {
-    return getToolbarDecoratorIcon("edit.png");
+    return AllIcons.Actions.Edit;
   }
 
   @NotNull
   public static Icon getAddClassIcon() {
-    return getToolbarDecoratorIcon("addClass.png");
+    return AllIcons.ToolbarDecorator.AddClass;
   }
 
   @NotNull
   public static Icon getAddPatternIcon() {
-    return getToolbarDecoratorIcon("addPattern.png");
+    return AllIcons.ToolbarDecorator.AddPattern;
   }
 
   @NotNull
   public static Icon getAddJiraPatternIcon() {
-    return getToolbarDecoratorIcon("addJira.png");
+    return AllIcons.ToolbarDecorator.AddJira;
   }
 
   @NotNull
   public static Icon getAddYouTrackPatternIcon() {
-    return getToolbarDecoratorIcon("addYouTrack.png");
+    return AllIcons.ToolbarDecorator.AddYouTrack;
   }
 
   @NotNull
   public static Icon getAddBlankLineIcon() {
-    return getToolbarDecoratorIcon("addBlankLine.png");
+    return AllIcons.ToolbarDecorator.AddBlankLine;
   }
 
   @NotNull
   public static Icon getAddPackageIcon() {
-    return getToolbarDecoratorIcon("addPackage.png");
+    return AllIcons.ToolbarDecorator.AddFolder;
   }
 
   @NotNull
   public static Icon getAddLinkIcon() {
-    return getToolbarDecoratorIcon("addLink.png");
+    return AllIcons.ToolbarDecorator.AddLink;
   }
 
   @NotNull
   public static Icon getAddFolderIcon() {
-    return getToolbarDecoratorIcon("addFolder.png");
+    return AllIcons.ToolbarDecorator.AddFolder;
   }
 
   @NotNull
@@ -657,19 +661,27 @@ public class IconUtil {
 
   @NotNull
   public static Icon textToIcon(@NotNull final String text, @NotNull final Component component, final float fontSize) {
-    final Font font = JBFont.create(JBUI.Fonts.label().deriveFont(fontSize));
-    FontMetrics metrics = component.getFontMetrics(font);
-    final int width = metrics.stringWidth(text) + JBUI.scale(4);
-    final int height = metrics.getHeight();
+    class MyIcon extends JBUI.ScalableJBIcon {
+      Font myFont;
+      FontMetrics myMetrics;
+      final WeakReference<Component> myCompRef = new WeakReference<>(component);
 
-    return new Icon() {
+      private MyIcon() {
+        setIconPreScaled(false);
+        getScaleContext().addUpdateListener(() -> update());
+        update();
+      }
+
       @Override
-      public void paintIcon(Component c, Graphics g, int x, int y) {
+      public void paintIcon(Component c, Graphics g, int x, int y) { // x,y is in USR_SCALE
         g = g.create();
         try {
           GraphicsUtil.setupAntialiasing(g);
-          g.setFont(font);
-          UIUtil.drawStringWithHighlighting(g, text, x + JBUI.scale(2), y + height - JBUI.scale(1), JBColor.foreground(), JBColor.background());
+          g.setFont(myFont);
+          UIUtil.drawStringWithHighlighting(g, text,
+                                            (int)scaleVal(x, OBJ_SCALE) + (int)scaleVal(2),
+                                            (int)scaleVal(y, OBJ_SCALE) + getIconHeight() - (int)scaleVal(1),
+                                            JBColor.foreground(), JBColor.background());
         }
         finally {
           g.dispose();
@@ -678,14 +690,23 @@ public class IconUtil {
 
       @Override
       public int getIconWidth() {
-        return width;
+        return myMetrics.stringWidth(text) + (int)scaleVal(4);
       }
 
       @Override
       public int getIconHeight() {
-        return height;
+        return myMetrics.getHeight();
       }
-    };
+
+      private void update() {
+        myFont = JBFont.create(JBUI.Fonts.label().deriveFont((float)scaleVal(fontSize, OBJ_SCALE))); // fontSize is in USR_SCALE
+        Component comp = myCompRef.get();
+        if (comp == null) comp = new Component() {};
+        myMetrics = comp.getFontMetrics(myFont);
+      }
+    }
+
+    return new MyIcon();
   }
 
   @NotNull
@@ -694,5 +715,13 @@ public class IconUtil {
     icon.setIcon(base, 0);
     icon.setIcon(textToIcon(text, new JLabel(), JBUI.scale(6f)), 1, SwingConstants.SOUTH_EAST);
     return icon;
+  }
+
+  /**
+   * Creates new icon with the filter applied.
+   */
+  @Nullable
+  public static Icon filterIcon(@NotNull Icon icon, RGBImageFilter filter, @Nullable Component ancestor) {
+    return IconLoader.filterIcon(icon, filter, ancestor);
   }
 }

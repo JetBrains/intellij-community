@@ -40,6 +40,7 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
   val workingDir = ourCurrentDir()
   val split = splitCommandInParameters(command)
   val handler = GitLineHandler(project, workingDir, getGitCommandInstance(split[0]))
+  handler.setWithMediator(false)
   handler.addParameters(split.subList(1, split.size))
 
   val result = Git.getInstance().runCommand(handler)
@@ -121,6 +122,10 @@ private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
 private fun lastMessage(project: Project) = message(project, "HEAD")
+
+fun GitRepository.lastAuthorTime() = cd { lastAuthorTime(project) }
+fun GitPlatformTest.lastAuthorTime() = lastAuthorTime(project)
+private fun lastAuthorTime(project: Project) = git(project, "log -1 --pretty=%at")
 
 fun GitRepository.message(revision: String) = cd { message(project, revision)}
 private fun message(project: Project, revision: String) =

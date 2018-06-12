@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -150,10 +135,10 @@ public class ExpressionStatement {
     return isExprStatement ? Result.EXPR_STATEMENT : Result.EXPRESSION;
   }
 
-  private static GroovyElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
+  private static IElementType namePartParse(PsiBuilder builder, GroovyParser parser) {
     if (TokenSets.BINARY_OP_SET.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
     if (TokenSets.KEYWORDS.contains(builder.getTokenType())) return GroovyElementTypes.WRONGWAY;
-    final GroovyElementType type = PathExpression.namePartParse(builder, parser);
+    final IElementType type = PathExpression.namePartParse(builder, parser);
     if (type == GroovyElementTypes.WRONGWAY && TokenSets.NUMBERS.contains(builder.getTokenType())) {
       builder.advanceLexer();
       return GroovyElementTypes.REFERENCE_EXPRESSION;

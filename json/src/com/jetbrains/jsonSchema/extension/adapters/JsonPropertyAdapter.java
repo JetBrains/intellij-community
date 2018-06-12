@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JsonPropertyAdapter {
   @Nullable String getName();
+  @Nullable JsonValueAdapter getNameValueAdapter();
   @Nullable JsonValueAdapter getValue();
   @NotNull PsiElement getDelegate();
   @Nullable JsonObjectValueAdapter getParentObject();

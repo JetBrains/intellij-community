@@ -64,7 +64,8 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     final Collection<VirtualFile> schemaFiles = myJsonSchemaService.getSchemaFilesForFile(file);
     if (schemaFiles.size() <= 1) return null;
 
-    final String message = createMessage(schemaFiles);
+    final String message = createMessage(schemaFiles, myJsonSchemaService,
+                                         "; ", "<html>There are several JSON Schemas mapped to this file: ", "</html>");
     if (message == null) return null;
 
     final EditorNotificationPanel panel = new EditorNotificationPanel(LightColors.RED);
@@ -76,9 +77,13 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
     return panel;
   }
 
-  public String createMessage(@NotNull final Collection<VirtualFile> schemaFiles) {
+  public static String createMessage(@NotNull final Collection<VirtualFile> schemaFiles,
+                                     @NotNull JsonSchemaService jsonSchemaService,
+                                     @NotNull String separator,
+                                     @NotNull String prefix,
+                                     @NotNull String suffix) {
     final List<Pair<Boolean, String>> pairList = schemaFiles.stream()
-      .map(file -> myJsonSchemaService.getSchemaProvider(file))
+      .map(file -> jsonSchemaService.getSchemaProvider(file))
       .filter(Objects::nonNull)
       .map(provider -> Pair.create(SchemaType.userSchema.equals(provider.getSchemaType()), provider.getName()))
       .collect(Collectors.toList());
@@ -95,6 +100,6 @@ public class JsonSchemaConflictNotificationProvider extends EditorNotifications.
       else {
         return pair.getSecond();
       }
-    }).collect(Collectors.joining("; ", "<html>There are several JSON Schemas mapped to this file: ", "</html>"));
+    }).collect(Collectors.joining(separator, prefix, suffix));
   }
 }

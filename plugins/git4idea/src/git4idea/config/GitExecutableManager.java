@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.text.ParseException;
 import java.util.Collections;
+import java.util.Objects;
 
 /**
  * Manager for "current git executable".

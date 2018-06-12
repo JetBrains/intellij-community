@@ -24,12 +24,14 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 
 public class BackAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) return;
     IdeDocumentHistory.getInstance(project).back();
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getProject();

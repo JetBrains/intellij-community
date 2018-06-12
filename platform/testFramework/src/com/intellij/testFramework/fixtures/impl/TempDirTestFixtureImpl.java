@@ -16,7 +16,6 @@
 package com.intellij.testFramework.fixtures.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
@@ -92,21 +91,23 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
 
   @Override
   public VirtualFile getFile(@NotNull final String path) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws IOException {
+    try {
+      return WriteAction.computeAndWait(() -> {
         final String fullPath = myTempDir.getCanonicalPath() + '/' + path;
         final VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByPath(fullPath);
-        result.setResult(file);
-      }
-    }.execute().getResultObject();
+        return file;
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @Override
   @NotNull
   public VirtualFile createFile(@NotNull final String name) {
     final File file = new File(createTempDirectory(), name);
-    return WriteAction.compute(() -> {
+    return WriteAction.computeAndWait(() -> {
       FileUtil.createIfDoesntExist(file);
       return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     });
@@ -122,12 +123,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   @NotNull
   public VirtualFile createFile(@NotNull String name, @NotNull final String text) throws IOException {
     final VirtualFile file = createFile(name);
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws IOException {
-        VfsUtil.saveText(file, text);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
     return file;
   }
 
@@ -141,12 +137,7 @@ public class TempDirTestFixtureImpl extends BaseFixture implements TempDirTestFi
   public void tearDown() throws Exception {
     try {
       if (myTempDir != null) {
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull Result result) throws IOException {
-            findOrCreateDir("").delete(this);
-          }
-        }.execute();
+        WriteAction.runAndWait(() -> findOrCreateDir("").delete(this));
       }
     }
     finally {

@@ -58,8 +58,8 @@ public class ModuleHighlightUtil {
 
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
     if (index.isInLibrary(file)) {
-      VirtualFile root;
-      if ((root = index.getClassRootForFile(file)) != null) {
+      VirtualFile root = index.getClassRootForFile(file);
+      if (root != null) {
         VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
         if (descriptorFile == null) {
           VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
@@ -75,15 +75,6 @@ public class ModuleHighlightUtil {
         }
         else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
           return LightJavaModule.getModule(PsiManager.getInstance(project), root);
-        }
-      }
-      else if ((root = index.getSourceRootForFile(file)) != null) {
-        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_FILE);
-        if (descriptorFile != null) {
-          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
-          if (psiFile instanceof PsiJavaFile) {
-            return ((PsiJavaFile)psiFile).getModuleDeclaration();
-          }
         }
       }
     }

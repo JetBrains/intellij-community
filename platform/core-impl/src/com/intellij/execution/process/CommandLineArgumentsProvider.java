@@ -26,7 +26,7 @@ import java.util.Map;
 
 /**
  * @author Roman.Chernyatchik, oleg
- * @deprecated Use GeneralCommandLine instead
+ * @deprecated Use {@link com.intellij.execution.configurations.GeneralCommandLine} instead
  * @deprecated Usages only in Ruby. Move to Ruby module?
  */
 @Deprecated

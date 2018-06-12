@@ -47,13 +47,15 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.util.List;
 
-class FindPopupDirectoryChooser extends JPanel {
+@SuppressWarnings("WeakerAccess")
+public class FindPopupDirectoryChooser extends JPanel {
   @NotNull private final FindUIHelper myHelper;
   @NotNull private final Project myProject;
   @NotNull private final FindPopupPanel myFindPopupPanel;
   @NotNull private final ComboBox<String> myDirectoryComboBox;
 
-  FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
+  @SuppressWarnings("WeakerAccess")
+  public FindPopupDirectoryChooser(@NotNull FindPopupPanel panel) {
     super(new BorderLayout());
 
     myHelper = panel.getHelper();
@@ -119,7 +121,8 @@ class FindPopupDirectoryChooser extends JPanel {
     add(buttonsPanel, BorderLayout.EAST);
   }
 
-  void initByModel(@NotNull FindModel findModel) {
+  @SuppressWarnings("WeakerAccess")
+  public void initByModel(@NotNull FindModel findModel) {
     final String directoryName = findModel.getDirectoryName();
     java.util.List<String> strings = FindInProjectSettings.getInstance(myProject).getRecentDirectories();
 
@@ -161,7 +164,7 @@ class FindPopupDirectoryChooser extends JPanel {
 
   private class MyRecursiveDirectoryAction extends ToggleAction {
     MyRecursiveDirectoryAction() {
-      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.General.Recursive);
+      super(FindBundle.message("find.scope.directory.recursive.checkbox"), "Recursively", AllIcons.Actions.ShowAsTree);
     }
 
     @Override

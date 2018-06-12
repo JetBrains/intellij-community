@@ -153,7 +153,12 @@ public class VfsData {
     if (segment != null || !create) return segment;
     return ourSegments.cacheOrGet(key, new Segment());
   }
-  
+
+  public static boolean hasLoadedFile(int id) {
+    Segment segment = getSegment(id, false);
+    return segment != null && segment.myObjectArray.get(getOffset(id)) != null;
+  }
+
   public static class FileAlreadyCreatedException extends Exception {
     private FileAlreadyCreatedException(String message) {
       super(message);

@@ -10,6 +10,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -107,10 +108,14 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     final Expander expander = new Expander();
     group.addSeparator();
     group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
-    group.add(cam.createExpandAllAction(expander, myView));
-    group.add(cam.createCollapseAllAction(expander, myView));
 
-    myPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
+    DefaultActionGroup treeActions = new DefaultActionGroup();
+    treeActions.add(cam.createExpandAllHeaderAction(expander, myView));
+    treeActions.add(cam.createCollapseAllHeaderAction(expander, myView));
+
+    JPanel toolbarPanel = new TreeActionsToolbarPanel(actionToolbar, treeActions, myView);
+
+    myPanel.add(toolbarPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
     myView.getGroupingSupport().setGroupingKeysOrSkip(set(DEFAULT_GROUPING_KEYS));
   }

@@ -50,7 +50,7 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   }
 
   /**
-   * @deprecated Use PersistentStateComponent (see LaunchBrowserBeforeRunTask for example).
+   * @deprecated Use {@link PersistentStateComponent} instead (see {@link com.intellij.ide.browsers.LaunchBrowserBeforeRunTask} for example).
    */
   public void writeExternal(@NotNull Element element) {
     if (this instanceof PersistentStateComponent) {
@@ -62,7 +62,7 @@ public abstract class BeforeRunTask<T extends BeforeRunTask> implements Cloneabl
   }
 
   /**
-   * @deprecated Use PersistentStateComponent (see LaunchBrowserBeforeRunTask for example).
+   * @deprecated Use {@link PersistentStateComponent} instead (see {@link com.intellij.ide.browsers.LaunchBrowserBeforeRunTask} for example).
    */
   public void readExternal(@NotNull Element element) {
     String attribValue = element.getAttributeValue("enabled");

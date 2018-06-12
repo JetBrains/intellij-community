@@ -190,7 +190,7 @@ public class JUnitStarter {
     for (int i = 0; i < args.length; i++) {
       String arg = args[i];
       if (arg.startsWith(IDE_VERSION)) {
-        int ideVersion = Integer.parseInt(arg.substring(IDE_VERSION.length(), arg.length()));
+        int ideVersion = Integer.parseInt(arg.substring(IDE_VERSION.length()));
         if (ideVersion != VERSION) {
           printStream.println("Wrong agent version: " + VERSION + ". IDE expects version: " + ideVersion);
           printStream.flush();

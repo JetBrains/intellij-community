@@ -6,11 +6,11 @@
       <option name="JAVA_CODE" value="false" />
       <option name="JAVA_STATEMENT" value="true" />
       <option name="JAVA_DECLARATION" value="true" />
-      <option name="JAVA_EXPRESSION" value="true" />
+      <option name="JAVA_EXPRESSION" value="false" />
       <option name="GROOVY" value="false" />
       <option name="GROOVY_STATEMENT" value="true" />
       <option name="GROOVY_DECLARATION" value="true" />
-      <option name="GROOVY_EXPRESSION" value="true" />
+      <option name="GROOVY_EXPRESSION" value="false" />
     </context>
   </template>
   <template resource-bundle="messages.CodeInsightBundle" key="livetemplate.description.psf"

@@ -111,15 +111,11 @@ public class CollapseTagIntention implements LocalQuickFix, IntentionAction {
     VirtualFile file = tag.getContainingFile().getVirtualFile();
     final Document document = FileDocumentManager.getInstance().getDocument(file);
 
-    new WriteCommandAction(project) {
-      @Override
-      protected void run(@NotNull final Result result) {
-        assert document != null;
-        document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
-        PsiDocumentManager.getInstance(project).commitDocument(document);
-        CodeStyleManager.getInstance(project).reformat(tag);
-      }
-    }.execute();
-
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      assert document != null;
+      document.replaceString(offset, tag.getTextRange().getEndOffset(), "/>");
+      PsiDocumentManager.getInstance(project).commitDocument(document);
+      CodeStyleManager.getInstance(project).reformat(tag);
+    });
   }
 }

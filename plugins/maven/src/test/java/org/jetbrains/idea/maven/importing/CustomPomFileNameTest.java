@@ -34,6 +34,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m1/customName.xml</module>" +
@@ -56,6 +57,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>customName.xml</module>" +
@@ -78,6 +80,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m1/customPom.xml</module>" +
@@ -98,6 +101,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     createProjectSubFile("m1/customPom.xml", createPomXml(
                   "<artifactId>m1</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<parent>" +
                   "  <groupId>test</groupId>" +
@@ -123,6 +127,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m1/customPom.xml</module>" +
@@ -167,6 +172,7 @@ public class CustomPomFileNameTest extends MavenDomTestCase {
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +
                   "<version>1</version>" +
+                  "<packaging>pom</packaging>" +
 
                   "<modules>" +
                   "  <module>m1/customName.xml</module>" +

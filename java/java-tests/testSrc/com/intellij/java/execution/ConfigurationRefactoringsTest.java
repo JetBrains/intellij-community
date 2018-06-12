@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution;
 
 import com.intellij.execution.RunManager;
@@ -11,7 +9,6 @@ import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.impl.RunnerAndConfigurationSettingsImpl;
 import com.intellij.execution.junit.AllInPackageConfigurationProducer;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.testframework.AbstractJavaTestConfigurationProducer;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -140,9 +137,7 @@ public class ConfigurationRefactoringsTest extends BaseConfigurationTestCase {
   public void testRenameBadTestClass() throws IOException {
     PsiClass psiClass = mySource.createClass("NotATest", NOT_A_TEST);
     assertNotNull(psiClass);
-    JUnitConfigurationType instance = JUnitConfigurationType.getInstance();
-    assertNotNull(instance);
-    JUnitConfiguration configuration = new JUnitConfiguration("notATest", myProject, instance.getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration("notATest", myProject);
     configuration.setMainClass(psiClass);
     configuration.setModule(configuration.getValidModules().iterator().next());
 

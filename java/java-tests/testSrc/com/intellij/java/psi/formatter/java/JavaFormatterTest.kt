@@ -3442,4 +3442,163 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
       "}"
     )
   }
+
+  /**
+   * See IDEA-98552, IDEA-175560
+   */
+  fun testParenthesesIndentation() {
+    doTextTest(
+"""
+package com.company;
+
+import java.util.Arrays;
+import java.util.List;
+
+class Test {
+
+void foo(boolean bool1, boolean bool2) {
+List<String> list = Arrays.asList(
+"a", "b", "c"
+);
+ // IDEA-98552
+for (
+String s : list
+) {
+System.out.println(s);
+}
+ // IDEA-175560
+if (bool1
+&& bool2
+) { // Indented at continuation indent level
+ // do stuff
+}
+}
+}
+""",
+
+"""
+package com.company;
+
+import java.util.Arrays;
+import java.util.List;
+
+class Test {
+
+    void foo(boolean bool1, boolean bool2) {
+        List<String> list = Arrays.asList(
+                "a", "b", "c"
+        );
+        // IDEA-98552
+        for (
+                String s : list
+        ) {
+            System.out.println(s);
+        }
+        // IDEA-175560
+        if (bool1
+                && bool2
+        ) { // Indented at continuation indent level
+            // do stuff
+        }
+    }
+}
+"""
+    )
+  }
+
+  fun testBlankLinesBeforeClassEnd () {
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    doTextTest(
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+
+    {
+        field1 = 2;
+    }
+
+    public void test() {
+        new Runnable() {
+            public void run() {
+            }
+        };
+    }
+}
+""",
+
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+
+    {
+        field1 = 2;
+    }
+
+    public void test() {
+        new Runnable() {
+            public void run() {
+            }
+        };
+    }
+
+
+}
+"""
+    )
+  }
+
+  fun testBlankLinesBeforeClassEnd_afterField () {
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    doTextTest(
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+}
+""",
+
+"""
+public class Test {
+
+    private int field1;
+    private int field2;
+
+
+}
+"""
+    )
+  }
+
+
+  fun testBlankLinesBeforeClassEnd_afterInnerClass () {
+    AbstractJavaFormatterTest.getSettings().BLANK_LINES_BEFORE_CLASS_END = 2;
+    doTextTest(
+"""
+public class Test {
+
+    private class InnerTest {
+        private int f;
+    }
+}
+""",
+
+"""
+public class Test {
+
+    private class InnerTest {
+        private int f;
+
+
+    }
+
+
+}
+"""
+    )
+  }
 }

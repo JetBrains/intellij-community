@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.popup.PopupFactoryImpl;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MouseEventAdapter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
@@ -22,7 +23,6 @@ public class ActionGroupLink extends JPanel {
   private final MyLinkLabel myLinkLabel;
 
   public ActionGroupLink(@NotNull String text, @Nullable Icon icon, @NotNull ActionGroup actionGroup) {
-    super(new BorderLayout());
     setOpaque(false);
 
     myLinkLabel = new MyLinkLabel(text, icon);
@@ -38,7 +38,8 @@ public class ActionGroupLink extends JPanel {
     }, null);
 
 
-    JLabel arrow = new JLabel(AllIcons.General.Combo3);
+    JLabel arrow = new JLabel(AllIcons.General.LinkDropTriangle);
+    arrow.setVerticalAlignment(SwingConstants.BOTTOM);
     arrow.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     new ClickListener() {
       @Override
@@ -49,8 +50,8 @@ public class ActionGroupLink extends JPanel {
       }
     }.installOn(arrow);
 
-    add(myLinkLabel, BorderLayout.CENTER);
-    add(arrow, BorderLayout.EAST);
+    setLayout(new GridBagLayout());
+    add(JBUI.Panels.simplePanel(myLinkLabel).addToRight(arrow), new GridBagConstraints());
   }
 
   public LinkLabel getLinkLabel() {

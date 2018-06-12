@@ -49,6 +49,7 @@ public class ModuleGroupItem extends PackagingSourceItem {
     return myPath.hashCode();
   }
 
+  @NotNull
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ModuleGroupSourceItemPresentation(myGroupName);

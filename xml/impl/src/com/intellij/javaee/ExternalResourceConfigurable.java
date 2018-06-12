@@ -27,8 +27,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 
-public class ExternalResourceConfigurable extends BaseConfigurable
-  implements Configurable.NoScroll {
+public class ExternalResourceConfigurable extends BaseConfigurable implements Configurable.NoScroll {
   private JPanel myPanel;
   private List<NameLocationPair> myPairs;
   private List<String> myIgnoredUrls;

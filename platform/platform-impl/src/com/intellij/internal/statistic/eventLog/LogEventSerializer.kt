@@ -6,6 +6,7 @@ package com.intellij.internal.statistic.eventLog
 import com.google.common.reflect.TypeToken
 import com.google.gson.*
 import com.intellij.util.containers.hash.HashMap
+import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 
 object LogEventSerializer {
@@ -13,6 +14,10 @@ object LogEventSerializer {
 
   fun toString(session: Any): String {
     return gson.toJson(session)
+  }
+
+  fun toString(session: Any, writer: OutputStreamWriter) {
+    gson.toJson(session, writer)
   }
 
   fun fromString(line: String): LogEvent {

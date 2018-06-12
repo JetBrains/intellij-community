@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -60,7 +62,7 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
 
   public ChangesListView(@NotNull Project project) {
     myProject = project;
-    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this, true);
 
     setModel(TreeModelBuilder.buildEmpty(project));
 
@@ -200,15 +202,6 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     }
     else if (key == PlatformDataKeys.HELP_ID) {
       sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
-    }
-    else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
-      final TreePath selectionPath = getSelectionPath();
-      if (selectionPath != null && selectionPath.getPathCount() > 1) {
-        ChangesBrowserNode<?> firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
-        if (firstNode instanceof ChangesBrowserChangeListNode) {
-          sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, firstNode.getAllChangesUnder());
-        }
-      }
     }
     else if (key == ChangesGroupingSupport.KEY) {
       sink.put(ChangesGroupingSupport.KEY, myGroupingSupport);
@@ -361,6 +354,21 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NotNull
   public Stream<Change> getChanges() {
     return getRoot().getObjectsUnderStream(Change.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), change);
+    while (node != null) {
+      if (node instanceof ChangesBrowserChangeListNode) {
+        return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      }
+      if (node == getRoot() && Registry.is("vcs.skip.single.default.changelist")) {
+        return getRoot().getAllChangesUnder();
+      }
+      node = (DefaultMutableTreeNode)node.getParent();
+    }
+    return null;
   }
 
   @NotNull

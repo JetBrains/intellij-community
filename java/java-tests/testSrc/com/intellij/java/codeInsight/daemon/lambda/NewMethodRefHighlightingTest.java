@@ -180,6 +180,7 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodReferenceSwallowedErrors() { doTest(); }
   public void testConflictingVarargsFromFirstSearchWithNArityOfTheSecondSearch() { doTest(); }
   public void testSkipInferenceForInapplicableMethodReference() { doTest(); }
+  public void testRegisterVariablesForNonFoundParameterizations() { doTest(); }
 
   public void testPreferErrorOnTopLevelToFailedSubstitutorOnNestedLevel() { doTest(); }
 

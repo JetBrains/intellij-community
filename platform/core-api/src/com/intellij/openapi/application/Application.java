@@ -434,4 +434,5 @@ public interface Application extends ComponentManager {
   boolean isInternal();
 
   boolean isEAP();
+
 }

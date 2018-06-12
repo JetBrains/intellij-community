@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.Disposable
@@ -74,9 +60,12 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   // access under storageLock
   @Suppress("LeakingThis")
-  private var isUseVfsListener = if (componentManager == null) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state
+  private var isUseVfsListener = if (componentManager == null || !isUseVfsForWrite) ThreeState.NO else ThreeState.UNSURE // unsure because depends on stream provider state
 
   protected open val isUseXmlProlog: Boolean
+    get() = true
+
+  protected open val isUseVfsForWrite: Boolean
     get() = true
 
   companion object {
@@ -297,6 +286,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
                                      provider: StreamProvider? = null) : FileBasedStorage(file, fileSpec, rootElementName, pathMacroManager, roamingType, provider), StorageVirtualFileTracker.TrackedStorage {
     override val isUseXmlProlog: Boolean
       get() = rootElementName != null && storageManager.isUseXmlProlog
+
+    override val isUseVfsForWrite: Boolean
+      get() = storageManager.isUseVfsForWrite
 
     override fun beforeElementSaved(element: Element) {
       if (rootElementName != null) {

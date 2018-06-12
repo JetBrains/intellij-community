@@ -48,6 +48,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
+import java.util.List;
+import java.util.stream.Collectors;
+import java.util.stream.IntStream;
 
 /**
  * @author max
@@ -102,10 +105,7 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
   }
 
   private GroupNode buildUsageTree(int[] indices, UsageGroupingRule[] rules) {
-    Usage[] usages = new Usage[indices.length];
-    for (int i = 0; i < usages.length; i++) {
-      usages[i] = createUsage(indices[i]);
-    }
+    List<Usage> usages = IntStream.of(indices).mapToObj(UsageNodeTreeBuilderTest::createUsage).collect(Collectors.toList());
 
     UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setUsagesString("searching for mock usages");
@@ -129,11 +129,9 @@ public class UsageNodeTreeBuilderTest extends LightPlatformTestCase {
     try {
       UsageViewImpl usageView = new UsageViewImpl(getProject(), presentation, UsageTarget.EMPTY_ARRAY, null);
       Disposer.register(getTestRootDisposable(), usageView);
-      for (Usage usage : usages) {
-        usageView.appendUsage(usage);
-      }
+      usageView.appendUsagesInBulk(usages);
       UIUtil.dispatchAllInvocationEvents();
-      ProgressManager.getInstance().run(new Task.Modal(getProject(), "waiting", false) {
+      ProgressManager.getInstance().run(new Task.Modal(getProject(), "Waiting", false) {
         @Override
         public void run(@NotNull ProgressIndicator indicator) {
           usageView.waitForUpdateRequestsCompletion();

@@ -33,6 +33,7 @@ public class SPIClassProviderReferenceElement extends SPIPackageOrClassReference
     super(node);
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return TextRange.from(0, getTextLength());

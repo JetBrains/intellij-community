@@ -6,11 +6,13 @@
     </item>
     <item name='java.lang.reflect.Array java.lang.Object newInstance(java.lang.Class&lt;?&gt;, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>
     <item name='java.lang.reflect.Array java.lang.Object newInstance(java.lang.Class&lt;?&gt;, int...)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
     </item>

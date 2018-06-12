@@ -19,7 +19,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentEvent;
-import com.intellij.openapi.editor.ex.PrioritizedDocumentListener;
 import com.intellij.openapi.editor.ex.PrioritizedInternalDocumentListener;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.Getter;
@@ -31,30 +30,24 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> {
-  private final PrioritizedDocumentListener myListener;
-  private final Document myDocument;
-
+public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedInternalDocumentListener {
   protected RangeMarkerTree(@NotNull Document document) {
-    myDocument = document;
-    myListener = new PrioritizedInternalDocumentListener() {
-      @Override
-      public int getPriority() {
-        return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
-      }
+    document.addDocumentListener(this);
+  }
 
-      @Override
-      public void documentChanged(DocumentEvent e) {
-        updateMarkersOnChange(e);
-      }
+  @Override
+  public void moveTextHappened(int start, int end, int newBase) {
+    reTarget(start, end, newBase);
+  }
 
-      @Override
-      public void moveTextHappened(int start, int end, int newBase) {
-        reTarget(start, end, newBase);
-      }
-    };
+  @Override
+  public int getPriority() {
+    return EditorDocumentPriorities.RANGE_MARKER; // Need to make sure we invalidate all the stuff before someone (like LineStatusTracker) starts to modify highlights.
+  }
 
-    document.addDocumentListener(myListener);
+  @Override
+  public void documentChanged(DocumentEvent event) {
+    updateMarkersOnChange(event);
   }
 
   @Override
@@ -81,8 +74,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
     return 0;
   }
 
-  void dispose() {
-    myDocument.removeDocumentListener(myListener);
+  void dispose(@NotNull Document document) {
+    document.removeDocumentListener(this);
   }
 
   private static final int DUPLICATE_LIMIT = 30; // assertion: no more than DUPLICATE_LIMIT range markers are allowed to be registered at given (start, end)
@@ -126,12 +119,6 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   protected RMNode<T> createNewNode(@NotNull T key, int start, int end, 
                                     boolean greedyToLeft, boolean greedyToRight, boolean stickingToRight, int layer) {
     return new RMNode<>(this, key, start, end, greedyToLeft, greedyToRight, stickingToRight);
-  }
-
-  @Override
-  protected void checkBelongsToTheTree(@NotNull T interval, boolean assertInvalid) {
-    assert interval.getDocument() == myDocument;
-    super.checkBelongsToTheTree(interval, assertInvalid);
   }
 
   @Override
@@ -244,7 +231,7 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
       checkMax(true);
 
       IntervalNode<T> root = getRoot();
-      assert root == null || root.maxEnd + root.delta <= myDocument.getTextLength();
+      assert root == null || root.maxEnd + root.delta <= e.getDocument().getTextLength();
     }
     finally {
       l.writeLock().unlock();

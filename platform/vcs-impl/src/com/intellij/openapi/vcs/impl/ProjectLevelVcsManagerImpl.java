@@ -325,7 +325,7 @@ public class ProjectLevelVcsManagerImpl extends ProjectLevelVcsManagerEx impleme
 
   @Override
   public VcsRoot getVcsRootObjectFor(@Nullable FilePath file) {
-    if (file == null || myProject.isDisposed()) return null;
+    if (file == null) return null;
 
     VirtualFile vFile = ChangesUtil.findValidParentAccurately(file);
     return vFile != null ? getVcsRootObjectFor(vFile) : null;

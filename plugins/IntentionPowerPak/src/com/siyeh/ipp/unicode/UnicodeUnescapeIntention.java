@@ -53,7 +53,7 @@ public class UnicodeUnescapeIntention extends Intention {
         if (index < 0) {
           break;
         }
-        replacement.append(text.substring(anchor, index));
+        replacement.append(text, anchor, index);
         int hexStart = index + 1;
         while (text.charAt(hexStart) == 'u') {
           hexStart++;
@@ -62,7 +62,7 @@ public class UnicodeUnescapeIntention extends Intention {
         final int c = Integer.parseInt(text.substring(hexStart, anchor), 16);
         replacement.appendCodePoint(c);
       }
-      replacement.append(text.substring(anchor, textLength));
+      replacement.append(text, anchor, textLength);
       document.replaceString(start, end, replacement);
     }
     else {

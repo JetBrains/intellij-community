@@ -1,6 +1,8 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.idea;
 
 import groovy.lang.Script;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -16,7 +18,7 @@ public class IdeaProjectLoader {
     File home = new File(new URI(uri).getSchemeSpecificPart());
 
     while (home != null) {
-      if (home.isDirectory() && new File(home, ".idea").exists()) {
+      if (home.isDirectory() && new File(home, PathMacroUtil.DIRECTORY_STORE_NAME).exists()) {
         return home.getCanonicalPath();
       }
 

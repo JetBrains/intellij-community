@@ -121,11 +121,13 @@ public class ClsReferenceExpressionImpl extends ClsElementImpl implements PsiRef
     return result != JavaResolveResult.EMPTY ? new JavaResolveResult[]{result} : JavaResolveResult.EMPTY_ARRAY;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());

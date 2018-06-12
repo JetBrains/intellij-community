@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.text.StringUtilRt;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +28,7 @@ import java.util.*;
 public class Comparing {
   private Comparing() { }
 
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static <T> boolean equal(@Nullable T arg1, @Nullable T arg2) {
     if (arg1 == arg2) return true;
     if (arg1 == null || arg2 == null) {
@@ -43,6 +45,7 @@ public class Comparing {
     return arg1.equals(arg2);
   }
 
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static <T> boolean equal(@Nullable T[] arr1, @Nullable T[] arr2) {
     if (arr1 == null || arr2 == null) {
       return arr1 == arr2;
@@ -50,14 +53,17 @@ public class Comparing {
     return Arrays.equals(arr1, arr2);
   }
 
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(CharSequence s1, CharSequence s2) {
     return equal(s1, s2, true);
   }
 
+  @Contract(value = "null,!null -> false; !null,null -> false; null,null -> true", pure = true)
   public static boolean equal(@Nullable String arg1, @Nullable String arg2) {
     return arg1 == null ? arg2 == null : arg1.equals(arg2);
   }
 
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
   public static boolean equal(@Nullable CharSequence s1, @Nullable CharSequence s2, boolean caseSensitive) {
     if (s1 == s2) return true;
     if (s1 == null || s2 == null) return false;
@@ -82,6 +88,7 @@ public class Comparing {
     return true;
   }
 
+  @Contract("null,!null,_ -> false; !null,null,_ -> false; null,null,_ -> true")
   public static boolean equal(@Nullable String arg1, @Nullable String arg2, boolean caseSensitive) {
     if (arg1 == null || arg2 == null) {
       return arg1 == arg2;

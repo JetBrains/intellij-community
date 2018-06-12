@@ -190,10 +190,10 @@ class NonNullInAnalysis extends Analysis<PResult> {
   @NotNull
   Equation mkEquation(PResult result) {
     if (Identity == result || Return == result) {
-      return new Equation(aKey, new Final(Value.Top));
+      return new Equation(aKey, Value.Top);
     }
     else if (NPE == result) {
-      return new Equation(aKey, new Final(Value.NotNull));
+      return new Equation(aKey, Value.NotNull);
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;
@@ -410,10 +410,10 @@ class NullableInAnalysis extends Analysis<PResult> {
   @NotNull
   Equation mkEquation(PResult result) {
     if (NPE == result) {
-      return new Equation(aKey, new Final(Value.Top));
+      return new Equation(aKey, Value.Top);
     }
     if (Identity == result || Return == result) {
-      return new Equation(aKey, new Final(Value.Null));
+      return new Equation(aKey, Value.Null);
     }
     else {
       ConditionalNPE condNpe = (ConditionalNPE) result;

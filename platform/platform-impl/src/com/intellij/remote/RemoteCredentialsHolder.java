@@ -25,6 +25,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 
@@ -53,6 +54,7 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   private String myHost;
   private int myPort;//will always be equal to myLiteralPort, if it's valid, or equal to 0 otherwise
   private String myLiteralPort;
+  @Nullable
   private String myUserName;
   private String myPassword;
   private String myPrivateKeyFile;
@@ -106,12 +108,13 @@ public class RemoteCredentialsHolder implements MutableRemoteCredentials {
   }
 
   @Override
+  @Nullable
   @Transient
   public String getUserName() {
     return myUserName;
   }
 
-  public void setUserName(String userName) {
+  public void setUserName(@Nullable String userName) {
     myUserName = userName;
   }
 

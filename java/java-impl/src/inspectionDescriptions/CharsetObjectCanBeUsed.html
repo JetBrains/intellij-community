@@ -1,0 +1,10 @@
+<html>
+<body>
+Reports methods and constructors where constant charset String literal is used (like <b>"UTF-8"</b>) which could be replaced with
+a predefined Charset object like <b>StandardCharsets.UTF_8</b>. This may work a little bit faster, because charset lookup becomes
+unnecessary. Also catching <b>UnsupportedEncodingException</b> may become unnecessary as well. In this case the catch block will
+be removed automatically.
+<!-- tooltip end -->
+<p><small>New in 2018.2</small></p>
+</body>
+</html>

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.scope.processor;
 
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.infos.CandidateInfo;
@@ -93,29 +94,8 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
 
   protected MethodCandidateInfo createCandidateInfo(@NotNull PsiMethod method, @NotNull PsiSubstitutor substitutor,
                                                     final boolean staticProblem, final boolean accessible, final boolean varargs) {
-    final PsiExpressionList argumentList = getArgumentList();
-    return new MethodCandidateInfo(method, substitutor, !accessible, staticProblem, argumentList, myCurrentFileContext,
-                                   null, getTypeArguments(), getLanguageLevel()) {
-
-      private PsiType[] myExpressionTypes;
-
-      @Override
-      public PsiType[] getArgumentTypes() {
-        if (myExpressionTypes == null && argumentList != null) {
-          final PsiType[] expressionTypes = getExpressionTypes(argumentList);
-          if (MethodCandidateInfo.isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
-            return expressionTypes;
-          }
-          myExpressionTypes = expressionTypes;
-        }
-        return myExpressionTypes;
-      }
-
-      @Override
-      public boolean isVarargs() {
-        return varargs;
-      }
-    };
+    return new VarargsAwareMethodCandidateInfo(method, substitutor, accessible, staticProblem, getArgumentList(), myCurrentFileContext,
+                                               getTypeArguments(), getLanguageLevel(), varargs);
   }
 
   protected static PsiType[] getExpressionTypes(PsiExpressionList argumentList) {
@@ -155,5 +135,39 @@ public class MethodCandidatesProcessor extends MethodsProcessor{
     //noinspection SuspiciousSystemArraycopy
     System.arraycopy(resolveResult, 0, infos, 0, resolveResult.length);
     return infos;
+  }
+
+  private static class VarargsAwareMethodCandidateInfo extends MethodCandidateInfo {
+    private final PsiExpressionList myArgumentList;
+    private final boolean myVarargs;
+    private PsiType[] myExpressionTypes;
+
+    public VarargsAwareMethodCandidateInfo(PsiMethod method,
+                                           PsiSubstitutor substitutor,
+                                           boolean accessible,
+                                           boolean staticProblem,
+                                           PsiExpressionList argumentList,
+                                           PsiElement context, PsiType[] arguments, LanguageLevel level, boolean varargs) {
+      super(method, substitutor, !accessible, staticProblem, argumentList, context, null, arguments, level);
+      myArgumentList = argumentList;
+      myVarargs = varargs;
+    }
+
+    @Override
+    public PsiType[] getArgumentTypes() {
+      if (myExpressionTypes == null && myArgumentList != null) {
+        final PsiType[] expressionTypes = getExpressionTypes(myArgumentList);
+        if (isOverloadCheck() || LambdaUtil.isLambdaParameterCheck()) {
+          return expressionTypes;
+        }
+        myExpressionTypes = expressionTypes;
+      }
+      return myExpressionTypes;
+    }
+
+    @Override
+    public boolean isVarargs() {
+      return myVarargs;
+    }
   }
 }

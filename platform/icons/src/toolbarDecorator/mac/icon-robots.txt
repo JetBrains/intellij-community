@@ -1,0 +1,15 @@
+deprecated: add.png -> /general/add.svg; to be removed in IDEA 2020 - use AllIcons.General.Add
+deprecated: addBlankLine.png -> /toolbarDecorator/addBlankLine.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddBlankLine
+deprecated: addClass.png -> /toolbarDecorator/addClass.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddClass
+deprecated: addFolder.png -> /toolbarDecorator/addFolder.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddFolder
+deprecated: addIcon.png -> /toolbarDecorator/addIcon.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddIcon
+deprecated: addJira.png -> /toolbarDecorator/addJira.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddJira
+deprecated: addLink.png -> /toolbarDecorator/addLink.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddLink
+deprecated: addPackage.png -> /toolbarDecorator/addFolder.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddFolder
+deprecated: addPattern.png -> /toolbarDecorator/addPattern.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddPattern
+deprecated: addRemoteDatasource.png -> /toolbarDecorator/addRemoteDatasource.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddRemoteDatasource
+deprecated: addYouTrack.png -> /toolbarDecorator/addYouTrack.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.AddYouTrack
+deprecated: edit.png -> /actions/edit.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Edit
+deprecated: moveDown.png -> /actions/moveDown.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveDown
+deprecated: moveUp.png -> /actions/moveUp.svg; to be removed in IDEA 2020 - use AllIcons.Actions.MoveUp
+deprecated: remove.png -> /general/remove.svg; to be removed in IDEA 2020 - use AllIcons.General.Remove

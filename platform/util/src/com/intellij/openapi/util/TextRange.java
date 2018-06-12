@@ -167,7 +167,7 @@ public class TextRange implements Segment, Serializable {
   public String replace(@NotNull String original, @NotNull String replacement) {
     try {
       String beginning = original.substring(0, getStartOffset());
-      String ending = original.substring(getEndOffset(), original.length());
+      String ending = original.substring(getEndOffset());
       return beginning + replacement + ending;
     }
     catch (StringIndexOutOfBoundsException e) {

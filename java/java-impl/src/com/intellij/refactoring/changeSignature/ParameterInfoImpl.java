@@ -65,10 +65,12 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     this.defaultValue = defaultValue;
   }
 
+  @Override
   public int getOldIndex() {
     return oldParameterIndex;
   }
 
+  @Override
   public void setUseAnySingleVariable(boolean useAnySingleVariable) {
     this.useAnySingleVariable = useAnySingleVariable;
   }
@@ -91,9 +93,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     if (oldParameterIndex != parameterInfo.oldParameterIndex) return false;
     if (defaultValue != null ? !defaultValue.equals(parameterInfo.defaultValue) : parameterInfo.defaultValue != null) return false;
     if (!getName().equals(parameterInfo.getName())) return false;
-    if (!getTypeText().equals(parameterInfo.getTypeText())) return false;
-
-    return true;
+    return getTypeText().equals(parameterInfo.getTypeText());
   }
 
   public int hashCode() {
@@ -103,21 +103,14 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return result;
   }
 
+  @Override
   public String getTypeText() {
-    if (getTypeWrapper() != null) {
-      return getTypeWrapper().getTypeText();
-    }
-    else {
-      return "";
-    }
+    return getTypeWrapper() == null ? "" : getTypeWrapper().getTypeText();
   }
 
+  @Override
   public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-    if (getTypeWrapper() != null) {
-      return getTypeWrapper().getType(context, manager);
-    } else {
-      return null;
-    }
+    return getTypeWrapper() == null ? null : getTypeWrapper().getType(context, manager);
   }
 
   @Override
@@ -125,18 +118,22 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public CanonicalTypes.Type getTypeWrapper() {
     return myType;
   }
 
+  @Override
   public void setName(String name) {
     this.name = name != null ? name : "";
   }
 
+  @Override
   public boolean isVarargType() {
     return getTypeText().endsWith("...");
   }
@@ -151,6 +148,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return result.toArray(new ParameterInfoImpl[0]);
   }
 
+  @Override
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     if (StringUtil.isEmpty(defaultValue)) return null;
@@ -159,10 +157,12 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
   }
 
+  @Override
   public boolean isUseAnySingleVariable() {
     return useAnySingleVariable;
   }
 
+  @Override
   public String getDefaultValue() {
     return defaultValue;
   }

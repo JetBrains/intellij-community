@@ -53,13 +53,15 @@ public abstract class GradleReRunBuildFilter implements Filter {
     String trimLine = line.trim();
     if (!(trimLine.contains("Run with --")
           && (trimLine.endsWith("option to get the stack trace.")
-              || trimLine.endsWith("option to get more log output.")))) {
+              || trimLine.endsWith("option to get more log output.")
+              || trimLine.endsWith("to get full insights.")))) {
       return null;
     }
     addLinkIfMatch("Run with --stacktrace", "--stacktrace");
     addLinkIfMatch("Run with --info", "--info");
     addLinkIfMatch("Run with --debug option", "--debug");
     addLinkIfMatch("--debug option", "--debug");
+    addLinkIfMatch("Run with --scan", "--scan");
     if (links.isEmpty()) {
       return null;
     }

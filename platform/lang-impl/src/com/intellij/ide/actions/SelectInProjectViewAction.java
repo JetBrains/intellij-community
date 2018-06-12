@@ -1,61 +1,45 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.SelectInContext;
-import com.intellij.ide.impl.ProjectPaneSelectInTarget;
+import com.intellij.ide.SelectInManager;
+import com.intellij.ide.SelectInTarget;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.NotNull;
 
+import static com.intellij.openapi.wm.ToolWindowId.PROJECT_VIEW;
+
 /**
  * @author Konstantin Bulenkov
  */
 public class SelectInProjectViewAction extends DumbAwareAction {
+  private static PsiDocumentManager getDocumentManager(Project project) {
+    return project == null || project.isDisposed() ? null : PsiDocumentManager.getInstance(project);
+  }
+
   @Override
-  public void actionPerformed(AnActionEvent e) {
-    final ProjectPaneSelectInTarget target = new ProjectPaneSelectInTarget(e.getProject());
-    final SelectInContext context = SelectInContextImpl.createContext(e);
+  public void beforeActionPerformedUpdate(@NotNull AnActionEvent event) {
+    PsiDocumentManager manager = getDocumentManager(event.getProject());
+    if (manager != null) manager.commitAllDocuments();
+    super.beforeActionPerformedUpdate(event);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent event) {
+    SelectInTarget target = SelectInManager.findSelectInTarget(PROJECT_VIEW, event.getProject());
+    SelectInContext context = target == null ? null : SelectInContextImpl.createContext(event);
+    event.getPresentation().setEnabled(context != null && target.canSelect(context));
+  }
+
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent event) {
+    SelectInTarget target = SelectInManager.findSelectInTarget(PROJECT_VIEW, event.getProject());
+    SelectInContext context = target == null ? null : SelectInContextImpl.createContext(event);
     if (context != null) {
       target.selectIn(context, true);
     }
-  }
-
-  @Override
-  public void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
-    Project project = e.getProject();
-    if (project != null) {
-      PsiDocumentManager.getInstance(project).commitAllDocuments();
-    }
-    super.beforeActionPerformedUpdate(e);
-  }
-
-  @Override
-  public void update(AnActionEvent e) {
-    final Project project = e.getProject();
-    if (project != null) {
-      final ProjectPaneSelectInTarget target = new ProjectPaneSelectInTarget(project);
-      final SelectInContext context = SelectInContextImpl.createContext(e);
-      if (context != null && target.canSelect(context)) {
-        e.getPresentation().setEnabled(true);
-        return;
-      }
-    }
-    e.getPresentation().setEnabled(false);
   }
 }

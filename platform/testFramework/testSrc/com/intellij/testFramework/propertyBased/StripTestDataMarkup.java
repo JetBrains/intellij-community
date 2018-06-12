@@ -21,28 +21,29 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.ExpectedHighlightingData;
 import com.intellij.testFramework.PsiTestUtil;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author peter
  */
-public class StripTestDataMarkup implements MadTestingAction {
-  private final PsiFile myFile;
+public class StripTestDataMarkup extends ActionOnFile {
 
   public StripTestDataMarkup(PsiFile file) {
-    myFile = file;
+    super(file);
   }
 
   @Override
-  public void performAction() {
-    WriteCommandAction.runWriteCommandAction(myFile.getProject(), () -> {
-      Document document = myFile.getViewProvider().getDocument();
-      new ExpectedHighlightingData(document, true, true, true, true, myFile).init();
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      Document document = getDocument();
+      new ExpectedHighlightingData(document, true, true, true, true, getFile()).init();
       removeMarkup(document, "<caret>");
       removeMarkup(document, "<ref>");
       removeMarkup(document, "<selection>");
       removeMarkup(document, "</selection>");
     });
-    PsiTestUtil.checkPsiStructureWithCommit(myFile, PsiTestUtil::checkStubsMatchText);
+    PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
   }
 
   private static void removeMarkup(Document document, String marker) {

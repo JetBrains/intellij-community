@@ -1,9 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.controlFlow;
 
-public class ConditionalThrowToInstruction extends ConditionalBranchingInstruction {
+import org.jetbrains.annotations.NotNull;
 
-  public ConditionalThrowToInstruction(final int offset) {
+public class ConditionalThrowToInstruction extends ConditionalBranchingInstruction {
+  ConditionalThrowToInstruction(final int offset) {
     super(offset, null, Role.END);
   }
 
@@ -12,7 +13,7 @@ public class ConditionalThrowToInstruction extends ConditionalBranchingInstructi
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitConditionalThrowToInstruction(this, offset, nextOffset);
   }
 }

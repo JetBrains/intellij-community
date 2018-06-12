@@ -259,11 +259,13 @@ public class MoveFilesOrDirectoriesUtil {
       return (PsiDirectory)psiElement;
     }
     else if (psiElement != null) {
-      return psiElement.getContainingFile().getContainingDirectory();
+      PsiFile containingFile = psiElement.getContainingFile();
+      if (containingFile != null) {
+        return containingFile.getContainingDirectory();
+      }
     }
-    else {
-      return null;
-    }
+
+    return null;
   }
 
   /**

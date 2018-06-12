@@ -32,13 +32,17 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author peter
  */
-public class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
+class ClassLiteralLookupElement extends LookupElement implements TypedLookupItem {
   @NonNls private static final String DOT_CLASS = ".class";
+  @Nullable private final SmartPsiElementPointer<PsiClass> myClass;
   private final PsiExpression myExpr;
   private final String myPresentableText;
   private final String myCanonicalText;
 
-  public ClassLiteralLookupElement(PsiClassType type, PsiElement context) {
+  ClassLiteralLookupElement(PsiClassType type, PsiElement context) {
+    PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    myClass = psiClass == null ? null : SmartPointerManager.createPointer(psiClass);
+    
     myCanonicalText = type.getCanonicalText();
     myPresentableText = type.getPresentableText();
     myExpr = JavaPsiFacade.getInstance(context.getProject()).getElementFactory().createExpressionFromText(myCanonicalText + DOT_CLASS, context);
@@ -63,7 +67,7 @@ public class ClassLiteralLookupElement extends LookupElement implements TypedLoo
   @Nullable
   @Override
   public PsiElement getPsiElement() {
-    return PsiUtil.resolveClassInType(getType());
+    return myClass == null ? null : myClass.getElement();
   }
 
   @NotNull

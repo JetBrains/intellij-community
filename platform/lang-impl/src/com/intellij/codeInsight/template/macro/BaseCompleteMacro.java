@@ -121,9 +121,7 @@ public abstract class BaseCompleteMacro extends Macro {
         return;
       }
 
-      Runnable runnable = () -> new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull com.intellij.openapi.application.Result result) throws Throwable {
+      Runnable runnable = () -> WriteCommandAction.runWriteCommandAction(project, ()-> {
           Editor editor = myContext.getEditor();
           if (editor != null) {
             TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
@@ -131,8 +129,7 @@ public abstract class BaseCompleteMacro extends Macro {
               templateState.considerNextTabOnLookupItemSelected(item);
             }
           }
-        }
-      }.execute();
+        });
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         runnable.run();
       } else {

@@ -263,17 +263,18 @@ public class MiscImportingTest extends MavenImportingTestCase {
       File repo = new File(myDir, "repo");
       setRepositoryPath(repo.getPath());
 
-      importProject("<groupId>test</groupId>" +
-                    "<artifactId>project</artifactId>" +
-                    "<version>1</version>" +
-                    "" +
-                    "<build>" +
-                    "  <plugins>" +
-                    "    <plugin>" +
-                    "      <artifactId>maven-surefire-plugin</artifactId>" +
-                    "    </plugin>" +
-                    "  </plugins>" +
-                    "</build>");
+      createProjectPom("<groupId>test</groupId>" +
+                       "<artifactId>project</artifactId>" +
+                       "<version>1</version>" +
+                       "" +
+                       "<build>" +
+                       "  <plugins>" +
+                       "    <plugin>" +
+                       "      <artifactId>maven-surefire-plugin</artifactId>" +
+                       "    </plugin>" +
+                       "  </plugins>" +
+                       "</build>");
+      importProjectWithErrors(true);
 
       List<MavenProjectProblem> problems = myProjectsTree.getRootProjects().get(0).getProblems();
       assertTrue(problems.size() > 0);
@@ -330,20 +331,21 @@ public class MiscImportingTest extends MavenImportingTestCase {
     setRepositoryPath(helper.getTestDataPath("plugins"));
     getMavenGeneralSettings().setWorkOffline(true);
 
-    importProjectWithMaven3("<groupId>test</groupId>" +
-                            "<artifactId>project</artifactId>" +
-                            "<version>1</version>" +
-                            "<description>throw!</description>" +
-                            "" +
-                            "<build>" +
-                            "  <extensions>" +
-                            "    <extension>" +
-                            "      <groupId>intellij.test</groupId>" +
-                            "      <artifactId>maven-extension</artifactId>" +
-                            "      <version>1.0</version>" +
-                            "    </extension>" +
-                            "  </extensions>" +
-                            "</build>");
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+                     "<description>throw!</description>" +
+                     "" +
+                     "<build>" +
+                     "  <extensions>" +
+                     "    <extension>" +
+                     "      <groupId>intellij.test</groupId>" +
+                     "      <artifactId>maven-extension</artifactId>" +
+                     "      <version>1.0</version>" +
+                     "    </extension>" +
+                     "  </extensions>" +
+                     "</build>");
+    importProjectWithErrors(false);
 
     List<MavenProject> projects = myProjectsTree.getProjects();
     assertEquals(1, projects.size());

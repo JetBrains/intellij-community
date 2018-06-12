@@ -146,6 +146,7 @@ public class JavaResolveCache {
     return result;
   }
 
+  @FunctionalInterface
   public interface ConstValueComputer{
     Object execute(@NotNull PsiVariable variable, Set<PsiVariable> visitedVars);
   }

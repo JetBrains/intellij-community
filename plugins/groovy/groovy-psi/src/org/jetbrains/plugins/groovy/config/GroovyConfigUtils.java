@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.config;
 
@@ -26,6 +26,8 @@ import java.util.regex.Pattern;
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
+  // to avoid java modules deps the same pattern was copied at org.jetbrains.plugins.gradle.service.GradleInstallationManager.GROOVY_ALL_JAR_PATTERN
+  // please update it as well for further changes
   @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all(-minimal)?(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
   public static final int VERSION_GROUP_NUMBER = 3; // version will be in third group in GROOVY_ALL_JAR_PATTERN
   @NonNls public static final Pattern GROOVY_JAR_PATTERN = Pattern.compile("groovy(-(\\d+(\\.\\d+)*))?(-indy|-alpha.*|-beta.*)?\\.jar");
@@ -38,6 +40,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public static final String GROOVY2_2 = "2.2";
   public static final String GROOVY2_2_2 = "2.2.2";
   public static final String GROOVY2_3 = "2.3";
+  public static final String GROOVY3_0 = "3.0";
 
   private static GroovyConfigUtils myGroovyConfigUtils;
 

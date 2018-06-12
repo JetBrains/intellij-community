@@ -91,7 +91,7 @@
         <clientProperties>
           <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithoutIndent"/>
         </clientProperties>
-        <border type="none" title="Artifactory or Nexus Service URLs:"/>
+        <border type="none" title="Artifactory, Nexus or Bintray Service URLs:"/>
         <children>
           <scrollpane id="3bdae" class="com.intellij.ui.components.JBScrollPane">
             <constraints>

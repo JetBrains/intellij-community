@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.openapi.actionSystem.*;
@@ -66,23 +64,19 @@ public class CommonActionsPanel extends JPanel {
     }
   }
   public interface Listener {
-    void doAdd();
-    void doRemove();
-    void doUp();
-    void doDown();
-    void doEdit();
+    default void doAdd() {
+    }
 
-    class Adapter implements Listener {
-      @Override
-      public void doAdd() {}
-      @Override
-      public void doRemove() {}
-      @Override
-      public void doUp() {}
-      @Override
-      public void doDown() {}
-      @Override
-      public void doEdit() {}
+    default void doRemove() {
+    }
+
+    default void doUp() {
+    }
+
+    default void doDown() {
+    }
+
+    default void doEdit() {
     }
   }
 

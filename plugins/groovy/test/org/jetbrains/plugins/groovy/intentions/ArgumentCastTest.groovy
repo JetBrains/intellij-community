@@ -50,11 +50,27 @@ foo(<caret>'a', 2, 3)
   }
 
   void test3() {
-    doAntiTest('''\
+    doTextTest('''\
 def foo(char c, int x) {}
 
 foo(<caret>'a', 'a')
-''', "Cast 1st parameter to char", GroovyAssignabilityCheckInspection)
+''', "Cast 1st parameter to char", '''\
+def foo(char c, int x) {}
+
+foo('a' as char, 'a')
+''', GroovyAssignabilityCheckInspection)
+  }
+
+  void test3_2() {
+    doTextTest('''\
+def foo(char c, int x) {}
+
+foo(<caret>'a', 'a')
+''', "Cast 2nd parameter to int", '''\
+def foo(char c, int x) {}
+
+foo('a', 'a' as int)
+''', GroovyAssignabilityCheckInspection)
   }
 
   void testMapArgIsIncorrect() {

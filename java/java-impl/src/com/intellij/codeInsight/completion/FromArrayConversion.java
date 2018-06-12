@@ -15,14 +15,13 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.ExpressionLookupItem;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Consumer;
@@ -58,7 +57,7 @@ class FromArrayConversion {
         int startOffset = context.getStartOffset() - qualifierText.length();
         final Project project = element.getProject();
         final String callSpace = getSpace(
-          CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
+          CodeStyle.getLanguageSettings(context.getFile()).SPACE_WITHIN_METHOD_CALL_PARENTHESES);
         final String newText = "java.util.Arrays." + methodName + "(" + callSpace + qualifierText + prefix + callSpace + ")";
         context.getDocument().replaceString(startOffset, context.getTailOffset(), newText);
 

@@ -22,15 +22,15 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.search.PsiShortNamesCache;
-import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,36 +89,28 @@ public class YourkitFilter implements Filter{
 
     public void navigate(final Project project) {
       DefaultPsiElementListCellRenderer renderer = new DefaultPsiElementListCellRenderer();
-
-      final JList list = new JBList(myPsiFiles);
-      list.setCellRenderer(renderer);
-
-      final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-      renderer.installSpeedSearch(builder);
-
-      final Runnable runnable = () -> {
-        int[] ids = list.getSelectedIndices();
-        if (ids == null || ids.length == 0) return;
-        Object[] selectedElements = list.getSelectedValues();
-        for (Object element : selectedElements) {
-          Navigatable descriptor = EditSourceUtil.getDescriptor((PsiElement)element);
-          if (descriptor != null && descriptor.canNavigate()) {
-            descriptor.navigate(true);
-          }
-        }
-      };
-
       final Editor editor = CommonDataKeys.EDITOR.getData(DataManager.getInstance().getDataContext());
-
-      builder.
-        setTitle("Choose file").
-        setItemChoosenCallback(runnable).
-        createPopup().showInBestPositionFor(editor);
+      if (editor != null) {
+        final IPopupChooserBuilder<PsiFile> builder = JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(ContainerUtil.newArrayList(myPsiFiles))
+          .setRenderer(renderer)
+          .setTitle("Choose file")
+          .setItemsChosenCallback((selectedElements) -> {
+            for (PsiFile element : selectedElements) {
+              Navigatable descriptor = EditSourceUtil.getDescriptor(element);
+              if (descriptor != null && descriptor.canNavigate()) {
+                descriptor.navigate(true);
+              }
+            }
+          });
+        renderer.installSpeedSearch(builder);
+        builder.createPopup().showInBestPositionFor(editor);
+      }
     }
   }
 
 
-  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer {
+  private static class DefaultPsiElementListCellRenderer extends PsiElementListCellRenderer<PsiElement> {
     public String getElementText(final PsiElement element) {
       return element.getContainingFile().getName();
     }

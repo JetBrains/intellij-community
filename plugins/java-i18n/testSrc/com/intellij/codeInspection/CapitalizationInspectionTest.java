@@ -74,12 +74,7 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
     if (!fix) return;
 
     final IntentionAction action = myFixture.filterAvailableIntentions("Properly capitalize").get(0);
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        action.invoke(getProject(), myFixture.getEditor(), getFile());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> action.invoke(getProject(), myFixture.getEditor(), getFile()));
     myFixture.checkResultByFile(getTestName(false) + "_after.java");
   }
 
@@ -94,6 +89,6 @@ public class CapitalizationInspectionTest extends LightCodeInsightFixtureTestCas
 
   @Override
   protected String getBasePath() {
-    return PluginPathManager.getPluginHomePathRelative("devkit") + "/testData/inspections/capitalization";
+    return PluginPathManager.getPluginHomePathRelative("java-i18n") + "/testData/inspections/capitalization";
   }
 }

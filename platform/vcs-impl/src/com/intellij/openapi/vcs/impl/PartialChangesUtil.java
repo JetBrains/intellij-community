@@ -61,16 +61,13 @@ public class PartialChangesUtil {
         if (change instanceof ChangeListChange) {
           ChangeListChange changelistChange = (ChangeListChange)change;
 
-          ContentRevision afterRevision = change.getAfterRevision();
-          if (afterRevision instanceof CurrentContentRevision) {
-            VirtualFile virtualFile = ((CurrentContentRevision)afterRevision).getVirtualFile();
-            if (virtualFile != null) {
-              partialChangesMap.putValue(virtualFile, changelistChange);
-              continue;
-            }
+          VirtualFile virtualFile = getVirtualFile(change);
+          if (virtualFile != null) {
+            partialChangesMap.putValue(virtualFile, changelistChange);
           }
-
-          otherChanges.add((changelistChange).getChange());
+          else {
+            otherChanges.add((changelistChange).getChange());
+          }
         }
         else {
           otherChanges.add(change);
@@ -126,7 +123,7 @@ public class PartialChangesUtil {
       return task.compute();
     }
 
-    clm.setDefaultChangeList(targetChangeList, true);
+    switchChangeList(clm, targetChangeList, oldDefaultList);
     try {
       return task.compute();
     }
@@ -146,7 +143,7 @@ public class PartialChangesUtil {
       return task.compute();
     }
 
-    clm.setDefaultChangeList(targetChangeList, true);
+    switchChangeList(clm, targetChangeList, oldDefaultList);
     try {
       return task.compute();
     }
@@ -158,11 +155,19 @@ public class PartialChangesUtil {
     }
   }
 
+  private static void switchChangeList(@NotNull ChangeListManagerEx clm,
+                                       @NotNull LocalChangeList targetChangeList,
+                                       @NotNull LocalChangeList oldDefaultList) {
+    clm.setDefaultChangeList(targetChangeList, true);
+    LOG.debug(String.format("Active changelist changed: %s -> %s", oldDefaultList.getName(), targetChangeList.getName()));
+  }
+
   private static void restoreChangeList(@NotNull ChangeListManagerEx clm,
                                         @NotNull LocalChangeList targetChangeList,
                                         @NotNull LocalChangeList oldDefaultList) {
     if (Comparing.equal(clm.getDefaultChangeList().getId(), targetChangeList.getId())) {
       clm.setDefaultChangeList(oldDefaultList, true);
+      LOG.debug(String.format("Active changelist restored: %s -> %s", targetChangeList.getName(), oldDefaultList.getName()));
     }
     else {
       LOG.warn(new Throwable("Active changelist was changed during the operation"));

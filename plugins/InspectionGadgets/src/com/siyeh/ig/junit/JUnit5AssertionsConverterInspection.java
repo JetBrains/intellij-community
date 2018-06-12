@@ -20,11 +20,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
+import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -72,19 +74,51 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
 
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
+      doCheck(expression,
+              () -> AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false),
+              psiMethod -> {
+                final PsiClass containingClass = psiMethod.getContainingClass();
+                if (containingClass == null) {
+                  return;
+                }
+
+                String methodName = psiMethod.getName();
+                registerMethodCallError(expression, containingClass.getName(),
+                                        getNewAssertClassName(methodName),
+                                        absentInJUnit5(psiMethod, methodName));
+              });
+    }
+
+    @Override
+    public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+      doCheck(expression, 
+              () -> AssertHint.create(expression, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false),
+              psiMethod -> {
+                final PsiClass containingClass = psiMethod.getContainingClass();
+                if (containingClass == null) {
+                  return;
+                }
+
+                String methodName = psiMethod.getName();
+                registerError(expression, containingClass.getQualifiedName(), getNewAssertClassName(methodName), absentInJUnit5(psiMethod, methodName));
+              });
+    }
+
+    private void doCheck(PsiElement expression,
+                         Computable<? extends AssertHint> computable,
+                         Consumer<? super PsiMethod> registerError) {
       final Project project = expression.getProject();
       final Module module = ModuleUtilCore.findModuleForPsiElement(expression);
       if (module == null) {
         return;
       }
-      final PsiClass newAssertClass = JavaPsiFacade.getInstance(project)
-        .findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
+      final PsiClass newAssertClass = JavaPsiFacade.getInstance(project).findClass(JUnitCommonClassNames.ORG_JUNIT_JUPITER_API_ASSERTIONS, 
+                                                                                   GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module));
       if (newAssertClass == null) {
         return;
       }
 
-      AssertHint hint = AssertHint.create(expression, methodName ->
-        AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false);
+      AssertHint hint = computable.compute();
       if (hint == null) {
         return;
       }
@@ -94,34 +128,22 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      final PsiClass containingClass = psiMethod.getContainingClass();
-      if (containingClass == null) {
-        return;
-      }
 
-      final String name = containingClass.getQualifiedName();
       if (hint.isMessageOnFirstPosition()) {
         PsiFile file = expression.getContainingFile();
         if (file instanceof PsiClassOwner) {
           for (PsiClass psiClass : ((PsiClassOwner)file).getClasses()) {
             TestFramework testFramework = TestFrameworks.detectFramework(psiClass);
             if (testFramework != null && myFrameworkName.equals(testFramework.getName())) {
-              String methodName = psiMethod.getName();
-              registerMethodCallError(expression, name,
-                                      getNewAssertClassName(methodName),
-                                      absentInJUnit5(psiMethod, methodName));
+              registerError.consume(psiMethod);
               break;
             }
           }
         }
-
       }
     }
 
     private boolean absentInJUnit5(PsiMethod psiMethod, String methodName) {
-      if ("fail".equals(methodName)) {
-        return psiMethod.getParameterList().isEmpty();
-      }
       if ("assertNotEquals".equals(methodName)) {
         PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
         if (parameters.length > 0) {
@@ -156,8 +178,17 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, ProblemDescriptor descriptor) {
-      final PsiMethodCallExpression methodCallExpression =
-        PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethodCallExpression.class);
+      PsiElement element = descriptor.getPsiElement();
+      if (element instanceof PsiMethodReferenceExpression) {
+        AssertHint assertHint =
+          AssertHint.create((PsiMethodReferenceExpression)element, methodName -> AssertHint.JUnitCommonAssertNames.ASSERT_METHOD_2_PARAMETER_COUNT.get(methodName), false);
+        if (assertHint != null) {
+          replaceQualifier(project, assertHint.getMethod().getName(), (PsiReferenceExpression)element);
+        }
+        return;
+      }
+
+      final PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(element, PsiMethodCallExpression.class);
       if (methodCallExpression == null) {
         return;
       }
@@ -170,9 +201,6 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
       }
 
       String methodName = assertHint.getMethod().getName();
-      PsiClass newAssertClass = JavaPsiFacade.getInstance(project).findClass(getNewAssertClassName(methodName),
-                                                                             methodCallExpression.getResolveScope());
-
       if (!"assertThat".equals(methodName)) {
         PsiExpression message = assertHint.getMessage();
         if (message != null) {
@@ -180,6 +208,14 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
           message.delete();
         }
       }
+      replaceQualifier(project, methodName, methodCallExpression.getMethodExpression());
+    }
+
+    private static void replaceQualifier(Project project,
+                                         String methodName,
+                                         final PsiReferenceExpression methodExpression) {
+      PsiClass newAssertClass = JavaPsiFacade.getInstance(project).findClass(getNewAssertClassName(methodName),
+                                                                             methodExpression.getResolveScope());
 
       if (newAssertClass == null) {
         return;
@@ -189,7 +225,6 @@ public class JUnit5AssertionsConverterInspection extends BaseInspection {
         return;
       }
 
-      PsiReferenceExpression methodExpression = methodCallExpression.getMethodExpression();
       methodExpression.setQualifierExpression(JavaPsiFacade.getElementFactory(project).createReferenceExpression(newAssertClass));
       JavaCodeStyleManager.getInstance(project).shortenClassReferences(methodExpression);
     }

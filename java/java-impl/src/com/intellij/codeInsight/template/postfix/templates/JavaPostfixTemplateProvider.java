@@ -4,8 +4,8 @@ package com.intellij.codeInsight.template.postfix.templates;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.JavaCompletionContributor;
 import com.intellij.codeInsight.template.impl.TemplateImpl;
-import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.postfix.templates.editable.*;
+import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
@@ -17,25 +17,18 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import kotlin.LazyKt;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
 import java.util.Set;
+
+import static com.intellij.codeInsight.template.postfix.templates.PostfixTemplatesUtils.*;
 
 
 public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   private static final String LANGUAGE_LEVEL_ATTR = "language-level";
-  private static final String CONDITIONS_TAG = "conditions";
-  private static final String TEMPLATE_TAG = "template";
-  private static final String CONDITION_TAG = "condition";
-  private static final String ID_ATTR = "id";
-  private static final String FQN_ATTR = "fqn";
-  private static final String TOPMOST_ATTR = "topmost";
 
   private final Set<PostfixTemplate> myBuiltinTemplates = ContainerUtil.newHashSet(
     new AssertStatementPostfixTemplate(this),
@@ -55,6 +48,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ArgumentPostfixTemplate(this),
 
     new CastExpressionPostfixTemplate(),
+    new NewExpressionPostfixTemplate(),
+    new CastVarPostfixTemplate(),
     new ElseStatementPostfixTemplate(),
     new IfStatementPostfixTemplate(),
     new InstanceofExpressionPostfixTemplate(),
@@ -138,9 +133,13 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
         templateToEdit instanceof JavaEditablePostfixTemplate &&
         // cannot be editable until there is no UI for editing template variables    
         !(templateToEdit instanceof ForIndexedPostfixTemplate) &&
+        !(templateToEdit instanceof ForeachPostfixTemplate) &&
         !(templateToEdit instanceof ArgumentPostfixTemplate) &&
         !(templateToEdit instanceof OptionalPostfixTemplate)) {
-      return new JavaPostfixTemplateEditor(this, templateToEdit);
+      JavaPostfixTemplateEditor editor = new JavaPostfixTemplateEditor(this);
+      editor.setTemplate(templateToEdit);
+
+      return editor;
     }
     return null;
   }
@@ -148,46 +147,30 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
   @Nullable
   @Override
   public JavaEditablePostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
-    boolean useTopmostExpression = Boolean.parseBoolean(template.getAttributeValue(TOPMOST_ATTR));
+    TemplateImpl liveTemplate = readExternalLiveTemplate(template, this);
+    if (liveTemplate == null) return null;
+    Set<JavaPostfixTemplateExpressionCondition> conditions = readExternalConditions(template, JavaPostfixTemplateProvider::readExternal);
+    boolean useTopmostExpression = readExternalTopmostAttribute(template);
     String languageLevelAttributeValue = template.getAttributeValue(LANGUAGE_LEVEL_ATTR);
     LanguageLevel languageLevel = ObjectUtils.notNull(LanguageLevel.parse(languageLevelAttributeValue), LanguageLevel.JDK_1_6);
 
-    Set<JavaPostfixTemplateExpressionCondition> conditions = new LinkedHashSet<>();
-    Element conditionsElement = template.getChild(CONDITIONS_TAG);
-    if (conditionsElement != null) {
-      for (Element conditionElement : conditionsElement.getChildren(CONDITION_TAG)) {
-        ContainerUtil.addIfNotNull(conditions, readExternal(conditionElement));
-      }
-    }
-    Element templateChild = template.getChild(TemplateSettings.TEMPLATE);
-    if (templateChild == null) {
-      return null;
-    }
-    TemplateImpl liveTemplate = TemplateSettings.readTemplateFromElement("", templateChild, getClass().getClassLoader());
     return new JavaEditablePostfixTemplate(id, name, liveTemplate, "", conditions, languageLevel, useTopmostExpression, this);
   }
 
   @Override
   public void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
     if (template instanceof JavaEditablePostfixTemplate) {
-      parentElement.setAttribute(TOPMOST_ATTR, String.valueOf(((JavaEditablePostfixTemplate)template).isUseTopmostExpression()));
 
       LanguageLevel languageLevel = ((JavaEditablePostfixTemplate)template).getMinimumLanguageLevel();
       parentElement.setAttribute(LANGUAGE_LEVEL_ATTR, JpsJavaSdkType.complianceOption(languageLevel.toJavaVersion()));
-      Element conditionsTag = new Element(CONDITIONS_TAG);
-      for (JavaPostfixTemplateExpressionCondition condition : ((JavaEditablePostfixTemplate)template).getExpressionConditions()) {
-        writeExternal(condition, conditionsTag);
-      }
 
-      Element templateTag = TemplateSettings.serializeTemplate(((EditablePostfixTemplate)template).getLiveTemplate(), null,
-                                                               LazyKt.lazyOf(Collections.emptyMap()));
-      parentElement.addContent(conditionsTag).addContent(templateTag);
+      PostfixTemplatesUtils.writeExternalTemplate(template, parentElement);
     }
   }
 
   @Nullable
   private static JavaPostfixTemplateExpressionCondition readExternal(@NotNull Element condition) {
-    String id = condition.getAttributeValue(ID_ATTR);
+    String id = condition.getAttributeValue(PostfixTemplateExpressionCondition.ID_ATTR);
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition();
     }
@@ -206,22 +189,12 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition.ID.equals(id)) {
       return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNotPrimitiveTypeExpressionCondition();
     }
-    if (JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition.ID.equals(id)) {
-      String fqn = condition.getAttributeValue(FQN_ATTR);
+    if (JavaPostfixTemplateExpressionFqnCondition.ID.equals(id)) {
+      String fqn = condition.getAttributeValue(JavaPostfixTemplateExpressionFqnCondition.FQN_ATTR);
       if (StringUtil.isNotEmpty(fqn)) {
-        return new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(fqn);
+        return new JavaPostfixTemplateExpressionFqnCondition(fqn);
       }
     }
     return null;
-  }
-
-  private static void writeExternal(@NotNull JavaPostfixTemplateExpressionCondition condition, @NotNull Element parentElement) {
-    Element element = new Element(CONDITION_TAG);
-    element.setAttribute(ID_ATTR, condition.getId());
-    if (condition instanceof JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition) {
-      String fqn = ((JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition)condition).getFqn();
-      element.setAttribute(FQN_ATTR, fqn);
-    }
-    parentElement.addContent(element);
   }
 }

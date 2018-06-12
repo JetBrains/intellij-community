@@ -35,8 +35,6 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Alarm;
 import com.intellij.util.BitUtil;
@@ -129,31 +127,9 @@ public class LookupManagerImpl extends LookupManager {
                                  @NotNull final LookupArranger arranger) {
     hideActiveLookup();
 
-    final CodeInsightSettings settings = CodeInsightSettings.getInstance();
-
-    final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
-
     final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
     final Alarm alarm = new Alarm();
-    final Runnable request = () -> {
-      if (myActiveLookup != lookup) return;
-
-      LookupElement currentItem = lookup.getCurrentItem();
-      if (currentItem != null && currentItem.isValid() && isAutoPopupJavadocSupportedBy(currentItem)) {
-        final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
-        if (completion != null && !completion.isAutopopupCompletion()) {
-          try {
-            DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
-          }
-          catch (IndexNotReadyException ignored) {
-          }
-        }
-      }
-    };
-    if (settings.AUTO_POPUP_JAVADOC_INFO) {
-      alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
-    }
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
@@ -173,8 +149,9 @@ public class LookupManagerImpl extends LookupManager {
       @Override
       public void currentItemChanged(LookupEvent event) {
         alarm.cancelAllRequests();
+        CodeInsightSettings settings = CodeInsightSettings.getInstance();
         if (settings.AUTO_POPUP_JAVADOC_INFO && DocumentationManager.getInstance(myProject).getDocInfoHint() == null) {
-          alarm.addRequest(request, settings.JAVADOC_INFO_DELAY);
+          alarm.addRequest(() -> showJavadoc(lookup), settings.JAVADOC_INFO_DELAY);
         }
       }
 
@@ -208,7 +185,29 @@ public class LookupManagerImpl extends LookupManager {
     return lookup;
   }
 
-  protected boolean isAutoPopupJavadocSupportedBy(LookupElement lookupItem) {
+  private void showJavadoc(LookupImpl lookup) {
+    if (myActiveLookup != lookup) return;
+    
+    DocumentationManager docManager = DocumentationManager.getInstance(myProject);
+    if (docManager.getDocInfoHint() != null) return; // will auto-update
+    
+    LookupElement currentItem = lookup.getCurrentItem();
+    CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
+    if (currentItem != null && currentItem.isValid() && isAutoPopupJavadocSupportedBy(currentItem) && completion != null) {
+      try {
+        boolean hideLookupWithDoc = completion.isAutopopupCompletion() || CodeInsightSettings.getInstance().JAVADOC_INFO_DELAY == 0;
+        docManager.showJavaDocInfo(lookup.getEditor(), lookup.getPsiFile(), false, () -> {
+          if (hideLookupWithDoc && completion == CompletionService.getCompletionService().getCurrentCompletion()) {
+            hideActiveLookup();
+          }
+        });
+      }
+      catch (IndexNotReadyException ignored) {
+      }
+    }
+  }
+
+  protected boolean isAutoPopupJavadocSupportedBy(@SuppressWarnings("unused") LookupElement lookupItem) {
     return true;
   }
 

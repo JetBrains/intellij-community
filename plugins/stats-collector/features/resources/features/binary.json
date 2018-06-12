@@ -1,0 +1,52 @@
+{
+  "liftShorterClasses": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "liftShorter": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "middleMatching": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "templates": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "nonGeneric": {
+    "0": 0,
+    "1": 1,
+    "default": 0
+  },
+  "prox_inResolveScope": {
+    "true": 1,
+    "false": 0,
+    "default": 1
+  },
+  "prox_openedInEditor": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "prox_sameDirectory": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "prox_sameLogicalRoot": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  },
+  "prox_sdkOrLibrary": {
+    "true": 1,
+    "false": 0,
+    "default": 0
+  }
+}

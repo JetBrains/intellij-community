@@ -17,12 +17,21 @@ public class BaseDecompiler {
     engine = new Fernflower(provider, saver, options, logger);
   }
 
-  public void addSpace(File file, boolean isOwn) {
-    if (isOwn) {
-      engine.addSource(file);
+  public void addSource(File source) {
+    engine.addSource(source);
+  }
+
+  public void addLibrary(File library) {
+    engine.addLibrary(library);
+  }
+
+  /** @deprecated use {@link #addSource(File)} / {@link #addLibrary(File)} instead */
+  public void addSpace(File file, boolean own) {
+    if (own) {
+      addSource(file);
     }
     else {
-      engine.addLibrary(file);
+      addLibrary(file);
     }
   }
 

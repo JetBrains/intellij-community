@@ -69,8 +69,8 @@ public class RepositoryLibrarySynchronizer implements StartupActivity, DumbAware
     return false;
   }
 
-  private static Collection<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
-    final Set<Library> result = new HashSet<>();
+  public static Set<Library> collectLibraries(final @NotNull Project project, final @NotNull Predicate<Library> predicate) {
+    final Set<Library> result = new LinkedHashSet<>();
     ApplicationManager.getApplication().runReadAction(() -> {
       if (project.isDisposed()) return;
       

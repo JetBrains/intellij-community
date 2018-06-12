@@ -1103,18 +1103,10 @@ public class PyUtil {
    * Counts initial underscores of an identifier.
    *
    * @param name identifier
-   * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
+   * @return 0 if null or no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
-  public static int getInitialUnderscores(String name) {
-    if (name == null) {
-      return 0;
-    }
-    int underscores = 0;
-    if (name.startsWith("__")) {
-      underscores = 2;
-    }
-    else if (name.startsWith("_")) underscores = 1;
-    return underscores;
+  public static int getInitialUnderscores(@Nullable String name) {
+    return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
   }
 
   /**
@@ -1214,7 +1206,11 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.3.
+   */
   @Nullable
+  @Deprecated
   public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
     return strListValue(attr.findAssignedValue());
   }
@@ -1866,6 +1862,47 @@ public class PyUtil {
     }
 
     return loop;
+  }
+
+  public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {
+    if (value == null) return false;
+
+    final PyClassType type = as(context.getType(value), PyClassType.class);
+    if (type != null && !type.isDefinition()) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
+      final Set<PyClass> forbiddenClasses = StreamEx
+        .of(builtinCache.getListType(), builtinCache.getSetType(), builtinCache.getDictType())
+        .nonNull()
+        .map(PyClassType::getPyClass)
+        .toSet();
+
+      final PyClass cls = type.getPyClass();
+      return forbiddenClasses.contains(cls) || ContainerUtil.exists(cls.getAncestorClasses(context), forbiddenClasses::contains);
+    }
+
+    return false;
+  }
+
+  public static void addDecorator(@NotNull PyFunction function, @NotNull String decorator) {
+    final PyDecoratorList currentDecorators = function.getDecoratorList();
+
+    final List<String> decoTexts = new ArrayList<>();
+    decoTexts.add(decorator);
+    if (currentDecorators != null) {
+      for (PyDecorator deco : currentDecorators.getDecorators()) {
+        decoTexts.add(deco.getText());
+      }
+    }
+
+    final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
+    final PyDecoratorList newDecorators = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+
+    if (currentDecorators != null) {
+      currentDecorators.replace(newDecorators);
+    }
+    else {
+      function.addBefore(newDecorators, function.getFirstChild());
+    }
   }
 
   /**

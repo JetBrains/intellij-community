@@ -40,7 +40,7 @@ public class DiffFiles {
     System.out.println("Missing:");
     printOrdered(missing);
 
-    System.out.println("");
+    System.out.println();
 
     System.out.println("Unused:");
     printOrdered(unused);

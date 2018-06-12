@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui;
 
 import com.intellij.ide.DataManager;
@@ -338,7 +338,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJFrame extends JFrame implements DataProvider, IdeFrame.Child {
-
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -425,11 +424,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     }
 
     @Override
-    public IdeFrame getParentFrame() {
-      return myParent;
-    }
-
-    @Override
     public void dispose() {
       FrameWrapper owner = myOwner;
       myOwner = null;
@@ -457,7 +451,6 @@ public class FrameWrapper implements Disposable, DataProvider {
   }
 
   private static class MyJDialog extends JDialog implements DataProvider, IdeFrame.Child {
-
     private FrameWrapper myOwner;
     private final IdeFrame myParent;
 
@@ -512,11 +505,6 @@ public class FrameWrapper implements Disposable, DataProvider {
     @Override
     public IdeRootPaneNorthExtension getNorthExtension(String key) {
       return null;
-    }
-
-    @Override
-    public IdeFrame getParentFrame() {
-      return myParent;
     }
 
     @Override

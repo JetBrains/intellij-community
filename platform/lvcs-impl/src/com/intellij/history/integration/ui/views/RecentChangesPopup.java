@@ -22,8 +22,7 @@ import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.ui.components.JBList;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -32,57 +31,21 @@ import java.awt.*;
 import java.util.List;
 
 public class RecentChangesPopup {
-  private final Project myProject;
-  private final IdeaGateway myGateway;
-  private final LocalHistoryFacade myVcs;
-
-  public RecentChangesPopup(Project project, IdeaGateway gw, LocalHistoryFacade vcs) {
-    myProject = project;
-    myGateway = gw;
-    myVcs = vcs;
-  }
-
-  public void show() {
-    List<RecentChange> cc = myVcs.getRecentChanges(myGateway.createTransientRootEntry());
+  public static void show(Project project, IdeaGateway gw, LocalHistoryFacade vcs) {
+    List<RecentChange> cc = vcs.getRecentChanges(gw.createTransientRootEntry());
+    String title = LocalHistoryBundle.message("recent.changes.popup.title");
     if (cc.isEmpty()) {
-      Messages.showInfoMessage(myProject, LocalHistoryBundle.message("recent.changes.to.changes"), getTitle());
+      Messages.showInfoMessage(project, LocalHistoryBundle.message("recent.changes.to.changes"), title);
       return;
     }
 
-    final JList list = new JBList(createModel(cc));
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(new RecentChangesListCellRenderer());
-
-    Runnable selectAction = () -> {
-      RecentChange c = (RecentChange)list.getSelectedValue();
-      showRecentChangeDialog(c);
-    };
-
-    showList(list, selectAction);
-  }
-
-  private ListModel createModel(List<RecentChange> cc) {
-    DefaultListModel m = new DefaultListModel();
-    for (RecentChange c : cc) {
-      m.addElement(c);
-    }
-    return m;
-  }
-
-  private void showList(JList list, Runnable selectAction) {
-    new PopupChooserBuilder(list).
-      setTitle(getTitle()).
-      setItemChoosenCallback(selectAction).
-      createPopup().
-      showCenteredInCurrentWindow(myProject);
-  }
-
-  private void showRecentChangeDialog(RecentChange c) {
-    new RecentChangeDialog(myProject, myGateway, c).show();
-  }
-
-  private String getTitle() {
-    return LocalHistoryBundle.message("recent.changes.popup.title");
+    JBPopupFactory.getInstance().createPopupChooserBuilder(cc)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setRenderer(new RecentChangesListCellRenderer())
+      .setTitle(title)
+      .setItemChosenCallback(change -> new RecentChangeDialog(project, gw, change).show())
+      .createPopup()
+      .showCenteredInCurrentWindow(project);
   }
 
   private static class RecentChangesListCellRenderer implements ListCellRenderer {

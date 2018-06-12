@@ -387,18 +387,15 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
   @Override
   @NotNull
   public Artifact addArtifact(@NotNull final String name, @NotNull final ArtifactType type, final CompositePackagingElement<?> root) {
-    return new WriteAction<Artifact>() {
-      @Override
-      protected void run(@NotNull final Result<Artifact> result) {
-        final ModifiableArtifactModel model = createModifiableModel();
-        final ModifiableArtifact artifact = model.addArtifact(name, type);
-        if (root != null) {
-          artifact.setRootElement(root);
-        }
-        model.commit();
-        result.setResult(artifact);
+    return WriteAction.compute(() -> {
+      final ModifiableArtifactModel model = createModifiableModel();
+      final ModifiableArtifact artifact = model.addArtifact(name, type);
+      if (root != null) {
+        artifact.setRootElement(root);
       }
-    }.execute().getResultObject();
+      model.commit();
+      return artifact;
+    });
   }
 
   @Override
@@ -412,12 +409,7 @@ public class ArtifactManagerImpl extends ArtifactManager implements ProjectCompo
     final ModifiableArtifactModel model = createModifiableModel();
     final CompositePackagingElement<?> root = model.getOrCreateModifiableArtifact(artifact).getRootElement();
     PackagingElementFactory.getInstance().getOrCreateDirectory(root, relativePath).addOrFindChildren(elements);
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.run(() -> model.commit());
   }
 
   @Override

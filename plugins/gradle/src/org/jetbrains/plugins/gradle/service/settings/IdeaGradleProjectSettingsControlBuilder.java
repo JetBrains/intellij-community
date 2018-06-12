@@ -4,8 +4,10 @@ package org.jetbrains.plugins.gradle.service.settings;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
+import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSystemSettingsControlCustomizer;
 import com.intellij.openapi.externalSystem.service.ui.ExternalSystemJdkComboBox;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
@@ -13,10 +15,8 @@ import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ui.configuration.ProjectStructureConfigurable;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ProjectSdksModel;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.MessageType;
@@ -77,9 +77,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   private boolean myShowBalloonIfNecessary;
   private final ActionListener myActionListener;
 
-
   private boolean dropUseAutoImportBox;
   private boolean dropCreateEmptyContentRootDirectoriesBox;
+  private boolean dropModulesGroupingOptionPanel;
 
   @SuppressWarnings("FieldCanBeLocal") // Used implicitly by reflection at disposeUIResources() and showUi()
   @Nullable
@@ -92,9 +92,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
   @Nullable
   private JLabel myGradleJdkLabel;
   @Nullable
-  private ExternalSystemJdkComboBox myGradleJdkComboBox;
-  @Nullable
-  private FixedSizeButton myGradleJdkSetUpButton;
+  protected ExternalSystemJdkComboBox myGradleJdkComboBox;
+  @Nullable protected FixedSizeButton myGradleJdkSetUpButton;
   private boolean dropGradleJdkComponents;
 
   @Nullable
@@ -121,6 +120,11 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Nullable
   private JBCheckBox myStoreExternallyCheckBox;
+  private boolean dropStoreExternallyCheckBox;
+
+  @SuppressWarnings("FieldCanBeLocal") // do not shift UI on the hide/show action, see IdeaGradleProjectSettingsControlBuilder.showUi
+  @Nullable
+  private JPanel myGradleJdkPanel;
 
   public IdeaGradleProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
     myInstallationManager = ServiceManager.getService(GradleInstallationManager.class);
@@ -200,6 +204,16 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
+  public IdeaGradleProjectSettingsControlBuilder dropStoreExternallyCheckBox() {
+    dropStoreExternallyCheckBox = true;
+    return this;
+  }
+
+  public IdeaGradleProjectSettingsControlBuilder dropModulesGroupingOptionPanel() {
+    dropModulesGroupingOptionPanel = true;
+    return this;
+  }
+
   @Override
   public void showUi(boolean show) {
     ExternalSystemUiUtil.showUi(this, show);
@@ -212,7 +226,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public ExternalSystemSettingsControlCustomizer getExternalSystemSettingsControlCustomizer() {
-    return new ExternalSystemSettingsControlCustomizer(dropUseAutoImportBox, dropCreateEmptyContentRootDirectoriesBox);
+    return new ExternalSystemSettingsControlCustomizer(
+      dropUseAutoImportBox, dropCreateEmptyContentRootDirectoriesBox, dropModulesGroupingOptionPanel);
   }
 
   @Override
@@ -241,7 +256,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       content.add(myResolveModulePerSourceSetCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
 
-    if (myInitialSettings.getStoreProjectFilesExternally() != ThreeState.UNSURE) {
+    if (!dropStoreExternallyCheckBox && myInitialSettings.getStoreProjectFilesExternally() != ThreeState.UNSURE) {
       myStoreExternallyCheckBox = new JBCheckBox("Store generated project files externally");
       content.add(myStoreExternallyCheckBox, ExternalSystemUiUtil.getFillLineConstraints(indentLevel));
     }
@@ -280,9 +295,9 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
       myGradleJdkComboBox = new ExternalSystemJdkComboBox().withoutJre();
 
       content.add(myGradleJdkLabel, ExternalSystemUiUtil.getLabelConstraints(indentLevel));
-      JPanel gradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
-      gradleJdkPanel.setFocusable(false);
-      gradleJdkPanel.add(myGradleJdkComboBox, BorderLayout.CENTER);
+      myGradleJdkPanel = new JPanel(new BorderLayout(SystemInfo.isMac ? 0 : 2, 0));
+      myGradleJdkPanel.setFocusable(false);
+      myGradleJdkPanel.add(myGradleJdkComboBox, BorderLayout.CENTER);
       myGradleJdkSetUpButton = new FixedSizeButton(myGradleJdkComboBox);
       myGradleJdkSetUpButton.setToolTipText(UIBundle.message("component.with.browse.button.browse.button.tooltip.text"));
       // FixedSizeButton isn't focusable but it should be selectable via keyboard.
@@ -297,8 +312,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
         myGradleJdkSetUpButton.setFocusable(true);
         myGradleJdkSetUpButton.getAccessibleContext().setAccessibleName(ApplicationBundle.message("button.new"));
       }
-      gradleJdkPanel.add(myGradleJdkSetUpButton, BorderLayout.EAST);
-      content.add(gradleJdkPanel, ExternalSystemUiUtil.getFillLineConstraints(0));
+      myGradleJdkPanel.add(myGradleJdkSetUpButton, BorderLayout.EAST);
+      content.add(myGradleJdkPanel, ExternalSystemUiUtil.getFillLineConstraints(0));
     }
     return this;
   }
@@ -346,6 +361,16 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
   @Override
   public boolean validate(GradleProjectSettings settings) throws ConfigurationException {
+    if(myGradleJdkComboBox != null && !ApplicationManager.getApplication().isUnitTestMode()) {
+      Sdk selectedJdk = myGradleJdkComboBox.getSelectedJdk();
+      if(selectedJdk == null) {
+        throw new ConfigurationException(GradleBundle.message("gradle.jvm.undefined"));
+      }
+      String homePath = selectedJdk.getHomePath();
+      if(!ExternalSystemJdkUtil.isValidJdk(homePath)) {
+        throw new ConfigurationException(GradleBundle.message("gradle.jvm.incorrect", homePath));
+      }
+    }
     if (myGradleHomePathField == null) return true;
 
     String gradleHomePath = FileUtil.toCanonicalPath(myGradleHomePathField.getText());
@@ -534,7 +559,7 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
     return this;
   }
 
-  private void resetGradleJdkComboBox(@Nullable final Project project,
+  protected void resetGradleJdkComboBox(@Nullable final Project project,
                                       GradleProjectSettings settings,
                                       @Nullable WizardContext wizardContext) {
     if (myGradleJdkComboBox == null) return;
@@ -548,9 +573,8 @@ public class IdeaGradleProjectSettingsControlBuilder implements GradleProjectSet
 
     myGradleJdkComboBox.refreshData(sdkItem, projectJdk);
     if (myGradleJdkSetUpButton != null) {
-      ProjectSdksModel sdksModel = ProjectStructureConfigurable.getInstance(
-        project == null || project.isDisposed() ? ProjectManager.getInstance().getDefaultProject() : project).getProjectJdksModel();
-      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, id -> id instanceof JavaSdk);
+      ProjectSdksModel sdksModel = new ProjectSdksModel();
+      myGradleJdkComboBox.setSetupButton(myGradleJdkSetUpButton, sdksModel, null, JavaSdkType.class::isInstance);
     }
   }
 

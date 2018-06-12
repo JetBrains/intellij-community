@@ -69,12 +69,9 @@ public class RenameFileFix implements IntentionAction, LocalQuickFix {
   public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiFile file = descriptor.getPsiElement().getContainingFile();
     if (isAvailable(project, null, file)) {
-      new WriteCommandAction(project) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          invoke(project, null, file);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).run(() -> {
+        invoke(project, null, file);
+      });
     }
   }
 

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.Disposable;
@@ -139,7 +125,7 @@ public class InlayModelImpl implements InlayModel, Disposable {
 
   @Override
   public void dispose() {
-    myInlayTree.dispose();
+    myInlayTree.dispose(myEditor.getDocument());
   }
 
   @Nullable
@@ -167,6 +153,16 @@ public class InlayModelImpl implements InlayModel, Disposable {
   }
 
   @Override
+  public boolean hasInlineElementsInRange(int startOffset, int endOffset) {
+    return !myInlayTree.processOverlappingWith(startOffset, endOffset, inlay -> false);
+  }
+
+  @Override
+  public boolean hasInlineElements() {
+    return myInlayTree.size() > 0;
+  }
+
+  @Override
   public boolean hasInlineElementAt(int offset) {
     return !myInlayTree.processOverlappingWith(offset, offset, inlay -> false);
   }
@@ -179,6 +175,18 @@ public class InlayModelImpl implements InlayModel, Disposable {
     VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
     return visualPosition.line == inlayStartPosition.line && 
            visualPosition.column >= inlayStartPosition.column && visualPosition.column < inlayStartPosition.column + inlayCount;
+  }
+
+  @Nullable
+  @Override
+  public Inlay getInlineElementAt(@NotNull VisualPosition visualPosition) {
+    int offset = myEditor.logicalPositionToOffset(myEditor.visualToLogicalPosition(visualPosition));
+    List<Inlay> inlays = getInlineElementsInRange(offset, offset);
+    if (inlays.isEmpty()) return null;
+    VisualPosition inlayStartPosition = myEditor.offsetToVisualPosition(offset, false, false);
+    if (visualPosition.line != inlayStartPosition.line) return null;
+    int inlayIndex = visualPosition.column - inlayStartPosition.column;
+    return inlayIndex >= 0 && inlayIndex < inlays.size() ? inlays.get(inlayIndex) : null;
   }
 
   @Nullable

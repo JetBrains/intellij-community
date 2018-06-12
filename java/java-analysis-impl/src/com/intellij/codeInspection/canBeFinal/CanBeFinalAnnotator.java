@@ -190,7 +190,7 @@ class CanBeFinalAnnotator extends RefGraphAnnotatorEx {
               }
             }
             List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
-            if (redirectedConstructors == null || redirectedConstructors.isEmpty()) {
+            if (redirectedConstructors.isEmpty()) {
               List<PsiVariable> ssaVariables = ControlFlowUtil.getSSAVariables(flow);
               ArrayList<PsiVariable> good = new ArrayList<>(ssaVariables);
               good.addAll(instanceInitializerInitializedFields);

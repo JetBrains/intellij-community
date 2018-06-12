@@ -16,6 +16,9 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -28,7 +31,6 @@ import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,7 +42,6 @@ import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -334,6 +335,24 @@ public abstract class GotoActionBase extends AnAction {
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
+    if (seManager.isShown()) {
+      if (searchProviderID.equals(seManager.getShownContributorID())) {
+        seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
+      }
+      else {
+        seManager.setShownContributor(searchProviderID);
+      }
+      return;
+    }
+
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+    seManager.show(searchProviderID);
+  }
 
   private static boolean historyEnabled() {
     return !ContainerUtil.isEmpty(ourHistory.get(myInAction));

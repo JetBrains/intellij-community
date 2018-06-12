@@ -429,10 +429,10 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (oldComponent != null) return false;
     final MyTextComponentWrapper wrapper = search ? mySearchFieldWrapper : myReplaceFieldWrapper;
 
-    final JTextComponent textComponent;
+    final JTextArea textComponent;
       SearchTextArea textArea = new SearchTextArea(search);
       textComponent = textArea.getTextArea();
-      ((JTextArea)textComponent).setRows(isMultiline() ? 2 : 1);
+      textComponent.setRows(isMultiline() ? 2 : 1);
 
     wrapper.setContent(textArea);
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodEvaluator
@@ -186,7 +186,7 @@ public class MethodEvaluator implements Evaluator {
   private static Value invokeDefaultMethod(DebugProcess debugProcess, EvaluationContext evaluationContext,
                                            Value obj, String name)
     throws EvaluateException {
-    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class.getName(), evaluationContext, debugProcess);
+    ClassType invokerClass = ClassLoadingUtils.getHelperClass(DefaultMethodInvoker.class, evaluationContext);
 
     if (invokerClass != null) {
       List<Method> methods = invokerClass.methodsByName("invoke");

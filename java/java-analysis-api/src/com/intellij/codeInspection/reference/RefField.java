@@ -26,6 +26,8 @@ import com.intellij.psi.PsiField;
  */
 public interface RefField extends RefJavaElement {
    Key<Boolean> ENUM_CONSTANT = Key.create("ENUM_CONSTANT");
+   Key<Boolean> IMPLICITLY_WRITTEN = Key.create("IMPLICITLY_WRITTEN");
+   Key<Boolean> IMPLICITLY_READ = Key.create("IMPLICITLY_READ");
   /**
    * Checks if the field is used for reading.
    *

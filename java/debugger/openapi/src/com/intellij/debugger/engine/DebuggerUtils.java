@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.engine;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -493,19 +491,7 @@ public abstract class DebuggerUtils {
     return Arrays.stream(SyntheticTypeComponentProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSynthetic(typeComponent));
   }
 
-  /**
-   * @deprecated use {@link #isInsideSimpleGetter(PsiElement)} instead
-   */
-  @Deprecated
-  public static boolean isSimpleGetter(PsiMethod method) {
-    return Arrays.stream(SimpleGetterProvider.EP_NAME.getExtensions()).anyMatch(provider -> provider.isSimpleGetter(method));
-  }
-
   public static boolean isInsideSimpleGetter(@NotNull PsiElement contextElement) {
-    for (SimpleGetterProvider provider : SimpleGetterProvider.EP_NAME.getExtensions()) {
-      PsiMethod psiMethod = PsiTreeUtil.getParentOfType(contextElement, PsiMethod.class);
-      if (psiMethod != null && provider.isSimpleGetter(psiMethod)) return true;
-    }
     return Arrays.stream(SimplePropertyGetterProvider.EP_NAME.getExtensions())
       .anyMatch(provider -> provider.isInsideSimpleGetter(contextElement));
   }
@@ -544,26 +530,17 @@ public abstract class DebuggerUtils {
 
   public abstract PsiClass chooseClassDialog(String title, Project project);
 
-  /**
-   * IDEA-122113
-   * Will be removed when Java debugger will be moved to XDebugger API
-   */
-  public static boolean isDebugActionAware(@NotNull PsiFile file) {
-    return isDebugAware(file, false);
-  }
-
   public static boolean isBreakpointAware(@NotNull PsiFile file) {
-    return isDebugAware(file, true);
-  }
-
-  private static boolean isDebugAware(@NotNull PsiFile file, boolean breakpointAware) {
     FileType fileType = file.getFileType();
     //noinspection deprecation
     if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).isJVMDebuggingSupported()) {
       return true;
     }
 
-    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions())
-      .anyMatch(provider -> breakpointAware ? provider.isBreakpointAware(file) : provider.isActionAware(file));
+    return Arrays.stream(JavaDebugAware.EP_NAME.getExtensions()).anyMatch(provider -> provider.isBreakpointAware(file));
+  }
+
+  public static boolean isAndroidVM(@NotNull VirtualMachine virtualMachine) {
+    return StringUtil.containsIgnoreCase(virtualMachine.name(), "dalvik");
   }
 }

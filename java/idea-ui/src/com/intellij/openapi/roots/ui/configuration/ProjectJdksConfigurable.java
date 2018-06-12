@@ -42,6 +42,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.util.*;
 
+import static com.intellij.openapi.projectRoots.SimpleJavaSdkType.notSimpleJavaSdkType;
+
 public class ProjectJdksConfigurable extends MasterDetailsComponent {
   private final ProjectSdksModel myProjectJdksModel;
   private final Project myProject;
@@ -154,7 +156,7 @@ public class ProjectJdksConfigurable extends MasterDetailsComponent {
     myProjectJdksModel.createAddActions(group, myTree, projectJdk -> {
       addNode(new MyNode(new JdkConfigurable(((ProjectJdkImpl)projectJdk), myProjectJdksModel, TREE_UPDATER, myHistory, myProject), false), myRoot);
       selectNodeInTree(findNodeByObject(myRoot, projectJdk));
-    });
+    }, notSimpleJavaSdkType());
     actions.add(new MyActionGroupWrapper(group));
     actions.add(new MyDeleteAction(Conditions.alwaysTrue()));
     return actions;

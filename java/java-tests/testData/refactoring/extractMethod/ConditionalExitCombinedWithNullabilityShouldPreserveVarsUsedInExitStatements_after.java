@@ -5,7 +5,7 @@ class X {
     for (String psiMethod : methods) {
         String strings = newMethod(method, testName);
         if (strings != null) return strings;
-      
+
     }
     return null;
   }

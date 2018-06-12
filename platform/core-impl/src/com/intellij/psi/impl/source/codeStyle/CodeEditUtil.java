@@ -41,15 +41,15 @@ public class CodeEditUtil {
 
   private CodeEditUtil() { }
 
-  public static void addChild(ASTNode parent, ASTNode child, ASTNode anchorBefore) {
+  public static void addChild(@NotNull ASTNode parent, @NotNull ASTNode child, @Nullable ASTNode anchorBefore) {
     addChildren(parent, child, child, anchorBefore);
   }
 
-  public static void removeChild(ASTNode parent, @NotNull ASTNode child) {
+  public static void removeChild(@NotNull ASTNode parent, @NotNull ASTNode child) {
     removeChildren(parent, child, child);
   }
 
-  public static ASTNode addChildren(ASTNode parent, @NotNull ASTNode first, @NotNull ASTNode last, ASTNode anchorBefore) {
+  public static ASTNode addChildren(@NotNull ASTNode parent, @NotNull ASTNode first, @NotNull ASTNode last, @Nullable ASTNode anchorBefore) {
     ASTNode lastChild = last.getTreeNext();
     ASTNode current = first;
     while (current != lastChild) {
@@ -85,7 +85,7 @@ public class CodeEditUtil {
     return result;
   }
 
-  private static boolean isComment(IElementType type) {
+  private static boolean isComment(@NotNull IElementType type) {
     final ParserDefinition def = LanguageParserDefinitions.INSTANCE.forLanguage(type.getLanguage());
     return def != null && def.getCommentTokens().contains(type);
   }
@@ -119,7 +119,7 @@ public class CodeEditUtil {
     }
 
     PsiFile file = psiElement.getContainingFile();
-    setOldIndentation((TreeElement)first, IndentHelper.getInstance().getIndent(file.getProject(), file.getFileType(), first));
+    setOldIndentation((TreeElement)first, IndentHelper.getInstance().getIndent(file, first));
   }
 
   public static int getOldIndentation(ASTNode node) {
@@ -128,7 +128,7 @@ public class CodeEditUtil {
     return stored != null ? stored : -1;
   }
 
-  public static void removeChildren(ASTNode parent, @NotNull ASTNode first, @NotNull ASTNode last) {
+  public static void removeChildren(@NotNull ASTNode parent, @NotNull ASTNode first, @NotNull ASTNode last) {
     final boolean tailingElement = last.getStartOffset() + last.getTextLength() == parent.getStartOffset() + parent.getTextLength();
     final boolean forceReformat = needToForceReformat(parent, first, last);
     saveWhitespacesInfo(first);
@@ -142,7 +142,7 @@ public class CodeEditUtil {
     assert child == last : last + " is not a successor of " + first + " in the .getTreeNext() chain";
 
     final ASTNode prevLeaf = TreeUtil.prevLeaf(first);
-    final ASTNode nextLeaf = TreeUtil.nextLeaf(first);
+    final ASTNode nextLeaf = TreeUtil.nextLeaf(last);
     parent.removeRange(first, last.getTreeNext());
     ASTNode nextLeafToAdjust = nextLeaf;
     if (nextLeafToAdjust != null && prevLeaf != null && nextLeafToAdjust.getTreeParent() == null) {
@@ -167,7 +167,7 @@ public class CodeEditUtil {
     return buffer.toString().trim().length();
   }
 
-  public static void replaceChild(ASTNode parent, @NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
+  public static void replaceChild(@NotNull ASTNode parent, @NotNull ASTNode oldChild, @NotNull ASTNode newChild) {
     saveWhitespacesInfo(oldChild);
     saveWhitespacesInfo(newChild);
 
@@ -307,11 +307,11 @@ public class CodeEditUtil {
     }
   }
 
-  public static void markToReformatBefore(final ASTNode right, boolean value) {
+  public static void markToReformatBefore(@NotNull ASTNode right, boolean value) {
     right.putCopyableUserData(REFORMAT_BEFORE_KEY, value ? true : null);
   }
 
-  private static int getBlankLines(final String text) {
+  private static int getBlankLines(@NotNull String text) {
     int result = 0;
     int currentIndex = -1;
     while ((currentIndex = text.indexOf('\n', currentIndex + 1)) >= 0) result++;
@@ -340,12 +340,12 @@ public class CodeEditUtil {
     treeElement.putCopyableUserData(INDENT_INFO, oldIndentation >= 0 ? oldIndentation : null);
   }
 
-  public static boolean isMarkedToReformatBefore(final TreeElement element) {
+  public static boolean isMarkedToReformatBefore(@NotNull TreeElement element) {
     return element.getCopyableUserData(REFORMAT_BEFORE_KEY) != null;
   }
 
   @Nullable
-  public static PsiElement createLineFeed(final PsiManager manager) {
+  public static PsiElement createLineFeed(@NotNull PsiManager manager) {
     return Factory.createSingleLeafElement(TokenType.WHITE_SPACE, "\n", 0, 1, null, manager).getPsi();
   }
 
@@ -355,7 +355,7 @@ public class CodeEditUtil {
    * @param node node to check
    * @return {@code true} if given node is configured to be reformatted; {@code false} otherwise
    */
-  public static boolean isMarkedToReformat(final ASTNode node) {
+  public static boolean isMarkedToReformat(@NotNull ASTNode node) {
     if (node.getCopyableUserData(REFORMAT_KEY) == null || !isSuspendedNodesReformattingAllowed()) {
       return false;
     }
@@ -369,7 +369,7 @@ public class CodeEditUtil {
    * @param node  target element which {@code 'reformat'} status should be changed
    * @param value {@code true} if the element should be reformatted; {@code false} otherwise
    */
-  public static void markToReformat(final ASTNode node, boolean value) {
+  public static void markToReformat(@NotNull ASTNode node, boolean value) {
     if (ALLOW_TO_MARK_NODES_TO_REFORMAT.get()) {
       node.putCopyableUserData(REFORMAT_KEY, value ? true : null);
     }

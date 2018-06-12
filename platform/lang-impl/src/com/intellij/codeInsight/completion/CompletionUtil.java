@@ -125,6 +125,10 @@ public class CompletionUtil {
     return findInText(offset, startOffset, idPart, idStart, text);
   }
 
+  public static String findIdentifierPrefix(String wholeText, int offset, ElementPattern<Character> idPart,
+                                             ElementPattern<Character> idStart) {
+    return findInText(offset, 0, idPart, idStart, wholeText);
+  }
 
   public static String findIdentifierPrefix(@NotNull Document document, int offset, ElementPattern<Character> idPart,
                                             ElementPattern<Character> idStart) {

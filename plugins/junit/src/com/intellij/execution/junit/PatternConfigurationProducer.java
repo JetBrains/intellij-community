@@ -66,6 +66,11 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
   }
 
   @Override
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return JUnitConfiguration.TEST_PATTERN.equals(type);
+  }
+
+  @Override
   protected Module findModule(JUnitConfiguration configuration, Module contextModule) {
     final Set<String> patterns = configuration.getPersistentData().getPatterns();
     return findModule(configuration, contextModule, patterns);
@@ -73,12 +78,10 @@ public class PatternConfigurationProducer extends AbstractPatternBasedConfigurat
 
   @Override
   public boolean isConfigurationFromContext(JUnitConfiguration unitConfiguration, ConfigurationContext context) {
-    final TestObject testobject = unitConfiguration.getTestObject();
-    if (testobject instanceof TestsPattern) {
-      if (differentParamSet(unitConfiguration, context.getLocation())) return false;
-      final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
-      if (isConfiguredFromContext(context, patterns)) return true;
-    }
+     if (!isApplicableTestType(unitConfiguration.getTestType(), context)) return false;
+    if (differentParamSet(unitConfiguration, context.getLocation())) return false;
+    final Set<String> patterns = unitConfiguration.getPersistentData().getPatterns();
+    if (isConfiguredFromContext(context, patterns)) return true;
     return false;
   }
 }

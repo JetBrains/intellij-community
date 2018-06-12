@@ -16,19 +16,20 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public class GoToInstruction extends BranchingInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.GoToInstruction");
 
   public final boolean isReturn; //true if goto has been generated as a result of return statement
 
-  public GoToInstruction(int offset) {
+  GoToInstruction(int offset) {
     this(offset, BranchingInstruction.Role.END);
   }
-  public GoToInstruction(int offset, Role role) {
+  GoToInstruction(int offset, @NotNull Role role) {
     this (offset,role,false);
   }
-  public GoToInstruction(int offset, Role role, boolean isReturn) {
+  GoToInstruction(int offset, @NotNull Role role, boolean isReturn) {
     super(offset, role);
     this.isReturn = isReturn;
   }
@@ -49,7 +50,7 @@ public class GoToInstruction extends BranchingInstruction {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitGoToInstruction(this, offset, nextOffset);
   }
 }

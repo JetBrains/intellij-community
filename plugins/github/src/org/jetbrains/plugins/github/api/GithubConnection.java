@@ -57,11 +57,6 @@ public class GithubConnection {
   private volatile HttpUriRequest myRequest;
   private volatile boolean myAborted;
 
-  @TestOnly
-  public GithubConnection(@NotNull GithubAuthData auth) {
-    this(auth, false);
-  }
-
   public GithubConnection(@NotNull GithubAuthData auth, boolean reusable) {
     myApiURL = GithubUrlUtil.getApiUrl(auth.getHost());
     myClient = new GithubConnectionBuilder(auth, myApiURL).createClient();

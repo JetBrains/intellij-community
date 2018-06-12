@@ -37,7 +37,7 @@ public class OpenOutputAction extends AnAction {
   public OpenOutputAction(AdditionalTabComponent console) {
     super("Open in Editor");
     myConsole = console;
-    getTemplatePresentation().setIcon(AllIcons.Actions.Export);
+    getTemplatePresentation().setIcon(AllIcons.ToolbarDecorator.Export);
   }
 
   public void actionPerformed(AnActionEvent e) {

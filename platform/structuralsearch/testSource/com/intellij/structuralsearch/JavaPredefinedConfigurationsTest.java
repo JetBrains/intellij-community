@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -57,18 +57,47 @@ public class JavaPredefinedConfigurationsTest extends StructuralSearchTestCase {
                        asList("X() {}",
                               "X(int i) {    System.out.println(i);  }",
                               "X(String... ss) {}")));
+    testCases.put(SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
+                  pair("class X {" +
+                       "  X() {}" +
+                       "}" +
+                       "class Y {" +
+                       "  Y() {}" +
+                       "  Y(String name) {}" +
+                       "}" +
+                       "class Z {" +
+                       "  Z(String name) {}" +
+                       "}" +
+                       "class A {" +
+                       "  void x(String names) {}" +
+                       "}",
+                       asList("class X {" +
+                              "  X() {}" +
+                              "}",
+                              "class A {" +
+                              "  void x(String names) {}" +
+                              "}")));
+    testCases.put(SSRBundle.message("predefined.configuration.try.without.resources"),
+                  pair("class X {{" +
+                       "  try {} finally {}" +
+                       "  try {" +
+                       "    ;" +
+                       "  } catch (RuntimeException e) {}" +
+                       "  try (resourceRef) {}" +
+                       "  try (AutoCloseable ac = null) {}" +
+                       "}}",
+                       asList("try {} finally {}")));
   }
 
   public void testPredefinedConfigurations() {
-    final Configuration[] templates = JavaPredefinedConfigurations.createPredefinedTemplates();
-    for (Configuration template : templates) {
+    for (Configuration template : JavaPredefinedConfigurations.createPredefinedTemplates()) {
       final Pair<String, List<String>> testCase = testCases.get(template.getName());
       if (testCase == null) continue; // todo fail when not all predefined templates are covered
       if (!(template instanceof SearchConfiguration)) fail();
       final SearchConfiguration searchConfiguration = (SearchConfiguration)template;
       options = searchConfiguration.getMatchOptions();
       final List<MatchResult> matches = testMatcher.testFindMatches(testCase.first, options, true, StdFileTypes.JAVA, null, false);
-      assertEquals(matches.size(), testCase.second.size());
+      assertEquals(testCase.second.size(), matches.size());
       for (int i = 0; i < matches.size(); i++) {
         final String matchText = StructuralSearchUtil.getPresentableElement(matches.get(i).getMatch()).getText();
         assertEquals(template.getName(), testCase.second.get(i), matchText);

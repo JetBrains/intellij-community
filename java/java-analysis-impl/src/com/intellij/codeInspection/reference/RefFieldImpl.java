@@ -123,14 +123,27 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
         refUtil.addReferences(psiField, this, psiField);
       }
 
-      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant || RefUtil.isImplicitWrite(psiField)) {
-        if (!checkFlag(USED_FOR_WRITING_MASK)) {
-          setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
-          setFlag(true, USED_FOR_WRITING_MASK);
-        }
+      if (psiField.getInitializer() != null || psiField instanceof PsiEnumConstant) {
+        setInitializerMasks();
       }
+      else if (RefUtil.isImplicitWrite(psiField)) {
+        putUserData(IMPLICITLY_WRITTEN, true);
+        setInitializerMasks();
+      }
+
+      if (RefUtil.isImplicitRead(psiField)) {
+        putUserData(IMPLICITLY_READ, true);
+      }
+
       refUtil.addTypeReference(psiField, psiField.getType(), getRefManager(), this);
       getRefManager().fireBuildReferences(this);
+    }
+  }
+
+  private void setInitializerMasks() {
+    if (!checkFlag(USED_FOR_WRITING_MASK)) {
+      setFlag(true, ASSIGNED_ONLY_IN_INITIALIZER_MASK);
+      setFlag(true, USED_FOR_WRITING_MASK);
     }
   }
 

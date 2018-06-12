@@ -301,4 +301,9 @@ public class Py3TypeCheckerInspectionTest extends PyInspectionTestCase {
   public void testDataclassesReplace() {
     runWithLanguageLevel(LanguageLevel.PYTHON37, () -> super.doMultiFileTest());
   }
+
+  // PY-28127
+  public void testInitializingTypeVar() {
+    doTest();
+  }
 }

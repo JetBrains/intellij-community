@@ -54,6 +54,11 @@
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
+    <extensionPoint name="wordBoundaryFilter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
+    </extensionPoint>
+
     <extensionPoint name="bidiRegionsSeparator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
@@ -92,6 +97,10 @@
 
     <extensionPoint name="daemon.highlightInfoFilter"
                     interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
+    
+    <extensionPoint name="daemon.tooltipActionProvider"
+                    interface="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider"/>
+    
     <extensionPoint name="daemon.intentionActionFilter"
                     interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter"/>
 
@@ -272,6 +281,8 @@
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
 
+    <extensionPoint name="gotoActionAliasMatcher"
+                    interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher"/>
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="gotoSymbolContributor"
@@ -280,9 +291,23 @@
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="anonymousElementProvider"
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
-    <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.SearchEverywhereContributor"/>
+    <extensionPoint name="searchEverywhereContributor"
+                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributor"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
+
+    <extensionPoint name="runAnything.runConfigurationProvider"
+                    interface="com.intellij.ide.actions.runAnything.RunAnythingRunConfigurationProvider"/>
+
+    <extensionPoint name="runAnything.activityProvider"
+                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingActivityProvider"/>
+
+    <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler"/>
+
+    <extensionPoint name="runAnything.group" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingGroup"/>
+
+    <extensionPoint name="runAnything.commandCustomizer"
+                    interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
 
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
     <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
@@ -433,6 +458,8 @@
 
     <extensionPoint name="programRunner"
                     interface="com.intellij.execution.runners.ProgramRunner"/>
+
+    <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
     <extensionPoint name="executor"
                     interface="com.intellij.execution.Executor"/>
@@ -597,6 +624,7 @@
     <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.parameterInfo.ParameterInfoHandler"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.parameterInfo.listener" interface="com.intellij.codeInsight.hint.ParameterInfoListener" />
     <extensionPoint name="codeInsight.parameterNameHints" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayParameterHintsProvider"/>
     </extensionPoint>
@@ -620,6 +648,8 @@
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
+    <extensionPoint name="virtualFileQualifiedNameProvider"
+                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
@@ -786,7 +816,7 @@
 
     <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass"
-            implements="com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper"/>
+            implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>

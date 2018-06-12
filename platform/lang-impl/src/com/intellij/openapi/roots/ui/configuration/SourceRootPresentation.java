@@ -29,7 +29,7 @@ public class SourceRootPresentation {
   @NotNull
   private static <P extends JpsElement> Icon getSourceRootIcon(@NotNull JpsTypedModuleSourceRoot<P> root) {
     ModuleSourceRootEditHandler<P> handler = ModuleSourceRootEditHandler.getEditHandler(root.getRootType());
-    return handler != null ? handler.getRootIcon(root.getProperties()) : PlatformIcons.DIRECTORY_CLOSED_ICON;
+    return handler != null ? handler.getRootIcon(root.getProperties()) : PlatformIcons.FOLDER_ICON;
   }
 
   @Nullable

@@ -22,14 +22,12 @@ import com.intellij.util.text.DateFormatUtil;
 import git4idea.actions.GitInit;
 import git4idea.commands.Git;
 import git4idea.repo.GitRepository;
-import git4idea.test.GitExecutor;
 import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubFullPath;
 import org.jetbrains.plugins.github.test.GithubTest;
 import org.jetbrains.plugins.github.ui.GithubCreatePullRequestDialog;
-import org.jetbrains.plugins.github.util.GithubUrlUtil;
-import org.jetbrains.plugins.github.util.GithubUtil;
+import org.jetbrains.plugins.github.util.GithubGitHelper;
 
 import java.util.Random;
 
@@ -64,7 +62,7 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
   }
 
   protected void deleteRemoteBranch() {
-    GitRepository repository = GithubUtil.getGitRepository(myProject, projectRoot);
+    GitRepository repository = GithubGitHelper.findGitRepository(myProject, projectRoot);
     if (repository != null) {
       Git.getInstance().push(repository, "origin", PROJECT_URL, ":" + BRANCH_NAME, false);
     }
@@ -92,10 +90,6 @@ public abstract class GithubCreatePullRequestTestBase extends GithubTest {
 
     setGitIdentity(projectRoot);
     GitInit.refreshAndConfigureVcsMappings(myProject, projectRoot, projectRoot.getPath());
-  }
-
-  protected void addRemote(@NotNull String user) {
-    git("remote add somename " + GithubUrlUtil.getCloneUrl(new GithubFullPath(user, PROJECT_NAME)));
   }
 
   protected void createBranch() {

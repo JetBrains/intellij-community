@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.CommonBundle;
@@ -26,6 +12,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchUtil;
@@ -45,10 +32,11 @@ import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.regex.Pattern;
 
 public class ExistingTemplatesComponent {
+  private static final Pattern SPLIT = Pattern.compile("(?<!/)/(?!/)"); // slash not preceded or followed by another slash
+
   private final Tree patternTree;
   private final DefaultTreeModel patternTreeModel;
   private final DefaultMutableTreeNode userTemplatesNode;
@@ -66,36 +54,12 @@ public class ExistingTemplatesComponent {
     patternTreeModel = new DefaultTreeModel(root);
     patternTree = createTree(patternTreeModel);
 
-    DefaultMutableTreeNode parent = null;
-    String lastCategory = null;
-    final List<DefaultMutableTreeNode> nodesToExpand = new ArrayList<>();
-
-    final List<Configuration> predefined = StructuralSearchUtil.getPredefinedTemplates();
-    for (final Configuration info : predefined) {
-      final DefaultMutableTreeNode node = new DefaultMutableTreeNode(info);
-
-      if (lastCategory == null || !lastCategory.equals(info.getCategory())) {
-        if (info.getCategory().length() > 0) {
-          root.add(parent = new DefaultMutableTreeNode(info.getCategory()));
-          nodesToExpand.add(parent);
-          lastCategory = info.getCategory();
-        }
-        else {
-          root.add(node);
-          continue;
-        }
-      }
-
-      parent.add(node);
+    for (Configuration info : StructuralSearchUtil.getPredefinedTemplates()) {
+      getOrCreateCategoryNode(root, SPLIT.split(info.getCategory())).add(new DefaultMutableTreeNode(info, false));
     }
+    root.add(userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category")));
 
-    userTemplatesNode = new DefaultMutableTreeNode(SSRBundle.message("user.defined.category"));
-    root.add(userTemplatesNode);
-
-    for (final DefaultMutableTreeNode nodeToExpand : nodesToExpand) {
-      patternTree.expandPath(new TreePath(new Object[]{root, nodeToExpand}));
-    }
-
+    TreeUtil.expandAll(patternTree);
     final TreeExpander treeExpander = new DefaultTreeExpander(patternTree);
     final CommonActionsManager actionManager = CommonActionsManager.getInstance();
     panel = ToolbarDecorator.createDecorator(patternTree)
@@ -179,21 +143,33 @@ public class ExistingTemplatesComponent {
     configureSelectTemplateAction(historyList);
   }
 
-  public void selectConfiguration(String name) {
-    final DefaultMutableTreeNode root = (DefaultMutableTreeNode)patternTreeModel.getRoot();
-    final int count = root.getChildCount();
-    for (int i = 0; i < count; i++) {
-      final DefaultMutableTreeNode category = (DefaultMutableTreeNode)root.getChildAt(i);
-      final int count1 = category.getChildCount();
-      for (int j = 0; j < count1; j++ ) {
-        final DefaultMutableTreeNode leaf = (DefaultMutableTreeNode)category.getChildAt(j);
-        final Configuration configuration = (Configuration)leaf.getUserObject();
-        if (name.equals(configuration.getName())) {
-          TreeUtil.selectInTree(leaf, false, patternTree, false);
-          return;
+  @NotNull
+  private static DefaultMutableTreeNode getOrCreateCategoryNode(@NotNull DefaultMutableTreeNode root, String[] path) {
+    DefaultMutableTreeNode result = root;
+    outer:
+    for (String step : path) {
+      step = StringUtil.replace(step, "//", "/");
+      DefaultMutableTreeNode child = (result.getChildCount() == 0) ? null : (DefaultMutableTreeNode)result.getLastChild();
+      while (child != null) {
+        if (step.equals(child.getUserObject())) {
+          result = child;
+          continue outer;
         }
+        else child = child.getPreviousSibling();
       }
+      final DefaultMutableTreeNode newNode = new DefaultMutableTreeNode(step);
+      result.add(newNode);
+      result = newNode;
     }
+    return result;
+  }
+
+  public void selectConfiguration(String name) {
+    final DefaultMutableTreeNode node = TreeUtil.findNode((DefaultMutableTreeNode)patternTreeModel.getRoot(), n -> {
+      final Object object = n.getUserObject();
+      return object instanceof Configuration && name.equals(((Configuration)object).getName());
+    });
+    TreeUtil.selectInTree(node, false, patternTree, false);
   }
 
   private void initialize() {

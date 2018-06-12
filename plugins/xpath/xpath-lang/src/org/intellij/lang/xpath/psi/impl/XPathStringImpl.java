@@ -65,7 +65,7 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
     if (text.endsWith(String.valueOf(getQuoteChar())) && text.length() > 1) {
       return text.substring(1, text.length() - 1);
     } else {
-      return text.substring(1, text.length());
+      return text.substring(1);
     }
   }
 

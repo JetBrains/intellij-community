@@ -1,11 +1,11 @@
 # Stubs for threading
 
+import sys
+from types import FrameType, TracebackType
 from typing import (
-    Any, Callable, Iterable, List, Mapping, Optional, Tuple, Type, Union,
+    Any, Callable, Iterable, List, Mapping, Optional, Type, Union,
     TypeVar,
 )
-from types import FrameType, TracebackType
-import sys
 
 # TODO recursive type
 _TF = Callable[[FrameType, str, Any], Optional[Callable[..., Any]]]
@@ -40,10 +40,10 @@ if sys.version_info >= (3,):
 class ThreadError(Exception): ...
 
 
-# TODO: Change to a class with __getattr__ and __setattr__
-# once mypy supports universal __setattr__.
-# See https://github.com/python/mypy/issues/521
-local = ...  # type: Any
+class local(object):
+    def __getattribute__(self, name: str) -> Any: ...
+    def __setattr__(self, name: str, value: Any) -> None: ...
+    def __delattr__(self, name: str) -> None: ...
 
 
 class Thread:

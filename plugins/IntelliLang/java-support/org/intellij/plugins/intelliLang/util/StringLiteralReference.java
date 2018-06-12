@@ -34,10 +34,12 @@ public abstract class StringLiteralReference implements PsiReference {
     myValue = value;
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myValue;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return ElementManipulators.getValueTextRange(myValue);
   }

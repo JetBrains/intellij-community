@@ -55,6 +55,7 @@ import com.jetbrains.extenstions.QNameResolveContext
 import com.jetbrains.extenstions.getElementAndResolvableName
 import com.jetbrains.extenstions.resolveToElement
 import com.jetbrains.python.PyBundle
+import com.jetbrains.python.PyNames
 import com.jetbrains.python.psi.PyFile
 import com.jetbrains.python.psi.PyFunction
 import com.jetbrains.python.psi.PyQualifiedNameOwner
@@ -63,6 +64,7 @@ import com.jetbrains.python.run.*
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant
 import com.jetbrains.python.run.targetBasedConfiguration.TargetWithVariant
 import com.jetbrains.python.run.targetBasedConfiguration.createRefactoringListenerIfPossible
+import com.jetbrains.python.run.targetBasedConfiguration.targetAsPsiElement
 import com.jetbrains.reflection.DelegationProperty
 import com.jetbrains.reflection.Properties
 import com.jetbrains.reflection.Property
@@ -100,7 +102,8 @@ internal fun getAdditionalArgumentsPropertyName() = com.jetbrains.python.testing
 /**
  * If runner name is here that means test runner only can run inheritors for TestCase
  */
-val RunnersThatRequireTestCaseClass = setOf(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME)
+val RunnersThatRequireTestCaseClass = setOf<String>(PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME,
+                                            PyTestFrameworkService.getSdkReadableNameByFramework(PyNames.TRIAL_TEST))
 
 /**
  * Checks if element could be test target
@@ -766,7 +769,18 @@ object PyTestsConfigurationProducer : AbstractPythonTestConfigurationProducer<Py
     val psiElement = context?.psiLocation ?: return false
     val targetForConfig = PyTestsConfigurationProducer.getTargetForConfig(configuration,
                                                                           psiElement) ?: return false
-    return configuration.target == targetForConfig.first
+
+    if (configuration.target != targetForConfig.first) return false
+
+
+    //Even of both configurations have same targets, it could be that both have same qname which is resolved
+    // to different elements due to different working folders.
+    // Resolve them and check files
+    if (configuration.target.targetType != PyRunTargetVariant.PYTHON) return true
+
+    val targetPsi = targetAsPsiElement(configuration.target.targetType, configuration.target.target, configuration,
+                                       configuration.getWorkingDirectoryAsVirtual()) ?: return true
+    return targetPsi.containingFile == psiElement.containingFile
   }
 }
 

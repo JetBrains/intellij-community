@@ -28,7 +28,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import com.intellij.psi.codeStyle.SuggestedNameInfo;
+import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -166,7 +169,7 @@ public class BindFieldsFromParametersAction extends BaseIntentionAction implemen
     for (PsiParameter parameter : parameters) {
       types.putValue(parameter.getType(), parameter);
     }
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class);
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(file);
     final boolean preferLongerNames = settings.PREFER_LONGER_NAMES;
     for (PsiParameter selected : parameters) {
       try {

@@ -16,7 +16,7 @@ public class Test {
   }
 
   OptionalInt opt() {
-    return OptionalInt.empty();
+    return (/*comment*/OptionalInt.empty());
   }
 
   void m(Optional<String> opt) {}

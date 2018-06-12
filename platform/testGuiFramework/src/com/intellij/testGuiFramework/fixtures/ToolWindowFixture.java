@@ -215,7 +215,7 @@ public abstract class ToolWindowFixture {
     }, timeout);
   }
 
-  private boolean isVisible() {
+  public boolean isVisible() {
     //noinspection ConstantConditions
     return execute(new GuiQuery<Boolean>() {
       @Override

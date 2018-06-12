@@ -21,5 +21,6 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

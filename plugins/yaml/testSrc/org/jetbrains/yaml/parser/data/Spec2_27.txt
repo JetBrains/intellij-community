@@ -52,10 +52,10 @@ YAML file
                   PsiElement(Eol)('\n')
                   PsiElement(indent)('            ')
                   PsiElement(scalar list)('458 Walkman Dr.')
-                  PsiElement(Eol)('\n')
+                  PsiElement(block scalar EOL)('\n')
                   PsiElement(indent)('            ')
                   PsiElement(scalar list)('Suite #292')
-              PsiElement(Eol)('\n')
+                  PsiElement(block scalar EOL)('\n')
               PsiElement(indent)('        ')
               YAML key value
                 PsiElement(scalar key)('city    :')

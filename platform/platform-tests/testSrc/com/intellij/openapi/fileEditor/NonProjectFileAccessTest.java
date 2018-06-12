@@ -4,7 +4,6 @@ package com.intellij.openapi.fileEditor;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
@@ -93,19 +92,16 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     final VirtualFile[] createdNonProject = new VirtualFile[1];
     final VirtualFile[] copiedNonProject = new VirtualFile[1];
 
-    new WriteAction<Object>() {
-      @Override
-      protected void run(@NotNull Result<Object> result) throws Throwable {
-        createdNonProject[0] = nonProjectFile.getParent().createChildData(this, "createdNonProject.txt");
-        copiedNonProject[0] = nonProjectFile.copy(this, nonProjectFile.getParent(), "copiedNonProject.txt");
-        myCreatedFiles.add(createdNonProject[0]);
-        myCreatedFiles.add(copiedNonProject[0]);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      createdNonProject[0] = nonProjectFile.getParent().createChildData(this, "createdNonProject.txt");
+      copiedNonProject[0] = nonProjectFile.copy(this, nonProjectFile.getParent(), "copiedNonProject.txt");
+      myCreatedFiles.add(createdNonProject[0]);
+      myCreatedFiles.add(copiedNonProject[0]);
+    });
 
-    typeAndCheck(createdNonProject[0], true); 
-    typeAndCheck(copiedNonProject[0], true); 
-    
+    typeAndCheck(createdNonProject[0], true);
+    typeAndCheck(copiedNonProject[0], true);
+
     typeAndCheck(nonProjectFile, false); // original is still locked 
   }
 
@@ -120,25 +116,21 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
     typeAndCheck(fileUnderProjectDir, false);
   }
 
-  public void testAccessToModuleSystemFiles() {
-    final Module moduleWithoutContentRoot = new WriteCommandAction<Module>(getProject()) {
-      @Override
-      protected void run(@NotNull Result<Module> result) throws Throwable {
-        String moduleName;
-        ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
-        try {
-          VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
-          moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
-          moduleModel.commit();
-        }
-        catch (Throwable t) {
-          moduleModel.dispose();
-          throw t;
-        }
-
-        result.setResult(ModuleManager.getInstance(getProject()).findModuleByName(moduleName));
+  public void testAccessToModuleSystemFiles() throws IOException {
+    final Module moduleWithoutContentRoot = WriteCommandAction.writeCommandAction(getProject()).compute(() -> {
+      String moduleName;
+      ModifiableModuleModel moduleModel = ModuleManager.getInstance(getProject()).getModifiableModel();
+      try {
+        VirtualFile moduleDir = getProject().getBaseDir().createChildDirectory(this, "moduleWithoutContentRoot");
+        moduleName = moduleModel.newModule(moduleDir.getPath() + "/moduleWithoutContentRoot.iml", EmptyModuleType.EMPTY_MODULE).getName();
+        moduleModel.commit();
       }
-    }.execute().getResultObject();
+      catch (Throwable t) {
+        moduleModel.dispose();
+        throw t;
+      }
+      return ModuleManager.getInstance(getProject()).findModuleByName(moduleName);
+    });
     PlatformTestUtil.saveProject(getProject());
 
     VirtualFile fileUnderNonProjectModuleDir = createFileExternally(new File(PathUtil.getParentPath(moduleWithoutContentRoot.getModuleFilePath())));
@@ -337,15 +329,18 @@ public class NonProjectFileAccessTest extends HeavyFileEditorManagerTestCase {
   
   @NotNull
   private VirtualFile createFileExternally(File dir) {
-    VirtualFile result = new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+    VirtualFile result = null;
+    try {
+      result = WriteAction.computeAndWait(() -> {
         // create externally, since files created via VFS are marked for editing automatically
         File file = new File(dir, FileUtil.createSequentFileName(dir, "extfile", "txt"));
         assertTrue(file.createNewFile());
-        result.setResult(LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file));
-      }
-    }.execute().getResultObject();
+        return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     myCreatedFiles.add(result);
     return result;
   }

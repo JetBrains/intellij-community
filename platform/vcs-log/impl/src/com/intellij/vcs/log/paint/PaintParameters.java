@@ -24,7 +24,6 @@ public class PaintParameters {
   private static final float SELECT_THICK_LINE = 2.5f;
 
   public static final int ROW_HEIGHT = 22;
-  public static final int LABEL_PADDING = 3;
 
   public static int getNodeWidth(int rowHeight) {
     return WIDTH_NODE * rowHeight / ROW_HEIGHT;

@@ -20,7 +20,14 @@ import org.assertj.core.api.Assertions.assertThat
 
 class CompletionLoggingPrefixLengthTest: CompletionLoggingTestBase() {
 
-  fun `test completion on dot starts has prefix length 1`() {
+
+    override fun setUp() {
+        super.setUp()
+        myFixture.addClass("interface Rum {}")
+        myFixture.addClass("interface Runn {}")
+    }
+
+    fun `test completion on dot starts has prefix length 1`() {
     myFixture.type('.')
     myFixture.completeBasic()
 
@@ -36,9 +43,21 @@ class CompletionLoggingPrefixLengthTest: CompletionLoggingTestBase() {
 
     val prefixLength = lookup.prefixLength()
 
-    myFixture.type('\n')
     assertThat(prefixLength).isEqualTo(1)
   }
+
+
+    fun `test if completion starts with 3 chars prefix is still 1`() {
+        myFixture.type('\b')
+        myFixture.type("Run")
+        myFixture.completeBasic()
+
+        val prefixLength = lookup.prefixLength()
+
+        myFixture.type('\n')
+
+        assertThat(prefixLength).isEqualTo(1)
+    }
 
 
   fun `test if completion starts with 1 char prefix is 1`() {
@@ -49,19 +68,6 @@ class CompletionLoggingPrefixLengthTest: CompletionLoggingTestBase() {
     val prefixLength = lookup.prefixLength()
 
     myFixture.type("un\n")
-
-    assertThat(prefixLength).isEqualTo(1)
-  }
-
-
-  fun `test if completion starts with 3 chars prefix is still 1`() {
-    myFixture.type('\b')
-    myFixture.type("Run")
-    myFixture.completeBasic()
-
-    val prefixLength = lookup.prefixLength()
-
-    myFixture.type('\n')
 
     assertThat(prefixLength).isEqualTo(1)
   }

@@ -18,6 +18,8 @@ package com.intellij.openapi.roots.ui.configuration.projectRoot;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.ui.PanelWithText;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -25,21 +27,25 @@ import javax.swing.*;
  * @author nik
  */
 public class TextConfigurable<T> extends NamedConfigurable<T> {
+  @NotNull
   private final T myObject;
+  @NotNull
   private final String myBannerSlogan;
+  @NotNull
   private final String myDisplayName;
-  private final Icon myClosedIcon;
+  private final Icon myIcon;
+  @NotNull
   private final String myDescriptionText;
 
-  public TextConfigurable(final T object,
-                          final String displayName,
-                          final String bannerSlogan,
-                          final String descriptionText,
-                          final Icon closedIcon) {
+  public TextConfigurable(@NotNull T object,
+                          @NotNull String displayName,
+                          @NotNull String bannerSlogan,
+                          @NotNull String descriptionText,
+                          @Nullable Icon icon) {
     myDisplayName = displayName;
     myBannerSlogan = bannerSlogan;
     myDescriptionText = descriptionText;
-    myClosedIcon = closedIcon;
+    myIcon = icon;
     myObject = object;
   }
 
@@ -63,11 +69,13 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
     return myObject;
   }
 
+  @NotNull
   @Override
   public String getBannerSlogan() {
     return myBannerSlogan;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return myDisplayName;
@@ -75,7 +83,7 @@ public class TextConfigurable<T> extends NamedConfigurable<T> {
 
   @Override
   public Icon getIcon(final boolean open) {
-    return myClosedIcon;
+    return myIcon;
   }
 
   @Override

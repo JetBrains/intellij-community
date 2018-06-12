@@ -32,9 +32,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 class MigrateToStreamFix implements LocalQuickFix {
   private final BaseStreamApiMigration myMigration;
 
@@ -74,7 +71,7 @@ class MigrateToStreamFix implements LocalQuickFix {
     if (result == null) return;
     LambdaCanBeMethodReferenceInspection.replaceAllLambdasWithMethodReferences(result);
     PsiDiamondTypeUtil.removeRedundantTypeArguments(result);
-    result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result);
+    result = SimplifyStreamApiCallChainsInspection.simplifyStreamExpressions(result, true);
     CodeStyleManager.getInstance(project).reformat(JavaCodeStyleManager.getInstance(project).shortenClassReferences(result));
   }
 }

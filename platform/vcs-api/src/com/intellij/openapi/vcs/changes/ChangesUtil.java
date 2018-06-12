@@ -68,6 +68,10 @@ public class ChangesUtil {
     }
   };
 
+  public static final Comparator<LocalChangeList> CHANGELIST_COMPARATOR =
+    Comparator.<LocalChangeList>comparingInt(list -> list.isDefault() ? -1 : 0)
+      .thenComparing(list -> list.getName(), String::compareToIgnoreCase);
+
   private ChangesUtil() {}
 
   @NotNull

@@ -156,4 +156,8 @@ public class HighlightingSessionImpl implements HighlightingSession {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myEDTQueue.drain();
   }
+
+  static void clearProgressIndicator(@NotNull DaemonProgressIndicator indicator) {
+    indicator.putUserData(HIGHLIGHTING_SESSION, null);
+  }
 }

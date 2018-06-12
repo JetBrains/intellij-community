@@ -52,7 +52,7 @@ public class JavaCoverageEnabledConfiguration extends CoverageEnabledConfigurati
   }
 
   @Nullable
-  public static JavaCoverageEnabledConfiguration getFrom(final RunConfigurationBase configuration) {
+  public static JavaCoverageEnabledConfiguration getFrom(@NotNull final RunConfigurationBase configuration) {
     final CoverageEnabledConfiguration coverageEnabledConfiguration = getOrCreate(configuration);
     if (coverageEnabledConfiguration instanceof JavaCoverageEnabledConfiguration) {
       return (JavaCoverageEnabledConfiguration)coverageEnabledConfiguration;

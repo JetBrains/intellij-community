@@ -26,6 +26,7 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.tree.IElementType;
@@ -326,10 +327,12 @@ public class CodeInsightUtil {
 
     if (baseClass.hasModifierProperty(PsiModifier.FINAL)) return;
 
+    Set<PsiClass> imported = processImportedInheritors(context, baseClass, inheritorsProcessor);
+
     if (matcher.getPrefix().length() > 2) {
       JBTreeTraverser<PsiClass> traverser = JBTreeTraverser.of(PsiClass::getInnerClasses);
       AllClassesGetter.processJavaClasses(matcher, context.getProject(), scope, psiClass -> {
-        Iterable<PsiClass> inheritors = traverser.withRoot(psiClass).filter(c -> c.isInheritor(baseClass, true));
+        Iterable<PsiClass> inheritors = traverser.withRoot(psiClass).filter(c -> c.isInheritor(baseClass, true) && !imported.contains(c));
         return ContainerUtil.process(inheritors, inheritorsProcessor);
       });
     }
@@ -337,9 +340,26 @@ public class CodeInsightUtil {
       Query<PsiClass> baseQuery = ClassInheritorsSearch.search(baseClass, scope, true, true, false);
       Query<PsiClass> query = new FilteredQuery<>(baseQuery, psiClass ->
         !(psiClass instanceof PsiTypeParameter) &&
-        ContainerUtil.exists(JavaCompletionUtil.getAllLookupStrings(psiClass), matcher::prefixMatches));
+        ContainerUtil.exists(JavaCompletionUtil.getAllLookupStrings(psiClass), matcher::prefixMatches) &&
+        !imported.contains(psiClass));
       query.forEach(inheritorsProcessor);
     }
+  }
+
+  @NotNull
+  private static Set<PsiClass> processImportedInheritors(PsiElement context, PsiClass baseClass, Processor<PsiClass> inheritorsProcessor) {
+    Set<PsiClass> visited = new HashSet<>();
+
+    context.getContainingFile().getOriginalFile().processDeclarations(new PsiScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        if (element instanceof PsiClass && ((PsiClass)element).isInheritor(baseClass, true) && visited.add((PsiClass)element)) {
+          return inheritorsProcessor.process((PsiClass)element);
+        }
+        return true;
+      }
+    }, ResolveState.initial(), null, context);
+    return visited;
   }
 
   private static void addContextTypeArguments(PsiElement context, PsiClassType baseType, Processor<PsiClass> inheritorsProcessor) {

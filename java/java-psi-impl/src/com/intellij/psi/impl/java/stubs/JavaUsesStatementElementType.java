@@ -29,7 +29,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -70,7 +69,7 @@ public class JavaUsesStatementElementType extends JavaStubElementType<PsiUsesSta
   @NotNull
   @Override
   public PsiUsesStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new PsiUsesStatementStubImpl(parentStub, StringRef.toString(dataStream.readName()));
+    return new PsiUsesStatementStubImpl(parentStub, dataStream.readNameString());
   }
 
   @Override

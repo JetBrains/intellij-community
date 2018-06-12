@@ -6,8 +6,11 @@ package com.jetbrains.python.psi.impl.stubs
 import com.intellij.psi.stubs.StubInputStream
 import com.intellij.psi.stubs.StubOutputStream
 import com.intellij.psi.util.QualifiedName
-import com.jetbrains.python.psi.*
+import com.jetbrains.python.psi.PyCallExpression
+import com.jetbrains.python.psi.PyReferenceExpression
+import com.jetbrains.python.psi.PyTargetExpression
 import com.jetbrains.python.psi.impl.PyEvaluator
+import com.jetbrains.python.psi.impl.PyPsiUtils
 import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.stubs.PyDataclassFieldStub
 import java.io.IOException
@@ -21,7 +24,7 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       val value = expression.findAssignedValue() as? PyCallExpression ?: return null
       val callee = value.callee as? PyReferenceExpression ?: return null
 
-      val calleeName = calculateFullyQCalleeName(callee) ?: calculateImportedCalleeName(callee) ?: return null
+      val calleeName = calculateCalleeName(callee) ?: return null
       val arguments = analyzeArguments(value)
 
       return PyDataclassFieldStubImpl(calleeName, arguments.first, arguments.second, arguments.third)
@@ -29,49 +32,17 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
 
     @Throws(IOException::class)
     fun deserialize(stream: StubInputStream): PyDataclassFieldStub? {
-      val calleeName = stream.readName() ?: return null
+      val calleeName = stream.readNameString() ?: return null
       val hasDefault = stream.readBoolean()
       val hasDefaultFactory = stream.readBoolean()
       val initValue = stream.readBoolean()
 
-      return PyDataclassFieldStubImpl(QualifiedName.fromDottedString(calleeName.string), hasDefault, hasDefaultFactory, initValue)
+      return PyDataclassFieldStubImpl(QualifiedName.fromDottedString(calleeName), hasDefault, hasDefaultFactory, initValue)
     }
 
-    private fun calculateFullyQCalleeName(callee: PyReferenceExpression): QualifiedName? {
-      // SUPPORTED CASES:
-
-      // import dataclasses
-      // ... = dataclasses.field(...)
-
-      // import dataclasses as dc
-      // ... = dc.field(...)
-
-      val calleeName = callee.name
-      val qualifier = callee.qualifier
-
-      if (calleeName == "field" && qualifier is PyReferenceExpression && !qualifier.isQualified && resolvesToDataclassesModule(qualifier)) {
-        return QualifiedName.fromComponents(qualifier.name, calleeName)
-      }
-
-      return null
-    }
-
-    private fun calculateImportedCalleeName(callee: PyReferenceExpression): QualifiedName? {
-      // SUPPORTED CASES:
-
-      // from dataclasses import field
-      // ... = field(...)
-
-      // from dataclasses import field as F
-      // ... = F(...)
-
-      for (element in PyResolveUtil.resolveLocally(callee)) {
-        if (element is PyImportElement && element.importedQName.toString() == "field") {
-          val importStatement = element.containingImportStatement
-          if (importStatement is PyFromImportStatement && importStatement.importSourceQName.toString() == "dataclasses") {
-            return QualifiedName.fromComponents(callee.name)
-          }
-        }
+    private fun calculateCalleeName(callee: PyReferenceExpression): QualifiedName? {
+      if (QualifiedName.fromComponents("dataclasses", "field") in PyResolveUtil.resolveImportedElementQNameLocally(callee)) {
+        return PyPsiUtils.asQualifiedName(callee)
       }
 
       return null
@@ -83,10 +54,6 @@ class PyDataclassFieldStubImpl private constructor(private val calleeName: Quali
       val initValue = PyEvaluator().evaluate(call.getKeywordArgument("init")) as? Boolean ?: true
 
       return Triple(hasDefault, hasDefaultFactory, initValue)
-    }
-
-    private fun resolvesToDataclassesModule(referenceExpression: PyReferenceExpression): Boolean {
-      return PyResolveUtil.resolveLocally(referenceExpression).any { it is PyImportElement && it.importedQName.toString() == "dataclasses" }
     }
   }
 

@@ -66,6 +66,7 @@ public class TestModuleOutputPackagingElement extends ModuleOutputPackagingEleme
     return context.getModulesProvider().getRootModel(module).getSourceRoots(JavaModuleSourceRootTypes.TESTS);
   }
 
+  @NotNull
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DelegatedPackagingElementPresentation(new ModuleElementPresentation(myModulePointer, context, true));
   }

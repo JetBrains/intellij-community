@@ -147,7 +147,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
     return fixes.toArray(SuppressQuickFix.EMPTY_ARRAY);
   }
 
-  private static void addAllSuppressActions(@NotNull Set<SuppressQuickFix> fixes,
+  private static void addAllSuppressActions(@NotNull Collection<SuppressQuickFix> fixes,
                                             @NotNull PsiElement element,
                                             @NotNull InspectionSuppressor suppressor,
                                             @NotNull ThreeState appliedToInjectionHost,
@@ -198,7 +198,7 @@ public abstract class InspectionProfileEntry implements BatchSuppressableTool {
       case 1:
         return Collections.singleton(elementLanguageSuppressor.get(0));
       default:
-        return new java.util.HashSet<>(elementLanguageSuppressor);
+        return new HashSet<>(elementLanguageSuppressor);
     }
   }
 

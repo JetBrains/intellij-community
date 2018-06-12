@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NonNls;
  * @author Konstantin Bulenkov
  */
 public class LineMarkerProviders extends LanguageExtension<LineMarkerProvider> {
-  public static LineMarkerProviders INSTANCE = new LineMarkerProviders();
+  public static final LineMarkerProviders INSTANCE = new LineMarkerProviders();
   @NonNls public static final String EP_NAME = "com.intellij.codeInsight.lineMarkerProvider";
 
   private LineMarkerProviders() {

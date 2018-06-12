@@ -32,10 +32,10 @@ class C {
     try (<error descr="Unhandled exception from auto-closeable resource: C.E3">MyResource r = new MyResource()</error>) { }
     catch (E1 e) { }
 
-    try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    try (MyResource r = new <error descr="Unhandled exception: C.E1">MyResource</error>()) { }
     catch (E3 e) { }
 
-    try (MyResource r = <error descr="Unhandled exception: C.E1">new MyResource()</error>) { }
+    try (MyResource r = new <error descr="Unhandled exception: C.E1">MyResource</error>()) { }
 
     try (<error descr="Unhandled exception from auto-closeable resource: java.lang.Exception">I r = null</error>) { System.out.println(r); }
   }

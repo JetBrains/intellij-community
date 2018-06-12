@@ -26,10 +26,12 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
@@ -73,6 +75,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list) {
+    return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
+  }
+
+  @NotNull
+  @Override
   public ListPopup createConfirmation(String title, final Runnable onYes, int defaultOptionIndex) {
     return createConfirmation(title, CommonBundle.getYesButtonText(), CommonBundle.getNoButtonText(), onYes, defaultOptionIndex);
   }
@@ -104,6 +112,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     return null;
+  }
+
+  @Override
+  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JList list) {
+    return new PopupListAdapter(builder, list);
+  }
+
+  @Override
+  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTree tree) {
+    return new PopupTreeAdapter(builder, tree);
+  }
+
+  @Override
+  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTable table) {
+    return new PopupTableAdapter(builder, table);
   }
 
   @NotNull
@@ -376,7 +399,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
       getComponentContextSupplier(component),
       actionPlace, null, defaultOptionIndex);
   }
-
 
   private static boolean itemsHaveMnemonics(final List<ActionItem> items) {
     for (ActionItem item : items) {

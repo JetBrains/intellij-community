@@ -396,6 +396,16 @@ public class FileTypesTest extends PlatformTestCase {
     assertTrue(pair.second);
   }
 
+  public void testGetRemovedMappings() {
+    FileTypeAssocTable<FileType> table = myFileTypeManager.getExtensionMap().copy();
+    ArchiveFileType fileType = ArchiveFileType.INSTANCE;
+    FileNameMatcher matcher = table.getAssociations(fileType).get(0);
+    table.removeAssociation(matcher, fileType);
+    Map<FileNameMatcher, FileType> reassigned =
+      myFileTypeManager.getExtensionMap().getRemovedMappings(table, Arrays.asList(myFileTypeManager.getRegisteredFileTypes()));
+    assertEquals(1, reassigned.size());
+  }
+
   public void testRenamedPropertiesToUnknownAndBack() throws Exception {
     FileType propFileType = myFileTypeManager.getFileTypeByFileName("xx.properties");
     assertEquals("Properties", propFileType.getName());
@@ -656,21 +666,19 @@ public class FileTypesTest extends PlatformTestCase {
           });
 
           if (random.nextInt(3) == 0) {
-            new WriteCommandAction.Simple(getProject()) {
-              @Override
-              protected void run() throws Throwable {
-                byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
-                Arrays.fill(bytes, (byte)' ');
-                virtualFile.setBinaryContent(bytes);
-              }
-            }.execute().throwException();
+            WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+              byte[] bytes = new byte[(int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD + (isText ? 1 : 0)];
+              Arrays.fill(bytes, (byte)' ');
+              virtualFile.setBinaryContent(bytes);
+            });
 
 
             //RandomAccessFile ra = new RandomAccessFile(f, "rw");
             //ra.setLength(ra.length()+(isText ? 1 : -1));
             //ra.close();
             //LocalFileSystem.getInstance().refreshFiles(Collections.singletonList(virtualFile));
-            System.out.println(i+"; f = " + f.length()+"; virtualFile="+virtualFile.getLength()+"; type="+virtualFile.getFileType());
+            System.out
+              .println(i + "; f = " + f.length() + "; virtualFile=" + virtualFile.getLength() + "; type=" + virtualFile.getFileType());
             //Thread.sleep(random.nextInt(100));
           }
         }

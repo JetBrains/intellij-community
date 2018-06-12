@@ -387,7 +387,7 @@ public abstract class HistoryDialog<T extends HistoryDialogModel> extends FrameW
 
       showNotification(r.getCommandName());
     }
-    catch (IOException e) {
+    catch (Exception e) {
       showError(message("message.error.during.revert", e));
     }
   }

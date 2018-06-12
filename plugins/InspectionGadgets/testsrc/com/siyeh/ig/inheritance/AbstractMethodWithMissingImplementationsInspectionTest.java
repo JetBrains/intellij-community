@@ -16,7 +16,15 @@
 package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiClassOwner;
+import com.intellij.psi.search.searches.ClassInheritorsSearch;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.Processor;
+import com.intellij.util.QueryExecutor;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class AbstractMethodWithMissingImplementationsInspectionTest extends LightInspectionTestCase {
@@ -27,6 +35,16 @@ public class AbstractMethodWithMissingImplementationsInspectionTest extends Ligh
 
   public void testDuplicateClass() {
     doTest();
+  }
+  
+  public void testSearchReturnsUnrelatedClass() {
+    PlatformTestUtil.registerExtension(ClassInheritorsSearch.EP_NAME, new QueryExecutor<PsiClass, ClassInheritorsSearch.SearchParameters>() {
+      @Override
+      public boolean execute(@NotNull ClassInheritorsSearch.SearchParameters p, @NotNull Processor<? super PsiClass> consumer) {
+        return ContainerUtil.process(((PsiClassOwner)p.getClassToProcess().getContainingFile()).getClasses(), consumer);
+      }
+    }, getTestRootDisposable());
+    doTest(); 
   }
 
   @Nullable

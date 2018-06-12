@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -43,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
+import com.intellij.util.AstLoadingFilter;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -195,7 +182,12 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   }
 
   private void highlightTargetUsages(@NotNull PsiElement target) {
-    final Couple<Collection<TextRange>> usages = getHighlightUsages(target, myFile, true);
+    final Couple<Collection<TextRange>> usages = AstLoadingFilter.disableTreeLoading(
+      () -> getHighlightUsages(target, myFile, true),
+      () -> "Currently highlighted file: \n" +
+            "psi file: " + myFile + ";\n" +
+            "virtual file: " + myFile.getVirtualFile()
+    );
     myReadAccessRanges.addAll(usages.first);
     myWriteAccessRanges.addAll(usages.second);
   }
@@ -240,11 +232,8 @@ public class IdentifierHighlighterPass extends TextEditorHighlightingPass {
   public static void clearMyHighlights(Document document, Project project) {
     MarkupModel markupModel = DocumentMarkupModel.forDocument(document, project, true);
     for (RangeHighlighter highlighter : markupModel.getAllHighlighters()) {
-      Object tooltip = highlighter.getErrorStripeTooltip();
-      if (!(tooltip instanceof HighlightInfo)) {
-        continue;
-      }
-      HighlightInfo info = (HighlightInfo)tooltip;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info == null) continue;
       if (info.type == HighlightInfoType.ELEMENT_UNDER_CARET_READ || info.type == HighlightInfoType.ELEMENT_UNDER_CARET_WRITE) {
         highlighter.dispose();
       }

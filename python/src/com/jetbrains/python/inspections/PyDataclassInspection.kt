@@ -15,7 +15,6 @@ import com.jetbrains.python.codeInsight.stdlib.DataclassParameters
 import com.jetbrains.python.codeInsight.stdlib.parseDataclassParameters
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.psi.*
-import com.jetbrains.python.psi.impl.PyBuiltinCache
 import com.jetbrains.python.psi.impl.PyCallExpressionHelper
 import com.jetbrains.python.psi.impl.stubs.PyDataclassFieldStubImpl
 import com.jetbrains.python.psi.resolve.PyResolveContext
@@ -242,17 +241,10 @@ class PyDataclassInspection : PyInspection() {
       if (field.annotationValue == null) return
 
       val value = field.findAssignedValue()
-      val valueClass = getInstancePyClass(value)
-
-      if (valueClass != null) {
-        val builtinCache = PyBuiltinCache.getInstance(field)
-        val disallowed = setOf(builtinCache.listType?.pyClass, builtinCache.setType?.pyClass, builtinCache.dictType?.pyClass)
-
-        if (valueClass in disallowed || valueClass.getAncestorClasses(myTypeEvalContext).find(disallowed::contains) != null) {
-          registerProblem(value,
-                          "Mutable default '${valueClass.name}' is not allowed. Use 'default_factory'",
-                          ProblemHighlightType.GENERIC_ERROR)
-        }
+      if (PyUtil.isForbiddenMutableDefault(value, myTypeEvalContext)) {
+        registerProblem(value,
+                        "Mutable default '${value?.text}' is not allowed. Use 'default_factory'",
+                        ProblemHighlightType.GENERIC_ERROR)
       }
     }
 

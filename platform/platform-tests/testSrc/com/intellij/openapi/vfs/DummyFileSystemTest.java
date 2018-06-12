@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -32,18 +31,16 @@ import static org.junit.Assert.assertNotNull;
 
 public class DummyFileSystemTest extends BareTestFixtureTestCase {
   @Test
-  public void testDeletionEvents() {
+  public void testDeletionEvents() throws IOException {
     DummyFileSystem fs = new DummyFileSystem();
 
-    Pair<VirtualFile, VirtualFile> pair = new WriteAction<Pair<VirtualFile, VirtualFile>>() {
-      @Override
-      protected void run(@NotNull Result<Pair<VirtualFile, VirtualFile>> result) throws IOException {
-        VirtualFile root = fs.createRoot("root");
-        VirtualFile file = root.createChildData(this, "f");
-        result.setResult(pair(root, file));
-      }
-    }.execute().getResultObject();
-    VirtualFile root = pair.first, file = pair.second;
+    Pair<VirtualFile, VirtualFile> pair = WriteAction.computeAndWait(() -> {
+      VirtualFile root = fs.createRoot("root");
+      VirtualFile file = root.createChildData(this, "f");
+      return pair(root, file);
+    });
+    VirtualFile root = pair.first;
+    VirtualFile file = pair.second;
 
     VirtualFileEvent[] events = new VirtualFileEvent[2];
 
@@ -61,12 +58,7 @@ public class DummyFileSystemTest extends BareTestFixtureTestCase {
     fs.addVirtualFileListener(listener);
     Disposer.register(getTestRootDisposable(), () -> fs.removeVirtualFileListener(listener));
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws IOException {
-        file.delete(this);
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> file.delete(this));
 
     for (VirtualFileEvent event : events) {
       assertNotNull(event);

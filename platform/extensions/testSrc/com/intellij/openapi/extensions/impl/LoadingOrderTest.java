@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.extensions.LoadingOrder;
@@ -79,6 +65,17 @@ public class LoadingOrderTest {
     target.add(createElement(LoadingOrder.LAST, null, "6"));
     LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
     assertSequence(array, "123456");
+  }
+
+  @Test
+  public void testComplexSortingBeforeLast() {
+    List<LoadingOrder.Orderable> target = new ArrayList<>();
+    target.add(createElement(LoadingOrder.LAST, "1", "1"));
+    target.add(createElement(LoadingOrder.readOrder("last,before 1"), null, "2"));
+    target.add(createElement(LoadingOrder.ANY, null, "3"));
+    target.add(createElement(LoadingOrder.before("1'"), null, "4"));
+    LoadingOrder.Orderable[] array = target.toArray(new LoadingOrder.Orderable[0]);
+    assertSequence(array, "3421");
   }
 
   private static void assertSequence(LoadingOrder.Orderable[] array, String expected) {

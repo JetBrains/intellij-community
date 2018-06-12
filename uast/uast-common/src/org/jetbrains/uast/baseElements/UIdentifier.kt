@@ -31,9 +31,11 @@ open class UIdentifier(
 
   override fun asLogString() = log("Identifier ($name)")
 
-  override val sourcePsi: PsiElement? = psi
+  override val sourcePsi: PsiElement?
+    get() = psi
 
-  override val javaPsi: PsiElement? = null
+  override val javaPsi: PsiElement?
+    get() = null
 }
 
 open class LazyParentUIdentifier(psi: PsiElement?, private val givenParent: UElement?) : UIdentifier(psi, givenParent) {

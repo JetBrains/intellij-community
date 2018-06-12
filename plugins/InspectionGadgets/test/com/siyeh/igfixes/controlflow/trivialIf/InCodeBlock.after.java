@@ -5,7 +5,9 @@ class InCodeBlock {
   public boolean test(String s) {
     {
       int i = Integer.parseInt(s);
-        return i > 0;
+        //comment1
+        return i > /*in condition*/ 0;
     }
+    //comment2
   }
 }

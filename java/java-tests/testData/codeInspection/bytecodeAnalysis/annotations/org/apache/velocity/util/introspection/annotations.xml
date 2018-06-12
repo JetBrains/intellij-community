@@ -21,6 +21,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.util.introspection.ClassMap org.apache.velocity.util.introspection.ClassMap.MethodCache createMethodCache()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.util.introspection.ClassMap void populateMethodCacheWithInterface(org.apache.velocity.util.introspection.ClassMap.MethodCache, java.lang.Class) 1'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -89,6 +94,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.util.introspection.IntrospectorCacheImpl org.apache.velocity.util.introspection.ClassMap put(java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.util.introspection.IntrospectorCacheImpl org.apache.velocity.util.introspection.ClassMap put(java.lang.Class) 0'>

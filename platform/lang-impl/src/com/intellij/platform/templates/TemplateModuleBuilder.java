@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.platform.templates;
 
-import com.intellij.codeStyle.CodeStyleFacade;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
@@ -344,7 +344,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
                          patchedContent.substring(i + SaveProjectAsTemplateAction.FILE_HEADER_TEMPLATE_PLACEHOLDER.length());
       }
     }
-    return StringUtilRt.convertLineSeparators(patchedContent, CodeStyleFacade.getInstance().getLineSeparator()).
+    return StringUtilRt.convertLineSeparators(patchedContent, CodeStyle.getDefaultSettings().getLineSeparator()).
       getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 

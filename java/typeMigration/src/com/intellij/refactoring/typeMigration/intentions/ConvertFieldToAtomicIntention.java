@@ -11,7 +11,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.AllowedApiFilterExtension;
@@ -138,7 +137,7 @@ public class ConvertFieldToAtomicIntention extends PsiElementBaseIntentionAction
   static void postProcessVariable(@NotNull PsiVariable var, @NotNull String toType) {
 
     Project project = var.getProject();
-    if (var instanceof PsiField || CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+    if (var instanceof PsiField || JavaCodeStyleSettings.getInstance(var.getContainingFile()).GENERATE_FINAL_LOCALS) {
       PsiModifierList modifierList = assertNotNull(var.getModifierList());
       WriteAction.run(() -> {
         if (var.getInitializer() == null) {

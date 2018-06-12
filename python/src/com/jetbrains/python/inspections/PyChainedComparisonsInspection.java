@@ -38,6 +38,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 
+import static com.jetbrains.python.psi.PyUtil.as;
+
 /**
  * User: catherine
  *
@@ -97,23 +99,36 @@ public class PyChainedComparisonsInspection extends PyInspection {
       myOperator = null;
       getInnerRight = false;
 
-      final PyExpression leftExpression = node.getLeftExpression();
-      final PyExpression rightExpression = node.getRightExpression();
+      final PyBinaryExpression leftExpression = as(node.getLeftExpression(), PyBinaryExpression.class);
+      final PyBinaryExpression rightExpression = as(node.getRightExpression(), PyBinaryExpression.class);
 
-      if (leftExpression instanceof PyBinaryExpression &&
-          rightExpression instanceof PyBinaryExpression) {
-        if (node.getOperator() == PyTokenTypes.AND_KEYWORD) {
-          if (isRightSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression) ||
-              isLeftSimplified((PyBinaryExpression)leftExpression, (PyBinaryExpression)rightExpression)) {
-            if (isConstantInTheMiddle) {
-              if(!ignoreConstantInTheMiddle) {
-                registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
-                                new DontSimplifyStatementsWithConstantInTheMiddleQuickFix());
-              }
+      if (leftExpression != null && rightExpression != null && node.getOperator() == PyTokenTypes.AND_KEYWORD) {
+        boolean applicable = false;
+        if (leftExpression.getOperator() == PyTokenTypes.AND_KEYWORD) {
+          final PyBinaryExpression leftLeft = as(leftExpression.getLeftExpression(), PyBinaryExpression.class);
+          final PyBinaryExpression leftRight = as(leftExpression.getRightExpression(), PyBinaryExpression.class);
+          if (leftLeft != null && (isRightSimplified(leftLeft, rightExpression) || isLeftSimplified(leftLeft, rightExpression))) {
+            applicable = true;
+            getInnerRight = false;
+          }
+          else if (leftRight != null && (isRightSimplified(leftRight, rightExpression) || isLeftSimplified(leftRight, rightExpression))) {
+            applicable = true;
+            getInnerRight = true;
+          }
+        }
+        else if (isRightSimplified(leftExpression, rightExpression) || isLeftSimplified(leftExpression, rightExpression)) {
+          applicable = true;
+        }
+
+        if (applicable) {
+          if (isConstantInTheMiddle) {
+            if (!ignoreConstantInTheMiddle) {
+              registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight),
+                              new DontSimplifyStatementsWithConstantInTheMiddleQuickFix());
             }
-            else {
-              registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
-            }
+          }
+          else {
+            registerProblem(node, "Simplify chained comparison", new ChainedComparisonsQuickFix(myIsLeft, myIsRight, getInnerRight));
           }
         }
       }
@@ -122,13 +137,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
     private boolean isRightSimplified(@NotNull final PyBinaryExpression leftExpression,
                                       @NotNull final PyBinaryExpression rightExpression) {
       final PyExpression leftRight = leftExpression.getRightExpression();
-      if (leftRight instanceof PyBinaryExpression && PyTokenTypes.AND_KEYWORD == leftExpression.getOperator()) {
-        if (isRightSimplified((PyBinaryExpression)leftRight, rightExpression)) {
-          getInnerRight = true;
-          return true;
-        }
-      }
-
       if (leftRight instanceof PyBinaryExpression &&
           PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftRight).getOperator())) {
         if (isRightSimplified((PyBinaryExpression)leftRight, rightExpression)) {
@@ -171,15 +179,6 @@ public class PyChainedComparisonsInspection extends PyInspection {
 
     private boolean isLeftSimplified(PyBinaryExpression leftExpression, PyBinaryExpression rightExpression) {
       final PyExpression leftLeft = leftExpression.getLeftExpression();
-      final PyExpression leftRight = leftExpression.getRightExpression();
-      if (leftRight instanceof PyBinaryExpression
-          && PyTokenTypes.AND_KEYWORD == leftExpression.getOperator()) {
-        if (isLeftSimplified((PyBinaryExpression)leftRight, rightExpression)) {
-          getInnerRight = true;
-          return true;
-        }
-      }
-
       if (leftLeft instanceof PyBinaryExpression &&
           PyTokenTypes.RELATIONAL_OPERATIONS.contains(((PyBinaryExpression)leftLeft).getOperator())) {
         if (isLeftSimplified((PyBinaryExpression)leftLeft, rightExpression)) {

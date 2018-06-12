@@ -15,11 +15,13 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,17 +39,21 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!myValue.isValid() || !myExpectedType.isValid() || !(myExpectedType instanceof PsiClassType)) {
+    if (!myValue.isValid() || !myExpectedType.isValid()) {
       return false;
     }
-    final PsiClass resolvedType = ((PsiClassType)myExpectedType).resolve();
-    return resolvedType != null && CommonClassNames.JAVA_LANG_STRING.equals(resolvedType.getQualifiedName()) && myValue instanceof PsiLiteralExpression;
+    final PsiClass resolvedType = PsiUtil.resolveClassInType(myExpectedType);
+    if (resolvedType != null && CommonClassNames.JAVA_LANG_STRING.equals(resolvedType.getQualifiedName())) {
+      return myValue instanceof PsiLiteralExpression ||
+             myValue instanceof PsiReferenceExpression && ((PsiReferenceExpression)myValue).resolve() == null;
+    }
+    return false;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     String newText = myValue.getText();
-    newText = StringUtil.stripQuotesAroundValue(newText);
+    newText = StringUtil.unquoteString(newText);
     newText = "\"" + newText + "\"";
     PsiElement newToken = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(newText, null);
     final PsiElement newElement = myValue.replace(newToken);
@@ -72,4 +78,22 @@ public class SurroundWithQuotesAnnotationParameterValueFix implements IntentionA
   }
 
 
+  public static void register(@NotNull QuickFixActionRegistrar registrar,
+                              @NotNull PsiJavaCodeReferenceElement ref) {
+    if (ref instanceof PsiReferenceExpression) {
+      PsiElement parent = ref.getParent();
+      if (parent instanceof PsiNameValuePair && ((PsiNameValuePair)parent).getValue() == ref) {
+        PsiReference reference = parent.getReference();
+        if (reference != null) {
+          PsiElement annotationMethod = reference.resolve();
+          if (annotationMethod instanceof PsiMethod) {
+            PsiType returnType = ((PsiMethod)annotationMethod).getReturnType();
+            if (returnType != null) {
+              registrar.register(new SurroundWithQuotesAnnotationParameterValueFix((PsiReferenceExpression)ref, returnType));
+            }
+          }
+        }
+      }
+    }
+  }
 }

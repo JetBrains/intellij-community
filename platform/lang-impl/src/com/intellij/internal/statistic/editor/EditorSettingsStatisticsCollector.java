@@ -106,6 +106,7 @@ class EditorSettingsStatisticsCollector extends ApplicationUsagesCollector {
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION, "completionHints");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_EXTERNAL_ANNOTATIONS_INLINE, "externalAnnotationsInline");
     addBoolIfDiffers(set, cis, cisDefault, s -> s.SHOW_INFERRED_ANNOTATIONS_INLINE, "inferredAnnotationsInline");
+    addBoolIfDiffers(set, cis, cisDefault, s -> s.TAB_EXITS_BRACKETS_AND_QUOTES, "tabExitsBracketsAndQuotes");
 
     return set;
   }

@@ -466,19 +466,15 @@ public class SvnRenameTest extends Svn17TestCase {
 
   private VirtualFile moveToNewPackage(final VirtualFile file, final String packageName) {
     final VirtualFile[] dir = new VirtualFile[1];
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      public void run() {
-        try {
-          dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
-          file.move(this, dir[0]);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      try {
+        dir[0] = myWorkingCopyDir.createChildDirectory(this, packageName);
+        file.move(this, dir[0]);
       }
-    }.execute().throwException();
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
     return dir[0];
   }
 }

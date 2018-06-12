@@ -55,6 +55,7 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
   private boolean myShowWelcomeScreen = !PlatformUtils.isDataGrip();
   private int myConfirmOpenNewProject = OPEN_PROJECT_ASK;
   private ProcessCloseConfirmation myProcessCloseConfirmation = ProcessCloseConfirmation.ASK;
+  private String myDefaultProjectDirectory = "";
 
   public static GeneralSettings getInstance(){
     return ServiceManager.getService(GeneralSettings.class);
@@ -282,5 +283,13 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
 
   public void setSearchInBackground(final boolean searchInBackground) {
     mySearchInBackground = searchInBackground;
+  }
+
+  public String getDefaultProjectDirectory() {
+    return myDefaultProjectDirectory;
+  }
+
+  public void setDefaultProjectDirectory(String defaultProjectDirectory) {
+    myDefaultProjectDirectory = defaultProjectDirectory;
   }
 }

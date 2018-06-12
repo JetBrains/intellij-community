@@ -44,7 +44,7 @@ public class PropertiesReferenceManager {
   }
 
   @NotNull
-  public List<PropertiesFile> findPropertiesFiles(@NotNull final Module module, final String bundleName) {
+  public List<PropertiesFile> findPropertiesFiles(@NotNull Module module, final String bundleName) {
     ConcurrentMap<String, List<PropertiesFile>> map =
       CachedValuesManager.getManager(module.getProject()).getCachedValue(module, () -> {
         ConcurrentMap<String, List<PropertiesFile>> factoryMap = ConcurrentFactoryMap.createMap(

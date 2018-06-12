@@ -17,7 +17,7 @@ class Thing<T> {
   public <X extends Throwable> void exceptionMethod(Supplier<X> xSupplier) throws X { }
 
   void m(final Thing<Integer> integer){
-    integer.flatMap(s -> new Thing(s)).<error descr="Unhandled exception: java.lang.Throwable">exceptionMethod(IllegalStateException::new);</error>
+    integer.flatMap(s -> new Thing(s)).<error descr="Unhandled exception: java.lang.Throwable">exceptionMethod</error>(IllegalStateException::new);
     integer.flatMap(Thing::new).exceptionMethod(IllegalStateException::new);
   }
 }

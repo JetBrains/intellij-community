@@ -245,9 +245,13 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
 
   @Override
   public synchronized boolean isIndexed(@NotNull VirtualFile root) {
-    return myRoots.contains(root) &&
-           !(myBigRepositoriesList.isBig(root)) &&
+    return isIndexingEnabled(root) &&
            (!myCommitsToIndex.containsKey(root) && myNumberOfTasks.get(root).get() == 0);
+  }
+
+  public boolean isIndexingEnabled(@NotNull VirtualFile root) {
+    if (myIndexStorage == null) return false;
+    return myRoots.contains(root) && !(myBigRepositoriesList.isBig(root));
   }
 
   @Override
@@ -389,7 +393,7 @@ public class VcsLogPersistentIndex implements VcsLogIndex, Disposable {
     @NotNull private final HeavyAwareExecutor myHeavyAwareExecutor;
 
     public MySingleTaskController(@NotNull Project project, @NotNull Disposable parent) {
-      super(project, EmptyConsumer.getInstance(), false, parent);
+      super(project, "index", EmptyConsumer.getInstance(), false, parent);
       myHeavyAwareExecutor = new HeavyAwareExecutor(project, 50, 100, VcsLogPersistentIndex.this);
     }
 

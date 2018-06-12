@@ -48,6 +48,13 @@
     <xi:fallback/>
   </xi:include>
 
+  <application-components>
+    <component>
+      <implementation-class>com.intellij.openapi.projectRoots.impl.DefaultJdkConfigurator</implementation-class>
+      <headless-implementation-class/>
+    </component>
+  </application-components>
+
   <project-components>
 
     <component>
@@ -105,9 +112,6 @@
     <extensionPoint name="debugger.sourcePositionProvider"
                     interface="com.intellij.debugger.engine.SourcePositionProvider"/>
 
-    <extensionPoint name="debugger.simpleGetterProvider"
-                    interface="com.intellij.debugger.engine.SimpleGetterProvider"/>
-
     <extensionPoint name="debugger.simplePropertyGetterProvider"
                     interface="com.intellij.debugger.engine.SimplePropertyGetterProvider"/>
 
@@ -127,8 +131,6 @@
     <extensionPoint name="compiler.inspectionValidator"
                     interface="com.intellij.openapi.compiler.util.InspectionValidator"
                     area="IDEA_PROJECT"/>
-
-    <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
     <extensionPoint name="debuggerEditorTextProvider" beanClass="com.intellij.lang.LanguageExtensionPoint" >
       <with attribute="implementationClass" implements="com.intellij.debugger.impl.EditorTextProvider"/>
@@ -246,6 +248,9 @@
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.application.JavaApplicationRunConfigurationImporter"/>
     <externalSystem.runConfigurationImporter implementation="com.intellij.execution.remote.JavaRemoteDebugRunConfigurationImporter"/>
 
+    <runLineMarkerContributor language="JVM"
+                              order="before applicationRunLineMarkerProvider"
+                              implementationClass="com.intellij.execution.application.JvmApplicationRunLineMarkerContributor"/>
     <runLineMarkerContributor language="JAVA" id="applicationRunLineMarkerProvider"
                               implementationClass="com.intellij.execution.application.ApplicationRunLineMarkerProvider"/>
 
@@ -400,8 +405,10 @@
     <action id="ShowRecentTests" class="com.intellij.testIntegration.ShowRecentTests">
       <keyboard-shortcut first-keystroke="control shift SEMICOLON" keymap="$default"/>
     </action>
-    <action class="com.intellij.execution.testDiscovery.ConfigureTestDiscoveryAction" internal="true" id="TestDiscoveryIndexChooser" text="Choose external test discovery indices">
-      <add-to-group group-id="Internal" anchor="last"/>
+
+    <action class="com.intellij.execution.testDiscovery.actions.ShowDiscoveredTestsAction" id="ShowDiscoveredTests" text="Show Discovered Tests">
+      <add-to-group group-id="RunMenu" anchor="before" relative-to-action="DebugMainMenu"/>
+      <add-to-group group-id="ChangesViewPopupMenu" anchor="last"/>
     </action>
 
     <action id="JShell.Console"

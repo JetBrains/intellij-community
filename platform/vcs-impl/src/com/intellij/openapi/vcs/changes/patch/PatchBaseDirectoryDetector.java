@@ -31,10 +31,14 @@ public abstract class PatchBaseDirectoryDetector {
   }
 
   @Nullable
-  public abstract Result detectBaseDirectory(String name);
+  @Deprecated
+  public Result detectBaseDirectory(String name) {
+    return null;
+  }
 
   public abstract Collection<VirtualFile> findFiles(String fileName);
 
+  @Deprecated
   public static class Result {
     public String baseDir;
     public int stripDirs;

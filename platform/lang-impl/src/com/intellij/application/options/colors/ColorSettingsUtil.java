@@ -26,13 +26,9 @@ import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorSettingsPage;
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author lesya
@@ -81,6 +77,7 @@ public class ColorSettingsUtil {
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.weak.warning"), CodeInsightColors.WEAK_WARNING_ATTRIBUTES));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.problems"), CodeInsightColors.GENERIC_SERVER_ERROR_OR_WARNING));
     descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.server.duplicate"), CodeInsightColors.DUPLICATE_FROM_SERVER));
+    descriptors.add(new AttributesDescriptor(OptionsBundle.message("options.java.attribute.descriptor.runtime"), CodeInsightColors.RUNTIME_ERROR));
 
     for (SeveritiesProvider provider : Extensions.getExtensions(SeveritiesProvider.EP_NAME)) {
       for (HighlightInfoType highlightInfoType : provider.getSeveritiesHighlightInfoTypes()) {

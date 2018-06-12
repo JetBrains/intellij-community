@@ -94,12 +94,9 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
         assert valueElement != null;
         literal.replace(valueElement);
       };
-      new WriteCommandAction(element.getProject(), caption) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          replaceRunnable.run();
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(element.getProject()).withName(caption).run(() -> {
+        replaceRunnable.run();
+      });
     }
   }
 }

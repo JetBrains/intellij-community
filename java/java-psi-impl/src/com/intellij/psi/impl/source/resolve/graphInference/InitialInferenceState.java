@@ -65,7 +65,7 @@ class InitialInferenceState {
         final PsiType substitute = topInferenceSubstitutor.substitute(parameters[i]);
         newParameters[i] = (InferenceVariable)PsiUtil.resolveClassInClassTypeOnly(substitute);
       }
-      myCaptures.add(Pair.create(newParameters, (PsiClassType)subst.substitute(capture.second)));
+      myCaptures.add(Pair.create(newParameters, (PsiClassType)topInferenceSubstitutor.substitute(subst.substitute(capture.second))));
     }
     myInferenceSessionContainer = inferenceSessionContainer;
   }

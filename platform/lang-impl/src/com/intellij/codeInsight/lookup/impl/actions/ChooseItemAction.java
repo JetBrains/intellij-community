@@ -19,6 +19,7 @@ package com.intellij.codeInsight.lookup.impl.actions;
 import com.intellij.codeInsight.completion.CodeCompletionFeatures;
 import com.intellij.codeInsight.completion.CompletionProcess;
 import com.intellij.codeInsight.completion.CompletionService;
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
@@ -36,7 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public abstract class ChooseItemAction extends EditorAction {
+public abstract class ChooseItemAction extends EditorAction implements HintManagerImpl.ActionToIgnore {
   public ChooseItemAction(Handler handler) {
     super(handler);
   }

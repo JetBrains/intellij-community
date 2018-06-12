@@ -101,7 +101,7 @@ public class PythonPathEditor extends SdkPathEditor {
   @Override
   protected VirtualFile[] adjustAddedFileSet(Component component, VirtualFile[] files) {
     for (int i = 0, filesLength = files.length; i < filesLength; i++) {
-      if (files[i].getFileType() == FileTypes.ARCHIVE) {
+      if (!files[i].isDirectory() && files[i].getFileType() == FileTypes.ARCHIVE) {
         files[i] = JarFileSystem.getInstance().getJarRootForLocalFile(files[i]);
       }
     }

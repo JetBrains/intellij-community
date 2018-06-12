@@ -14,9 +14,6 @@ import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
 
-/**
- * @author Tagir Valeev
- */
 class FindFirstMigration extends BaseStreamApiMigration {
   FindFirstMigration(boolean shouldWarn) {super(shouldWarn, "findFirst()");}
 

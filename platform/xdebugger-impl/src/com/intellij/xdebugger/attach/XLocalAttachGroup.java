@@ -20,49 +20,22 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.UserDataHolder;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
-
+/**
+ * @deprecated Use XAttachProcessPresentationGroup (will be removed in 2018.2)
+ */
 @ApiStatus.Experimental
-public interface XLocalAttachGroup {
-  int getOrder();
-  
-  @NotNull
-  String getGroupName();
-
+public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
-   * and use it for presentation
-   * @return an icon to be shown in popup menu for your debugger item
+   * @deprecated will be removed in 2018.2
    */
   @NotNull
-  Icon getProcessIcon(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder);
-
-  /**
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
-   * and use it for presentation
-   * @return a text to be shown on your debugger item
-   */
-  @NotNull
-  String getProcessDisplayText(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder);
-
-  /**
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
-   * and use it for presentation
-   * @return a description of process to be shown in tooltip of your debugger item
-   */
-  @Nullable
-  default String getProcessDescription(@NotNull Project project, @NotNull ProcessInfo info, @NotNull UserDataHolder dataHolder) {
-    return null;
-  }
-
-  /**
-   * Specifies process order in your group
-   * @param dataHolder you may put your specific data into the holder at previous step in method @{@link XLocalAttachDebuggerProvider#getAvailableDebuggers(Project, ProcessInfo, UserDataHolder)}
-   * and use it for comparison
-   */
-  int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder);
-
   XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
+
+  /**
+   * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
+   */
+  default int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
+    return compare(a, b);
+  }
 }

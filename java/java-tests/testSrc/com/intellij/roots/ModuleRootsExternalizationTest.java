@@ -13,7 +13,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.ModuleRootManagerImpl;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.IdeaTestUtil;
@@ -47,7 +46,7 @@ public class ModuleRootsExternalizationTest extends ModuleTestCase {
   }
 
   private ModuleRootManagerImpl createTempModuleRootManager() throws IOException {
-    File tmpModule = FileUtil.createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION);
+    File tmpModule = getTempDir().createTempFile("tst", ModuleFileType.DOT_DEFAULT_EXTENSION, false);
     myFilesToDelete.add(tmpModule);
     final Module module = createModule(tmpModule);
     return (ModuleRootManagerImpl)ModuleRootManager.getInstance(module);

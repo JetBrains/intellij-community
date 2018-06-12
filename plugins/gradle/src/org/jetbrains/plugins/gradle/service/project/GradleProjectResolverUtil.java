@@ -25,7 +25,8 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemDebugEnvironment;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -96,7 +97,7 @@ public class GradleProjectResolverUtil {
 
     String mainModuleId = getModuleId(resolverCtx, gradleModule);
     final ModuleData moduleData =
-      new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName,
+      new ModuleData(mainModuleId, GradleConstants.SYSTEM_ID, getDefaultModuleTypeId(), moduleName,
                      mainModuleFileDirectoryPath, mainModuleConfigPath);
 
     ExternalProject externalProject = resolverCtx.getExtraProject(gradleModule, ExternalProject.class);
@@ -116,6 +117,11 @@ public class GradleProjectResolverUtil {
     return projectDataNode.createChild(ProjectKeys.MODULE, moduleData);
   }
 
+  public static String getDefaultModuleTypeId() {
+    ModuleType moduleType = ModuleTypeManager.getInstance().getDefaultModuleType();
+    return moduleType.getId();
+  }
+
   @NotNull
   static String getInternalModuleName(@NotNull IdeaModule gradleModule, @NotNull ExternalProject externalProject,
                                       @NotNull ProjectResolverContext resolverCtx) {
@@ -129,15 +135,23 @@ public class GradleProjectResolverUtil {
                                       @NotNull ProjectResolverContext resolverCtx) {
     String delimiter;
     StringBuilder moduleName = new StringBuilder();
+    String defaultGroupId = resolverCtx.getDefaultGroupId();
     if (resolverCtx.isUseQualifiedModuleNames()) {
       delimiter = ".";
-      if (StringUtil.isNotEmpty(externalProject.getGroup())) {
-        moduleName.append(externalProject.getGroup()).append(delimiter);
+      String groupId = externalProject.getGroup();
+      if (StringUtil.isEmpty(groupId)) {
+        groupId = defaultGroupId;
+      }
+      if (StringUtil.isNotEmpty(groupId)) {
+        moduleName.append(groupId).append(delimiter);
       }
       moduleName.append(externalProject.getName());
     }
     else {
       delimiter = "_";
+      if (StringUtil.isNotEmpty(defaultGroupId)) {
+        moduleName.append(defaultGroupId).append(delimiter);
+      }
       moduleName.append(gradleModule.getName());
     }
     if (sourceSetName != null) {

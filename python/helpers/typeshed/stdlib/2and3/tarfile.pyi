@@ -119,7 +119,11 @@ class TarFile(Iterable[TarInfo]):
                     path: _Path = ...) -> None: ...
     def extractfile(self,
                     member: Union[str, TarInfo]) -> Optional[IO[bytes]]: ...
-    if sys.version_info >= (3,):
+    if sys.version_info >= (3, 7):
+        def add(self, name: str, arcname: Optional[str] = ...,
+                recursive: bool = ..., *,
+                filter: Optional[Callable[[TarInfo], Optional[TarInfo]]] = ...) -> None: ...
+    elif sys.version_info >= (3,):
         def add(self, name: str, arcname: Optional[str] = ...,
                 recursive: bool = ...,
                 exclude: Optional[Callable[[str], bool]] = ..., *,

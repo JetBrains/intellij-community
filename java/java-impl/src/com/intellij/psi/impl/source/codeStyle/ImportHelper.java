@@ -16,6 +16,7 @@
 package com.intellij.psi.impl.source.codeStyle;
 
 import com.intellij.codeInsight.ImportFilter;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightVisitorImpl;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -40,6 +41,7 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
@@ -65,6 +67,15 @@ public class ImportHelper{
   private final JavaCodeStyleSettings mySettings;
   @NonNls private static final String JAVA_LANG_PACKAGE = "java.lang";
 
+  public ImportHelper(@NotNull JavaCodeStyleSettings settings) {
+    mySettings = settings;
+  }
+
+  /**
+   * @deprecated Use {@link #ImportHelper(JavaCodeStyleSettings)} instead. The instance of JavaCodeStyleSettings
+   *             can be obtained using {@link JavaCodeStyleSettings#getInstance(PsiFile)} method.
+   */
+  @Deprecated
   public ImportHelper(@NotNull CodeStyleSettings settings){
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
   }
@@ -339,6 +350,7 @@ public class ImportHelper{
       }
     }
     if (!conflicts.isEmpty() && !(file instanceof PsiCompiledElement)) {
+      String packageName = file.getPackageName();
       file.accept(new JavaRecursiveElementVisitor() {
         @Override
         public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
@@ -346,7 +358,11 @@ public class ImportHelper{
           PsiElement element = reference.resolve();
           if (element instanceof PsiClass && conflicts.contains(((PsiClass)element).getName())) {
             String fqn = ((PsiClass)element).getQualifiedName();
-            outNamesToUseSingle.add(fqn);
+            if (fqn != null && 
+                !PsiTreeUtil.isAncestor(file, element, true) && 
+                !packageName.equals(StringUtil.getPackageName(fqn))) {
+              outNamesToUseSingle.add(fqn);
+            }
           }
         }
       });
@@ -869,22 +885,26 @@ public class ImportHelper{
       ContainerUtil.addAll(stack, child.getChildren());
 
       for (final PsiReference reference : child.getReferences()) {
-        if (!(reference instanceof PsiJavaReference)) continue;
-        final PsiJavaReference javaReference = (PsiJavaReference)reference;
-        if (javaReference instanceof JavaClassReference && ((JavaClassReference)javaReference).getContextReference() != null) continue;
+        JavaResolveResult resolveResult = HighlightVisitorImpl.resolveJavaReference(reference);
+        if (resolveResult == null) continue;
+
         PsiJavaCodeReferenceElement referenceElement = null;
-        if (reference instanceof PsiJavaCodeReferenceElement) {
-          referenceElement = (PsiJavaCodeReferenceElement)child;
-          if (referenceElement.getQualifier() != null) {
-            continue;
-          }
-          if (reference instanceof PsiJavaCodeReferenceElementImpl
-              && ((PsiJavaCodeReferenceElementImpl)reference).getKind(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND) {
-            continue;
+        if (reference instanceof PsiJavaReference) {
+          final PsiJavaReference javaReference = (PsiJavaReference)reference;
+          if (javaReference instanceof JavaClassReference && ((JavaClassReference)javaReference).getContextReference() != null) continue;
+          referenceElement = null;
+          if (reference instanceof PsiJavaCodeReferenceElement) {
+            referenceElement = (PsiJavaCodeReferenceElement)child;
+            if (referenceElement.getQualifier() != null) {
+              continue;
+            }
+            if (reference instanceof PsiJavaCodeReferenceElementImpl
+                && ((PsiJavaCodeReferenceElementImpl)reference).getKindEnum(((PsiJavaCodeReferenceElementImpl)reference).getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.CLASS_IN_QUALIFIED_NEW_KIND) {
+              continue;
+            }
           }
         }
 
-        final JavaResolveResult resolveResult = javaReference.advancedResolve(true);
         PsiElement refElement = resolveResult.getElement();
         if (refElement == null && referenceElement != null) {
           refElement = ResolveClassUtil.resolveClass(referenceElement, referenceElement.getContainingFile()); // might be uncomplete code

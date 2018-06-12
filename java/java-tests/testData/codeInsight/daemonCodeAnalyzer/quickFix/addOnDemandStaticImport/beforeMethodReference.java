@@ -6,6 +6,7 @@ import java.util.*;
 public class Foo {
   {
     Block<Integer[]> b2 = Arrays::sort;
+    Block<Integer> bBroken = Arrays::sort;
     Arra<caret>ys.sort((byte[])null);
   }
 

@@ -4,6 +4,7 @@ package org.jetbrains.plugins.groovy.fixes
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
+import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 import org.jetbrains.plugins.groovy.util.TestUtils
@@ -14,6 +15,7 @@ class CreateConstantFromJavaUsageTest extends GrHighlightingTestBase {
     return TestUtils.testDataPath + 'fixes/createConstantFromJava/' + getTestName(true) + '/'
   }
 
+  @NotNull
   @Override
   protected LightProjectDescriptor getProjectDescriptor() {
     return GroovyLightProjectDescriptor.GROOVY_LATEST_REAL_JDK

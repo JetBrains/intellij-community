@@ -22,28 +22,12 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.JavaPsiConstructorUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class RefactoringChangeUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.ChangeUtil");
-
-  @Nullable
-  private static String getMethodExpressionName(@Nullable PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) return null;
-    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
-    return methodExpression.getReferenceName();
-  }
-
-  public static boolean isSuperOrThisMethodCall(@Nullable PsiElement element) {
-    String name = getMethodExpressionName(element);
-    return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
-  }
-
-  public static boolean isSuperMethodCall(@Nullable PsiElement element) {
-    String name = getMethodExpressionName(element);
-    return PsiKeyword.SUPER.equals(name);
-  }
 
   public static PsiType getTypeByExpression(PsiExpression expr) {
     PsiType type = expr != null ? expr.getType() : null;
@@ -62,10 +46,6 @@ public class RefactoringChangeUtil {
       }
       return null;
     }
-    PsiClass refClass = PsiUtil.resolveClassInType(type);
-    if (refClass instanceof PsiAnonymousClass) {
-      type = ((PsiAnonymousClass)refClass).getBaseClassType();
-    }
 
     return GenericsUtil.getVariableTypeByExpressionType(type);
   }
@@ -76,7 +56,7 @@ public class RefactoringChangeUtil {
     PsiManager manager = referenceExpression.getManager();
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(referenceExpression, PsiMethodCallExpression.class, true);
     while (methodCallExpression != null) {
-      if (isSuperOrThisMethodCall(methodCallExpression)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(methodCallExpression)) {
         return referenceExpression;
       }
       methodCallExpression = PsiTreeUtil.getParentOfType(methodCallExpression, PsiMethodCallExpression.class, true);

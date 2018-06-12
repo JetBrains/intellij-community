@@ -3,13 +3,11 @@ package com.jetbrains.python.codeInsight.override;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
-import com.google.common.collect.Streams;
 import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.ProductivityFeatureNames;
 import com.intellij.ide.util.MemberChooser;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
@@ -36,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 import java.util.function.Function;
-import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 /**
  * @author Alexey.Ivanov
@@ -142,12 +138,9 @@ public class PyOverrideImplementUtil {
     if (membersToOverride == null) {
       return;
     }
-    new WriteCommandAction(pyClass.getProject(), pyClass.getContainingFile()) {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
-        write(pyClass, membersToOverride, editor, implement);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(pyClass.getProject(), pyClass.getContainingFile()).run(() -> {
+      write(pyClass, membersToOverride, editor, implement);
+    });
   }
 
   private static void write(@NotNull PyClass pyClass, @NotNull List<PyMethodMember> newMembers, @NotNull Editor editor, boolean implement) {
@@ -286,11 +279,11 @@ public class PyOverrideImplementUtil {
         if (langLevel.isPython2()) {
           final String baseFirstName = !baseParams.isEmpty() ? baseParams.get(0).getName() : null;
           final String firstName = baseFirstName != null ? baseFirstName : PyNames.CANONICAL_SELF;
-          PsiElement outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
+          PyClass outerClass = PsiTreeUtil.getParentOfType(pyClass, PyClass.class, true, PyFunction.class);
           String className = pyClass.getName();
           final List<String> nameResult = Lists.newArrayList(className);
           while (outerClass != null) {
-            nameResult.add(0, ((PyClass)outerClass).getName());
+            nameResult.add(0, outerClass.getName());
             outerClass = PsiTreeUtil.getParentOfType(outerClass, PyClass.class, true, PyFunction.class);
           }
 
@@ -396,17 +389,14 @@ public class PyOverrideImplementUtil {
    * @return
    */
   private static List<PyAnnotation> getAnnotations(@NotNull PyFunction function, @NotNull TypeEvalContext typeEvalContext) {
-    return Streams.concat(
-      function.getParameters(typeEvalContext).stream()
+    return StreamEx.of(function.getParameters(typeEvalContext))
         .map(PyCallableParameter::getParameter)
-        .filter(PyNamedParameter.class::isInstance)
-        .map(PyNamedParameter.class::cast)
-        .filter(parameter -> !parameter.isSelf())
-        .map(pyNamedParameter -> pyNamedParameter.getAnnotation()),
-      Stream.of(function.getAnnotation())
-    )
-      .filter(Objects::nonNull)
-      .collect(Collectors.toList());
+        .select(PyNamedParameter.class)
+        .remove(PyParameter::isSelf)
+        .map(PyAnnotationOwner::getAnnotation)
+        .append(function.getAnnotation())
+        .nonNull()
+        .toList();
   }
 
   /**

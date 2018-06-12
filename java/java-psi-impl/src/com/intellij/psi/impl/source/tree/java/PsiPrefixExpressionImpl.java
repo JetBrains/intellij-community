@@ -88,7 +88,7 @@ public class PsiPrefixExpressionImpl extends ExpressionPsiElement implements Psi
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child == getFirstChildNode()) return ChildRole.OPERATION_SIGN;
     if (child == getLastChildNode() && ElementType.EXPRESSION_BIT_SET.contains(child.getElementType())) return ChildRole.OPERAND;

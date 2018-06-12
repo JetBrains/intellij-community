@@ -15,6 +15,12 @@ import java.nio.file.Files;
  */
 @SuppressWarnings({"unused", "IOResourceOpenedButNotSafelyClosed"})
 public class Test01 {
+  @ExpectNotNull
+  @ExpectContract(pure = true)
+  public static MySupplier methodReference(@ExpectNotNull String s) {
+    return s::trim;
+  }
+
   boolean plainFlag;
   volatile boolean volatileFlag;
 
@@ -63,18 +69,18 @@ public class Test01 {
     return "s";
   }
 
-  @ExpectContract(value = "!null->!null;null->null", pure = true)
+  @ExpectContract(value = "_->param1", pure = true)
   static String idString(String s) {
     return s;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "->this", pure = true)
   @ExpectNotNull
   public Test01 getThis() {
     return this;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "->new", pure = true)
   @ExpectNotNull
   protected Test01 createRoot() {
     return new Test01();
@@ -116,12 +122,6 @@ public class Test01 {
     return () -> s.trim();
   }
 
-  @ExpectNotNull
-  @ExpectContract(pure = true)
-  public static MySupplier methodReference(@ExpectNotNull String s) {
-    return s::trim;
-  }
-
   @ExpectContract(value="null,_->fail", pure = true)
   public static void assertNotNull(@ExpectNotNull Object obj, String message) {
     if(obj == null) {
@@ -146,7 +146,7 @@ public class Test01 {
   }
 
   @ExpectNotNull
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "_,_,_->new", pure = true)
   public static long[] copyOfRange(@ExpectNotNull long[] arr, int from, int to) {
     int diff = to - from;
     if (diff < 0) {
@@ -158,7 +158,7 @@ public class Test01 {
   }
 
   @ExpectNotNull
-  @ExpectContract(pure = true)
+  @ExpectContract(value="_->new", pure = true)
   public static long[] copyAndModify(@ExpectNotNull long[] input) {
     long[] copy = copyOfRange(input, 0, input.length);
     copy[0] = 1;
@@ -170,7 +170,7 @@ public class Test01 {
     copy[1] = 2;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value="_,_,_,_->new", pure = true)
   public static <I, O> O[] copyOfRangeObject(@ExpectNotNull I[] arr, int from, int to, @ExpectNotNull Class<? extends O[]> newType) {
     int diff = to - from;
     if (diff < 0) {
@@ -251,7 +251,7 @@ public class Test01 {
     }
   }
 
-  @ExpectContract("!null->!null;null->null")
+  @ExpectContract("_->param1")
   String testCatchReturn(String s) {
     try {
       Integer.parseInt(s);
@@ -285,7 +285,7 @@ public class Test01 {
     return false;
   }
 
-  @ExpectContract(pure = true)
+  @ExpectContract(value = "_->new", pure = true)
   String[] replaceFirstWithNull(@ExpectNotNull String[] arr) {
     String[] res = arr.clone();
     res[0] = null;

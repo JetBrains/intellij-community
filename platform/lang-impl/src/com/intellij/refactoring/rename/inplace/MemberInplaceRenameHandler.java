@@ -32,10 +32,13 @@ import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.rename.RenamePsiElementProcessor;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
-  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+  protected boolean isAvailable(@Nullable PsiElement element,
+                                @NotNull Editor editor,
+                                @NotNull PsiFile file) {
     PsiElement nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset());
     if (nameSuggestionContext == null && editor.getCaretModel().getOffset() > 0) {
       nameSuggestionContext = file.findElementAt(editor.getCaretModel().getOffset() - 1);
@@ -52,7 +55,9 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @Override
-  public InplaceRefactoring doRename(@NotNull final PsiElement elementToRename, final Editor editor, final DataContext dataContext) {
+  public InplaceRefactoring doRename(@NotNull PsiElement elementToRename,
+                                     @NotNull Editor editor,
+                                     @Nullable DataContext dataContext) {
     if (elementToRename instanceof PsiNameIdentifierOwner) {
       final RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(elementToRename);
       if (processor.isInplaceRenameSupported()) {
@@ -86,7 +91,9 @@ public class MemberInplaceRenameHandler extends VariableInplaceRenameHandler {
   }
 
   @NotNull
-  protected MemberInplaceRenamer createMemberRenamer(@NotNull PsiElement element, PsiNameIdentifierOwner elementToRename, Editor editor) {
+  protected MemberInplaceRenamer createMemberRenamer(@NotNull PsiElement element,
+                                                     @NotNull PsiNameIdentifierOwner elementToRename,
+                                                     @NotNull Editor editor) {
     return new MemberInplaceRenamer(elementToRename, element, editor);
   }
 }

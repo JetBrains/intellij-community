@@ -74,7 +74,7 @@ public class JsonParserDefinition implements ParserDefinition {
 
   @Override
   public PsiFile createFile(FileViewProvider fileViewProvider) {
-    return new JsonFileImpl(fileViewProvider);
+    return new JsonFileImpl(fileViewProvider, JsonLanguage.INSTANCE);
   }
 
   @Override

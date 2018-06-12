@@ -53,6 +53,15 @@ public interface SMTestLocator {
     return getLocation(protocol, path, project, scope);
   }
 
+  /**
+   * Parse stacktrace line and return corresponding location.
+   */
+  @NotNull
+  default List<Location> getLocation(@NotNull String stacktraceLine,
+                                     @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    return Collections.emptyList();
+  }
+
   /** @deprecated consoles should provide specific locators; the implementation is trivial (to be removed in IDEA 18) */
   class Composite implements SMTestLocator, DumbAware {
     private final Map<String, ? extends SMTestLocator> myLocators;

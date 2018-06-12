@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageParserDefinitions;
@@ -22,9 +23,7 @@ import com.intellij.lang.ParserDefinition;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -36,19 +35,18 @@ import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.xml.XmlTokenType;
 import com.intellij.util.CharTable;
+import org.jetbrains.annotations.NotNull;
 
 public class ShiftIndentInsideHelper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.Helper");
 
   private final CommonCodeStyleSettings mySettings;
-  private final FileType myFileType;
+  private final PsiFile myFile;
   private final IndentHelper myIndentIndentHelper;
-  private final Project myProject;
 
-  public ShiftIndentInsideHelper(FileType fileType, Project project) {
-    myProject = project;
-    mySettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(JavaLanguage.INSTANCE);
-    myFileType = fileType;
+  public ShiftIndentInsideHelper(@NotNull PsiFile file) {
+    myFile = file;
+    mySettings = CodeStyle.getLanguageSettings(file, JavaLanguage.INSTANCE);
     myIndentIndentHelper = IndentHelper.getInstance();
   }
 
@@ -76,10 +74,10 @@ public class ShiftIndentInsideHelper {
         }
                     if (c == '\n' || c == '\r') continue;
         String space = text.substring(offset + 1, offset1);
-        int indent = IndentHelperImpl.getIndent(myProject, myFileType, space, true);
+        int indent = IndentHelperImpl.getIndent(myFile, space, true);
         int newIndent = indent + indentShift;
         newIndent = Math.max(newIndent, 0);
-        String newSpace = IndentHelperImpl.fillIndent(myProject, myFileType, newIndent);
+        String newSpace = IndentHelperImpl.fillIndent(CodeStyle.getIndentOptions(myFile), newIndent);
 
         ASTNode leaf = element.findLeafElementAt(offset);
         if (!mayShiftIndentInside(leaf)) {
@@ -97,7 +95,7 @@ public class ShiftIndentInsideHelper {
           ) &&
               next != element) {
             if (mySettings.KEEP_FIRST_COLUMN_COMMENT) {
-              int commentIndent = myIndentIndentHelper.getIndent(myProject, myFileType, next, true);
+              int commentIndent = myIndentIndentHelper.getIndent(myFile, next, true);
               if (commentIndent == 0) continue;
             }
           }
@@ -179,6 +177,6 @@ public class ShiftIndentInsideHelper {
   }
 
   public FileType getFileType() {
-    return myFileType;
+    return myFile.getFileType();
   }
 }

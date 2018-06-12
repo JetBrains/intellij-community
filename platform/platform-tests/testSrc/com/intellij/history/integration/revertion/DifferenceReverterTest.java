@@ -21,7 +21,6 @@ import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IntegrationTestCase;
 import com.intellij.openapi.vfs.VirtualFile;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -283,11 +282,11 @@ public class DifferenceReverterTest extends IntegrationTestCase {
     assertEquals(1000, f.getTimeStamp());
   }
 
-  private void revertLastChange(int... diffsIndices) throws IOException {
+  private void revertLastChange(int... diffsIndices) throws Exception {
     revertChange(0, diffsIndices);
   }
 
-  private void revertChange(int change, int... diffsIndices) throws IOException {
+  private void revertChange(int change, int... diffsIndices) throws Exception {
     List<Revision> revs = getRevisionsFor(myRoot);
     Revision leftRev = revs.get(change + 1);
     Revision rightRev = revs.get(change);

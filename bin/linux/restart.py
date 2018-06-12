@@ -20,7 +20,9 @@ try:
 
     if len(sys.argv) > 3:
         to_launch = sys.argv[3:]
-        os.spawnv(os.P_WAIT, to_launch[0], to_launch)
+        ec = os.spawnv(os.P_WAIT, to_launch[0], to_launch)
+        if ec != 0:
+            syslog.syslog(syslog.LOG_ERR, str(to_launch) + ': ' + str(ec))
 
     to_launch = ['/usr/bin/open', sys.argv[2]] if sys.platform == 'darwin' else [sys.argv[2]]
     os.execv(to_launch[0], to_launch)

@@ -29,7 +29,6 @@ public class ApiStatus {
    * It's safe to use an element marked by this annotation if the usage is located in the same sources codebase as the declaration. However
    * if the declaration belongs to an external library such usages may lead to problems when the library will be updated to another version.
    */
-  @Experimental
   @Documented
   @Retention(RetentionPolicy.CLASS)
   @Target({

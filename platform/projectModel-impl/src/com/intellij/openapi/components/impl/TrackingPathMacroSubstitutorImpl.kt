@@ -1,8 +1,10 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.components.impl
 
 import com.intellij.openapi.components.PathMacroSubstitutor
 import com.intellij.openapi.components.TrackingPathMacroSubstitutor
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.diagnostic.debug
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.SmartHashSet
 import com.intellij.util.containers.isNullOrEmpty
@@ -59,7 +61,7 @@ internal class TrackingPathMacroSubstitutorImpl(private val macroManager: BasePa
       return
     }
 
-    LOG.debug("Registering unknown macros ${unknownMacros.joinToString(", ")} in component $componentName")
+    LOG.debug { "Registering unknown macros ${unknownMacros.joinToString(", ")} in component $componentName" }
 
     synchronized(lock) {
       for (unknownMacro in unknownMacros) {

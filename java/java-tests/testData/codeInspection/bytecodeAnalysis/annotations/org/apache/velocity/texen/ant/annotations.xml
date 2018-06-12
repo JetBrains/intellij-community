@@ -30,6 +30,9 @@
         </annotation>
     </item>
     <item name='org.apache.velocity.texen.ant.TexenTask org.apache.velocity.context.Context initControlContext()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.texen.ant.TexenTask void cleanup()'>

@@ -15,4 +15,25 @@ class Foo {
       System.out.println("impossible");
     }
   }
+
+  class Instrumented {
+    // s1 might be written by annotation processor
+    String s1;
+    String s2 = null;
+
+    Instrumented() {
+      System.out.println(s1.length()
+                         +s2.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>());
+    }
+  }
+
+  class NotInstrumented {
+    String s1;
+    String s2 = null;
+
+    NotInstrumented() {
+      System.out.println(s1.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>()
+                         +s2.<warning descr="Method invocation 'length' may produce 'java.lang.NullPointerException'">length</warning>());
+    }
+  }
 }

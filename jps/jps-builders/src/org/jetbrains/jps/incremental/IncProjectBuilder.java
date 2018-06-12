@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Predicate;
@@ -836,7 +836,8 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor("IncProjectBuilder executor pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
     private final CompileContext myContext;
     private final AtomicReference<Throwable> myException = new AtomicReference<>();
     private final Object myQueueLock = new Object();

@@ -24,9 +24,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamChainCallExtractor implements ChainCallExtractor {
   @Override
   public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {

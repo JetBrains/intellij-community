@@ -112,7 +112,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + frameworks.toString(),
-                () -> assertTrue(frameworks.contains("Add 'JUnit5.0' to classpath")));
+                () -> assertTrue(frameworks.contains("Add 'JUnit5.2' to classpath")));
 
       myFixture.configureByText("MyTest.java", "class MyTest {@<error descr=\"Cannot resolve symbol 'DisplayName'\">DisplayName</error> void method() {}}");
       myFixture.testHighlighting(false, false, false);
@@ -121,7 +121,7 @@ class JUnit5AcceptanceTest extends JUnit5CodeInsightTest {
         .map(action -> action.getText())
         .filter(name -> name.startsWith("Add")).collect(Collectors.toSet());
       assertAll("Detected frameworks: " + displayNameFrameworks.toString(),
-                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5.0' to classpath")));
+                () -> assertTrue (displayNameFrameworks.contains("Add 'JUnit5.2' to classpath")));
 
     });
   }

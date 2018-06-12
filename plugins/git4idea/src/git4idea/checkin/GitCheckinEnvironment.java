@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.checkin;
 
 import com.intellij.CommonBundle;
 import com.intellij.diff.util.Side;
 import com.intellij.dvcs.AmendComponent;
 import com.intellij.dvcs.DvcsUtil;
-import com.intellij.dvcs.push.ui.VcsPushDialog;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
@@ -68,7 +53,6 @@ import com.intellij.vcs.log.util.VcsUserUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsUtil;
 import git4idea.GitUserRegistry;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;
 import git4idea.changes.GitChangeUtils;
 import git4idea.commands.Git;
@@ -295,7 +279,8 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
       List<GitRepository> preselectedRepositories = newArrayList(repositories);
       GuiUtils.invokeLaterIfNeeded(
-        () -> new VcsPushDialog(myProject, preselectedRepositories, GitBranchUtil.getCurrentRepository(myProject)).show(),
+        () -> new GitPushAfterCommitDialog(myProject, preselectedRepositories,
+                                           GitBranchUtil.getCurrentRepository(myProject)).showOrPush(),
         modality, myProject.getDisposed());
     }
     return exceptions;
@@ -484,14 +469,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
   }
 
   private static void reset(@NotNull Project project, @NotNull VirtualFile root, @NotNull Collection<Change> changes) throws VcsException {
-    Set<FilePath> paths = new HashSet<>();
-    paths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
-    paths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
+    Set<FilePath> allPaths = new HashSet<>();
+    allPaths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
+    allPaths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
 
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
-    handler.endOptions();
-    handler.addRelativePaths(paths);
-    Git.getInstance().runCommand(handler).getOutputOrThrow();
+    for (List<String> paths : VcsFileUtil.chunkPaths(root, allPaths)) {
+      GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
+      handler.endOptions();
+      handler.addParameters(paths);
+      Git.getInstance().runCommand(handler).getOutputOrThrow();
+    }
   }
 
   public List<VcsException> commit(List<Change> changes, String preparedComment) {
@@ -659,26 +646,17 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                      final Collection<FilePath> added,
                                      final Collection<FilePath> removed,
                                      final List<VcsException> exceptions) {
-    boolean rc = true;
-    if (!added.isEmpty()) {
-      try {
-        GitFileUtils.addPaths(project, root, added);
-      }
-      catch (VcsException ex) {
-        exceptions.add(ex);
-        rc = false;
-      }
+    try {
+      List<FilePath> files = new ArrayList<>();
+      files.addAll(added);
+      files.addAll(removed);
+      GitFileUtils.addPaths(project, root, files);
+      return true;
     }
-    if (!removed.isEmpty()) {
-      try {
-        GitFileUtils.delete(project, root, removed, "--ignore-unmatch");
-      }
-      catch (VcsException ex) {
-        exceptions.add(ex);
-        rc = false;
-      }
+    catch (VcsException ex) {
+      exceptions.add(ex);
+      return false;
     }
-    return rc;
   }
 
   /**
@@ -844,7 +822,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {
 
-    @NotNull private final GitVcs myVcs;
     @NotNull private final CheckinProjectPanel myCheckinProjectPanel;
     @NotNull private final JPanel myPanel;
     @NotNull private final EditorTextField myAuthorField;
@@ -856,7 +833,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
 
     GitCheckinOptions(@NotNull Project project, @NotNull CheckinProjectPanel panel) {
-      myVcs = GitVcs.getInstance(project);
       myCheckinProjectPanel = panel;
       myAuthorField = createTextField(project, getAuthors(project));
       myAuthorField.addFocusListener(new FocusAdapter() {
@@ -956,7 +932,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         h.addParameters("--max-count=1");
         h.addParameters("--encoding=UTF-8");
         String formatPattern;
-        if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion())) {
+        if (GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myProject)) {
           formatPattern = "%B";
         }
         else {

@@ -15,7 +15,7 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils.getPropertyNameByAccessorName
 import org.jetbrains.plugins.groovy.lang.psi.util.getAccessorName
-import org.jetbrains.plugins.groovy.lang.psi.util.getNameAndKind
+import org.jetbrains.plugins.groovy.lang.psi.util.getPropertyNameAndKind
 
 internal class CreatePropertyAction(
   target: GrTypeDefinition,
@@ -24,21 +24,22 @@ internal class CreatePropertyAction(
 ) : CreateMemberAction(target, request), JvmGroupIntentionAction {
 
   private val project = target.project
-  private val propertyInfo get() = requireNotNull(getNameAndKind(request.methodName))
+  private val propertyInfo get() = requireNotNull(getPropertyNameAndKind(request.methodName))
 
-  override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.second }
+  override fun getRenderData() = JvmActionGroup.RenderData { propertyInfo.first }
 
   override fun getFamilyName(): String = message("create.property.from.usage.family")
 
   override fun isAvailable(project: Project, editor: Editor?, file: PsiFile?): Boolean {
     if (!super.isAvailable(project, editor, file)) return false
-    val (propertyKind, propertyName) = getNameAndKind(request.methodName) ?: return false
+    val (propertyName, propertyKind) = getPropertyNameAndKind(request.methodName) ?: return false
 
     if (propertyKind == SETTER && readOnly) return false
 
+    val parameters = request.expectedParameters
     when (propertyKind) {
-      GETTER, BOOLEAN_GETTER -> if (request.parameters.isNotEmpty()) return false
-      SETTER -> if (request.parameters.size != 1) return false
+      GETTER, BOOLEAN_GETTER -> if (parameters.isNotEmpty()) return false
+      SETTER -> if (parameters.size != 1) return false
     }
 
     val counterAccessorName = counterPart(propertyKind).getAccessorName(propertyName)
@@ -49,7 +50,7 @@ internal class CreatePropertyAction(
     return when (propertyKind) {
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
-        val expectedType = request.parameters.single().second.singleOrNull()
+        val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
         if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
@@ -85,9 +86,9 @@ internal class CreatePropertyAction(
 
     override fun getModifiers() = if (readOnly) listOf(JvmModifier.FINAL) else emptyList()
 
-    override fun getFieldName() = propertyInfo.second
+    override fun getFieldName() = propertyInfo.first
 
-    override fun getFieldType() = request.createPropertyTypeConstraints(propertyInfo.first)
+    override fun getFieldType() = request.createPropertyTypeConstraints(propertyInfo.second)
 
     override fun getTargetSubstitutor() = request.targetSubstitutor
 

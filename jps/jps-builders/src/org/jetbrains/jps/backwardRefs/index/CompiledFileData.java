@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs.index;
 
 import org.jetbrains.annotations.NotNull;
@@ -28,17 +14,20 @@ public class CompiledFileData {
   private final Map<LightRef, Integer> myReferences;
   private final Map<LightRef, Void> myDefinitions;
   private final Map<SignatureData, Collection<LightRef>> mySignatureData;
+  private final Map<LightRef, Void> myImplicitToString;
 
   public CompiledFileData(@NotNull Map<LightRef, Collection<LightRef>> backwardHierarchyMap,
                           @NotNull Map<LightRef, Collection<LightRef>> casts,
                           @NotNull Map<LightRef, Integer> references,
                           @NotNull Map<LightRef, Void> definitions,
-                          @NotNull Map<SignatureData, Collection<LightRef>> signatureData) {
+                          @NotNull Map<SignatureData, Collection<LightRef>> signatureData,
+                          @NotNull Map<LightRef, Void> implicitToString) {
     myBackwardHierarchyMap = backwardHierarchyMap;
     myCasts = casts;
     myReferences = references;
     myDefinitions = definitions;
     mySignatureData = signatureData;
+    myImplicitToString = implicitToString;
   }
 
   @NotNull
@@ -64,5 +53,10 @@ public class CompiledFileData {
   @NotNull
   public Map<LightRef, Collection<LightRef>> getCasts() {
     return myCasts;
+  }
+
+  @NotNull
+  public Map<LightRef, Void> getImplicitToString() {
+    return myImplicitToString;
   }
 }

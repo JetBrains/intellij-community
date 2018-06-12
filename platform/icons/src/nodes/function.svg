@@ -1,9 +1,7 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>function</title>
-  <g>
-    <g id="_Group_" data-name=" Group " opacity="0.5">
-      <circle cx="8" cy="8" r="7" fill="#f98b9e"/>
-    </g>
-    <path d="M7.6245,4H5V5H6.9346L7.4269,6.0244,5,11H6.1709L8,7.1143,9.8291,11h1.171Z" fill="#231f20" opacity="0.6" style="isolation: isolate"/>
+  <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
+    <circle cx="8" cy="8" r="7" fill="#f98b9e"/>
   </g>
+  <path d="M7.62445,4.5H5v1h1.9346l.4923,1.0244L5,11.5h1.1709L8,7.6143,9.82905,11.5h1.171Z" fill="#231f20" opacity="0.7"/>
 </svg>

@@ -14,6 +14,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -118,7 +119,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           "strings" to PsiType.getJavaLangString(method.manager, method.resolveScope),
           "ints" to PsiType.INT,
           "longs" to PsiType.LONG,
-          "doubles" to PsiType.DOUBLE)
+          "doubles" to PsiType.DOUBLE,
+          "shorts" to PsiType.SHORT,
+          "bytes" to PsiType.BYTE,
+          "floats" to PsiType.FLOAT,
+          "chars" to PsiType.CHAR,
+          "classes" to PsiType.getJavaLangClass(method.manager, method.resolveScope))
 
         for (valueKey in possibleValues.keys) {
           processArrayInAnnotationParameter(valuesSource.findDeclaredAttributeValue(valueKey),
@@ -252,7 +258,19 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 if (psiClass.isEnum && psiClass.findFieldByName((attributeValue as PsiLiteral).value as String?, false) != null) return
                 //implicit java time conversion
                 val qualifiedName = psiClass.qualifiedName
-                if (qualifiedName != null && qualifiedName.startsWith("java.time.")) return
+                if (qualifiedName != null) {
+                  if (qualifiedName.startsWith("java.time.")) return
+                  if (qualifiedName.equals("java.nio.file.Path")) return
+                }
+
+                val factoryMethod: (PsiMethod) -> Boolean = {
+                  !it.hasModifier(JvmModifier.PRIVATE) &&
+                   it.parameterList.parametersCount == 1 &&
+                   it.parameterList.parameters[0].type.equalsToText(CommonClassNames.JAVA_LANG_STRING)
+                }
+
+                if (!psiClass.hasModifier(JvmModifier.ABSTRACT) && psiClass.constructors.find(factoryMethod) != null) return
+                if (psiClass.methods.find { it.hasModifier(JvmModifier.STATIC) && factoryMethod(it) } != null) return
               }
             }
             if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, 0)) return

@@ -43,6 +43,7 @@ public class ArtifactSourceItem extends PackagingSourceItem {
     myArtifact = artifact;
   }
 
+  @NotNull
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ArtifactPointer pointer = ArtifactPointerManager.getInstance(context.getProject()).createPointer(myArtifact, context.getArtifactModel());

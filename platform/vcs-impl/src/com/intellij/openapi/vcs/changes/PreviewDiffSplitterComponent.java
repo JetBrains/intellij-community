@@ -38,9 +38,9 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
     setDetailsOn(detailsOn);
   }
 
-  public void updatePreview() {
+  public void updatePreview(boolean fromModelRefresh) {
     if (isDetailsOn()) {
-      myProcessor.refresh();
+      myProcessor.refresh(fromModelRefresh);
     }
     else {
       myProcessor.clear();
@@ -61,7 +61,7 @@ public class PreviewDiffSplitterComponent extends JBSplitter {
 
   public void setDetailsOn(boolean detailsOn) {
     myDetailsOn = detailsOn;
-    updatePreview();
+    updatePreview(false);
     if (myDetailsOn == (getSecondComponent() == null)) {
       updateVisibility();
     }

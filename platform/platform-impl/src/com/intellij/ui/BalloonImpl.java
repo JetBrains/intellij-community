@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
+import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
 import com.intellij.openapi.MnemonicHelper;
@@ -28,7 +29,6 @@ import com.intellij.ui.components.panels.Wrapper;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
-import java.util.HashSet;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -49,6 +49,7 @@ import java.awt.image.BufferedImage;
 import java.awt.image.ImageFilter;
 import java.awt.image.RGBImageFilter;
 import java.util.Collections;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 import java.util.concurrent.CopyOnWriteArraySet;
@@ -585,7 +586,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
       ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
         @Override
         public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-          if (myHideOnAction) {
+          if (myHideOnAction && !(action instanceof HintManagerImpl.ActionToIgnore)) {
             hide();
           }
         }
@@ -881,7 +882,7 @@ public class BalloonImpl implements Balloon, IdeTooltip.Ui {
   public void startSmartFadeoutTimer(int delay) {
     mySmartFadeout = true;
     mySmartFadeoutDelay = delay;
-    FrameStateManager.getInstance().addListener(new FrameStateListener.Adapter() {
+    FrameStateManager.getInstance().addListener(new FrameStateListener() {
       @Override
       public void onFrameDeactivated() {
         if (myFadeoutAlarm.getActiveRequestCount() > 0) {

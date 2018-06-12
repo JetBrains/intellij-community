@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>InterfaceNeverImplemented.java</file>
-    <line>3</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Interface which has no concrete subclass</problem_class>
-    <description>Interface &lt;code&gt;InterfaceNeverImplemented&lt;/code&gt; has no concrete subclass #loc</description>
-  </problem>
-</problems>

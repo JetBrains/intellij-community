@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.coverage.view;
 
 import com.intellij.CommonBundle;
@@ -39,6 +37,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.DefaultTableCellRenderer;
+import javax.swing.table.TableColumn;
+import javax.swing.table.TableColumnModel;
 import java.awt.*;
 import java.awt.event.*;
 
@@ -52,7 +52,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   private final CoverageViewBuilder myBuilder;
   private final Project myProject;
   private final CoverageViewManager.StateBean myStateBean;
- 
+
 
   public CoverageView(final Project project, final CoverageDataManager dataManager, CoverageViewManager.StateBean stateBean) {
     myProject = project;
@@ -70,18 +70,21 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       emptyText.appendText(" Click ");
       emptyText.appendText("Edit", SimpleTextAttributes.LINK_ATTRIBUTES, new ActionListener() {
         public void actionPerformed(final ActionEvent e) {
-          final String configurationName = configuration.getName();
-          final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findConfigurationByName(configurationName);
+          final RunnerAndConfigurationSettings configurationSettings = RunManager.getInstance(project).findSettings(configuration);
           if (configurationSettings != null) {
             RunDialog.editConfiguration(project, configurationSettings, "Edit Run Configuration");
-          } else {
-            Messages.showErrorDialog(project, "Configuration \'" + configurationName + "\' was not found", CommonBundle.getErrorTitle());
+          }
+          else {
+            Messages.showErrorDialog(project, "Configuration \'" + configuration.getName() + "\' was not found", CommonBundle.getErrorTitle());
           }
         }
       });
       emptyText.appendText(" to fix configuration settings.");
     }
-    myTable.getColumnModel().getColumn(0).setCellRenderer(new NodeDescriptorTableCellRenderer());
+    TableColumnModel columnModel = myTable.getColumnModel();
+    TableColumn nameColumn = columnModel.getColumn(0);
+    nameColumn.setCellRenderer(new NodeDescriptorTableCellRenderer());
+    nameColumn.setPreferredWidth(myStateBean.myElementSize);
     myTable.getTableHeader().setReorderingAllowed(false);
     JPanel centerPanel = JBUI.Panels.simplePanel()
       .addToCenter(ScrollPaneFactory.createScrollPane(myTable))
@@ -136,6 +139,10 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
     if (!myProject.isDisposed()) {
       CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
     }
+  }
+
+  public void saveSize() {
+    myStateBean.myElementSize = myTable.getColumnModel().getColumn(0).getWidth();
   }
 
   private static ActionGroup createPopupGroup() {
@@ -208,7 +215,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
   public void updateParentTitle() {
     myBuilder.updateParentTitle();
   }
-  
+
   private AbstractTreeNode getSelectedValue() {
     return (AbstractTreeNode)myBuilder.getSelectedValue();
   }
@@ -286,7 +293,7 @@ public class CoverageView extends BorderLayoutPanel implements DataProvider, Dis
       myBuilder.updateParentTitle();
     }
   }
-  
+
   private class GoUpAction extends DumbAwareAction {
 
     private final CoverageViewTreeStructure myTreeStructure;

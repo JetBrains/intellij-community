@@ -16,7 +16,7 @@
 package com.intellij.java.psi
 
 import com.intellij.codeInsight.AnnotationTargetUtil
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.command.WriteCommandAction
@@ -64,7 +64,7 @@ class JavaStubsTest extends LightCodeInsightFixtureTestCase {
       """.stripIndent())
 
     def file = cls.containingFile as PsiFileImpl
-    assert ControlFlowAnalyzer.isPure(cls.methods[0])
+    assert JavaMethodContractUtil.isPure(cls.methods[0])
     assert file.stub
     assert !file.contentsLoaded
   }
@@ -317,6 +317,15 @@ class A {
   }  
 }"""
     PsiTestUtil.checkStubsMatchText(myFixture.addFileToProject("a.java", text))
+  }
+
+  void "test incomplete static import does not cause CCE"() {
+    def file = myFixture.addFileToProject('a.java', 'import static foo.bar.') as PsiJavaFile
+    assert ((PsiFileImpl)file).stub
+    assert file.node
+    def staticImport = ((PsiJavaFile)file).importList.importStaticStatements[0]
+    assert staticImport.referenceName == null
+    assert !staticImport.resolveTargetClass()
   }
 
 }

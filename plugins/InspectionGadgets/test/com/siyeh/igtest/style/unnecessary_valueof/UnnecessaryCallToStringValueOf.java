@@ -3,7 +3,7 @@ package com.siyeh.igtest.style.unnecessary_valueof;
 public class UnnecessaryCallToStringValueOf {
 
     String foo() {
-        return "star" + <warning descr="'String.valueOf(7)' can be simplified to '7'">String.valueOf(7)</warning>;
+        return "star" + <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(7);
     }
 
     String bar() {
@@ -18,15 +18,15 @@ public class UnnecessaryCallToStringValueOf {
     }
 
     void polyadic(String s) {
-      s = "abc" + <warning descr="'String.valueOf('d')' can be simplified to ''d''">String.valueOf('d')</warning> + "efg";
+      s = "abc" + <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>('d') + "efg";
     }
 
     void printStream() {
-        System.out.print(<warning descr="'String.valueOf(7)' can be simplified to '7'">String.valueOf(7)</warning>);
+        System.out.print(<warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(7));
     }
 
     void builder(StringBuilder builder) {
-        builder.append(<warning descr="'String.valueOf(0x8)' can be simplified to '0x8'">String.valueOf(0x8)</warning>);
+        builder.append(<warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(0x8));
     }
 
     public static void main22(String[] args) {
@@ -46,14 +46,14 @@ public class UnnecessaryCallToStringValueOf {
   }
 
   void smarter() {
-    String f = <warning descr="'String.valueOf(\"statistics\")' can be simplified to '\"statistics\"'">String.valueOf("statistics")</warning> +
+    String f = <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>("statistics") +
                ':' +
-               <warning descr="'String.valueOf(1)' can be simplified to '1'">String.valueOf(1)</warning>;
+               <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(1);
   }
 
   void regression() {
-    String s = "" + Integer.valueOf("asdf") + String.valueOf((nothing()));
-    String t = "" + <warning descr="'String.valueOf(something())' can be simplified to 'something()'">String.valueOf(something())</warning>;
+    String s = "" + Integer.valueOf("asdf") + <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>((nothing()));
+    String t = "" + <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(something());
   }
 
   Object nothing() {
@@ -63,5 +63,24 @@ public class UnnecessaryCallToStringValueOf {
   @org.jetbrains.annotations.NotNull
   Object something() {
     return new Object();
+  }
+
+  void test(int i) {
+    System.out.println("i = "+<warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(i));
+  }
+
+  String forString(String s1, String s2) {
+      if(s1 != null) {
+        return <warning descr="Unnecessary 'String.valueOf()' call">String.valueOf</warning>(s1);
+      }
+      return String.valueOf(s2);
+  }
+
+  void toStringConversion() {
+    boolean bool = System.nanoTime() % 2 == 0;
+
+    String s1 = "bool: " + <warning descr="Unnecessary 'Boolean.toString()' call">Boolean.toString</warning>(bool);
+    String s2 = "long: " + <warning descr="Unnecessary 'Long.toString()' call">Long.toString</warning>(System.nanoTime());
+    String s3 = "float: " + <warning descr="Unnecessary 'Float.toString()' call">Float.toString</warning>(1.0f+2.0f+3.0f);
   }
 }

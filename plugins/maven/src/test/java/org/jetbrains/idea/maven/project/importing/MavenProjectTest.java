@@ -16,8 +16,10 @@
 
 package org.jetbrains.idea.maven.project.importing;
 
+import com.intellij.openapi.roots.LanguageLevelModuleExtensionImpl;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenArtifactNode;
 import org.jetbrains.idea.maven.model.MavenPlugin;
@@ -515,6 +517,29 @@ public class MavenProjectTest extends MavenImportingTestCase {
 
     assertEquals("1.4", getMavenProject().getSourceLevel());
     assertEquals("1.4", getMavenProject().getTargetLevel());
+  }
+
+  public void testCompilerPluginConfigurationRelease() {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<version>1</version>" +
+
+                     "<build>" +
+                     "  <plugins>" +
+                     "    <plugin>" +
+                     "      <groupId>org.apache.maven.plugins</groupId>" +
+                     "      <artifactId>maven-compiler-plugin</artifactId>" +
+                     "      <configuration>" +
+                     "        <release>7</release>" +
+                     "      </configuration>" +
+                     "    </plugin>" +
+                     "  </plugins>" +
+                     "</build>");
+
+    importProject();
+
+    assertEquals("7", getMavenProject().getReleaseLevel());
+    assertEquals(LanguageLevel.JDK_1_7, LanguageLevelModuleExtensionImpl.getInstance(getModule("project")).getLanguageLevel());
   }
 
   public void testMergingPluginConfigurationFromBuildProfilesAndPluginsManagement() {

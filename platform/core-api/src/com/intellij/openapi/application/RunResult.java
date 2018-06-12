@@ -20,7 +20,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.util.ExceptionUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class RunResult<T> extends Result<T> {
+public final class RunResult<T> extends Result<T> {
   private BaseActionRunnable<T> myActionRunnable;
   private Throwable myThrowable;
 

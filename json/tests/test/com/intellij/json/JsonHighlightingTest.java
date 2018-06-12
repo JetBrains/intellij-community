@@ -6,14 +6,11 @@ import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 /**
  * @author Mikhail Golubev
  */
-public class JsonHighlightingTest extends JsonTestCase {
+public class JsonHighlightingTest extends JsonHighlightingTestBase {
 
-  private void doTest() {
-    doTestHighlighting(true, true, true);
-  }
-
-  private long doTestHighlighting(boolean checkInfo, boolean checkWeakWarning, boolean checkWarning) {
-    return myFixture.testHighlighting(checkWarning, checkInfo, checkWeakWarning, "/highlighting/" + getTestName(false) + ".json");
+  @Override
+  protected String getExtension() {
+    return "json";
   }
 
   private void enableStandardComplianceInspection(boolean checkComments, boolean checkTopLevelValues) {

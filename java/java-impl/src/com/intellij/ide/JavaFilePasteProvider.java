@@ -58,27 +58,24 @@ public class JavaFilePasteProvider implements PasteProvider {
       }
     }
     final PsiClass mainClass = publicClass;
-    new WriteCommandAction(project, "Paste class '" + mainClass.getName() + "'") {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        PsiFile file;
-        try {
-          file = targetDir.createFile(mainClass.getName() + ".java");
-        }
-        catch (IncorrectOperationException e) {
-          return;
-        }
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        if (document != null) {
-          document.setText(javaFile.getText());
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-        }
-        if (file instanceof PsiJavaFile) {
-          updatePackageStatement((PsiJavaFile) file, targetDir);
-        }
-        new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
+    WriteCommandAction.writeCommandAction(project).withName("Paste class '" + mainClass.getName() + "'").run(() -> {
+      PsiFile file;
+      try {
+        file = targetDir.createFile(mainClass.getName() + ".java");
       }
-    }.execute();
+      catch (IncorrectOperationException e) {
+        return;
+      }
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      if (document != null) {
+        document.setText(javaFile.getText());
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+      }
+      if (file instanceof PsiJavaFile) {
+        updatePackageStatement((PsiJavaFile)file, targetDir);
+      }
+      new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
+    });
   }
 
   private static void updatePackageStatement(final PsiJavaFile javaFile, final PsiDirectory targetDir) {

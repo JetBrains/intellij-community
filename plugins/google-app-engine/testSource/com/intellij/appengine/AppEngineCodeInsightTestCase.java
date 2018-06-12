@@ -17,7 +17,6 @@ package com.intellij.appengine;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
@@ -30,7 +29,6 @@ import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.CommonProcessors;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 
@@ -50,12 +48,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     myModuleBuilder = fixtureBuilder.addModule(JavaModuleFixtureBuilder.class);
     myProjectFixture = fixtureBuilder.getFixture();
     myCodeInsightFixture = createCodeInsightFixture(getBaseDirectoryPath());
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        addAppEngineSupport(myProjectFixture.getModule());
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> addAppEngineSupport(myProjectFixture.getModule()));
   }
 
   protected abstract String getBaseDirectoryPath();

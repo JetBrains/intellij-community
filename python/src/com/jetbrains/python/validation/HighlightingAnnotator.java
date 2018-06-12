@@ -19,6 +19,8 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.source.tree.LeafPsiElement;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.highlighting.PyHighlighter;
@@ -39,8 +41,22 @@ public class HighlightingAnnotator extends PyAnnotator {
     final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
     if (function != null) {
       final TextAttributesKey attrKey = node.isSelf() ? PyHighlighter.PY_SELF_PARAMETER : PyHighlighter.PY_PARAMETER;
-      addHighlightingAnnotation(node.getFirstChild(), attrKey);
+      if (isArgOrKwargParameter(node)) {
+        addHighlightingAnnotation(node, attrKey);
+      }
+      else {
+        addHighlightingAnnotation(node.getFirstChild(), attrKey);
+      }
     }
+  }
+
+  private static boolean isArgOrKwargParameter(PyParameter parameter) {
+    if (parameter instanceof PyNamedParameter) {
+      final PyNamedParameter namedParameter = (PyNamedParameter)parameter;
+      return namedParameter.isPositionalContainer() ||
+             namedParameter.isKeywordContainer();
+    }
+    return false;
   }
 
   @Override

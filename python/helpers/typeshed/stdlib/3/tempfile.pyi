@@ -15,14 +15,14 @@ template = ...  # type: str
 
 if sys.version_info >= (3, 5):
     def TemporaryFile(
-        mode: str = ..., buffering: int = ..., encoding: str = ...,
-        newline: str = ..., suffix: Optional[AnyStr]= ..., prefix: Optional[AnyStr] = ...,
+        mode: str = ..., buffering: int = ..., encoding: Optional[str] = ...,
+        newline: Optional[str] = ..., suffix: Optional[AnyStr] = ..., prefix: Optional[AnyStr] = ...,
         dir: Optional[AnyStr] = ...
     ) -> IO[Any]:
         ...
     def NamedTemporaryFile(
-        mode: str = ..., buffering: int = ..., encoding: str = ...,
-        newline: str = ..., suffix: Optional[AnyStr] = ..., prefix: Optional[AnyStr] = ...,
+        mode: str = ..., buffering: int = ..., encoding: Optional[str] = ...,
+        newline: Optional[str] = ..., suffix: Optional[AnyStr] = ..., prefix: Optional[AnyStr] = ...,
         dir: Optional[AnyStr] = ..., delete: bool =...
     ) -> IO[Any]:
         ...
@@ -53,14 +53,14 @@ if sys.version_info >= (3, 5):
     def gettempprefixb() -> bytes: ...
 else:
     def TemporaryFile(
-        mode: str = ..., buffering: int = ..., encoding: str = ...,
-        newline: str = ..., suffix: str = ..., prefix: str = ...,
+        mode: str = ..., buffering: int = ..., encoding: Optional[str] = ...,
+        newline: Optional[str] = ..., suffix: str = ..., prefix: str = ...,
         dir: Optional[str] = ...
     ) -> IO[Any]:
         ...
     def NamedTemporaryFile(
-        mode: str = ..., buffering: int = ..., encoding: str = ...,
-        newline: str = ..., suffix: str = ..., prefix: str = ...,
+        mode: str = ..., buffering: int = ..., encoding: Optional[str] = ...,
+        newline: Optional[str] = ..., suffix: str = ..., prefix: str = ...,
         dir: Optional[str] = ..., delete: bool =...
     ) -> IO[Any]:
         ...

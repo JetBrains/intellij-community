@@ -14,11 +14,13 @@ public class PsiReferenceWrapper implements PsiReference {
     myOriginalPsiReference = originalPsiReference;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myOriginalPsiReference.getElement();
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myOriginalPsiReference.getRangeInElement();

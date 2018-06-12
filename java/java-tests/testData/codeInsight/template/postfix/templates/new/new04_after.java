@@ -1,7 +1,6 @@
 public abstract class Foo {
     void m() {
-        new Foo() {<caret>
-        };
+        new Foo()<caret>
     }
 }
 

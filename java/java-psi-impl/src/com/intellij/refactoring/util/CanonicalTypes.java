@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
@@ -40,6 +39,7 @@ public class CanonicalTypes {
     @NotNull
     public abstract PsiType getType(@Nullable PsiElement context, PsiManager manager) throws IncorrectOperationException;
 
+    @NotNull
     public PsiType getType(@NotNull PsiElement context) {
       return getType(context, context.getManager());
     }
@@ -47,7 +47,7 @@ public class CanonicalTypes {
     @NonNls
     public abstract String getTypeText();
 
-    public void addImportsTo(JavaCodeFragment fragment) { }
+    public void addImportsTo(@NotNull JavaCodeFragment fragment) { }
 
     public boolean isValid() {
       return true;
@@ -84,7 +84,7 @@ public class CanonicalTypes {
   }
 
   private static class Array extends AnnotatedType {
-    protected final Type myComponentType;
+    final Type myComponentType;
 
     private Array(@NotNull PsiType original, @NotNull Type componentType) {
       super(original.getAnnotationProvider());
@@ -103,7 +103,7 @@ public class CanonicalTypes {
     }
 
     @Override
-    public void addImportsTo(JavaCodeFragment fragment) {
+    public void addImportsTo(@NotNull JavaCodeFragment fragment) {
       myComponentType.addImportsTo(fragment);
     }
 
@@ -158,16 +158,11 @@ public class CanonicalTypes {
 
     @Override
     public String getTypeText() {
-      if (myBound == null) {
-        return "?";
-      }
-      else {
-        return "? " + (myIsExtending ? "extends " : "super ") + myBound.getTypeText();
-      }
+      return myBound == null ? "?" : "? " + (myIsExtending ? "extends " : "super ") + myBound.getTypeText();
     }
 
     @Override
-    public void addImportsTo(JavaCodeFragment fragment) {
+    public void addImportsTo(@NotNull JavaCodeFragment fragment) {
       if (myBound != null) {
         myBound.addImportsTo(fragment);
       }
@@ -242,7 +237,7 @@ public class CanonicalTypes {
     }
 
     @Override
-    public void addImportsTo(JavaCodeFragment fragment) {
+    public void addImportsTo(@NotNull JavaCodeFragment fragment) {
       fragment.addImportsFromString(myClassQName);
       for (Type type : mySubstitutor.values()) {
         if (type != null) {
@@ -274,7 +269,7 @@ public class CanonicalTypes {
     }
 
     @Override
-    public void addImportsTo(JavaCodeFragment fragment) {
+    public void addImportsTo(@NotNull JavaCodeFragment fragment) {
       for (Type type : myTypes) {
         type.addImportsTo(fragment);
       }

@@ -113,6 +113,13 @@ public class DfaRelationValue extends DfaValue {
       }
     }
 
+    /**
+     * @return true if this relation is >, >=, <, != or <=
+     */
+    public boolean isInequality() {
+      return this == LE || this == GE || this == LT || this == GT || this == NE;
+    }
+
     @Override
     public String toString() {
       return myName;

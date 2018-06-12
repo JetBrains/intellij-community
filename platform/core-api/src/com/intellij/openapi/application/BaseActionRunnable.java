@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.util.ThrowableRunnable;
 import org.jetbrains.annotations.NotNull;
 
 public abstract class BaseActionRunnable<T> {
@@ -31,7 +32,9 @@ public abstract class BaseActionRunnable<T> {
 
   /**
    * Same as {@link #execute()}, but does not log an error if an exception occurs.
+   * @deprecated use {@link ReadAction#run(ThrowableRunnable)} or  {@link WriteAction#run(ThrowableRunnable)} instead
    */
+  @Deprecated
   @NotNull
   public final RunResult<T> executeSilently() {
     mySilentExecution = true;

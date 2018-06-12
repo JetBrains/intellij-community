@@ -11,7 +11,6 @@ import com.intellij.openapi.util.BuildNumber;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.SystemInfoRt;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -56,7 +55,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private int myProgressHeight = 2;
   private int myProgressX = 1;
   private int myProgressY = 350;
-  private int myLicenseOffsetY = Registry.is("ide.new.about") ? 85 : 30;
+  private int myLicenseOffsetY = 85;
   private String mySplashImageUrl;
   private String myAboutImageUrl;
   @SuppressWarnings("UseJBColor") private Color mySplashTextColor = new Color(0, 35, 135);  // idea blue
@@ -100,6 +99,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private String myStatisticsServiceUrl;
   private String myStatisticsServiceKey;
   private String myEventLogSettingsUrl;
+  @Deprecated
   private String myThirdPartySoftwareUrl;
   private String myJetbrainsTvUrl;
   private String myEvalLicenseUrl = "https://www.jetbrains.com/store/license.html";
@@ -186,6 +186,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx {
   private static final String ATTRIBUTE_STATISTICS_SERVICE = "service";
   private static final String ATTRIBUTE_STATISTICS_SERVICE_KEY = "service-key";
   private static final String ATTRIBUTE_EVENT_LOG_STATISTICS_SETTINGS = "event-log-settings";
+  @Deprecated
   private static final String ELEMENT_THIRD_PARTY = "third-party";
   private static final String ELEMENT_JB_TV = "jetbrains-tv";
   private static final String CUSTOMIZE_IDE_WIZARD_STEPS = "customize-ide-wizard";

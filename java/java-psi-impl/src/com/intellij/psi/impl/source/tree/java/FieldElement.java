@@ -20,7 +20,6 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
@@ -83,7 +82,7 @@ public class FieldElement extends CompositeElement{
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     assert (child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaDocElementType.DOC_COMMENT) {

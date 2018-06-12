@@ -103,6 +103,12 @@ public class VcsDirectoryConfigurationPanel extends JPanel implements Configurab
       this.mapping = mapping;
       this.type = type;
     }
+
+    @Override
+    public String toString() {
+      if (type == Type.SEPARATOR) return "";
+      return mapping.toString();
+    }
   }
 
   private static class MyDirectoryRenderer extends ColoredTableCellRenderer {

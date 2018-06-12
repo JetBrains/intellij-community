@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner
 
-import com.intellij.execution.process.ProcessOutputTypes
 import com.intellij.execution.testframework.sm.runner.ui.MockPrinter
 import com.intellij.openapi.util.Disposer
 
@@ -26,11 +11,11 @@ class OutputTest : BaseSMTRunnerTestCase() {
     val child = createTestProxy("child", suite)
     child.setTreeBuildBeforeStart()
 
-    suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
+    suite.addStdOutput("before test started\n")
     child.setStarted()
-    child.addStdOutput("inside test\n", ProcessOutputTypes.STDOUT)
+    child.addStdOutput("inside test\n")
     child.setFinished()
-    suite.addStdOutput("after test finished\n", ProcessOutputTypes.STDOUT)
+    suite.addStdOutput("after test finished\n")
 
     val printer = MockPrinter(true)
     suite.printOn(printer)
@@ -48,11 +33,11 @@ class OutputTest : BaseSMTRunnerTestCase() {
     val child = createTestProxy("child", suite)
     child.setTreeBuildBeforeStart()
 
-    suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
+    suite.addStdOutput("before test started\n")
     child.setStarted()
-    child.addStdOutput("inside test\n", ProcessOutputTypes.STDOUT)
+    child.addStdOutput("inside test\n")
     child.setTestFailed("fail", null, false)
-    suite.addStdOutput("after test finished\n", ProcessOutputTypes.STDOUT)
+    suite.addStdOutput("after test finished\n")
 
     val printer = MockPrinter(true)
     suite.printOn(printer)
@@ -71,12 +56,12 @@ class OutputTest : BaseSMTRunnerTestCase() {
     child.setTreeBuildBeforeStart()
 
     try {
-      suite.addStdOutput("before test started\n", ProcessOutputTypes.STDOUT)
+      suite.addStdOutput("before test started\n")
       child.setStarted()
-      child.addStdOutput("inside test\n", ProcessOutputTypes.STDOUT)
+      child.addStdOutput("inside test\n")
       child.setFinished()
       suite.flush()
-      suite.addStdOutput("after test finished\n", ProcessOutputTypes.STDOUT)
+      suite.addStdOutput("after test finished\n")
 
       val printer = MockPrinter(true)
       suite.printOn(printer)

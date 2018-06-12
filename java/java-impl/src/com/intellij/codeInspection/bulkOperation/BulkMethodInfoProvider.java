@@ -20,9 +20,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.stream.Stream;
 
-/**
- * @author Tagir Valeev
- */
 public interface BulkMethodInfoProvider {
   ExtensionPointName<BulkMethodInfoProvider> KEY = ExtensionPointName.create("com.intellij.java.inspection.bulkMethodInfo");
 

@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.util;
 
+import com.intellij.lang.jvm.types.JvmPrimitiveTypeKind;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootModificationTracker;
@@ -73,6 +60,8 @@ public class TypeConversionUtil {
     }
   };
   private static final Key<PsiElement> ORIGINAL_CONTEXT = Key.create("ORIGINAL_CONTEXT");
+  public static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
+  public static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
 
   static {
     TYPE_TO_RANK_MAP.put(PsiType.BYTE, BYTE_RANK);
@@ -821,7 +810,16 @@ public class TypeConversionUtil {
       return isAssignable(left, ((PsiDisjunctionType)right).getLeastUpperBound(), allowUncheckedConversion, capture);
     }
 
-    if (left instanceof PsiArrayType) return false;
+    if (left instanceof PsiArrayType) {
+      if (right instanceof PsiClassType) {
+        PsiClass aClass = ((PsiClassType)right).resolve();
+        if (aClass instanceof PsiTypeParameter) {
+          PsiType upperBound = getUpperBound(aClass);
+          return upperBound != null && isAssignable(left, upperBound, allowUncheckedConversion, capture);
+        }
+      }
+      return false;
+    }
     if (right instanceof PsiPrimitiveType) {
       if (isVoidType(right)) return false;
       if (!(left instanceof PsiPrimitiveType)) {
@@ -942,7 +940,7 @@ public class TypeConversionUtil {
         () -> {
           final JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
           final Set<String> set = new THashSet<>();
-          for (final String qname : PsiPrimitiveType.getAllBoxedTypeNames()) {
+          for (final String qname : JvmPrimitiveTypeKind.getBoxedFqns()) {
             final PsiClass boxedClass = facade.findClass(qname, GlobalSearchScope.allScope(project));
             InheritanceUtil.processSupers(boxedClass, true, psiClass1 -> {
               ContainerUtil.addIfNotNull(set, psiClass1.getQualifiedName());
@@ -1461,6 +1459,14 @@ public class TypeConversionUtil {
   
   public static void markAsFreshVariable(PsiTypeParameter parameter, PsiElement context) {
     parameter.putUserData(ORIGINAL_CONTEXT, context);
+  }
+
+  public static PsiType getUpperBound(@NotNull PsiClass psiClass) {
+    return psiClass.getUserData(UPPER_BOUND);
+  }
+
+  public static PsiType getLowerBound(@NotNull PsiClass psiClass) {
+    return psiClass.getUserData(LOWER_BOUND);
   }
 
   private interface Caster {

@@ -42,6 +42,7 @@ import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.RefactoringMessageUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.RecentsManager;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -205,7 +206,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       final PsiDirectory psiDirectory = (PsiDirectory)myTargetContainer;
       PsiPackage oldPackage = getTargetPackage();
       String name = oldPackage == null ? "" : oldPackage.getQualifiedName();
-      final String targetName = myPackageNameField.getText();
+      final String targetName = getPackageName();
       if (!Comparing.equal(name, targetName)) {
         final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(myProject);
         final List<VirtualFile> contentSourceRoots = JavaProjectRootsUtil.getSuitableDestinationSourceRoots(myProject);
@@ -302,7 +303,7 @@ public class MoveInnerDialog extends MoveDialogBase {
         message = RefactoringMessageUtil.checkCanCreateClass((PsiDirectory)target, className);
 
         if (message == null) {
-          final String packageName = myPackageNameField.getText().trim();
+          final String packageName = getPackageName();
           if (packageName.length() > 0 && !PsiNameHelper.getInstance(myProject).isQualifiedName(packageName)) {
             message = RefactoringMessageUtil.getIncorrectIdentifierMessage(packageName);
           }
@@ -319,6 +320,7 @@ public class MoveInnerDialog extends MoveDialogBase {
       return;
     }
 
+    RecentsManager.getInstance(myProject).registerRecentEntry(RECENTS_KEY, getPackageName());
     myProcessor.setup(getInnerClass(), className, isPassOuterClass(), parameterName,
                       isSearchInComments(), isSearchInNonJavaFiles(), target);
 
@@ -326,6 +328,10 @@ public class MoveInnerDialog extends MoveDialogBase {
     saveOpenInEditorOption();
     myProcessor.setOpenInEditor(openInEditor);
     invokeRefactoring(myProcessor);
+  }
+
+  private String getPackageName() {
+    return myPackageNameField.getText().trim();
   }
 
   protected void doHelpAction() {
@@ -345,12 +351,9 @@ public class MoveInnerDialog extends MoveDialogBase {
       myParameterField.getComponent().setEnabled(false);
     }
 
-    myPackageNameField = new PackageNameReferenceEditorCombo("", myProject, RECENTS_KEY,
-                                                             RefactoringBundle.message("choose.destination.package"));
     PsiPackage psiPackage = getTargetPackage();
-    if (psiPackage != null) {
-      myPackageNameField.prependItem(psiPackage.getQualifiedName());
-    }
+    myPackageNameField = new PackageNameReferenceEditorCombo(psiPackage != null ? psiPackage.getQualifiedName() : "", myProject, RECENTS_KEY,
+                                                             RefactoringBundle.message("choose.destination.package"));
   }
 
   @Nullable

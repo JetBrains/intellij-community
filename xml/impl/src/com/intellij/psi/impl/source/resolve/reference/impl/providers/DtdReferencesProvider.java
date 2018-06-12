@@ -65,11 +65,13 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
 
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return myRange;
@@ -168,11 +170,13 @@ public class DtdReferencesProvider extends PsiReferenceProvider {
       }
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return myElement;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return myRange;

@@ -77,8 +77,12 @@ public class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("INSTANCE_FINAL_FIELD_ATTRIBUTES", INSTANCE_FIELD_ATTRIBUTES);
   public static final TextAttributesKey STATIC_FIELD_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_ATTRIBUTES", DefaultLanguageHighlighterColors.STATIC_FIELD);
-  public static final TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES 
+  public static final TextAttributesKey STATIC_FIELD_IMPORTED_ATTRIBUTES 
+    = TextAttributesKey.createTextAttributesKey("STATIC_FIELD_IMPORTED_ATTRIBUTES", STATIC_FIELD_ATTRIBUTES);
+  public static final TextAttributesKey STATIC_FINAL_FIELD_ATTRIBUTES
     = TextAttributesKey.createTextAttributesKey("STATIC_FINAL_FIELD_ATTRIBUTES", STATIC_FIELD_ATTRIBUTES);
+  public static final TextAttributesKey STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES 
+    = TextAttributesKey.createTextAttributesKey("STATIC_FINAL_FIELD_IMPORTED_ATTRIBUTES", STATIC_FINAL_FIELD_ATTRIBUTES);
   public static final TextAttributesKey CLASS_NAME_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("CLASS_NAME_ATTRIBUTES", DefaultLanguageHighlighterColors.CLASS_NAME);
   public static final TextAttributesKey ANONYMOUS_CLASS_NAME_ATTRIBUTES 
@@ -99,6 +103,8 @@ public class JavaHighlightingColors {
     = TextAttributesKey.createTextAttributesKey("METHOD_DECLARATION_ATTRIBUTES", DefaultLanguageHighlighterColors.FUNCTION_DECLARATION);
   public static final TextAttributesKey STATIC_METHOD_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("STATIC_METHOD_ATTRIBUTES", DefaultLanguageHighlighterColors.STATIC_METHOD);
+  public static final TextAttributesKey STATIC_METHOD_CALL_IMPORTED_ATTRIBUTES
+    = TextAttributesKey.createTextAttributesKey("STATIC_METHOD_IMPORTED_ATTRIBUTES", STATIC_METHOD_ATTRIBUTES);
   public static final TextAttributesKey ABSTRACT_METHOD_ATTRIBUTES 
     = TextAttributesKey.createTextAttributesKey("ABSTRACT_METHOD_ATTRIBUTES", METHOD_CALL_ATTRIBUTES);
   public static final TextAttributesKey INHERITED_METHOD_ATTRIBUTES 

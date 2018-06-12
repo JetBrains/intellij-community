@@ -237,14 +237,14 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
              .findClass(AnnotationUtil.LANGUAGE, GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module)) != null;
   }
 
-  public static boolean doAddLanguageAnnotation(Project project,
+  public static boolean doAddLanguageAnnotation(@NotNull Project project,
                                                 @Nullable final PsiModifierListOwner modifierListOwner,
                                                 @NotNull final PsiLanguageInjectionHost host,
                                                 final String languageId,
                                                 Processor<PsiLanguageInjectionHost> annotationFixer) {
     final boolean addAnnotation = isAnnotationsJarInPath(ModuleUtilCore.findModuleForPsiElement(modifierListOwner))
-      && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
-      && modifierListOwner.getModifierList() != null;
+                                  && PsiUtil.isLanguageLevel5OrHigher(modifierListOwner)
+                                  && modifierListOwner.getModifierList() != null;
     final PsiStatement statement = PsiTreeUtil.getParentOfType(host, PsiStatement.class);
     if (!addAnnotation && statement == null) return false;
 
@@ -254,27 +254,27 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       return false;
     }
 
-    new WriteCommandAction(modifierListOwner.getProject(), modifierListOwner.getContainingFile()) {
-      protected void run(@NotNull Result result) throws Throwable {
-        PsiElementFactory javaFacade = JavaPsiFacade.getElementFactory(getProject());
-        if (addAnnotation) {
-          JVMElementFactory factory = ObjectUtils.chooseNotNull(JVMElementFactories.getFactory(modifierListOwner.getLanguage(), getProject()), javaFacade);
-          PsiAnnotation annotation = factory.createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
-          PsiModifierList list = ObjectUtils.assertNotNull(modifierListOwner.getModifierList());
-          final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);
-          if (existingAnnotation != null) {
-            existingAnnotation.replace(annotation);
-          }
-          else {
-            list.addAfter(annotation, null);
-          }
-          JavaCodeStyleManager.getInstance(getProject()).shortenClassReferences(list);
+    WriteCommandAction.writeCommandAction(project, modifierListOwner.getContainingFile()).run(() -> {
+      PsiElementFactory javaFacade = JavaPsiFacade.getElementFactory(project);
+      if (addAnnotation) {
+        JVMElementFactory factory =
+          ObjectUtils.chooseNotNull(JVMElementFactories.getFactory(modifierListOwner.getLanguage(), project), javaFacade);
+        PsiAnnotation annotation =
+          factory.createAnnotationFromText("@" + AnnotationUtil.LANGUAGE + "(\"" + languageId + "\")", modifierListOwner);
+        PsiModifierList list = ObjectUtils.assertNotNull(modifierListOwner.getModifierList());
+        final PsiAnnotation existingAnnotation = list.findAnnotation(AnnotationUtil.LANGUAGE);
+        if (existingAnnotation != null) {
+          existingAnnotation.replace(annotation);
         }
         else {
-          statement.getParent().addBefore(javaFacade.createCommentFromText("//language=" + languageId, host), statement);
+          list.addAfter(annotation, null);
         }
+        JavaCodeStyleManager.getInstance(project).shortenClassReferences(list);
       }
-    }.execute();
+      else {
+        statement.getParent().addBefore(javaFacade.createCommentFromText("//language=" + languageId, host), statement);
+      }
+    });
     return true;
   }
 

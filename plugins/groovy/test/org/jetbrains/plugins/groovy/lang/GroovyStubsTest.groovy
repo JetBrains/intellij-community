@@ -28,6 +28,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
@@ -59,11 +60,9 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile)
     final Document fooDocument = fooFile.getViewProvider().getDocument()
     assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
-    new WriteCommandAction.Simple(project, fooFile) {
-      void run() {
+    WriteCommandAction.writeCommandAction(project, fooFile).run ({
         fooDocument.setText("class Fooxx {}")
-      }
-    }.execute()
+    } as ThrowableRunnable)
     PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
     fooFile.setTreeElementPointer(null)
     DumbServiceImpl.getInstance(project).setDumb(true)

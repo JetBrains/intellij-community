@@ -16,13 +16,15 @@
 
 package com.intellij.codeInsight.generation;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -30,6 +32,23 @@ import java.util.List;
 public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImplementsAnnotationsHandler {
   @Override
   public String[] getAnnotations(Project project) {
+    List<String> annotations = getCoreAnnotations(project);
+
+    CodeStyleSettings settings = CodeStyle.getSettings(project);
+    annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
+
+    return ArrayUtil.toStringArray(annotations);
+  }
+
+  @Override
+  public String[] getAnnotations(@NotNull PsiFile file) {
+    List<String> annotations = getCoreAnnotations(file.getProject());
+    annotations.addAll(JavaCodeStyleSettings.getInstance(file).getRepeatAnnotations());
+    return ArrayUtil.toStringArray(annotations);
+  }
+
+  @NotNull
+  private static List<String> getCoreAnnotations(Project project) {
     List<String> annotations = new ArrayList<>();
 
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
@@ -37,10 +56,6 @@ public class OverrideImplementsAnnotationsHandlerImpl implements OverrideImpleme
     annotations.addAll(manager.getNullables());
 
     annotations.add(AnnotationUtil.NLS);
-
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
-    annotations.addAll(settings.getCustomSettings(JavaCodeStyleSettings.class).getRepeatAnnotations());
-
-    return ArrayUtil.toStringArray(annotations);
+    return annotations;
   }
 }

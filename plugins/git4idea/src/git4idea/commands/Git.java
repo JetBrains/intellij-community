@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import git4idea.branch.GitRebaseParams;
+import git4idea.push.GitPushParams;
 import git4idea.repo.GitRemote;
 import git4idea.repo.GitRepository;
 import git4idea.reset.GitResetMode;
@@ -144,12 +145,7 @@ public interface Git {
 
   @NotNull
   GitCommandResult push(@NotNull GitRepository repository,
-                        @NotNull GitRemote remote,
-                        @NotNull String spec,
-                        boolean force,
-                        boolean updateTracking,
-                        boolean skipHook,
-                        @Nullable String tagMode,
+                        @NotNull GitPushParams pushParams,
                         GitLineHandlerListener... listeners);
 
   @NotNull

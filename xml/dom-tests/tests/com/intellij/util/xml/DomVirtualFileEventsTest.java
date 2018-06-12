@@ -24,6 +24,8 @@ import com.intellij.util.xml.events.DomEvent;
 import com.intellij.util.xml.impl.DomFileElementImpl;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
+
 /**
  * @author peter
  */
@@ -41,75 +43,66 @@ public class DomVirtualFileEventsTest extends DomHardCoreTestCase{
     }, getTestRootDisposable());
   }
 
-  public void testCreateFile() {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        final VirtualFile dir = getVirtualFile(createTempDirectory());
-        addSourceContentToRoots(getModule(), dir);
-        final VirtualFile childData = dir.createChildData(this, "abc.xml");
-        System.gc();
-        System.gc();
-        System.gc();
-        System.gc();
-        assertResultsAndClear();
-        setFileText(childData, "<a/>");
-        assertEventCount(0);
-        assertResultsAndClear();
-      }
-    }.execute().throwException();
+  public void testCreateFile() throws IOException {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      final VirtualFile dir = getVirtualFile(createTempDirectory());
+      addSourceContentToRoots(getModule(), dir);
+      final VirtualFile childData = dir.createChildData(this, "abc.xml");
+      System.gc();
+      System.gc();
+      System.gc();
+      System.gc();
+      assertResultsAndClear();
+      setFileText(childData, "<a/>");
+      assertEventCount(0);
+      assertResultsAndClear();
+    });
   }
 
-  public void testDeleteFile() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        final VirtualFile dir = getVirtualFile(createTempDirectory());
-        addSourceContentToRoots(getModule(), dir);
-        final VirtualFile childData = dir.createChildData(this, "abc.xml");
-        assertResultsAndClear();
-        setFileText(childData, "<a/>");
-        final DomFileElementImpl<DomElement> fileElement = getFileElement(childData);
-        assertResultsAndClear();
+  public void testDeleteFile() throws IOException {
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final VirtualFile dir = getVirtualFile(createTempDirectory());
+      addSourceContentToRoots(getModule(), dir);
+      final VirtualFile childData = dir.createChildData(this, "abc.xml");
+      assertResultsAndClear();
+      setFileText(childData, "<a/>");
+      final DomFileElementImpl<DomElement> fileElement = getFileElement(childData);
+      assertResultsAndClear();
 
-        childData.delete(this);
-        assertEventCount(1);
-        putExpected(new DomEvent(fileElement, false));
-        assertResultsAndClear();
-        assertFalse(fileElement.isValid());
-      }
-    }.execute().throwException();
+      childData.delete(this);
+      assertEventCount(1);
+      putExpected(new DomEvent(fileElement, false));
+      assertResultsAndClear();
+      assertFalse(fileElement.isValid());
+    });
   }
 
-  public void testRenameFile() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        final VirtualFile dir = getVirtualFile(createTempDirectory());
-        addSourceContentToRoots(getModule(), dir);
-        final VirtualFile data = dir.createChildData(this, "abc.xml");
-        setFileText(data, "<a/>");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-        DomFileElementImpl<DomElement> fileElement = getFileElement(data);
-        assertEventCount(0);
-        assertResultsAndClear();
+  public void testRenameFile() throws IOException {
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final VirtualFile dir = getVirtualFile(createTempDirectory());
+      addSourceContentToRoots(getModule(), dir);
+      final VirtualFile data = dir.createChildData(this, "abc.xml");
+      setFileText(data, "<a/>");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+      DomFileElementImpl<DomElement> fileElement = getFileElement(data);
+      assertEventCount(0);
+      assertResultsAndClear();
 
-        data.rename(this, "deaf.xml");
-        assertEventCount(1);
-        putExpected(new DomEvent(fileElement, false));
-        assertResultsAndClear();
-        assertEquals(fileElement, getFileElement(data));
-        assertTrue(fileElement.isValid());
-        fileElement = getFileElement(data);
+      data.rename(this, "deaf.xml");
+      assertEventCount(1);
+      putExpected(new DomEvent(fileElement, false));
+      assertResultsAndClear();
+      assertEquals(fileElement, getFileElement(data));
+      assertTrue(fileElement.isValid());
+      fileElement = getFileElement(data);
 
-        data.rename(this, "fff.xml");
-        assertEventCount(1);
-        putExpected(new DomEvent(fileElement, false));
-        assertResultsAndClear();
-        assertNull(getFileElement(data));
-        assertFalse(fileElement.isValid());
-      }
-    }.execute().throwException();
+      data.rename(this, "fff.xml");
+      assertEventCount(1);
+      putExpected(new DomEvent(fileElement, false));
+      assertResultsAndClear();
+      assertNull(getFileElement(data));
+      assertFalse(fileElement.isValid());
+    });
   }
 
   private DomFileElementImpl<DomElement> getFileElement(final VirtualFile file) {

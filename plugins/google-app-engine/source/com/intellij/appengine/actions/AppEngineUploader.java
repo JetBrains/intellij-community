@@ -120,15 +120,14 @@ public class AppEngineUploader {
       final GenericDomValue<String> application = root.getApplication();
       if (StringUtil.isEmptyOrSpaces(application.getValue())) {
         final String name = Messages.showInputDialog(project, "<html>Application name is not specified in appengine-web.xml.<br>" +
-              "Enter application name (see your <a href=\"http://appengine.google.com\">AppEngine account</a>):</html>", CommonBundle.getErrorTitle(), null, "", null);
+                                                              "Enter application name (see your <a href=\"http://appengine.google.com\">AppEngine account</a>):</html>",
+                                                     CommonBundle.getErrorTitle(), null, "", null);
         if (name == null) return null;
 
         final PsiFile file = application.getXmlTag().getContainingFile();
-        new WriteCommandAction(project, file) {
-          protected void run(@NotNull final Result result) {
-            application.setStringValue(name);
-          }
-        }.execute();
+        WriteCommandAction.writeCommandAction(project, file).run(() -> {
+          application.setStringValue(name);
+        });
         final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
         if (document != null) {
           FileDocumentManager.getInstance().saveDocument(document);

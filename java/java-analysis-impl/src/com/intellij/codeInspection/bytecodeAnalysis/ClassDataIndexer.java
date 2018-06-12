@@ -57,12 +57,6 @@ import static com.intellij.codeInspection.bytecodeAnalysis.ProjectBytecodeAnalys
  */
 public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMember, Equations>> {
 
-  public static final Final FINAL_TOP = new Final(Value.Top);
-  public static final Final FINAL_FAIL = new Final(Value.Fail);
-  public static final Final FINAL_BOT = new Final(Value.Bot);
-  public static final Final FINAL_NOT_NULL = new Final(Value.NotNull);
-  public static final Final FINAL_NULL = new Final(Value.Null);
-
   static final String STRING_CONCAT_FACTORY = "java/lang/invoke/StringConcatFactory";
 
   public static final Consumer<Map<HMember, Equations>> ourIndexSizeStatistics =
@@ -406,11 +400,11 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         if(methodNode.name.equals("<init>")) {
           // Do not infer failing contracts for constructors
           shouldInferNonTrivialFailingContracts = false;
-          throwEquation = new Equation(new EKey(method, Throw, stable), FINAL_TOP);
+          throwEquation = new Equation(new EKey(method, Throw, stable), Value.Top);
         } else {
           final InThrowAnalysis inThrowAnalysis = new InThrowAnalysis(richControlFlow, Throw, origins, stable, sharedPendingStates);
           throwEquation = inThrowAnalysis.analyze();
-          if (!throwEquation.result.equals(FINAL_TOP)) {
+          if (!throwEquation.result.equals(Value.Top)) {
             result.add(throwEquation);
           }
           shouldInferNonTrivialFailingContracts = !inThrowAnalysis.myHasNonTrivialReturn;
@@ -434,8 +428,8 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
               }
               if (shouldInferNonTrivialFailingContracts) {
                 InThrow direction = new InThrow(index, val);
-                if (throwEquation.result.equals(FINAL_FAIL)) {
-                  builder.add(new Equation(new EKey(method, direction, stable), FINAL_FAIL));
+                if (throwEquation.result.equals(Value.Fail)) {
+                  builder.add(new Equation(new EKey(method, direction, stable), Value.Fail));
                 }
                 else {
                   builder.add(new InThrowAnalysis(richControlFlow, direction, origins, stable, sharedPendingStates).analyze());
@@ -458,24 +452,24 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
                 new NonNullInAnalysis(richControlFlow, new In(i, false), stable, sharedPendingActions, sharedResults);
               Equation notNullParamEquation = notNullInAnalysis.analyze();
               possibleNPE = notNullInAnalysis.possibleNPE;
-              notNullParam = notNullParamEquation.result.equals(FINAL_NOT_NULL);
+              notNullParam = notNullParamEquation.result.equals(Value.NotNull);
               result.add(notNullParamEquation);
             }
             else {
               // parameter is not leaking, so it is definitely NOT @NotNull
-              result.add(new Equation(new EKey(method, new In(i, false), stable), FINAL_TOP));
+              result.add(new Equation(new EKey(method, new In(i, false), stable), Value.Top));
             }
 
             if (leakingNullableParameters[i]) {
               if (notNullParam || possibleNPE) {
-                result.add(new Equation(new EKey(method, new In(i, true), stable), FINAL_TOP));
+                result.add(new Equation(new EKey(method, new In(i, true), stable), Value.Top));
               }
               else {
                 result.add(new NullableInAnalysis(richControlFlow, new In(i, true), stable, sharedPendingStates).analyze());
               }
             }
             else {
-              result.add(new Equation(new EKey(method, new In(i, true), stable), FINAL_NULL));
+              result.add(new Equation(new EKey(method, new In(i, true), stable), Value.Null));
             }
 
             if (isInterestingResult) {
@@ -487,7 +481,7 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
               }
               if (notNullParam) {
                 // @NotNull, like "null->fail"
-                result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), FINAL_BOT));
+                result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), Value.Bot));
                 result.add(new Equation(new EKey(method, new InOut(i, Value.NotNull), stable), outEquation.result));
                 continue;
               }
@@ -530,16 +524,16 @@ public class ClassDataIndexer implements VirtualFileGist.GistCalculator<Map<HMem
         // 4 = @NotNull parameter, @Nullable parameter, null -> ..., !null -> ...
         List<Equation> result = new ArrayList<>(argumentTypes.length * 4 + 2);
         if (isReferenceResult) {
-          result.add(new Equation(new EKey(method, Out, stable), FINAL_TOP));
-          result.add(new Equation(new EKey(method, NullableOut, stable), FINAL_BOT));
+          result.add(new Equation(new EKey(method, Out, stable), Value.Top));
+          result.add(new Equation(new EKey(method, NullableOut, stable), Value.Bot));
         }
         for (int i = 0; i < argumentTypes.length; i++) {
           if (ASMUtils.isReferenceType(argumentTypes[i])) {
-            result.add(new Equation(new EKey(method, new In(i, false), stable), FINAL_TOP));
-            result.add(new Equation(new EKey(method, new In(i, true), stable), FINAL_TOP));
+            result.add(new Equation(new EKey(method, new In(i, false), stable), Value.Top));
+            result.add(new Equation(new EKey(method, new In(i, true), stable), Value.Top));
             if (isInterestingResult) {
-              result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), FINAL_TOP));
-              result.add(new Equation(new EKey(method, new InOut(i, Value.NotNull), stable), FINAL_TOP));
+              result.add(new Equation(new EKey(method, new InOut(i, Value.Null), stable), Value.Top));
+              result.add(new Equation(new EKey(method, new InOut(i, Value.NotNull), stable), Value.Top));
             }
           }
         }

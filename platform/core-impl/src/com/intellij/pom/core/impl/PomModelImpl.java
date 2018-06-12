@@ -20,10 +20,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
-import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressIndicatorProvider;
+import com.intellij.openapi.progress.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
@@ -140,70 +137,61 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       throw new IncorrectOperationException("Must not modify PSI inside save listener");
     }
     final PomModelAspect aspect = transaction.getTransactionAspect();
-    startTransaction(transaction);
+    ProgressManager.getInstance().executeNonCancelableSection(()->{
+      startTransaction(transaction);
 
-    Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
-    if (block != null) {
-      block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
-    }
+      Pair<PomModelAspect,PomTransaction> block = getBlockingTransaction(aspect, transaction);
+      if (block != null) {
+        block.getSecond().getAccumulatedEvent().beforeNestedTransaction();
+      }
 
-    List<Throwable> throwables = new ArrayList<>(0);
-    DebugUtil.performPsiModification(null, ()->{
-      try{
-        Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
-        blockedAspects.push(Pair.create(aspect, transaction));
-
-        final PomModelEvent event;
+      List<Throwable> throwables = new ArrayList<>(0);
+      DebugUtil.performPsiModification(null, ()->{
         try{
-          transaction.run();
-          event = transaction.getAccumulatedEvent();
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch(Exception e){
-          throwables.add(e);
-          return;
-        }
-        finally{
-          blockedAspects.pop();
-        }
-        if(block != null){
-          block.getSecond().getAccumulatedEvent().merge(event);
-          return;
-        }
+          Stack<Pair<PomModelAspect, PomTransaction>> blockedAspects = myBlockedAspects.get();
+          blockedAspects.push(Pair.create(aspect, transaction));
 
-        { // update
-          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
-          for (final PomModelAspect pomModelAspect : changedAspects) {
-            dependants.addAll(getAllDependants(pomModelAspect));
+          final PomModelEvent event;
+          try{
+            transaction.run();
+            event = transaction.getAccumulatedEvent();
           }
-          for (final PomModelAspect modelAspect : dependants) {
-            if (!changedAspects.contains(modelAspect)) {
-              modelAspect.update(event);
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch(Exception e){
+            throwables.add(e);
+            return;
+          }
+          finally{
+            blockedAspects.pop();
+          }
+          if(block != null){
+            block.getSecond().getAccumulatedEvent().merge(event);
+            return;
+          }
+
+          { // update
+            final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+            final Collection<PomModelAspect> dependants = new LinkedHashSet<>();
+            for (final PomModelAspect pomModelAspect : changedAspects) {
+              dependants.addAll(getAllDependants(pomModelAspect));
+            }
+            for (final PomModelAspect modelAspect : dependants) {
+              if (!changedAspects.contains(modelAspect)) {
+                modelAspect.update(event);
+              }
             }
           }
-        }
-        for (final PomModelListener listener : myListeners) {
-          final Set<PomModelAspect> changedAspects = event.getChangedAspects();
-          for (PomModelAspect modelAspect : changedAspects) {
-            if (listener.isAspectChangeInteresting(modelAspect)) {
-              listener.modelChanged(event);
-              break;
+          for (final PomModelListener listener : myListeners) {
+            final Set<PomModelAspect> changedAspects = event.getChangedAspects();
+            for (PomModelAspect modelAspect : changedAspects) {
+              if (listener.isAspectChangeInteresting(modelAspect)) {
+                listener.modelChanged(event);
+                break;
+              }
             }
           }
-        }
-      }
-      catch (ProcessCanceledException e) {
-        throw e;
-      }
-      catch (Throwable t) {
-        throwables.add(t);
-      }
-      finally {
-        try {
-          commitTransaction(transaction);
         }
         catch (ProcessCanceledException e) {
           throw e;
@@ -211,8 +199,19 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
         catch (Throwable t) {
           throwables.add(t);
         }
-        if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
-      }
+        finally {
+          try {
+            commitTransaction(transaction);
+          }
+          catch (ProcessCanceledException e) {
+            throw e;
+          }
+          catch (Throwable t) {
+            throwables.add(t);
+          }
+          if (!throwables.isEmpty()) CompoundRuntimeException.throwIfNotEmpty(throwables);
+        }
+      });
     });
   }
 
@@ -261,7 +260,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
       containingFileByTree.getViewProvider().contentsSynchronized();
     }
 
-    if (progressIndicator != null) progressIndicator.finishNonCancelableSection();
   }
 
   private void reparseParallelTrees(PsiFile changedFile, PsiToDocumentSynchronizer synchronizer) {
@@ -328,8 +326,6 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
   }
 
   private void startTransaction(@NotNull PomTransaction transaction) {
-    final ProgressIndicator progressIndicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    if(progressIndicator != null) progressIndicator.startNonCancelableSection();
     final PsiDocumentManagerBase manager = (PsiDocumentManagerBase)PsiDocumentManager.getInstance(myProject);
     final PsiToDocumentSynchronizer synchronizer = manager.getSynchronizer();
     final PsiElement changeScope = transaction.getChangeScope();

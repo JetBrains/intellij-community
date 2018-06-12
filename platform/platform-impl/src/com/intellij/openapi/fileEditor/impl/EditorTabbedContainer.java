@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.icons.AllIcons;
@@ -25,7 +23,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Queryable;
 import com.intellij.openapi.ui.ShadowAction;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
@@ -33,8 +30,8 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.ToolWindowManagerAdapter;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.InplaceButton;
 import com.intellij.ui.SimpleTextAttributes;
@@ -46,7 +43,7 @@ import com.intellij.ui.tabs.*;
 import com.intellij.ui.tabs.impl.JBEditorTabs;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.BitUtil;
-import com.intellij.util.Consumer;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.TimedDeadzone;
 import com.intellij.util.ui.UIUtil;
@@ -122,7 +119,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       () -> (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP), ActionPlaces.EDITOR_TAB_POPUP, false).addTabMouseListener(new TabMouseListener()).getPresentation()
       .setTabDraggingEnabled(true).setUiDecorator(() -> new UiDecorator.UiDecoration(null, new Insets(TabsUtil.TAB_VERTICAL_PADDING, 8, TabsUtil.TAB_VERTICAL_PADDING, 8))).setTabLabelActionsMouseDeadzone(TimedDeadzone.NULL).setGhostsAlwaysVisible(true).setTabLabelActionsAutoHide(false)
       .setActiveTabFillIn(EditorColorsManager.getInstance().getGlobalScheme().getDefaultBackground()).setPaintFocus(false).getJBTabs()
-      .addListener(new TabsListener.Adapter() {
+      .addListener(new TabsListener() {
         @Override
         public void selectionChanged(final TabInfo oldSelection, final TabInfo newSelection) {
           final FileEditorManager editorManager = FileEditorManager.getInstance(myProject);
@@ -165,7 +162,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
 
     updateTabBorder();
 
-    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerAdapter() {
+    MessageBusConnection busConnection = project.getMessageBus().connect();
+
+    busConnection.subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
         updateTabBorder();
@@ -177,7 +176,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
       }
     });
 
-    project.getMessageBus().connect().subscribe(UISettingsListener.TOPIC, uiSettings -> updateTabBorder());
+    busConnection.subscribe(UISettingsListener.TOPIC, uiSettings -> updateTabBorder());
 
     Disposer.register(project, this);
   }
@@ -332,7 +331,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   /**
-   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab, 
+   * @param ignorePopup if <code>false</code> and context menu is shown currently for some tab,
    *                    component for which menu is invoked will be returned
    */
   @Nullable
@@ -421,13 +420,12 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   }
 
   private class CloseTab extends AnAction implements DumbAware {
-
     ShadowAction myShadow;
     private final TabInfo myTabInfo;
 
     CloseTab(JComponent c, TabInfo info) {
       myTabInfo = info;
-      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c);
+      myShadow = new ShadowAction(this, ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE), c, myTabs);
     }
 
     @Override
@@ -503,14 +501,15 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     final VirtualFile file = (VirtualFile)selected.getObject();
     final FileEditorManagerEx mgr = FileEditorManagerEx.getInstanceEx(myProject);
 
-    AsyncResult<EditorWindow> window = mgr.getActiveWindow();
-    window.doWhenDone((Consumer<EditorWindow>)wnd -> {
-      if (wnd != null) {
-        if (wnd.findFileComposite(file) != null) {
-          mgr.closeFile(file, wnd);
+    mgr
+      .getActiveWindow()
+      .onSuccess(wnd -> {
+        if (wnd != null) {
+          if (wnd.findFileComposite(file) != null) {
+            mgr.closeFile(file, wnd);
+          }
         }
-      }
-    });
+      });
   }
 
   private boolean isFloating() {

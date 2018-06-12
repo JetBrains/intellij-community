@@ -88,12 +88,9 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
     if (anObject == null) anObject = "";
     if (anObject.equals(getItem())) return;
     final String s = (String)anObject;
-    new WriteCommandAction(myProject) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        getDocument().setText(s);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      getDocument().setText(s);
+    });
 
     final Editor editor = getEditor();
     if (editor != null) editor.getCaretModel().moveToOffset(s.length());

@@ -80,7 +80,7 @@ public class AsyncPopupImpl extends WizardPopup implements Runnable {
     myPanel.add(new AsyncProcessIcon("Async Popup Step"), BorderLayout.WEST);
     myPanel.add(new JBLabel("Loading..."), BorderLayout.CENTER);
     myPanel.setBorder(new EmptyBorder(UIUtil.getListCellPadding()));
-    myPanel.setBackground(UIUtil.getListSelectionBackground());
+    myPanel.setBackground(UIUtil.getListBackground());
     myPanel.registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {

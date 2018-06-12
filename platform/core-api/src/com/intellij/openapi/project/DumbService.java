@@ -208,7 +208,7 @@ public abstract class DumbService {
 
   /**
    * Cancels the given task. If it's in the queue, it won't be executed. If it's already running, its {@link com.intellij.openapi.progress.ProgressIndicator} is canceled, so the next {@link ProgressManager#checkCanceled()} call
-   * will throw {@link com.intellij.openapi.progress.ProcessCanceledException}.
+   * will throw {@link ProcessCanceledException}.
    */
   public abstract void cancelTask(@NotNull DumbModeTask task);
 
@@ -246,6 +246,7 @@ public abstract class DumbService {
     if (o instanceof PossiblyDumbAware) {
       return ((PossiblyDumbAware)o).isDumbAware();
     }
+    //noinspection SSBasedInspection
     return o instanceof DumbAware;
   }
 

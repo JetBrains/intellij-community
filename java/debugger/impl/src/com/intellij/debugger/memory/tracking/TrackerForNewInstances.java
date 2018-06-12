@@ -15,16 +15,12 @@
  */
 package com.intellij.debugger.memory.tracking;
 
-import com.sun.jdi.ObjectReference;
+import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import org.jetbrains.annotations.NotNull;
-
+import com.sun.jdi.ObjectReference;
 import java.util.List;
 
-public interface TrackerForNewInstances {
+public interface TrackerForNewInstances extends TrackerForNewInstancesBase {
   @NotNull
   List<ObjectReference> getNewInstances();
-
-  int getCount();
-
-  boolean isReady();
 }

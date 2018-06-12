@@ -152,12 +152,7 @@ public abstract class ModuleTestCase extends IdeaTestCase {
     final Module module = createModule(moduleDir + "/" + newModuleFileName, moduleType);
     final VirtualFile root = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleDir);
     assertNotNull(root);
-    new WriteCommandAction.Simple(module.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        root.refresh(false, true);
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(module.getProject()).run(() -> root.refresh(false, true));
     if (addSourceRoot) {
       PsiTestUtil.addSourceContentToRoots(module, root);
     }

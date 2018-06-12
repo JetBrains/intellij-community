@@ -20,10 +20,10 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
@@ -91,11 +91,8 @@ public class NestedMethodCallInspectionBase extends BaseInspection {
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
       PsiExpression outerExpression = expression;
-      while (outerExpression != null && outerExpression.getParent() instanceof PsiExpression) {
+      while (outerExpression.getParent() instanceof PsiExpression) {
         outerExpression = (PsiExpression)outerExpression.getParent();
-      }
-      if (outerExpression == null) {
-        return;
       }
       final PsiElement parent = outerExpression.getParent();
       if (!(parent instanceof PsiExpressionList)) {
@@ -105,7 +102,7 @@ public class NestedMethodCallInspectionBase extends BaseInspection {
       if (!(grandParent instanceof PsiCallExpression)) {
         return;
       }
-      if (ExpressionUtils.isConstructorInvocation(grandParent)) {
+      if (JavaPsiConstructorUtil.isConstructorCall(grandParent)) {
         //ignore nested method calls at the start of a constructor,
         //where they can't be extracted
         return;

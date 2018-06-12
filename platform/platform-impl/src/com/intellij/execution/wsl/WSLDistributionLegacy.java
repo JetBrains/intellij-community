@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.openapi.util.AtomicNullableLazyValue;
@@ -7,6 +7,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 
@@ -14,7 +16,8 @@ import java.nio.file.Paths;
  * Represents legacy bash.exe WSL, see RUBY-20359
  */
 public class WSLDistributionLegacy extends WSLDistribution {
-  public static final WSLDistributionLegacy LEGACY_WSL = new WSLDistributionLegacy();
+  private static final WSLDistribution.Description LEGACY_WSL =
+    new WSLDistribution.Description("UBUNTU_LEGACY", "ubuntu_bash", "bash.exe", "Ubuntu (Legacy)");
 
   private static final String WSL_ROOT_CHUNK = "\\lxss\\rootfs";
 
@@ -23,15 +26,29 @@ public class WSLDistributionLegacy extends WSLDistribution {
     return StringUtil.isEmpty(localAppDataPath) ? null : localAppDataPath + WSL_ROOT_CHUNK;
   });
 
-  private WSLDistributionLegacy() {
-    super("UBUNTU_LEGACY", "ubuntu_bash", "bash.exe", "Ubuntu (Legacy)");
-  }
-
   @Nullable
-  @Override
-  protected Path getExecutableRootPath() {
+  private static Path getExecutableRootPath() {
     String windir = System.getenv().get("windir");
     return StringUtil.isEmpty(windir) ? null : Paths.get(windir, "System32");
+  }
+
+  /**
+   * @return legacy WSL ("Bash-on-Windows") if it's available, <code>null</code> otherwise
+   */
+  @Nullable
+  static WSLDistribution getInstance() {
+    final Path executableRoot = getExecutableRootPath();
+    if (executableRoot == null) return null;
+
+    final Path executablePath = executableRoot.resolve(LEGACY_WSL.exeName);
+    if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
+      return new WSLDistributionLegacy(executablePath);
+    }
+    return null;
+  }
+
+  private WSLDistributionLegacy(@NotNull Path executablePath) {
+    super(LEGACY_WSL, executablePath);
   }
 
   @NotNull

@@ -18,7 +18,6 @@ package git4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.changes.ui.SimpleChangesBrowser;
 import com.intellij.util.Consumer;
 import git4idea.GitCommit;

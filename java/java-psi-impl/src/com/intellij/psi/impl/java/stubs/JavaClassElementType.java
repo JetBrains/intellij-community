@@ -167,16 +167,16 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
 
     if (!isAnonymous) {
-      StringRef name = dataStream.readName();
-      StringRef qname = dataStream.readName();
-      StringRef sourceFileName = dataStream.readName();
-      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, StringRef.toString(qname), StringRef.toString(name), null, flags);
-      classStub.setSourceFileName(StringRef.toString(sourceFileName));
+      String name = dataStream.readNameString();
+      String qname = dataStream.readNameString();
+      String sourceFileName = dataStream.readNameString();
+      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
     else {
-      StringRef baseRef = dataStream.readName();
-      return new PsiClassStubImpl(type, parentStub, null, null, StringRef.toString(baseRef), flags);
+      String baseRef = dataStream.readNameString();
+      return new PsiClassStubImpl(type, parentStub, null, null, baseRef, flags);
     }
   }
 

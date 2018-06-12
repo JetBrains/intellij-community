@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -158,7 +158,7 @@ class JavaPredefinedConfigurations {
 
       createSearchTemplateInfo(
         SSRBundle.message("predefined.configuration.class.with.parameterless.constructors"),
-        "class 'Class {\n  '_Method{0,0}:[ script( \"__context__.constructor\" ) ]('_ParameterType '_Parameter+);\n}",
+        "class 'Class {\n  '_Method{0,0}('_ParameterType '_Parameter+);\n}",
         CLASS_TYPE
       ),
 
@@ -210,8 +210,8 @@ class JavaPredefinedConfigurations {
                                "@interface 'Interface {}", METADATA_TYPE),
 
       // J2EE templates
-      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class 'StrutsActionClass extends '_ParentClass*:Action {\n" +
-                                                                                                      "  public ActionForward 'AnActionMethod:*execute (ActionMapping '_action,\n" +
+      createSearchTemplateInfoSimple(SSRBundle.message("predefined.configuration.struts.1.1.actions"),"public class '_StrutsActionClass extends '_ParentClass*:Action {\n" +
+                                                                                                      "  public ActionForward '_AnActionMethod:*execute (ActionMapping '_action,\n" +
                                                                                                       "                                 ActionForm '_form,\n" +
                                                                                                       "                                 HttpServletRequest '_request,\n" +
                                                                                                       "                                 HttpServletResponse '_response);\n" +
@@ -310,6 +310,7 @@ class JavaPredefinedConfigurations {
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.unboxing.in.method.calls"), "'_Instance?.'Call('_BeforeParam*,'_Param:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )],'_AfterParam*)", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.boxing"), "'_expression:[ exprtype( int|boolean|long|char|short|byte ) && formal( Object|Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
       createSearchTemplateInfo(SSRBundle.message("predefined.configuration.any.unboxing"), "'_expression:[ formal( int|boolean|long|char|short|byte ) && exprtype( Integer|Boolean|Long|Character|Short|Byte )]", INTERESTING_TYPE),
+      createSearchTemplateInfo(SSRBundle.message("predefined.configuration.try.without.resources"), "try ('_ResourceType '_resource{0,0} = '_init; '_expression{0,0}) {\n  '_TryStatement*;\n} catch('_ExceptionType '_Exception{0,0}) {\n  '_CatchStatement*;\n}", INTERESTING_TYPE),
       //createSearchTemplateInfo("methods called","'_?.'_:[ref('Method)] ('_*)", INTERESTING_TYPE),
       //createSearchTemplateInfo("fields selected","'_?.'_:[ref('Field)] ", INTERESTING_TYPE),
       //createSearchTemplateInfo("symbols used","'_:[ref('Symbol)] ", INTERESTING_TYPE),

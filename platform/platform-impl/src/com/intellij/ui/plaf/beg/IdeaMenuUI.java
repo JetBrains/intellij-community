@@ -169,9 +169,9 @@ public class IdeaMenuUI extends BasicMenuUI{
         BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
       }
       else {
-        final Object disabledForeground = UIUtil.getMenuItemDisabledForeground();
-        if (disabledForeground instanceof Color){
-          g.setColor((Color)disabledForeground);
+        final Color disabledForeground = UIUtil.getMenuItemDisabledForeground();
+        if (disabledForeground != null){
+          g.setColor(disabledForeground);
           BasicGraphicsUtils.drawStringUnderlineCharAt(g, s1, mnemonicIndex, ourTextRect.x, ourTextRect.y + fontmetrics.getAscent());
         }
         else{

@@ -73,7 +73,7 @@ public class ImageComponent extends JComponent {
         UIManager.getDefaults().put(uiClassID, ImageComponentUI.class.getName());
     }
 
-    private final ImageDocument document = new ImageDocumentImpl();
+    private final ImageDocument document = new ImageDocumentImpl(this);
     private final Grid grid = new Grid();
     private final Chessboard chessboard = new Chessboard();
     private boolean myFileSizeVisible = true;
@@ -247,6 +247,11 @@ public class ImageComponent extends JComponent {
         private ScaledImageProvider imageProvider;
         private String format;
         private Image renderer;
+        private Component myComponent;
+
+        public ImageDocumentImpl(Component component) {
+            this.myComponent = component;
+        }
 
         public Image getRenderer() {
             return renderer;
@@ -263,12 +268,12 @@ public class ImageComponent extends JComponent {
 
         @Override
         public BufferedImage getValue(double scale) {
-            return imageProvider != null ? imageProvider.apply(scale) : null;
+            return imageProvider != null ? imageProvider.apply(scale, myComponent) : null;
         }
 
         public void setValue(BufferedImage image) {
             this.renderer = image != null ? Toolkit.getDefaultToolkit().createImage(image.getSource()) : null;
-            setValue(image != null ? ignore -> image : null);
+            setValue(image != null ? (scale, anchor) -> image : null);
         }
 
         @Override

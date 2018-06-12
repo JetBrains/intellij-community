@@ -384,4 +384,10 @@ public class YouTrackRepository extends BaseRepositoryImpl {
   public HttpClient getHttpClient() {
     return super.getHttpClient();
   }
+
+  @NotNull
+  @Override
+  protected String getDefaultScheme() {
+    return "https";
+  }
 }

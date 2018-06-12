@@ -1,17 +1,20 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.jvm.JvmClassKind;
+import com.intellij.lang.jvm.JvmEnumField;
 import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.annotation.JvmAnnotationAttributeValue;
 import com.intellij.lang.jvm.types.JvmReferenceType;
+import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
+import java.util.Collections;
+import java.util.EnumMap;
 import java.util.Map;
-import java.util.Set;
 
 import static com.intellij.psi.PsiType.getJavaLangObject;
 import static com.intellij.psi.PsiType.getTypeByName;
@@ -19,21 +22,25 @@ import static com.intellij.psi.PsiType.getTypeByName;
 class PsiJvmConversionHelper {
 
   private static final Logger LOG = Logger.getInstance(PsiJvmConversionHelper.class);
-  private static final Map<String, JvmModifier> MODIFIERS = ContainerUtil.<String, JvmModifier>immutableMapBuilder()
-    .put(PsiModifier.PUBLIC, JvmModifier.PUBLIC)
-    .put(PsiModifier.PROTECTED, JvmModifier.PROTECTED)
-    .put(PsiModifier.PRIVATE, JvmModifier.PRIVATE)
-    .put(PsiModifier.PACKAGE_LOCAL, JvmModifier.PACKAGE_LOCAL)
-    .put(PsiModifier.STATIC, JvmModifier.STATIC)
-    .put(PsiModifier.ABSTRACT, JvmModifier.ABSTRACT)
-    .put(PsiModifier.FINAL, JvmModifier.FINAL)
-    .put(PsiModifier.NATIVE, JvmModifier.NATIVE)
-    .put(PsiModifier.SYNCHRONIZED, JvmModifier.SYNCHRONIZED)
-    .put(PsiModifier.STRICTFP, JvmModifier.STRICTFP)
-    .put(PsiModifier.TRANSIENT, JvmModifier.TRANSIENT)
-    .put(PsiModifier.VOLATILE, JvmModifier.VOLATILE)
-    .put(PsiModifier.TRANSITIVE, JvmModifier.TRANSITIVE)
-    .build();
+  private static final Map<JvmModifier, String> MODIFIERS;
+
+  static {
+    Map<JvmModifier, String> modifiers = new EnumMap<>(JvmModifier.class);
+    modifiers.put(JvmModifier.PUBLIC, PsiModifier.PUBLIC);
+    modifiers.put(JvmModifier.PROTECTED, PsiModifier.PROTECTED);
+    modifiers.put(JvmModifier.PRIVATE, PsiModifier.PRIVATE);
+    modifiers.put(JvmModifier.PACKAGE_LOCAL, PsiModifier.PACKAGE_LOCAL);
+    modifiers.put(JvmModifier.STATIC, PsiModifier.STATIC);
+    modifiers.put(JvmModifier.ABSTRACT, PsiModifier.ABSTRACT);
+    modifiers.put(JvmModifier.FINAL, PsiModifier.FINAL);
+    modifiers.put(JvmModifier.NATIVE, PsiModifier.NATIVE);
+    modifiers.put(JvmModifier.SYNCHRONIZED, PsiModifier.SYNCHRONIZED);
+    modifiers.put(JvmModifier.STRICTFP, PsiModifier.STRICTFP);
+    modifiers.put(JvmModifier.TRANSIENT, PsiModifier.TRANSIENT);
+    modifiers.put(JvmModifier.VOLATILE, PsiModifier.VOLATILE);
+    modifiers.put(JvmModifier.TRANSITIVE, PsiModifier.TRANSITIVE);
+    MODIFIERS = Collections.unmodifiableMap(modifiers);
+  }
 
   @NotNull
   static PsiAnnotation[] getListAnnotations(@NotNull PsiModifierListOwner modifierListOwner) {
@@ -41,15 +48,19 @@ class PsiJvmConversionHelper {
     return list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
   }
 
-  @NotNull
-  static JvmModifier[] getListModifiers(@NotNull PsiModifierListOwner modifierListOwner) {
-    final Set<JvmModifier> result = EnumSet.noneOf(JvmModifier.class);
-    MODIFIERS.forEach((psi, jvm) -> {
-      if (modifierListOwner.hasModifierProperty(psi)) {
-        result.add(jvm);
-      }
-    });
-    return result.toArray(JvmModifier.EMPTY_ARRAY);
+  @Nullable
+  static PsiAnnotation getListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    return list == null ? null : list.findAnnotation(fqn);
+  }
+
+  static boolean hasListAnnotation(@NotNull PsiModifierListOwner modifierListOwner, @NotNull String fqn) {
+    PsiModifierList list = modifierListOwner.getModifierList();
+    return list != null && list.hasAnnotation(fqn);
+  }
+
+  static boolean hasListModifier(@NotNull PsiModifierListOwner modifierListOwner, @NotNull JvmModifier modifier) {
+    return modifierListOwner.hasModifierProperty(MODIFIERS.get(modifier));
   }
 
   @NotNull
@@ -97,5 +108,44 @@ class PsiJvmConversionHelper {
     PsiReferenceList referenceList = psiClass.isInterface() ? psiClass.getExtendsList() : psiClass.getImplementsList();
     if (referenceList == null) return JvmReferenceType.EMPTY_ARRAY;
     return referenceList.getReferencedTypes();
+  }
+
+  @NotNull
+  static String getAnnotationAttributeName(@NotNull PsiNameValuePair pair) {
+    String name = pair.getName();
+    return name == null ? PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME : name;
+  }
+
+  @Nullable
+  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@NotNull PsiNameValuePair pair) {
+    return getAnnotationAttributeValue(pair.getValue());
+  }
+
+  @Nullable
+  static JvmAnnotationAttributeValue getAnnotationAttributeValue(@Nullable PsiAnnotationMemberValue value) {
+    if (value instanceof PsiClassObjectAccessExpression) {
+      return new PsiAnnotationClassValue((PsiClassObjectAccessExpression)value);
+    }
+    if (value instanceof PsiAnnotation) {
+      return new PsiNestedAnnotationValue((PsiAnnotation)value);
+    }
+    if (value instanceof PsiArrayInitializerMemberValue) {
+      return new PsiAnnotationArrayValue((PsiArrayInitializerMemberValue)value);
+    }
+    if (value instanceof PsiReferenceExpression) {
+      PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+      if (resolved instanceof JvmEnumField) {
+        return new PsiAnnotationEnumFieldValue((PsiReferenceExpression)value, (JvmEnumField)resolved);
+      }
+    }
+    if (value instanceof PsiExpression) {
+      return new PsiAnnotationConstantValue((PsiExpression)value);
+    }
+
+    if (value != null) {
+      LOG.warn(new RuntimeExceptionWithAttachments("Not implemented: " + value.getClass(), new Attachment("text", value.getText())));
+    }
+
+    return null;
   }
 }

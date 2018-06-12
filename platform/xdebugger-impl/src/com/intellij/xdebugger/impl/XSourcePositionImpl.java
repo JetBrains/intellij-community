@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.openapi.application.ReadAction;
@@ -21,6 +19,7 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.DocumentUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -131,15 +130,15 @@ public abstract class XSourcePositionImpl implements XSourcePosition {
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int)} instead
    */
-  @Nullable
+  @Contract("null , _ -> null; !null, _ -> !null")
   public static XSourcePositionImpl create(@Nullable VirtualFile file, int line) {
-    return create(file, line, 0);
+    return file == null ? null : create(file, line, 0);
   }
 
   /**
    * do not call this method from plugins, use {@link XDebuggerUtil#createPosition(VirtualFile, int, int)} instead
    */
-  @Nullable
+  @Contract("null , _, _ -> null; !null, _, _ -> !null")
   public static XSourcePositionImpl create(@Nullable VirtualFile file, final int line, final int column) {
     if (file == null) {
       return null;

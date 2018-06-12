@@ -157,10 +157,9 @@ public class PyIntroduceFieldHandler extends IntroduceHandler {
   @Override
   protected PsiElement addDeclaration(@NotNull PsiElement expression, @NotNull PsiElement declaration, @NotNull IntroduceOperation operation) {
     final PsiElement expr = expression instanceof PyClass ? expression : expression.getParent();    
-    PsiElement anchor = PyUtil.getContainingClassOrSelf(expr);
-    assert anchor instanceof PyClass;
-    final PyClass clazz = (PyClass)anchor;
-    final Project project = anchor.getProject();
+    PyClass clazz = PyUtil.getContainingClassOrSelf(expr);
+    assert clazz != null;
+    final Project project = clazz.getProject();
     if (operation.getInitPlace() == InitPlace.CONSTRUCTOR && !inConstructor(expression)) {
       return AddFieldQuickFix.addFieldToInit(project, clazz, "", new AddFieldDeclaration(declaration));
     } else if (operation.getInitPlace() == InitPlace.SET_UP) {

@@ -20,12 +20,8 @@ package org.jetbrains.uast
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.vfs.VfsUtilCore
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiNamedElement
-import com.intellij.psi.PsiParameter
+import com.intellij.psi.*
 import com.intellij.psi.util.PsiTreeUtil
-import org.jetbrains.annotations.ApiStatus
 import java.io.File
 
 inline fun <reified T : UElement> UElement.getParentOfType(strict: Boolean = true): T? = getParentOfType(T::class.java, strict)
@@ -96,11 +92,27 @@ fun UElement.getContainingUClass() = getParentOfType<UClass>(UClass::class.java)
 fun UElement.getContainingUMethod() = getParentOfType<UMethod>(UMethod::class.java)
 fun UElement.getContainingUVariable() = getParentOfType<UVariable>(UVariable::class.java)
 
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingMethod()?.javaPsi"))
 fun UElement.getContainingMethod() = getContainingUMethod()?.psi
+
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUClass()?.javaPsi"))
 fun UElement.getContainingClass() = getContainingUClass()?.psi
+
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.1", replaceWith = ReplaceWith("getContainingUVariable()?.javaPsi"))
 fun UElement.getContainingVariable() = getContainingUVariable()?.psi
 
+@Deprecated(message = "Useless function, will be removed in IDEA 2019.1",
+            replaceWith = ReplaceWith("PsiTreeUtil.getParentOfType(this, PsiClass::class.java)"))
 fun PsiElement?.getContainingClass() = this?.let { PsiTreeUtil.getParentOfType(it, PsiClass::class.java) }
+
+fun PsiElement?.findContainingUClass(): UClass? {
+  var element = this
+  while (element != null && element !is PsiFileSystemItem) {
+    element.toUElementOfType<UClass>()?.let { return it }
+    element = element.parent
+  }
+  return null
+}
 
 fun UElement.isChildOf(probablyParent: UElement?, strict: Boolean = false): Boolean {
   tailrec fun isChildOf(current: UElement?, probablyParent: UElement): Boolean {
@@ -163,14 +175,13 @@ fun Collection<UElement?>.toPsiElements() = mapNotNull { it?.psi }
 
 /**
  * A helper function for getting parents for given [PsiElement] that could be considered as identifier.
- * Useful for working with gutter accorting to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ * Useful for working with gutter according to recommendations in [com.intellij.codeInsight.daemon.LineMarkerProvider].
+ *
+ * @see [getUParentForAnnotationIdentifier] for working with annotations
  */
-@ApiStatus.Experimental
 fun getUParentForIdentifier(identifier: PsiElement): UElement? {
   val uIdentifier = identifier.toUElementOfType<UIdentifier>() ?: return null
   return uIdentifier.uastParent
-         ?: identifier.parent.toUElement() // a workaround for Kotlin < 1.2.30 which identifiers cant get parents
-
 }
 
 /**

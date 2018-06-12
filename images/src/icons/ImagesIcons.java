@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package icons;
 
 import com.intellij.openapi.util.IconLoader;
@@ -29,10 +15,10 @@ public class ImagesIcons {
   }
 
   public static final Icon EditExternally = load("/org/intellij/images/icons/EditExternally.png"); // 16x16
-  public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.png"); // 16x16
+  public static final Icon ImagesFileType = load("/org/intellij/images/icons/ImagesFileType.svg"); // 16x16
   public static final Icon ThumbnailBlank = load("/org/intellij/images/icons/ThumbnailBlank.png"); // 75x86
   public static final Icon ThumbnailDirectory = load("/org/intellij/images/icons/ThumbnailDirectory.png"); // 75x82
-  public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.png"); // 13x13
-  public static final Icon ToggleGrid = load("/org/intellij/images/icons/ToggleGrid.png"); // 16x16
-  public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.png"); // 18x18
+  public static final Icon ThumbnailToolWindow = load("/org/intellij/images/icons/ThumbnailToolWindow.svg"); // 13x13
+  public static final Icon ToggleGrid = load("/org/intellij/images/icons/ToggleGrid.svg"); // 16x16
+  public static final Icon ToggleTransparencyChessboard = load("/org/intellij/images/icons/ToggleTransparencyChessboard.svg"); // 16x16
 }

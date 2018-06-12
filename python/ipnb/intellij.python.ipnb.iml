@@ -24,7 +24,6 @@
         <SOURCES />
       </library>
     </orderEntry>
-    <orderEntry type="library" name="markdown4j-2.2" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.python.configure" />
     <orderEntry type="module-library">
@@ -36,5 +35,6 @@
         <SOURCES />
       </library>
     </orderEntry>
+    <orderEntry type="library" name="markdown4j" level="project" />
   </component>
 </module>

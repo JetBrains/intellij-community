@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The common base interface for all elements of the PSI tree.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
  * for high-level overview.
  */
 public interface PsiElement extends UserDataHolder, Iconable {

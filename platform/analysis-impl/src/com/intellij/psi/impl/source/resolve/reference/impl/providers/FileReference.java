@@ -338,6 +338,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return myIndex > 0 ? myFileReferenceSet.getReference(myIndex - 1) : null;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myFileReferenceSet.getElement();
@@ -363,6 +364,7 @@ public class FileReference implements PsiFileReference, FileReferenceOwner, PsiP
     return item != null && FileReferenceHelperRegistrar.areElementsEquivalent(item, (PsiFileSystemItem)element);
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRange;

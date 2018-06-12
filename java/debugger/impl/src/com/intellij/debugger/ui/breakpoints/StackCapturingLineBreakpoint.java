@@ -282,9 +282,9 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static final Key<Pair<ClassType, Method>> CAPTURE_STORAGE_METHOD = Key.create("CAPTURE_STORAGE_METHOD");
   public static final Pair<ClassType, Method> NO_CAPTURE_AGENT = Pair.empty();
 
-  private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evaluationContext)
+  private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evalContext)
     throws EvaluateException {
-    evaluationContext = evaluationContext.withAutoLoadClasses(false);
+    EvaluationContextImpl evaluationContext = evalContext.withAutoLoadClasses(false);
 
     DebugProcessImpl process = evaluationContext.getDebugProcess();
     Pair<ClassType, Method> methodPair = process.getUserData(CAPTURE_STORAGE_METHOD);
@@ -313,9 +313,11 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
     List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(MAX_STACK_LENGTH));
-    Value resArray = process.invokeMethod(evaluationContext, methodPair.first, methodPair.second, args,
-                                          ObjectReference.INVOKE_SINGLE_THREADED, true);
-    DebuggerUtilsEx.keep(resArray, evaluationContext);
+    Pair<ClassType, Method> finalMethodPair = methodPair;
+    Value resArray = DebuggerUtilsEx.computeAndKeep(
+      () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,
+                                 args, ObjectReference.INVOKE_SINGLE_THREADED, true),
+      evaluationContext);
     if (resArray instanceof ArrayReference) {
       List<Value> values = ((ArrayReference)resArray).getValues();
       List<StackFrameItem> res = new ArrayList<>(values.size());

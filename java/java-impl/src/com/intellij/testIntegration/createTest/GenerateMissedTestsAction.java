@@ -33,7 +33,6 @@ import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFinderHelper;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,12 +84,13 @@ public class GenerateMissedTestsAction extends PsiElementBaseIntentionAction {
       return;
     }
 
-    final JBList list = new JBList(testClasses);
-    list.setCellRenderer(new PsiClassListCellRenderer());
-    JBPopupFactory.getInstance().createListPopupBuilder(list)
-      .setItemChoosenCallback(() -> generateMissedTests((PsiClass)list.getSelectedValue(), srcClass, editor))
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(ContainerUtil.newArrayList(testClasses))
+      .setRenderer(new PsiClassListCellRenderer())
+      .setItemChosenCallback((selectedClass) -> generateMissedTests((PsiClass)selectedClass, srcClass, editor))
       .setTitle("Choose Test")
-      .createPopup().showInBestPositionFor(editor);
+      .createPopup()
+      .showInBestPositionFor(editor);
   }
 
   private static void generateMissedTests(final PsiClass testClass, final PsiClass srcClass, Editor srcEditor) {

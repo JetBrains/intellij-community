@@ -41,7 +41,7 @@ import http.server as CGIHTTPServer
 import http.server as SimpleHTTPServer
 import pickle as cPickle
 import queue as queue
-# import reprlib as reprlib
+import reprlib as reprlib
 import socketserver as socketserver
 import _thread as _thread
 import tkinter as tkinter

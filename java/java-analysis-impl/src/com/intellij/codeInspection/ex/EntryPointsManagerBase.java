@@ -210,26 +210,10 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
           }
         }
 
-        for (ClassPattern pattern : myPatterns) {
-          final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
-          if (refClass != null) {
-            if (pattern.method.isEmpty()) {
-              for (RefMethod constructor : ((RefClass)refClass).getConstructors()) {
-                ((RefMethodImpl)constructor).setEntry(true);
-                ((RefMethodImpl)constructor).setPermanentEntry(true);
-              }
-            }
-            else {
-              List<RefEntity> children = refClass.getChildren();
-              for (RefEntity entity : children) {
-                if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
-                  ((RefMethodImpl)entity).setEntry(true);
-                  ((RefMethodImpl)entity).setPermanentEntry(true);
-                }
-              }
-            }
-          }
-        }
+        getPatternEntryPoints(manager).forEach((entity) -> {
+          entity.setEntry(true);
+          entity.setPermanentEntry(true);
+        });
       });
     }
   }
@@ -240,6 +224,29 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
     }
 
     myTemporaryEntryPoints.clear();
+  }
+
+  private List<RefElementImpl> getPatternEntryPoints(RefManager manager) {
+    List<RefElementImpl> entries = new ArrayList<>();
+    for (ClassPattern pattern : myPatterns) {
+      final RefEntity refClass = manager.getReference(RefJavaManager.CLASS, pattern.pattern);
+      if (refClass != null) {
+        if (pattern.method.isEmpty()) {
+          for (RefMethod refMethod : ((RefClass)refClass).getConstructors()) {
+            entries.add((RefElementImpl)refMethod);
+          }
+        }
+        else {
+          List<RefEntity> children = refClass.getChildren();
+          for (RefEntity entity : children) {
+            if (entity instanceof RefMethodImpl && entity.getName().startsWith(pattern.method + "(")) {
+              entries.add((RefElementImpl)entity);
+            }
+          }
+        }
+      }
+    }
+    return entries;
   }
 
   @Override
@@ -367,7 +374,7 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
 
   @NotNull
   @Override
-  public RefElement[] getEntryPoints() {
+  public RefElement[] getEntryPoints(RefManager refManager) {
     validateEntryPoints();
     List<RefElement> entries = new ArrayList<>();
     Collection<SmartRefElementPointer> collection = myPersistentEntryPoints.values();
@@ -378,6 +385,8 @@ public abstract class EntryPointsManagerBase extends EntryPointsManager implemen
       }
     }
     entries.addAll(myTemporaryEntryPoints);
+    
+    entries.addAll(getPatternEntryPoints(refManager));
 
     return entries.toArray(new RefElement[0]);
   }

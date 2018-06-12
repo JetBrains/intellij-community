@@ -154,9 +154,11 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
     Consumer<PsiType> consumer = eachReturnType -> {
       PsiClass psiClass = PsiUtil.resolveClassInType(eachReturnType);
-      if (psiClass == null || !MethodReferenceResolver.canBeConstructed(psiClass)) return;
+      if (psiClass == null) return;
 
       if (eachReturnType.getArrayDimensions() == 0) {
+        if (!MethodReferenceResolver.canBeConstructed(psiClass)) return;
+        
         PsiMethod[] constructors = psiClass.getConstructors();
         for (PsiMethod psiMethod : constructors) {
           if (isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {
@@ -238,7 +240,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
 
       for (PsiMethod psiMethod : psiClass.getMethods()) {
         if (!psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            hasAppropriateReturnType(expectedReturnType, psiMethod) &&
+            hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
             isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {
           result.add(createMethodRefOnThis(functionalInterfaceType, psiMethod, first ? null : psiClass));
         }
@@ -256,7 +258,7 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     for (PsiClass psiClass : JBIterable.generate(PsiTreeUtil.getParentOfType(originalPosition, PsiClass.class), PsiClass::getContainingClass)) {
       for (PsiMethod psiMethod : psiClass.getMethods()) {
         if (psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            hasAppropriateReturnType(expectedReturnType, psiMethod) &&
+            hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
             isSignatureAppropriate(psiMethod, params, substitutor, 0, originalPosition)) {
           result.add(createMethodRefOnClass(functionalInterfaceType, psiMethod, psiClass));
         }
@@ -274,14 +276,14 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     List<LookupElement> result = new ArrayList<>();
     final PsiType functionalInterfaceParamType = substitutor.substitute(params[0].getType());
     final PsiClass paramClass = PsiUtil.resolveClassInClassTypeOnly(functionalInterfaceParamType);
-    if (paramClass != null && !paramClass.hasTypeParameters()) {
+    if (paramClass != null) {
       final Set<String> visited = new HashSet<>();
       for (PsiMethod psiMethod : paramClass.getAllMethods()) {
         PsiClass containingClass = psiMethod.getContainingClass();
         PsiClass qualifierClass = containingClass != null ? containingClass : paramClass;
         if (visited.add(psiMethod.getName()) &&
             !psiMethod.hasModifierProperty(PsiModifier.STATIC) &&
-            hasAppropriateReturnType(expectedReturnType, psiMethod) &&
+            hasAppropriateReturnType(expectedReturnType, psiMethod, substitutor) &&
             isSignatureAppropriate(psiMethod, params, substitutor, 1, originalPosition)) {
           LookupElement methodRefLookupElement = createMethodRefOnClass(functionalInterfaceType, psiMethod, qualifierClass);
           if (prioritize && containingClass == paramClass) {
@@ -294,9 +296,11 @@ public class FunctionalExpressionCompletionProvider extends CompletionProvider<C
     return result;
   }
 
-  private static boolean hasAppropriateReturnType(PsiType expectedReturnType, PsiMethod psiMethod) {
+  private static boolean hasAppropriateReturnType(PsiType expectedReturnType,
+                                                  PsiMethod psiMethod,
+                                                  PsiSubstitutor substitutor) {
     PsiType returnType = psiMethod.getReturnType();
-    return returnType != null && TypeConversionUtil.isAssignable(expectedReturnType, returnType);
+    return returnType != null && TypeConversionUtil.isAssignable(expectedReturnType, substitutor.substitute(returnType));
   }
 
   private static boolean isSignatureAppropriate(PsiMethod psiMethod, PsiParameter[] params, PsiSubstitutor substitutor, int offset, PsiElement place) {

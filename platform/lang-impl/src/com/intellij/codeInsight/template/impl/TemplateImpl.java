@@ -314,7 +314,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
 
     mySegments = new SmartList<>();
-    StringBuilder buffer = new StringBuilder("");
+    StringBuilder buffer = new StringBuilder();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString);
 

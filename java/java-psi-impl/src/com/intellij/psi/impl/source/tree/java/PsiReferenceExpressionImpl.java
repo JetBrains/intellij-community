@@ -207,13 +207,14 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
 
       final List<ResolveResult[]> qualifiers = new SmartList<>();
       final ResolveCache resolveCache = ResolveCache.getInstance(containingFile.getProject());
+      boolean physical = containingFile.isPhysical();
       qualifier.accept(new JavaRecursiveElementWalkingVisitor() {
         @Override
         public void visitReferenceExpression(PsiReferenceExpression expression) {
           if (!(expression instanceof PsiReferenceExpressionImpl)) {
             return;
           }
-          ResolveResult[] cachedResults = resolveCache.getCachedResults(expression, true, false, true);
+          ResolveResult[] cachedResults = resolveCache.getCachedResults(expression, physical, false, true);
           if (cachedResults != null) {
             return;
           }
@@ -774,7 +775,7 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == JavaTokenType.DOT) {
@@ -807,11 +808,13 @@ public class PsiReferenceExpressionImpl extends ExpressionPsiElement implements 
     }
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return PsiJavaCodeReferenceElementImpl.calcRangeInElement(this);

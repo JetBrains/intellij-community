@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.ide.ui.UISettings;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.EditorTextField;
 import com.intellij.util.ui.JBSwingUtilities;
@@ -158,13 +143,14 @@ public class IJSwingUtilities extends JBSwingUtilities {
 
   public static void moveMousePointerOn(Component component) {
     if (component != null && component.isShowing()) {
-      UISettings settings = ApplicationManager.getApplication() == null ? null : UISettings.getInstance();
+      UISettings settings = UISettings.getInstanceOrNull();
       if (settings != null && settings.getMoveMouseOnDefaultButton()) {
         Point point = component.getLocationOnScreen();
         int dx = component.getWidth() / 2;
         int dy = component.getHeight() / 2;
         try {
           new Robot().mouseMove(point.x + dx, point.y + dy);
+          component.requestFocusInWindow();
         }
         catch (AWTException ignored) {
           // robot is not available

@@ -210,7 +210,7 @@ class GitDeleteBranchOperation extends GitBranchOperation {
   @NotNull
   private GitCommandResult setUpTracking(@NotNull GitRepository repository, @NotNull String branchName, @NotNull String trackedBranch) {
     GitLineHandler handler = new GitLineHandler(myProject, repository.getRoot(), GitCommand.BRANCH);
-    if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion())) {
+    if (GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository)) {
       handler.addParameters("--set-upstream-to", trackedBranch, branchName);
     }
     else {

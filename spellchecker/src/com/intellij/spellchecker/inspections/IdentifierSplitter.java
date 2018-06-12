@@ -27,6 +27,8 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
+import static com.intellij.openapi.util.text.StringUtil.newBombedCharSequence;
+
 
 public class IdentifierSplitter extends BaseSplitter {
   private static final IdentifierSplitter INSTANCE = new IdentifierSplitter();
@@ -74,7 +76,7 @@ public class IdentifierSplitter extends BaseSplitter {
       for (TextRange word : words) {
         boolean uc = Strings.isUpperCased(text, word);
         boolean flag = (uc && !isAllWordsAreUpperCased);
-        Matcher matcher = WORD.matcher(text.substring(word.getStartOffset(), word.getEndOffset()));
+        Matcher matcher = WORD.matcher(newBombedCharSequence(text.substring(word.getStartOffset(), word.getEndOffset()), 500));
         if (matcher.find()) {
           TextRange found = matcherRange(word, matcher);
           addWord(consumer, flag, found);

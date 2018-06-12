@@ -3,7 +3,7 @@ class Foo {
       Inner inner = new Inner().invoke();
       String var = inner.getVar();
       if (var == null) return null;
-    System.out.println(var);
+      System.out.println(var);
   }
 
     private class Inner {

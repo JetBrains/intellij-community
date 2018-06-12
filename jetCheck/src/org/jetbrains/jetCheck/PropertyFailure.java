@@ -3,6 +3,8 @@ package org.jetbrains.jetCheck;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.function.Supplier;
+
 /**
  * @author peter
  */
@@ -50,6 +52,13 @@ public interface PropertyFailure<T> {
      */
     @NotNull
     CounterExample<T> replay();
+
+    /**
+     * @return the data used for generator to produce this counterexample, serialized into Base64.
+     * To be used with {@link PropertyChecker#rechecking} or {@link ImperativeCommand#checkScenario}
+     */
+    @NotNull
+    String getSerializedData();
   }
   
 }

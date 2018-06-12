@@ -11,7 +11,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
-import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -123,7 +122,7 @@ class GitLogRecordCollector implements Consumer<GitLogRecord> {
       ContainerUtil.addAll(hashes, r.getParentsHashes());
     }
 
-    GitLineHandler handler = new GitLineHandler(project, root, GitCommand.LOG);
+    GitLineHandler handler = GitLogUtil.createGitHandler(project, root);
     GitLogParser parser = new GitLogParser(project, GitLogParser.NameStatus.NONE, HASH, TREE);
     GitVcs vcs = GitVcs.getInstance(project);
     handler.setStdoutSuppressed(true);

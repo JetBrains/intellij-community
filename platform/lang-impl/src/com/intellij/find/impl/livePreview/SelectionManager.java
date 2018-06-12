@@ -96,6 +96,10 @@ public class SelectionManager {
 
   public boolean isSelected(@NotNull FindResult result) {
     Editor editor = mySearchResults.getEditor();
-    return editor.getCaretModel().getCaretAt(editor.offsetToVisualPosition(result.getEndOffset())) != null;
+    int endOffset = result.getEndOffset();
+    for (Caret caret : editor.getCaretModel().getAllCarets()) {
+      if (caret.getOffset() == endOffset) return true;
+    }
+    return false;
   }
 }

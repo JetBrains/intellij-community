@@ -128,10 +128,7 @@ public class Splash extends JDialog implements StartupProgress {
       mySplashIsVisible = true;
     }
 
-    int totalWidth = myImage.getIconWidth() - getProgressX();
-    if (Registry.is("ide.new.about")) {
-      totalWidth +=3;
-    }
+    int totalWidth = myImage.getIconWidth() - getProgressX() + 3;
     final int progressWidth = (int)(totalWidth * myProgress);
     final int width = progressWidth - myProgressLastPosition;
     g.setColor(color);
@@ -176,17 +173,11 @@ public class Splash extends JDialog implements StartupProgress {
 
         g.setFont(UIUtil.getFontWithFallback(font));
         g.setColor(textColor);
-        int offsetX = uiScale(15);
-        int offsetY = 30;
-        if (Registry.is("ide.new.about")) {
-          if (info instanceof ApplicationInfoImpl) {
-            offsetX = Math.max(offsetX, uiScale(((ApplicationInfoImpl)info).getProgressX()));
-            offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
-          } else {
-            return false;
-          }
+        if (!(info instanceof ApplicationInfoImpl)) {
+          return false;
         }
-
+        int offsetX = Math.max(uiScale(15), uiScale(((ApplicationInfoImpl)info).getProgressX()));
+        int offsetY = ((ApplicationInfoImpl)info).getLicenseOffsetY();
         g.drawString(licensedToMessage, x + offsetX, y + height - uiScale(offsetY));
         if (licenseRestrictionsMessages.size() > 0) {
           g.drawString(licenseRestrictionsMessages.get(0), x + offsetX, y + height - uiScale(offsetY - 16));
@@ -199,7 +190,7 @@ public class Splash extends JDialog implements StartupProgress {
 
   @NotNull
   protected static Font createFont(String name) {
-    return new Font(name, Font.PLAIN, uiScale(Registry.is("ide.new.about") ? 12 : SystemInfo.isUnix ? 10 : 11));
+    return new Font(name, Font.PLAIN, uiScale(12));
   }
 
   private static final float JBUI_INIT_SCALE = JBUI.scale(1f);

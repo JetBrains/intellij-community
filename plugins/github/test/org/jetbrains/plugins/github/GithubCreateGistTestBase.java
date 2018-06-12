@@ -15,19 +15,14 @@
  */
 package org.jetbrains.plugins.github;
 
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.text.DateFormatUtil;
-import git4idea.test.TestDialogHandler;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.github.api.GithubApiUtil;
-import org.jetbrains.plugins.github.api.GithubConnection;
 import org.jetbrains.plugins.github.api.data.GithubGist;
 import org.jetbrains.plugins.github.api.requests.GithubGistRequest.FileContent;
 import org.jetbrains.plugins.github.test.GithubTest;
-import org.jetbrains.plugins.github.ui.GithubLoginDialog;
-import org.jetbrains.plugins.github.util.GithubAuthDataHolder;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -54,7 +49,10 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
   protected void deleteGist() throws IOException {
     if (GIST_ID != null) {
-      GithubApiUtil.deleteGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
+      myApiTaskExecutor.execute(myAccount, c -> {
+        GithubApiUtil.deleteGist(c, GIST_ID);
+        return null;
+      });
       GIST = null;
       GIST_ID = null;
     }
@@ -77,7 +75,7 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
 
     if (GIST == null) {
       try {
-        GIST = GithubApiUtil.getGist(new GithubConnection(myGitHubSettings.getAuthData()), GIST_ID);
+        GIST = myApiTaskExecutor.execute(myAccount, c -> GithubApiUtil.getGist(c, GIST_ID));
       }
       catch (IOException e) {
         System.err.println(e.getMessage());
@@ -125,14 +123,5 @@ public abstract class GithubCreateGistTestBase extends GithubTest {
     }
 
     assertTrue("Gist content differs from sample", Comparing.haveEqualElements(files, expected));
-  }
-
-  protected void registerCancelingLoginDialogHandler() {
-    dialogManager.registerDialogHandler(GithubLoginDialog.class, new TestDialogHandler<GithubLoginDialog>() {
-      @Override
-      public int handleDialog(GithubLoginDialog dialog) {
-        return DialogWrapper.CANCEL_EXIT_CODE;
-      }
-    });
   }
 }

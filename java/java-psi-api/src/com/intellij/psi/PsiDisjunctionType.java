@@ -22,12 +22,10 @@ import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.Function;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * Composite type resulting from Project Coin's multi-catch statements, i.e. {@code FileNotFoundException | EOFException}.
@@ -149,5 +147,34 @@ public class PsiDisjunctionType extends PsiType.Stub {
     }
 
     return true;
+  }
+
+  public static List<PsiType> flattenAndRemoveDuplicates(@NotNull List<PsiType> types) {
+    Set<PsiType> disjunctionSet = new LinkedHashSet<>();
+    for (PsiType type : types) {
+      flatten(disjunctionSet, type);
+    }
+    ArrayList<PsiType> disjunctions = new ArrayList<>(disjunctionSet);
+    for (Iterator<PsiType> iterator = disjunctions.iterator(); iterator.hasNext(); ) {
+      PsiType d1 = iterator.next();
+      for (PsiType d2 : disjunctions) {
+        if (d1 != d2 && d2.isAssignableFrom(d1)) {
+          iterator.remove();
+          break;
+        }
+      }
+    }
+    return disjunctions;
+  }
+
+  private static void flatten(Set<PsiType> disjunctions, PsiType type) {
+    if (type instanceof PsiDisjunctionType) {
+      for (PsiType child : ((PsiDisjunctionType)type).getDisjunctions()) {
+        flatten(disjunctions, child);
+      }
+    } else {
+      disjunctions.add(type);
+    }
+
   }
 }

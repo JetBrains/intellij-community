@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.BeforeRunTask;
@@ -38,14 +36,14 @@ public interface RunConfiguration extends RunProfile, Cloneable {
    */
   @NotNull
   default ConfigurationType getType() {
-    return getFactory().getType();
+    ConfigurationFactory factory = getFactory();
+    return factory == null ? UnknownConfigurationType.INSTANCE : factory.getType();
   }
 
   /**
    * Returns the factory that has created the run configuration.
-   *
-   * @return the factory instance.
    */
+  @Nullable
   ConfigurationFactory getFactory();
 
   /**
@@ -68,8 +66,6 @@ public interface RunConfiguration extends RunProfile, Cloneable {
 
   /**
    * Returns the project in which the run configuration exists.
-   *
-   * @return the project instance.
    */
   Project getProject();
 
@@ -114,6 +110,15 @@ public interface RunConfiguration extends RunProfile, Cloneable {
     return System.identityHashCode(this);
   }
 
+  /**
+   * Returns the unique identifier of the run configuration. Return null if not applicable.
+   * Used only for non-managed RC type.
+   */
+  @Nullable
+  default String getId() {
+    return null;
+  }
+
   @NotNull
   @Transient
   default String getPresentableType() {
@@ -121,6 +126,15 @@ public interface RunConfiguration extends RunProfile, Cloneable {
       return " (" + StringUtil.first(getType().getDisplayName(), 10, true) + ")";
     }
     return "";
+  }
+
+  /**
+   * If this method returns true, disabled executor buttons (e.g. Run) will be hidden when this configuration is selected.
+   * Note that this will lead to UI flickering when switching between this configuration and others for which this property
+   * is false, so you should avoid overriding this method unless you're really sure of what you're doing.
+   */
+  default boolean hideDisabledExecutorButtons() {
+    return false;
   }
 
   /**

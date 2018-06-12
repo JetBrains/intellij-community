@@ -130,11 +130,11 @@ public class PyiTypeProvider extends PyTypeProviderBase {
   }
 
   @Override
-  public PyType getReferenceType(@NotNull PsiElement target, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement target, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (target instanceof PyTargetExpression) {
       final PsiElement pythonStub = PyiUtil.getPythonStub((PyTargetExpression)target);
       if (pythonStub instanceof PyTypedElement) {
-        return context.getType((PyTypedElement)pythonStub);
+        return PyTypeUtil.notNullToRef(context.getType((PyTypedElement)pythonStub));
       }
     }
     return null;

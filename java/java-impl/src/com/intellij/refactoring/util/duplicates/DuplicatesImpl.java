@@ -129,7 +129,8 @@ public class DuplicatesImpl {
           final boolean allChosen = promptDialog.getExitCode() == FindManager.PromptResult.ALL;
           showAll.set(allChosen);
           if (allChosen && confirmDuplicatePrompt != null && prompt == null) {
-            if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?", CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
+            if (Messages.showOkCancelDialog(project, "In order to replace all occurrences method signature will be changed. Proceed?",
+                                            CommonBundle.getWarningTitle(), Messages.getWarningIcon()) !=
                 Messages.OK) return true;
           }
           if (promptDialog.getExitCode() == FindManager.PromptResult.SKIP) return false;
@@ -144,17 +145,15 @@ public class DuplicatesImpl {
     // call change signature when needed
     provider.prepareSignature(match);
 
-    new WriteCommandAction(project, MethodDuplicatesHandler.REFACTORING_NAME, MethodDuplicatesHandler.REFACTORING_NAME) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        try {
-          provider.processMatch(match);
-        }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
-        }
+    WriteCommandAction.writeCommandAction(project).withName(MethodDuplicatesHandler.REFACTORING_NAME)
+                      .withGroupId(MethodDuplicatesHandler.REFACTORING_NAME).run(() -> {
+      try {
+        provider.processMatch(match);
       }
-    }.execute();
+      catch (IncorrectOperationException e) {
+        LOG.error(e);
+      }
+    });
 
     return false;
   }

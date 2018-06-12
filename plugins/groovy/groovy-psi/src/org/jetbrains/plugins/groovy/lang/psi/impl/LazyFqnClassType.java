@@ -29,7 +29,7 @@ public class LazyFqnClassType extends GrLiteralClassType {
   private final String myFqn;
 
   private LazyFqnClassType(@NotNull String fqn,
-                           LanguageLevel languageLevel,
+                           @NotNull LanguageLevel languageLevel,
                            @NotNull GlobalSearchScope scope,
                            @NotNull JavaPsiFacade facade) {
     super(languageLevel, scope, facade);

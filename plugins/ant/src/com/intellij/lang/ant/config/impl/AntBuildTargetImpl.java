@@ -31,10 +31,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class AntBuildTargetImpl implements AntBuildTargetBase {
@@ -176,7 +176,6 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
       throw new IllegalStateException("Target '" + getName() + "' is invalid: build file is null");
     }
 
-    String[] targets = isDefault() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{getName()};
-    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, dataContext, additionalProperties, buildListener);
+    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, isDefault()? Collections.emptyList() : getTargetNames(), null, dataContext, additionalProperties, buildListener);
   }
 }

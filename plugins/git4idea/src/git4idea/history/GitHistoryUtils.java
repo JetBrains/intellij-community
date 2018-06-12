@@ -254,6 +254,8 @@ public class GitHistoryUtils {
     return ArrayUtil.toStringArray(parameters);
   }
 
+  // used externally
+  @SuppressWarnings("unused")
   public static void loadDetails(@NotNull Project project,
                                  @NotNull VirtualFile root,
                                  @NotNull Consumer<? super GitCommit> commitConsumer,

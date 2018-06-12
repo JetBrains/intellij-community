@@ -42,8 +42,6 @@ import java.util.*;
 
 public class InferenceSession {
   private static final Logger LOG = Logger.getInstance(InferenceSession.class);
-  private static final Key<PsiType> LOWER_BOUND = Key.create("LowBound");
-  private static final Key<PsiType> UPPER_BOUND = Key.create("UpperBound");
   private static final Key<Boolean> ERASED = Key.create("UNCHECKED_CONVERSION");
   private static final Function<Pair<PsiType, PsiType>, PsiType> UPPER_BOUND_FUNCTION = pair -> GenericsUtil.getGreatestLowerBound(pair.first, pair.second);
 
@@ -133,18 +131,11 @@ public class InferenceSession {
     initBounds(typeParams);
   }
 
-  public static PsiType getUpperBound(@NotNull PsiClass psiClass) {
-    return psiClass.getUserData(UPPER_BOUND);
-  }
-  public static PsiType getLowerBound(@NotNull PsiClass psiClass) {
-    return psiClass.getUserData(LOWER_BOUND);
-  }
-
   public static PsiType createTypeParameterTypeWithUpperBound(PsiType upperBound, PsiElement place) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(place.getProject());
 
     final PsiTypeParameter parameter = elementFactory.createTypeParameterFromText("T", place);
-    parameter.putUserData(UPPER_BOUND, upperBound);
+    parameter.putUserData(TypeConversionUtil.UPPER_BOUND, upperBound);
 
     return elementFactory.createType(parameter);
   }
@@ -501,7 +492,7 @@ public class InferenceSession {
                                              boolean addConstraint,
                                              PsiSubstitutor initialSubstitutor) {
     final PsiType interfaceReturnType = LambdaUtil.getFunctionalInterfaceReturnType(parameterType);
-    if (interfaceReturnType != null) {
+    if (interfaceReturnType != null && !PsiType.VOID.equals(interfaceReturnType)) {
       final List<PsiExpression> returnExpressions = LambdaUtil.getReturnExpressions(lambdaExpression);
       for (PsiExpression returnExpression : returnExpressions) {
         processReturnExpression(additionalConstraints, ignoredConstraints, returnExpression, interfaceReturnType, addConstraint, initialSubstitutor);
@@ -726,8 +717,11 @@ public class InferenceSession {
       InferenceVariable[] variables = initBounds(null, restParamSubstitution, capturedParams.toArray(PsiTypeParameter.EMPTY_ARRAY));
       int idx = 0;
       for (PsiType parameter : parameters) {
-        if (parameter instanceof PsiCapturedWildcardType && isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
-          variables[idx++].putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+        if (parameter instanceof PsiCapturedWildcardType) {
+          InferenceVariable variable = variables[idx++];
+          if (isProperType(((PsiCapturedWildcardType)parameter).getWildcard())) {
+            variable.putUserData(ORIGINAL_CAPTURE, (PsiCapturedWildcardType)parameter);
+          }
         }
       }
       return variables;
@@ -1032,6 +1026,7 @@ public class InferenceSession {
                                     final PsiSubstitutor substitutor) {
     for (InferenceVariable typeParameter : typeParams) {
       if (typeParameter.getInstantiation() != PsiType.NULL) continue;
+      if (typeParameter.getUserData(ORIGINAL_CAPTURE) != null) continue;
       final PsiType type = substitutor.substitute(typeParameter);
       if (type instanceof PsiClassType) {
         final PsiClass aClass = ((PsiClassType)type).resolve();
@@ -1135,9 +1130,9 @@ public class InferenceSession {
             return false;
           }
         }
-        parameter.putUserData(LOWER_BOUND, lub);
+        parameter.putUserData(TypeConversionUtil.LOWER_BOUND, lub);
       }
-      parameter.putUserData(UPPER_BOUND,
+      parameter.putUserData(TypeConversionUtil.UPPER_BOUND,
                             composeBound(var, InferenceBound.UPPER, UPPER_BOUND_FUNCTION, ySubstitutor.putAll(substitutor), true));
       TypeConversionUtil.markAsFreshVariable(parameter, myContext);
       if (!var.addBound(elementFactory.createType(parameter), InferenceBound.EQ, myIncorporationPhase)) {
@@ -1191,7 +1186,7 @@ public class InferenceSession {
         //restore captured wildcard from method return type when no additional constraints were inferred
         //to preserve equality of type arguments
         if (capturedWildcard != null &&
-            capturedWildcard.getUpperBound().equals(getUpperBound(aClass))) {
+            capturedWildcard.getUpperBound().equals(TypeConversionUtil.getUpperBound(aClass))) {
           eqBound = capturedWildcard;
         }
       }
@@ -1925,22 +1920,7 @@ public class InferenceSession {
 
   public static boolean wasUncheckedConversionPerformed(PsiElement call) {
     final Boolean erased = call.getUserData(ERASED);
-    if (erased != null && erased.booleanValue()) {
-      return true;
-    }
-
-    if (call instanceof PsiCallExpression) {
-      PsiExpressionList args = ((PsiCallExpression)call).getArgumentList();
-      if (args != null) {
-        for (PsiExpression expression : args.getExpressions()) {
-          if (expression instanceof PsiNewExpression && !PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
-            continue;
-          }
-          if (wasUncheckedConversionPerformed(expression)) return true;
-        }
-      }
-    }
-    return false;
+    return erased != null && erased.booleanValue();
   }
 
   public PsiElement getContext() {

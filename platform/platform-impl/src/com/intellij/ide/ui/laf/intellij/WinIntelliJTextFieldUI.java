@@ -31,6 +31,8 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseListener;
 
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
+
 /**
  * @author Konstantin Bulenkov
  */
@@ -110,11 +112,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
   }
 
   @Override
-  protected int getMinimumHeight() {
+  protected int getMinimumHeight(int textHeight) {
     JComponent c = getComponent();
-    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) ||
-           UIUtil.getParentOfType(JSpinner.class, c) != null ?
-           JBUI.scale(18) : JBUI.scale(24);
+    Insets i = c.getInsets();
+    return DarculaEditorTextFieldBorder.isComboBoxEditor(c) || UIUtil.getParentOfType(JSpinner.class, c) != null ?
+           textHeight : MINIMUM_HEIGHT.get() + i.top + i.bottom;
   }
 
   @Override
@@ -151,6 +153,11 @@ public class WinIntelliJTextFieldUI extends TextFieldWithPopupHandlerUI {
     if (!clickable) return null;
     Icon icon = UIManager.getIcon("TextField.darcula.clear.icon");
     return icon != null ? icon : IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+  }
+
+  @Override
+  protected Insets getDefaultMargins() {
+    return JBUI.insets(2, 5);
   }
 
   @Override

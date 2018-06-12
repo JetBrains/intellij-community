@@ -51,7 +51,7 @@ public class StringBuilderSpinAllocatorTester {
   private static long concurrentTime(int count, final Runnable action) {
     return time(count, () -> {
       boolean ok =
-        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(THREADS, null), null, true, o -> {
+        JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(THREADS, null), null, o -> {
           action.run();
           return true;
         });

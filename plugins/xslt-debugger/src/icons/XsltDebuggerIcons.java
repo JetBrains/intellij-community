@@ -28,7 +28,7 @@ public class XsltDebuggerIcons {
     return IconLoader.getIcon(path, XsltDebuggerIcons.class);
   }
 
-  
+
   public static class Actions {
     public static final Icon FilterWhitespace = load("/org/intellij/plugins/xsltDebugger/ui/actions/filterWhitespace.png"); // 16x16
 

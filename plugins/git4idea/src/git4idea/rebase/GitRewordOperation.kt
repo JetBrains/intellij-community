@@ -31,7 +31,6 @@ import com.intellij.openapi.vcs.VcsNotifier.STANDARD_NOTIFICATION
 import com.intellij.util.containers.MultiMap
 import com.intellij.vcs.log.Hash
 import com.intellij.vcs.log.VcsCommitMetadata
-import git4idea.GitVcs
 import git4idea.branch.GitBranchUtil
 import git4idea.branch.GitRebaseParams
 import git4idea.checkin.GitCheckinEnvironment
@@ -41,8 +40,8 @@ import git4idea.commands.GitLineHandler
 import git4idea.config.GitConfigUtil
 import git4idea.config.GitVersionSpecialty
 import git4idea.history.GitLogUtil
-import git4idea.rebase.GitRebaseEntry.Action.pick
-import git4idea.rebase.GitRebaseEntry.Action.reword
+import git4idea.rebase.GitRebaseEntry.Action.PICK
+import git4idea.rebase.GitRebaseEntry.Action.REWORD
 import git4idea.repo.GitRepository
 import git4idea.repo.GitRepositoryChangeListener
 import git4idea.reset.GitResetMode
@@ -80,7 +79,7 @@ class GitRewordOperation(private val repository: GitRepository,
   }
 
   private fun canRewordViaAmend() =
-    isLatestCommit() && GitVersionSpecialty.CAN_AMEND_WITHOUT_FILES.existsIn(GitVcs.getInstance(project).version)
+    isLatestCommit() && GitVersionSpecialty.CAN_AMEND_WITHOUT_FILES.existsIn(project)
 
   private fun isLatestCommit() = commit.id.asString() == initialHeadPosition
 
@@ -145,8 +144,8 @@ class GitRewordOperation(private val repository: GitRepository,
 
   private fun injectRewordAction(list: List<GitRebaseEntry>): List<GitRebaseEntry> {
     return list.map({ entry ->
-      if (entry.action == pick && commit.id.asString().startsWith(entry.commit))
-        GitRebaseEntry(reword, entry.commit, entry.subject)
+      if (entry.action == PICK && commit.id.asString().startsWith(entry.commit))
+        GitRebaseEntry(REWORD, entry.commit, entry.subject)
       else entry
     })
   }

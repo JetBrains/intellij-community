@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import java.awt.*;
 
 /**
@@ -87,6 +88,14 @@ public class ErrorLabel extends JLabel {
       if (getHorizontalAlignment() == CENTER) {
         int w = g.getFontMetrics().stringWidth(text);
         x += (getWidth() - x - w) >> 1;
+      }
+
+      Border border = getBorder();
+      if (border != null) {
+        Insets insets = border.getBorderInsets(this);
+        if (insets.left != -1) {
+          x += insets.left;
+        }
       }
 
       drawWave(this, g, x, text);

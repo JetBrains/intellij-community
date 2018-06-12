@@ -32,7 +32,7 @@ YAML file
                   PsiElement(Eol)('\n')
                   PsiElement(indent)('      ')
                   PsiElement(scalar list)('x = MoreObject("345\n")')
-          PsiElement(Eol)('\n')
+                  PsiElement(block scalar EOL)('\n')
           PsiElement(indent)('  ')
           YAML sequence item
             PsiElement(-)('-')

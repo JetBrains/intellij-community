@@ -4,8 +4,8 @@ class Test {
 
   private String getRevenue() {
       final String revenue = newMethod("revenues");
-    
-    return revenue;
+
+      return revenue;
   }
 
     @NotNull
@@ -20,7 +20,7 @@ class Test {
     public String getExpense() {
         final String expense = newMethod("expenses");
 
-    return expense;
+        return expense;
   }
 
   private String createNamedQuery(String expenses) {

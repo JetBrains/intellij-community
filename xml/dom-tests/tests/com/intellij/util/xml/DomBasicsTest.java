@@ -46,12 +46,7 @@ import java.util.*;
 public class DomBasicsTest extends DomTestCase {
   @Override
   protected void invokeTestRunnable(@NotNull final Runnable runnable) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() {
-        runnable.run();
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(null).run(() -> runnable.run());
   }
 
   public void testFileElementCaching() {
@@ -404,12 +399,9 @@ public class DomBasicsTest extends DomTestCase {
     element.getChild().getGenericValue().setStringValue("abc");
     element.addChildElement().getGenericValue().setStringValue("def");
 
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        element2.copyFrom(element);
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      element2.copyFrom(element);
+    });
     assertEquals("attr", element2.getAttr().getValue());
     assertEquals("true", element2.getGenericValue().getStringValue());
 
@@ -436,12 +428,9 @@ public class DomBasicsTest extends DomTestCase {
     element2.ensureTagExists();
     assertNull(element2.getChild().getChild().getGenericValue().getStringValue());
     element1.getChild().getChild().getGenericValue().setStringValue("abc");
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        element2.copyFrom(element1);
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      element2.copyFrom(element1);
+    });
     assertEquals("abc", element2.getChild().getChild().getGenericValue().getStringValue());
   }
 
@@ -472,12 +461,9 @@ public class DomBasicsTest extends DomTestCase {
     assertEquals(oldChild1, child1);
     assertEquals(child1, oldChild1);
     final MyElement oldElement1 = oldElement;
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        oldElement1.undefine();
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      oldElement1.undefine();
+    });
     assertFalse(oldChild1.isValid());
 
     assertFalse(oldElement.isValid());
@@ -528,14 +514,11 @@ public class DomBasicsTest extends DomTestCase {
     final MyElement element = createElement("<a><child-element/><child-element><child/></child-element></a>");
     final MyElement parent = element.getChildElements().get(1);
     final MyElement child = parent.getChild();
-    final MyElement copy = (MyElement) child.createStableCopy();
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        parent.undefine();
-        element.addChildElement().getChild().ensureXmlElementExists();
-      }
-    }.execute();
+    final MyElement copy = (MyElement)child.createStableCopy();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      parent.undefine();
+      element.addChildElement().getChild().ensureXmlElementExists();
+    });
     assertFalse(child.isValid());
     assertTrue(copy.isValid());
   }

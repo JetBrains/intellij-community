@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.jdi;
 
 import com.intellij.debugger.SourcePosition;
@@ -30,6 +16,7 @@ import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.MultiMap;
 import com.sun.jdi.*;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.MethodVisitor;
 import org.jetbrains.org.objectweb.asm.Opcodes;
 
@@ -391,8 +378,7 @@ public class LocalVariablesUtil {
     public void visitLocalVariable(PsiLocalVariable variable) {
       super.visitLocalVariable(variable);
       if (!myReached) {
-        appendName(variable.getName());
-        myCurrentSlotIndex += getTypeSlotSize(variable.getType());
+        appendName(variable);
       }
     }
 
@@ -400,8 +386,7 @@ public class LocalVariablesUtil {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
-          appendName("<monitor>");
-          myCurrentSlotIndex++;
+          appendName("<monitor>", 1);
           super.visitSynchronizedStatement(statement);
         }
         finally {
@@ -410,8 +395,15 @@ public class LocalVariablesUtil {
       }
     }
 
-    private void appendName(String varName) {
+    private void appendName(@Nullable PsiVariable variable) {
+      if (variable != null) {
+        appendName(variable.getName(), getTypeSlotSize(variable.getType()));
+      }
+    }
+
+    private void appendName(String varName, int size) {
       myNames.putValue(myCurrentSlotIndex, varName);
+      myCurrentSlotIndex += size;
     }
 
     @Override
@@ -445,6 +437,16 @@ public class LocalVariablesUtil {
       if (shouldVisit(statement)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
+          PsiExpression value = statement.getIteratedValue();
+          if (value != null && value.getType() instanceof PsiArrayType) {
+            appendName("", 1); // array copy
+            appendName("<length>", 1);
+            appendName("<index>", 1);
+          }
+          else {
+            appendName("<iterator>", 1);
+          }
+          appendName(statement.getIterationParameter());
           super.visitForeachStatement(statement);
         }
         finally {
@@ -458,6 +460,7 @@ public class LocalVariablesUtil {
       if (shouldVisit(section)) {
         myIndexStack.push(myCurrentSlotIndex);
         try {
+          appendName(section.getParameter());
           super.visitCatchSection(section);
         }
         finally {

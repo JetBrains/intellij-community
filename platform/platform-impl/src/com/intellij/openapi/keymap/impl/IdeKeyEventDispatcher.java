@@ -146,17 +146,17 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    if (e.getKeyCode() == KeyEvent.VK_CONTROL && e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT) {
+    if (e.getKeyCode() == KeyEvent.VK_CONTROL) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myLeftCtrlPressed = true;
+        myLeftCtrlPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_LEFT;
       }
       else if (e.getID() == KeyEvent.KEY_RELEASED) {
         myLeftCtrlPressed = false;
       }
     }
-    else if (e.getKeyCode() == KeyEvent.VK_ALT && e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT) {
+    else if (e.getKeyCode() == KeyEvent.VK_ALT) {
       if (e.getID() == KeyEvent.KEY_PRESSED) {
-        myRightAltPressed = true;
+        myRightAltPressed = e.getKeyLocation() == KeyEvent.KEY_LOCATION_RIGHT;
       }
       else if (e.getID() == KeyEvent.KEY_RELEASED) {
         myRightAltPressed = false;
@@ -222,6 +222,9 @@ public final class IdeKeyEventDispatcher implements Disposable {
       }
       else if (getState() == KeyState.STATE_KEY_GESTURE_PROCESSOR) {
         return myKeyGestureProcessor.process();
+      }
+      else if (getState() == KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR) {
+        return inWaitForPossibleAltGr();
       }
       else {
         throw new IllegalStateException("state = " + getState());
@@ -326,6 +329,30 @@ public final class IdeKeyEventDispatcher implements Disposable {
     }
   }
 
+  private boolean inWaitForPossibleAltGr() {
+    KeyEvent e = myContext.getInputEvent();
+    KeyStroke keyStroke = myFirstKeyStroke;
+    myFirstKeyStroke = null;
+    setState(KeyState.STATE_INIT);
+
+    // processing altGr
+    int eventId = e.getID();
+    if (KeyEvent.KEY_TYPED == eventId && e.isAltGraphDown()) {
+      return false;
+    } else if (KeyEvent.KEY_RELEASED == eventId) {
+
+      updateCurrentContext(myContext.getFoundComponent(), new KeyboardShortcut(keyStroke, null), myContext.isModalContext());
+
+      if (myContext.getActions().isEmpty()) {
+        return false;
+      }
+
+      return processActionOrWaitSecondStroke(keyStroke);
+    }
+
+    return false;
+  }
+
   private boolean inSecondStrokeInProgressState() {
     KeyEvent e = myContext.getInputEvent();
 
@@ -380,6 +407,10 @@ public final class IdeKeyEventDispatcher implements Disposable {
     return inInitState();
   }
 
+  @NonNls private static final Set<String> ALT_GR_LAYOUTS = new HashSet<>(Arrays.asList(
+    "pl", "de", "fi", "fr", "no", "da", "se", "pt", "nl", "tr", "sl", "hu", "bs", "hr", "sr", "sk", "lv", "sv"
+  ));
+
   private boolean inInitState() {
     Component focusOwner = myContext.getFocusOwner();
     boolean isModalContext = myContext.isModalContext();
@@ -387,10 +418,22 @@ public final class IdeKeyEventDispatcher implements Disposable {
     KeyEvent e = myContext.getInputEvent();
 
     // http://www.jetbrains.net/jira/browse/IDEADEV-12372
-    if (myLeftCtrlPressed && myRightAltPressed && focusOwner != null &&
-        (e.getModifiers() | InputEvent.SHIFT_MASK) == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK | InputEvent.SHIFT_MASK) &&
-        e.getKeyChar() != KeyEvent.CHAR_UNDEFINED) {
-      return false;
+    boolean isCandidateForAltGr = myLeftCtrlPressed && myRightAltPressed && focusOwner != null && e.getModifiers() == (InputEvent.CTRL_MASK | InputEvent.ALT_MASK);
+    if (isCandidateForAltGr) {
+      if (Registry.is("actionSystem.force.alt.gr")) {
+        return false;
+      }
+      final InputContext inputContext = focusOwner.getInputContext();
+      if (inputContext != null) {
+        Locale locale = inputContext.getLocale();
+        if (locale != null) {
+          @NonNls final String language = locale.getLanguage();
+          if (ALT_GR_LAYOUTS.contains(language)) {
+            // don't search for shortcuts
+            return false;
+          }
+        }
+      }
     }
 
     KeyStroke originalKeyStroke = KeyStrokeAdapter.getDefaultKeyStroke(e);
@@ -421,6 +464,20 @@ public final class IdeKeyEventDispatcher implements Disposable {
       // there's nothing mapped for this stroke
       return false;
     }
+
+    // workaround for IDEA-177327
+    if (isCandidateForAltGr && SystemInfo.isWindows && Registry.is("actionSystem.fix.alt.gr")) {
+      myFirstKeyStroke = keyStroke;
+      setState(KeyState.STATE_WAIT_FOR_POSSIBLE_ALT_GR);
+      return true;
+    }
+
+    return processActionOrWaitSecondStroke(keyStroke);
+  }
+
+  private boolean processActionOrWaitSecondStroke(KeyStroke keyStroke) {
+    DataContext dataContext = myContext.getDataContext();
+    KeyEvent e = myContext.getInputEvent();
 
     if(myContext.isHasSecondStroke()){
       myFirstKeyStroke=keyStroke;

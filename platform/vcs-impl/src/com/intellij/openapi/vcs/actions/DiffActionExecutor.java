@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.diff.DiffProvider;
 import com.intellij.openapi.vcs.diff.ItemLatestState;
@@ -138,9 +139,8 @@ public abstract class DiffActionExecutor {
           boolean inverted = false;
           String title1;
           String title2;
-          final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(mySelectedFile);
-          if (status == null || FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) ||
-              FileStatus.IGNORED.equals(status)) {
+          final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(mySelectedFile);
+          if (FileStatus.NOT_CHANGED.equals(status) || FileStatus.UNKNOWN.equals(status) || FileStatus.IGNORED.equals(status)) {
             final VcsRevisionNumber currentRevision = myDiffProvider.getCurrentRevision(mySelectedFile);
 
             inverted = revisionNumber.compareTo(currentRevision) > 0;

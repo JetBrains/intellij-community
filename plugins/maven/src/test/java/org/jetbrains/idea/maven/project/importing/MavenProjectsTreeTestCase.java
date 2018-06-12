@@ -15,14 +15,13 @@
  */
 package org.jetbrains.idea.maven.project.importing;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 import org.jetbrains.idea.maven.project.MavenProjectsTree;
 
+import java.io.IOException;
 import java.util.Collections;
 import java.util.List;
 
@@ -48,14 +47,11 @@ public abstract class MavenProjectsTreeTestCase extends MavenImportingTestCase {
     myTree.delete(asList(file), getMavenGeneralSettings(), EMPTY_MAVEN_PROCESS);
   }
 
-  protected void updateTimestamps(final VirtualFile... files) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (VirtualFile each : files) {
-          each.setBinaryContent(each.contentsToByteArray());
-        }
+  protected void updateTimestamps(final VirtualFile... files) throws IOException {
+    WriteAction.runAndWait(() -> {
+      for (VirtualFile each : files) {
+        each.setBinaryContent(each.contentsToByteArray());
       }
-    }.execute().throwException();
+    });
   }
 }

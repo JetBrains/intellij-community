@@ -40,7 +40,7 @@ public class ConditionalGotoInstruction extends BranchingInstruction implements 
   }
 
   public String toString() {
-    return (isNegated() ? "!":"") + "cond?_goto " + getOffset();
+    return "IF_" + (isNegated() ? "NE" : "EQ") + " " + getOffset();
   }
 
   @Override

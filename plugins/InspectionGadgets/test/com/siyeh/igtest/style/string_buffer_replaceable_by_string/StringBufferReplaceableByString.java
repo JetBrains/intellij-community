@@ -1,5 +1,7 @@
 package com.siyeh.igtest.performance.string_buffer_replaceable_by_string;
 
+import java.util.StringJoiner;
+
 public class StringBufferReplaceableByString {
 
   StringBuilder foo() {
@@ -135,5 +137,21 @@ public class StringBufferReplaceableByString {
     builder.append(b).append(' ');
     builder.append(c);
     return builder.toString();
+  }
+
+  void test2(String s, CharSequence s1) {
+    StringJoiner <warning descr="'StringJoiner sj' can be replaced with 'String'">sj</warning> = new StringJoiner("");
+    sj.add("foo");
+    sj.add(s);
+    sj.add("bar");
+    sj.add(s1);
+    System.out.println(sj.toString());
+  }
+
+  void test(String str1, String str2) {
+    String s = new <warning descr="'StringJoiner' can be replaced with 'String'">StringJoiner</warning>("")
+      .add(str1)
+      .add(str2)
+      .toString();
   }
 }

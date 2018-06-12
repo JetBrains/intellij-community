@@ -33,6 +33,7 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
   private String myProjectPath;
   private String myConfigurationName = Dependency.DEFAULT_CONFIGURATION;
   private Collection<File> myProjectDependencyArtifacts;
+  private Collection<File> myProjectDependencyArtifactsSources;
 
   public DefaultExternalProjectDependency() {
   }
@@ -76,6 +77,15 @@ public class DefaultExternalProjectDependency extends AbstractExternalDependency
 
   public void setProjectDependencyArtifacts(Collection<File> projectArtifacts) {
     myProjectDependencyArtifacts = projectArtifacts;
+  }
+
+  @Override
+  public Collection<File> getProjectDependencyArtifactsSources() {
+    return myProjectDependencyArtifactsSources;
+  }
+
+  public void setProjectDependencyArtifactsSources(Collection<File> projectArtifactsSources) {
+    myProjectDependencyArtifactsSources = projectArtifactsSources;
   }
 
   @Override

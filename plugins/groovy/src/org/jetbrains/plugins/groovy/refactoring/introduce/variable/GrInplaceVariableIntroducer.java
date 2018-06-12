@@ -90,16 +90,14 @@ public abstract class GrInplaceVariableIntroducer extends GrAbstractInplaceIntro
     myCanBeFinalCb.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
-            final GrVariable variable = getVariable();
-            if (variable != null) {
-              finalListener.perform(myCanBeFinalCb.isSelected(), variable);
-            }
+        WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+          PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
+          final GrVariable variable = getVariable();
+          if (variable != null) {
+            finalListener.perform(myCanBeFinalCb.isSelected(), variable);
           }
-        }.execute();
+          ;
+        });
       }
     });
     final JPanel panel = new JPanel(new GridBagLayout());

@@ -21,6 +21,6 @@ import com.intellij.openapi.project.DumbAware;
 
 public abstract class ShowDiffPreviewAction extends ToggleAction implements DumbAware {
   public ShowDiffPreviewAction() {
-    super("Preview Diff", null, AllIcons.Actions.DiffPreview);
+    super("Preview Diff", null, AllIcons.Actions.PreviewDetails);
   }
 }

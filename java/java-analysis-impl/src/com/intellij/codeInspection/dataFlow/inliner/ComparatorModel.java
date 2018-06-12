@@ -103,7 +103,7 @@ abstract class ComparatorModel {
 
     @Override
     void invoke(CFGBuilder builder) {
-      builder.dup().ifNotNull().chain(myDownstream::invoke).elseBranch().pop().endIf();
+      builder.dup().ifNotNull().chain(myDownstream::invoke).elseBranch().pop().end();
     }
   }
 

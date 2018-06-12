@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -84,13 +85,20 @@ public class JavaTestLocator implements SMTestLocator {
       for (Location location : locations) {
         PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
-          if (metainfo.equals(ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
+          if (StringUtil.equalsIgnoreWhitespaces(metainfo, ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
             return Collections.singletonList(location);
           }
         }
       }
     }
     return locations;
+  }
+
+  @NotNull
+  @Override
+  public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    StackTraceLine line = new StackTraceLine(project, stacktraceLine);
+    return getLocation(TEST_PROTOCOL, line.getClassName() + "." + line.getMethodName(), project, scope);
   }
 
   private static List<Location> collectMethodNavigatables(@NotNull String path,

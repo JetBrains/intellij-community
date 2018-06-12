@@ -15,25 +15,33 @@
  */
 package com.intellij.refactoring.wrapreturnvalue.usageInfo;
 
-import com.intellij.psi.PsiCallExpression;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
+import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class UnwrapCall extends FixableUsageInfo {
-  private final PsiCallExpression myCall;
   private final String myUnwrapMethod;
 
-  public UnwrapCall(@NotNull PsiCallExpression call, @NotNull String unwrapMethod) {
+  public UnwrapCall(@NotNull PsiExpression call, @NotNull String unwrapMethod) {
     super(call);
-    myCall = call;
     myUnwrapMethod = unwrapMethod;
   }
 
   @Override
   public void fixUsage() throws IncorrectOperationException {
-    String newExpression = myCall.getText() + '.' + myUnwrapMethod + "()";
-    MutationUtils.replaceExpression(newExpression, myCall);
+    PsiElement element = getElement();
+    if (!(element instanceof PsiExpression)) return;
+    if (element instanceof PsiMethodReferenceExpression) {
+      PsiExpression expression = LambdaRefactoringUtil.convertToMethodCallInLambdaBody((PsiMethodReferenceExpression)element);
+      if (expression == null) return;
+      element = expression;
+    }
+    String newExpression = element.getText() + '.' + myUnwrapMethod + "()";
+    MutationUtils.replaceExpression(newExpression, (PsiExpression)element);
   }
 }

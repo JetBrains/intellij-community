@@ -12,8 +12,8 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.DocumentReferenceManagerImpl;
@@ -90,8 +90,7 @@ import java.util.Collection;
 import java.util.HashSet;
 import java.util.Objects;
 import java.util.Set;
-
-import static com.intellij.testFramework.TemporaryDirectoryKt.generateTemporaryPath;
+import java.util.concurrent.TimeUnit;
 
 /**
  * @author yole
@@ -103,7 +102,10 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   protected ProjectManagerEx myProjectManager;
   protected Project myProject;
   protected Module myModule;
-  protected static final Collection<File> myFilesToDelete = new THashSet<>();
+
+  protected final Collection<File> myFilesToDelete = new THashSet<>();
+  private final TempFiles myTempFiles = new TempFiles(myFilesToDelete);
+
   protected boolean myAssertionsInTestDetected;
   public static Thread ourTestThread;
   private static TestCase ourTestCase;
@@ -116,6 +118,20 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   private static Set<VirtualFile> ourEternallyLivingFilesCache;
   private SdkLeakTracker myOldSdks;
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+
+
+  @NotNull
+  public TempFiles getTempDir() {
+    return myTempFiles;
+  }
+
+  protected final VirtualFile createTestProjectStructure() throws IOException {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, myFilesToDelete);
+  }
+
+  protected final VirtualFile createTestProjectStructure(String rootPath) throws Exception {
+    return PsiTestUtil.createTestProjectStructure(myProject, myModule, rootPath, myFilesToDelete);
+  }
 
   /**
    * If a temp directory is reused from some previous test run, there might be cached children in its VFS.
@@ -301,7 +317,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
         int hashCode = System.identityHashCode(leaked);
         leakers.append("Leaked project found:").append(leaked).append("; hash: ").append(hashCode).append("; place: ")
                .append(getCreationPlace(leaked)).append("\n");
-        leakers.append(backLink+"\n");
+        leakers.append(backLink).append("\n");
         leakers.append(";-----\n");
 
         hashCodes.remove(hashCode);
@@ -317,7 +333,6 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   @NotNull
   @TestOnly
   public static String getCreationPlace(@NotNull Project project) {
-    String place = project.getUserData(CREATION_PLACE);
     Object base;
     try {
       base = project.isDisposed() ? "" : project.getBaseDir();
@@ -325,7 +340,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     catch (Exception e) {
       base = " (" + e + " while getting base dir)";
     }
-    return project + (place != null ? place : "") + base;
+    String place = project.getUserData(CREATION_PLACE);
+    return project + " " +(place == null ? "" : place) + base;
   }
 
   protected void runStartupActivities() {
@@ -357,18 +373,19 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       }
     }
 
-    Path tempFile = generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
+    Path tempFile = TemporaryDirectoryKt
+      .generateTemporaryPath(FileUtil.sanitizeFileName(getName(), false) + (isDirectoryBasedProject ? "" : ProjectFileType.DOT_DEFAULT_EXTENSION));
     myFilesToDelete.add(tempFile.toFile());
     return tempFile;
   }
 
   protected void setUpModule() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        myModule = createMainModule();
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> myModule = createMainModule());
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
@@ -397,25 +414,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       File moduleFile = new File(FileUtil.toSystemDependentName(path), moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION);
       FileUtil.createIfDoesntExist(moduleFile);
       myFilesToDelete.add(moduleFile);
-      return new WriteAction<Module>() {
-        @Override
-        protected void run(@NotNull Result<Module> result) {
-          VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
-          assertNotNull(virtualFile);
-          Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
-          module.getModuleFile();
-          result.setResult(module);
-        }
-      }.execute().getResultObject();
+      return WriteAction.computeAndWait(() -> {
+        VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(moduleFile);
+        assertNotNull(virtualFile);
+        Module module = ModuleManager.getInstance(project).newModule(virtualFile.getPath(), moduleType.getId());
+        module.getModuleFile();
+        return module;
+      });
     }
 
     ModuleManager moduleManager = ModuleManager.getInstance(project);
-    return new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
-        result.setResult(moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.getId()));
-      }
-    }.execute().getResultObject();
+    return WriteAction.computeAndWait(
+      () -> moduleManager.newModule(path + File.separatorChar + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION, moduleType.getId()));
   }
 
   protected ModuleType getModuleType() {
@@ -519,11 +529,11 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
       })
       .append(() -> {
         ((JarFileSystemImpl)JarFileSystem.getInstance()).cleanupForNextTest();
-        
-        for (final File fileToDelete : myFilesToDelete) {
-          delete(fileToDelete);
-        }
+
+        getTempDir().deleteAll();
         LocalFileSystem.getInstance().refreshIoFiles(myFilesToDelete);
+        LaterInvocator.dispatchPendingFlushes();
+        ((FileBasedIndexImpl)FileBasedIndex.getInstance()).waitForVfsEventsExecuted(1, TimeUnit.MINUTES);
       })
       .append(() -> {
         if (!myAssertionsInTestDetected) {
@@ -601,21 +611,8 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
     resetClassFields(aClass.getSuperclass());
   }
 
-  private String getFullName() {
-    return getClass().getName() + "." + getName();
-  }
-
-  private void delete(File file) {
-    boolean b = FileUtil.delete(file);
-    if (!b && file.exists() && !myAssertionsInTestDetected) {
-      fail("Can't delete " + file.getAbsolutePath() + " in " + getFullName());
-    }
-  }
-
   protected void setUpJdk() {
-    //final ProjectJdkEx jdk = ProjectJdkUtil.getDefaultJdk("java 1.4");
     final Sdk jdk = getTestProjectJdk();
-//    ProjectJdkImpl jdk = ProjectJdkTable.getInstance().addJdk(defaultJdk);
     Module[] modules = ModuleManager.getInstance(myProject).getModules();
     for (Module module : modules) {
       ModuleRootModificationUtil.setModuleSdk(module, jdk);
@@ -642,8 +639,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           resetAllFields();
         });
       }
-      catch (Throwable e) {
-        // Ignore
+      catch (Throwable ignored) {
       }
     }
   }
@@ -764,12 +760,12 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static File createTempDir(@NonNls final String prefix) throws IOException {
+  public File createTempDir(@NonNls @NotNull String prefix) throws IOException {
     return createTempDir(prefix, true);
   }
 
   @NotNull
-  public static File createTempDir(@NonNls final String prefix, final boolean refresh) throws IOException {
+  public File createTempDir(@NonNls @NotNull String prefix, final boolean refresh) throws IOException {
     final File tempDirectory = FileUtilRt.createTempDirectory("idea_test_" + prefix, null, false);
     myFilesToDelete.add(tempDirectory);
     if (refresh) {
@@ -816,7 +812,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   @NotNull
-  public static VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
+  public VirtualFile createTempFile(@NonNls @NotNull String ext, @Nullable byte[] bom, @NonNls @NotNull String content, @NotNull Charset charset) throws IOException {
     File temp = FileUtil.createTempFile("copy", "." + ext);
     setContentOnDisk(temp, bom, content, charset);
 
@@ -843,31 +839,31 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
 
   @NotNull
   protected static VirtualFile createChildData(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        result.setResult(dir.createChildData(null, name));
-      }
-    }.execute().throwException().getResultObject();
+    try {
+      return WriteAction.computeAndWait(()-> dir.createChildData(null, name));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull
   protected static VirtualFile createChildDirectory(@NotNull final VirtualFile dir, @NotNull @NonNls final String name) {
-    return new WriteAction<VirtualFile>() {
-      @Override
-      protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
-        result.setResult(dir.createChildDirectory(null, name));
-      }
-    }.execute().throwException().getResultObject();
+    try {
+      return WriteAction.computeAndWait(()-> dir.createChildDirectory(null, name));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static void rename(@NotNull final VirtualFile vFile1, @NotNull final String newName) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        vFile1.rename(this, newName);
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.rename(vFile1, newName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected static void delete(@NotNull final VirtualFile vFile1) {
@@ -875,62 +871,64 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
   }
 
   public static void move(@NotNull final VirtualFile vFile1, @NotNull final VirtualFile newFile) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        vFile1.move(this, newFile);
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> vFile1.move(vFile1, newFile));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
   
   @NotNull
   protected static VirtualFile copy(@NotNull final VirtualFile file, @NotNull final VirtualFile newParent, @NotNull final String copyName) {
     final VirtualFile[] copy = new VirtualFile[1];
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
-        copy[0] = file.copy(this, newParent, copyName);
-      }
-    }.execute().throwException();
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> copy[0] = file.copy(file, newParent, copyName));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
     return copy[0];
   }
 
   public static void copyDirContentsTo(@NotNull final VirtualFile vTestRoot, @NotNull final VirtualFile toDir) {
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() throws Throwable {
+    try {
+      WriteCommandAction.writeCommandAction(null).run(() -> {
         for (VirtualFile file : vTestRoot.getChildren()) {
-          VfsUtil.copy(this, file, toDir);
+          VfsUtil.copy(file, file, toDir);
         }
-      }
-    }.execute().throwException();
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void setFileText(@NotNull final VirtualFile file, @NotNull final String text) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VfsUtil.saveText(file, text);
-      }
-    }.execute().throwException();
+    try {
+      WriteAction.runAndWait(() -> VfsUtil.saveText(file, text));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setBinaryContent(content);
-      }
-    }.execute().throwException();
+    try {
+    WriteAction.runAndWait(() -> file.setBinaryContent(content));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
   public static void setBinaryContent(@NotNull final VirtualFile file, @NotNull final byte[] content, final long newModificationStamp, final long newTimeStamp, final Object requestor) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        file.setBinaryContent(content,newModificationStamp, newTimeStamp,requestor);
-      }
-    }.execute().throwException();
+    try {
+    WriteAction.runAndWait(() -> file.setBinaryContent(content, newModificationStamp, newTimeStamp, requestor));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   @NotNull

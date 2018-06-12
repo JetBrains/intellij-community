@@ -46,9 +46,8 @@ internal object GrCodeReferenceResolver : GroovyResolver<GrCodeReferenceElement>
 }
 
 private fun GrCodeReferenceElement.resolveAsPackageReference(): Collection<GroovyResolveResult> {
-  val fqn = qualifiedReferenceName ?: return emptyList()
-  val pckg = JavaPsiFacade.getInstance(project).findPackage(fqn) ?: return emptyList()
-  return listOf(ElementGroovyResult(pckg))
+  val aPackage = resolvePackageFqn() ?: return emptyList()
+  return listOf(ElementGroovyResult(aPackage))
 }
 
 private fun GrCodeReferenceElement.resolveAsImportReference(): Collection<GroovyResolveResult> {

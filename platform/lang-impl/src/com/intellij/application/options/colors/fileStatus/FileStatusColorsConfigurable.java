@@ -45,6 +45,11 @@ public class FileStatusColorsConfigurable implements SearchableConfigurable, Con
     return FILE_STATUS_COLORS_ID;
   }
 
+  @Override
+  public String getHelpTopic() {
+    return "reference.versionControl.highlight";
+  }
+
   @Nls
   @Override
   public String getDisplayName() {

@@ -44,7 +44,6 @@ class JUnitClientListener(val sendObjectFun: (JUnitInfo) -> Unit) : RunListener(
 
   override fun testFailure(failure: Failure?) {
     sendObjectFun(JUnitInfo(Type.FAILURE, failure!!.exception, JUnitInfo.getClassAndMethodName(failure.description)))
-    LOG.error(failure.exception)
   }
 
   override fun testFinished(description: Description?) {

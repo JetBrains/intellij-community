@@ -89,6 +89,11 @@ public class VisiblePack implements VcsLogDataPack {
     return myFilters;
   }
 
+  @Override
+  public boolean isEmpty() {
+    return getVisibleGraph().getVisibleCommitCount() == 0;
+  }
+
   public VirtualFile getRoot(int row) {
     int head = myVisibleGraph.getRowInfo(row).getOneOfHeads();
     return myDataPack.getRefsModel().rootAtHead(head);

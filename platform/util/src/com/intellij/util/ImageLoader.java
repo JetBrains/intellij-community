@@ -46,7 +46,6 @@ import java.util.concurrent.ConcurrentMap;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.IMG;
 import static com.intellij.util.ImageLoader.ImageDesc.Type.SVG;
 import static com.intellij.util.ui.JBUI.ScaleType.PIX_SCALE;
-import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 
 public class ImageLoader implements Serializable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.ImageLoader");
@@ -187,6 +186,10 @@ public class ImageLoader implements Serializable {
         }
       }
 
+      void add(ImageDesc.Type type) {
+        list.add(new ImageDesc(name + "." + ext, cls, 1.0, type, true));
+      }
+
       ImageDescList build() {
         return list;
       }
@@ -232,9 +235,9 @@ public class ImageLoader implements Serializable {
                                  cls,
                                  Registry.is("ide.svg.icon"),
                                  adjustScaleFactor(allowFloatScaling, ctx.getScale(PIX_SCALE)));
+
       if (path.contains("://") && !path.startsWith("file:")) {
-        ImageDesc.Type type = StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG;
-        list.list.add(new ImageDesc(path, cls, 1.0, type, true));
+        list.add(StringUtil.endsWithIgnoreCase(path, ".svg") ? SVG : IMG);
       }
       else if (retina && dark) {
         list.add(true, true);
@@ -290,10 +293,7 @@ public class ImageLoader implements Serializable {
       return with(new ImageConverter() {
         @Override
         public Image convert(Image source, ImageDesc desc) {
-          if (source != null && UIUtil.isJreHiDPI(ctx)) {
-            return RetinaImage.createFrom(source, ctx.getScale(SYS_SCALE), ourComponent);
-          }
-          return source;
+          return ImageUtil.ensureHiDPI(source, ctx);
         }
       });
     }
@@ -314,6 +314,7 @@ public class ImageLoader implements Serializable {
   public static final Component ourComponent = new Component() {
   };
 
+  @SuppressWarnings("UnusedReturnValue")
   private static boolean waitForImage(Image image) {
     if (image == null) return false;
     if (image.getWidth(null) > 0) return true;

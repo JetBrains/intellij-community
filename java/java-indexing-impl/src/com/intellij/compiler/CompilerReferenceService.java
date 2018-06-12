@@ -37,6 +37,9 @@ public abstract class CompilerReferenceService extends AbstractProjectComponent 
   @Nullable
   public abstract GlobalSearchScope getScopeWithoutCodeReferences(@NotNull PsiElement element);
 
+  @Nullable
+  public abstract GlobalSearchScope getScopeWithoutImplicitToStringCodeReferences(@NotNull PsiElement aClass);
+
   /**
    * @return a hierarchy of direct inheritors built on compilation time.
    * This hierarchy is restricted by searchFileType and searchScope.

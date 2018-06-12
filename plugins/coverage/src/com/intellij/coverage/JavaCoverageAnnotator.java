@@ -24,11 +24,11 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -231,6 +231,12 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
     return getPercentage(info.coveredClassCount, info.totalClassCount);
   }
 
+  public String getBranchCoveredPercentage(@Nullable PackageAnnotator.SummaryCoverageInfo info) {
+    if (info == null) return null;
+    return getPercentage(info.coveredBranchCount, info.totalBranchCount);
+  }
+
+
   private static String getPercentage(int covered, int total) {
     final int percentage = total == 0 ? 100 : (int)((double)covered / total * 100);
     return percentage + "% (" + covered + "/" + total + ")";
@@ -246,6 +252,9 @@ public class JavaCoverageAnnotator extends BaseCoverageAnnotator {
 
     coverageInfo.totalLineCount = info.totalLineCount + testInfo.totalLineCount;
     coverageInfo.coveredLineCount = info.getCoveredLineCount() + testInfo.getCoveredLineCount();
+
+    coverageInfo.totalBranchCount = info.totalBranchCount + testInfo.totalBranchCount;
+    coverageInfo.coveredBranchCount = info.coveredBranchCount + testInfo.coveredBranchCount;
     return coverageInfo;
   }
 

@@ -267,17 +267,21 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Title or Explanatory Caption: <legend>
 
 	legend.elem =
-		element legend { legend.inner & legend.attrs }
+		element legend { legend.inner & legend.attrs } & nonW3C
 	legend.attrs =
 		(	common.attrs
 		)
 	legend.inner =
 		(	common.inner.phrasing
-		|	h1.elem
-		|	h2.elem
-		|	h3.elem
-		|	h4.elem
-		|	h5.elem
-		|	h6.elem
-		|	hgroup.elem
+		)
+	legend.elem.w3c =
+		element legend { legend.inner.w3c & legend.attrs } & W3Conly
+	legend.inner.w3c =
+		(	common.inner.phrasing
+		&	h1.elem*
+		&	h2.elem*
+		&	h3.elem*
+		&	h4.elem*
+		&	h5.elem*
+		&	h6.elem*
 		)

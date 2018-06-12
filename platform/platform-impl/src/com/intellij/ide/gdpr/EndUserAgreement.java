@@ -9,7 +9,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -133,9 +132,6 @@ public final class EndUserAgreement {
 
   @NotNull
   private static String getDocumentName() {
-    if (!PlatformUtils.isCommercialEdition()) {
-      return PRIVACY_POLICY_DOCUMENT_NAME;
-    }
     try {
       final String docName = new String(FileUtilRt.loadFileText(getDocumentNameFile(), StandardCharsets.UTF_8));
       if (!StringUtil.isEmptyOrSpaces(docName)) {
@@ -165,10 +161,6 @@ public final class EndUserAgreement {
       myName = name;
       myText = text;
       myVersion = parseVersion(text);
-    }
-
-    public boolean isPrivacyPolicy() {
-      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName);
     }
 
     public boolean isAccepted() {

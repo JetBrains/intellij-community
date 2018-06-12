@@ -13,7 +13,7 @@ class a  {
 
   void f2(int i) {
     try {
-      <error descr="Unhandled exception: java.io.FileNotFoundException">new FileReader("")</error>;
+      new <error descr="Unhandled exception: java.io.FileNotFoundException">FileReader</error>("");
     }
     finally {
       if (i==4) <error descr="Unhandled exception: java.lang.ClassNotFoundException">throw new ClassNotFoundException();</error>
@@ -22,7 +22,7 @@ class a  {
 
   void f3(int i) {
     try {
-      <error descr="Unhandled exception: java.io.FileNotFoundException">new FileReader("")</error>;
+      new <error descr="Unhandled exception: java.io.FileNotFoundException">FileReader</error>("");
     }
     finally {
       if (i==1) return;
@@ -31,7 +31,7 @@ class a  {
 
   void f4(int i) {
     try {
-      <error descr="Unhandled exception: java.io.FileNotFoundException">new FileReader("")</error>;
+      new <error descr="Unhandled exception: java.io.FileNotFoundException">FileReader</error>("");
     }
     finally {
       if (i==1) <error descr="Unhandled exception: java.io.FileNotFoundException">throw new FileNotFoundException();</error>

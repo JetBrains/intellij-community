@@ -47,7 +47,7 @@ class ExtendedJTreeCellReader : BasicJTreeCellReader(), JTreeCellReader {
 
   override fun valueAt(tree: JTree, modelValue: Any?): String? {
     if (modelValue == null) return null
-    val isLeaf = try { modelValue is DefaultMutableTreeNode &&  modelValue.leafCount == 1 } catch (e: Error) { false }
+    val isLeaf: Boolean = try { modelValue is DefaultMutableTreeNode && modelValue.isLeaf } catch (e: Error) { false }
     val cellRendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, modelValue, false, false, isLeaf, 0, false)
     return getValueWithCellRenderer(cellRendererComponent)
   }

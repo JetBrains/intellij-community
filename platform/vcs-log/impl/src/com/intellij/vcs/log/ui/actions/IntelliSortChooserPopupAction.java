@@ -90,7 +90,7 @@ public class IntelliSortChooserPopupAction extends DumbAwareAction {
     @Override
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
-      e.getPresentation().setEnabled(myUI.areGraphActionsEnabled() && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE));
+      e.getPresentation().setEnabled(!myUI.getDataPack().isEmpty() && myProperties.exists(MainVcsLogUiProperties.BEK_SORT_TYPE));
     }
 
     @Override

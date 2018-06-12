@@ -63,6 +63,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   public AllModels execute(final BuildController controller) {
     configureAdditionalTypes(controller);
 
+    long startTime = System.currentTimeMillis();
     //outer conditional is needed to be compatible with 1.8
     final IdeaProject ideaProject = myIsPreviewMode ? controller.getModel(BasicIdeaProject.class) : controller.getModel(IdeaProject.class);
     if (ideaProject == null || ideaProject.getModules().isEmpty()) {
@@ -71,15 +72,22 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     AllModels allModels = new AllModels(ideaProject);
     allModels.setGradleProjectDirSupported(myIsGradleProjectDirSupported);
+    allModels.logPerformance("Get model IdeaProject" + (myIsPreviewMode ? " (preview mode)" : ""), System.currentTimeMillis() - startTime);
+
+    long startTimeBuildEnv = System.currentTimeMillis();
     BuildEnvironment buildEnvironment = controller.findModel(BuildEnvironment.class);
     allModels.setBuildEnvironment(buildEnvironment);
+    allModels.logPerformance("Get model BuildEnvironment", System.currentTimeMillis() - startTimeBuildEnv);
+
     addExtraProject(controller, allModels, null);
     for (IdeaModule module : ideaProject.getModules()) {
       addExtraProject(controller, allModels, module);
     }
 
     if (myIsCompositeBuildsSupported) {
+      long startTimeGradleBuild = System.currentTimeMillis();
       GradleBuild gradleBuild = controller.getModel(GradleBuild.class);
+      allModels.logPerformance("Get model GradleBuild", System.currentTimeMillis() - startTimeGradleBuild);
       for (GradleBuild build : gradleBuild.getIncludedBuilds()) {
         IdeaProject ideaIncludedProject = controller.findModel(build, IdeaProject.class);
         allModels.getIncludedBuilds().add(ideaIncludedProject);
@@ -131,9 +139,13 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
   private void addExtraProject(@NotNull BuildController controller, @NotNull AllModels allModels, @Nullable IdeaModule model) {
     for (Class aClass : myExtraProjectModelClasses) {
       try {
+        long startTime = System.currentTimeMillis();
         Object extraProject = controller.findModel(model, aClass);
         if (extraProject == null) continue;
         allModels.addExtraProject(extraProject, aClass, model != null ? model.getGradleProject() : null);
+        allModels.logPerformance("Get model " + aClass.getName()
+                                 + (model == null ? " without target" : " for module " + model.getName()),
+                                 System.currentTimeMillis() - startTime);
       }
       catch (Exception e) {
         // do not fail project import in a preview mode
@@ -148,6 +160,7 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
 
     private final List<IdeaProject> includedBuilds = new ArrayList<IdeaProject>();
     private boolean isGradleProjectDirSupported;
+    private final Map<String, Long> performanceTrace = new LinkedHashMap<String, Long>();
 
     public AllModels(@NotNull IdeaProject ideaProject) {
       super(ideaProject);
@@ -199,6 +212,14 @@ public class ProjectImportAction implements BuildAction<ProjectImportAction.AllM
       else {
         return modelClazz.getName() + '@' + ("root" + getRootModel().getName().hashCode());
       }
+    }
+
+    public void logPerformance(@NotNull final String description, long millis) {
+      performanceTrace.put(description, millis);
+    }
+
+    public Map<String, Long> getPerformanceTrace() {
+      return performanceTrace;
     }
   }
 }

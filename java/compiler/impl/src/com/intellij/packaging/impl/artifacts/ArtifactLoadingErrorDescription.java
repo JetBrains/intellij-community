@@ -15,14 +15,12 @@
  */
 package com.intellij.packaging.impl.artifacts;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ConfigurationErrorDescription;
 import com.intellij.openapi.module.ConfigurationErrorType;
 import com.intellij.openapi.project.Project;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
@@ -42,11 +40,7 @@ public class ArtifactLoadingErrorDescription extends ConfigurationErrorDescripti
   public void ignoreInvalidElement() {
     final ModifiableArtifactModel model = ArtifactManager.getInstance(myProject).createModifiableModel();
     model.removeArtifact(myArtifact);
-    new WriteAction() {
-      protected void run(@NotNull final Result result) {
-        model.commit();
-      }
-    }.execute();
+    WriteAction.run(() -> model.commit());
   }
 
   @Override

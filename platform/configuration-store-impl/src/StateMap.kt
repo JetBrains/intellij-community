@@ -9,8 +9,8 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.isEmpty
 import gnu.trove.THashMap
-import org.iq80.snappy.SnappyFramedInputStream
-import org.iq80.snappy.SnappyFramedOutputStream
+import net.jpountz.lz4.LZ4BlockInputStream
+import net.jpountz.lz4.LZ4BlockOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.util.*
@@ -18,13 +18,13 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  SnappyFramedOutputStream(byteOut).use {
+  LZ4BlockOutputStream(byteOut).use {
     serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
-private fun unarchiveState(state: ByteArray) = SnappyFramedInputStream(ByteArrayInputStream(state), false).use { deserializeElementFromBinary(it) }
+private fun unarchiveState(state: ByteArray) = LZ4BlockInputStream(ByteArrayInputStream(state)).use { deserializeElementFromBinary(it) }
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray

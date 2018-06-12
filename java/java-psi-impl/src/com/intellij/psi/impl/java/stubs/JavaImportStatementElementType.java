@@ -31,7 +31,6 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -70,7 +69,7 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
       if (type == JavaElementType.JAVA_CODE_REFERENCE || type == JavaElementType.IMPORT_STATIC_REFERENCE) {
         refText = JavaSourceUtil.getReferenceText(tree, child);
       }
-      else if (type == JavaTokenType.ASTERISK) {
+      else if (type == JavaTokenType.DOT) {
         isOnDemand = true;
       }
     }
@@ -88,8 +87,8 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
   @NotNull
   @Override
   public PsiImportStatementStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    final byte flags = dataStream.readByte();
-    final StringRef refText = dataStream.readName();
+    byte flags = dataStream.readByte();
+    String refText = dataStream.readNameString();
     return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 

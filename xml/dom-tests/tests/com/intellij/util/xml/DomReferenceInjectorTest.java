@@ -418,11 +418,13 @@ public class DomReferenceInjectorTest extends DomHardCoreTestCase {
 
       return new PsiReference[] {
         new PsiReference() {
+          @NotNull
           @Override
           public PsiElement getElement() {
             return element;
           }
 
+          @NotNull
           @Override
           public TextRange getRangeInElement() {
             return refRange;

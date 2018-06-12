@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.collectors;
 
 import org.jetbrains.java.decompiler.main.DecompilerContext;
@@ -24,9 +22,7 @@ public class BytecodeSourceMapper {
     Map<Integer, Integer> method_mapping = class_mapping.computeIfAbsent(methodName, k -> new HashMap<>());
 
     // don't overwrite
-    if (!method_mapping.containsKey(bytecodeOffset)) {
-      method_mapping.put(bytecodeOffset, sourceLine);
-    }
+    method_mapping.putIfAbsent(bytecodeOffset, sourceLine);
   }
 
   public void addTracer(String className, String methodName, BytecodeMappingTracer tracer) {

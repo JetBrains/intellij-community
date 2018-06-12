@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import org.jetbrains.yaml.psi.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 
@@ -213,7 +213,7 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     fields.stream()
           .filter(field -> !field.isAnyNameAllowed())
           .forEach(field -> {
-      final List<Field> fieldPath = Stream.concat(currentPath.stream(), Stream.of(field)).collect(Collectors.toList());
+      final List<Field> fieldPath = StreamEx.of(currentPath).append(field).toList();
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
             if (metaType instanceof YamlMetaClass) {

@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>SerializableHasSerialVersionUIDField.java</file>
+    <line>6</line>
+    <package>com.siyeh.igtest.serialization.serializable_can_have_default_serial_uid</package>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">'Serializable' can have default generated 'serialVersionUID'</problem_class>
+    <description>'serialVersionUID' differs from default generated</description>
+  </problem>
+
+</problems>

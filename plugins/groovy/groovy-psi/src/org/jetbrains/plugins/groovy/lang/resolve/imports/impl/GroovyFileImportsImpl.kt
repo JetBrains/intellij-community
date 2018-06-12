@@ -57,6 +57,10 @@ internal class GroovyFileImportsImpl(
     return allNamedImports.doProcess(processor, state, place)
   }
 
+  override fun processStaticStarImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+    return staticStarImports.doProcess(processor, state, place)
+  }
+
   override fun processAllStarImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     return allStarImports.doProcess(processor, state, place)
   }

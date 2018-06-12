@@ -1,7 +1,6 @@
 public class Foo {
     void m() {
-        new IFoo() {<caret>
-        };
+        new IFoo()<caret>
         f();
     }
 }

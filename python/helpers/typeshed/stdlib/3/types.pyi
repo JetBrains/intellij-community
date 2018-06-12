@@ -4,14 +4,13 @@
 # TODO parts of this should be conditional on version
 
 import sys
+# ModuleType is exported from this module, but for circular import
+# reasons exists in its own stub file (with ModuleSpec and Loader).
+from _importlib_modulespec import ModuleType as ModuleType  # Exported
 from typing import (
     Any, Awaitable, Callable, Dict, Generic, Iterator, Mapping, Optional, Tuple, TypeVar,
     Union, overload, Type
 )
-
-# ModuleType is exported from this module, but for circular import
-# reasons exists in its own stub file (with ModuleSpec and Loader).
-from _importlib_modulespec import ModuleType as ModuleType  # Exported
 
 _T = TypeVar('_T')
 _T_co = TypeVar('_T_co', covariant=True)
@@ -78,8 +77,10 @@ class MappingProxyType(Mapping[_KT, _VT], Generic[_KT, _VT]):
     def __iter__(self) -> Iterator[_KT]: ...
     def __len__(self) -> int: ...
 
-# TODO: use __getattr__ and __setattr__ instead of inheriting from Any, pending mypy#521.
-class SimpleNamespace(Any): ...  # type: ignore
+class SimpleNamespace:
+    def __getattribute__(self, name: str) -> Any: ...
+    def __setattr__(self, name: str, value: Any) -> None: ...
+    def __delattr__(self, name: str) -> None: ...
 
 class GeneratorType:
     gi_code = ...  # type: CodeType
@@ -152,10 +153,19 @@ class BuiltinFunctionType:
 BuiltinMethodType = BuiltinFunctionType
 
 class TracebackType:
-    tb_frame = ...  # type: FrameType
-    tb_lasti = ...  # type: int
-    tb_lineno = ...  # type: int
-    tb_next = ...  # type: TracebackType
+    if sys.version_info >= (3, 7):
+        def __init__(self, tb_next: Optional[TracebackType], tb_frame: FrameType, tb_lasti: int, tb_lineno: int) -> None: ...
+        tb_next: Optional[TracebackType]
+    else:
+        @property
+        def tb_next(self) -> Optional[TracebackType]: ...
+    # the rest are read-only even in 3.7
+    @property
+    def tb_frame(self) -> FrameType: ...
+    @property
+    def tb_lasti(self) -> int: ...
+    @property
+    def tb_lineno(self) -> int: ...
 
 class FrameType:
     f_back = ...  # type: FrameType
@@ -166,6 +176,9 @@ class FrameType:
     f_lineno = ...  # type: int
     f_locals = ...  # type: Dict[str, Any]
     f_trace = ...  # type: Callable[[], None]
+    if sys.version_info >= (3, 7):
+        f_frace_lines: bool
+        f_trace_opcodes: bool
 
     def clear(self) -> None: ...
 

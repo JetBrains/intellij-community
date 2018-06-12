@@ -7,7 +7,7 @@ class CatchExceptions {
 
 	void bar() {
 		try {
-		foo();<caret>
+		fo<caret>o();
 		}
 	}
 }

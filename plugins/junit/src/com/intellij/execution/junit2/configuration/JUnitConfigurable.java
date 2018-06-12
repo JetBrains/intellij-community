@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit2.configuration;
 
@@ -22,9 +8,9 @@ import com.intellij.execution.MethodBrowser;
 import com.intellij.execution.ShortenCommandLine;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.execution.junit.JUnitUtil;
 import com.intellij.execution.junit.TestClassFilter;
+import com.intellij.execution.testDiscovery.TestDiscoveryExtension;
 import com.intellij.execution.testframework.SourceScope;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.ui.*;
@@ -110,10 +96,10 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
   private LabeledComponent<ShortenCommandLineModeCombo> myShortenClasspathModeCombo;
   private JComboBox myForkCb;
   private JBLabel myTestLabel;
-  private JComboBox myTypeChooser;
+  private JComboBox<Integer> myTypeChooser;
   private JBLabel mySearchForTestsLabel;
   private JPanel myScopesPanel;
-  private JComboBox myRepeatCb;
+  private JComboBox<String> myRepeatCb;
   private JTextField myRepeatCountField;
   private LabeledComponent<JComboBox<String>> myChangeListLabeledComponent;
   private LabeledComponent<RawCommandLineEditor> myUniqueIdField;
@@ -131,6 +117,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myModule.getComponent().addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         myCommonJavaParameters.setModuleContext(myModuleSelector.getModule());
+        reloadTestKindModel();
       }
     });
     myBrowsers = new BrowseModuleValueActionListener[]{
@@ -166,21 +153,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       new CategoryBrowser(project),
       null
     };
-    // Garbage support
-    final DefaultComboBoxModel aModel = new DefaultComboBoxModel();
-    aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
-    aModel.addElement(JUnitConfigurationModel.DIR);
-    aModel.addElement(JUnitConfigurationModel.PATTERN);
-    aModel.addElement(JUnitConfigurationModel.CLASS);
-    aModel.addElement(JUnitConfigurationModel.METHOD);
-    aModel.addElement(JUnitConfigurationModel.CATEGORY);
-    aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
-    aModel.addElement(JUnitConfigurationModel.TAGS);
-    if (Registry.is("testDiscovery.enabled")) {
-      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
-      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
-    }
-    myTypeChooser.setModel(aModel);
+
+    reloadTestKindModel();
     myTypeChooser.setRenderer(new ListCellRendererWrapper<Integer>() {
       @Override
       public void customize(JList list, Integer value, int index, boolean selected, boolean hasFocus) {
@@ -207,7 +181,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
             setText("UniqueId");
             break;
           case JUnitConfigurationModel.TAGS:
-            setText("Tags (JUnit 5)");
+            setText("Tags");
             break;
           case JUnitConfigurationModel.BY_SOURCE_POSITION:
             setText("Through source location");
@@ -225,7 +199,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myTestLocations[JUnitConfigurationModel.DIR] = myDir;
     myTestLocations[JUnitConfigurationModel.CATEGORY] = myCategory;
 
-    myRepeatCb.setModel(new DefaultComboBoxModel(RepeatCount.REPEAT_TYPES));
+    myRepeatCb.setModel(new DefaultComboBoxModel<>(RepeatCount.REPEAT_TYPES));
     myRepeatCb.setSelectedItem(RepeatCount.ONCE);
     myRepeatCb.addActionListener(new ActionListener() {
       @Override
@@ -236,7 +210,8 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
 
     final JPanel panel = myPattern.getComponent();
     panel.setLayout(new BorderLayout());
-    myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField());
+    myPatternTextField = new TextFieldWithBrowseButton(new ExpandableTextField(text -> Arrays.asList(text.split("\\|\\|")), 
+                                                                               strings -> StringUtil.join(strings, "||")));
     myPatternTextField.setButtonIcon(IconUtil.getAddIcon());
     panel.add(myPatternTextField, BorderLayout.CENTER);
     myTestLocations[JUnitConfigurationModel.PATTERN] = myPattern;
@@ -288,12 +263,44 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     myChangeListLabeledComponent.getComponent().setModel(model);
     model.addElement("All");
 
-    final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
-    for (LocalChangeList changeList : changeLists) {
-      model.addElement(changeList.getName());
+    if (!project.isDefault()) {
+      final List<LocalChangeList> changeLists = ChangeListManager.getInstance(project).getChangeLists();
+      for (LocalChangeList changeList : changeLists) {
+        model.addElement(changeList.getName());
+      }
     }
 
     myShortenClasspathModeCombo.setComponent(new ShortenCommandLineModeCombo(myProject, myJrePathEditor, myModule.getComponent()));
+  }
+
+  private void reloadTestKindModel() {
+    int selectedIndex = myTypeChooser.getSelectedIndex();
+    final DefaultComboBoxModel<Integer> aModel = new DefaultComboBoxModel<>();
+    aModel.addElement(JUnitConfigurationModel.ALL_IN_PACKAGE);
+    aModel.addElement(JUnitConfigurationModel.DIR);
+    aModel.addElement(JUnitConfigurationModel.PATTERN);
+    aModel.addElement(JUnitConfigurationModel.CLASS);
+    aModel.addElement(JUnitConfigurationModel.METHOD);
+
+    Module module = getModuleSelector().getModule();
+    GlobalSearchScope searchScope = module != null ? GlobalSearchScope.moduleRuntimeScope(module, true) 
+                                                   : GlobalSearchScope.allScope(myProject);
+
+    if (JavaPsiFacade.getInstance(myProject).findPackage("org.junit") != null) {
+      aModel.addElement(JUnitConfigurationModel.CATEGORY);
+    }
+
+    if (JUnitUtil.isJUnit5(searchScope, myProject)) {
+      aModel.addElement(JUnitConfigurationModel.UNIQUE_ID);
+      aModel.addElement(JUnitConfigurationModel.TAGS);
+    }
+
+    if (Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
+      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_POSITION);
+      aModel.addElement(JUnitConfigurationModel.BY_SOURCE_CHANGES);
+    }
+    myTypeChooser.setModel(aModel);
+    myTypeChooser.setSelectedIndex(selectedIndex);
   }
 
   private static void addRadioButtonsListeners(final JRadioButton[] radioButtons, ChangeListener listener) {
@@ -314,7 +321,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       configuration.setRepeatCount(1);
     }
     configuration.getPersistentData().setUniqueIds(setArrayFromText(myUniqueIdField));
-    configuration.getPersistentData().setTags(setArrayFromText(myTagsField));
+    configuration.getPersistentData().setTags(myTagsField.getComponent().getText());
     configuration.getPersistentData().setChangeList((String)myChangeListLabeledComponent.getComponent().getSelectedItem());
     myModel.apply(getModuleSelector().getModule(), configuration);
     applyHelpersTo(configuration);
@@ -355,8 +362,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
     String[] ids = configuration.getPersistentData().getUniqueIds();
     myUniqueIdField.getComponent().setText(ids != null ? StringUtil.join(ids, " ") : null);
 
-    String[] tags = configuration.getPersistentData().getTags();
-    myTagsField.getComponent().setText(tags != null ? StringUtil.join(tags, " ") : null);
+    myTagsField.getComponent().setText(configuration.getPersistentData().getTags());
 
     myCommonJavaParameters.reset(configuration);
     getModuleSelector().reset(configuration);
@@ -740,9 +746,7 @@ public class JUnitConfigurable<T extends JUnitConfiguration> extends SettingsEdi
       }
       final ClassFilter.ClassFilterWithScope classFilter;
       try {
-        final JUnitConfiguration configurationCopy =
-          new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject(),
-                                 JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+        final JUnitConfiguration configurationCopy = new JUnitConfiguration(ExecutionBundle.message("default.junit.configuration.name"), getProject());
         applyEditorTo(configurationCopy);
         classFilter = TestClassFilter
           .create(SourceScope.modulesWithDependencies(configurationCopy.getModules()), configurationCopy.getConfigurationModule().getModule());

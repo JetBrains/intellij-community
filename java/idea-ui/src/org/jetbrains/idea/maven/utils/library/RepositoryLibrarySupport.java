@@ -82,7 +82,7 @@ public class RepositoryLibrarySupport {
     realLibraryProperties.setMavenId(libraryProperties.getMavenId());
 
     ApplicationManager.getApplication().runWriteAction(() -> modifiableModel.commit());
-    RepositoryUtils.loadDependencies(
+    RepositoryUtils.loadDependenciesToLibrary(
       module.getProject(),
       library,
       model.isDownloadSources(),

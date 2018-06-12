@@ -2,7 +2,6 @@ package org.jetbrains.jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Random;
 import java.util.function.Predicate;
 
 
@@ -10,16 +9,16 @@ import java.util.function.Predicate;
  * @author peter
  */
 class GenerativeDataStructure extends AbstractDataStructure {
-  private final Random random;
+  private final IntSource random;
 
-  GenerativeDataStructure(Random random, StructureNode node, int sizeHint) {
+  GenerativeDataStructure(IntSource random, StructureNode node, int sizeHint) {
     super(node, sizeHint);
     this.random = random;
   }
 
   @Override
   public int drawInt(@NotNull IntDistribution distribution) {
-    int i = distribution.generateInt(random);
+    int i = random.drawInt(distribution);
     node.addChild(new IntData(node.id.childId(null), i, distribution));
     return i;
   }

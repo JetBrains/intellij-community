@@ -21,6 +21,7 @@ import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class XmlFileElement extends FileElement implements XmlElementType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.XmlFileElement");
@@ -34,7 +35,7 @@ public class XmlFileElement extends FileElement implements XmlElementType {
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     if (child.getElementType() == XML_DOCUMENT ||
         child.getElementType() == HTML_DOCUMENT) {

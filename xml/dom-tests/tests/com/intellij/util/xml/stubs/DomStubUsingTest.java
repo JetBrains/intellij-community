@@ -147,12 +147,7 @@ public class DomStubUsingTest extends DomStubTest {
     assertNotNull(domElement);
     assertTrue(domElement.exists());
 
-    new WriteCommandAction.Simple(null) {
-      @Override
-      protected void run() {
-        domElement.undefine();
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(null).run(() -> domElement.undefine());
 
     assertFalse(domElement.exists());
   }

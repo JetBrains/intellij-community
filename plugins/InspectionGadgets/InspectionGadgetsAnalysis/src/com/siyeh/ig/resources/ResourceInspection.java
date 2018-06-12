@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.resources;
 
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.WriteExternalException;
@@ -27,6 +28,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jdom.Element;
@@ -508,14 +510,16 @@ public abstract class ResourceInspection extends BaseInspection {
         return;
       }
       final PsiExpression[] expressions = argumentList.getExpressions();
-      for (PsiExpression expression : expressions) {
-        final PsiExpression expression1 = PsiUtil.deparenthesizeExpression(expression);
-        if (!(expression1 instanceof PsiReferenceExpression)) {
+      for (PsiExpression argument : expressions) {
+        final PsiExpression maybeReferenceExpression = PsiUtil.deparenthesizeExpression(argument);
+        if (!(maybeReferenceExpression instanceof PsiReferenceExpression)) {
           continue;
         }
-        final PsiReferenceExpression referenceExpression = (PsiReferenceExpression)expression1;
-        final PsiElement target = referenceExpression.resolve();
-        if (boundVariable.equals(target)) {
+        if (ExpressionUtils.isReferenceTo(maybeReferenceExpression, boundVariable)) {
+          if (callExpression instanceof PsiMethodCallExpression) {
+            PsiExpression returnedValue = JavaMethodContractUtil.findReturnedValue((PsiMethodCallExpression)callExpression);
+            if (returnedValue != null && returnedValue == maybeReferenceExpression) return;
+          }
           escaped = true;
           break;
         }

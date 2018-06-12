@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -17,7 +15,7 @@ import org.jdom.Element
 /**
  * todo rename component state name to "ExternalProjectModuleManager" for consistency (2018.1 release)
  */
-@State(name = "ExternalModuleListStorage", storages = arrayOf(Storage("modules.xml")), externalStorageOnly = true)
+@State(name = "ExternalModuleListStorage", storages = [(Storage("modules.xml"))], externalStorageOnly = true)
 internal class ExternalModuleListStorage(private val project: Project) : PersistentStateComponent<Element>, ProjectModelElement {
   var loadedState: Set<ModulePath>? = null
     private set

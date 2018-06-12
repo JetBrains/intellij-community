@@ -15,6 +15,7 @@ except ImportError:
     from _pydev_bundle import _pydev_imports_tipper
 
 from _pydevd_bundle import pydevd_xml
+from _pydevd_bundle.pydevd_constants import dict_iter_items
 dir2 = _pydev_imports_tipper.generate_imports_tip_for_module
 
 
@@ -105,7 +106,13 @@ class Completer:
 
         a = {}
 
-        for dict_with_comps in [__builtin__.__dict__, self.namespace, self.global_namespace]: #@UndefinedVariable
+        filtered_builtin = {}
+        for (key, val) in dict_iter_items(__builtin__.__dict__):
+            # do not use dict comprehension for Py2.6 compatibility
+            if val not in (True, False, None):
+                filtered_builtin[key] = val
+
+        for dict_with_comps in [filtered_builtin, self.namespace, self.global_namespace]: #@UndefinedVariable
             a.update(dict_with_comps)
 
         filter = _StartsWithFilter(text)

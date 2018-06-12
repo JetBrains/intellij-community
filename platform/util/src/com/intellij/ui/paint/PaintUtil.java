@@ -48,13 +48,6 @@ public class PaintUtil {
       public int round(double value) {
         return (int)Math.round(value);
       }
-    },
-    /** Rounds with flooring .5 value */
-    ROUND_FLOOR_BIAS {
-      @Override
-      public int round(double value) {
-        return (int)Math.ceil(value - 0.5);
-      }
     };
 
     /**
@@ -154,6 +147,13 @@ public class PaintUtil {
       devValue += (rm == FLOOR) ? -1 : 1;
     }
     return devValue / scale;
+  }
+
+  /**
+   * @see #alignToInt(double, ScaleContext, RoundingMode, ParityMode)
+   */
+  public static double alignToInt(double usrValue, @NotNull ScaleContext ctx) {
+    return alignToInt(usrValue, ctx, null, null);
   }
 
   /**

@@ -106,7 +106,7 @@ public class GitNewResetDialog extends DialogWrapper {
       return String.format("%s -> %s", getSourceText(entry.getKey()), getTargetText(entry.getValue()));
     }
 
-    StringBuilder desc = new StringBuilder("");
+    StringBuilder desc = new StringBuilder();
     for (Map.Entry<GitRepository, VcsFullCommitDetails> entry : commits.entrySet()) {
       GitRepository repository = entry.getKey();
       VcsFullCommitDetails commit = entry.getValue();

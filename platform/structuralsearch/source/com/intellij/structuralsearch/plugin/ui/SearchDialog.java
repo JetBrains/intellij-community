@@ -2,7 +2,6 @@
 package com.intellij.structuralsearch.plugin.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.FindBundle;
 import com.intellij.find.FindSettings;
 import com.intellij.ide.IdeBundle;
@@ -10,8 +9,6 @@ import com.intellij.ide.util.scopeChooser.ScopeChooserCombo;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -41,6 +38,7 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.ComboboxSpeedSearch;
 import com.intellij.ui.IdeBorderFactory;
@@ -49,7 +47,6 @@ import com.intellij.ui.TitledSeparator;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -98,6 +95,7 @@ public class SearchDialog extends DialogWrapper {
   private String mySavedEditorText;
   private JPanel myContentPanel;
   private JComponent myEditorPanel;
+  private JButton myEditVariablesButton;
 
   public SearchDialog(SearchContext searchContext) {
     this(searchContext, true, true);
@@ -170,20 +168,29 @@ public class SearchDialog extends DialogWrapper {
   void initiateValidation() {
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(() -> {
-      final boolean valid = ReadAction.compute(() -> {
-        try {
-          return Boolean.valueOf(isValid());
-        }
-        catch (ProcessCanceledException e) {
-          throw e;
-        }
-        catch (RuntimeException e) {
-          Logger.getInstance(SearchDialog.class).error(e);
-        }
-        return Boolean.FALSE;
-      }).booleanValue();
-      ApplicationManager.getApplication().invokeLater(() -> getOKAction().setEnabled(valid));
+      try {
+        final boolean valid = isValid();
+        final boolean compiled = isCompiled();
+        ApplicationManager.getApplication().invokeLater(() -> {
+          myEditVariablesButton.setEnabled(compiled);
+          getOKAction().setEnabled(valid);
+        });
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
+      }
+      catch (RuntimeException e) {
+        Logger.getInstance(SearchDialog.class).error(e);
+      }
     }, 250);
+  }
+
+  private boolean isCompiled() {
+    try {
+      return PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false) != null;
+    } catch (MalformedPatternException e) {
+      return false;
+    }
   }
 
   protected void buildOptions(JPanel searchOptions) {
@@ -219,12 +226,7 @@ public class SearchDialog extends DialogWrapper {
     dialects.setRenderer(new ListCellRendererWrapper<Language>() {
       @Override
       public void customize(JList list, Language value, int index, boolean selected, boolean hasFocus) {
-        if (value == null) {
-          setText("None");
-        }
-        else {
-          setText(value.getDisplayName());
-        }
+        setText((value == null) ? "None" : value.getDisplayName());
       }
     });
     dialects.addItemListener(new ItemListener() {
@@ -238,20 +240,7 @@ public class SearchDialog extends DialogWrapper {
     final JLabel jLabel = new JLabel(SSRBundle.message("search.dialog.file.type.label"));
     final JLabel jLabel2 = new JLabel(SSRBundle.message("search.dialog.context.label"));
     final JLabel jLabel3 = new JLabel(SSRBundle.message("search.dialog.file.dialect.label"));
-    searchOptions.add(
-      UIUtil.createOptionLine(
-        new JComponent[]{
-          jLabel,
-          fileTypes,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel2,
-          contexts,
-          (JComponent)Box.createHorizontalStrut(8),
-          jLabel3,
-          dialects,
-        }
-      )
-    );
+    searchOptions.add(UIUtil.createOptionLine(jLabel, fileTypes, jLabel2, contexts, jLabel3, dialects));
 
     jLabel.setLabelFor(fileTypes);
     jLabel2.setLabelFor(contexts);
@@ -401,11 +390,9 @@ public class SearchDialog extends DialogWrapper {
     final PsiFile file = documentManager.getPsiFile(document);
     if (file == null) return;
 
-    new WriteCommandAction(project, file) {
-      @Override protected void run(@NotNull Result result) {
-        CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, file).run(() -> {
+      CodeStyleManager.getInstance(project).adjustLineIndent(file, new TextRange(0, document.getTextLength()));
+    });
   }
 
   protected void startSearching() {
@@ -550,7 +537,7 @@ public class SearchDialog extends DialogWrapper {
     panel.add(Box.createHorizontalStrut(8));
 
     panel.add(
-      createJButtonForAction(
+      myEditVariablesButton = createJButtonForAction(
         new AbstractAction() {
           {
             putValue(NAME, SSRBundle.message("edit.variables.button"));
@@ -588,6 +575,7 @@ public class SearchDialog extends DialogWrapper {
             Configuration[] configurations = dialog.getSelectedConfigurations();
             if (configurations.length == 1) {
               setSearchPattern(configurations[0]);
+              initiateValidation();
             }
           }
         }
@@ -621,11 +609,11 @@ public class SearchDialog extends DialogWrapper {
     return panel;
   }
 
-  protected List<Variable> getVariablesFromListeners() {
+  protected List<String> getVariablesFromListeners() {
     return getVarsFrom(searchCriteriaEdit);
   }
 
-  protected static List<Variable> getVarsFrom(Editor searchCriteriaEdit) {
+  protected static List<String> getVarsFrom(Editor searchCriteriaEdit) {
     SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
     return (handler == null) ? new ArrayList<>() : new ArrayList<>(handler.getVariables());
   }
@@ -692,7 +680,7 @@ public class SearchDialog extends DialogWrapper {
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
-      filterOutUnusedVariableConstraints(myConfiguration);
+      removeUnusedVariableConstraints(myConfiguration);
       ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
 
       startSearching();
@@ -702,25 +690,17 @@ public class SearchDialog extends DialogWrapper {
     }
   }
 
-  private void filterOutUnusedVariableConstraints(Configuration configuration) {
-    final List<Variable> variables = getVariablesFromListeners();
-    final List<String> variableNames = new ArrayList<>();
-    for (Variable variable : variables) {
-      variableNames.add(variable.getName());
-    }
-    variableNames.add(Configuration.CONTEXT_VAR_NAME);
+  private void removeUnusedVariableConstraints(Configuration configuration) {
+    final List<String> variableNames = getVariablesFromListeners();
     configuration.getMatchOptions().retainVariableConstraints(variableNames);
   }
 
   public Configuration getConfiguration() {
-    filterOutUnusedVariableConstraints(myConfiguration);
+    removeUnusedVariableConstraints(myConfiguration);
     setValuesToConfig(myConfiguration);
     return myConfiguration;
   }
 
-  /**
-   * Needs to be called on the event thread or while holding a read lock.
-   */
   protected boolean isValid() {
     try {
       Matcher.validate(searchContext.getProject(), getConfiguration().getMatchOptions());

@@ -68,10 +68,33 @@
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.lang.Thread getFirstQueuedThread()'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getExclusiveQueuedThreads()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getQueuedThreads()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getSharedQueuedThreads()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads(java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.concurrent.locks.AbstractQueuedSynchronizer.Node addWaiter(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer java.util.concurrent.locks.AbstractQueuedSynchronizer.Node enq(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
@@ -108,7 +131,15 @@
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject boolean isOwnedBy(java.util.concurrent.locks.AbstractQueuedSynchronizer) 0'>
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
+    <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject java.util.Collection&lt;java.lang.Thread&gt; getWaitingThreads()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject java.util.concurrent.locks.AbstractQueuedSynchronizer.Node addConditionWaiter()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject void doSignal(java.util.concurrent.locks.AbstractQueuedSynchronizer.Node) 0'>
@@ -176,6 +207,7 @@
     </item>
     <item name='java.util.concurrent.locks.ReentrantLock java.util.concurrent.locks.Condition newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -185,6 +217,7 @@
     </item>
     <item name='java.util.concurrent.locks.ReentrantLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -267,6 +300,7 @@
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.Sync java.util.concurrent.locks.AbstractQueuedSynchronizer.ConditionObject newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -275,6 +309,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.Sync.ThreadLocalHoldCounter java.util.concurrent.locks.ReentrantReadWriteLock.Sync.HoldCounter initialValue()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock WriteLock(java.util.concurrent.locks.ReentrantReadWriteLock)'>
@@ -296,6 +333,7 @@
     </item>
     <item name='java.util.concurrent.locks.ReentrantReadWriteLock.WriteLock java.util.concurrent.locks.Condition newCondition()'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

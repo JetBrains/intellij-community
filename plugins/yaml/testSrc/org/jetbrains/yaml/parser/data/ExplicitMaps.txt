@@ -19,7 +19,7 @@ YAML file
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           PsiElement(scalar list)('block key')
-        PsiElement(Eol)('\n')
+          PsiElement(block scalar EOL)('\n')
         PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML sequence

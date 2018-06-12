@@ -70,6 +70,7 @@ public class CodeFoldingConfigurable extends CompositeConfigurable<CodeFoldingOp
       Project project = editor.getProject();
       if (project != null && !project.isDefault()) CodeFoldingManager.getInstance(project).scheduleAsyncFoldingUpdate(editor);
     }
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.FOLDING_CONFIGURABLE_TOPIC).changesApplied();
   }
 
   @Override

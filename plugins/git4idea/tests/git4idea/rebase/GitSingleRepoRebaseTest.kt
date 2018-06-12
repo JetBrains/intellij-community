@@ -448,7 +448,7 @@ class GitSingleRepoRebaseTest : GitRebaseBaseTest() {
     GitTestingRebaseProcess(project, GitRebaseParams.editCommits("HEAD^", rebaseEditor, false), repo).rebase()
 
     assertNotNull("Didn't get any rebase entries", receivedEntries)
-    assertEquals("Rebase entries parsed incorrectly", listOf(GitRebaseEntry.Action.pick), receivedEntries!!.map { it.action })
+    assertEquals("Rebase entries parsed incorrectly", listOf(GitRebaseEntry.Action.PICK), receivedEntries!!.map { it.action })
   }
 
   // IDEA-176455

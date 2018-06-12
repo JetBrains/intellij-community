@@ -3,15 +3,15 @@ package com.intellij.util.ui;
 
 import com.intellij.openapi.util.IconLoader.CachedImageIcon;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
-import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.JBUI.ScaleContext;
 import junit.framework.TestCase;
-import org.junit.After;
-import org.junit.Before;
+import org.junit.BeforeClass;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 import javax.swing.*;
 import java.io.File;
@@ -19,32 +19,20 @@ import java.net.MalformedURLException;
 
 import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 
 /**
  * Tests that {@link CachedImageIcon#scale(float)} doesn't break the contract and scales correctly.
  *
  * @author tav
  */
-public class IconScaleTest extends TestScaleHelper {
+public class IconScaleTest {
+  @ClassRule
+  public static final ExternalResource manageState = new RestoreScaleRule();
 
-  private static boolean initialSvgProp;
-
-  @Before
-  @Override
-  public void setState() {
-    super.setState();
-
-    RegistryValue rv = Registry.get("ide.svg.icon");
-    initialSvgProp = rv.asBoolean();
-    rv.setValue(true);
-  }
-
-  @After
-  @Override
-  public void restoreState() {
-    super.restoreState();
-
-    Registry.get("ide.svg.icon").setValue(initialSvgProp);
+  @BeforeClass
+  public static void beforeClass() {
+    TestScaleHelper.setRegistryProperty("ide.svg.icon", "true");
   }
 
   @Test
@@ -96,7 +84,7 @@ public class IconScaleTest extends TestScaleHelper {
     TestCase.assertEquals("unexpected scaled icon real height", ICON_SCALED_REAL_SIZE, ImageUtil.getRealHeight(IconUtil.toImage(scaledIcon)));
   }
 
-  private String getIconPath() {
+  private static String getIconPath() {
     return PlatformTestUtil.getPlatformTestDataPath() + "ui/abstractClass.svg";
   }
 }

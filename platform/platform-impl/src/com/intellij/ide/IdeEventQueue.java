@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.FocusManagerImpl;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.concurrency.AppExecutorUtil;
@@ -66,6 +67,7 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 import java.util.function.Consumer;
 import java.util.stream.Collectors;
 
@@ -90,8 +92,6 @@ public class IdeEventQueue extends EventQueue {
   private final List<Runnable> myIdleListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final List<Runnable> myActivityListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Alarm myIdleRequestsAlarm = new Alarm();
-  private final Alarm myIdleTimeCounterAlarm = new Alarm();
-  private long myIdleTime;
   private final Map<Runnable, MyFireIdleRequest> myListener2Request = new HashMap<>();
   // IdleListener -> MyFireIdleRequest
   private final IdeKeyEventDispatcher myKeyEventDispatcher = new IdeKeyEventDispatcher(this);
@@ -117,7 +117,7 @@ public class IdeEventQueue extends EventQueue {
   private boolean myIsInInputEvent;
   @NotNull
   private AWTEvent myCurrentEvent = new InvocationEvent(this, EmptyRunnable.getInstance());
-  private long myLastActiveTime;
+  private volatile long myLastActiveTime = System.nanoTime();
   private long myLastEventTime = System.currentTimeMillis();
   private WindowManagerEx myWindowManager;
   private final List<EventDispatcher> myDispatchers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -137,7 +137,9 @@ public class IdeEventQueue extends EventQueue {
   public void executeWhenAllFocusEventsLeftTheQueue(Runnable runnable) {
     ifFocusEventsInTheQueue(e -> {
       if (myRunnablesWaitingFocusChange.containsKey(e)) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("We have already had a runnable for the event: " + e);
+        }
         myRunnablesWaitingFocusChange.get(e).add(runnable);
       }
       else {
@@ -157,7 +159,9 @@ public class IdeEventQueue extends EventQueue {
   private void ifFocusEventsInTheQueue(Consumer<AWTEvent> yes, Runnable no) {
     if (!focusEventsList.isEmpty()) {
 
-      FOCUS_AWARE_RUNNABLES_LOG.debug(runnablesWaitingForFocusChangeState());
+      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug(runnablesWaitingForFocusChangeState());
+      }
 
       // find the latest focus gained
       Optional<AWTEvent> first = focusEventsList.stream().
@@ -166,16 +170,22 @@ public class IdeEventQueue extends EventQueue {
         findFirst();
 
       if (first.isPresent()) {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable saved for : [" + first.get().getID() + "; " + first.get().getSource() + "] -> " + no.getClass().getName());
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable saved for : [" + first.get().getID() + "; " + first.get().getSource() + "] -> " + no.getClass().getName());
+        }
         yes.accept(first.get());
       }
       else {
-        FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
+        if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+          FOCUS_AWARE_RUNNABLES_LOG.debug("    runnable is run on EDT if needed : " + no.getClass().getName());
+        }
         UIUtil.invokeLaterIfNeeded(no);
       }
     }
     else {
-      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list is empty: runnable is run right away : " + no.getClass().getName());
+      }
       UIUtil.invokeLaterIfNeeded(no);
     }
   }
@@ -192,7 +202,6 @@ public class IdeEventQueue extends EventQueue {
     EventQueue systemEventQueue = Toolkit.getDefaultToolkit().getSystemEventQueue();
     assert !(systemEventQueue instanceof IdeEventQueue) : systemEventQueue;
     systemEventQueue.push(this);
-    addIdleTimeCounterRequest();
 
     KeyboardFocusManager keyboardFocusManager = IdeKeyboardFocusManager.replaceDefault();
     keyboardFocusManager.addPropertyChangeListener("permanentFocusOwner", e -> {
@@ -241,28 +250,6 @@ public class IdeEventQueue extends EventQueue {
 
   public void setWindowManager(final WindowManagerEx windowManager) {
     myWindowManager = windowManager;
-  }
-
-
-  private void addIdleTimeCounterRequest() {
-    if (isTestMode()) return;
-
-    myIdleTimeCounterAlarm.cancelAllRequests();
-    myLastActiveTime = System.currentTimeMillis();
-    myIdleTimeCounterAlarm.addRequest(() -> {
-      myIdleTime += System.currentTimeMillis() - myLastActiveTime;
-      addIdleTimeCounterRequest();
-    }, 20000, ModalityState.NON_MODAL);
-  }
-
-  /**
-   * This class performs special processing in order to have {@link #getIdleTime()} return more or less up-to-date data.
-   * <p/>
-   * This method allows to stop that processing (convenient in non-intellij environment like upsource).
-   */
-  @SuppressWarnings("unused") // Used in upsource.
-  public void stopIdleTimeCalculation() {
-    myIdleTimeCounterAlarm.cancelAllRequests();
   }
 
   public void addIdleListener(@NotNull final Runnable runnable, final int timeoutMillis) {
@@ -369,7 +356,7 @@ public class IdeEventQueue extends EventQueue {
   @Override
   public void dispatchEvent(@NotNull AWTEvent e) {
 
-    if (skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
+    if (Registry.is("skip.typed.event") && skipTypedKeyEventsIfFocusReturnsToOwner(e)) return;
 
     if (isMetaKeyPressedOnLinux(e)) return;
 
@@ -442,8 +429,10 @@ public class IdeEventQueue extends EventQueue {
 
     if (isFocusEvent(e)) {
       AWTEvent finalEvent = e;
-      FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
-        collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+      if (FOCUS_AWARE_RUNNABLES_LOG.isDebugEnabled()) {
+        FOCUS_AWARE_RUNNABLES_LOG.debug("Focus event list (execute on focus event): " + focusEventsList.stream().
+          collect(StringBuilder::new, (builder, event) -> builder.append(", [" + event.getID() + "; " + event.getSource().getClass().getName() + "]"), StringBuilder::append));
+      }
       StreamEx.of(focusEventsList).
         takeWhileInclusive(entry -> !entry.equals(finalEvent)).
         collect(Collectors.toList()).stream().map(entry -> {
@@ -457,7 +446,8 @@ public class IdeEventQueue extends EventQueue {
         forEach(runnable -> {
           try {
             runnable.run();
-          } catch (Exception exc) {
+          }
+          catch (Exception exc) {
             LOG.info(exc);
           }
         });
@@ -699,7 +689,7 @@ public class IdeEventQueue extends EventQueue {
             MouseEvent.MOUSE_PRESSED == e.getID() ||
             MouseEvent.MOUSE_RELEASED == e.getID() ||
             MouseEvent.MOUSE_CLICKED == e.getID()) {
-          addIdleTimeCounterRequest();
+          myLastActiveTime = System.nanoTime();
           for (Runnable activityListener : myActivityListeners) {
             activityListener.run();
           }
@@ -721,6 +711,9 @@ public class IdeEventQueue extends EventQueue {
 
       return;
     }
+
+    if (e instanceof InputEvent)
+      TouchBarsManager.onInputEvent((InputEvent)e);
 
     if (dispatchByCustomDispatchers(e)) return;
 
@@ -954,9 +947,8 @@ public class IdeEventQueue extends EventQueue {
   }
 
   public long getIdleTime() {
-    return myIdleTime;
+    return TimeUnit.NANOSECONDS.toMillis(System.nanoTime() - myLastActiveTime);
   }
-
 
   @NotNull
   public IdePopupManager getPopupManager() {
@@ -1220,6 +1212,8 @@ public class IdeEventQueue extends EventQueue {
   private final ConcurrentLinkedQueue<AWTEvent> focusEventsList =
       new ConcurrentLinkedQueue<>();
 
+  private final AtomicLong ourLastTimePressed = new AtomicLong(0);
+
   // return true if posted, false if consumed immediately
   boolean doPostEvent(@NotNull AWTEvent event) {
     for (PostEventHook listener : myPostEventListeners.getListeners()) {
@@ -1263,30 +1257,40 @@ public class IdeEventQueue extends EventQueue {
           delayKeyEvents.set(true);
           lastTypeaheadTimestamp = System.currentTimeMillis();
         }
-      } else if (event.getID() == KeyEvent.KEY_RELEASED && Registry.is("action.aware.typeAhead.searchEverywhere")) {
+      } else if (event.getID() == KeyEvent.KEY_RELEASED && Registry.is("action.aware.typeAhead.searchEverywhere")
+                 && KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() instanceof IdeFrame) {
         KeyEvent keyEvent = (KeyEvent)event;
-        if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT
-
-          ) {
+        // 1. check key code
+        // 2. if key code != SHIFT -> restart
+        // 3. if has other modifiers - > restart
+        // 4. keyEvent.getWhen() - ourLastTimePressed.get() < 100 -> restart
+        // 5. if the second time and (keyEvent.getWhen() - ourLastTimePressed.get() > 500) -> restart state
+        if (keyEvent.getKeyCode() == KeyEvent.VK_SHIFT) {
           switch (mySearchEverywhereTypeaheadState) {
             case DEACTIVATED:
               mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.TRIGGERED;
+              ourLastTimePressed.set(keyEvent.getWhen());
               break;
             case TRIGGERED:
-              delayKeyEvents.set(true);
-              lastTypeaheadTimestamp = System.currentTimeMillis();
-              mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
+              long timeDelta = keyEvent.getWhen() - ourLastTimePressed.get();
+              if (timeDelta >= 100 && timeDelta <= 500) {
+                delayKeyEvents.set(true);
+                lastTypeaheadTimestamp = System.currentTimeMillis();
+                mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DETECTED;
+              } else {
+                mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+                flushDelayedKeyEvents();
+                // no need to reset ourLastTimePressed
+              }
               break;
           }
-        } else if (mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.TRIGGERED) {
-          mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
         }
       }
 
       if (isTypeaheadTimeoutExceeded(event)) {
         TYPEAHEAD_LOG.debug("Clear delayed events because of IdeFrame deactivation");
         delayKeyEvents.set(false);
-        myDelayedKeyEvents.clear();
+        flushDelayedKeyEvents();
         lastTypeaheadTimestamp = 0;
         if (Registry.is("action.aware.typeAhead.searchEverywhere")) {
           mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
@@ -1295,6 +1299,18 @@ public class IdeEventQueue extends EventQueue {
     }
 
     super.postEvent(event);
+
+    if (Registry.is("action.aware.typeAhead.searchEverywhere") &&
+        event instanceof KeyEvent &&
+        (mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.TRIGGERED ||
+         mySearchEverywhereTypeaheadState == SearchEverywhereTypeaheadState.DETECTED))
+    {
+      long timeDelta = ((KeyEvent)event).getWhen() - ourLastTimePressed.get();
+      if (timeDelta < 100 || timeDelta > 500) {
+        mySearchEverywhereTypeaheadState = SearchEverywhereTypeaheadState.DEACTIVATED;
+        flushDelayedKeyEvents();
+      }
+    }
 
     if (Registry.is("action.aware.typeAhead")) {
       if (doesFocusGoIntoPopup(event)) {

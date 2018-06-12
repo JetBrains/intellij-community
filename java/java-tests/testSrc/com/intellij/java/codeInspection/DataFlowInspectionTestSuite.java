@@ -30,6 +30,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspectionTest.class);
     suite.addTestSuite(DataFlowInspection8Test.class);
     suite.addTestSuite(DataFlowInspection9Test.class);
+    suite.addTestSuite(DataFlowInspection10Test.class);
     suite.addTestSuite(DataFlowInspectionHeavyTest.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
     suite.addTestSuite(ContractCheckTest.class);
@@ -50,12 +51,15 @@ public class DataFlowInspectionTestSuite {
 
     suite.addTestSuite(NullableStuffInspectionTest.class);
     suite.addTestSuite(NullableStuffInspectionAncientTest.class);
+    
+    suite.addTestSuite(CheckerNullityTest.class);
 
     suite.addTestSuite(AddAssertStatementFixTest.class);
     suite.addTestSuite(SurroundWithIfFixTest.class);
     suite.addTestSuite(ReplaceWithTernaryOperatorTest.class);
     suite.addTestSuite(ReplaceWithObjectsEqualsTest.class);
     suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
+    suite.addTestSuite(ReplaceWithNullCheckFixTest.class);
     suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
     suite.addTestSuite(UnwrapIfStatementFixTest.class);

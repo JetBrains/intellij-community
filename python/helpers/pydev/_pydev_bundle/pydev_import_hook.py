@@ -1,4 +1,5 @@
 import sys
+import traceback
 from types import ModuleType
 
 
@@ -25,6 +26,7 @@ class ImportHookManager(ModuleType):
                     self._modules_to_patch.pop(name)
         except:
             sys.stderr.write("Matplotlib support failed\n")
+            traceback.print_exc()
         return module
 
 

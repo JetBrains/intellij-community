@@ -47,7 +47,7 @@ internal abstract class PropertyRenderer(
   private val expectedTypes: List<ExpectedTypeInfo> = when (propertyKind) {
     PropertyKind.GETTER -> extractExpectedTypes(project, request.returnType).orObject(target)
     PropertyKind.BOOLEAN_GETTER -> listOf(PsiType.BOOLEAN.toExpectedType())
-    PropertyKind.SETTER -> extractExpectedTypes(project, request.parameters.single().second).orObject(target)
+    PropertyKind.SETTER -> extractExpectedTypes(project, request.expectedParameters.single().expectedTypes).orObject(target)
   }
 
   private lateinit var targetDocument: Document

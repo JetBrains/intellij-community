@@ -80,6 +80,7 @@ public class JavaDocInfoGenerator {
   private static final String VALUE_TAG = "value";
   private static final String LT = "&lt;";
   private static final String GT = "&gt;";
+  private static final String NBSP = "&nbsp;";
 
   private static final Pattern ourWhitespaces = Pattern.compile("[ \\n\\r\\t]+");
   private static final Pattern ourRelativeHtmlLinks = Pattern.compile("<A.*?HREF=\"([^\":]*)\"", Pattern.CASE_INSENSITIVE | Pattern.DOTALL);
@@ -403,14 +404,17 @@ public class JavaDocInfoGenerator {
         LOG.debug("Documentation for " + myElement + " was generated from source code, it wasn't found at following URLs: ", docURLs);
       }
       else {
-        if (buffer.length() == 0) {
-          buffer.append("<html><body></body></html>");
-        }
-        String errorSection = "<p id=\"error\">Following external urls were checked:<br>&nbsp;&nbsp;&nbsp;<i>" +
-                              StringUtil.join(docURLs, XmlStringUtil::escapeString, "</i><br>&nbsp;&nbsp;&nbsp;<i>") +
-                              "</i><br>The documentation for this element is not found. Please add all the needed paths to API docs in " +
-                              "<a href=\"open://Project Settings\">Project Settings.</a></p>";
-        buffer.append( errorSection);
+        buffer.append(DocumentationMarkup.CONTENT_START).append("<p class='centered'>");
+        buffer.append(DocumentationMarkup.GRAYED_START)
+              .append("The following documentation url").append(docURLs.size() > 1 ? "s were" : " was").append(" checked:")
+              .append(BR_TAG)
+              .append(NBSP)
+              .append(StringUtil.join(docURLs, XmlStringUtil::escapeString, BR_TAG + NBSP))
+              .append(DocumentationMarkup.GRAYED_END);
+        buffer.append(BR_TAG);
+        buffer.append("<a href=\"open://Project Settings\">Edit API docs paths</a>");
+        buffer.append("</p>");
+        buffer.append(DocumentationMarkup.CONTENT_END);
       }
     }
 
@@ -811,7 +815,7 @@ public class JavaDocInfoGenerator {
     return null;
   }
 
-  public static void appendExpressionValue(StringBuilder buffer, PsiExpression initializer, String label) {
+  public static void appendExpressionValue(StringBuilder buffer, PsiExpression initializer) {
     String text = initializer.getText().trim();
     int index1 = text.indexOf('\n');
     if (index1 < 0) index1 = text.length();
@@ -820,7 +824,7 @@ public class JavaDocInfoGenerator {
     int index = Math.min(index1, index2);
     boolean trunc = index < text.length();
     text = text.substring(0, index);
-    buffer.append(label);
+    buffer.append(" = ");
     buffer.append(StringUtil.escapeXml(text));
     if (trunc) {
       buffer.append("...");
@@ -850,8 +854,9 @@ public class JavaDocInfoGenerator {
       }
       PsiExpression constantInitializer = calcInitializerExpression(variable);
       if (constantInitializer != null) {
-        buffer.append("\n");
-        appendExpressionValue(buffer, constantInitializer, CodeInsightBundle.message("javadoc.resolved.value"));
+        buffer.append(DocumentationMarkup.GRAYED_START);
+        appendExpressionValue(buffer, constantInitializer);
+        buffer.append(DocumentationMarkup.GRAYED_END);
       }
     }
   }
@@ -864,7 +869,7 @@ public class JavaDocInfoGenerator {
     for (AnnotationDocGenerator anno : AnnotationDocGenerator.getAnnotationsToShow(owner)) {
       anno.generateAnnotation(buffer, format);
 
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       if (splitAnnotations) buffer.append("\n");
     }
   }
@@ -1073,7 +1078,7 @@ public class JavaDocInfoGenerator {
     int indent = 0;
     if (!modifiers.isEmpty()) {
       buffer.append(modifiers);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       indent += modifiers.length() + 1;
     }
 
@@ -1081,13 +1086,13 @@ public class JavaDocInfoGenerator {
     indent += StringUtil.unescapeXml(StringUtil.stripHtml(typeParamsString, true)).length();
     if (!typeParamsString.isEmpty()) {
       buffer.append(typeParamsString);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       indent++;
     }
 
     if (method.getReturnType() != null) {
       indent += generateType(buffer, method.getReturnType(), method, generateLink, useShortNames);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       indent++;
     }
     buffer.append("<b>");
@@ -1103,7 +1108,7 @@ public class JavaDocInfoGenerator {
       PsiParameter parm = parameters[i];
       generateAnnotations(buffer, parm, place, false);
       generateType(buffer, parm.getType(), method, generateLink, useShortNames);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       if (parm.getName() != null) {
         buffer.append(parm.getName());
       }
@@ -1117,20 +1122,13 @@ public class JavaDocInfoGenerator {
     PsiClassType[] refs = method.getThrowsList().getReferencedTypes();
     if (refs.length > 0) {
       buffer.append("\n");
-      indent -= THROWS_KEYWORD.length() + 1;
-      for (int i = 0; i < indent; i++) {
-        buffer.append(" ");
-      }
-      indent += THROWS_KEYWORD.length() + 1;
       buffer.append(THROWS_KEYWORD);
-      buffer.append("&nbsp;");
+      buffer.append(NBSP);
       for (int i = 0; i < refs.length; i++) {
         generateLink(buffer, useShortNames ? refs[i].getPresentableText() : refs[i].getCanonicalText(), null, method, false);
         if (i < refs.length - 1) {
-          buffer.append(",\n");
-          for (int j = 0; j < indent; j++) {
-            buffer.append(" ");
-          }
+          buffer.append(",")
+                .append(NBSP);
         }
       }
     }
@@ -1177,7 +1175,7 @@ public class JavaDocInfoGenerator {
   protected void generatePrologue(StringBuilder buffer) {
     URL baseUrl = getBaseUrl();
     if (baseUrl != null) {
-      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>");
+      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>"); // used to resolve URLs of local images
     }
   }
 

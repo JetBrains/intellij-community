@@ -435,11 +435,6 @@ public class ShelveChangesManager extends AbstractProjectComponent implements JD
   }
 
   private void rollbackChangesAfterShelve(@NotNull Collection<Change> changes) {
-    final ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (progressIndicator != null) {
-      progressIndicator.startNonCancelableSection();
-    }
-
     final String operationName = UIUtil.removeMnemonic(RollbackChangesDialog.operationNameByChanges(myProject, changes));
     boolean modalContext = ApplicationManager.getApplication().isDispatchThread() && LaterInvocator.isInModalContext();
     new RollbackWorker(myProject, operationName, modalContext).

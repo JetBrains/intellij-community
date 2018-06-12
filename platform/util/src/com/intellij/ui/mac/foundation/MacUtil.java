@@ -191,12 +191,10 @@ public class MacUtil {
     return null;
   }
 
-  public static void matrixHasYou(Object activity) {
-    if (activity != null) {
-      ID processInfo = invoke("NSProcessInfo", "processInfo");
-      invoke(processInfo, "endActivity:", activity);
-      cfRelease((ID)activity);
-    }
+  public static void matrixHasYou(@NotNull Object activity) {
+    ID processInfo = invoke("NSProcessInfo", "processInfo");
+    invoke(processInfo, "endActivity:", activity);
+    cfRelease((ID)activity);
   }
 
   @NotNull

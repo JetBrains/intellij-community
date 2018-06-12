@@ -51,6 +51,7 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageTargetUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
+import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -94,6 +95,11 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
 
   protected PsiFile findPsiFile(VirtualFile f) {
     return PsiManager.getInstance(myProject).findFile(f);
+  }
+
+  protected void configureProjectPom(@Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
+    VirtualFile file = createProjectPom(xml);
+    configTest(file);
   }
 
   protected void configTest(VirtualFile f) {

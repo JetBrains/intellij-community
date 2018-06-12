@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -26,8 +28,6 @@ import com.intellij.ui.SmartExpander;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.ui.treeStructure.actions.CollapseAllAction;
-import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
@@ -51,7 +51,6 @@ import java.awt.event.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
 import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
 import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
@@ -83,16 +82,17 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
 
+  private boolean myModelUpdateInProgress;
+
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
                      boolean highlightProblems) {
     super(ChangesBrowserNode.createRoot(project));
     myProject = project;
-    myGroupingSupport = new ChangesGroupingSupport(myProject, this);
+    myGroupingSupport = new ChangesGroupingSupport(myProject, this, highlightProblems);
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
-    setHorizontalAutoScrollingEnabled(false);
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
@@ -263,24 +263,34 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public abstract void rebuildTree();
 
   protected void updateTreeModel(@NotNull DefaultTreeModel model) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myModelUpdateInProgress = true;
+    try {
+      ApplicationManager.getApplication().assertIsDispatchThread();
 
-    TreeState state = null;
-    if (myKeepTreeState) {
-      state = TreeState.createOn(this, getRoot());
-    }
+      TreeState state = null;
+      if (myKeepTreeState) {
+        state = TreeState.createOn(this, getRoot());
+      }
 
-    setModel(model);
-    myIsModelFlat = isCurrentModelFlat();
-    setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
+      setModel(model);
+      myIsModelFlat = isCurrentModelFlat();
+      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
 
-    if (myKeepTreeState) {
-      //noinspection ConstantConditions
-      state.applyTo(this, getRoot());
+      if (myKeepTreeState) {
+        //noinspection ConstantConditions
+        state.applyTo(this, getRoot());
+      }
+      else {
+        resetTreeState();
+      }
     }
-    else {
-      resetTreeState();
+    finally {
+      myModelUpdateInProgress = false;
     }
+  }
+
+  public boolean isModelUpdateInProgress() {
+    return myModelUpdateInProgress;
   }
 
   private void resetTreeState() {
@@ -456,24 +466,49 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     TreeUtil.expandAll(this);
   }
 
+
+  /**
+   * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
+   */
   public AnAction[] getTreeActions() {
-    final ExpandAllAction expandAllAction = new ExpandAllAction(this) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!myGroupingSupport.isNone() || !myIsModelFlat);
-      }
+    return new AnAction[]{
+      ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),
+      createExpandAllAction(false),
+      createCollapseAllAction(false)
     };
-    final CollapseAllAction collapseAllAction = new CollapseAllAction(this) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!myGroupingSupport.isNone() || !myIsModelFlat);
-      }
-    };
-    AnAction[] actions = new AnAction[]{ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP), expandAllAction, collapseAllAction};
-    expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), this);
-    collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), this);
-    return actions;
   }
+
+  @NotNull
+  public AnAction createExpandAllAction(boolean headerAction) {
+    if (headerAction) {
+      return CommonActionsManager.getInstance().createExpandAllHeaderAction(new MyTreeExpander(), this);
+    }
+    else {
+      return CommonActionsManager.getInstance().createExpandAllAction(new MyTreeExpander(), this);
+    }
+  }
+
+  @NotNull
+  public AnAction createCollapseAllAction(boolean headerAction) {
+    if (headerAction) {
+      return CommonActionsManager.getInstance().createCollapseAllHeaderAction(new MyTreeExpander(), this);
+    }
+    else {
+      return CommonActionsManager.getInstance().createCollapseAllAction(new MyTreeExpander(), this);
+    }
+  }
+
+  private class MyTreeExpander extends DefaultTreeExpander {
+    public MyTreeExpander() {
+      super(ChangesTree.this);
+    }
+
+    @Override
+    public boolean isVisible(AnActionEvent event) {
+      return !myGroupingSupport.isNone() || !myIsModelFlat;
+    }
+  }
+
 
   public void setSelectionMode(@JdkConstants.TreeSelectionMode int mode) {
     getSelectionModel().setSelectionMode(mode);

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler;
 
 import org.jetbrains.java.decompiler.main.decompiler.ConsoleDecompiler;
@@ -36,7 +36,7 @@ public class BulkDecompilationTest {
     unpack(new File(fixture.getTestDataDir(), "bulk.jar"), classes);
 
     ConsoleDecompiler decompiler = fixture.getDecompiler();
-    decompiler.addSpace(classes, true);
+    decompiler.addSource(classes);
     decompiler.decompileContext();
 
     assertFilesEqual(new File(fixture.getTestDataDir(), "bulk"), fixture.getTargetDir());
@@ -55,7 +55,7 @@ public class BulkDecompilationTest {
   private void doTestJar(String name) {
     ConsoleDecompiler decompiler = fixture.getDecompiler();
     String jarName = name + ".jar";
-    decompiler.addSpace(new File(fixture.getTestDataDir(), jarName), true);
+    decompiler.addSource(new File(fixture.getTestDataDir(), jarName));
     decompiler.decompileContext();
 
     File unpacked = new File(fixture.getTempDir(), "unpacked");

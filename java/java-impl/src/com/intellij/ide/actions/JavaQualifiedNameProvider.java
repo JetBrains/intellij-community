@@ -30,12 +30,14 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
+import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.LogicalRoot;
 import com.intellij.util.LogicalRootsManager;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -85,18 +87,24 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
     else if (element instanceof PsiMember) {
       final PsiMember member = (PsiMember)element;
-      PsiClass containingClass = member.getContainingClass();
-      if (containingClass instanceof PsiAnonymousClass) containingClass = ((PsiAnonymousClass)containingClass).getBaseClassType().resolve();
-      if (containingClass == null) return null;
-      String classFqn = containingClass.getQualifiedName();
-      if (classFqn == null) return member.getName();  // refer to member of anonymous class by simple name
-      if (member instanceof PsiMethod && containingClass.findMethodsByName(member.getName(), false).length > 1) {
-        return classFqn + "#" + member.getName() + getParameterString((PsiMethod)member);
+      String memberFqn = getMethodOrFieldQualifiedName(member);
+      if (memberFqn == null) return null;
+      if (member instanceof PsiMethod && MethodSignatureUtil.hasOverloads((PsiMethod)member)) {
+        return memberFqn + getParameterString((PsiMethod)member);
       }
-      return classFqn + "#" + member.getName();
+      return memberFqn;
     }
 
     return null;
+  }
+
+  private static String getMethodOrFieldQualifiedName(@NotNull PsiMember member) {
+    PsiClass containingClass = member.getContainingClass();
+    if (containingClass instanceof PsiAnonymousClass) containingClass = ((PsiAnonymousClass)containingClass).getBaseClassType().resolve();
+    if (containingClass == null) return null;
+    String classFqn = containingClass.getQualifiedName();
+    if (classFqn == null) return member.getName();  // refer to member of anonymous class by simple name
+    return classFqn + "#" + member.getName();
   }
 
   public PsiElement qualifiedNameToElement(final String fqn, final Project project) {
@@ -348,5 +356,12 @@ public class JavaQualifiedNameProvider implements QualifiedNameProvider {
     }
     JavaCodeStyleManager codeStyleManagerEx = JavaCodeStyleManager.getInstance(element.getProject());
     codeStyleManagerEx.shortenClassReferences(element, JavaCodeStyleManager.INCOMPLETE_CODE);
+  }
+
+  public static boolean hasQualifiedName(@NotNull String qName, @NotNull PsiMethod member) {
+    String memberName = getMethodOrFieldQualifiedName(member);
+    if (memberName == null || !qName.startsWith(memberName + "(")) return false;
+    return qName.equals(memberName + getParameterString(member, false)) ||
+           qName.equals(memberName + getParameterString(member, true));
   }
 }

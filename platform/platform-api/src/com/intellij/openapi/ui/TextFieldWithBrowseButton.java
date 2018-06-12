@@ -84,10 +84,11 @@ public class TextFieldWithBrowseButton extends ComponentWithBrowseButton<JTextFi
   protected void installPathCompletion(final FileChooserDescriptor fileChooserDescriptor,
                                        @Nullable Disposable parent) {
     final Application application = ApplicationManager.getApplication();
-     if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
-     FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);
-   }
-        
+    if (application == null || application.isUnitTestMode() || application.isHeadlessEnvironment()) return;
+    FileChooserFactory.getInstance().installFileCompletion(getChildComponent(), fileChooserDescriptor, true, parent);
+  }
+
+  @NotNull
   public JTextField getTextField() {
     return getChildComponent();
   }

@@ -244,7 +244,7 @@ private class ModuleDescriptionsTree(project: Project) {
   fun installDoubleClickListener(action: () -> Unit) {
     object : DoubleClickListener() {
       override fun onDoubleClick(event: MouseEvent): Boolean {
-        if (tree.selectionPaths.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true }) {
+        if (tree.selectionPaths?.all { (it?.lastPathComponent as? ModuleDescriptionTreeNode)?.isLeaf == true } ?: false) {
           action()
           return true
         }
@@ -267,6 +267,10 @@ private class ModuleDescriptionsTree(project: Project) {
   fun fillTree(modules: Collection<ModuleDescription>) {
     removeAllNodes()
     helper.createModuleNodes(modules, root, model)
+    expandRoot()
+  }
+
+  private fun expandRoot() {
     tree.expandPath(TreePath(root))
   }
 
@@ -280,6 +284,7 @@ private class ModuleDescriptionsTree(project: Project) {
     for (node in toRemove) {
       helper.removeNode(node, root, model)
     }
+    expandRoot()
   }
 
   private fun findNodes(condition: (ModuleDescriptionNode) -> Boolean): List<ModuleDescriptionNode> {

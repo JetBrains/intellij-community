@@ -1,0 +1,68 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: -1, value: 0.0}
+    noGrid: true
+  - {}
+  - {}
+  - {noGrid: true}
+  count: 4
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id003 {horizontal: true, value: 6.0}
+      min: *id003
+      preferred: *id003
+    grow: 0.0
+  - {}
+  count: 2
+componentConstrains:
+  Profiler requires access to the kernel-level API. Enter the sudo password to allow this.:
+    spanX: 2097051
+    vertical:
+      gapAfter:
+        min: &id004 {horizontal: false, value: 20.0}
+        preferred: *id004
+      gapBefore:
+        min: &id005 {horizontal: false, value: 10.0}
+        preferred: *id005
+    wrap: true
+  'Sudo password:': {}
+  'JPasswordField #2': {spanX: 2097051, wrap: true}
+  !!binary "G1JlbWVtYmVy": {skip: 1, spanX: 2097051, wrap: true}
+  'SimpleColoredComponent #4':
+    spanX: 2097051
+    vertical:
+      gapAfter:
+        min: &id006 {horizontal: false, value: 20.0}
+        preferred: *id006
+      gapBefore:
+        min: &id007 {horizontal: false, value: 12.0}
+        preferred: *id007
+    wrap: true
+cellBounds:
+- [0, 0, 480, 62]
+- [0, 72, 83, 24]
+- [89, 72, 391, 24]
+- [89, 106, 391, 13]
+- [0, 129, 480, 52]
+componentBounds:
+  Profiler requires access to the kernel-level API. Enter the sudo password to allow this.: [
+    0, 10, 242, 32]
+  'Sudo password:': [0, 75, 83, 16]
+  'JPasswordField #2': [86, 69, 256, 30]
+  !!binary "G1JlbWVtYmVy": [86, 104, 89, 18]
+  'SimpleColoredComponent #4': [0, 141, 271, 20]

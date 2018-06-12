@@ -57,14 +57,14 @@ class X {
       "}",
 
       "/**\n" +
-      " * Some of the usl contained \n" +
+      " * Some of the usl contained\n" +
       " * {@link sdfsdf.test.ttttttt.ssss.stttt.tttttttcom}\n" +
       " */\n" +
       "public class X {\n" +
       "}")
   }
 
-  fun testDoNot() {
+  fun testNoWrapInALink() {
     getSettings().WRAP_LONG_LINES = true
     getSettings().RIGHT_MARGIN = 70
 

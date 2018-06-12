@@ -22,14 +22,14 @@ import java.util.Collection;
 public class CannotUndoReportDialog extends DialogWrapper {
   private static final int FILE_TEXT_PREVIEW_CHARS_LIMIT = 40;
 
-  private JList myProblemFilesList;
+  private JList<String> myProblemFilesList;
   private JPanel myPanel;
   private JLabel myProblemMessageLabel;
 
   public CannotUndoReportDialog(Project project, @Nls String problemText, Collection<DocumentReference> files) {
     super(project, false);
 
-    DefaultListModel model = new DefaultListModel();
+    DefaultListModel<String> model = new DefaultListModel<>();
     for (DocumentReference file : files) {
       final VirtualFile vFile = file.getFile();
       if (vFile != null) {

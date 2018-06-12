@@ -20,14 +20,13 @@ import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageView;
 import com.intellij.usages.UsageViewPresentation;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreeNode;
 
 public class UsageViewTreeModelBuilder extends DefaultTreeModel {
-  private final RootGroupNode myRootNode;
+  private final GroupNode.Root myRootNode;
   private final TargetsRootNode myTargetsNode;
 
   private final UsageTarget[] myTargets;
@@ -35,8 +34,8 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   private final String myTargetsNodeText;
 
   public UsageViewTreeModelBuilder(@NotNull UsageViewPresentation presentation, @NotNull UsageTarget[] targets) {
-    super(new RootGroupNode());
-    myRootNode = (RootGroupNode)root;
+    super(GroupNode.createRoot());
+    myRootNode = (GroupNode.Root)root;
     myTargetsNodeText = presentation.getTargetsNodeText();
     myTargets = targets;
     myTargetsNode = myTargetsNodeText == null ? null : new TargetsRootNode(myTargetsNodeText);
@@ -134,17 +133,6 @@ public class UsageViewTreeModelBuilder extends DefaultTreeModel {
   @Override
   public Object getRoot() {
     return myRootNode;
-  }
-
-  private static class RootGroupNode extends GroupNode {
-    private RootGroupNode() {
-      super(null, null, 0);
-    }
-
-    @NonNls
-    public String toString() {
-      return "Root "+super.toString();
-    }
   }
 
   @Override

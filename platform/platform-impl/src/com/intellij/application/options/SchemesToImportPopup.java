@@ -17,7 +17,7 @@ package com.intellij.application.options;
 
 import com.intellij.openapi.options.Scheme;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.UIUtil;
@@ -50,7 +50,7 @@ public abstract class SchemesToImportPopup<T> {
   }
 
   private void showList(JList list, Runnable selectAction) {
-    new PopupChooserBuilder(list).
+    JBPopupFactory.getInstance().createListPopupBuilder(list).
       setTitle("Import Scheme").
       setItemChoosenCallback(selectAction).
       createPopup().

@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.util.SystemInfoRt;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.MacUIUtil;
@@ -23,11 +11,14 @@ import com.intellij.util.ui.MacUIUtil;
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.basic.BasicPasswordFieldUI;
+import javax.swing.text.Caret;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.FocusListener;
 import java.awt.geom.Rectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -67,9 +58,23 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
 
   @Override
   public Dimension getPreferredSize(JComponent c) {
-    Dimension size = super.getPreferredSize(c);
+    return updatePreferredSize(super.getPreferredSize(c));
+  }
+
+  protected Dimension updatePreferredSize(Dimension size) {
     Insets i = getComponent().getInsets();
-    return new Dimension(size.width, Math.max(size.height, JBUI.scale(20) + i.top + i.bottom));
+    size.height = Math.max(size.height, getMinimumHeight() + i.top + i.bottom);
+    JBInsets.addTo(size, getComponent().getMargin());
+    return size;
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
+  }
+
+  @Override
+  public Dimension getMinimumSize(JComponent c) {
+    return getPreferredSize(c);
   }
 
   @Override
@@ -92,7 +97,7 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
                             MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
         g2.translate(r.x, r.y);
 
-        float bw = DarculaUIUtil.bw();
+        float bw = DarculaUIUtil.BW.getFloat();
 
         if (component.isEnabled() && component.isEditable()) {
           g2.setColor(component.getBackground());
@@ -102,6 +107,36 @@ public class DarculaPasswordFieldUI extends BasicPasswordFieldUI {
       } finally {
         g2.dispose();
       }
+    }
+  }
+
+  @Override
+  protected Rectangle getVisibleEditorRect() {
+    JTextComponent c = getComponent();
+    Rectangle bounds = new Rectangle(c.getSize());
+    JBInsets.removeFrom(bounds, c.getInsets());
+    JBInsets.removeFrom(bounds, c.getMargin());
+    return bounds;
+  }
+
+  @Override
+  public void installUI(JComponent c) {
+    super.installUI(c);
+    getComponent().setMargin(JBUI.insets(0, 5));
+  }
+
+  @Override
+  protected Caret createCaret() {
+    return new TextFieldWithPopupHandlerUI.MarginAwareCaret();
+  }
+
+  @Override
+  protected void installDefaults() {
+    super.installDefaults();
+
+    JTextComponent component = getComponent();
+    if (SystemInfoRt.isMac && SystemProperties.getBooleanProperty("idea.ui.set.password.echo.char", false)) {
+      LookAndFeel.installProperty(component, "echoChar", '•');
     }
   }
 }

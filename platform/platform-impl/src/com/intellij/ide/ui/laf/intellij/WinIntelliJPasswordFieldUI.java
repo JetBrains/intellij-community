@@ -16,22 +16,19 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.ide.ui.laf.darcula.ui.DarculaPasswordFieldUI;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.basic.BasicPasswordFieldUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
-import java.awt.event.FocusEvent;
-import java.awt.event.FocusListener;
 import java.awt.event.MouseListener;
 
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI.HOVER_PROPERTY;
 
-public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
-
+public class WinIntelliJPasswordFieldUI extends DarculaPasswordFieldUI {
   private MouseListener hoverListener;
-  private FocusListener focusListener;
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -42,18 +39,7 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
     super.installListeners();
     JTextComponent passwordField = getComponent();
     hoverListener = new DarculaUIUtil.MouseHoverPropertyTrigger(passwordField, HOVER_PROPERTY);
-    focusListener = new FocusListener() {
-      @Override public void focusGained(FocusEvent e) {
-        passwordField.repaint();
-      }
-
-      @Override public void focusLost(FocusEvent e) {
-        passwordField.repaint();
-      }
-    };
-
     passwordField.addMouseListener(hoverListener);
-    passwordField.addFocusListener(focusListener);
   }
 
   @Override public void uninstallListeners() {
@@ -61,10 +47,6 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
     JTextComponent passwordField = getComponent();
     if (hoverListener != null) {
       passwordField.removeMouseListener(hoverListener);
-    }
-
-    if (focusListener != null) {
-      passwordField.removeFocusListener(focusListener);
     }
   }
 
@@ -86,5 +68,10 @@ public class WinIntelliJPasswordFieldUI extends BasicPasswordFieldUI {
     } finally {
       g2.dispose();
     }
+  }
+
+  @Override
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 }

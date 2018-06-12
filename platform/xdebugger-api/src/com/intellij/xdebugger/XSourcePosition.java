@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.xdebugger;
 
@@ -20,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Represents position in a source file. Use {@link XDebuggerUtil#createPosition} and {@link XDebuggerUtil#createPositionByOffset} to
@@ -42,4 +29,11 @@ public interface XSourcePosition {
 
   @NotNull
   Navigatable createNavigatable(@NotNull Project project);
+
+  static boolean isOnTheSameLine(@Nullable XSourcePosition pos1, @Nullable XSourcePosition pos2) {
+    if (pos1 == null || pos2 == null) {
+      return false;
+    }
+    return pos1.getFile().equals(pos2.getFile()) && pos1.getLine() == pos2.getLine();
+  }
 }

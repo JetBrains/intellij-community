@@ -24,14 +24,21 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiVariable;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
 public class AssignInstruction extends Instruction {
   private final PsiExpression myRExpression;
+  private final PsiExpression myLExpression;
   @Nullable private final DfaValue myAssignedValue;
 
-  public AssignInstruction(PsiExpression RExpression, @Nullable DfaValue assignedValue) {
-    myRExpression = RExpression;
+  public AssignInstruction(PsiExpression rExpression, @Nullable DfaValue assignedValue) {
+    this(getLeftHandOfAssignment(rExpression), rExpression, assignedValue);
+  }
+
+  public AssignInstruction(PsiExpression lExpression, PsiExpression rExpression, @Nullable DfaValue assignedValue) {
+    myLExpression = lExpression;
+    myRExpression = rExpression;
     myAssignedValue = assignedValue;
   }
 
@@ -47,11 +54,7 @@ public class AssignInstruction extends Instruction {
 
   @Nullable
   public PsiExpression getLExpression() {
-    if(myRExpression == null) return null;
-    if(myRExpression.getParent() instanceof PsiAssignmentExpression) {
-      return ((PsiAssignmentExpression)myRExpression.getParent()).getLExpression();
-    }
-    return null;
+    return myLExpression;
   }
 
   public boolean isVariableInitializer() {
@@ -65,5 +68,15 @@ public class AssignInstruction extends Instruction {
 
   public String toString() {
     return "ASSIGN";
+  }
+
+  @Contract("null -> null")
+  @Nullable
+  private static PsiExpression getLeftHandOfAssignment(PsiExpression rExpression) {
+    if(rExpression == null) return null;
+    if(rExpression.getParent() instanceof PsiAssignmentExpression) {
+      return ((PsiAssignmentExpression)rExpression.getParent()).getLExpression();
+    }
+    return null;
   }
 }

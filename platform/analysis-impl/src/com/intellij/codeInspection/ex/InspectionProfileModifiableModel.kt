@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ex
 
 import com.intellij.openapi.project.Project
@@ -8,6 +6,7 @@ import com.intellij.openapi.util.InvalidDataException
 import com.intellij.openapi.util.WriteExternalException
 import com.intellij.profile.codeInspection.ProjectInspectionProfileManager
 import com.intellij.psi.PsiElement
+import com.intellij.psi.search.scope.packageSet.NamedScope
 import com.intellij.util.Consumer
 
 open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) : InspectionProfileImpl(source.name, source.myToolSupplier, source.profileManager, source.myBaseProfile, null) {
@@ -72,12 +71,27 @@ open class InspectionProfileModifiableModel(val source: InspectionProfileImpl) :
     return false
   }
 
+  fun isProperSetting(toolId: String, scope: NamedScope, project: Project): Boolean {
+    if (myBaseProfile != null) {
+      val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool
+      val actualWrapper = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }?.tool
+      return baseDefaultWrapper != null && actualWrapper != null && ScopeToolState.areSettingsEqual(baseDefaultWrapper, actualWrapper)
+    }
+    return false
+  }
+
   fun resetToBase(project: Project?) {
     initInspectionTools(project)
 
     copyToolsConfigurations(myBaseProfile, project)
     myChangedToolNames = null
     myUninitializedSettings.clear()
+  }
+
+  fun resetToBase(toolId: String, scope: NamedScope, project: Project?) {
+    val baseDefaultWrapper = myBaseProfile.getToolsOrNull(toolId, null)?.defaultState?.tool!!
+    val state = myTools[toolId]?.tools?.first { s -> scope == s.getScope(project) }!!
+    state.tool = copyToolSettings(baseDefaultWrapper)
   }
 
   //invoke when isChanged() == true

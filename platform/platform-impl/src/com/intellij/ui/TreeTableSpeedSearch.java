@@ -18,6 +18,7 @@ package com.intellij.ui;
 
 import com.intellij.ui.treeStructure.treetable.TreeTable;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
@@ -39,10 +40,12 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
   }
 
 
+  @Override
   protected boolean isSpeedSearchEnabled() {
     return !getComponent().isEditing() && super.isSpeedSearchEnabled();
   }
 
+  @Override
   protected void selectElement(Object element, String selectedText) {
     final TreePath treePath = (TreePath)element;
     final int row = myComponent.getTree().getRowForPath(treePath);
@@ -57,6 +60,8 @@ public class TreeTableSpeedSearch extends SpeedSearchBase<TreeTable> {
     return selectionRows == null || selectionRows.length == 0 ? -1 : selectionRows[0];
   }
 
+  @NotNull
+  @Override
   protected Object[] getAllElements() {
     TreePath[] paths = new TreePath[myComponent.getTree().getRowCount()];
     for(int i = 0; i < paths.length; i++){

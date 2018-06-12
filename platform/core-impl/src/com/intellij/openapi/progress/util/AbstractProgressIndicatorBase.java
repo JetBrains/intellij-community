@@ -58,9 +58,8 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
   private Stack<String> myTextStack;
   private DoubleArrayList myFractionStack;
   private Stack<String> myText2Stack;
-  private volatile int myNonCancelableCount;
 
-  protected ProgressIndicator myModalityProgress;
+  ProgressIndicator myModalityProgress;
   private volatile ModalityState myModalityState = ModalityState.NON_MODAL;
 
   @Override
@@ -97,14 +96,15 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     stopSystemActivity();
   }
 
-  protected void startSystemActivity() {
+  private void startSystemActivity() {
     myMacActivity = myShouldStartActivity ? MacUtil.wakeUpNeo(toString()) : null;
   }
 
-  protected void stopSystemActivity() {
-    if (myMacActivity != null) {
-      synchronized (myMacActivity) {
-        MacUtil.matrixHasYou(myMacActivity);
+  void stopSystemActivity() {
+    Object macActivity = myMacActivity;
+    if (macActivity != null) {
+      synchronized (macActivity) {
+        MacUtil.matrixHasYou(macActivity);
         myMacActivity = null;
       }
     }
@@ -209,16 +209,14 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public void startNonCancelableSection() {
-    myNonCancelableCount++;
   }
 
   @Override
   public void finishNonCancelableSection() {
-    myNonCancelableCount--;
   }
 
   protected boolean isCancelable() {
-    return myNonCancelableCount == 0;
+    return !ProgressManager.getInstance().isInNonCancelableSection();
   }
 
   @Override
@@ -285,8 +283,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (indicator instanceof ProgressIndicatorStacked) {
       ProgressIndicatorStacked stacked = (ProgressIndicatorStacked)indicator;
 
-      myNonCancelableCount = stacked.getNonCancelableCount();
-
       myTextStack = new Stack<>(stacked.getTextStack());
 
       myText2Stack = new Stack<>(stacked.getText2Stack());
@@ -319,6 +315,6 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
 
   @Override
   public int getNonCancelableCount() {
-    return myNonCancelableCount;
+    return ProgressManager.getInstance().isInNonCancelableSection() ? 1 : 0;
   }
 }

@@ -299,8 +299,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   protected abstract List<Data> getContents();
 
   public int getSelectedIndex() {
-    Object o = myList.getSelectedValue();
-    return o == null? -1 : ((Item)o).index;
+    Item o = myList.getSelectedValue();
+    return o == null? -1 : o.index;
   }
   
   public void setSelectedIndex(int index) {

@@ -104,10 +104,6 @@ public class ExceptionBreakpoint extends Breakpoint<JavaExceptionBreakpointPrope
   }
 
   public Icon getIcon() {
-    if (!isEnabled()) {
-      final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-      return master == null? AllIcons.Debugger.Db_disabled_exception_breakpoint : AllIcons.Debugger.Db_dep_exception_breakpoint;
-    }
     return AllIcons.Debugger.Db_exception_breakpoint;
   }
 

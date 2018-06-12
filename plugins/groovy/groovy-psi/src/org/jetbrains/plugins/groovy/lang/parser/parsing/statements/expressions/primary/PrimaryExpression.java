@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.primary;
 
 import com.intellij.lang.PsiBuilder;
 import com.intellij.psi.tree.IElementType;
 import org.jetbrains.plugins.groovy.GroovyBundle;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyElementType;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -51,7 +36,7 @@ public class PrimaryExpression {
     }
     if (GroovyTokenTypes.kNEW == tokenType) {
       PsiBuilder.Marker marker = builder.mark();
-      final GroovyElementType type = newExprParse(builder, parser);
+      final IElementType type = newExprParse(builder, parser);
       marker.done(type);
       return type;
     }
@@ -98,7 +83,7 @@ public class PrimaryExpression {
     return GroovyElementTypes.WRONGWAY;
   }
 
-  public static GroovyElementType parenthesizedExprParse(PsiBuilder builder, GroovyParser parser) {
+  public static IElementType parenthesizedExprParse(PsiBuilder builder, GroovyParser parser) {
     PsiBuilder.Marker marker = builder.mark();
     ParserUtils.getToken(builder, GroovyTokenTypes.mLPAREN);
     if (!AssignmentExpression.parse(builder, parser)) {
@@ -110,7 +95,7 @@ public class PrimaryExpression {
     return GroovyElementTypes.PARENTHESIZED_EXPRESSION;
   }
 
-  public static GroovyElementType newExprParse(PsiBuilder builder, GroovyParser parser) {
+  public static IElementType newExprParse(PsiBuilder builder, GroovyParser parser) {
     ParserUtils.getToken(builder, GroovyTokenTypes.kNEW);
     ParserUtils.getToken(builder, GroovyTokenTypes.mNLS);
     PsiBuilder.Marker rb = builder.mark();

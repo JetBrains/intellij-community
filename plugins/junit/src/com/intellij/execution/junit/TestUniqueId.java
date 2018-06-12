@@ -57,7 +57,7 @@ public class TestUniqueId extends TestObject {
       }
       else {
         PsiClass containingClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
-        if (containingClass != null && TestFrameworks.detectFramework(containingClass) == null) {
+        if (containingClass == null || TestFrameworks.detectFramework(containingClass) == null) {
           return nodeId;
         }
       }

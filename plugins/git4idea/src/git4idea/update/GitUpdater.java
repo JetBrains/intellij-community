@@ -124,7 +124,7 @@ public abstract class GitUpdater {
       }
     }
 
-    if (GitVersionSpecialty.KNOWS_PULL_REBASE.existsIn(GitVcs.getInstance(project).getVersion())) {
+    if (GitVersionSpecialty.KNOWS_PULL_REBASE.existsIn(project)) {
       try {
         String pullRebaseValue = GitConfigUtil.getValue(project, repository.getRoot(), "pull.rebase");
         if (pullRebaseValue != null && isRebaseValue(pullRebaseValue)) return REBASE;

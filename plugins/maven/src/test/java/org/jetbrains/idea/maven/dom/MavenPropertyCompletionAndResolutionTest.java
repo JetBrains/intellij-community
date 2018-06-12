@@ -236,6 +236,7 @@ public class MavenPropertyCompletionAndResolutionTest extends MavenDomTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>parent</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<build>" +
                      " <directory>dir</directory>" +

@@ -20,7 +20,6 @@ import com.google.common.util.concurrent.AtomicDouble;
 import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -163,7 +162,7 @@ public class FileDownloaderImpl implements FileDownloader {
       int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
       LOG.debug("Downloading " + myFileDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl pool", maxParallelDownloads);
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl Pool", maxParallelDownloads);
       List<Future<Void>> results = new ArrayList<>();
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileDescription description : myFileDescriptions) {
@@ -262,15 +261,11 @@ public class FileDownloaderImpl implements FileDownloader {
     List<Pair<VirtualFile,DownloadableFileDescription>> result = new ArrayList<>();
     for (final Pair<File, DownloadableFileDescription> pair : ioFiles) {
       final File ioFile = pair.getFirst();
-      VirtualFile libraryRootFile = new WriteAction<VirtualFile>() {
-        @Override
-        protected void run(@NotNull Result<VirtualFile> result) {
-          final String url = VfsUtil.getUrlForLibraryRoot(ioFile);
-          LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
-          result.setResult(VirtualFileManager.getInstance().refreshAndFindFileByUrl(url));
-        }
-
-      }.execute().getResultObject();
+      VirtualFile libraryRootFile = WriteAction.computeAndWait(() -> {
+        final String url = VfsUtil.getUrlForLibraryRoot(ioFile);
+        LocalFileSystem.getInstance().refreshAndFindFileByIoFile(ioFile);
+        return VirtualFileManager.getInstance().refreshAndFindFileByUrl(url);
+      });
       if (libraryRootFile != null) {
         result.add(Pair.create(libraryRootFile, pair.getSecond()));
       }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.geb;
 
 import com.intellij.psi.*;
@@ -54,10 +40,10 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
         if (contentField instanceof GrField) {
           GrField f = (GrField)contentField;
           if ("content".equals(f.getName()) && f.hasModifierProperty(PsiModifier.STATIC) && f.getContainingClass() == aClass) {
-            Map<String, PsiField> elements = GebUtil.getContentElements(aClass);
-            for (PsiField field : elements.values()) {
-              if (field.getNavigationElement() == place) {
-                return; // Don't resolve variable definition.
+            Map<String, PsiMember> elements = GebUtil.getContentElements(aClass);
+            for (PsiMember element : elements.values()) {
+              if (element.getNavigationElement() == place) {
+                return; // Don't resolve definition.
               }
             }
           }
@@ -65,27 +51,27 @@ public class GebPageMemberContributor extends NonCodeMembersContributor {
       }
     }
 
-    processPageFields(processor, aClass, state);
+    processPageElements(processor, aClass, state);
   }
 
-  public static boolean processPageFields(PsiScopeProcessor processor,
-                                          @NotNull PsiClass pageClass,
-                                          ResolveState state) {
+  public static boolean processPageElements(PsiScopeProcessor processor,
+                                            @NotNull PsiClass pageClass,
+                                            ResolveState state) {
     Map<String, PsiClass> supers = ClassUtil.getSuperClassesWithCache(pageClass);
     String nameHint = ResolveUtil.getNameHint(processor);
 
     for (PsiClass psiClass : supers.values()) {
-      Map<String, PsiField> contentFields = GebUtil.getContentElements(psiClass);
+      Map<String, PsiMember> contentElements = GebUtil.getContentElements(psiClass);
 
       if (nameHint == null) {
-        for (Map.Entry<String, PsiField> entry : contentFields.entrySet()) {
+        for (Map.Entry<String, PsiMember> entry : contentElements.entrySet()) {
           if (!processor.execute(entry.getValue(), state)) return false;
         }
       }
       else {
-        PsiField field = contentFields.get(nameHint);
-        if (field != null) {
-          return processor.execute(field, state);
+        PsiMember element = contentElements.get(nameHint);
+        if (element != null) {
+          return processor.execute(element, state);
         }
       }
     }

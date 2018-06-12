@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.compiler.CompilerDirectHierarchyInfo;
@@ -36,7 +34,6 @@ import com.intellij.util.PairProcessor;
 import com.intellij.util.Processor;
 import com.intellij.util.Processors;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.FileBasedIndex;
@@ -54,7 +51,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   public static final int SMART_SEARCH_THRESHOLD = 5;
 
   @Override
-  public void processQuery(@NotNull SearchParameters p, @NotNull Processor<PsiFunctionalExpression> consumer) {
+  public void processQuery(@NotNull SearchParameters p, @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     List<SamDescriptor> descriptors = calcDescriptors(p);
     Project project = PsiUtilCore.getProjectInReadAction(p.getElementToSearch());
     if (project == null) return;
@@ -181,7 +178,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
                                  : ContainerUtil.filter(occurrences, it -> it.canHaveType(samClasses, vFile)));
   }
 
-  private static boolean processFile(@NotNull Processor<PsiFunctionalExpression> consumer,
+  private static boolean processFile(@NotNull Processor<? super PsiFunctionalExpression> consumer,
                                      List<SamDescriptor> descriptors,
                                      VirtualFile vFile, Collection<Integer> offsets) {
     return ReadAction.compute(() -> {
@@ -322,7 +319,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
             return true;
           });
 
-        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.SERVICE.getInstance(project);
+        PsiSearchHelperImpl helper = (PsiSearchHelperImpl)PsiSearchHelper.getInstance(project);
         Processor<VirtualFile> processor = Processors.cancelableCollectProcessor(files);
         for (String word : likelyNames) {
           helper.processFilesWithText(searchScope, UsageSearchContext.IN_CODE, true, word, processor);
@@ -335,7 +332,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
   private static boolean performSearchUsingCompilerIndices(@NotNull List<SamDescriptor> descriptors,
                                                            @NotNull GlobalSearchScope searchScope,
                                                            @NotNull Project project,
-                                                           @NotNull Processor<PsiFunctionalExpression> consumer) {
+                                                           @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     CompilerReferenceService compilerReferenceService = CompilerReferenceService.getInstance(project);
     if (compilerReferenceService == null) return true;
     for (SamDescriptor descriptor : descriptors) {
@@ -357,7 +354,7 @@ public class JavaFunctionalExpressionSearcher extends QueryExecutorBase<PsiFunct
 
   private static boolean processFunctionalExpressions(@Nullable CompilerDirectHierarchyInfo funExprInfo,
                                                       @NotNull SamDescriptor descriptor,
-                                                      @NotNull Processor<PsiFunctionalExpression> consumer) {
+                                                      @NotNull Processor<? super PsiFunctionalExpression> consumer) {
     if (funExprInfo != null) {
       if (!ContainerUtil.process(funExprInfo.getHierarchyChildren().iterator(), fe -> consumer.process((PsiFunctionalExpression)fe))) return false;
       GlobalSearchScope dirtyScope = funExprInfo.getDirtyScope();

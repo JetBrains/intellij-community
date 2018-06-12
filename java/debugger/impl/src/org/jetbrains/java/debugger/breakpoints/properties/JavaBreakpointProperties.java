@@ -25,6 +25,10 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   private boolean INSTANCE_FILTERS_ENABLED = false;
   private InstanceFilter[] myInstanceFilters;
 
+  private boolean CALLER_FILTERS_ENABLED    = false;
+  private String[] myCallerFilters;
+  private String[] myCallerExclusionFilters;
+
   @XCollection(propertyElementName = "instance-filters")
   public InstanceFilter[] getInstanceFilters() {
     return myInstanceFilters != null ? myInstanceFilters : InstanceFilter.EMPTY_ARRAY;
@@ -92,6 +96,10 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
 
     setINSTANCE_FILTERS_ENABLED(state.isINSTANCE_FILTERS_ENABLED());
     myInstanceFilters = state.getInstanceFilters();
+
+    setCALLER_FILTERS_ENABLED(state.isCALLER_FILTERS_ENABLED());
+    myCallerFilters = state.getCallerFilters();
+    myCallerExclusionFilters = state.getCallerExclusionFilters();
   }
 
   @OptionTag("count-filter-enabled")
@@ -135,6 +143,39 @@ public class JavaBreakpointProperties<T extends JavaBreakpointProperties> extend
   public boolean setINSTANCE_FILTERS_ENABLED(boolean INSTANCE_FILTERS_ENABLED) {
     boolean changed = this.INSTANCE_FILTERS_ENABLED != INSTANCE_FILTERS_ENABLED;
     this.INSTANCE_FILTERS_ENABLED = INSTANCE_FILTERS_ENABLED;
+    return changed;
+  }
+
+  @OptionTag("caller-filters-enabled")
+  public boolean isCALLER_FILTERS_ENABLED() {
+    return CALLER_FILTERS_ENABLED;
+  }
+
+  public boolean setCALLER_FILTERS_ENABLED(boolean CALLER_FILTERS_ENABLED) {
+    boolean changed = this.CALLER_FILTERS_ENABLED != CALLER_FILTERS_ENABLED;
+    this.CALLER_FILTERS_ENABLED = CALLER_FILTERS_ENABLED;
+    return changed;
+  }
+
+  @XCollection(propertyElementName = "caller-filters")
+  public String[] getCallerFilters() {
+    return myCallerFilters != null ? myCallerFilters : ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  public boolean setCallerFilters(String[] callerFilters) {
+    boolean changed = !filtersEqual(myCallerFilters, callerFilters);
+    myCallerFilters = callerFilters;
+    return changed;
+  }
+
+  @XCollection(propertyElementName = "caller-exclusion-filters")
+  public String[] getCallerExclusionFilters() {
+    return myCallerExclusionFilters != null ? myCallerExclusionFilters : ArrayUtil.EMPTY_STRING_ARRAY;
+  }
+
+  public boolean setCallerExclusionFilters(String[] callerExclusionFilters) {
+    boolean changed = !filtersEqual(myCallerExclusionFilters, callerExclusionFilters);
+    myCallerExclusionFilters = callerExclusionFilters;
     return changed;
   }
 }

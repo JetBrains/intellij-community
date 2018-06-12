@@ -46,6 +46,15 @@ public class CommittedChangesBrowser extends SimpleChangesBrowser {
     );
   }
 
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    return ContainerUtil.append(
+      super.createPopupMenuActions(),
+      ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserMenu")
+    );
+  }
+
   public void setUseCase(final CommittedChangesBrowserUseCase useCase) {
     myUseCase = useCase;
   }

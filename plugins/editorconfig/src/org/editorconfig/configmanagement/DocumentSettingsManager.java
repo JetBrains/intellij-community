@@ -1,10 +1,11 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.editorconfig.configmanagement;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.impl.TrailingSpacesStripper;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -19,7 +20,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-public class DocumentSettingsManager extends FileDocumentManagerAdapter {
+public class DocumentSettingsManager implements FileDocumentManagerListener {
   // Handles the following EditorConfig settings:
   public static final String trimTrailingWhitespaceKey = "trim_trailing_whitespace";
   public static final String insertFinalNewlineKey = "insert_final_newline";
@@ -27,7 +28,7 @@ public class DocumentSettingsManager extends FileDocumentManagerAdapter {
 
   static {
     Map<String, String> map = new HashMap<>();
-    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_WHOLE);
+    map.put("true", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_CHANGED);
     map.put("false", EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE);
     trimMap = Collections.unmodifiableMap(map);
   }

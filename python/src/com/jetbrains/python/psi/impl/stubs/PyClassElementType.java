@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.stubs.*;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyClassImpl;
@@ -165,7 +164,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
 
   @NotNull
   public PyClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
-    final String name = StringRef.toString(dataStream.readName());
+    final String name = dataStream.readNameString();
 
     final int superClassCount = dataStream.readByte();
     final Map<QualifiedName, QualifiedName> superClasses = new LinkedHashMap<>();
@@ -178,10 +177,10 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     final ArrayList<String> baseClassesText = new ArrayList<>();
     for (int i = 0; i < baseClassesCount; i++) {
       final boolean isParametrized = dataStream.readBoolean();
-      final StringRef ref = dataStream.readName();
-      baseClassesText.add(ref != null ? ref.getString() : null);
+      String ref = dataStream.readNameString();
+      baseClassesText.add(ref);
       if (ref != null && isParametrized) {
-        parametrizedBaseClasses.add(ref.getString());
+        parametrizedBaseClasses.add(ref);
       }
     }
 
@@ -204,7 +203,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
       sink.occurrence(PyClassNameIndexInsensitive.KEY, name.toLowerCase());
     }
 
-    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(createPsi(stub))) {
+    for (String attribute : PyClassAttributesIndex.getAllDeclaredAttributeNames(stub.getPsi())) {
       sink.occurrence(PyClassAttributesIndex.KEY, attribute);
     }
 

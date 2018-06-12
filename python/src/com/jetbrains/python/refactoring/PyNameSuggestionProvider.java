@@ -56,12 +56,14 @@ public class PyNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @NotNull
-  protected String toUnderscores(@NotNull final String name) {
+  public static String toUnderscores(@NotNull final String name) {
     final StringBuilder result = new StringBuilder();
     for (int i = 0; i < name.length(); i++) {
+      final char prev = i > 0 ? name.charAt(i - 1) : '\0';
       final char c = name.charAt(i);
+      final char next = i + 1 < name.length() ? name.charAt(i + 1) : '\0';
       if (Character.isUpperCase(c)) {
-        if (i != 0) {
+        if (Character.isLowerCase(prev) || Character.isDigit(prev) || Character.isUpperCase(prev) && Character.isLowerCase(next)) {
           result.append("_");
         }
         result.append(Character.toLowerCase(c));

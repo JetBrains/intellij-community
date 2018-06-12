@@ -23,13 +23,21 @@ public class ExternalSystemSettingsControlCustomizer {
 
   private boolean hideUseAutoImportBox;
   private boolean hideCreateEmptyContentRootDirectoriesBox;
+  private boolean hideModulesGroupingOptionPanel;
 
   public ExternalSystemSettingsControlCustomizer() {
   }
 
   public ExternalSystemSettingsControlCustomizer(boolean hideUseAutoImportBox, boolean hideCreateEmptyContentRootDirectoriesBox) {
+    this(hideUseAutoImportBox, hideCreateEmptyContentRootDirectoriesBox, false);
+  }
+
+  public ExternalSystemSettingsControlCustomizer(boolean hideUseAutoImportBox,
+                                                 boolean hideCreateEmptyContentRootDirectoriesBox,
+                                                 boolean hideModulesGroupingOptionPanel) {
     this.hideUseAutoImportBox = hideUseAutoImportBox;
     this.hideCreateEmptyContentRootDirectoriesBox = hideCreateEmptyContentRootDirectoriesBox;
+    this.hideModulesGroupingOptionPanel = hideModulesGroupingOptionPanel;
   }
 
   public boolean isUseAutoImportBoxHidden() {
@@ -38,5 +46,9 @@ public class ExternalSystemSettingsControlCustomizer {
 
   public boolean isCreateEmptyContentRootDirectoriesBoxHidden() {
     return hideCreateEmptyContentRootDirectoriesBox;
+  }
+
+  public boolean isModulesGroupingOptionPanelHidden() {
+    return hideModulesGroupingOptionPanel;
   }
 }

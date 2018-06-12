@@ -33,7 +33,7 @@ public class SourceRootIconProvider {
     }
     else {
       Icon excludedIcon = getIconIfExcluded(project, vFile);
-      return excludedIcon != null ? excludedIcon : PlatformIcons.DIRECTORY_CLOSED_ICON;
+      return excludedIcon != null ? excludedIcon : PlatformIcons.FOLDER_ICON;
     }
   }
   

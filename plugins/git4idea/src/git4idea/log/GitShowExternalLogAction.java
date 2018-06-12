@@ -53,7 +53,6 @@ import git4idea.config.GitExecutableManager;
 import git4idea.repo.GitRepositoryImpl;
 import git4idea.repo.GitRepositoryManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -94,7 +93,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
       }
 
       String tabName = calcTabName(cm, roots);
-      MyContentComponent component = createManagerAndContent(project, vcs, roots, tabName);
+      MyContentComponent component = createManagerAndContent(project, vcs, roots, true);
       Content content = ContentFactory.SERVICE.getInstance().createContent(component, tabName, false);
       content.setDisposer(component.myDisposable);
       content.setDescription("Log for " + StringUtil.join(roots, VirtualFile::getPath, "\n"));
@@ -115,7 +114,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
   private static MyContentComponent createManagerAndContent(@NotNull Project project,
                                                             @NotNull final GitVcs vcs,
                                                             @NotNull final List<VirtualFile> roots,
-                                                            @Nullable String tabName) {
+                                                            boolean isToolWindowTab) {
     final GitRepositoryManager repositoryManager = GitRepositoryManager.getInstance(project);
     for (VirtualFile root : roots) {
       repositoryManager.addExternalRepository(root, GitRepositoryImpl.getInstance(root, project, true));
@@ -127,7 +126,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
         repositoryManager.removeExternalRepository(root);
       }
     });
-    AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), tabName);
+    AbstractVcsLogUi ui = manager.createLogUi(calcLogId(roots), isToolWindowTab);
     Disposer.register(disposable, ui);
     return new MyContentComponent(new VcsLogPanel(manager, ui), roots, disposable);
   }
@@ -239,7 +238,7 @@ public class GitShowExternalLogAction extends DumbAwareAction {
     @Override
     public void onSuccess() {
       if (!myProject.isDisposed()) {
-        MyContentComponent content = createManagerAndContent(myProject, myVcs, myRoots, null);
+        MyContentComponent content = createManagerAndContent(myProject, myVcs, myRoots, false);
         WindowWrapper window = new WindowWrapperBuilder(WindowWrapper.Mode.FRAME, content)
           .setProject(myProject)
           .setTitle("Git Log")

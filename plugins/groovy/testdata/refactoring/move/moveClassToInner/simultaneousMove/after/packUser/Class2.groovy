@@ -9,5 +9,5 @@ import pack2.A;
  */
 public class Class2 {
   A.Class1 myClass1;
-  A.Class0 myClass0;
+    A.Class0 myClass0;
 }

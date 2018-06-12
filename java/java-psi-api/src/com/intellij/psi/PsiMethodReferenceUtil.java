@@ -38,6 +38,23 @@ public class PsiMethodReferenceUtil {
     return false;
   }
 
+  public static boolean isResolvedBySecondSearch(@NotNull PsiMethodReferenceExpression methodRef) {
+    PsiElement resolve = methodRef.resolve();
+    if (resolve instanceof PsiMethod) {
+      PsiMethod method = (PsiMethod)resolve;
+      PsiType functionalInterfaceType = methodRef.getFunctionalInterfaceType();
+      PsiClassType.ClassResolveResult functionalResolveResult = PsiUtil.resolveGenericsClassInType(functionalInterfaceType);
+      final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalResolveResult);
+      return interfaceMethod != null &&
+             isResolvedBySecondSearch(methodRef,
+                                      interfaceMethod.getSignature(LambdaUtil.getSubstitutor(interfaceMethod, functionalResolveResult)),
+                                      method.isVarArgs(),
+                                      method.hasModifierProperty(PsiModifier.STATIC),
+                                      method.getParameterList().getParametersCount());
+    }
+    return false;
+  }
+
   public static boolean isResolvedBySecondSearch(@NotNull PsiMethodReferenceExpression methodRef,
                                                  @Nullable MethodSignature signature,
                                                  boolean varArgs,

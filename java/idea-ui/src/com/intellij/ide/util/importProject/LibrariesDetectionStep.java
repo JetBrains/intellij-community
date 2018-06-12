@@ -51,16 +51,19 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     myProjectDescriptor.setLibraries(myLibrariesPanel.getChosenEntries());
   }
 
+  @Override
   protected JComponent createResultsPanel() {
     myLibrariesPanel = new LibrariesLayoutPanel(myInsight);
     return myLibrariesPanel;
   }
 
+  @Override
   protected String getProgressText() {
     return "Searching for libraries. Please wait.";
   }
 
-  int myPreviousStateHashCode = -1;
+  private int myPreviousStateHashCode = -1;
+  @Override
   protected boolean shouldRunProgress() {
     final int currentHash = calcStateHashCode();
     try {
@@ -79,6 +82,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return hash;
   }
 
+  @Override
   protected List<LibraryDescriptor> calculate() {
     final List<DetectedSourceRoot> sourceRoots = getSourceRoots();
 
@@ -106,6 +110,7 @@ public class LibrariesDetectionStep extends AbstractStepWithProgress<List<Librar
     return sourceRoots;
   }
 
+  @Override
   protected void onFinished(List<LibraryDescriptor> libraries, final boolean canceled) {
     myLibrariesPanel.rebuild();
   }

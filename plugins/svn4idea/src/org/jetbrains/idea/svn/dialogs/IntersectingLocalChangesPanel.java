@@ -11,7 +11,7 @@ import com.intellij.openapi.util.BooleanGetter;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
-import com.intellij.openapi.vcs.changes.ui.NoneChangesGroupingPolicy;
+import com.intellij.openapi.vcs.changes.ui.DefaultChangesGroupingPolicy;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -75,7 +75,7 @@ public class IntersectingLocalChangesPanel {
 
   @NotNull
   private SimpleTree createTree() {
-    SimpleTree tree = new SimpleTree(TreeModelBuilder.buildFromFilePaths(myProject, new NoneChangesGroupingPolicy.Factory(), myFiles)) {
+    SimpleTree tree = new SimpleTree(TreeModelBuilder.buildFromFilePaths(myProject, new DefaultChangesGroupingPolicy.Factory(myProject), myFiles)) {
       @Override
       protected void configureUiHelper(@NotNull TreeUIHelper helper) {
         super.configureUiHelper(helper);

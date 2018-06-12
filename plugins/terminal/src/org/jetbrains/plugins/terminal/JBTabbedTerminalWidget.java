@@ -145,7 +145,7 @@ public class JBTabbedTerminalWidget extends TabbedTerminalWidget implements Disp
         }
       };
 
-      myTabs.addListener(new TabsListener.Adapter() {
+      myTabs.addListener(new TabsListener() {
         @Override
         public void selectionChanged(TabInfo oldSelection, TabInfo newSelection) {
           for (TabChangeListener each : myListeners) {

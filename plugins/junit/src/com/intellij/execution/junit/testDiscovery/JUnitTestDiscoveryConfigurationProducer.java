@@ -17,11 +17,21 @@ package com.intellij.execution.junit.testDiscovery;
 
 import com.intellij.execution.JavaTestConfigurationBase;
 import com.intellij.execution.PsiLocation;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.configurations.RunProfileState;
 import com.intellij.execution.junit.JUnitConfiguration;
 import com.intellij.execution.junit.JUnitConfigurationType;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestsPattern;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testDiscovery.TestDiscoveryConfigurationProducer;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiMethod;
+
+import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.stream.Collectors;
 
 public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfigurationProducer {
   protected JUnitTestDiscoveryConfigurationProducer() {
@@ -40,5 +50,24 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
       return Pair.create(data.getMainClassName(), data.getMethodName());
     }
     return null;
+  }
+
+  @Override
+  public boolean isApplicable(PsiMethod[] methods) {
+    return Arrays.stream(methods).anyMatch(method -> JUnitUtil.isTestMethod(new PsiLocation<>(method)));
+  }
+
+  @Override
+  public RunProfileState createProfile(PsiMethod[] testMethods,
+                                       Module module,
+                                       RunConfiguration configuration,
+                                       ExecutionEnvironment environment) {
+    JUnitConfiguration.Data data = ((JUnitConfiguration)configuration).getPersistentData();
+    data.setPatterns(
+      Arrays.stream(testMethods)
+            .map(method -> method.getContainingClass().getQualifiedName() + "," + method.getName())
+            .collect(Collectors.toCollection(LinkedHashSet::new)));
+    data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
+    return new TestsPattern((JUnitConfiguration)configuration, environment);
   }
 }

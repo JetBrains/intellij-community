@@ -1,5 +1,5 @@
 // "Initialize in constructor" "true"
-class A {
+class Main {
   private final int var;
 
   private Main() {

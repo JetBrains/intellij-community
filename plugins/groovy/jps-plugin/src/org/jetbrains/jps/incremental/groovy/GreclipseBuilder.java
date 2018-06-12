@@ -220,6 +220,11 @@ public class GreclipseBuilder extends ModuleLevelBuilder {
   }
 
   private boolean performCompilation(List<String> args, StringWriter out, StringWriter err, Map<String, List<String>> outputs, CompileContext context, ModuleChunk chunk) {
+    String bytecodeTarget = JpsGroovycRunner.getBytecodeTarget(context, chunk);
+    if (bytecodeTarget != null) {
+      System.setProperty(JpsGroovycRunner.GROOVY_TARGET_BYTECODE, bytecodeTarget);
+    }
+
     try {
       Class<?> mainClass = Class.forName(GreclipseMain.class.getName(), true, myGreclipseLoader);
       Constructor<?> constructor = mainClass.getConstructor(PrintWriter.class, PrintWriter.class, Map.class, Map.class);

@@ -25,7 +25,6 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportUtil;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
@@ -104,11 +103,7 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
         return false;
       }
 
-      new WriteAction() {
-        protected void run(@NotNull final Result result) {
-          myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel);
-        }
-      }.execute();
+      WriteAction.run(() -> myModifiableModelsProvider.commitModuleModifiableModel(modifiableModel));
 
       final boolean downloaded = librarySettings.downloadFiles(getRootPane());
       if (!downloaded) {
@@ -121,16 +116,14 @@ public class AddSupportForSingleFrameworkDialog extends DialogWrapper {
       }
     }
 
-    new WriteAction() {
-      protected void run(@NotNull final Result result) {
-        final ModifiableRootModel rootModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
-        if (librarySettings != null) {
-          librarySettings.addLibraries(rootModel, new ArrayList<>(), myModel.getLibrariesContainer());
-        }
-        myConfigurable.addSupport(myModule, rootModel, myModifiableModelsProvider);
-        myModifiableModelsProvider.commitModuleModifiableModel(rootModel);
+    WriteAction.run(() -> {
+      final ModifiableRootModel rootModel = myModifiableModelsProvider.getModuleModifiableModel(myModule);
+      if (librarySettings != null) {
+        librarySettings.addLibraries(rootModel, new ArrayList<>(), myModel.getLibrariesContainer());
       }
-    }.execute();
+      myConfigurable.addSupport(myModule, rootModel, myModifiableModelsProvider);
+      myModifiableModelsProvider.commitModuleModifiableModel(rootModel);
+    });
     return true;
   }
 

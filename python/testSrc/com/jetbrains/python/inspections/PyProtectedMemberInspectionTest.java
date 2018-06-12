@@ -84,6 +84,16 @@ public class PyProtectedMemberInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::doTest);
   }
 
+  // PY-26139
+  public void testProtectedModuleInSamePackage() {
+    doMultiFileTest("my_package/module2.py");
+  }
+
+  // PY-26139
+  public void testProtectedModuleInPackageAbove() {
+    doMultiFileTest("my_package/my_subpackage/module2.py");
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

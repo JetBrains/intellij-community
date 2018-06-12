@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.ui.components.JBList;
@@ -76,8 +64,10 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
           for (int index : getSelectedIndices()) {
             if (index >= 0) {
               JCheckBox checkbox = getCheckBoxAt(index);
-              value = value != null ? value : !checkbox.isSelected();
-              setSelected(checkbox, index, value);
+              if (checkbox.isEnabled()) {
+                value = value != null ? value : !checkbox.isSelected();
+                setSelected(checkbox, index, value);
+              }
             }
           }
         }
@@ -98,7 +88,9 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
             if (p != null) {
               Dimension dim = getCheckBoxDimension(checkBox);
               if (p.x >= 0 && p.x < dim.width && p.y >= 0 && p.y < dim.height) {
-                setSelected(checkBox, index, !checkBox.isSelected());
+                if (checkBox.isEnabled()) {
+                  setSelected(checkBox, index, !checkBox.isSelected());
+                }
                 return true;
               }
             }
@@ -353,7 +345,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
       Font font = getFont();
       checkbox.setBackground(backgroundColor);
       checkbox.setForeground(textColor);
-      checkbox.setEnabled(isEnabled());
+      checkbox.setEnabled(isEnabled() && isEnabled(index));
       checkbox.setFont(font);
       checkbox.setFocusPainted(false);
       checkbox.setBorderPainted(false);
@@ -367,7 +359,7 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
         panel.add(checkbox, BorderLayout.LINE_START);
 
         JLabel infoLabel = new JLabel(auxText, SwingConstants.RIGHT);
-        infoLabel.setBorder(new EmptyBorder(0, 0, 0, checkbox.getInsets().left));
+        infoLabel.setBorder(JBUI.Borders.emptyRight(checkbox.getInsets().left));
         infoLabel.setFont(UIUtil.getFont(UIUtil.FontSize.SMALL, font));
         panel.add(infoLabel, BorderLayout.CENTER);
 
@@ -399,6 +391,10 @@ public class CheckBoxList<T> extends JBList<JCheckBox> {
   @Nullable
   protected String getSecondaryText(int index) {
     return null;
+  }
+
+  protected boolean isEnabled(int index) {
+    return true;
   }
 
   protected Color getBackground(final boolean isSelected) {

@@ -1,9 +1,7 @@
 package com.siyeh.igtest.abstraction.overly_strong_type_cast;
 
 import java.lang.reflect.Array;
-import java.util.AbstractList;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 
 interface TestInter{}
@@ -92,4 +90,24 @@ interface SafeCloseable extends Closeable {
 interface Closeable extends AutoCloseable {
 
   public void close() throws java.io.IOException;
+}
+
+interface IndexerFunction<K, V> {
+    IndexerFunction<Long, String> indexer = (IndexerFunction.LongKey<String>) value -> value.length();
+    
+    K getObjectKey(V value);
+
+    interface LongKey<V> extends IndexerFunction<Long, V> {
+        long getNumberKey(V value);
+
+        @Override
+        default Long getObjectKey(V value) {
+            return getNumberKey(value);
+        }
+    }
+}
+class Varargs {
+  void m(Object value) {
+    Arrays.asList((Object[]) value); 
+  }
 }

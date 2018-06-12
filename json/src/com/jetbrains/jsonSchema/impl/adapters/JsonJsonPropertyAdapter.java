@@ -49,6 +49,12 @@ public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
     return myProperty.getValue() == null ? null : createAdapterByType(myProperty.getValue());
   }
 
+  @Nullable
+  @Override
+  public JsonValueAdapter getNameValueAdapter() {
+    return createAdapterByType(myProperty.getNameElement());
+  }
+
   @NotNull
   @Override
   public PsiElement getDelegate() {

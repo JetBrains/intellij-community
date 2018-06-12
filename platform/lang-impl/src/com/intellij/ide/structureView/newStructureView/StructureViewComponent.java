@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.structureView.newStructureView;
 
@@ -25,7 +23,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -139,12 +140,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(myTreeStructure);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, this);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
     myTree = new MyTree(myAsyncTreeModel);
 
-    Disposer.register(this, () -> myTreeModelWrapper.dispose());
-    Disposer.register(this, myAsyncTreeModel);
+    Disposer.register(this, () -> Disposer.dispose(myTreeModelWrapper));
 
     registerAutoExpandListener(myTree, myTreeModel);
 
@@ -261,8 +261,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
   public static JBIterable<Object> getSelectedValues(JTree tree) {
     return traverser()
       .withRoots(JBIterable.of(tree.getSelectionPaths())
-                   .map(TreePath::getLastPathComponent)
-                   .filterMap(StructureViewComponent::unwrapValue))
+                           .map(TreePath::getLastPathComponent)
+                           .filterMap(StructureViewComponent::unwrapValue))
       .traverse();
   }
 
@@ -273,7 +273,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   private void addTreeKeyListener() {
     getTree().addKeyListener(
-        new KeyAdapter() {
+      new KeyAdapter() {
         @Override
         public void keyPressed(KeyEvent e) {
           if (KeyEvent.VK_ENTER == e.getKeyCode()) {
@@ -366,13 +366,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
   }
 
-  public AsyncResult<AbstractTreeNode> expandPathToElement(Object element) {
-    AsyncResult<AbstractTreeNode> result = new AsyncResult<>();
-    expandSelectFocusInner(element, false, false).processed(p -> {
-      if (p == null) result.setRejected();
-      else result.setDone(ObjectUtils.tryCast(TreeUtil.getUserObject(p.getLastPathComponent()), AbstractTreeNode.class));
-    });
-    return result;
+  public Promise<AbstractTreeNode> expandPathToElement(Object element) {
+    return expandSelectFocusInner(element, false, false)
+      .then(p -> TreeUtil.getUserObject(AbstractTreeNode.class, p.getLastPathComponent()));
   }
 
   @NotNull
@@ -413,8 +409,12 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       return TreeVisitor.Action.CONTINUE;
     };
     Function<TreePath, Promise<TreePath>> action = path -> {
-      if (select) TreeUtil.selectPath(myTree, path);
-      else myTree.expandPath(path);
+      if (select) {
+        TreeUtil.selectPath(myTree, path);
+      }
+      else {
+        myTree.expandPath(path);
+      }
       if (requestFocus) {
         IdeFocusManager.getInstance(myProject).requestFocus(myTree, false);
       }
@@ -509,7 +509,7 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     else {
       AtomicBoolean complete = new AtomicBoolean(false);
       //noinspection TestOnlyProblems
-      Promise<Void> promise = rebuildAndUpdate().processed(ignore -> complete.set(true));
+      Promise<Void> promise = rebuildAndUpdate().onProcessed(ignore -> complete.set(true));
       while (!complete.get()) {
         //noinspection TestOnlyProblems
         UIUtil.dispatchAllInvocationEvents();
@@ -635,9 +635,9 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       List<Object> list = JBIterable.of(getTree().getSelectionPaths())
-        .map(TreePath::getLastPathComponent)
-        .map(StructureViewComponent::unwrapNavigatable)
-        .toList();
+                                    .map(TreePath::getLastPathComponent)
+                                    .map(StructureViewComponent::unwrapNavigatable)
+                                    .toList();
       Object[] selectedElements = list.isEmpty() ? null : ArrayUtil.toObjectArray(list);
       if (selectedElements == null || selectedElements.length == 0) return null;
       if (selectedElements[0] instanceof Navigatable) {
@@ -670,11 +670,11 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
     AsyncPromise<Void> result = new AsyncPromise<>();
     rebuild();
     TreeVisitor visitor = path -> {
-      Object o = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (o instanceof AbstractTreeNode) ((AbstractTreeNode)o).update();
+      AbstractTreeNode node = TreeUtil.getUserObject(AbstractTreeNode.class, path.getLastPathComponent());
+      if (node != null) node.update();
       return TreeVisitor.Action.CONTINUE;
     };
-    myAsyncTreeModel.accept(visitor).processed(ignore -> result.setResult(null));
+    myAsyncTreeModel.accept(visitor).onProcessed(ignore -> result.setResult(null));
     return result;
   }
 
@@ -960,8 +960,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
       }
       else {
         for (Object o : children) {
-          Object userObject = TreeUtil.getUserObject(o);
-          if (userObject instanceof NodeDescriptor && isAutoExpandNode((NodeDescriptor)userObject)) {
+          NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, o);
+          if (descriptor != null && isAutoExpandNode(descriptor)) {
             expandLater(parentPath, o);
           }
         }

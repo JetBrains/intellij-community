@@ -116,7 +116,26 @@ public class ClassUtils {
     return integralTypes.contains(type);
   }
 
-  public static boolean isImmutable(PsiType type) {
+  /**
+   * Checks whether given type represents a known immutable value (which visible state cannot be changed).
+   * This call is equivalent to {@code isImmutable(type, true)}.
+   * @param type type to check
+   * @return true if type is known to be immutable; false otherwise
+   */
+  @Contract("null -> false")
+  public static boolean isImmutable(@Nullable PsiType type) {
+    return isImmutable(type, true);
+  }
+
+  /**
+   * Checks whether given type represents a known immutable value (which visible state cannot be changed).
+   *
+   * @param type type to check
+   * @param checkDocComment if true JavaDoc comment will be checked for {@code @Immutable} tag (which may cause AST loading).
+   * @return true if type is known to be immutable; false otherwise
+   */
+  @Contract("null,_ -> false")
+  public static boolean isImmutable(@Nullable PsiType type, boolean checkDocComment) {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type)) {
       return true;
     }
@@ -124,10 +143,11 @@ public class ClassUtils {
     if (aClass == null) {
       return false;
     }
-    if (immutableTypes.contains(aClass.getQualifiedName())) {
+    String qualifiedName = aClass.getQualifiedName();
+    if (immutableTypes.contains(qualifiedName) || (qualifiedName != null && qualifiedName.startsWith("com.google.common.collect.Immutable"))) {
       return true;
     }
-    return JCiPUtil.isImmutable(aClass);
+    return JCiPUtil.isImmutable(aClass, checkDocComment);
   }
 
   public static boolean inSamePackage(@Nullable PsiElement element1,
@@ -182,7 +202,16 @@ public class ClassUtils {
 
   @Nullable
   public static PsiClass getContainingClass(PsiElement element) {
-    return PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    PsiClass currentClass;
+    while (true) {
+      currentClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+      if (currentClass instanceof PsiAnonymousClass &&
+          PsiTreeUtil.isAncestor(((PsiAnonymousClass)currentClass).getArgumentList(), element, true)) {
+        element = currentClass;
+      } else {
+        return currentClass;
+      }
+    }
   }
 
   public static PsiClass getOutermostContainingClass(PsiClass aClass) {

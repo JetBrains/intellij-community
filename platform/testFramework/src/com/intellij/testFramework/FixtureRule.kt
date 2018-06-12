@@ -3,6 +3,7 @@ package com.intellij.testFramework
 
 import com.intellij.ide.highlighter.ProjectFileType
 import com.intellij.idea.IdeaTestApplication
+import com.intellij.openapi.Disposable
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.runUndoTransparentWriteAction
 import com.intellij.openapi.components.ComponentManager
@@ -16,6 +17,7 @@ import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.project.ex.ProjectEx
 import com.intellij.openapi.project.ex.ProjectManagerEx
 import com.intellij.openapi.project.impl.ProjectManagerImpl
+import com.intellij.openapi.util.Disposer
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFSImpl
@@ -305,4 +307,17 @@ fun createOrLoadProject(tempDirManager: TemporaryDirectory, projectCreator: ((Vi
 
 fun ComponentManager.saveStore() {
   stateStore.save(SmartList(), true)
+}
+
+class DisposableRule : ExternalResource() {
+  private var _disposable = lazy { Disposer.newDisposable() }
+
+  val disposable: Disposable
+    get() = _disposable.value
+
+  override fun after() {
+    if (_disposable.isInitialized()) {
+      Disposer.dispose(_disposable.value)
+    }
+  }
 }

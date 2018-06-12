@@ -10,8 +10,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.*;
 import org.jetbrains.yaml.psi.impl.YAMLArrayImpl;
 import org.jetbrains.yaml.psi.impl.YAMLBlockMappingImpl;
@@ -37,9 +39,13 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
   }
 
   private static void collectDescriptors(@NotNull final PsiElement element, @NotNull final List<FoldingDescriptor> descriptors) {
-    final TextRange nodeTextRange = element.getTextRange();
+    TextRange nodeTextRange = element.getTextRange();
     if (nodeTextRange.getLength() < 2) {
       return;
+    }
+
+    if (PsiUtilCore.getElementType(element.getNode().getLastChildNode()) == YAMLTokenTypes.SCALAR_EOL) {
+      nodeTextRange = new TextRange(nodeTextRange.getStartOffset(), nodeTextRange.getEndOffset() - 1);
     }
 
     if (element instanceof YAMLDocument) {
@@ -67,6 +73,7 @@ public class YAMLFoldingBuilder extends FoldingBuilderEx implements DumbAware {
 
   @NotNull
   private static String getPlaceholderText(@Nullable PsiElement psiElement) {
+
     if (psiElement instanceof YAMLDocument) {
       return "---";
     }

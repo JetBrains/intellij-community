@@ -34,6 +34,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.runtime.resource.ResourceCacheImpl java.util.Iterator enumerateKeys()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.resource.ResourceFactory ResourceFactory()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>

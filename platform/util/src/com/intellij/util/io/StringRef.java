@@ -115,6 +115,12 @@ public class StringRef {
     return nameId != 0 ? new StringRef(nameId, store) : null;
   }
 
+  @Nullable
+  public static String stringFromStream(@NotNull DataInput in, @NotNull AbstractStringEnumerator store) throws IOException {
+    final int nameId = DataInputOutputUtil.readINT(in);
+    return nameId != 0 ? store.valueOf(nameId) : null;
+  }
+
   @NotNull
   public static StringRef[] createArray(int count) {
     return count == 0 ? EMPTY_ARRAY : new StringRef[count];

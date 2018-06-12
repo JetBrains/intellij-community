@@ -23,8 +23,10 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LexerTestCase;
 import org.jetbrains.annotations.NotNull;
-import org.junit.Assert;
 import org.jetbrains.jetCheck.Generator;
+import org.junit.Assert;
+
+import java.util.function.Function;
 
 /**
  * Checks that incrementally updated editor highlighter produces the same result as it would
@@ -37,17 +39,17 @@ import org.jetbrains.jetCheck.Generator;
  * 
  * @author peter
  */
-public class CheckHighlighterConsistency implements MadTestingAction {
-  private final PsiFile myFile;
+public class CheckHighlighterConsistency extends ActionOnFile {
 
   public CheckHighlighterConsistency(PsiFile file) {
-    myFile = file;
+    super(file);
   }
 
   @Override
-  public void performAction() {
-    Editor editor = FileEditorManager.getInstance(myFile.getProject()).getSelectedTextEditor();
-    assert editor.getDocument() == myFile.getViewProvider().getDocument();
+  public void performCommand(@NotNull Environment env) {
+    env.logMessage(toString());
+    Editor editor = FileEditorManager.getInstance(getProject()).getSelectedTextEditor();
+    assert editor.getDocument() == getDocument();
 
     performCheck(editor);
   }
@@ -78,16 +80,12 @@ public class CheckHighlighterConsistency implements MadTestingAction {
     return tokens.toString();
   }
 
-  public static boolean runActionsInEditor(FileWithActions actions) {
-    FileEditorManager.getInstance(actions.getPsiFile().getProject()).openFile(actions.getPsiFile().getVirtualFile(), true);
-    return actions.runActions();
-  }
-
   @NotNull
-  public static Generator<MadTestingAction> randomEditsWithHighlighterChecks(PsiFile file) {
-    return Generator.anyOf(Generator.constant(new CheckHighlighterConsistency(file)),
-                           InsertString.asciiInsertions(file),
-                           DeleteRange.psiRangeDeletions(file));
-  }
+  public static final Function<PsiFile, Generator<? extends MadTestingAction>> randomEditsWithHighlighterChecks = file -> {
+    FileEditorManager.getInstance(file.getProject()).openFile(file.getVirtualFile(), true);
+    return Generator.sampledFrom(new CheckHighlighterConsistency(file),
+                                 new InsertString(file),
+                                 new DeleteRange(file));
+  };
 
 }

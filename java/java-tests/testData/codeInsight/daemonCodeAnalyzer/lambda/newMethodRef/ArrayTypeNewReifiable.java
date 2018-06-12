@@ -13,6 +13,7 @@ class Main<T> {
     I<Inner<String>> inn1 = Main.Inner[]::new;
     I<Main<?>.Inner<?>> inn2 = Main<?>.Inner<?>[]::new;
     I<Main<String>.Inner<String>> inn3 = <error descr="Generic array creation">Main<String>.Inner<String>[]</error>::new;
+    I<Main<?>.Inner<?>> inn4 = Main<?>.Inner<?>[]::<String>new;
   }
 
   class Inner<P> {}
