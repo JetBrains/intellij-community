@@ -93,7 +93,7 @@ public class UIUtil {
     TemplateEditorUtil.setHighlighter(editor, contextType);
 
     if (addToolTipForVariableHandler) {
-      SubstitutionShortInfoHandler.install(editor);
+      SubstitutionShortInfoHandler.install(editor, null);
     }
 
     return editor;

@@ -18,10 +18,12 @@ import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.ui.HintHint;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
+import java.util.function.Consumer;
 
 public class SubstitutionShortInfoHandler implements DocumentListener, EditorMouseMotionListener, CaretListener {
   private static final Key<SubstitutionShortInfoHandler> LISTENER_KEY = Key.create("sslistener.key");
@@ -29,20 +31,22 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
   private long modificationTimeStamp;
   private final List<String> variables = new SmartList<>();
   private final Editor editor;
+  @Nullable private final Consumer<String> myCurrentVariableCallback;
   public static final Key<Configuration> CURRENT_CONFIGURATION_KEY = Key.create("SS.CurrentConfiguration");
 
-  SubstitutionShortInfoHandler(@NotNull Editor _editor) {
+  SubstitutionShortInfoHandler(@NotNull Editor _editor, @Nullable Consumer<String> currentVariableCallback) {
     editor = _editor;
+    myCurrentVariableCallback = currentVariableCallback;
   }
 
   @Override
   public void mouseMoved(EditorMouseEvent e) {
     LogicalPosition position  = editor.xyToLogicalPosition( e.getMouseEvent().getPoint() );
 
-    handleInputFocusMovement(position);
+    handleInputFocusMovement(position, false);
   }
 
-  private void handleInputFocusMovement(LogicalPosition position) {
+  private void handleInputFocusMovement(LogicalPosition position, boolean caret) {
     final Configuration configuration = editor.getUserData(CURRENT_CONFIGURATION_KEY);
     if (configuration == null) {
       return;
@@ -70,11 +74,19 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
           text = getShortParamString(variable);
           final boolean replacementVariable =
             variable instanceof ReplacementVariableDefinition || variable == null && configuration instanceof ReplaceConfiguration;
-          configuration.setCurrentVariableName(replacementVariable
-                                               ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
-                                               : variableName);
+          final String currentVariableName = replacementVariable
+                              ? variableName + ReplaceConfiguration.REPLACEMENT_VARIABLE_SUFFIX
+                              : variableName;
+          configuration.setCurrentVariableName(currentVariableName);
+          if (myCurrentVariableCallback != null && caret) {
+            myCurrentVariableCallback.accept(currentVariableName);
+            caret = false;
+          }
         }
       }
+    }
+    if (myCurrentVariableCallback != null && caret) {
+      myCurrentVariableCallback.accept(Configuration.CONTEXT_VAR_NAME);
     }
 
     if (!text.isEmpty()) {
@@ -100,7 +112,7 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
 
   @Override
   public void caretPositionChanged(CaretEvent e) {
-    handleInputFocusMovement(e.getNewPosition());
+    handleInputFocusMovement(e.getNewPosition(), true);
   }
 
   public List<String> getVariables() {
@@ -213,8 +225,8 @@ public class SubstitutionShortInfoHandler implements DocumentListener, EditorMou
     return editor.getUserData(LISTENER_KEY);
   }
 
-  static void install(Editor editor) {
-    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor);
+  static void install(Editor editor, @Nullable Consumer<String> currentVariableCallback) {
+    final SubstitutionShortInfoHandler handler = new SubstitutionShortInfoHandler(editor, currentVariableCallback);
     editor.addEditorMouseMotionListener(handler);
     editor.getDocument().addDocumentListener(handler);
     editor.getCaretModel().addCaretListener(handler);

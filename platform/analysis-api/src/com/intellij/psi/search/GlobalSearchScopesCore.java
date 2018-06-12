@@ -207,7 +207,7 @@ public class GlobalSearchScopesCore {
     }
   }
 
-  private static class DirectoryScope extends GlobalSearchScope {
+  public static class DirectoryScope extends GlobalSearchScope {
     private final VirtualFile myDirectory;
     private final boolean myWithSubdirectories;
 
@@ -221,6 +221,15 @@ public class GlobalSearchScopesCore {
       super(project);
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory;
+    }
+
+    @NotNull
+    public VirtualFile getDirectory() {
+      return myDirectory;
+    }
+
+    public boolean isWithSubdirectories() {
+      return myWithSubdirectories;
     }
 
     @Override
