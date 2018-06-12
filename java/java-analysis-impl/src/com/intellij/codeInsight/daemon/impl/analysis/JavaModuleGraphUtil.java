@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.psi.util.CachedValueProvider.Result;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.graph.DFSTBuilder;
@@ -36,8 +37,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
-
-import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphUtil {
   private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
@@ -126,7 +125,7 @@ public class JavaModuleGraphUtil {
   public static Collection<PsiJavaModule> findCycle(@NotNull PsiJavaModule module) {
     Project project = module.getProject();
     List<Set<PsiJavaModule>> cycles = CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(findCycles(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(findCycles(project), cacheDependency()));
     return ContainerUtil.find(cycles, set -> set.contains(module));
   }
 
@@ -149,6 +148,11 @@ public class JavaModuleGraphUtil {
   @Nullable
   public static PsiJavaModule findOrigin(@NotNull PsiJavaModule module, @NotNull String packageName) {
     return getRequiresGraph(module).findOrigin(module, packageName);
+  }
+
+  @SuppressWarnings("deprecation")
+  private static Object cacheDependency() {
+    return PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
   }
 
   /*
@@ -204,7 +208,7 @@ public class JavaModuleGraphUtil {
   private static RequiresGraph getRequiresGraph(PsiJavaModule module) {
     Project project = module.getProject();
     return CachedValuesManager.getManager(project).getCachedValue(project, () ->
-      Result.create(buildRequiresGraph(project), OUT_OF_CODE_BLOCK_MODIFICATION_COUNT));
+      Result.create(buildRequiresGraph(project), cacheDependency()));
   }
 
   /*
