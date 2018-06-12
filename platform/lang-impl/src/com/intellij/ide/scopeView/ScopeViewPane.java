@@ -44,7 +44,9 @@ import com.intellij.ui.tree.AsyncTreeModel;
 import com.intellij.ui.tree.RestoreSelectionListener;
 import com.intellij.ui.tree.TreeVisitor;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
+import com.intellij.util.OpenSourceUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -56,6 +58,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTree;
 import javax.swing.ToolTipManager;
 import javax.swing.tree.TreePath;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Comparator;
 import java.util.LinkedHashMap;
 import java.util.Objects;
@@ -184,6 +188,16 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
       myTree.setRootVisible(false);
       myTree.setShowsRootHandles(true);
       myTree.addTreeSelectionListener(new RestoreSelectionListener());
+      myTree.addKeyListener(new KeyAdapter() {
+        @Override
+        public void keyPressed(KeyEvent event) {
+          if (event.isConsumed()) return;
+          if (KeyEvent.VK_ENTER == event.getKeyCode()) {
+            OpenSourceUtil.openSourcesFrom(ScopeViewPane.this, ScreenReader.isActive());
+            event.consume();
+          }
+        }
+      });
       TreeUtil.installActions(myTree);
       ToolTipManager.sharedInstance().registerComponent(myTree);
       EditSourceOnDoubleClickHandler.install(myTree);
@@ -223,7 +237,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
     PsiElement element = object instanceof PsiElement ? (PsiElement)object : null;
     NamedScopeFilter current = myTreeModel.getFilter();
     if (select(element, file, requestFocus, current)) return;
-    for (NamedScopeFilter filter : getFilters()) {
+    for (NamedScopeFilter filter: getFilters()) {
       if (current != filter && select(element, file, requestFocus, filter)) return;
     }
   }
@@ -346,7 +360,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @NotNull
   private static LinkedHashMap<String, NamedScopeFilter> map(NamedScopesHolder... holders) {
     LinkedHashMap<String, NamedScopeFilter> map = new LinkedHashMap<>();
-    for (NamedScopeFilter filter : NamedScopeFilter.list(holders)) {
+    for (NamedScopeFilter filter: NamedScopeFilter.list(holders)) {
       NamedScopeFilter old = map.put(filter.toString(), filter);
       if (old != null) LOG.warn("DUPLICATED: " + filter);
     }
