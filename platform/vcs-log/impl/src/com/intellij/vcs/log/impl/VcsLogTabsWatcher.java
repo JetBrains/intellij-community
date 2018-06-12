@@ -37,7 +37,7 @@ public class VcsLogTabsWatcher implements Disposable {
   @NotNull private final MyRefreshPostponedEventsListener myPostponedEventsListener;
   @Nullable private ToolWindow myToolWindow;
   private boolean myIsVisible;
-  @NotNull private MessageBusConnection myConnection;
+  @Nullable private MessageBusConnection myConnection;
 
   public VcsLogTabsWatcher(@NotNull Project project, @NotNull PostponableLogRefresher refresher) {
     myRefresher = refresher;
@@ -77,7 +77,10 @@ public class VcsLogTabsWatcher implements Disposable {
   }
 
   private void removeListeners() {
-    myConnection.disconnect();
+    if (myConnection != null) {
+      myConnection.disconnect();
+      myConnection = null;
+    }
 
     if (myToolWindow != null) {
       myToolWindow.getContentManager().removeContentManagerListener(myPostponedEventsListener);
