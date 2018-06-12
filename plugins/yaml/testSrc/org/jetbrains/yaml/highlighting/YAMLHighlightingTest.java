@@ -6,6 +6,7 @@ import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCa
 import org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection;
 import org.jetbrains.yaml.inspections.YAMLRecursiveAliasInspection;
 import org.jetbrains.yaml.inspections.YAMLUnresolvedAliasInspection;
+import org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection;
 
 public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCase {
   @Override
@@ -37,6 +38,11 @@ public class YAMLHighlightingTest extends LightPlatformCodeInsightFixtureTestCas
 
   public void testDuplicatedKeys() {
     myFixture.enableInspections(YAMLDuplicatedKeysInspection.class);
+    doTest();
+  }
+
+  public void testUnusedAnchors() {
+    myFixture.enableInspections(YAMLUnusedAnchorInspection.class);
     doTest();
   }
 

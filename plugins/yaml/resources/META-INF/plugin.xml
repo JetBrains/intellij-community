@@ -49,6 +49,11 @@
                      key="inspections.duplicated.keys.name"
                      groupKey="inspections.group.name" enabledByDefault="true"
                      implementationClass="org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection"/>
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLUnusedAnchor"
+                     key="inspections.unused.anchor.name" level="WARNING"
+                     groupKey="inspections.group.name" enabledByDefault="true"
+                     implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
 
   </extensions>
   
