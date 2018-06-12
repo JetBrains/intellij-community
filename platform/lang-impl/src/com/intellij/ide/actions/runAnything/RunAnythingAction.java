@@ -1436,7 +1436,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     }
 
     @Override
-    protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<TextUI> uiConsumer) {
+    protected boolean customSetupUIAndTextField(@NotNull TextFieldWithProcessing textField, @NotNull Consumer<? super TextUI> uiConsumer) {
       if (UIUtil.isUnderDarcula()) {
         uiConsumer.consume(new MyDarcula());
         textField.setBorder(new DarculaTextBorder());
