@@ -8,48 +8,51 @@
         <path d="M0 0 L480 0 L480 320 L0 320 L0 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="1">
-        <path d="M0 0 L0 27 L335 27 L335 0 Z"/>
+        <path d="M0 0 L0 27 L332 27 L332 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="2">
-        <path d="M-1 -1 L-1 26 L334 26 L334 -1 Z"/>
+        <path d="M-1 -1 L-1 26 L331 26 L331 -1 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="3">
-        <path d="M8 4 L8 23 L330 23 L330 4 Z"/>
+        <path d="M8 4 L8 23 L327 23 L327 4 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="4">
-        <path d="M0 0 L0 16 L139 16 L139 0 Z"/>
+        <path d="M331 4 L331 23 L4 23 L4 4 ZM0 0 L0 27 L332 27 L332 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="5">
-        <path d="M0 3 L0 22 L164 22 L164 3 Z"/>
+        <path d="M0 0 L0 15 L142 15 L142 0 Z"/>
       </clipPath>
       <clipPath clipPathUnits="userSpaceOnUse" id="6">
-        <path d="M0 0 L0 16 L142 16 L142 0 Z"/>
+        <path d="M0 4 L0 22 L167 22 L167 4 Z"/>
+      </clipPath>
+      <clipPath clipPathUnits="userSpaceOnUse" id="7">
+        <path d="M0 0 L0 15 L145 15 L145 0 Z"/>
       </clipPath>
     </defs>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" stroke="rgb(236,236,236)">
+    <g fill="rgb(236,236,236)" font-family="sans-serif" stroke="rgb(236,236,236)">
       <rect x="0" width="480" height="320" y="0" clip-path="url(#0)" stroke="none"/>
     </g>
-    <g fill="rgb(236,236,236)" font-size="13px" font-family="'.SF NS Text'" transform="translate(145,23)" stroke="rgb(236,236,236)">
-      <rect x="0" width="338" height="27" y="0" clip-path="url(#1)" stroke="none"/>
+    <g fill="rgb(236,236,236)" font-family="sans-serif" transform="translate(148,22)" stroke="rgb(236,236,236)">
+      <rect x="0" width="335" height="27" y="0" clip-path="url(#1)" stroke="none"/>
     </g>
-    <g fill="white" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(146,24)" stroke="white">
-      <rect x="3" y="3" clip-path="url(#2)" width="330" rx="0" ry="0" height="19" stroke="none"/>
+    <g fill="white" text-rendering="optimizeLegibility" font-family="sans-serif" transform="translate(149,23)" stroke="white">
+      <rect x="3" y="3" clip-path="url(#2)" width="327" rx="0" ry="0" height="19" stroke="none"/>
     </g>
-    <g fill="rgb(29,29,29)" font-size="13px" font-family="'.SF NS Text'" transform="translate(145,23)" stroke="rgb(29,29,29)">
+    <g fill="rgb(29,29,29)" font-family="sans-serif" transform="translate(148,22)" stroke="rgb(29,29,29)">
       <text x="8" xml:space="preserve" y="18" clip-path="url(#3)" stroke="none">input</text>
     </g>
-    <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-size="13px" font-family="'.SF NS Text'" transform="translate(145,23)" stroke="rgb(188,188,188)">
-      <path d="M3 3 L335 3 L335 24 L3 24 L3 3 ZM4 4 L334 4 L334 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#1)" stroke="none"/>
+    <g fill="rgb(188,188,188)" text-rendering="optimizeLegibility" font-family="sans-serif" transform="translate(148,22)" stroke="rgb(188,188,188)">
+      <path d="M3 3 L332 3 L332 24 L3 24 L3 3 ZM4 4 L331 4 L331 23 L4 23 L4 4 Z" fill-rule="evenodd" clip-path="url(#4)" stroke="none"/>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px" transform="translate(0,28)">
-      <text x="0" xml:space="preserve" y="13" clip-path="url(#4)" stroke="none">Android module name:</text>
+    <g font-family="sans-serif" font-weight="bold" transform="translate(0,28)">
+      <text x="0" xml:space="preserve" y="12" clip-path="url(#5)" stroke="none">Android module name:</text>
     </g>
-    <g fill="rgb(29,29,29)" font-size="13px" font-family="'.SF NS Text'" transform="translate(144,-3)" stroke="rgb(29,29,29)">
-      <image x="0" y="0" clip-path="url(#5)" width="22" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/checkBox.png" height="22" preserveAspectRatio="none"/>
-      <text x="25" xml:space="preserve" y="16" clip-path="url(#5)" stroke="none">Android module name:</text>
+    <g fill="rgb(29,29,29)" font-weight="bold" font-family="sans-serif" transform="translate(147,-4)" stroke="rgb(29,29,29)">
+      <image x="0" y="0" clip-path="url(#6)" width="22" xlink:href="../../../../../../platform-impl/src/com/intellij/ide/ui/laf/icons/checkBox.png" height="22" preserveAspectRatio="none"/>
+      <text x="25" xml:space="preserve" y="16" clip-path="url(#6)" stroke="none">Android module name:</text>
     </g>
-    <g font-family="'.SF NS Text'" font-size="13px">
-      <text x="0" xml:space="preserve" y="13" clip-path="url(#6)" stroke="none">Create Android module</text>
+    <g font-family="sans-serif" font-weight="bold">
+      <text x="0" xml:space="preserve" y="12" clip-path="url(#7)" stroke="none">Create Android module</text>
     </g>
   </g>
 </svg>

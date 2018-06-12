@@ -11,7 +11,6 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.TextComponent;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.panels.NonOpaquePanel;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.JBEmptyBorder;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
@@ -234,9 +233,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
 
   @NotNull
   public static JLabel createCommentComponent(@Nullable String commentText, boolean isCommentBelow) {
-    // todo why our JBLabel cannot render html if render panel without frame (test only)
-    boolean isCopyable = SystemProperties.getBooleanProperty("idea.ui.comment.copyable", true);
-    JLabel component = new JBLabel("").setCopyable(isCopyable).setAllowAutoWrapping(true);
+    JLabel component = new JBLabel("").setCopyable(true).setAllowAutoWrapping(true);
     component.setVerticalTextPosition(SwingConstants.TOP);
     component.setFocusable(false);
     component.setForeground(UIUtil.getContextHelpForeground());
@@ -247,12 +244,7 @@ public class ComponentPanelBuilder implements GridBagPanelBuilder {
       component.setFont(smallFont);
     }
 
-    if (isCopyable) {
-      setCommentText(component, commentText, isCommentBelow);
-    }
-    else {
-      component.setText(commentText);
-    }
+    setCommentText(component, commentText, isCommentBelow);
     return component;
   }
 
