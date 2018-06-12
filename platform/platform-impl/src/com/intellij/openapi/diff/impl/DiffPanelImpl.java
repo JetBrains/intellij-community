@@ -151,6 +151,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
                        boolean horizontal,
                        int diffDividerPolygonsOffset,
                        DiffTool parentTool) {
+    DiffUsageTriggerCollector.trigger("deprecated.DiffPanelImpl");
 
     myProject = project;
     myIsHorizontal = horizontal;

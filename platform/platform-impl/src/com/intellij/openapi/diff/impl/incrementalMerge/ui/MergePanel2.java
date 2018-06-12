@@ -88,6 +88,7 @@ public class MergePanel2 implements DiffViewer {
   private final MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
+    DiffUsageTriggerCollector.trigger("deprecated.MergePanel2");
 
     ArrayList<EditorPlace> editorPlaces = new ArrayList<>();
     EditorPlace.EditorListener placeListener = new EditorPlace.EditorListener() {
