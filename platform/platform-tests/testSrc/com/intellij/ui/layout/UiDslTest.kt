@@ -9,8 +9,11 @@ import com.intellij.testFramework.UsefulTestCase
 import com.intellij.ui.UiTestRule
 import com.intellij.ui.changeLafIfNeed
 import com.intellij.ui.layout.migLayout.patched.*
-import org.junit.*
 import org.junit.Assume.assumeTrue
+import org.junit.Before
+import org.junit.ClassRule
+import org.junit.Rule
+import org.junit.Test
 import org.junit.rules.TestName
 import org.junit.runner.RunWith
 import org.junit.runners.Parameterized
@@ -50,13 +53,7 @@ class UiDslTest {
       assumeTrue("macOS or Windows 10 are required", SystemInfoRt.isMac || SystemInfo.isWin10OrNewer)
     }
 
-    System.setProperty("idea.ui.comment.copyable", "false")
     changeLafIfNeed(lafName)
-  }
-
-  @After
-  fun afterMethod() {
-    System.clearProperty("idea.ui.comment.copyable")
   }
 
   @Test
