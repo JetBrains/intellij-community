@@ -219,10 +219,6 @@ open class MultipleFileMergeDialog2(
     return TreeUtil.collectSelectedObjectsOfType(table.tree, VirtualFile::class.java)
   }
 
-  protected fun beforeResolve(files: Collection<VirtualFile>): Boolean {
-    return true
-  }
-
   override fun createActions(): Array<Action> {
     cancelAction.putValue(Action.NAME, CommonBundle.getCloseButtonText())
     return arrayOf(cancelAction)
@@ -241,9 +237,6 @@ open class MultipleFileMergeDialog2(
 
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
-    if (!beforeResolve(files)) {
-      return
-    }
 
     try {
       if (mergeSession is MergeSessionEx) {
@@ -334,9 +327,6 @@ open class MultipleFileMergeDialog2(
     val requestFactory = DiffRequestFactory.getInstance()
     val files = getSelectedFiles()
     if (files.isEmpty()) return
-    if (!beforeResolve(files)) {
-      return
-    }
 
     for (file in files) {
       val mergeData: MergeData
