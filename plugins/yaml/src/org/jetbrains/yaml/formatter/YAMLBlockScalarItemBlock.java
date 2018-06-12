@@ -148,7 +148,7 @@ class YAMLBlockScalarItemBlock implements Block {
   private static int getNodeFullIndent(@NotNull ASTNode node) {
     ASTNode indentNode = node.getTreePrev();
     if (indentNode == null || indentNode.getElementType() != YAMLTokenTypes.INDENT) {
-      throw new IllegalStateException("Impossible: scalar block item without indent");
+      return 0;
     }
     return indentNode.getTextLength();
   }
