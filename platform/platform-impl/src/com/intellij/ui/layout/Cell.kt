@@ -68,11 +68,14 @@ abstract class Cell {
     button(*constraints)
   }
 
-  fun checkBox(text: String, isSelected: Boolean = false, vararg constraints: CCFlags, actionListener: (event: ActionEvent, component: JCheckBox) -> Unit) {
+  fun checkBox(text: String, isSelected: Boolean = false, comment: String? = null, vararg constraints: CCFlags, actionListener: ((event: ActionEvent, component: JCheckBox) -> Unit)? = null): JCheckBox {
     val component = JCheckBox(text)
     component.isSelected = isSelected
-    component.addActionListener(ActionListener { actionListener(it, component) })
-    component(*constraints)
+    if (actionListener != null) {
+      component.addActionListener(ActionListener { actionListener(it, component) })
+    }
+    component(*constraints, comment = comment)
+    return component
   }
 
   fun textFieldWithBrowseButton(browseDialogTitle: String,
