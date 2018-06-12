@@ -2864,6 +2864,25 @@ public class UIUtil {
       return style;
     }
 
+    @Override
+    public Document createDefaultDocument() {
+      StyleSheet styles = getStyleSheet();
+      StyleSheet ss = new StyleSheet() {
+        @Override
+        protected int getCompressionThreshold() {
+          return -1;
+        }
+      };
+
+      ss.addStyleSheet(styles);
+
+      HTMLDocument doc = new HTMLDocument(ss);
+      doc.setParser(getParser());
+      doc.setAsynchronousLoadPriority(4);
+      doc.setTokenThreshold(100);
+      return doc;
+    }
+
     public static StyleSheet createStyleSheet() {
       StyleSheet style = new StyleSheet();
       style.addStyleSheet(isUnderDarcula() ? (StyleSheet)UIManager.getDefaults().get("StyledEditorKit.JBDefaultStyle") : DEFAULT_HTML_KIT_CSS);
