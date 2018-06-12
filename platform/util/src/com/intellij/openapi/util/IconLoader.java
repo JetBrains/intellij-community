@@ -230,7 +230,8 @@ public final class IconLoader {
       url = ((Class)context).getResource(path);
     }
     else if (context instanceof ClassLoader) {
-      url = ((ClassLoader)context).getResource(path);
+      // Paths in ClassLoader getResource shouldn't start with "/"
+      url = ((ClassLoader)context).getResource(path.startsWith("/") ? path.substring(1) : path);
     }
     else {
       LOG.warn("unexpected: " + context);
