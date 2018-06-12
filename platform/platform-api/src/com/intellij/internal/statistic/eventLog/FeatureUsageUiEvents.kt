@@ -45,17 +45,19 @@ object FeatureUsageUiEvents {
   }
 
   fun logCloseDialog(name: String, exitCode: Int) {
-    val customData: MutableMap<String, Any>
-    if (exitCode == DialogWrapper.OK_EXIT_CODE) {
-      FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_OK_DIALOG_DATA)
-    }
-    else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
-      FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CANCEL_DIALOG_DATA)
-    }
-    else {
-      customData = ContainerUtil.newHashMap<String, Any>(CLOSE_OK_DIALOG_DATA)
-      customData["code"] = exitCode
-      FeatureUsageLogger.log(DIALOGS_ID, name, customData)
+    if (FeatureUsageLogger.isEnabled()) {
+      val customData: MutableMap<String, Any>
+      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_OK_DIALOG_DATA)
+      }
+      else if (exitCode == DialogWrapper.CANCEL_EXIT_CODE) {
+        FeatureUsageLogger.log(DIALOGS_ID, name, CLOSE_CANCEL_DIALOG_DATA)
+      }
+      else {
+        customData = ContainerUtil.newHashMap<String, Any>(CLOSE_OK_DIALOG_DATA)
+        customData["code"] = exitCode
+        FeatureUsageLogger.log(DIALOGS_ID, name, customData)
+      }
     }
   }
 }
