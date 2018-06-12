@@ -1715,38 +1715,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // '(' type_element ')' priority1_4
-  static boolean cast_expression_no_pin(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "cast_expression_no_pin")) return false;
-    if (!nextTokenIs(b, T_LPAREN)) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeToken(b, T_LPAREN);
-    r = r && type_element(b, l + 1);
-    r = r && consumeToken(b, T_RPAREN);
-    r = r && expression(b, l + 1, 13);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  /* ********************************************************** */
-  // '(' capital_type_element ')' not_colon priority1_4
-  static boolean cast_expression_pin(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "cast_expression_pin")) return false;
-    if (!nextTokenIs(b, T_LPAREN)) return false;
-    boolean r, p;
-    Marker m = enter_section_(b, l, _NONE_);
-    r = consumeToken(b, T_LPAREN);
-    r = r && capital_type_element(b, l + 1);
-    r = r && consumeToken(b, T_RPAREN);
-    r = r && not_colon(b, l + 1);
-    p = r; // pin = 4
-    r = r && expression(b, l + 1, 13);
-    exit_section_(b, l, m, r, p, null);
-    return r || p;
-  }
-
-  /* ********************************************************** */
   // '(' (IDENTIFIER | primitive_type)
   static boolean cast_expression_start(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression_start")) return false;
@@ -7046,7 +7014,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // &cast_expression_start (cast_expression_pin | cast_expression_no_pin)
+  // &cast_expression_start ('(' type_element ')' priority1_4)
   public static boolean cast_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression")) return false;
     if (!nextTokenIsSmart(b, T_LPAREN)) return false;
@@ -7068,12 +7036,16 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // cast_expression_pin | cast_expression_no_pin
+  // '(' type_element ')' priority1_4
   private static boolean cast_expression_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression_1")) return false;
     boolean r;
-    r = cast_expression_pin(b, l + 1);
-    if (!r) r = cast_expression_no_pin(b, l + 1);
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, T_LPAREN);
+    r = r && type_element(b, l + 1);
+    r = r && consumeToken(b, T_RPAREN);
+    r = r && expression(b, l + 1, 13);
+    exit_section_(b, m, null, r);
     return r;
   }
 
