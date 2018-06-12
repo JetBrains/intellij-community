@@ -1720,7 +1720,8 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
     public void update(@NotNull AnActionEvent e) {
       super.update(e);
       final Presentation presentation = e.getPresentation();
-      if (isHideEmptyMiddlePackages(myCurrentViewId)) {
+      // see com.intellij.ide.favoritesTreeView.actions.FavoritesCompactEmptyMiddlePackagesAction.updateButton
+      if (isFlattenPackages(myCurrentViewId)) {
         presentation.setText(IdeBundle.message("action.hide.empty.middle.packages"));
         presentation.setDescription(IdeBundle.message("action.show.hide.empty.middle.packages"));
       }
