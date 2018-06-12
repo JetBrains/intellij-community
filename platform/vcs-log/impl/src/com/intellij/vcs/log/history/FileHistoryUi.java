@@ -17,6 +17,7 @@ package com.intellij.vcs.log.history;
 
 import com.google.common.util.concurrent.SettableFuture;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
@@ -91,8 +92,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     myPath = path;
     myFileHistoryPanel = new FileHistoryPanel(this, logData, myVisiblePack, path);
 
-    for (VcsLogHighlighterFactory factory : ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
-                                                                 f -> HIGHLIGHTERS.contains(f.getId()))) {
+    for (VcsLogHighlighterFactory factory: ContainerUtil.filter(Extensions.getExtensions(LOG_HIGHLIGHTER_FACTORY_EP, myProject),
+                                                                f -> HIGHLIGHTERS.contains(f.getId()))) {
       getTable().addHighlighter(factory.createHighlighter(logData, this));
     }
 
@@ -128,7 +129,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public VcsFileRevision createRevision(@Nullable VcsFullCommitDetails details) {
     if (details != null && !(details instanceof LoadingDetails)) {
       List<Change> changes = collectRelevantChanges(details);
-      for (Change change : changes) {
+      for (Change change: changes) {
         ContentRevision revision = change.getAfterRevision();
         if (revision != null) {
           return new VcsLogFileRevision(details, revision, revision.getFile());
@@ -147,7 +148,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
     if (myPath.isDirectory()) return myPath;
 
     List<Change> changes = collectRelevantChanges(details);
-    for (Change change : changes) {
+    for (Change change: changes) {
       ContentRevision revision = change.getAfterRevision();
       if (revision != null) {
         return revision.getFile();
@@ -160,12 +161,22 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     Set<FilePath> fileNames = getFileNames(details);
-    if (myPath.isDirectory()) {
-      return ContainerUtil.filter(details.getChanges(), change -> affectsDirectories(change, fileNames));
+    return collectRelevantChanges(details,
+                                  change -> myPath.isDirectory() ? affectsDirectories(change, fileNames) : affectsFiles(change, fileNames));
+  }
+
+  @NotNull
+  private static List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details,
+                                                     @NotNull Condition<Change> isRelevant) {
+    List<Change> changes = ContainerUtil.filter(details.getChanges(), isRelevant);
+    if (!changes.isEmpty()) return changes;
+    if (details.getParents().size() > 1) {
+      for (int parent = 0; parent < details.getParents().size(); parent++) {
+        List<Change> changesToParent = ContainerUtil.filter(details.getChanges(parent), isRelevant);
+        if (!changesToParent.isEmpty()) return changesToParent;
+      }
     }
-    else {
-      return ContainerUtil.filter(details.getChanges(), change -> affectsFiles(change, fileNames));
-    }
+    return Collections.emptyList();
   }
 
   @NotNull
@@ -197,7 +208,7 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   public List<Change> collectChanges(@NotNull List<VcsFullCommitDetails> detailsList, boolean onlyRelevant) {
     List<Change> changes = ContainerUtil.newArrayList();
     List<VcsFullCommitDetails> detailsListReversed = ContainerUtil.reverse(detailsList);
-    for (VcsFullCommitDetails details : detailsListReversed) {
+    for (VcsFullCommitDetails details: detailsListReversed) {
       changes.addAll(onlyRelevant ? collectRelevantChanges(details) : details.getChanges());
     }
 
