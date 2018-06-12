@@ -20,7 +20,6 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-@SuppressWarnings("deprecation")
 public abstract class UrlOpener {
   public static final ExtensionPointName<UrlOpener> EP_NAME = ExtensionPointName.create("org.jetbrains.urlOpener");
 

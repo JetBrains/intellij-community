@@ -207,9 +207,9 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<>();
+    //noinspection deprecation
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
     Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
     return allTypes.toArray(new SdkType[0]);
@@ -259,11 +259,11 @@ public abstract class SdkType implements SdkTypeId {
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @since 2017.1
    */
-  @SuppressWarnings("deprecation")
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<Sdk> sdkCreatedCallback) {
+    //noinspection deprecation
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 

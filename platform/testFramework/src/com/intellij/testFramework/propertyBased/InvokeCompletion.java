@@ -84,7 +84,6 @@ public class InvokeCompletion extends ActionOnFile {
       Registry.get("ide.completion.variant.limit").setValue(100_000, raiseCompletionLimit);
       try {
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);
-        //noinspection deprecation
         Editor caretEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, getFile());
         performCompletion(caretEditor, Objects.requireNonNull(PsiUtilBase.getPsiFileInEditor(caretEditor, project)), completionChar, env);
         PsiTestUtil.checkPsiStructureWithCommit(getFile(), PsiTestUtil::checkStubsMatchText);

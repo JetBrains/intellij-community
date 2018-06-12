@@ -40,7 +40,6 @@ public class InspectionProfileLoadUtil {
       }
     }
     if (name == null) {
-      //noinspection deprecation
       name = element.getAttributeValue("profile_name");
     }
     return name != null ? name : FileUtilRt.getNameWithoutExtension(file.getFileName().toString());

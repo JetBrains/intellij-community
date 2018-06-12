@@ -2301,6 +2301,5 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
   }
 
   private static void triggerUsage(@NotNull String feature) {
-    //noinspection deprecation
   }
 }

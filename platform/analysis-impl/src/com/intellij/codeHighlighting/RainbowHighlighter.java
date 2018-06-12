@@ -78,14 +78,14 @@ public class RainbowHighlighter {
       RAINBOW_COLOR_KEYS[i] = TextAttributesKey.createTextAttributesKey("RAINBOW_COLOR" + i, createRainbowAttribute(RAINBOW_JB_COLORS_DEFAULT[i]));
     }
   }
-  public final static String RAINBOW_TYPE = "rainbow";
-  private final static String RAINBOW_TEMP_PREF = "RAINBOW_TEMP_";
+  public static final String RAINBOW_TYPE = "rainbow";
+  private static final String RAINBOW_TEMP_PREF = "RAINBOW_TEMP_";
 
   @SuppressWarnings("deprecation")
-  public final static TextAttributesKey RAINBOW_ANCHOR = TextAttributesKey.createTextAttributesKey(RAINBOW_TYPE, new TextAttributes());
+  public static final TextAttributesKey RAINBOW_ANCHOR = TextAttributesKey.createTextAttributesKey(RAINBOW_TYPE, new TextAttributes());
   @SuppressWarnings("deprecation")
-  public final static TextAttributesKey RAINBOW_GRADIENT_DEMO = TextAttributesKey.createTextAttributesKey("rainbow_demo", new TextAttributes());
-  public final static Boolean DEFAULT_RAINBOW_ON = Boolean.FALSE;
+  public static final TextAttributesKey RAINBOW_GRADIENT_DEMO = TextAttributesKey.createTextAttributesKey("rainbow_demo", new TextAttributes());
+  public static final Boolean DEFAULT_RAINBOW_ON = Boolean.FALSE;
 
   @NotNull private final TextAttributesScheme myColorsScheme;
   @NotNull private final Color[] myRainbowColors;
@@ -329,7 +329,6 @@ public class RainbowHighlighter {
 
   @NotNull
   private static TextAttributesKey createRainbowKey(int i, Color rainbowColor) {
-    //noinspection deprecation
     TextAttributesKey key = TextAttributesKey.createTempTextAttributesKey(
       RAINBOW_TEMP_PREF + i,
       new TextAttributes());

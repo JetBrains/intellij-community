@@ -114,7 +114,6 @@ public final class ConcurrentHashSet<K> implements Set<K> {
     return map.keySet().toString();
   }
 
-  @SuppressWarnings("deprecation")
   @Override
   public boolean equals(Object obj) {
     if (this == obj) {
