@@ -73,9 +73,9 @@ private fun run(laf: LookAndFeel) {
 //          val panel = visualPaddingsPanelOnlyTextField()
 //          val panel = visualPaddingsPanelOnlyLabeledScrollPane()
     //      val panel = labelRowShouldNotGrow()
-//          val panel = cellPanel()
+          val panel = commentAndPanel()
 //          val panel = alignFieldsInTheNestedGrid()
-          val panel = visualPaddingsPanel()
+//          val panel = visualPaddingsPanel()
 //          val panel = withVerticalButtons()
 //    val panel = createLafTestPanel()
 
