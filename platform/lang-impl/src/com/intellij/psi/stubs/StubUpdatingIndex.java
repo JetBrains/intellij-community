@@ -455,6 +455,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
           final InputDataDiffBuilder<Integer, SerializedStubTree> diffBuilder = super.getCurrentDataEvaluator().compute();
           if (diffBuilder instanceof CollectionInputDataDiffBuilder) {
             oldStubIndexKeys = ((CollectionInputDataDiffBuilder<Integer, SerializedStubTree>)diffBuilder).getSeq();
+          } else if (diffBuilder instanceof MapInputDataDiffBuilder) {
+            oldStubIndexKeys = ((MapInputDataDiffBuilder<Integer, SerializedStubTree>)diffBuilder).getMap().keySet();
           }
           return diffBuilder;
         };
