@@ -240,7 +240,6 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
   private void notifyStructureChanged(@NotNull VirtualFile file) {
     boolean flattenPackages = root.getSettings().isFlattenPackages();
-    boolean resolveCompactedFolder = !flattenPackages && file.isDirectory() && root.getSettings().isHideEmptyMiddlePackages();
     if (flattenPackages) {
       ProjectFileIndex index = getProjectFileIndex(root.getProject());
       VirtualFile ancestor = index == null ? null : index.getSourceRootForFile(file);
@@ -248,7 +247,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         // TODO: check that file is located under a source root with packages
         file = ancestor;
       }
+      else {
+        flattenPackages = false;
+      }
     }
+    boolean resolveCompactedFolder = !flattenPackages && file.isDirectory() && root.getSettings().isCompactDirectories();
     find(file, null, found -> {
       if (found instanceof Node) {
         Node node = (Node)found;
@@ -544,6 +547,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     Collection<AbstractTreeNode> createChildren(@NotNull Node parent, @NotNull Collection<AbstractTreeNode> old) {
       boolean flattenPackages = getSettings().isFlattenPackages();
       boolean hideEmptyMiddlePackages = getSettings().isHideEmptyMiddlePackages();
+      boolean compactDirectories = getSettings().isCompactDirectories();
       Mapper<FileNode, ProjectFileNode> mapper = new Mapper<>(FileNode::new, FileNode.class, old);
       List<AbstractTreeNode> children = new SmartList<>();
       List<PsiFile> files = new SmartList<>();
@@ -553,7 +557,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
         if (element instanceof PsiDirectory) {
           Icon icon = getFolderIcon(child, element);
           if (icon != AllIcons.Nodes.Package || !flattenPackages) {
-            ProjectFileNode childNext = !hideEmptyMiddlePackages ? null : getSingleDirectory(child);
+            ProjectFileNode childNext = !compactDirectories ? null : getSingleDirectory(child);
             while (childNext != null) {
               Icon iconNext = getFolderIcon(childNext, null);
               if (icon == iconNext) {
@@ -1045,11 +1049,11 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       Mapper<GroupNode, Object> mapper = new Mapper<>(GroupNode::new, GroupNode.class, old);
       ModuleManager manager = getModuleManager(parent.getProject());
       char separator = manager != null && manager.hasModuleGroups() ? VFS_SEPARATOR_CHAR : '.';
-      boolean hideEmptyMiddlePackages = parent.getSettings().isHideEmptyMiddlePackages();
+      boolean compactDirectories = parent.getSettings().isCompactDirectories();
       List<AbstractTreeNode> children = new SmartList<>();
       for (Group group: groups.values()) {
         Object id = group.id;
-        Group single = !hideEmptyMiddlePackages ? null : group.getSingleGroup();
+        Group single = !compactDirectories ? null : group.getSingleGroup();
         if (single != null) {
           StringBuilder sb = new StringBuilder(id.toString());
           do {
