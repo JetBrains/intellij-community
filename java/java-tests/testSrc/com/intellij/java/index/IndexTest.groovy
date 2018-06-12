@@ -39,6 +39,7 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
 import com.intellij.psi.impl.source.*
@@ -508,6 +509,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("Foo3 class")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+
+    document.text = "class Foo { Runnable r = () -> {}; }"
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
+    document.text = "class Foo { Runnable x = () -> { }; }"
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
