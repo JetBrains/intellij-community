@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.inspections.YAMLDuplicatedKeysInspection;
+import org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection;
 
 import java.util.List;
 import java.util.Optional;
@@ -21,7 +22,23 @@ public class YAMLIntentionTest extends LightPlatformCodeInsightFixtureTestCase {
     doTest("Remove key");
   }
 
-  @SuppressWarnings("SameParameterValue")
+  public void testDeleteAnchor1() {
+    doDeleteAnchorTest();
+  }
+
+  public void testDeleteAnchor2() {
+    doDeleteAnchorTest();
+  }
+
+  public void testDeleteAnchor3() {
+    doDeleteAnchorTest();
+  }
+
+  private void doDeleteAnchorTest() {
+    myFixture.enableInspections(YAMLUnusedAnchorInspection.class);
+    doTest("Remove anchor");
+  }
+
   private void doTest(@NotNull String intentionName) {
     String testName = getTestName(true);
     myFixture.configureByFile(testName + ".yml");
