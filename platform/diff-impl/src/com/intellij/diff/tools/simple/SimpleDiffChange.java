@@ -19,6 +19,7 @@ import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -316,6 +317,7 @@ public class SimpleDiffChange {
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
     return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> {
+      DiffUsageTriggerCollector.trigger("action.SimpleDiffChange.append");
       myViewer.appendChange(this, side);
     });
   }
