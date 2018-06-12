@@ -43,19 +43,21 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
                      permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, FilePath> {
-    val visibleLinearGraph = controller.compiledGraph
+    if (fileNamesData.hasRenames) {
+      val visibleLinearGraph = controller.compiledGraph
 
-    val row = startCommit?.let {
-      findAncestorRowAffectingFile(startCommit, startPath, visibleLinearGraph, permanentGraphInfo, fileNamesData)
-    } ?: 0
-    if (row >= 0) {
-      val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
-      val (paths, excluded) = refiner.refine(row, startPath)
-      if (!excluded.isEmpty()) {
-        val hidden = hideInplace(controller, permanentGraphInfo, excluded)
-        if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
+      val row = startCommit?.let {
+        findAncestorRowAffectingFile(startCommit, startPath, visibleLinearGraph, permanentGraphInfo, fileNamesData)
+      } ?: 0
+      if (row >= 0) {
+        val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
+        val (paths, excluded) = refiner.refine(row, startPath)
+        if (!excluded.isEmpty()) {
+          val hidden = hideInplace(controller, permanentGraphInfo, excluded)
+          if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
+        }
+        return paths
       }
-      return paths
     }
     return fileNamesData.buildPathsMap()
   }
@@ -104,18 +106,12 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val excluded = ContainerUtil.newHashSet<Int>()
 
   fun refine(row: Int, startPath: FilePath): Pair<HashMap<Int, FilePath>, HashSet<Int>> {
-    if (namesData.hasRenames) {
-      paths.push(startPath)
-      DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
-    }
-    else {
-      pathsForCommits.putAll(namesData.buildPathsMap())
-    }
+    paths.push(startPath)
+    DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
 
-    for (commit in pathsForCommits.keys) {
-      val path = pathsForCommits[commit]
-      if (path != null) {
-        if (!namesData.affects(commit, path)) excluded.add(commit)
+    pathsForCommits.forEach { commit, path ->
+      if (path != null && !namesData.affects(commit, path)) {
+        excluded.add(commit)
       }
     }
 
