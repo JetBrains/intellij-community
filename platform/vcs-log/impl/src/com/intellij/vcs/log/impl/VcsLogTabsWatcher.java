@@ -45,7 +45,7 @@ public class VcsLogTabsWatcher implements Disposable {
     ApplicationManager.getApplication().invokeLater(() -> {
       project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, myPostponedEventsListener);
       installContentListener();
-    });
+    }, project.getDisposed());
   }
 
   @Nullable
