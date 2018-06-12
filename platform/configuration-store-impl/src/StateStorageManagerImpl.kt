@@ -259,7 +259,7 @@ open class StateStorageManagerImpl(private val rootTagName: String,
       throw IllegalArgumentException("Extension is missing for storage file: $filePath")
     }
 
-    val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else this.rootTagName)
+    val storage = createFileBasedStorage(filePath, collapsedPath, effectiveRoamingType, if (exclusive) null else rootTagName)
     if (isUseVfsListener == ThreeState.YES && storage is StorageVirtualFileTracker.TrackedStorage) {
       virtualFileTracker?.put(filePath, storage)
     }
@@ -267,8 +267,17 @@ open class StateStorageManagerImpl(private val rootTagName: String,
   }
 
   // open for upsource
-  protected open fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage
-      = MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), if (roamingType == RoamingType.DISABLED) null else compoundStreamProvider)
+  protected open fun createFileBasedStorage(path: String, collapsedPath: String, roamingType: RoamingType, rootTagName: String?): StateStorage {
+    val provider = if (roamingType == RoamingType.DISABLED) {
+      // remove to ensure that repository doesn't store non-roamable files
+      compoundStreamProvider.delete(collapsedPath, roamingType)
+      null
+    }
+    else {
+      compoundStreamProvider
+    }
+    return MyFileStorage(this, Paths.get(path), collapsedPath, rootTagName, roamingType, getMacroSubstitutor(collapsedPath), provider)
+  }
 
   // open for upsource
   protected open fun createDirectoryBasedStorage(path: String, collapsedPath: String, @Suppress("DEPRECATION") splitter: StateSplitter): StateStorage
