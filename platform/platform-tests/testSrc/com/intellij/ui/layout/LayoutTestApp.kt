@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.layout
 
-import com.intellij.ide.BootstrapClassLoaderUtil
 import com.intellij.ide.ui.laf.IntelliJLaf
 import com.intellij.ide.ui.laf.darcula.DarculaLaf
 import com.intellij.openapi.ui.DialogWrapper
@@ -24,33 +23,14 @@ import javax.swing.plaf.metal.MetalLookAndFeel
 object DarculaUiTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-    LayoutTestAppBootstrapper.bootstrap(DarculaLaf::class.java.name)
+    run(DarculaLaf())
   }
 }
 
 object IntelliJUiTestApp {
   @JvmStatic
   fun main(args: Array<String>) {
-    LayoutTestAppBootstrapper.bootstrap(IntelliJLaf::class.java.name)
-  }
-}
-
-class LayoutTestAppBootstrapper {
-  companion object {
-    fun bootstrap(lafClassName: String) {
-      val newClassLoader = BootstrapClassLoaderUtil.initClassLoader()
-      Thread.currentThread().contextClassLoader = newClassLoader
-
-      val klass = Class.forName(LayoutTestAppBootstrapper::class.java.name, true, newClassLoader)
-      val instance = klass.newInstance()
-      val method = klass.getDeclaredMethod("target", LookAndFeel::class.java)
-
-      method.invoke(instance, Class.forName(lafClassName, true, newClassLoader).newInstance())
-    }
-  }
-
-  fun target(laf: LookAndFeel) {
-    run(laf)
+    run(IntelliJLaf())
   }
 }
 
