@@ -5,7 +5,9 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaModuleNameIndex;
@@ -23,15 +25,23 @@ import com.intellij.util.graph.GraphGenerator;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
 import java.util.function.BiFunction;
+import java.util.jar.Attributes;
+import java.util.jar.JarFile;
+import java.util.jar.Manifest;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 import static com.intellij.psi.util.PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT;
 
 public class JavaModuleGraphUtil {
+  private static final Attributes.Name MULTI_RELEASE = new Attributes.Name("Multi-Release");
+
   private JavaModuleGraphUtil() { }
 
   @Nullable
@@ -48,7 +58,68 @@ public class JavaModuleGraphUtil {
 
   @Nullable
   public static PsiJavaModule findDescriptorByFile(@Nullable VirtualFile file, @NotNull Project project) {
-    return ModuleHighlightUtil.getModuleDescriptor(file, project);
+    if (file == null) return null;
+
+    ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
+    if (index.isInLibrary(file)) {
+      VirtualFile root = index.getClassRootForFile(file);
+      if (root != null) {
+        VirtualFile descriptorFile = root.findChild(PsiJavaModule.MODULE_INFO_CLS_FILE);
+        if (descriptorFile == null) {
+          VirtualFile alt = root.findFileByRelativePath("META-INF/versions/9/" + PsiJavaModule.MODULE_INFO_CLS_FILE);
+          if (alt != null && isMultiReleaseJar(root)) {
+            descriptorFile = alt;
+          }
+        }
+        if (descriptorFile != null) {
+          PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
+          if (psiFile instanceof PsiJavaFile) {
+            return ((PsiJavaFile)psiFile).getModuleDeclaration();
+          }
+        }
+        else if (root.getFileSystem() instanceof JarFileSystem && "jar".equalsIgnoreCase(root.getExtension())) {
+          return LightJavaModule.getModule(PsiManager.getInstance(project), root);
+        }
+      }
+    }
+    else {
+      return findDescriptorByModule(index.getModuleForFile(file), index.isInTestSourceContent(file));
+    }
+
+    return null;
+  }
+
+  private static boolean isMultiReleaseJar(VirtualFile root) {
+    if (root.getFileSystem() instanceof JarFileSystem) {
+      VirtualFile manifest = root.findFileByRelativePath(JarFile.MANIFEST_NAME);
+      if (manifest != null) {
+        try (InputStream stream = manifest.getInputStream()) {
+          return Boolean.valueOf(new Manifest(stream).getMainAttributes().getValue(MULTI_RELEASE));
+        }
+        catch (IOException ignored) { }
+      }
+    }
+
+    return false;
+  }
+
+  @Nullable
+  public static PsiJavaModule findDescriptorByModule(@Nullable Module module, boolean inTests) {
+    if (module != null) {
+      JavaSourceRootType rootType = inTests ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE;
+      List<VirtualFile> files = ModuleRootManager.getInstance(module).getSourceRoots(rootType).stream()
+        .map(root -> root.findChild(PsiJavaModule.MODULE_INFO_FILE))
+        .filter(Objects::nonNull)
+        .collect(Collectors.toList());
+      if (files.size() == 1) {
+        PsiFile psiFile = PsiManager.getInstance(module.getProject()).findFile(files.get(0));
+        if (psiFile instanceof PsiJavaFile) {
+          return ((PsiJavaFile)psiFile).getModuleDeclaration();
+        }
+      }
+    }
+
+    return null;
   }
 
   @Nullable
