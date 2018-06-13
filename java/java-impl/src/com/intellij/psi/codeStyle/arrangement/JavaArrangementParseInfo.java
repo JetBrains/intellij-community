@@ -130,8 +130,10 @@ public class JavaArrangementParseInfo {
     getPropertyInfo(propertyName, className).setGetter(entry);
   }
 
-  public void registerSetter(@NotNull String propertyName, @NotNull String className, @NotNull JavaElementArrangementEntry entry) {
-    getPropertyInfo(propertyName, className).setSetter(entry);
+  public void registerSetter(@NotNull String propertyName,
+                             @NotNull String className,
+                             @NotNull JavaElementArrangementEntry entry) {
+    getPropertyInfo(propertyName, className).addSetter(entry);
   }
 
   @NotNull

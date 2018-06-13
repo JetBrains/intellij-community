@@ -15,7 +15,11 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.util.SmartList;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -24,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
 public class JavaArrangementPropertyInfo {
 
   @Nullable private JavaElementArrangementEntry myGetter;
-  @Nullable private JavaElementArrangementEntry mySetter;
+  private final List<JavaElementArrangementEntry> mySetters = new SmartList<>();
 
   @Nullable
   public JavaElementArrangementEntry getGetter() {
@@ -35,12 +39,15 @@ public class JavaArrangementPropertyInfo {
     myGetter = getter;
   }
 
-  @Nullable
-  public JavaElementArrangementEntry getSetter() {
-    return mySetter;
+
+  public void addSetter(@NotNull JavaElementArrangementEntry setter) {
+    mySetters.add(setter);
   }
 
-  public void setSetter(@Nullable JavaElementArrangementEntry setter) {
-    mySetter = setter;
+  /**
+   * @return list of setter entries, that always ordered by signature (not depends on position order)
+   */
+  public List<JavaElementArrangementEntry> getSetters() {
+    return mySetters;
   }
 }
