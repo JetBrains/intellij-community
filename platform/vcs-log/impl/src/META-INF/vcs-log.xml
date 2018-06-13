@@ -25,6 +25,7 @@
 
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogRepoSizeCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogFeaturesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.vcs.log.statistics.VcsLogUsageTriggerCollector"/>
 
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MyCommitsHighlighter$Factory"/>
     <logHighlighterFactory implementation="com.intellij.vcs.log.ui.highlighters.MergeCommitsHighlighter$Factory"/>
