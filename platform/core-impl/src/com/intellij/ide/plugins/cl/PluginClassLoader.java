@@ -101,7 +101,12 @@ public class PluginClassLoader extends UrlClassLoader {
     //some commonly used classes from kotlin-runtime must be loaded by the platform classloader. Otherwise if a plugin bundles its own version
     // of kotlin-runtime.jar it won't be possible to call platform's methods with these types in signatures from such a plugin.
     //We assume that these classes don't change between Kotlin versions so it's safe to always load them from platform's kotlin-runtime.
-    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.functions.") || KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
+
+    // Android Studio: we now call methods from the Kotlin plugin which can potentially disagree on types from kotlin-stdlib (mostly Kotlin
+    // reflection classes) in their signatures. For instance, org.jetbrains.kotlin.idea.util.NotNullableCopyableDataNodeUserDataProperty
+    // references kotlin.reflect.KProperty, which needs to be loaded only once in the platform.
+    return className.startsWith("kotlin.") && (className.startsWith("kotlin.jvm.") || className.startsWith("kotlin.reflect.")
+                                               || KOTLIN_STDLIB_CLASSES_USED_IN_SIGNATURES.contains(className));
   }
 
   @Nullable

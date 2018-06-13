@@ -459,8 +459,7 @@ public class PluginManagerCore {
     PluginId pluginId = pluginDescriptor.getPluginId();
     File pluginRoot = pluginDescriptor.getPath();
 
-    // Android Studio: we run unit tests with a prebuilt Kotlin plugin, so it's always safe to load it in its separate classloader.
-    if (isUnitTestMode() && !"org.jetbrains.kotlin".equals(pluginId.getIdString())) return null;
+    if (isUnitTestMode()) return null;
 
     try {
       final List<URL> urls = new ArrayList<>(classPath.length);
@@ -1100,6 +1099,22 @@ public class PluginManagerCore {
       String s = t.nextToken();
       final IdeaPluginDescriptorImpl ideaPluginDescriptor = loadDescriptor(new File(s), PLUGIN_XML);
       if (ideaPluginDescriptor != null) {
+        // Android Studio: when adding the Kotlin plugin via -Dplugin.path, we're either running tests or running from within the IDE.
+        // In this case, the Android plugin and the platform are loaded in the same (default) UrlClassLoader, which we must also use.
+        if ("org.jetbrains.kotlin".equals(ideaPluginDescriptor.getPluginId().getIdString())) {
+          ideaPluginDescriptor.setUseCoreClassLoader(true);
+
+          try {
+            final ClassLoader loader = PluginManagerCore.class.getClassLoader();
+            final Method addUrlMethod = getAddUrlMethod(loader);
+            for (File aClassPath : ideaPluginDescriptor.getClassPath()) {
+              final File file = aClassPath.getCanonicalFile();
+              addUrlMethod.invoke(loader, file.toURI().toURL());
+            }
+          } catch (Exception e) {
+            e.printStackTrace();
+          }
+        }
         result.add(ideaPluginDescriptor);
       }
     }
