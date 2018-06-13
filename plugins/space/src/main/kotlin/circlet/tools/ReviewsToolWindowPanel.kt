@@ -15,8 +15,8 @@ class ReviewsToolWindowPanel(project: Project) :
         setContent(form.panel)
 
         project.connection.connected.forEach(lifetime) {
-            if (project.reviewsToolWindow?.isVisible == true) {
-                form.reload()
+            if (project.toolWindow?.isVisible == true) {
+                reload()
             }
         }
     }

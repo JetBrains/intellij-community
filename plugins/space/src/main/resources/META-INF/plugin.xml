@@ -25,8 +25,8 @@
         <projectConfigurable id="circlet.settings.connection" groupId="tools" parentId="circlet.settings.global"
                              instance="circlet.settings.ConnectionConfigurable"/>
 
-        <toolWindow id="Code reviews" anchor="bottom" canCloseContents="true"
-                    factoryClass="circlet.tools.ReviewsToolWindowFactory"/>
+        <toolWindow id="Circlet" anchor="bottom" canCloseContents="true"
+                    factoryClass="circlet.tools.CircletToolWindowFactory"/>
     </extensions>
 
     <application-components>
@@ -44,7 +44,7 @@
         </component>
 
         <component>
-            <implementation-class>circlet.tools.ToolWindowsManager</implementation-class>
+            <implementation-class>circlet.tools.CircletToolWindowManager</implementation-class>
         </component>
     </project-components>
 

@@ -8,7 +8,7 @@ import com.intellij.openapi.wm.*
 import com.intellij.openapi.wm.ex.*
 import com.intellij.ui.content.*
 
-class ReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
+class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
     override fun createToolWindowContent(project: Project, toolWindow: ToolWindow) {
         val panel = ReviewsToolWindowPanel(project)
         val content = ContentFactory.SERVICE.getInstance().createContent(panel, "", false)
@@ -35,7 +35,7 @@ class ReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
             private var previouslyVisible = toolWindowVisible
 
             override fun stateChanged() {
-                val visible = project.reviewsToolWindow?.isVisible ?: return
+                val visible = project.toolWindow?.isVisible ?: return
 
                 if (visible && !previouslyVisible) {
                     panel.reload()
@@ -53,13 +53,13 @@ class ReviewsToolWindowFactory : ToolWindowFactory, DumbAware {
     }
 
     companion object {
-        const val TOOL_WINDOW_ID = "Code reviews"
+        const val TOOL_WINDOW_ID = "Circlet"
     }
 }
 
-val Project.reviewsToolWindow: ToolWindow?
+val Project.toolWindow: ToolWindow?
     get() = computeSafe {
-        toolWindowManager.getToolWindow(ReviewsToolWindowFactory.TOOL_WINDOW_ID)
+        toolWindowManager.getToolWindow(CircletToolWindowFactory.TOOL_WINDOW_ID)
     }
 
 private fun Content.updateDisplayName() {
