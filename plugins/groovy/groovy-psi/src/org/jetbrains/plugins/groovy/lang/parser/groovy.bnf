@@ -550,6 +550,13 @@ private type_argument ::= any_type_element | wildcard_type_element
 {
   name = 'type argument'
 }
+soft_type_argument_list ::= '<' soft_type_argument_list_item soft_type_argument_list_tail* type_argument_list_end
+{
+  consumeTokenMethod = 'consumeTokenFast'
+  elementType = type_argument_list
+}
+private soft_type_argument_list_item ::= type_argument_list_item | clear_variants_and_fail
+private soft_type_argument_list_tail ::= fast_comma mb_nl soft_type_argument_list_item
 // endregion
 
 
@@ -828,7 +835,7 @@ private priority0 ::= unqualified_reference_expression
                     | gstring
                     | regex
                     | parenthesized_expression
-unqualified_reference_expression ::= IDENTIFIER
+unqualified_reference_expression ::= IDENTIFIER soft_type_argument_list?
                                    | 'this'
                                    | 'super'
                                    | code_reference_identifiers_soft &(reference_dot | '.&')
