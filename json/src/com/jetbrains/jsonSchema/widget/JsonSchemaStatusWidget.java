@@ -74,11 +74,16 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
 
+    JsonSchemaEnabler[] enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions();
+    if (Arrays.stream(enablers).noneMatch(e -> e.shouldShowSwitcherWidget(file))) {
+      return WidgetState.HIDDEN;
+    }
+
     if (!hasAccessToSymbols()) {
       return WidgetState.DUMB_MODE;
     }
 
-    if (Arrays.stream(JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions()).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
+    if (Arrays.stream(enablers).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
       return WidgetState.HIDDEN;
     }
 
