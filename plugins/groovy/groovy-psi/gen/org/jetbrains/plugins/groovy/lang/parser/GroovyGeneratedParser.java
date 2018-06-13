@@ -697,6 +697,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // <<anyTypeElement type_element>>
+  static boolean any_type_element(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "any_type_element")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, null, "<type>");
+    r = anyTypeElement(b, l + 1, type_element_parser_);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  /* ********************************************************** */
   // <<parseApplication application_ref application_expression application_call application_index>>
   static boolean application(PsiBuilder b, int l) {
     return parseApplication(b, l + 1, application_ref_parser_, application_expression_parser_, application_call_parser_, application_index_parser_);
@@ -6203,12 +6214,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // type_element | wildcard_type_element
+  // any_type_element | wildcard_type_element
   static boolean type_argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_argument")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, null, "<type argument>");
-    r = type_element(b, l + 1);
+    r = any_type_element(b, l + 1);
     if (!r) r = wildcard_type_element(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
@@ -6233,13 +6244,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // mb_nl <<anyTypeElement type_argument>>
+  // mb_nl type_argument
   static boolean type_argument_list_item(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "type_argument_list_item")) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = mb_nl(b, l + 1);
-    r = r && anyTypeElement(b, l + 1, type_argument_parser_);
+    r = r && type_argument(b, l + 1);
     exit_section_(b, m, null, r);
     return r;
   }
@@ -6591,7 +6602,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // ('extends' | 'super') type_element
+  // ('extends' | 'super') any_type_element
   static boolean wildcard_bound(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "wildcard_bound")) return false;
     if (!nextTokenIs(b, "", KW_EXTENDS, KW_SUPER)) return false;
@@ -6599,7 +6610,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _NONE_);
     r = wildcard_bound_0(b, l + 1);
     p = r; // pin = 1
-    r = r && type_element(b, l + 1);
+    r = r && any_type_element(b, l + 1);
     exit_section_(b, l, m, r, p, null);
     return r || p;
   }
@@ -7818,11 +7829,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   final static Parser type_argument_list_parser_ = new Parser() {
     public boolean parse(PsiBuilder b, int l) {
       return type_argument_list(b, l + 1);
-    }
-  };
-  final static Parser type_argument_parser_ = new Parser() {
-    public boolean parse(PsiBuilder b, int l) {
-      return type_argument(b, l + 1);
     }
   };
   final static Parser type_element_parser_ = new Parser() {
