@@ -557,7 +557,7 @@
     <experimentalFeature id="inline.browse.button" percentOfUsers="100">
       <description>Inlines browse button inside TextFieldWithBrowseButton component</description>
     </experimentalFeature>
-    <experimentalFeature id="new.search.everywhere" percentOfUsers="20">
+    <experimentalFeature id="new.search.everywhere" percentOfUsers="0">
       <description>Shows new consolidated popup for all GoTo and Search Everywhere actions</description>
     </experimentalFeature>
   </extensions>
