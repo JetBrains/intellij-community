@@ -224,6 +224,7 @@ class BuildUtils {
     final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, false, true, false);
 
     final TBItemScrubber scrub = result.addScrubber();
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
     @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
     for (Object obj : listPopupStep.getValues()) {
       final Icon ic = listPopupStep.getIconFor(obj);
@@ -241,7 +242,7 @@ class BuildUtils {
         listPopup.handleSelect(true);
       };
 
-      scrub.addItem(ic, txt, () -> ApplicationManager.getApplication().invokeLater(() -> action.run()));
+      scrub.addItem(ic, txt, () -> ApplicationManager.getApplication().invokeLater(() -> action.run(), ms));
     }
 
     result.selectVisibleItemsToShow();
