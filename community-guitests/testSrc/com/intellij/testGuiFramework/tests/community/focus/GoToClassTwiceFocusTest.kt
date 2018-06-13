@@ -82,7 +82,7 @@ class GoToClassTwiceFocusTest : GuiTestCase() {
     smartRobot.shortcut(actionKeyStroke)
     smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
     Pause.pause(500)
-    FocusIssuesUtil.checkSearchEverywhereUI(typedString)
+    FocusIssuesUtil.checkSearchEnteredText(typedString)
     shortcut(ESCAPE)
   }
 

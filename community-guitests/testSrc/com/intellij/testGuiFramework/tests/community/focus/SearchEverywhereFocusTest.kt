@@ -23,7 +23,7 @@ class SearchEverywhereFocusTest : GuiTestCase() {
       doubleShift(50)
       fastType(typedString)
       Pause.pause(500)
-      FocusIssuesUtil.checkSearchEverywhereUI(typedString)
+      FocusIssuesUtil.checkSearchEnteredText(typedString)
       shortcut(ESCAPE)
       focusOnEditor()
     }
