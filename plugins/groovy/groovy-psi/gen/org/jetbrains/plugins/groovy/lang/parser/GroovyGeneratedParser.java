@@ -7288,7 +7288,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   // IDENTIFIER
   //                                    | 'this'
   //                                    | 'super'
-  //                                    | ('in' | 'def' | 'trait') &(reference_dot | '.&')
+  //                                    | code_reference_identifiers_soft &(reference_dot | '.&')
   //                                    | (STR_SQ | STR_DQ) &string_literal_as_reference
   public static boolean unqualified_reference_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression")) return false;
@@ -7303,25 +7303,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // ('in' | 'def' | 'trait') &(reference_dot | '.&')
+  // code_reference_identifiers_soft &(reference_dot | '.&')
   private static boolean unqualified_reference_expression_3(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression_3")) return false;
     boolean r;
     Marker m = enter_section_(b);
-    r = unqualified_reference_expression_3_0(b, l + 1);
+    r = code_reference_identifiers_soft(b, l + 1);
     r = r && unqualified_reference_expression_3_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // 'in' | 'def' | 'trait'
-  private static boolean unqualified_reference_expression_3_0(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "unqualified_reference_expression_3_0")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, KW_IN);
-    if (!r) r = consumeTokenSmart(b, KW_DEF);
-    if (!r) r = consumeTokenSmart(b, KW_TRAIT);
     exit_section_(b, m, null, r);
     return r;
   }

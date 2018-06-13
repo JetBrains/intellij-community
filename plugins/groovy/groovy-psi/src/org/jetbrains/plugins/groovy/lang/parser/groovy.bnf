@@ -831,7 +831,7 @@ private priority0 ::= unqualified_reference_expression
 unqualified_reference_expression ::= IDENTIFIER
                                    | 'this'
                                    | 'super'
-                                   | ('in' | 'def' | 'trait') &(reference_dot | '.&')
+                                   | code_reference_identifiers_soft &(reference_dot | '.&')
                                    | (STR_SQ | STR_DQ) &string_literal_as_reference
 {
   elementType = reference_expression
