@@ -16,6 +16,8 @@ import org.jetbrains.annotations.CalledInAwt
  */
 abstract class ProgressVisibilityManager : Disposable {
   private val indicators: MutableList<ProgressIndicator> = ArrayList()
+  var disposed = false
+    private set
 
   @CalledInAwt
   fun run(task: Task.Backgroundable): ProgressIndicator {
@@ -35,6 +37,7 @@ abstract class ProgressVisibilityManager : Disposable {
     for (indicator in indicators) {
       indicator.cancel()
     }
+    disposed = true
   }
 
   protected abstract fun setProgressVisible(visible: Boolean)
