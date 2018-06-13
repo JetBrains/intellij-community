@@ -75,16 +75,12 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
     }
 
     JsonSchemaEnabler[] enablers = JsonSchemaEnabler.EXTENSION_POINT_NAME.getExtensions();
-    if (Arrays.stream(enablers).noneMatch(e -> e.shouldShowSwitcherWidget(file))) {
+    if (Arrays.stream(enablers).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
       return WidgetState.HIDDEN;
     }
 
     if (!hasAccessToSymbols()) {
-      return WidgetState.DUMB_MODE;
-    }
-
-    if (Arrays.stream(enablers).noneMatch(e -> e.isEnabledForFile(file) && e.shouldShowSwitcherWidget(file))) {
-      return WidgetState.HIDDEN;
+      return WidgetState.getDumbModeState("JSON schema service", "JSON: ");
     }
 
     Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
