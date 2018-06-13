@@ -52,6 +52,7 @@ private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
 private val parseNoTypeArgumentsCodeReference: Key<Boolean> = Key.create("groovy.parse.no.type.arguments")
 private val parseAnyTypeElement: Key<Boolean> = Key.create("groovy.parse.any.type.element")
+private val parseQualifiedName: Key<Boolean> = Key.create("groovy.parse.qualified.name")
 private val parseCapitalizedCodeReference: Key<Boolean> = Key.create("groovy.parse.capitalized")
 private val parseDefinitelyTypeElement: Key<Boolean> = Key.create("groovy.parse.definitely.type.element")
 private val referenceWasCapitalized: Key<Boolean> = Key.create("groovy.parse.ref.was.capitalized")
@@ -105,6 +106,14 @@ fun anyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser): Boolea
 }
 
 private val PsiBuilder.anyTypeElementParsing get() = this[parseAnyTypeElement]
+
+fun qualifiedName(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  return builder.withKey(parseQualifiedName, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isQualifiedName(builder: PsiBuilder, level: Int): Boolean = builder[parseQualifiedName]
 
 fun capitalizedTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
   try {
