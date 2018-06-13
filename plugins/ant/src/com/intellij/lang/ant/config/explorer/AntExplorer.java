@@ -37,6 +37,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
@@ -482,10 +483,9 @@ public class AntExplorer extends SimpleToolWindowPanel implements DataProvider, 
       if (node.getUserObject() instanceof AntTargetNodeDescriptor) {
         final AntTargetNodeDescriptor targetNodeDescriptor = (AntTargetNodeDescriptor)node.getUserObject();
         final AntBuildTargetBase buildTarget = targetNodeDescriptor.getTarget();
-        final OpenFileDescriptor descriptor = buildTarget.getOpenFileDescriptor();
+        final Navigatable descriptor = buildTarget.getOpenFileDescriptor();
         if (descriptor != null) {
-          final VirtualFile descriptorFile = descriptor.getFile();
-          if (descriptorFile.isValid()) {
+          if (descriptor.canNavigate()) {
             return descriptor;
           }
         }

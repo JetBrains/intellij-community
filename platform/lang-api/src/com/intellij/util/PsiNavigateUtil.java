@@ -16,7 +16,7 @@
 
 package com.intellij.util;
 
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -31,12 +31,17 @@ public class PsiNavigateUtil {
       final int offset = navigationElement instanceof PsiFile ? -1 : navigationElement.getTextOffset();
 
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(psiElement);
+      Navigatable navigatable;
       if (virtualFile != null && virtualFile.isValid()) {
-        new OpenFileDescriptor(navigationElement.getProject(), virtualFile, offset).navigate(true);
+        navigatable = PsiNavigationSupport.getInstance().createNavigatable(navigationElement.getProject(), virtualFile, offset);
       }
       else if (navigationElement instanceof Navigatable) {
-        ((Navigatable)navigationElement).navigate(true);
+        navigatable = (Navigatable)navigationElement;
       }
+      else {
+        return;
+      }
+      navigatable.navigate(true);
     }
   }
 }

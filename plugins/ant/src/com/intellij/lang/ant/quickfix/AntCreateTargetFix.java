@@ -17,9 +17,9 @@ package com.intellij.lang.ant.quickfix;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.AntDomTarget;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
@@ -77,7 +77,9 @@ public class AntCreateTargetFix implements LocalQuickFix {
           }
         }
         if (generated instanceof XmlTag) {
-          result = new OpenFileDescriptor(project, containingFile.getVirtualFile(), ((XmlTag)generated).getValue().getTextRange().getEndOffset());
+          result = PsiNavigationSupport.getInstance().createNavigatable(project, containingFile.getVirtualFile(),
+                                                                        ((XmlTag)generated).getValue().getTextRange()
+                                                                                           .getEndOffset());
         }
         if (result == null && generated instanceof Navigatable) {
           result = (Navigatable)generated;

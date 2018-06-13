@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
@@ -23,7 +24,6 @@ import com.intellij.openapi.externalSystem.service.notification.NotificationCate
 import com.intellij.openapi.externalSystem.service.notification.NotificationData;
 import com.intellij.openapi.externalSystem.service.notification.NotificationSource;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -91,7 +91,7 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
 
     private final @NotNull File myFile;
     private final @NotNull Project myProject;
-    private volatile OpenFileDescriptor openFileDescriptor;
+    private volatile Navigatable openFileDescriptor;
 
     public MyNavigatable(@NotNull File file, @NotNull Project project) {
       myFile = file;
@@ -100,11 +100,11 @@ public class GradleProjectImportNotificationListener extends ExternalSystemTaskN
 
     @Override
     public void navigate(boolean requestFocus) {
-      OpenFileDescriptor fileDescriptor = openFileDescriptor;
+      Navigatable fileDescriptor = openFileDescriptor;
       if (fileDescriptor == null) {
         final VirtualFile virtualFile = ExternalSystemUtil.findLocalFileByPath(myFile.getPath());
         if (virtualFile != null) {
-          openFileDescriptor = fileDescriptor = new OpenFileDescriptor(myProject, virtualFile);
+          openFileDescriptor = fileDescriptor = PsiNavigationSupport.getInstance().createNavigatable(myProject, virtualFile, -1);
         }
       }
       if (fileDescriptor != null && fileDescriptor.canNavigate()) {

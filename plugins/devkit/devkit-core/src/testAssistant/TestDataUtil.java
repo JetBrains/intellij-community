@@ -15,8 +15,8 @@
  */
 package org.jetbrains.idea.devkit.testAssistant;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
@@ -174,7 +174,7 @@ public class TestDataUtil {
   static void openOrAskToCreateFile(@NotNull Project project, @NotNull String path) {
     VirtualFile file = getFileByPath(path);
     if (file != null) {
-      new OpenFileDescriptor(project, file).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true);
     }
     else {
       String displayPath = getHtmlDisplayPathForMissingFile(project, path);
@@ -182,7 +182,7 @@ public class TestDataUtil {
                                         DevKitBundle.message("testdata.create.dialog.title"), Messages.getQuestionIcon());
       if (rc == Messages.YES) {
         VirtualFile vFile = createFileByName(project, path);
-        new OpenFileDescriptor(project, vFile).navigate(true);
+        PsiNavigationSupport.getInstance().createNavigatable(project, vFile, -1).navigate(true);
       }
     }
   }

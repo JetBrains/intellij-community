@@ -6,12 +6,16 @@ package com.intellij.ide.todo;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.*;
+import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.OccurenceNavigator;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.nodes.TodoFileNode;
 import com.intellij.ide.todo.nodes.TodoItemNode;
 import com.intellij.ide.todo.nodes.TodoTreeHelper;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -20,7 +24,6 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
@@ -330,9 +333,11 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       }
       TodoItemNode pointer = myTodoTreeBuilder.getFirstPointerForElement(element);
       if (pointer != null) {
-        return new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
-          pointer.getValue().getRangeMarker().getStartOffset()
-        );
+        return PsiNavigationSupport.getInstance().createNavigatable(myProject,
+                                                                    pointer.getValue().getTodoItem().getFile()
+                                                                           .getVirtualFile(),
+                                                                    pointer.getValue().getRangeMarker()
+                                                                           .getStartOffset());
       }
       else {
         return null;
@@ -519,8 +524,9 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       if (pointer == null) return null;
       myTodoTreeBuilder.select(pointer);
       return new OccurenceInfo(
-        new OpenFileDescriptor(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
-                               pointer.getValue().getRangeMarker().getStartOffset()),
+        PsiNavigationSupport.getInstance()
+                            .createNavigatable(myProject, pointer.getValue().getTodoItem().getFile().getVirtualFile(),
+                                               pointer.getValue().getRangeMarker().getStartOffset()),
         -1,
         -1
       );

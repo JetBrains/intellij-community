@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.settings.mappings;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.json.JsonBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
@@ -164,7 +165,7 @@ public class JsonSchemaMappingsView implements Disposable {
         balloon.showInCenterOf(mySchemaField);
         return;
       }
-      new OpenFileDescriptor(myProject, virtualFile).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(myProject, virtualFile, -1).navigate(true);
     }).registerCustomShortcutSet(CommonShortcuts.getEditSource(), mySchemaField);
   }
 

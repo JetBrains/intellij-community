@@ -53,7 +53,6 @@ import com.intellij.openapi.editor.event.VisibleAreaListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.ex.EditorMarkupModel;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -611,7 +610,7 @@ public class DiffPanelImpl implements DiffPanelEx, ContentChangeListener, TwoSid
     return myData.getProject();
   }
 
-  public void showSource(@Nullable OpenFileDescriptor descriptor) {
+  public void showSource(@Nullable Navigatable descriptor) {
     myOptions.showSource(descriptor);
   }
 

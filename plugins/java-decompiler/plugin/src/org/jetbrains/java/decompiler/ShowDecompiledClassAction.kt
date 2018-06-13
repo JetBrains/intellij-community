@@ -2,10 +2,10 @@
 package org.jetbrains.java.decompiler
 
 import com.intellij.ide.highlighter.JavaClassFileType
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.actionSystem.AnAction
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiClassOwner
@@ -26,7 +26,7 @@ class ShowDecompiledClassAction : AnAction(IdeaDecompilerBundle.message("action.
     if (project != null) {
       val file = getOriginalFile(getPsiElement(e))
       if (file != null) {
-        OpenFileDescriptor(project, file, -1).navigate(true)
+        PsiNavigationSupport.getInstance().createNavigatable(project, file, -1).navigate(true)
       }
     }
   }

@@ -17,6 +17,7 @@ import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -29,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -377,14 +377,15 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   @Nullable
-  private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
+  private static Navigatable getOpenFileDescriptor(final RefElement refElement) {
     PsiElement psiElement = refElement.getElement();
     if (psiElement == null) return null;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return null;
     VirtualFile file = containingFile.getVirtualFile();
     if (file == null) return null;
-    return new OpenFileDescriptor(refElement.getRefManager().getProject(), file, psiElement.getTextOffset());
+    return PsiNavigationSupport.getInstance().createNavigatable(refElement.getRefManager().getProject(), file,
+                                                                psiElement.getTextOffset());
   }
 
   public void setApplyingFix(boolean applyingFix) {
@@ -833,7 +834,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           startOffset = textRange.getStartOffset();
         }
       }
-      return new OpenFileDescriptor(getProject(), virtualFile, startOffset);
+      return PsiNavigationSupport.getInstance().createNavigatable(getProject(), virtualFile, startOffset);
     }
     return null;
   }
