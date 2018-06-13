@@ -183,7 +183,15 @@ public class InjectLanguageAction implements IntentionAction, LowPriorityAction 
                 }
               }
             }
-            ;
+            else {
+              LanguageInjectionSupport support = host1.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
+              if (support != null) {
+                if (support.removeInjection(host)) {
+                  host1.getManager().dropPsiCaches();
+                }
+              }
+            }
+
             return fixer.process(host1);
           });
         }

@@ -110,7 +110,8 @@ public class TemporaryPlacesRegistry {
     PsiLanguageInjectionHost host = place.elementPointer.getElement();
     if (host == null) return;
 
-    Set<PsiLanguageInjectionHost> hosts = new SmartHashSet<>();
+    Set<PsiLanguageInjectionHost> hosts = new SmartHashSet<>(1);
+    hosts.add(host); // because `enumerate` doesn't handle reference injections
 
     InjectedLanguageManager.getInstance(myProject).enumerate(host, (injectedPsi, places) -> {
       injectedPsi.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);

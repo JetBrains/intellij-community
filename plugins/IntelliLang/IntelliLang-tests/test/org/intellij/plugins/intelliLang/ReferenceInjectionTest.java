@@ -139,6 +139,42 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
     assertInjectedLangAtCaret(null);
   }
 
+  public void testConvertToAnnotationReferenceInjection() {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    String bar() {\n" +
+                                          "        String result = \"ba<caret>r.xml\";\n" +
+                                          "        return result;\n" +
+                                          "    }    \n" +
+                                          "}");
+    PsiLanguageInjectionHost injectionHost = myFixture.findElementByText("\"bar.xml\"", PsiLanguageInjectionHost.class);
+    SmartPsiElementPointer<PsiLanguageInjectionHost> hostPtr = SmartPointerManager.createPointer(injectionHost);
+
+    StoringFixPresenter storedFix = new StoringFixPresenter();
+
+    InjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile(), new FileReferenceInjector(), storedFix);
+    myFixture.checkResult("class Foo {\n" +
+                          "    String bar() {\n" +
+                          "        String result = \"bar.xml\";\n" +
+                          "        return result;\n" +
+                          "    }    \n" +
+                          "}");
+    assertTrue(assertOneElement(getInjectedReferences()) instanceof FileReference);
+
+    storedFix.process((hostPtr.getElement()));
+    myFixture.checkResult("import org.intellij.lang.annotations.Language;\n" +
+                          "\n" +
+                          "class Foo {\n" +
+                          "    String bar() {\n" +
+                          "        @Language(\"file-reference\") String result = \"bar.xml\";\n" +
+                          "        return result;\n" +
+                          "    }    \n" +
+                          "}");
+    assertTrue(assertOneElement(getInjectedReferences()) instanceof FileReference);
+
+    UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
+    assertNull(getInjectedReferences());
+  }
+
   private void assertInjectedLangAtCaret(String lang) {
     InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(getProject());
     PsiElement injectedElement = injectedLanguageManager.findInjectedElementAt(getFile(), getEditor().getCaretModel().getOffset());
