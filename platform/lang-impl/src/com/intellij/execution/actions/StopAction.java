@@ -10,6 +10,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -265,7 +266,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
 
     List<Pair<RunContentDescriptor, Runnable>> descriptors = new ArrayList<>(stoppableDescriptors.size());
     for (RunContentDescriptor sd : stoppableDescriptors)
-      descriptors.add(Pair.create(sd, ()->ExecutionManagerImpl.stopProcess(sd)));
+      descriptors.add(Pair.create(sd, ()->ApplicationManager.getApplication().invokeLater(()->ExecutionManagerImpl.stopProcess(sd))));
     TouchBarsManager.showStopRunningBar(descriptors);
   }
 
