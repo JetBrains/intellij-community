@@ -94,7 +94,7 @@ public class EditorWindow {
   private static final Icon GAP_ICON = EmptyIcon.create(MODIFIED_ICON);
 
   private boolean myIsDisposed;
-  static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
+  public static final Key<Integer> INITIAL_INDEX_KEY = Key.create("initial editor index");
   private final Stack<Pair<String, Integer>> myRemovedTabs = new Stack<Pair<String, Integer>>() {
     @Override
     public void push(Pair<String, Integer> pair) {
