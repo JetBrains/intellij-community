@@ -1,2 +1,2 @@
-// Known incompatibilities between Android Studio 3.2 Canary 10 and kotlin-plugin-1.2.31-release-Studio3.2-1. Do NOT add to this list!
-org.jetbrains.kotlin::Access to unresolved class com.android.dx.*
+// Known incompatibilities between Android Studio 3.3 Canary 1 and kotlin-plugin-1.2.50-release-Studio3.3-1. Do NOT add to this list!
+

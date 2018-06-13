@@ -132,5 +132,9 @@
     <orderEntry type="module" module-name="intellij.platform.buildScripts" scope="TEST" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
+    <orderEntry type="module" module-name="intellij.android.kotlin.idea" />
+    <orderEntry type="module" module-name="intellij.android.kotlin.extensions" />
+    <orderEntry type="module" module-name="intellij.android.kotlin.output.parser" />
+    <orderEntry type="module" module-name="intellij.android.kotlin.extensions.jps" />
   </component>
 </module>
