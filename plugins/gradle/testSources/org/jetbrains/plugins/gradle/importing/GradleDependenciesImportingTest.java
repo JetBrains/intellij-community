@@ -450,7 +450,7 @@ public class GradleDependenciesImportingTest extends GradleImportingTestCase {
     List<LibraryOrderEntry> unresolvableDep = getModuleLibDeps("project_main", "Gradle: some:unresolvable-lib:0.1");
     assertEquals(1, unresolvableDep.size());
     LibraryOrderEntry unresolvableEntry = unresolvableDep.iterator().next();
-    assertFalse(unresolvableEntry.isModuleLevel());
+    assertTrue(unresolvableEntry.isModuleLevel());
     assertEquals(DependencyScope.COMPILE, unresolvableEntry.getScope());
     String[] unresolvableEntryUrls = unresolvableEntry.getUrls(OrderRootType.CLASSES);
     assertEquals(1, unresolvableEntryUrls.length);
