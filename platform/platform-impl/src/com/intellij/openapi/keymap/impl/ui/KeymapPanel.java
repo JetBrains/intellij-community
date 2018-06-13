@@ -87,6 +87,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
   private boolean myQuickListsModified = false;
   private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
 
+  private boolean myShowFnInitial = false;
+  private JCheckBox myShowFnCheckbox = null;
+
   public KeymapPanel() {
     setLayout(new BorderLayout());
     JPanel keymapPanel = new JPanel(new BorderLayout());
@@ -217,15 +220,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     if (TouchBarsManager.isTouchBarAvailable()) {
       final String appId = Utils.getAppId();
       if (appId != null && !appId.isEmpty()) {
-        final JCheckBox useFn = new JCheckBox("Show function keys in Touch Bar", NSDefaults.isShowFnKeysEnabled(appId));
-        useFn.addChangeListener(new ChangeListener() {
+        myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
+        myShowFnCheckbox = new JCheckBox("Show function keys in Touch Bar", myShowFnInitial);
+        myShowFnCheckbox.addChangeListener(new ChangeListener() {
           public void stateChanged(ChangeEvent e) {
-            final boolean changed = NSDefaults.setShowFnKeysEnabled(appId, useFn.isSelected());
-            if (changed)
-              Utils.restartTouchBarServer();
+            NSDefaults.setShowFnKeysEnabled(appId, myShowFnCheckbox.isSelected());
           }
         });
-        panel.add(useFn, BorderLayout.SOUTH);
+        panel.add(myShowFnCheckbox, BorderLayout.SOUTH);
       }
     }
 
@@ -482,11 +484,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     String error = myManager.apply();
     if (error != null) throw new ConfigurationException(error);
     updateAllToolbarsImmediately();
+
+    if (isShowFnModified())
+      Utils.restartTouchBarServer();
   }
 
   @Override
   public boolean isModified() {
-    return myManager.isModified();
+    return myManager.isModified() || isShowFnModified();
   }
 
   public void selectAction(String actionId) {
@@ -635,6 +640,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       });
     }
     return group;
+  }
+
+  private boolean isShowFnModified() {
+    if (myShowFnCheckbox == null)
+      return false;
+
+    return myShowFnInitial != myShowFnCheckbox.isSelected();
   }
 
   private static int showConfirmationDialog(Component parent) {
