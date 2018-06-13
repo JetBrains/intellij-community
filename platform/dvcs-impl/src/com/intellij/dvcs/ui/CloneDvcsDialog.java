@@ -323,6 +323,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
       @Override
       public void onSuccess() {
+        if (mySpinnerProgressManager.getDisposed()) return;
         if (!myNewRepositories.isEmpty()) {
           // otherwise editor content will be reset
           myRepositoryUrlCombobox.setSelectedItem(myRepositoryUrlField.getText());
