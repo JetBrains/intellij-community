@@ -11,10 +11,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -52,8 +52,17 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
     new CharsetMethodMatcher(JAVA_UTIL_PROPERTIES, "storeToXML", "java.io.OutputStream", JAVA_LANG_STRING, ""),
   };
 
-  private static final Set<String> SUPPORTED_CHARSETS =
-    ContainerUtil.immutableSet("US-ASCII", "ISO-8859-1", "UTF-8", "UTF-16BE", "UTF-16LE", "UTF-16");
+  private static final Map<String, String> SUPPORTED_CHARSETS =
+    EntryStream.of(
+      "US-ASCII", "US_ASCII",
+      "ASCII", "US_ASCII",
+      "ISO646-US", "US_ASCII",
+      "ISO-8859-1", "ISO_8859_1",
+      "UTF-8", "UTF_8",
+      "UTF-16BE", "UTF_16BE",
+      "UTF-16LE", "UTF_16LE",
+      "UTF-16", "UTF_16"
+    ).toMap();
 
   @NotNull
   @Override
@@ -69,7 +78,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
         if (match == null) return;
         String charsetString = getCharsetString(match.myStringCharset);
         if (charsetString == null) return;
-        String constantName = "StandardCharsets." + charsetString.replace('-', '_');
+        String constantName = "StandardCharsets." + SUPPORTED_CHARSETS.get(charsetString);
         holder
           .registerProblem(match.myStringCharset, InspectionsBundle.message("inspection.charset.object.can.be.used.message", constantName),
                            new CharsetObjectCanBeUsedFix(constantName));
@@ -79,7 +88,7 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       private String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
-        if (charsetString == null || !SUPPORTED_CHARSETS.contains(charsetString)) return null;
+        if (charsetString == null || !SUPPORTED_CHARSETS.containsKey(charsetString)) return null;
         if (charsetExpression instanceof PsiLiteralExpression) return charsetString;
         if (charsetExpression instanceof PsiReferenceExpression) {
           String name = ((PsiReferenceExpression)charsetExpression).getReferenceName();
