@@ -79,12 +79,7 @@ abstract class BaseStreamApiMigration {
     else {
       if (status == ControlFlowUtils.InitializerUsageStatus.AT_WANTED_PLACE_ONLY) {
         PsiTypeElement typeElement = var.getTypeElement();
-        if (typeElement != null && typeElement.isInferredType()) {
-          if (PsiTypesUtil.isDenotableType(typeElement.getType(), var)) {
-            PsiTypesUtil.replaceWithExplicitType(typeElement);
-            ct.delete(initializer);
-          }
-        } else {
+        if (typeElement == null || !typeElement.isInferredType() || PsiTypesUtil.replaceWithExplicitType(typeElement) != null) {
           ct.delete(initializer);
         }
       }
