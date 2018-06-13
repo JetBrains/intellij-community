@@ -14,7 +14,6 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.util.text.StringUtil.pluralize
 import com.intellij.openapi.vcs.AbstractVcsHelper
-import com.intellij.openapi.vcs.VcsException
 import com.intellij.openapi.vcs.VcsNotifier
 import com.intellij.openapi.vcs.changes.*
 import com.intellij.openapi.vcs.history.VcsRevisionNumber
@@ -114,14 +113,8 @@ class GitApplyChangesProcess(private val project: Project,
           }
         }
         else if (conflictDetector.hasHappened()) {
-          val shortRev = try {
-            GitRevisionNumber.resolve(project, repository.root, commit.id.asString()).shortRev
-          }
-          catch(e: VcsException) {
-            commit.id.asString()
-          }
           val mergeCompleted = ConflictResolver(project, git, repository.root,
-                                                shortRev, VcsUserUtil.getShortPresentation(commit.author),
+                                                commit.id.toShortString(), VcsUserUtil.getShortPresentation(commit.author),
                                                 commit.subject, operationName).merge()
           refreshVfsAndMarkDirty(repository)
           waitForChangeListManagerUpdate()
