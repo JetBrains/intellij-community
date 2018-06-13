@@ -338,6 +338,10 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testreferences$ref10() { doTest() }
 
+  void testreferences$ref11() { doTest() }
+
+  void testreferences$ref12() { doTest() }
+
   void testreferences$keywords() { doTest() }
 
   void testreferences$emptyTypeArgs() { doTest() }

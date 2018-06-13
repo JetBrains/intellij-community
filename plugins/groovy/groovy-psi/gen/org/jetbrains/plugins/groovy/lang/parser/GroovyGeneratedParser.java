@@ -5467,6 +5467,56 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // '<' soft_type_argument_list_item soft_type_argument_list_tail* type_argument_list_end
+  public static boolean soft_type_argument_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "soft_type_argument_list")) return false;
+    if (!nextTokenIsFast(b, T_LT)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_LT);
+    r = r && soft_type_argument_list_item(b, l + 1);
+    r = r && soft_type_argument_list_2(b, l + 1);
+    r = r && type_argument_list_end(b, l + 1);
+    exit_section_(b, m, TYPE_ARGUMENT_LIST, r);
+    return r;
+  }
+
+  // soft_type_argument_list_tail*
+  private static boolean soft_type_argument_list_2(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "soft_type_argument_list_2")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!soft_type_argument_list_tail(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "soft_type_argument_list_2", c)) break;
+    }
+    return true;
+  }
+
+  /* ********************************************************** */
+  // type_argument_list_item | clear_variants_and_fail
+  static boolean soft_type_argument_list_item(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "soft_type_argument_list_item")) return false;
+    boolean r;
+    r = type_argument_list_item(b, l + 1);
+    if (!r) r = clear_variants_and_fail(b, l + 1);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // fast_comma mb_nl soft_type_argument_list_item
+  static boolean soft_type_argument_list_tail(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "soft_type_argument_list_tail")) return false;
+    if (!nextTokenIs(b, T_COMMA)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = fast_comma(b, l + 1);
+    r = r && mb_nl(b, l + 1);
+    r = r && soft_type_argument_list_item(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // !<<isApplicationArguments>> '*' expression
   public static boolean spread_list_argument(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "spread_list_argument")) return false;
@@ -7311,7 +7361,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // IDENTIFIER
+  // IDENTIFIER soft_type_argument_list?
   //                                    | 'this'
   //                                    | 'super'
   //                                    | code_reference_identifiers_soft &(reference_dot | '.&')
@@ -7320,13 +7370,31 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!recursion_guard_(b, l, "unqualified_reference_expression")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _NONE_, REFERENCE_EXPRESSION, "<unqualified reference expression>");
-    r = consumeTokenSmart(b, IDENTIFIER);
+    r = unqualified_reference_expression_0(b, l + 1);
     if (!r) r = consumeTokenSmart(b, KW_THIS);
     if (!r) r = consumeTokenSmart(b, KW_SUPER);
     if (!r) r = unqualified_reference_expression_3(b, l + 1);
     if (!r) r = unqualified_reference_expression_4(b, l + 1);
     exit_section_(b, l, m, r, false, null);
     return r;
+  }
+
+  // IDENTIFIER soft_type_argument_list?
+  private static boolean unqualified_reference_expression_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unqualified_reference_expression_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenSmart(b, IDENTIFIER);
+    r = r && unqualified_reference_expression_0_1(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // soft_type_argument_list?
+  private static boolean unqualified_reference_expression_0_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "unqualified_reference_expression_0_1")) return false;
+    soft_type_argument_list(b, l + 1);
+    return true;
   }
 
   // code_reference_identifiers_soft &(reference_dot | '.&')
