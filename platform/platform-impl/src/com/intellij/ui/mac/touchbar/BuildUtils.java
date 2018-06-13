@@ -292,10 +292,8 @@ class BuildUtils {
 
       if (child instanceof ActionGroup) {
         ActionGroup actionGroup = (ActionGroup)child;
-        if (actionGroup.isPopup()) {
-          LOG.error(String.format("children with isPopup=true aren't supported now: i=%d, childId='%s', group='%s', group id='%s'", i, childId, group.toString(), groupId));
-          continue;
-        }
+        //if (actionGroup.isPopup()) System.out.println(String.format("add child with isPopup=true: i=%d, childId='%s', group='%s', group id='%s'", i, childId, group.toString(), groupId));
+
         if (filter != null && filter.skip(childId)) {
           // System.out.printf("filter child group: i=%d, childId='%s', group='%s', group id='%s'\n", i, childId, group.toString(), groupId);
           continue;
