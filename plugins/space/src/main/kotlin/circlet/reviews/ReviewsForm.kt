@@ -38,7 +38,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
         reload(reviews)
     }
 
-    private fun reload(reviews: List<CodeReviewShortInfo>) {
+    private fun reload(reviews: List<CodeReviewWithCount>) {
         println("reviews = $reviews") // TODO
     }
 }
