@@ -121,7 +121,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @Override
   public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
     if (selected instanceof PsiElement) {
-      if (((PsiElement)selected).isValid()) {
+      if (!((PsiElement)selected).isValid()) {
         LOG.warn("Cannot navigate to invalid PsiElement");
         return true;
       }
