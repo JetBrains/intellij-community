@@ -226,7 +226,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
           SubstitutionShortInfoHandler.install(editor, variableName ->
             myFilterPanel.setFilters(myConfiguration.getMatchOptions().getVariableConstraint(variableName)));
-          myFilterPanel.setFilters(myConfiguration.getMatchOptions().getVariableConstraint(Configuration.CONTEXT_VAR_NAME));
+          myFilterPanel.setFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
           editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
           final Project project = searchContext.getProject();
           final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(searchCriteriaEdit.getDocument());
