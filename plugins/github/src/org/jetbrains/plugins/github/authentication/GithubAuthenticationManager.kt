@@ -35,7 +35,9 @@ class GithubAuthenticationManager internal constructor(private val accountManage
                                            project: Project? = null,
                                            parentComponent: JComponent? = null,
                                            modalityStateSupplier: () -> ModalityState = { ModalityState.any() }): String? {
-    return getTokenForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) { requestNewToken(account, project, parentComponent) }
+    return getTokenForAccount(account) ?: invokeAndWaitIfNeed(modalityStateSupplier()) {
+      requestNewToken(account, project, parentComponent)
+    }
   }
 
   @CalledInAwt
@@ -53,6 +55,8 @@ class GithubAuthenticationManager internal constructor(private val accountManage
     accountManager.updateAccountToken(account, token)
     return token
   }
+
+  fun hasTokenForAccount(account: GithubAccount): Boolean = getTokenForAccount(account) != null
 
   @CalledInAwt
   fun requestNewAccount(project: Project): GithubAccount? {
@@ -99,6 +103,16 @@ class GithubAuthenticationManager internal constructor(private val accountManage
       }
     }
     return true
+  }
+
+  @CalledInAwt
+  fun ensureHasAccountsWithTokens(project: Project): Boolean {
+    if (!ensureHasAccounts(project)) return false
+    var atLeastOneHasToken = false
+    for (account in getAccounts()) {
+      atLeastOneHasToken = getOrRequestTokenForAccount(account, project) != null
+    }
+    return atLeastOneHasToken
   }
 
   fun getSingleOrDefaultAccount(project: Project): GithubAccount? {
