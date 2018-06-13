@@ -30,11 +30,9 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
-class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedInternalDocumentListener {
-  RangeMarkerTree(@NotNull Document document) {
+public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T> implements PrioritizedInternalDocumentListener {
+  protected RangeMarkerTree(@NotNull Document document) {
     document.addDocumentListener(this);
-  }
-  RangeMarkerTree() {
   }
 
   @Override

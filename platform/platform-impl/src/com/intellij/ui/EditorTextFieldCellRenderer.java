@@ -16,27 +16,30 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
+import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
+import com.intellij.openapi.editor.ex.LineIterator;
+import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.LineSet;
+import com.intellij.openapi.editor.impl.RangeMarkerTree;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.LineTokenizer;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.Processor;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -61,8 +64,8 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     this(project, fileType, true, parent);
   }
 
-  private EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType,
-                                      boolean inheritFontFromLaF, @NotNull Disposable parent) {
+  protected EditorTextFieldCellRenderer(@Nullable Project project, @Nullable FileType fileType,
+                                        boolean inheritFontFromLaF, @NotNull Disposable parent) {
     myProject = project;
     myFileType = fileType;
     myInheritFontFromLaF = inheritFontFromLaF;
@@ -114,7 +117,12 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     panel = createRendererComponent(myProject, myFileType, myInheritFontFromLaF);
     Disposer.register(this, panel);
-    Disposer.register(this, () -> UIUtil.putClientProperty(table, MY_PANEL_PROPERTY, null));
+    Disposer.register(this, new Disposable() {
+      @Override
+      public void dispose() {
+        UIUtil.putClientProperty(table, MY_PANEL_PROPERTY, null);
+      }
+    });
 
     table.putClientProperty(MY_PANEL_PROPERTY, panel);
     return panel;
@@ -132,10 +140,10 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
   public abstract static class RendererComponent extends CellRendererPanel implements Disposable {
     private final EditorEx myEditor;
     private final EditorTextField myTextField;
-    TextAttributes myTextAttributes;
+    protected TextAttributes myTextAttributes;
     private boolean mySelected;
 
-    RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
+    public RendererComponent(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
       Pair<EditorTextField, EditorEx> pair = createEditor(project, fileType, inheritFontFromLaF);
       myTextField = pair.first;
       myEditor = pair.second;
@@ -187,9 +195,9 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       myTextField.removeNotify();
     }
 
-    void setTextToEditor(String text) {
+    protected void setTextToEditor(String text) {
       myEditor.getMarkupModel().removeAllHighlighters();
-      WriteAction.run(() -> myEditor.getDocument().setText(text));
+      myEditor.getDocument().setText(text);
       ((EditorImpl)myEditor).resetSizes();
       myEditor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
@@ -345,9 +353,15 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     }
   }
 
-  private static class MyDocument extends DocumentImpl {
-    public MyDocument() {
-      super("");
+  private static class MyDocument extends UserDataHolderBase implements DocumentEx {
+    RangeMarkerTree<RangeMarkerEx> myRangeMarkers = new RangeMarkerTree<RangeMarkerEx>(this) {
+    };
+    char[] myChars = ArrayUtil.EMPTY_CHAR_ARRAY;
+    String myString = "";
+    LineSet myLineSet = LineSet.createLineSet(myString);
+
+    @Override
+    public void setModificationStamp(long modificationStamp) {
     }
 
     @Override
@@ -359,6 +373,66 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     public void moveText(int srcStart, int srcEnd, int dstOffset) {
       throw new UnsupportedOperationException();
     }
+
+    @Override
+    public void setText(@NotNull CharSequence text) {
+      String s = StringUtil.convertLineSeparators(text.toString());
+      myChars = new char[s.length()];
+      s.getChars(0, s.length(), myChars, 0);
+      myString = new String(myChars);
+      myLineSet = LineSet.createLineSet(myString);
+    }
+
+    @NotNull
+    @Override
+    public LineIterator createLineIterator() {
+      return myLineSet.createIterator();
+    }
+
+    @Override
+    public boolean removeRangeMarker(@NotNull RangeMarkerEx rangeMarker) { return myRangeMarkers.removeInterval(rangeMarker); }
+
+    @Override
+    public void registerRangeMarker(@NotNull RangeMarkerEx rangeMarker,
+                                    int start,
+                                    int end,
+                                    boolean greedyToLeft,
+                                    boolean greedyToRight,
+                                    int layer) {
+      myRangeMarkers.addInterval(rangeMarker, start, end, greedyToLeft, greedyToRight, false, layer);
+    }
+
+    @Override
+    public boolean processRangeMarkers(@NotNull Processor<? super RangeMarker> processor) { return myRangeMarkers.processAll(processor); }
+
+    @Override
+    public boolean processRangeMarkersOverlappingWith(int start,
+                                                      int end,
+                                                      @NotNull Processor<? super RangeMarker> processor) {
+      return myRangeMarkers.processOverlappingWith(start, end, processor);
+    }
+
+    @NotNull
+    @Override
+    public CharSequence getImmutableCharSequence() {
+      return myString;
+    }
+
+    @NotNull
+    @Override
+    public char[] getChars() { return myChars; }
+
+    @Override
+    public int getLineCount() { return myLineSet.findLineIndex(myChars.length) + 1; }
+
+    @Override
+    public int getLineNumber(int offset) { return myLineSet.findLineIndex(offset); }
+
+    @Override
+    public int getLineStartOffset(int line) { return myChars.length == 0 ? 0 : myLineSet.getLineStart(line); }
+
+    @Override
+    public int getLineEndOffset(int line) { return myChars.length == 0 ? 0 : myLineSet.getLineEnd(line); }
 
     @Override
     public void insertString(int offset, @NotNull CharSequence s) {
@@ -373,6 +447,11 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
     @Override
     public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
       throw new UnsupportedOperationException("Not implemented");
+    }
+
+    @Override
+    public boolean isWritable() {
+      return false;
     }
 
     @Override

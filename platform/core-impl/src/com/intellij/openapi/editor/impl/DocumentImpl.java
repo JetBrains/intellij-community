@@ -160,12 +160,8 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
   private void getSaveRMTree(@NotNull VirtualFile f,
                              @NotNull Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key, @NotNull RangeMarkerTree<RangeMarkerEx> tree) {
     RMTreeReference freshRef = new RMTreeReference(tree, f);
-    Reference<RangeMarkerTree<RangeMarkerEx>> oldRef;
-    do {
-      oldRef = f.getUserData(key);
-    }
-    while (!f.replace(key, oldRef, freshRef));
-    RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(oldRef);
+    RangeMarkerTree<RangeMarkerEx> oldTree = SoftReference.dereference(f.getUserData(key));
+    ((UserDataHolderEx)f).putUserData(key, freshRef);
 
     if (oldTree == null) {
       // no tree was saved in virtual file before. happens when created new document.
@@ -201,36 +197,6 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
       ref.virtualFile.replace(RANGE_MARKERS_KEY, ref, null);
       ref.virtualFile.replace(PERSISTENT_RANGE_MARKERS_KEY, ref, null);
     }
-  }
-
-  /**
-   * makes range marker without creating document (which could be expensive)
-   */
-  @NotNull
-  static RangeMarker createRangeMarkerForVirtualFile(@NotNull VirtualFile file,
-                                                     int startOffset,
-                                                     int endOffset,
-                                                     int startLine,
-                                                     int startCol,
-                                                     int endLine,
-                                                     int endCol,
-                                                     boolean persistent) {
-    RangeMarkerImpl marker = persistent
-                             ? new PersistentRangeMarker(file, startOffset, endOffset, startLine, startCol, endLine, endCol, false)
-                             : new RangeMarkerImpl(file, startOffset, endOffset, false);
-    Key<Reference<RangeMarkerTree<RangeMarkerEx>>> key = persistent ? PERSISTENT_RANGE_MARKERS_KEY : RANGE_MARKERS_KEY;
-    RangeMarkerTree<RangeMarkerEx> oldTree;
-    while (true) {
-      oldTree = SoftReference.dereference(file.getUserData(key));
-      if (oldTree != null) break;
-      oldTree = new RangeMarkerTree<>();
-      RMTreeReference reference = new RMTreeReference(oldTree, file);
-      if (file.replace(key, null, reference)) break;
-    }
-    oldTree.addInterval(marker, startOffset, endOffset, false, false, false, 0);
-
-    return marker;
-
   }
 
   public boolean setAcceptSlashR(boolean accept) {
@@ -386,7 +352,7 @@ public class DocumentImpl extends UserDataHolderBase implements DocumentEx {
     return markAsNeedsStrippingLater;
   }
 
-  private static int getMaxSpacesToLeave(int line, @NotNull List<? extends StripTrailingSpacesFilter> filters) {
+  private static int getMaxSpacesToLeave(int line, @NotNull List<StripTrailingSpacesFilter> filters) {
     for (StripTrailingSpacesFilter filter :  filters) {
       if (filter instanceof SmartStripTrailingSpacesFilter) {
         return ((SmartStripTrailingSpacesFilter)filter).getTrailingSpacesToLeave(line);

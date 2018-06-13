@@ -16,22 +16,14 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.editor.impl.event.DocumentEventImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileTypes.BinaryFileTypeDecompilers;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.util.ProperTextRange;
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.UnfairTextRange;
-import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,32 +39,22 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   private static final StripedIDGenerator counter = new StripedIDGenerator();
 
   RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register) {
-    this(ObjectUtils.notNull(FileDocumentManager.getInstance().getFile(document), document), document.getTextLength(), start, end, register,
-         false, false);
+    this(document, start, end, register, false, false);
   }
-
-  // constructor which creates marker without document and saves it in the virtual file directly. Can be cheaper than loading document.
-  RangeMarkerImpl(@NotNull VirtualFile virtualFile, int start, int end, boolean register) {
-    // unfortunately we don't know the exact document size until we load it
-    this(virtualFile, Integer.MAX_VALUE, start, end, register, false, false);
-  }
-
-  private RangeMarkerImpl(@NotNull Object documentOrFile, int documentTextLength, int start,
-                          int end,
-                          boolean register,
-                          boolean greedyToLeft,
-                          boolean greedyToRight) {
+  private RangeMarkerImpl(@NotNull DocumentEx document, int start, int end, boolean register, boolean greedyToLeft, boolean greedyToRight) {
     if (start < 0) {
       throw new IllegalArgumentException("Wrong start: " + start+"; end="+end);
     }
-    if (end > documentTextLength) {
-      throw new IllegalArgumentException("Wrong end: " + end + "; document length=" + documentTextLength + "; start=" + start);
+    if (end > document.getTextLength()) {
+      throw new IllegalArgumentException("Wrong end: " + end+ "; document length="+document.getTextLength()+"; start="+start);
     }
     if (start > end){
       throw new IllegalArgumentException("start > end: start=" + start+"; end="+end);
     }
 
-    myDocumentOrFile = documentOrFile;
+    FileDocumentManager manager = FileDocumentManager.getInstance();
+    VirtualFile file = manager.getFile(document);
+    myDocumentOrFile = file == null ? document : file;
     myId = counter.next();
     if (register) {
       registerInTree(start, end, greedyToLeft, greedyToRight, 0);
@@ -151,7 +133,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), greedy, isStickingToRight(), getLayer());
   }
 
-  void setStickingToRight(boolean value) {
+  public void setStickingToRight(boolean value) {
     if (!isValid() || value == isStickingToRight()) return;
     myNode.getTree().changeData(this, getStartOffset(), getEndOffset(), isGreedyToLeft(), isGreedyToRight(), value, getLayer());
   }
@@ -168,7 +150,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return node != null && node.isGreedyToRight();
   }
 
-  boolean isStickingToRight() {
+  public boolean isStickingToRight() {
     RangeMarkerTree.RMNode node = myNode;
     return node != null && node.isStickingToRight();
   }
@@ -244,7 +226,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     if (!isGreedyToLeft && intervalStart == offset + oldLength) {
       // handle replaceString that was minimized and resulted in insertString at the range start
       if (e instanceof DocumentEventImpl && oldLength == 0 && ((DocumentEventImpl)e).getInitialStartOffset() + ((DocumentEventImpl)e).getInitialOldLength() > offset) {
-        return new UnfairTextRange(intervalStart, intervalEnd + newLength);
+        return new UnfairTextRange(intervalStart - oldLength, intervalEnd + newLength - oldLength);
       }
       return new UnfairTextRange(intervalStart + newLength - oldLength, intervalEnd + newLength - oldLength);
     }
@@ -293,7 +275,6 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
     return new UnfairTextRange(intervalStart, intervalStart);
   }
 
-  @Override
   @NonNls
   public String toString() {
     return "RangeMarker" + (isGreedyToLeft() ? "[" : "(")
@@ -301,14 +282,14 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
            + (isGreedyToRight() ? "]" : ")") + " " + getId();
   }
 
-  int setIntervalStart(int start) {
+  public int setIntervalStart(int start) {
     if (start < 0) {
       LOG.error("Negative start: " + start);
     }
     return myNode.setIntervalStart(start);
   }
 
-  int setIntervalEnd(int end) {
+  public int setIntervalEnd(int end) {
     if (end < 0) {
       LOG.error("Negative end: "+end);
     }
@@ -318,22 +299,7 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @Override
   public boolean isValid() {
     RangeMarkerTree.RMNode node = myNode;
-    if (node == null || !node.isValid()) return false;
-    Object file = myDocumentOrFile;
-    return file instanceof Document || canHaveDocument((VirtualFile)file);
-  }
-
-  private static boolean canHaveDocument(@NotNull VirtualFile file) {
-    Document document = FileDocumentManager.getInstance().getCachedDocument(file);
-    if (document != null) return true;
-    if (!file.isValid() || file.isDirectory() || isBinaryWithoutDecompiler(file)) return false;
-
-    return !file.getFileType().isBinary() || !FileUtilRt.isTooLarge(file.getLength());
-  }
-
-  private static boolean isBinaryWithoutDecompiler(@NotNull VirtualFile file) {
-    final FileType fileType = file.getFileType();
-    return fileType.isBinary() && BinaryFileTypeDecompilers.INSTANCE.forFileType(fileType) == null;
+    return node != null && node.isValid();
   }
 
   public boolean setValid(boolean value) {
