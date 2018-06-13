@@ -544,9 +544,9 @@ private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_i
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-private type_argument_list_item ::= mb_nl <<anyTypeElement type_argument>>
+private type_argument_list_item ::= mb_nl type_argument
 private type_argument_list_end ::= <<mb_nl_group '>'>>
-private type_argument ::= type_element | wildcard_type_element
+private type_argument ::= any_type_element | wildcard_type_element
 {
   name = 'type argument'
 }
@@ -1155,11 +1155,12 @@ private array_type_elements ::= array_type_element*
 left array_type_element ::= '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
 
 wildcard_type_element ::= '?' wildcard_bound?
-private wildcard_bound ::= ('extends' | 'super') type_element { pin = 1 }
+private wildcard_bound ::= ('extends' | 'super') any_type_element { pin = 1 }
 left disjunction_type_element ::= disjunction_type_element_part+
 private disjunction_type_element_part ::= '|' (type_element | expect_type) { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
 private expect_type ::= <<replaceVariants "type">> fail
+private any_type_element ::= <<anyTypeElement type_element>>
 // endregion
 
 
