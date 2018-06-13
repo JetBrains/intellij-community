@@ -4,7 +4,7 @@ class Test {
     String string = null;
     try {
       try {
-        string = new String(bytes, "UTF<caret>-16");
+        string = new String(bytes, "utf<caret>16");
       }
       catch (NullPointerException exception) {
         System.out.println("ex1");

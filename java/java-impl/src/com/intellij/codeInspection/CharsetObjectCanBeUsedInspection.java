@@ -92,7 +92,9 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
       private String getCharsetString(PsiExpression charsetExpression) {
         charsetExpression = PsiUtil.skipParenthesizedExprDown(charsetExpression);
         String charsetString = ObjectUtils.tryCast(ExpressionUtils.computeConstantExpression(charsetExpression), String.class);
-        if (charsetString == null || !SUPPORTED_CHARSETS.containsKey(charsetString)) return null;
+        if (charsetString == null) return null;
+        charsetString = charsetString.toUpperCase(Locale.ENGLISH);
+        if (!SUPPORTED_CHARSETS.containsKey(charsetString)) return null;
         if (charsetExpression instanceof PsiLiteralExpression) return charsetString;
         if (charsetExpression instanceof PsiReferenceExpression) {
           String name = ((PsiReferenceExpression)charsetExpression).getReferenceName();
