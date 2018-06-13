@@ -53,7 +53,7 @@ public final class HierarchyNodeRenderer extends NodeRenderer {
       else if (object instanceof NodeDescriptor) {
         append(((NodeDescriptor)object).getElement().toString());
       }
-      else {
+      else if (object != null) {
         append(object.toString());
       }
     }
