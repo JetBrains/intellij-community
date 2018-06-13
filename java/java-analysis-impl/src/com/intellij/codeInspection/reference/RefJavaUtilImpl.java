@@ -46,10 +46,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
             final RefClassImpl refClass = (RefClassImpl)refFrom.getRefManager().getReference(aClass);
             refFrom.addReference(refClass, aClass, psiFrom, false, true, null);
           }
-
-          if (target instanceof PsiModifierListOwner && isDeprecated(target)) {
-            refFrom.setUsesDeprecatedApi(true);
-          }
         }
 
         @Override
@@ -71,10 +67,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
           final JavaResolveResult result = expression.advancedResolve(false);
           final PsiElement psiResolved = result.getElement();
-
-          if (psiResolved instanceof PsiModifierListOwner) {
-            if (isDeprecated(psiResolved)) refFrom.setUsesDeprecatedApi(true);
-          }
 
           RefElement refResolved = refFrom.getRefManager().getReference(psiResolved);
           refFrom.addReference(
@@ -144,10 +136,6 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
         @Nullable
         private RefMethod processNewLikeConstruct(final PsiMethod psiConstructor, final PsiExpressionList argumentList) {
-          if (psiConstructor != null) {
-            if (isDeprecated(psiConstructor)) refFrom.setUsesDeprecatedApi(true);
-          }
-
           RefMethodImpl refConstructor = (RefMethodImpl)refFrom.getRefManager().getReference(
             psiConstructor
           );
