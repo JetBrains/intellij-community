@@ -325,7 +325,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
-      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear")
+      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear", this::class.java)
       reloader.reload(state)
     }
 

@@ -1202,7 +1202,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
       }
       //noinspection AssignmentToStaticFieldFromInstanceMethod
       IdeaLogger.ourLastActionId = myLastPreformedActionId;
-      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId);
+      ActionsCollectorImpl.getInstance().record(myLastPreformedActionId, action.getClass());
     }
     for (AnActionListener listener : myActionListeners) {
       listener.beforeActionPerformed(action, dataContext, event);

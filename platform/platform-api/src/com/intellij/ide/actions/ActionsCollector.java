@@ -4,6 +4,8 @@ package com.intellij.ide.actions;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -12,7 +14,17 @@ import java.util.Map;
  * @author Konstantin Bulenkov
  */
 public abstract class ActionsCollector {
-  public abstract void record(String actionId);
+  /**
+   * Only actions from platform and JB plugins are recorded.
+   * If no context class is provided then nothing will be recorded.
+   * @deprecated
+   */
+  public void record(String actionId) {}
+
+  /**
+   * Only actions from platform and JB plugins are recorded.
+   */
+  public abstract void record(@Nullable String actionId, @NotNull Class context);
 
   public abstract State getState();
 
