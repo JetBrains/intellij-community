@@ -203,7 +203,17 @@ public class WSLDistribution {
              (askForSudo ? "; with sudo" : ": without sudo")
     );
 
-    StringBuilder commandLineString = new StringBuilder(commandLine.getCommandLineString());
+    StringBuilder commandLineString = new StringBuilder();
+    ParametersList parametersList = commandLine.getParametersList();
+    List<String> realParamsList = parametersList.getList();
+
+    // avoiding double wrapping into bash -c; may cause problems with escaping
+    if (realParamsList.size() == 2 && "bash".equals(commandLine.getExePath()) && "-c".equals(realParamsList.get(0))) {
+      commandLineString.append(realParamsList.get(1));
+    }
+    else {
+      commandLineString.append(commandLine.getCommandLineString());
+    }
 
     if (askForSudo) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommandLineString(commandLineString, "sudo", "-S", "-p", "''");
@@ -253,7 +263,6 @@ public class WSLDistribution {
 
 
     commandLine.setExePath(getExecutablePath().toString());
-    ParametersList parametersList = commandLine.getParametersList();
     parametersList.clearAll();
     parametersList.add(getRunCommandLineParameter());
     parametersList.add(commandLineString.toString());
