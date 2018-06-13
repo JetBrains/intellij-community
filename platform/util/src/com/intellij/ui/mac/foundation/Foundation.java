@@ -540,6 +540,11 @@ public class Foundation {
     return reference;
   }
 
+  @NotNull
+  public static ID castPointerToNSError(@NotNull PointerType pointerType) {
+    return new ID(pointerType.getPointer().getLong(0));
+  }
+
   private static Object[] convertTypes(@NotNull Object[] v) {
     final Object[] result = new Object[v.length];
     for (int i = 0; i < v.length; i++) {
