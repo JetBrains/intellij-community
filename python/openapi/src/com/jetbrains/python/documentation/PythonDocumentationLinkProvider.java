@@ -29,5 +29,14 @@ public interface PythonDocumentationLinkProvider {
   @Nullable
   String getExternalDocumentationUrl(PsiElement element, PsiElement originalElement);
 
-  String getExternalDocumentationRoot(Sdk sdk);
+  /**
+   * This method was used to provide the fallback URL in case the one returned by {@link #getExternalDocumentationUrl(PsiElement, PsiElement)}
+   * doesn't exist. This check is not performed any longer to avoid UI sluggishness.
+   *
+   * @deprecated Do your best to provide a valid URL in {@link #getExternalDocumentationUrl(PsiElement, PsiElement)}
+   */
+  @Deprecated
+  default String getExternalDocumentationRoot(Sdk sdk) {
+    return "";
+  }
 }

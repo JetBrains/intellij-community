@@ -21,7 +21,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.io.HttpRequests;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
@@ -46,7 +45,6 @@ import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.select.Elements;
 
-import java.io.File;
 import java.io.IOException;
 import java.net.MalformedURLException;
 import java.net.URL;
@@ -535,12 +533,12 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
-    final String url = getUrlFor(element, originalElement, true);
+    final String url = getOnlyUrlFor(element, originalElement);
     return url == null ? null : Collections.singletonList(url);
   }
 
   @Nullable
-  public static String getUrlFor(PsiElement element, PsiElement originalElement, boolean checkExistence) {
+  public static String getOnlyUrlFor(PsiElement element, PsiElement originalElement) {
     PsiFileSystemItem file = element instanceof PsiFileSystemItem ? (PsiFileSystemItem)element : element.getContainingFile();
     if (file == null) return null;
     if (PyNames.INIT_DOT_PY.equals(file.getName())) {
@@ -568,39 +566,15 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
     final String url = map.urlFor(qName, namedElement, pyVersion);
     if (url != null) {
-      if (checkExistence && !pageExists(url)) {
-        return map.rootUrlFor(qName);
-      }
       return url;
     }
     for (PythonDocumentationLinkProvider provider : Extensions.getExtensions(PythonDocumentationLinkProvider.EP_NAME)) {
       final String providerUrl = provider.getExternalDocumentationUrl(element, originalElement);
       if (providerUrl != null) {
-        if (checkExistence && !pageExists(providerUrl)) {
-          return provider.getExternalDocumentationRoot(sdk);
-        }
         return providerUrl;
       }
     }
     return null;
-  }
-
-  private static boolean pageExists(@NotNull String url) {
-    if (new File(url).exists()) {
-      return true;
-    }
-    try {
-      HttpRequests.head(url).tryConnect();
-    }
-    catch (HttpRequests.HttpStatusException e) {
-      return false;
-    }
-    catch (IllegalArgumentException e) {
-      return false;
-    }
-    catch (IOException ignored) {
-    }
-    return true;
   }
 
   @Nullable
@@ -683,7 +657,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
 
   @Override
   public boolean hasDocumentationFor(PsiElement element, PsiElement originalElement) {
-    return getUrlFor(element, originalElement, false) != null;
+    return getOnlyUrlFor(element, originalElement) != null;
   }
 
   @Override
