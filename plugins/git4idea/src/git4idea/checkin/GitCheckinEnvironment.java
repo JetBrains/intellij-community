@@ -289,7 +289,6 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     try {
       Set<FilePath> added = map2SetNotNull(rootChanges, it -> it.afterPath);
       Set<FilePath> removed = map2SetNotNull(rootChanges, it -> it.beforePath);
-      removed.removeAll(added);
 
       String rootPath = root.getPath();
 
@@ -298,10 +297,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       LOG.debug("Found staged changes: " + GitUtil.getLogString(rootPath, stagedChanges));
 
       // Reset staged changes which are not selected for commit
-      Collection<Change> excludedStagedChanges = filter(stagedChanges, change -> !added.contains(getAfterPath(change)) &&
-                                                                                 !removed.contains(getBeforePath(change)));
+      Collection<CommitChange> excludedStagedChanges = mapNotNull(stagedChanges, change -> {
+        FilePath before = getBeforePath(change);
+        FilePath after = getAfterPath(change);
+        if (removed.contains(before)) before = null;
+        if (added.contains(after)) after = null;
+        return before != null || after != null ? new CommitChange(before, after) : null;
+      });
+
       if (!excludedStagedChanges.isEmpty()) {
-        LOG.info("Staged changes excluded for commit: " + GitUtil.getLogString(rootPath, excludedStagedChanges));
+        LOG.info("Staged changes excluded for commit: " + getLogString(rootPath, excludedStagedChanges));
         resetExcluded(project, root, excludedStagedChanges);
       }
       try {
@@ -311,6 +316,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
         toAdd.removeAll(alreadyHandledPaths);
 
         Set<FilePath> toRemove = new HashSet<>(removed);
+        toRemove.removeAll(toAdd);
         toRemove.removeAll(alreadyHandledPaths);
 
         LOG.debug(String.format("Updating index: added: %s, removed: %s", toAdd, toRemove));
@@ -656,10 +662,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void resetExcluded(@NotNull Project project,
                                     @NotNull VirtualFile root,
-                                    @NotNull Collection<Change> changes) throws VcsException {
+                                    @NotNull Collection<CommitChange> changes) throws VcsException {
     Set<FilePath> allPaths = new THashSet<>(CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY);
-    allPaths.addAll(mapNotNull(changes, ChangesUtil::getAfterPath));
-    allPaths.addAll(mapNotNull(changes, ChangesUtil::getBeforePath));
+    for (CommitChange change : changes) {
+      addIfNotNull(allPaths, change.afterPath);
+      addIfNotNull(allPaths, change.beforePath);
+    }
 
     for (List<String> paths : VcsFileUtil.chunkPaths(root, allPaths)) {
       GitLineHandler handler = new GitLineHandler(project, root, GitCommand.RESET);
@@ -671,16 +679,16 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   private static void restoreExcluded(@NotNull Project project,
                                       @NotNull VirtualFile root,
-                                      @NotNull Collection<Change> changes,
+                                      @NotNull Collection<CommitChange> changes,
                                       @NotNull List<VcsException> exceptions) throws VcsException {
     Set<FilePath> toAdd = new HashSet<>();
     Set<FilePath> toRemove = new HashSet<>();
 
-    for (Change change : changes) {
+    for (CommitChange change : changes) {
       if (addAsCaseOnlyRename(project, root, change)) continue;
 
-      addIfNotNull(toAdd, getAfterPath(change));
-      addIfNotNull(toRemove, getBeforePath(change));
+      addIfNotNull(toAdd, change.afterPath);
+      addIfNotNull(toRemove, change.beforePath);
     }
     toRemove.removeAll(toAdd);
 
@@ -688,13 +696,12 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     updateIndex(project, root, toAdd, toRemove, exceptions);
   }
 
-  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull Change change) {
+  private static boolean addAsCaseOnlyRename(@NotNull Project project, @NotNull VirtualFile root, @NotNull CommitChange change) {
     try {
-      CommitChange commitChange = new CommitChange(change);
-      if (!isCaseOnlyRename(commitChange)) return false;
+      if (!isCaseOnlyRename(change)) return false;
 
-      FilePath beforePath = assertNotNull(commitChange.beforePath);
-      FilePath afterPath = assertNotNull(commitChange.afterPath);
+      FilePath beforePath = assertNotNull(change.beforePath);
+      FilePath afterPath = assertNotNull(change.afterPath);
 
       LOG.debug(String.format("Restoring staged case-only rename after commit: %s", change));
       GitLineHandler h = new GitLineHandler(project, root, GitCommand.MV);
@@ -1371,6 +1378,11 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
       else {
         this.virtualFile = null;
       }
+    }
+
+    public CommitChange(@Nullable FilePath beforePath,
+                        @Nullable FilePath afterPath) {
+      this(beforePath, afterPath, null, null, null, null);
     }
 
     public CommitChange(@Nullable FilePath beforePath,
