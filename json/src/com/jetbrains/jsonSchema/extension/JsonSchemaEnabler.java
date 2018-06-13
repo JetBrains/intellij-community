@@ -23,6 +23,7 @@ public interface JsonSchemaEnabler {
 
   /**
    * This method enables/disables JSON schema selection widget
+   * This method SHOULD NOT ADDRESS INDEXES
    */
   default boolean shouldShowSwitcherWidget(VirtualFile file) {
     return true;
