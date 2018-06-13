@@ -256,7 +256,7 @@ public class PluginManagerConfigurableNew
 
     panel.add(mySearchTextField, BorderLayout.NORTH);
 
-    myNameListener = (_0, descriptor) -> {
+    myNameListener = (label, descriptor) -> {
       assert myPluginsModel.detailPanel == null;
 
       JButton backButton = new JButton(mySearchResultInfo == null ? "Plugins" : "Search");
@@ -272,7 +272,7 @@ public class PluginManagerConfigurableNew
           myTabHeaderComponent.setSelection(currentTab);
         });
 
-        myCardPanel.select(Pair.create(descriptor, currentTab == 2), true);
+        myCardPanel.select(Pair.create(descriptor, label != null && currentTab == 2), true);
         myPluginsModel.detailPanel.backTabIndex = currentTab;
       }
       else {
