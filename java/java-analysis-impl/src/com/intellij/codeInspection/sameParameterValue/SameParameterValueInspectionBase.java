@@ -18,10 +18,14 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.VisibilityUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UParameter;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_IS_NOT_CONST;
 import static com.intellij.codeInspection.reference.RefParameter.VALUE_UNDEFINED;
@@ -56,7 +60,12 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
         if (value != VALUE_IS_NOT_CONST && value != VALUE_UNDEFINED) {
           if (!globalContext.shouldCheck(refParameter, this)) continue;
           if (problems == null) problems = new ArrayList<>(1);
-          problems.add(registerProblem(manager, refParameter.getElement(), value, refParameter.isUsedForWriting()));
+          UParameter uParameter = refParameter.getUastElement();
+          if (uParameter != null) {
+            PsiElement anchor = Objects.requireNonNull(uParameter.getUastAnchor()).getSourcePsi();
+            assert anchor != null;
+            problems.add(registerProblem(manager, refParameter.getName(), anchor, uParameter.isVarArgs(), value, refParameter.isUsedForWriting()));
+          }
         }
       }
     }
@@ -211,7 +220,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             boolean needFurtherProcess = false;
             for (int i = 0; i < paramValues.length; i++) {
               Object value = paramValues[i];
-              final Object currentArg = getArgValue(arguments[i], method);
+              final Object currentArg = getArgValue(UastContextKt.toUElement(arguments[i], UExpression.class), method);
               if (value == VALUE_UNDEFINED) {
                 paramValues[i] = currentArg;
                 if (currentArg != VALUE_IS_NOT_CONST) {
@@ -231,7 +240,8 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
             for (int i = 0, length = paramValues.length; i < length; i++) {
               Object value = paramValues[i];
               if (value != VALUE_UNDEFINED && value != VALUE_IS_NOT_CONST) {
-                holder.registerProblem(registerProblem(holder.getManager(), parameters[i], value, false));
+                PsiParameter parameter = parameters[i];
+                holder.registerProblem(registerProblem(holder.getManager(), parameter.getName(), parameter.getNameIdentifier(), parameter.isVarArgs(), value, false));
               }
             }
           }
@@ -239,16 +249,17 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
       };
     }
 
-    private Object getArgValue(PsiExpression arg, PsiMethod method) {
+    private Object getArgValue(UExpression arg, PsiMethod method) {
       return RefParameterImpl.getAccessibleExpressionValue(arg, () -> method);
     }
   }
 
   private ProblemDescriptor registerProblem(@NotNull InspectionManager manager,
-                                            PsiParameter parameter,
+                                            String parameterName,
+                                            PsiElement parameterAnchor,
+                                            boolean isVarArgs,
                                             Object value,
                                             boolean usedForWriting) {
-    final String name = parameter.getName();
     String shortName;
     String stringPresentation;
     boolean accessible = true;
@@ -258,7 +269,7 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
     }
     else {
       if (value instanceof PsiField) {
-        accessible = PsiUtil.isMemberAccessibleAt((PsiMember)value, parameter);
+        accessible = PsiUtil.isMemberAccessibleAt((PsiMember)value, parameterAnchor);
         stringPresentation = PsiFormatUtil.formatVariable((PsiVariable)value, 
                                                           PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_FQ_NAME, 
                                                           PsiSubstitutor.EMPTY);
@@ -270,11 +281,11 @@ public class SameParameterValueInspectionBase extends GlobalJavaBatchInspectionT
         stringPresentation = shortName =  String.valueOf(value);
       }
     }
-    return manager.createProblemDescriptor(ObjectUtils.notNull(parameter.getNameIdentifier(), parameter),
+    return manager.createProblemDescriptor(ObjectUtils.notNull(parameterAnchor, parameterAnchor),
                                            InspectionsBundle.message("inspection.same.parameter.problem.descriptor",
-                                                                     name,
+                                                                     parameterName,
                                                                      StringUtil.unquoteString(shortName)),
-                                           usedForWriting || parameter.isVarArgs() || !accessible ? null : createFix(name, stringPresentation),
+                                           usedForWriting || isVarArgs || !accessible ? null : createFix(parameterName, stringPresentation),
                                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
   }
 }

@@ -96,7 +96,7 @@ public class RedundantSuppressInspectionBase extends GlobalInspectionTool {
 
       private void visitElement(@NotNull RefElement refElement) {
         if (!globalContext.shouldCheck(refElement, RedundantSuppressInspectionBase.this)) return;
-        final PsiElement element = refElement.getElement();
+        final PsiElement element = refElement.getPsiElement();
         if (element == null) return;
         final CommonProblemDescriptor[] descriptors = checkElement(element, manager);
         for (CommonProblemDescriptor descriptor : descriptors) {

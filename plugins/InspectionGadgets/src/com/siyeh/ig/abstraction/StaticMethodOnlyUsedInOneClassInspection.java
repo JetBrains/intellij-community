@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -103,7 +104,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
       return null;
     }
     if (usageClass == null) {
-      final PsiClass aClass = containingClass.getElement();
+      final PsiClass aClass = ObjectUtils.tryCast(containingClass.getPsiElement(), PsiClass.class);
       if (aClass != null) {
         final SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(manager.getProject());
         method.putUserData(MARKER, smartPointerManager.createSmartPsiElementPointer(aClass));
@@ -117,11 +118,11 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
     if (ignoreTestClasses && usageClass.isTestCase()) {
       return null;
     }
-    final PsiClass psiClass = usageClass.getElement();
+    final PsiClass psiClass = ObjectUtils.tryCast(usageClass.getPsiElement(), PsiClass.class);
     if (psiClass == null) {
       return null;
     }
-    final PsiMethod psiMethod = (PsiMethod)method.getElement();
+    final PsiMethod psiMethod = ObjectUtils.tryCast(method.getPsiElement(), PsiMethod.class);
     if (psiMethod == null) {
       return null;
     }
@@ -167,7 +168,7 @@ public class StaticMethodOnlyUsedInOneClassInspection extends BaseGlobalInspecti
                   return true;
                 }
                 else {
-                  final PsiIdentifier identifier = ((PsiMethod)((RefMethod)refEntity).getElement()).getNameIdentifier();
+                  final PsiElement identifier = ((RefMethod)refEntity).getUastElement().getUastAnchor().getSourcePsi();
                   final ProblemDescriptor problemDescriptor = createProblemDescriptor(manager, identifier, containingClass);
                   problemDescriptionsProcessor.addProblemElement(refEntity, problemDescriptor);
                   ref.set(containingClass);

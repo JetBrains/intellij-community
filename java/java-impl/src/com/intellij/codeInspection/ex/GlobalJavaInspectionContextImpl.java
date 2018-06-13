@@ -11,7 +11,7 @@ import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionToolPresentation;
-import com.intellij.lang.StdLanguages;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,6 +39,9 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.uast.UClass;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -214,14 +217,13 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     if (myDerivedClassesRequests != null) {
       final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedClassesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
-        final PsiClass psiClass = (PsiClass)dereferenceInReadAction(sortedID);
-        if (psiClass == null) continue;
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(psiClass));
+        final UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(sortedID), UClass.class));
+        if (uClass == null) continue;
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(uClass));
 
         final List<DerivedClassesProcessor> processors = myDerivedClassesRequests.get(sortedID);
-        LOG.assertTrue(processors != null, psiClass.getClass().getName());
-        ClassInheritorsSearch.search(psiClass, searchScope, false)
-          .forEach(createMembersProcessor(processors, scope));
+        LOG.assertTrue(processors != null, uClass.getClass().getName());
+        ClassInheritorsSearch.search(uClass.getJavaPsi(), searchScope, false).forEach(createMembersProcessor(processors, scope));
       }
 
       myDerivedClassesRequests = null;
@@ -230,16 +232,15 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     if (myDerivedMethodsRequests != null) {
       final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myDerivedMethodsRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
-        final PsiMethod psiMethod = (PsiMethod)dereferenceInReadAction(sortedID);
-        if (psiMethod == null) continue;
-        final RefMethod refMethod = (RefMethod)refManager.getReference(psiMethod);
+        final UMethod uMethod = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(sortedID), UMethod.class));
+        if (uMethod == null) continue;
+        final RefMethod refMethod = (RefMethod)refManager.getReference(uMethod.getSourcePsi());
 
         context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refMethod));
 
         final List<DerivedMethodsProcessor> processors = myDerivedMethodsRequests.get(sortedID);
-        LOG.assertTrue(processors != null, psiMethod.getClass().getName());
-        OverridingMethodsSearch.search(psiMethod, searchScope, true)
-          .forEach(createMembersProcessor(processors, scope));
+        LOG.assertTrue(processors != null, uMethod.getClass().getName());
+        OverridingMethodsSearch.search(uMethod.getJavaPsi(), searchScope, true).forEach(createMembersProcessor(processors, scope));
       }
 
       myDerivedMethodsRequests = null;
@@ -248,14 +249,14 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     if (myFieldUsagesRequests != null) {
       final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myFieldUsagesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
-        final PsiField psiField = (PsiField)dereferenceInReadAction(sortedID);
-        if (psiField == null) continue;
+        final PsiElement field = dereferenceInReadAction(sortedID);
+        if (field == null) continue;
         final List<UsagesProcessor> processors = myFieldUsagesRequests.get(sortedID);
 
-        LOG.assertTrue(processors != null, psiField.getClass().getName());
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiField)));
+        LOG.assertTrue(processors != null, field.getClass().getName());
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(field)));
 
-        ReferencesSearch.search(psiField, searchScope, false)
+        ReferencesSearch.search(field, searchScope, false)
           .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
@@ -265,15 +266,15 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     if (myClassUsagesRequests != null) {
       final List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myClassUsagesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
-        final PsiClass psiClass = (PsiClass)dereferenceInReadAction(sortedID);
-        if (psiClass == null) continue;
+        final PsiElement classDeclaration = dereferenceInReadAction(sortedID);
+        if (classDeclaration == null) continue;
         final List<UsagesProcessor> processors = myClassUsagesRequests.get(sortedID);
 
-        LOG.assertTrue(processors != null, psiClass.getClass().getName());
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(psiClass));
+        LOG.assertTrue(processors != null, classDeclaration.getClass().getName());
+        UClass uClass = ReadAction.compute(() -> UastContextKt.toUElement(classDeclaration, UClass.class));
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, getClassPresentableName(uClass));
 
-        ReferencesSearch.search(psiClass, searchScope, false)
-          .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
+        ReferencesSearch.search(classDeclaration, searchScope, false).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
       }
 
       myClassUsagesRequests = null;
@@ -282,25 +283,27 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
     if (myMethodUsagesRequests != null) {
       List<SmartPsiElementPointer> sortedIDs = getSortedIDs(myMethodUsagesRequests);
       for (SmartPsiElementPointer sortedID : sortedIDs) {
-        final PsiMethod psiMethod = (PsiMethod)dereferenceInReadAction(sortedID);
-        if (psiMethod == null) continue;
+        final UMethod uMethod = ReadAction.compute(() -> UastContextKt.toUElement(dereferenceInReadAction(sortedID), UMethod.class));
+        if (uMethod == null) continue;
         final List<UsagesProcessor> processors = myMethodUsagesRequests.get(sortedID);
 
-        LOG.assertTrue(processors != null, psiMethod.getClass().getName());
-        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, refManager.getQualifiedName(refManager.getReference(psiMethod)));
+        LOG.assertTrue(processors != null, uMethod.getClass().getName());
+        context.incrementJobDoneAmount(context.getStdJobDescriptors().FIND_EXTERNAL_USAGES, ReadAction.compute(() -> uMethod.getName()));
 
-        MethodReferencesSearch.search(psiMethod, searchScope, true)
-          .forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
+        PsiMethod javaMethod = ReadAction.compute(() -> uMethod.getJavaPsi());
+        if (javaMethod != null) {
+          MethodReferencesSearch.search(javaMethod, searchScope, true).forEach(new PsiReferenceProcessorAdapter(createReferenceProcessor(processors, context)));
+        }
       }
 
       myMethodUsagesRequests = null;
     }
   }
 
-  private String getClassPresentableName(final PsiClass psiClass) {
+  private static String getClassPresentableName(final UClass uClass) {
     return ReadAction.compute(() -> {
-      final String qualifiedName = psiClass.getQualifiedName();
-      return qualifiedName != null ? qualifiedName : psiClass.getName();
+      final String qualifiedName = uClass.getQualifiedName();
+      return qualifiedName != null ? qualifiedName : uClass.getName();
     });
   }
 
@@ -368,7 +371,7 @@ public class GlobalJavaInspectionContextImpl extends GlobalJavaInspectionContext
       @Override
       public boolean execute(PsiReference reference) {
         AnalysisScope scope = context.getRefManager().getScope();
-        if (scope != null && scope.contains(reference.getElement()) && reference.getElement().getLanguage() == StdLanguages.JAVA ||
+        if (scope != null && scope.contains(reference.getElement()) && reference.getElement().getLanguage() == JavaLanguage.INSTANCE ||
             PsiTreeUtil.getParentOfType(reference.getElement(), PsiDocComment.class) != null) {
           return true;
         }

@@ -206,4 +206,12 @@ public class UnusedDeclarationTest extends AbstractUnusedDeclarationTest {
   public void testReferenceFromGroovy() {
     doTest();
   }
+
+  public void testInstanceOf() {
+    doTest();
+  }
+
+  public void testReferenceParameterList() {
+    doTest();
+  }
 }

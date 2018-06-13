@@ -6,6 +6,7 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiClassType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,5 +94,39 @@ public final class AnalysisUastUtil {
     }
 
     return false;
+  }
+
+  public static boolean isAccessedForWriting(@NotNull UElement expression) {
+    if (isOnAssignmentLeftHand(expression)) return true;
+    UElement parent = skipParenthesises(expression);
+    return isIncrementDecrement(parent);
+  }
+
+  private static boolean isIncrementDecrement(UElement element) {
+    if (!(element instanceof UUnaryExpression)) return false;
+    UastOperator operator = ((UUnaryExpression)element).getOperator();
+    return operator == UastPostfixOperator.DEC
+           || operator == UastPostfixOperator.INC
+           || operator == UastPrefixOperator.DEC
+           || operator == UastPrefixOperator.INC;
+  }
+
+  public static boolean isAccessedForReading(@NotNull UElement expression) {
+    UElement parent = skipParenthesises(expression);
+    return !(parent instanceof UBinaryExpression) ||
+           !(((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator) ||
+           UastUtils.isChildOf(((UBinaryExpression)parent).getRightOperand(), expression, false);
+  }
+
+  private static boolean isOnAssignmentLeftHand(@NotNull UElement expression) {
+    UExpression parent = ObjectUtils.tryCast(skipParenthesises(expression), UExpression.class);
+    if (parent == null) return false;
+    return parent instanceof UBinaryExpression
+           && ((UBinaryExpression)parent).getOperator() instanceof UastBinaryOperator.AssignOperator
+           && UastUtils.isChildOf(expression, ((UBinaryExpression)parent).getLeftOperand(), false);
+  }
+
+  private static UElement skipParenthesises(@NotNull UElement expression) {
+    return UastUtils.skipParentOfType(expression, true, UParenthesizedExpression.class);
   }
 }

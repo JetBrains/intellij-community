@@ -25,6 +25,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefModule;
 import com.intellij.codeInspection.reference.RefPackage;
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiIdentifier;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseGlobalInspection;
@@ -32,6 +33,7 @@ import com.siyeh.ig.dependency.DependencyUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UClass;
 
 import java.util.Set;
 
@@ -96,14 +98,11 @@ public class ClassOnlyUsedInOneModuleInspection extends BaseGlobalInspection {
     if (otherModule == null) {
       return null;
     }
-    final PsiClass aClass = refClass.getElement();
-    final PsiIdentifier identifier = aClass.getNameIdentifier();
-    if (identifier == null) {
-      return null;
-    }
+    final UClass aClass = refClass.getUastElement();
+    //TODO identifier
     final String moduleName = otherModule.getName();
     return new CommonProblemDescriptor[]{
-      manager.createProblemDescriptor(identifier,
+      manager.createProblemDescriptor(aClass.getPsi(),
                                       InspectionGadgetsBundle.message(
                                         "class.only.used.in.one.module.problem.descriptor",
                                         moduleName),

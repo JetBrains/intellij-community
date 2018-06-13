@@ -60,7 +60,8 @@ public class DisjointPackageInspection extends BaseGlobalInspection {
       if (!(child instanceof RefClass)) {
         continue;
       }
-      final PsiClass psiClass = ((RefClass)child).getElement();
+      //TODO reimplement using uast
+      final PsiClass psiClass = ((RefClass)child).getUastElement();
       if (ClassUtils.isInnerClass(psiClass)) {
         continue;
       }

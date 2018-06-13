@@ -22,11 +22,16 @@ import com.intellij.psi.search.searches.AllOverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.Query;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UExpression;
+import org.jetbrains.uast.UMethod;
+import org.jetbrains.uast.UastContextKt;
 
 import javax.swing.*;
 import java.awt.*;
@@ -75,11 +80,11 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
       if (refSuper != null && Comparing.strEqual(refMethod.getAccessModifier(), refSuper.getAccessModifier())){
         if (Comparing.strEqual(refSuper.getAccessModifier(), PsiModifier.PROTECTED) //protected modificator gives access to method in another package
             && !Comparing.strEqual(refUtil.getPackageName(refSuper), refUtil.getPackageName(refMethod))) return null;
-        final PsiModifierListOwner modifierListOwner = refMethod.getElement();
+        final PsiModifierListOwner modifierListOwner = ObjectUtils.tryCast(refMethod.getPsiElement(), PsiModifierListOwner.class);
         if (modifierListOwner != null) {
           final PsiModifierList list = modifierListOwner.getModifierList();
           if (list != null) {
-            final PsiModifierListOwner supMethod = refSuper.getElement();
+            final PsiModifierListOwner supMethod = ObjectUtils.tryCast(refSuper.getPsiElement(), PsiModifierListOwner.class);
             if (supMethod != null) {
               final PsiModifierList superModifiedList = supMethod.getModifierList();
               LOG.assertTrue(superModifiedList != null);
@@ -121,20 +126,30 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (message != null) {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
-      if (globalContext instanceof GlobalInspectionContextBase && ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
-        SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes(refMethod.getElement(), qualifiedName -> {
-          fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
-            QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
-            QuickFixBundle.message("fix.add.special.annotation.family"),
-            EXCLUDE_ANNOS, qualifiedName, refMethod.getElement()));
-          return true;
-        });
+      if (globalContext instanceof GlobalInspectionContextBase &&
+          ((GlobalInspectionContextBase)globalContext).getCurrentProfile().getSingleTool() == null) {
+        PsiElement psi = refMethod.getPsiElement();
+        if (psi instanceof PsiModifierListOwner) {
+          SpecialAnnotationsUtilBase.createAddToSpecialAnnotationFixes((PsiModifierListOwner)psi, qualifiedName -> {
+            fixes.add(SpecialAnnotationsUtilBase.createAddToSpecialAnnotationsListQuickFix(
+              QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
+              QuickFixBundle.message("fix.add.special.annotation.family"),
+              EXCLUDE_ANNOS, qualifiedName, psi));
+            return true;
+          });
+        }
       }
 
-      final ProblemDescriptor descriptor = manager.createProblemDescriptor(refMethod.getElement().getNavigationElement(), message, false,
-                                                                           fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
-                                                                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-      return new ProblemDescriptor[]{descriptor};
+      UElement anchor = refMethod.getUastElement().getUastAnchor();
+      if (anchor != null) {
+        PsiElement anchorPsi = anchor.getSourcePsi();
+        if (anchorPsi != null) {
+          final ProblemDescriptor descriptor = manager.createProblemDescriptor(anchorPsi, message, false,
+                                                                               fixes.toArray(LocalQuickFix.EMPTY_ARRAY),
+                                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          return new ProblemDescriptor[]{descriptor};
+        }
+      }
     }
 
     return null;
@@ -144,7 +159,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     if (!refMethod.isBodyEmpty()) {
       return false;
     }
-    final PsiModifierListOwner owner = refMethod.getElement();
+    final PsiModifierListOwner owner = ObjectUtils.tryCast(refMethod.getPsiElement(), PsiModifierListOwner.class);
     if (owner == null) {
       return false;
     }
@@ -199,15 +214,14 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
         if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
-              context.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
-                @Override
-                public boolean process(PsiMethod derivedMethod) {
-                  PsiCodeBlock body = derivedMethod.getBody();
-                  if (body == null || body.isEmpty()) return true;
-                  if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(derivedMethod)) return true;
-                  descriptionsProcessor.ignoreElement(refMethod);
-                  return false;
-                }
+              context.enqueueDerivedMethodsProcessor(refMethod, derivedMethod -> {
+                UMethod uDerivedMethod = UastContextKt.toUElement(derivedMethod, UMethod.class);
+                if (uDerivedMethod == null) return true;
+                UExpression body = uDerivedMethod.getUastBody();
+                if (RefMethodImpl.isEmptyExpression(body)) return true;
+                if (RefJavaUtil.getInstance().isMethodOnlyCallsSuper(uDerivedMethod)) return true;
+                descriptionsProcessor.ignoreElement(refMethod);
+                return false;
               });
             }
           });
@@ -339,7 +353,7 @@ public class EmptyMethodInspection extends GlobalJavaBatchInspectionTool {
     }
 
     private void deleteMethod(RefMethod refMethod, List<PsiElement> result) {
-      PsiElement psiElement = refMethod.getElement();
+      PsiElement psiElement = refMethod.getPsiElement();
       if (psiElement == null) return;
       if (!result.contains(psiElement)) result.add(psiElement);
     }

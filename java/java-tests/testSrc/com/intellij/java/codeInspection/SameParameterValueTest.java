@@ -82,4 +82,8 @@ public class SameParameterValueTest extends InspectionTestCase {
   public void testNegativeDouble() {
     doTest(getTestDir(), myTool, false, true);
   }
+
+  public void testField() {
+    doTest(getTestDir(), myTool, false, true);
+  }
 }

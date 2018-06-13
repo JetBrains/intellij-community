@@ -89,14 +89,10 @@ public class ClassOnlyUsedInOnePackageInspection extends BaseGlobalInspection {
     if (otherPackage == null) {
       return null;
     }
-    final PsiClass aClass = refClass.getElement();
-    final PsiIdentifier identifier = aClass.getNameIdentifier();
-    if (identifier == null) {
-      return null;
-    }
+    //TODO identifie
     final String packageName = otherPackage.getName();
     return new CommonProblemDescriptor[]{
-      manager.createProblemDescriptor(identifier,
+      manager.createProblemDescriptor(refClass.getPsiElement(),
                                       InspectionGadgetsBundle.message(
                                         "class.only.used.in.one.package.problem.descriptor",
                                         packageName),

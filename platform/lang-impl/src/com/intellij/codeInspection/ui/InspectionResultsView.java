@@ -378,7 +378,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
   @Nullable
   private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
-    PsiElement psiElement = refElement.getElement();
+    PsiElement psiElement = refElement.getPsiElement();
     if (psiElement == null) return null;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return null;
@@ -507,8 +507,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private Pair<JComponent, EditorEx> createBaseRightComponentFor(int problemCount, RefEntity selectedEntity) {
     if (selectedEntity instanceof RefElement &&
         selectedEntity.isValid() &&
-        !(((RefElement)selectedEntity).getElement() instanceof PsiDirectory)) {
-      PsiElement selectedElement = ((RefElement)selectedEntity).getElement();
+        !(((RefElement)selectedEntity).getPsiElement() instanceof PsiDirectory)) {
+      PsiElement selectedElement = ((RefElement)selectedEntity).getPsiElement();
       if (problemCount == 1) {
         CommonProblemDescriptor[] descriptors = myTree.getSelectedDescriptors();
         if (descriptors.length != 0) {
@@ -758,7 +758,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
 
       if (!item.isValid()) return null;
 
-      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getElement() : null;
+      PsiElement psiElement = item instanceof RefElement ? ((RefElement)item).getPsiElement() : null;
       if (psiElement == null) return null;
 
       final CommonProblemDescriptor problem = refElementNode.getDescriptor();
@@ -843,7 +843,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     RefEntity[] refElements = myTree.getSelectedElements();
     List<PsiElement> psiElements = new ArrayList<>();
     for (RefEntity refElement : refElements) {
-      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getElement() : null;
+      PsiElement psiElement = refElement instanceof RefElement ? ((RefElement)refElement).getPsiElement() : null;
       if (psiElement != null && psiElement.isValid()) {
         psiElements.add(psiElement);
       }
