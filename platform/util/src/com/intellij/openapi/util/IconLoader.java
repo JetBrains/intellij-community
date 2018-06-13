@@ -210,6 +210,9 @@ public final class IconLoader {
   private static Pair<String, ClassLoader> patchPath(@NotNull String path, ClassLoader classLoader) {
     for (IconPathPatcher patcher : ourPatchers) {
       String newPath = patcher.patchPath(path, classLoader);
+      if (newPath == null) {
+        newPath = patcher.patchPath(path);
+      }
       if (newPath != null) {
         LOG.info("replace '" + path + "' with '" + newPath + "'");
         return Pair.create(newPath, patcher.getContextClassLoader(path, classLoader));
