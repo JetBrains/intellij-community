@@ -55,6 +55,26 @@ class Test {
       rules: [rule(PUBLIC)]
     )
   }
+
+  void "test getter and multiple setters"() {
+    // Expected that setters even with the same name won't be reordered
+    doTest(
+            initial: '''\
+class Test {
+  public int getValue() { return 1; }
+  public void setValue(int i) {}
+  public void setValue(long i) {}
+}''',
+            expected: '''\
+class Test {
+  public int getValue() { return 1; }
+  public void setValue(int i) {}
+  public void setValue(long i) {}
+}''',
+      groups: [group(GETTERS_AND_SETTERS)],
+      rules: [rule(PUBLIC)]
+    )
+  }
   
   @Test
   void "test utility methods depth-first"() {

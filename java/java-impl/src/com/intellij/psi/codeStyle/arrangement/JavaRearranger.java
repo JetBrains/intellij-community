@@ -175,9 +175,15 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>,
     Collection<JavaArrangementPropertyInfo> properties = info.getProperties();
     for (JavaArrangementPropertyInfo propertyInfo : properties) {
       JavaElementArrangementEntry getter = propertyInfo.getGetter();
-      JavaElementArrangementEntry setter = propertyInfo.getSetter();
-      if (getter != null && setter != null && setter.getDependencies() == null) {
-        setter.addDependency(getter);
+      List<JavaElementArrangementEntry> setters = propertyInfo.getSetters();
+      if (getter != null && !setters.isEmpty()) {
+        JavaElementArrangementEntry previous = setters.get(0);
+        previous.addDependency(getter);
+        for (int i = 1; i < setters.size(); i++) {
+          JavaElementArrangementEntry setter = setters.get(i);
+          setter.addDependency(previous);
+          previous = setter;
+        }
       }
     }
   }
