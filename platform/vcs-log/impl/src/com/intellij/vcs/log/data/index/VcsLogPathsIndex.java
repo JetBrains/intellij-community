@@ -22,7 +22,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -54,7 +53,7 @@ import java.util.function.ObjIntConsumer;
 
 import static com.intellij.util.containers.ContainerUtil.newTroveSet;
 
-public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeData>> {
+public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsIndex.ChangeData>, VcsIndexableDetails> {
   private static final Logger LOG = Logger.getInstance(VcsLogPathsIndex.class);
   public static final String PATHS = "paths";
   public static final String INDEX_PATHS_IDS = "paths-ids";
@@ -74,7 +73,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
   @NotNull
   @Override
-  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeData>, VcsFullCommitDetails> extension)
+  protected ForwardIndex<Integer, List<VcsLogPathsIndex.ChangeData>> createForwardIndex(@NotNull IndexExtension<Integer, List<ChangeData>, VcsIndexableDetails> extension)
     throws IOException {
     if (!VcsLogIndexService.isPathsForwardIndexRequired()) return super.createForwardIndex(extension);
     return new VcsLogPathsForwardIndex(extension) {
@@ -253,7 +252,7 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return otherNames;
   }
 
-  private static class PathsIndexer implements DataIndexer<Integer, List<ChangeData>, VcsFullCommitDetails> {
+  private static class PathsIndexer implements DataIndexer<Integer, List<ChangeData>, VcsIndexableDetails> {
     @NotNull private final PersistentEnumeratorBase<LightFilePath> myPathsEnumerator;
     @NotNull private final Set<String> myRoots;
     @NotNull private Consumer<Exception> myFatalErrorConsumer = LOG::error;
@@ -272,28 +271,16 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
 
     @NotNull
     @Override
-    public Map<Integer, List<ChangeData>> map(@NotNull VcsFullCommitDetails inputData) {
+    public Map<Integer, List<ChangeData>> map(@NotNull VcsIndexableDetails inputData) {
       Map<Integer, List<ChangeData>> result = new THashMap<>();
 
       // its not exactly parents count since it is very convenient to assume that initial commit has one parent
       int parentsCount = inputData.getParents().isEmpty() ? 1 : inputData.getParents().size();
       for (int parent = 0; parent < parentsCount; parent++) {
-        Collection<Couple<LightFilePath>> moves = ContainerUtil.newHashSet();
-        Collection<LightFilePath> changedPaths = ContainerUtil.newHashSet();
-        if (inputData instanceof VcsIndexableDetails) {
-          changedPaths.addAll(toLightPaths(((VcsIndexableDetails)inputData).getModifiedPaths(parent)));
-          moves.addAll(ContainerUtil.map(((VcsIndexableDetails)inputData).getRenamedPaths(parent),
-                                         rename -> toLightPathCouple(rename.first, rename.second)));
-        }
-        else {
-          for (Change change : inputData.getChanges()) {
-            if (change.getAfterRevision() != null) changedPaths.add(new LightFilePath(change.getAfterRevision().getFile()));
-            if (change.getBeforeRevision() != null) changedPaths.add(new LightFilePath(change.getBeforeRevision().getFile()));
-            if (change.getType().equals(Change.Type.MOVED)) {
-              moves.add(toLightPathCouple(change.getBeforeRevision().getFile().getPath(), change.getAfterRevision().getFile().getPath()));
-            }
-          }
-        }
+        Collection<Couple<LightFilePath>> moves = ContainerUtil.newHashSet(ContainerUtil.map(inputData.getRenamedPaths(parent),
+                                                                                             rename -> toLightPathCouple(rename.first,
+                                                                                                                         rename.second)));
+        Collection<LightFilePath> changedPaths = ContainerUtil.newHashSet(toLightPaths(inputData.getModifiedPaths(parent)));
 
         int finalParent = parent;
         moves.forEach(move -> {
