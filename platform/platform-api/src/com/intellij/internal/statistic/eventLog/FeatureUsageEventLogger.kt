@@ -4,6 +4,7 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.diagnostic.Logger
 
 import com.intellij.openapi.extensions.ExtensionPointName
+import com.intellij.openapi.extensions.Extensions
 import java.io.File
 import java.util.*
 
@@ -51,13 +52,15 @@ class FeatureUsageEmptyEventLogger : FeatureUsageEventLogger {
 }
 
 fun getLoggerProvider(): FeatureUsageEventLoggerProvider {
-  val extensions = EP_NAME.extensions
-  if (extensions.isEmpty()) {
-    LOG.warn("Cannot find feature usage event logger")
-    return FeatureUsageEmptyEventLoggerProvider()
+  if (Extensions.getRootArea().hasExtensionPoint(EP_NAME.name)) {
+    val extensions = EP_NAME.extensions
+    if (extensions.isEmpty()) {
+      LOG.warn("Cannot find feature usage event logger")
+    }
+    else if (extensions.size > 1) {
+      LOG.warn("Too many feature usage loggers registered (" + Arrays.asList<FeatureUsageEventLoggerProvider>(*extensions) + ")")
+    }
+    return extensions[0]
   }
-  else if (extensions.size > 1) {
-    LOG.warn("Too many feature usage loggers registered (" + Arrays.asList<FeatureUsageEventLoggerProvider>(*extensions) + ")")
-  }
-  return extensions[0]
+  return FeatureUsageEmptyEventLoggerProvider()
 }
