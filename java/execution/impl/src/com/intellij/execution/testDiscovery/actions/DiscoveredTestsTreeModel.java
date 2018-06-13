@@ -61,6 +61,8 @@ class DiscoveredTestsTreeModel extends BaseTreeModel<Object> {
       List<Node.Method> methods = new SmartList<>();
       methods.add(methodNode);
       myTests.put(classNode, methods);
+
+      treeStructureChanged(null, null, null);
       return;
     }
 
