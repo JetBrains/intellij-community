@@ -1014,7 +1014,7 @@ public class CommonCodeStyleSettings {
     }
 
     @Nullable
-    FileIndentOptionsProvider getFileIndentOptionsProvider() {
+    public FileIndentOptionsProvider getFileIndentOptionsProvider() {
       return myFileIndentOptionsProvider;
     }
 
@@ -1049,6 +1049,11 @@ public class CommonCodeStyleSettings {
      */
     public void setOverrideLanguageOptions(boolean overrideLanguageOptions) {
       myOverrideLanguageOptions = overrideLanguageOptions;
+    }
+
+    @Nullable
+    public String getHint() {
+      return null;
     }
   }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.codeStyle.Indent;
-import com.intellij.psi.codeStyle.autodetect.DetectedIndentOptionsNotificationProvider;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.CheckUtil;
 import com.intellij.psi.impl.source.PostprocessReformattingAspect;
@@ -244,7 +243,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
       finally {
         editor.putUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE, null);
       }
-      DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, true);
+      //noinspection deprecation
+      CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(file);
     }
   }
 
@@ -318,7 +318,6 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
 
   @Override
   public int adjustLineIndent(@NotNull final PsiFile file, final int offset) throws IncorrectOperationException {
-    DetectedIndentOptionsNotificationProvider.updateIndentNotification(file, false);
     return PostprocessReformattingAspect.getInstance(file.getProject()).disablePostprocessFormattingInside(
       () -> doAdjustLineIndentByOffset(file, offset, FormattingMode.ADJUST_INDENT));
   }

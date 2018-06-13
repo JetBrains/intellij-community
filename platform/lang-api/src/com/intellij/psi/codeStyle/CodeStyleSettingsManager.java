@@ -31,6 +31,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.reflect.Field;
+import java.util.ArrayList;
+import java.util.List;
 
 public class CodeStyleSettingsManager implements PersistentStateComponent<Element> {
   private static final Logger LOG = Logger.getInstance(CodeStyleSettingsManager.class);
@@ -45,6 +47,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public volatile boolean USE_PER_PROJECT_SETTINGS;
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
+
+  private List<CodeStyleSettingsListener> myListeners = new ArrayList<>();
 
   /**
    * @deprecated see comments for {@link #getSettings(Project)}
@@ -158,6 +162,20 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   public void dropTemporarySettings() {
     myTemporarySettings = null;
+  }
+
+  public void addListener(@NotNull CodeStyleSettingsListener listener) {
+    myListeners.add(listener);
+  }
+
+  public void removeListener(@NotNull CodeStyleSettingsListener listener) {
+    myListeners.remove(listener);
+  }
+
+  public void fireCodeStyleSettingsChanged(@Nullable PsiFile file) {
+    for (CodeStyleSettingsListener listener : myListeners) {
+      listener.codeStyleSettingsChanged(new CodeStyleSettingsChangeEvent(file));
+    }
   }
 
 }
