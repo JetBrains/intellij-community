@@ -80,15 +80,16 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
   val fixture = forWhat.isFixture()
   val pyTestEnabled = TestRunnerService.getInstance(module).projectConfiguration == pyTestName
 
-  if (!fixture && !(isTestElement(forWhat, ThreeState.NO, typeEvalContext) && pyTestEnabled)) {
-    return emptyList()
+  return if (fixture || (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext))) {
+    StubIndex.getElements(PyDecoratorStubIndex.KEY, decoratorName, module.project,
+                          GlobalSearchScope.union(
+                            arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
+                          PyDecorator::class.java)
+      .mapNotNull { createFixture(it) }
+      .filterNot { fixture && it.name == forWhat.name } // Do not suggest fixture for itself
   }
-
-  return StubIndex.getElements(PyDecoratorStubIndex.KEY, decoratorName, module.project,
-                               GlobalSearchScope.union(
-                                 arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
-                               PyDecorator::class.java)
-    .mapNotNull { createFixture(it) }
-    .filterNot { fixture && it.name == forWhat.name } // Do not suggest fixture for itself
+  else {
+    emptyList()
+  }
 }
 
