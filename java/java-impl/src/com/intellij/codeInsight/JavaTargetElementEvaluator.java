@@ -112,7 +112,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         final PsiElement element = file.findElementAt(offset);
         if (element != null) {
           final PsiElement parent = element.getParent();
-          if (parent instanceof PsiFunctionalExpression) {
+          if (parent instanceof PsiFunctionalExpression && 
+              (PsiUtil.isJavaToken(element, JavaTokenType.ARROW) || PsiUtil.isJavaToken(element, JavaTokenType.DOUBLE_COLON))) {
             refElement = PsiUtil.resolveClassInType(((PsiFunctionalExpression)parent).getFunctionalInterfaceType());
           }
           else if (element instanceof PsiKeyword && 
