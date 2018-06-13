@@ -193,9 +193,9 @@ package_definition ::= modifier_list mb_nl ('package') package_name
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
-package_name ::= code_reference { elementType = '' name = 'package name' }
+private package_name ::= qualified_name { name = 'package name' }
 
-import ::= modifier_list mb_nl ('import') 'static'? import_reference import_star? import_alias?
+import ::= modifier_list mb_nl ('import') 'static'? qualified_name import_star? import_alias?
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType'
@@ -897,12 +897,10 @@ private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
-new_expression ::= 'new' type_argument_list?
-                   (primitive_type_element | <<allowDiamond code_reference>>)
-                   (call_argument_list_start call_argument_list | array_declaration)
-{
-  pin = 1
-}
+new_expression ::= 'new' type_argument_list? new_expression_tail { pin = 1 }
+private new_expression_tail ::= new_expression_type (call_argument_list_start call_argument_list | array_declaration) { pin = 1 }
+private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
+
 new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
 {
   elementType = new_expression
@@ -1167,34 +1165,27 @@ private expect_type ::= <<replaceVariants "type">> fail
 
 // region Code references
 code_reference ::= unqualified_code_reference qualified_code_reference_tail*
-import_reference ::= unqualified_code_reference import_reference_tail*
-{
-  elementType = code_reference
-  name = 'import reference'
-}
 qualified_code_reference ::= unqualified_code_reference qualified_code_reference_tail qualified_code_reference_tail* { elementType = code_reference}
 private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
 
 unqualified_code_reference ::= code_reference_part { elementType = code_reference }
 left qualified_code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
 {
+  pin = 1
   elementType = code_reference
   consumeTokenMethod = 'consumeTokenFast'
-}
-left import_reference_tail ::= code_reference_dot code_reference_part
-{
-  elementType = code_reference
-  pin = 1
 }
 private code_reference_dot ::= '.' !'*' mb_nl
 private code_reference_part ::= code_reference_identifier code_reference_type_arguments?
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
-private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft
+private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
 private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
 private code_reference_type_arguments ::= <<codeReferenceTypeArguments type_argument_list>> <<setRefHadTypeArguments>>
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= code_reference { elementType = '' name = 'type' }
+
+private qualified_name ::= <<qualifiedName code_reference>>
 // endregion
 
 
