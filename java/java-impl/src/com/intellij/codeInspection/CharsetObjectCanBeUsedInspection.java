@@ -11,10 +11,10 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ImportUtils;
-import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nls;
@@ -53,16 +53,20 @@ public class CharsetObjectCanBeUsedInspection extends AbstractBaseJavaLocalInspe
   };
 
   private static final Map<String, String> SUPPORTED_CHARSETS =
-    EntryStream.of(
-      "US-ASCII", "US_ASCII",
-      "ASCII", "US_ASCII",
-      "ISO646-US", "US_ASCII",
-      "ISO-8859-1", "ISO_8859_1",
-      "UTF-8", "UTF_8",
-      "UTF-16BE", "UTF_16BE",
-      "UTF-16LE", "UTF_16LE",
-      "UTF-16", "UTF_16"
-    ).toMap();
+    ContainerUtil.<String, String>immutableMapBuilder()
+      .put("US-ASCII", "US_ASCII")
+      .put("ASCII", "US_ASCII")
+      .put("ISO646-US", "US_ASCII")
+      .put("ISO-8859-1", "ISO_8859_1")
+      .put("UTF-8", "UTF_8")
+      .put("UTF8", "UTF_8")
+      .put("UTF-16BE", "UTF_16BE")
+      .put("UTF16BE", "UTF_16BE")
+      .put("UTF-16LE", "UTF_16LE")
+      .put("UTF16LE", "UTF_16LE")
+      .put("UTF-16", "UTF_16")
+      .put("UTF16", "UTF_16")
+      .build();
 
   @NotNull
   @Override
