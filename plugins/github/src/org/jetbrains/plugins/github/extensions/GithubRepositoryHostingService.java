@@ -85,7 +85,7 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
             );
           }
           catch (Exception e) {
-            exceptions.add(new RepositoryListLoadingException("Error connecting to Github", e));
+            exceptions.add(new RepositoryListLoadingException("Cannot load repositories from Github", e));
           }
         }
         return Pair.create(urls, exceptions);
