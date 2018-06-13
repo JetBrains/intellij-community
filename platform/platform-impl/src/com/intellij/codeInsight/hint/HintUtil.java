@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.hint;
 
 import com.intellij.icons.AllIcons;
@@ -40,7 +26,8 @@ import static com.intellij.util.ObjectUtils.notNull;
 public class HintUtil {
   /** @deprecated use getInformationColor() */
   @Deprecated
-  public static final Color INFORMATION_COLOR = new JBColor(new Color(253, 254, 226), new Color(0x4d4f51));
+  public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
+  private static final Color INFORMATION_BORDER = new JBColor(0xE6E6E6, 0x5C5C5C);
   /** @deprecated use getQuestionColor() */
   @Deprecated
   public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
@@ -89,7 +76,9 @@ public class HintUtil {
   @NotNull
   public static HintHint getInformationHint() {
     //noinspection UseJBColor
-    return new HintHint().setTextBg(getInformationColor())
+    return new HintHint()
+      .setBorderColor(INFORMATION_BORDER)
+      .setTextBg(getInformationColor())
       .setTextFg(UIUtil.isUnderDarcula() ? UIUtil.getLabelForeground() : Color.black)
       .setFont(getBoldFont())
       .setAwtTooltip(true);
