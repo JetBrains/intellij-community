@@ -52,7 +52,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -165,24 +164,14 @@ public class PyDocumentationBuilder {
     }
   }
 
-  private void buildForKeyword(@NotNull final String name) {
+  private void buildForKeyword(@NotNull String name) {
     try {
-      final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name));
-      try {
+      try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name))) {
         final String text = FileUtil.loadTextAndClose(reader);
         myContent.addItem(StringUtil.convertLineSeparators(text, "\n"));
       }
-      catch (IOException ignored) {
-      }
-      finally {
-        try {
-          reader.close();
-        }
-        catch (IOException ignored) {
-        }
-      }
     }
-    catch (FileNotFoundException ignored) {
+    catch (IOException ignored) {
     }
   }
 
