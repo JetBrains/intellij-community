@@ -386,6 +386,58 @@ public class Q {
   }
 
 
+  void "test method references dependant methods"() {
+    doTest(
+            initial: '''
+import java.util.ArrayList;
+
+public class Test {
+    private void top() {
+        new ArrayList<String>().stream()
+                .map(this::first)
+                .map(this::second)
+                .count();
+    }
+
+    private void irrelevant() {
+    }
+
+    private String second(String string) {
+        return string;
+
+    }
+
+    private String first(String string) {
+        return string;
+    }
+}
+''',
+            expected: '''
+import java.util.ArrayList;
+
+public class Test {
+    private void top() {
+        new ArrayList<String>().stream()
+                .map(this::first)
+                .map(this::second)
+                .count();
+    }
+    private String first(String string) {
+        return string;
+    }
+    private String second(String string) {
+        return string;
+
+    }
+    private void irrelevant() {
+    }
+}
+''',
+            groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+
 
 
 
