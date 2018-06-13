@@ -36,11 +36,21 @@ class CheckboxTreeFixture(robot: Robot, checkboxTree: CheckboxTree) : ExtendedTr
   fun setCheckboxValue(value: Boolean, vararg pathStrings: String) {
     val checkbox = getCheckboxComponent(*pathStrings)
     println("setCheckboxValue for ${pathStrings.joinToString()}: state = ${checkbox?.isSelected}")
-    if (checkbox != null && checkbox.isSelected != value)
+    if (checkbox != null && checkbox.isSelected != value) {
       clickCheckbox(*pathStrings)
+    }
   }
 
-  fun check(vararg pathStrings: String) = setCheckboxValue(true, *pathStrings)
+  /**
+   * Sometimes one click doesn't work - e.g. it can be swallowed by scrolling
+   * Then the second click must help.
+   * */
+  fun ensureCheckboxValue(value: Boolean, vararg pathString: String){
+    setCheckboxValue(value, *pathString)
+    setCheckboxValue(value, *pathString)
+  }
 
-  fun uncheck(vararg pathStrings: String) = setCheckboxValue(false, *pathStrings)
+  fun check(vararg pathStrings: String) = ensureCheckboxValue(true, *pathStrings)
+
+  fun uncheck(vararg pathStrings: String) = ensureCheckboxValue(false, *pathStrings)
 }
