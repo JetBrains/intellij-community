@@ -220,7 +220,8 @@ public class WSLDistribution {
             project,
             "Enter Root Password",
             "Sudo password for " + getPresentableName() + " root:",
-            new CredentialAttributes("WSL", "root", WSLDistribution.class)
+            new CredentialAttributes("WSL", "root", WSLDistribution.class),
+            true
           );
           if (password != null) {
             PrintWriter pw = new PrintWriter(input);
