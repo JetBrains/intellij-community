@@ -32,12 +32,10 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.MethodUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
-import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.stream.Stream;
 
 /**
  * @author peter
@@ -234,8 +232,13 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     if (contracts.isEmpty()) return;
     PsiType returnType = substitutor.substitute(method.getReturnType());
     DfaValue defaultResult = runner.getFactory().createTypeValue(returnType, DfaPsiUtil.getElementNullability(returnType, method));
-    Stream<DfaValue> returnValues = possibleReturnValues(callArguments, state, contracts, runner.getFactory(), defaultResult, methodRef);
-    returnValues.forEach(res -> processMethodReferenceResult(methodRef, contracts, res));
+    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments));
+    for (MethodContract contract : contracts) {
+      currentStates = addContractResults(contract, currentStates, runner.getFactory(), new HashSet<>(), defaultResult, methodRef);
+    }
+    for (DfaCallState currentState: currentStates) {
+      pushExpressionResult(defaultResult, () -> methodRef, currentState.myMemoryState);
+    }
   }
 
   @NotNull
@@ -266,26 +269,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
     return new DfaCallArguments(qualifier, arguments, JavaMethodContractUtil.isPure(method));
-  }
-
-  private Stream<DfaValue> possibleReturnValues(DfaCallArguments callArguments,
-                                                DfaMemoryState state,
-                                                List<? extends MethodContract> contracts,
-                                                DfaValueFactory factory,
-                                                DfaValue defaultResult,
-                                                PsiMethodReferenceExpression methodRef) {
-    Set<DfaCallState> currentStates = Collections.singleton(new DfaCallState(state.createClosureState(), callArguments));
-    Set<DfaMemoryState> finalStates = ContainerUtil.newLinkedHashSet();
-    for (MethodContract contract : contracts) {
-      currentStates = addContractResults(contract, currentStates, factory, finalStates, defaultResult, methodRef);
-    }
-    return StreamEx.of(finalStates).map(DfaMemoryState::peek)
-      .append(currentStates.isEmpty() ? StreamEx.empty() : StreamEx.of(defaultResult)).distinct();
-  }
-
-  protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef,
-                                              List<? extends MethodContract> contracts,
-                                              DfaValue res) {
   }
 
   @Override
@@ -335,16 +318,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       }
     }
 
-    PsiMethodReferenceExpression methodRef = instruction.getMethodType() == MethodCallInstruction.MethodType.METHOD_REFERENCE_CALL ?
-                                             (PsiMethodReferenceExpression)instruction.getContext() : null;
     DfaInstructionState[] result = new DfaInstructionState[finalStates.size()];
     int i = 0;
     for (DfaMemoryState state : finalStates) {
       if (instruction.shouldFlushFields()) {
         state.flushFields();
-      }
-      if (methodRef != null) {
-        processMethodReferenceResult(methodRef, instruction.getContracts(), state.peek());
       }
       result[i++] = new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), state);
     }

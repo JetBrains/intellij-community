@@ -21,6 +21,7 @@ import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -34,10 +35,16 @@ import java.util.ArrayList;
  */
 public abstract class InstructionVisitor {
 
-  public void beforeExpressionPush(@NotNull DfaValue value,
-                                   @NotNull PsiExpression expression,
-                                   @Nullable TextRange range,
-                                   @NotNull DfaMemoryState state) {
+  protected void beforeExpressionPush(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @Nullable TextRange range,
+                                      @NotNull DfaMemoryState state) {
+
+  }
+
+  protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
+                                                 @NotNull PsiMethodReferenceExpression methodRef,
+                                                 @NotNull DfaMemoryState state) {
 
   }
 
@@ -45,8 +52,17 @@ public abstract class InstructionVisitor {
                             @NotNull ExpressionPushingInstruction instruction,
                             @NotNull DfaMemoryState state) {
     PsiExpression anchor = instruction.getExpression();
-    if (anchor != null && !(instruction instanceof PushInstruction && ((PushInstruction)instruction).isReferenceWrite())) {
-      beforeExpressionPush(value, anchor, instruction.getExpressionRange(), state);
+    if (anchor != null
+        && !(instruction instanceof MethodCallInstruction &&
+             (((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.BOXING ||
+              ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.UNBOXING))
+        && !(instruction instanceof PushInstruction && ((PushInstruction)instruction).isReferenceWrite())) {
+      if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof PushInstruction)) {
+        beforeMethodReferenceResultPush(value, (PsiMethodReferenceExpression)anchor, state);
+      }
+      else {
+        beforeExpressionPush(value, anchor, instruction.getExpressionRange(), state);
+      }
     }
     state.push(value);
   }
