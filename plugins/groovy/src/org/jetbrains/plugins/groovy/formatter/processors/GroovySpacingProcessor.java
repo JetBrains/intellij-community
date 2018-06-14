@@ -206,12 +206,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
     }
     else {
-      processParentheses(GroovyTokenTypes.mLPAREN,
-                         GroovyTokenTypes.mRPAREN,
-                         mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
-                         mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
-                         mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
-                         mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE);
+      processParentheses(
+        mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
+        mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
+        mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE
+      );
     }
   }
 
@@ -609,27 +609,25 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpaceInCode(true);
     }
     else {
-      processParentheses(GroovyTokenTypes.mLPAREN,
-                         GroovyTokenTypes.mRPAREN,
-                         mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
-                         mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
-                         mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
-                         mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE);
+      processParentheses(
+        mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
+        mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
+        mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
+        mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE
+      );
     }
   }
 
-  private boolean processParentheses(@NotNull IElementType left,
-                                     @NotNull IElementType right,
-                                     @NotNull Boolean spaceWithin,
+  private boolean processParentheses(@NotNull Boolean spaceWithin,
                                      @Nullable Boolean spaceWithinEmpty,
                                      @Nullable Boolean leftLF,
                                      @Nullable Boolean rightLF) {
-    if (myType1 == left && myType2 == right && spaceWithinEmpty != null) {
+    if (myType1 == T_LPAREN && myType2 == T_RPAREN && spaceWithinEmpty != null) {
       createSpaceInCode(spaceWithinEmpty);
       return true;
     }
-    else if (myType1 == left) {
-      final ASTNode rparenth = findFrom(myChild1, right, true);
+    else if (myType1 == T_LPAREN) {
+      final ASTNode rparenth = findFrom(myChild1, T_RPAREN, true);
       if (rparenth == null || leftLF == null) {
         createSpaceInCode(spaceWithin);
       }
@@ -639,8 +637,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       }
       return true;
     }
-    else if (myType2 == right) {
-      final ASTNode lparenth = findFrom(myChild1, left, false);
+    else if (myType2 == T_RPAREN) {
+      final ASTNode lparenth = findFrom(myChild1, T_LPAREN, false);
       if (lparenth == null || rightLF == null) {
         createSpaceInCode(spaceWithin);
       }
@@ -902,8 +900,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitParenthesizedExpression(@NotNull GrParenthesizedExpression expression) {
-    processParentheses(GroovyTokenTypes.mLPAREN, GroovyTokenTypes.mRPAREN, mySettings.SPACE_WITHIN_PARENTHESES, null, mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP,
-                       mySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP);
+    processParentheses(
+      mySettings.SPACE_WITHIN_PARENTHESES,
+      null,
+      mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP,
+      mySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP
+    );
   }
 
   @Override
@@ -998,12 +1000,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpacingBeforeElementInsideControlStatement();
     }
     else {
-      processParentheses(GroovyTokenTypes.mLPAREN,
-                         GroovyTokenTypes.mRPAREN,
-                         mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                         null,
-                         mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
-                         mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE);
+      processParentheses(
+        mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+        null,
+        mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
+        mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE
+      );
     }
   }
 
