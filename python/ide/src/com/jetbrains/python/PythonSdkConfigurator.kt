@@ -36,13 +36,11 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
       return null
     }
 
-    fun findExistingSystemWideSdk(existingSdks: List<Sdk>): Sdk? {
-      return existingSdks.filter { it.isSystemWide }.sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
-    }
+    private fun findExistingSystemWideSdk(existingSdks: List<Sdk>) =
+      existingSdks.filter { it.isSystemWide }.sortedWith(PreferredSdkComparator.INSTANCE).firstOrNull()
 
-    fun findDetectedSystemWideSdk(existingSdks: List<Sdk>): Sdk? {
-      return detectSystemWideSdks(existingSdks).firstOrNull()
-    }
+    private fun findDetectedSystemWideSdk(existingSdks: List<Sdk>) =
+      detectSystemWideSdks(existingSdks).firstOrNull()
   }
 
   override fun configureProject(project: Project?, baseDir: VirtualFile, moduleRef: Ref<Module>?) {
