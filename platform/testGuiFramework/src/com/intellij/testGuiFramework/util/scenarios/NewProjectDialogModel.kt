@@ -4,10 +4,13 @@ package com.intellij.testGuiFramework.util.scenarios
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
+import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
 import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonOk
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJsModule
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateJvmModule
@@ -36,6 +39,9 @@ import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Consta
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupSpringInitializer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.groupStaticWeb
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.itemKotlinMpp
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressLoadingTemplates
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.progressSearchingForAppServerLibraries
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textApplicationServer
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textArtifactId
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textBasePackage
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.textGroupId
@@ -46,7 +52,6 @@ import com.intellij.testGuiFramework.utils.TestUtilsClass
 import com.intellij.testGuiFramework.utils.TestUtilsClassCompanion
 import org.fest.swing.fixture.JListFixture
 import org.fest.swing.timing.Pause
-import javax.swing.JDialog
 
 class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase) {
   companion object : TestUtilsClassCompanion<NewProjectDialogModel>(
@@ -70,6 +75,11 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val textRootModuleName = "Root module name:"
     const val checkCreateJvmModule = "Create JVM module:"
     const val checkCreateJsModule = "Create JS module:"
+    const val progressLoadingTemplates = "Loading Templates"
+    const val textApplicationServer = "Application Server:"
+    const val buttonOk = "OK"
+    const val buttonCancel = "Cancel"
+    const val progressSearchingForAppServerLibraries = "Searching for Application Server Libraries"
 
     // groups
     const val groupJava = "Java"
@@ -184,7 +194,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       if (setLibraries) {
         for (lib in libs) {
           logUIStep("Include `${lib.joinToString()}` to the project")
-          checkboxTree(*lib).clickCheckbox(*lib)
+          checkboxTree(*lib).check(*lib)
         }
       }
       else {
@@ -240,7 +250,7 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       else {
         for (lib in libs) {
           logUIStep("Include `${lib.joinToString()}` to the project")
-          checkboxTree(*lib).clickCheckbox(*lib)
+          checkboxTree(*lib).check(*lib)
         }
       }
       button(buttonNext).click()
@@ -266,9 +276,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       list.clickItem(groupGradle)
       setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
       if (gradleOptions.framework.isNotEmpty()) {
-        checkboxTree(gradleOptions.framework).clickCheckbox(gradleOptions.framework)
+        checkboxTree(gradleOptions.framework).check(gradleOptions.framework)
         if (gradleOptions.isJavaShouldNotBeChecked)
-          checkboxTree(gradleOptions.framework).clickCheckbox("Java")
+          checkboxTree(gradleOptions.framework).uncheck("Java")
       }
       button(buttonNext).click()
       logUIStep("Fill GroupId with `${gradleOptions.group}`")
@@ -485,7 +495,7 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
       list.clickItem(group.toString())
       for (lib in libs) {
         logUIStep("Include `${lib.joinToString()}` to the project")
-        checkboxTree(*lib).clickCheckbox(*lib)
+        checkboxTree(*lib).check(*lib)
       }
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
@@ -519,8 +529,43 @@ fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Librar
 }
 
 fun NewProjectDialogModel.waitLoadingTemplates(){
-  GuiTestUtilKt.waitUntilGone(robot = GuiRobotHolder.robot,
-                              timeoutInSeconds = 10,
-                              matcher = GuiTestUtilKt.typeMatcher(
-                                JDialog::class.java) { it.isShowing && it.title == "Loading Templates"})
+  GuiTestUtilKt.waitProgressDialogUntilGone(
+    GuiRobotHolder.robot,
+    progressTitle = progressLoadingTemplates
+  )
+}
+
+fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath: String) {
+  with(connectDialog()) {
+    val list: JListFixture = jList(groupJavaEnterprise)
+    assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
+    list.clickItem(groupJavaEnterprise)
+    combobox(textApplicationServer)
+    buttons("New...")[1].click()
+    popupClick(serverKind)
+    guiTestCase.dialog(serverKind) {
+      typeText(serverInstallPath)
+      button(buttonOk).click()
+      GuiTestUtilKt.waitProgressDialogUntilGone(
+        GuiRobotHolder.robot,
+        progressTitle = progressSearchingForAppServerLibraries
+      )
+
+    }
+    button(buttonCancel).click()
+  }
+}
+
+fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
+  with(connectDialog()) {
+    val list: JListFixture = jList(groupJavaEnterprise)
+    assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
+    list.clickItem(groupJavaEnterprise)
+    val cmb = combobox(textApplicationServer)
+    println(cmb.listItems())
+    assert(combobox(textApplicationServer)
+             .listItems()
+             .contains(serverName)) { "Appserver `$serverName` doesn't exist" }
+    button(buttonCancel).click()
+  }
 }

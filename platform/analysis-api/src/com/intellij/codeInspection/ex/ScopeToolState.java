@@ -156,7 +156,7 @@ public class ScopeToolState {
       throw e;
     }
     catch (Exception e) {
-      throw new WriteExternalException("Can't write settings for tool #" + entry.getShortName(), e);
+      throw new RuntimeException("Can't write settings for tool #" + entry.getShortName(), e);
     }
   }
 

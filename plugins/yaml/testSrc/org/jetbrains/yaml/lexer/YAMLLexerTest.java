@@ -213,6 +213,14 @@ public class YAMLLexerTest extends LexerTestCase {
     doTest();
   }
 
+  public void testCcDocumentMarker1() {
+    doTest();
+  }
+
+  public void testCcDocumentMarker2() {
+    doTest();
+  }
+
   private void doTest() {
     doFileTest("yml");
   }

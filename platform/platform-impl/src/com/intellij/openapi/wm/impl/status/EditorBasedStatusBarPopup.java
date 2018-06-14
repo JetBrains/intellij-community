@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -47,7 +48,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     update = new Alarm(this);
     myComponent = new TextPanel.WithIconAndArrows() {
       @Override
-      protected boolean shouldPaintIconAndArrows() {
+      protected boolean shouldPaintArrows() {
         return actionEnabled;
       }
     };
@@ -171,6 +172,9 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       String toolTipText;
 
       WidgetState state = getWidgetState(file);
+      if (state.noChange) {
+        return;
+      }
 
       if (state.hidden) {
         myComponent.setVisible(false);
@@ -206,18 +210,19 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   protected static class WidgetState {
 
     public static final WidgetState HIDDEN = new WidgetState("", "", false);
+    public static final WidgetState NO_CHANGE = new WidgetState("", "", false);
     static {
-      HIDDEN.setHidden(true);
+      HIDDEN.hidden = true;
+      NO_CHANGE.noChange = true;
     }
 
-    protected WidgetState(String toolTip, String text, boolean actionEnabled) {
+    // todo: update accordingly to UX-252
+    public static final WidgetState DUMB_MODE = new WidgetState(IdeBundle.message("progress.indexing.scanning"), IdeBundle.message("progress.indexing.updating"), false);
+
+    public WidgetState(String toolTip, String text, boolean actionEnabled) {
       this.toolTip = toolTip;
       this.text = text;
       this.actionEnabled = actionEnabled;
-    }
-
-    public void setHidden(boolean hidden) {
-      this.hidden = hidden;
     }
 
     public void setIcon(Icon icon) {
@@ -228,6 +233,7 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
     private final String text;
     private final boolean actionEnabled;
     private boolean hidden;
+    private boolean noChange;
     private Icon icon;
   }
 

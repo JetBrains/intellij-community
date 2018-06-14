@@ -10,6 +10,7 @@ import com.intellij.codeInsight.hint.HintManagerImpl
 import com.intellij.codeInsight.hint.LineTooltipRenderer
 import com.intellij.icons.AllIcons
 import com.intellij.ide.TooltipEvent
+import com.intellij.ide.actions.ActionsCollector
 import com.intellij.ide.ui.UISettings
 import com.intellij.openapi.actionSystem.*
 import com.intellij.openapi.actionSystem.impl.ActionButton
@@ -103,7 +104,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     val settingsComponent = createSettingsComponent(hintHint, tooltipReloader, hasMore)
 
     val settingsConstraints = GridBagConstraints(1, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NORTH, GridBagConstraints.HORIZONTAL,
-                                                 JBUI.insets(3, 3, 0, 3), 0, 0)
+                                                 JBUI.insets(4, 7, 4, 4), 0, 0)
     grid.add(settingsComponent, settingsConstraints)
 
     if (isShowActions()) {
@@ -138,16 +139,16 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
       .fillCellHorizontally()
       .anchor(GridBagConstraints.WEST)
 
-    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(3, 6, 3, 0))
-    buttons.add(createHint(shortcutRunActionText), gridBag.next().insets(0, 3, 0, 6))
+    buttons.add(createActionLabel(tooltipAction.text, runFixAction, hintHint.textBackground), gridBag.next().insets(5, 8, 5, 4))
+    buttons.add(createKeymapHint(shortcutRunActionText), gridBag.next().insets(0, 4, 0, 12))
 
     val showAllFixes = Runnable {
       hint.hide()
       tooltipAction.showAllActions(editor)
     }
 
-    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next().insets(3, 6, 3, 0))
-    buttons.add(createHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 3, 0, 6))
+    buttons.add(createActionLabel("More actions...", showAllFixes, hintHint.textBackground), gridBag.next().insets(5, 12, 5, 4))
+    buttons.add(createKeymapHint(shortcutShowAllActionsText), gridBag.next().fillCellHorizontally().insets(0, 4, 0, 20))
 
     actions.add(object : AnAction() {
       override fun actionPerformed(e: AnActionEvent?) {
@@ -211,10 +212,14 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     return ""
   }
 
-  private fun createHint(shortcutRunAction: String): JBLabel {
-    val fixHint = JBLabel(shortcutRunAction)
-    UIUtil.applyStyle(UIUtil.ComponentStyle.SMALL, fixHint)
-    fixHint.fontColor = UIUtil.FontColor.BRIGHTER
+  private fun createKeymapHint(shortcutRunAction: String): JComponent {
+    val fixHint = object : JBLabel(shortcutRunAction) {
+      override fun getForeground(): Color {
+        return getKeymapColor()
+      }
+    }
+    fixHint.border = JBUI.Borders.empty()
+    fixHint.font = getActionFont()
     return fixHint
   }
 
@@ -266,6 +271,15 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
 
     val settingsButton = object : ActionButton(actionGroup, presentation, ActionPlaces.UNKNOWN, Dimension(18, 18)) {
       override fun paintComponent(g: Graphics?) {
+        val state = popState
+        if (state == ActionButtonComponent.POPPED) {
+          val look = buttonLook
+          look.paintBackground(g!!, this, getSettingsIconHoverBackgroundColor())
+          look.paintIcon(g, this, icon)
+          look.paintBorder(g, this)
+          return
+        }
+
         paintButtonLook(g)
       }
     }
@@ -311,6 +325,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
     }
 
     override fun setSelected(e: AnActionEvent, state: Boolean) {
+      ActionsCollector.getInstance().record("tooltip.actions.show.description.gear")
       reloader.reload(state)
     }
 
@@ -341,6 +356,14 @@ fun createActionLabel(text: String, action: Runnable, background: Color): Hyperl
   label.font = toolTipFont
 
   return label
+}
+
+private fun getKeymapColor(): Color {
+  return JBColor.namedColor("tooltips.actions.keymap.text.color", JBColor(0x99a4ad, 0x919191))
+}
+
+private fun getSettingsIconHoverBackgroundColor(): Color {
+  return JBColor.namedColor("tooltips.actions.settings.icon.background.color", JBColor(0xe9eac0, 0x44494c))
 }
 
 private fun getActionFont(): Font? {

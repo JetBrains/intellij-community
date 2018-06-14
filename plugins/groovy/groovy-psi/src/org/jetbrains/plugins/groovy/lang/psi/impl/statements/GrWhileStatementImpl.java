@@ -18,7 +18,7 @@ public class GrWhileStatementImpl extends GrWhileStatementBase implements GrWhil
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitWhileStatement(this);
   }
 

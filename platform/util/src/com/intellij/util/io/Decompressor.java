@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
@@ -90,11 +91,11 @@ public abstract class Decompressor<Stream> {
     //</editor-fold>
   }
 
-  private FileFilter myFilter = null;
+  private Condition<String> myFilter = null;
   private boolean myOverwrite = true;
   private Consumer<File> myConsumer;
 
-  public Decompressor<Stream> filter(@Nullable FileFilter filter) {
+  public Decompressor<Stream> filter(@Nullable Condition<String> filter) {
     myFilter = filter;
     return this;
   }
@@ -114,11 +115,12 @@ public abstract class Decompressor<Stream> {
     try {
       Entry entry;
       while ((entry = nextEntry(stream)) != null) {
-        File outputFile = ZipUtil.newFileForEntry(outputDir, entry.name);
-
-        if (myFilter != null && !myFilter.accept(outputFile)) {
+        String name = entry.name;
+        if (myFilter != null && !myFilter.value(name)) {
           continue;
         }
+
+        File outputFile = ZipUtil.newFileForEntry(outputDir, name);
 
         if (entry.isDirectory) {
           FileUtil.createDirectory(outputFile);

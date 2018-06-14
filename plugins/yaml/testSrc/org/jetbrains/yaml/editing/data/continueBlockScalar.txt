@@ -1,0 +1,4 @@
+top:
+  key: |
+    hello
+    <caret>

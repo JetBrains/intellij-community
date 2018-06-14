@@ -24,15 +24,22 @@ import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.ParamsGroup;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.filters.Filter;
+import com.intellij.execution.filters.OpenFileHyperlinkInfo;
 import com.intellij.execution.filters.UrlFilter;
-import com.intellij.execution.process.OSProcessHandler;
-import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.ui.ConsoleView;
+import com.intellij.execution.ui.ExecutionConsole;
 import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.terminal.TerminalExecutionConsole;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PathMapper;
@@ -46,12 +53,14 @@ import com.jetbrains.python.sdk.PythonEnvUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Map;
 
 /**
  * @author yole
  */
 public class PythonScriptCommandLineState extends PythonCommandLineState {
+  private static final String INPUT_FILE_MESSAGE = "Input is being redirected from ";
   private final PythonRunConfiguration myConfig;
 
   public PythonScriptCommandLineState(PythonRunConfiguration runConfiguration, ExecutionEnvironment env) {
@@ -108,7 +117,46 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       return new DefaultExecutionResult(executeConsole, processHandler, AnAction.EMPTY_ARRAY);
     }
     else {
-      return super.execute(executor, processStarter, patchers);
+      ExecutionResult executionResult = super.execute(executor, processStarter, patchers);
+      if (myConfig.isRedirectInput()) {
+        addInputRedirectionMessage(project, executionResult);
+      }
+      return executionResult;
+    }
+  }
+
+  private void addInputRedirectionMessage(@NotNull Project project, @NotNull ExecutionResult executionResult) {
+    final String filePath = FileUtil.toSystemDependentName(new File(myConfig.getInputFile()).getAbsolutePath());
+    final ProcessHandler processHandler = executionResult.getProcessHandler();
+    processHandler.addProcessListener(new ProcessAdapter() {
+      @Override
+      public void startNotified(@NotNull ProcessEvent event) {
+        processHandler.notifyTextAvailable(INPUT_FILE_MESSAGE + filePath + "\n", ProcessOutputTypes.SYSTEM);
+      }
+
+      @Override
+      public void processTerminated(@NotNull ProcessEvent event) {
+        processHandler.removeProcessListener(this);
+      }
+    });
+
+    final ExecutionConsole console = executionResult.getExecutionConsole();
+    if (console instanceof ConsoleView) {
+      ((ConsoleView)console).addMessageFilter(new Filter() {
+        @Nullable
+        @Override
+        public Result applyFilter(String line, int entireLength) {
+          int position = line.indexOf(INPUT_FILE_MESSAGE);
+          if (position >= 0) {
+            VirtualFile file = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(filePath));
+            if (file == null) {
+              return null;
+            }
+            return new Result(entireLength - filePath.length() - 1, entireLength, new OpenFileHyperlinkInfo(new OpenFileDescriptor(project, file)));
+          }
+          return null;
+        }
+      });
     }
   }
 
@@ -194,6 +242,10 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
 
     if (!StringUtil.isEmptyOrSpaces(myConfig.getWorkingDirectory())) {
       commandLine.setWorkDirectory(myConfig.getWorkingDirectory());
+    }
+    String inputFile = myConfig.getInputFile();
+    if (myConfig.isRedirectInput() && !StringUtil.isEmptyOrSpaces(inputFile)) {
+      commandLine.withInput(new File(inputFile));
     }
   }
 

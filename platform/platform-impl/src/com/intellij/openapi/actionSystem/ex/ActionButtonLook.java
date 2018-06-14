@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.ActionButtonComponent;
 import com.intellij.openapi.actionSystem.impl.IdeaActionButtonLook;
 import com.intellij.openapi.actionSystem.impl.Win10ActionButtonLook;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,6 +41,11 @@ public abstract class ActionButtonLook {
     @Override public void paintBorder(Graphics g, JComponent component, int state) {
       delegate.paintBorder(g, component, state);
     }
+
+    @Override
+    public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
+      delegate.paintBackground(g, component, color);
+    }
   };
 
   public static final ActionButtonLook INPLACE_LOOK = new ActionButtonLook() {
@@ -58,6 +64,10 @@ public abstract class ActionButtonLook {
   public abstract void paintBackground(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
 
   public abstract void paintBorder(Graphics g, JComponent component, @ActionButtonComponent.ButtonState int state);
+  
+  public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
+    
+  }
 
   public void updateUI() {}
 

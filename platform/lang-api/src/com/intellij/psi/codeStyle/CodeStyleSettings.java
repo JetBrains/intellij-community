@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.configurationStore.UnknownElementCollector;
@@ -865,9 +866,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
 
     myUnknownElementWriter.write(element, getCustomSettingsValues(), CustomCodeStyleSettings::getTagName, settings -> {
       CustomCodeStyleSettings parentCustomSettings = parentSettings.getCustomSettings(settings.getClass());
-      if (parentCustomSettings == null) {
-        throw new WriteExternalException("Custom settings are null for " + settings.getClass());
-      }
       settings.writeExternal(element, parentCustomSettings);
     });
 

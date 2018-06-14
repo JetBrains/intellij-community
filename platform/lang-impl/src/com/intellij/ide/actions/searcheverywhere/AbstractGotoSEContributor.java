@@ -19,9 +19,11 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
@@ -29,6 +31,15 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereContributor<F> {
+
+  protected static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
+                                                                                "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "[)\\]]?" // possible closing paren/brace
+  );
+  protected static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
+  protected static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  protected static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
 
   protected final Project myProject;
 
@@ -87,7 +98,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   public String filterControlSymbols(String pattern) {
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
-      return applyPatternFilter(pattern, ChooseByNamePopup.patternToDetectLinesAndColumns);
+      return applyPatternFilter(pattern, patternToDetectLinesAndColumns);
     }
 
     return pattern;
@@ -109,20 +120,17 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
-    if (selected instanceof PsiElement && ((PsiElement)selected).isValid()) {
-      PsiElement psiElement = (PsiElement) selected;
-      psiElement = psiElement.getNavigationElement();
-      VirtualFile file = PsiUtilCore.getVirtualFile(psiElement);
+    if (selected instanceof PsiElement) {
+      if (((PsiElement)selected).isValid()) {
+        LOG.warn("Cannot navigate to invalid PsiElement");
+        return true;
+      }
 
-      Pair<Integer, Integer> position = getLineAndColumn(searchText);
-      boolean positionSpecified = position.first >= 0 || position.second >= 0;
-      if (file != null && positionSpecified) {
-        OpenFileDescriptor descriptor = new OpenFileDescriptor(psiElement.getProject(), file, position.first, position.second);
-        descriptor = descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
-        if (descriptor.canNavigate()) {
-          descriptor.navigate(true);
-          return true;
-        }
+      PsiElement psiElement = preparePsi((PsiElement) selected, modifiers, searchText);
+      Navigatable extNavigatable = createExtendedNavigatable(psiElement, searchText, modifiers);
+      if (extNavigatable != null && extNavigatable.canNavigate()) {
+        extNavigatable.navigate(true);
+        return true;
       }
 
       NavigationUtil.activateFileWithPsiElement(psiElement, openInCurrentWindow(modifiers));
@@ -136,7 +144,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public Object getDataForItem(Object element, String dataId) {
-    if (CommonDataKeys.PSI_ELEMENT.is(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.is(dataId) && element instanceof PsiElement) {
       return element;
     }
 
@@ -157,6 +165,23 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return false;
   }
 
+  @Nullable
+  protected Navigatable createExtendedNavigatable(PsiElement psi, String searchText, int modifiers) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(psi);
+    Pair<Integer, Integer> position = getLineAndColumn(searchText);
+    boolean positionSpecified = position.first >= 0 || position.second >= 0;
+    if (file != null && positionSpecified) {
+      OpenFileDescriptor descriptor = new OpenFileDescriptor(psi.getProject(), file, position.first, position.second);
+      return descriptor.setUseCurrentWindow(openInCurrentWindow(modifiers));
+    }
+
+    return null;
+  }
+
+  protected PsiElement preparePsi(PsiElement psiElement, int modifiers, String searchText) {
+    return psiElement.getNavigationElement();
+  }
+
   protected static Pair<Integer, Integer> getLineAndColumn(String text) {
     int line = getLineAndColumnRegexpGroup(text, 2);
     int column = getLineAndColumnRegexpGroup(text, 3);
@@ -169,7 +194,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   }
 
   private static int getLineAndColumnRegexpGroup(String text, int groupNumber) {
-    final Matcher matcher = ChooseByNamePopup.patternToDetectLinesAndColumns.matcher(text);
+    final Matcher matcher = patternToDetectLinesAndColumns.matcher(text);
     if (matcher.matches()) {
       try {
         if (groupNumber <= matcher.groupCount()) {

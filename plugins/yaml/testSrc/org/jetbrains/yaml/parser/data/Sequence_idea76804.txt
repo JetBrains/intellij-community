@@ -2,7 +2,8 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('server:')
+        PsiElement(scalar key)('server')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         YAML sequence
           YAML sequence item
@@ -19,7 +20,8 @@ YAML file
       PsiElement(Eol)('\n')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('server:')
+        PsiElement(scalar key)('server')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML sequence

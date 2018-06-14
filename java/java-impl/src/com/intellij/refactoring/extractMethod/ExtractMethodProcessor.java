@@ -260,8 +260,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     PsiClass defaultTargetClass = Optional.ofNullable(myElements[0].getContainingFile())
                                           .map(ExtractMethodSnapshot.SNAPSHOT_KEY::get)
-                                          .map(snapshot -> snapshot.myTargetClass)
-                                          .map(SmartPsiElementPointer::getElement)
+                                          .map(snapshot -> snapshot.getTargetClass())
                                           .orElse(null);
     return chooseTargetClass(codeFragment, pass, defaultTargetClass);
   }

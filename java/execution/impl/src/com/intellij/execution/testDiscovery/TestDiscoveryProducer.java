@@ -5,6 +5,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Couple;
+import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.ApiStatus;
@@ -32,7 +34,7 @@ public interface TestDiscoveryProducer {
                                      @NotNull String classFQName,
                                      @NotNull String methodName,
                                      byte frameworkId,
-                                     @NotNull TestConsumer consumer) {
+                                     @NotNull TestProcessor processor) {
     MultiMap<String, String> visitedTests = new MultiMap<String, String>() {
       @NotNull
       @Override
@@ -47,7 +49,7 @@ public interface TestDiscoveryProducer {
           if (!visitedTests.get(classFQName).contains(methodRawName)) {
             visitedTests.putValue(className, methodRawName);
             Couple<String> couple = extractParameter(methodRawName);
-            consumer.accept(className, couple.first, couple.second);
+            if (!processor.process(className, couple.first, couple.second)) return;
           }
         }
       }
@@ -63,7 +65,12 @@ public interface TestDiscoveryProducer {
   }
 
   @FunctionalInterface
-  interface TestConsumer {
-    boolean accept(@NotNull String className, @NotNull String methodName, @Nullable String parameter);
+  interface TestProcessor {
+    boolean process(@NotNull String className, @NotNull String methodName, @Nullable String parameter);
+  }
+
+  @FunctionalInterface
+  interface PsiTestProcessor {
+    boolean process(@NotNull PsiClass clazz, @NotNull PsiMethod method, @Nullable String parameter);
   }
 }

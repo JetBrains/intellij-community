@@ -49,7 +49,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   private final int myOffset;
   private final RangeMarker myRangeMarker;
 
-  private boolean myUseCurrentWindow = false;
+  private boolean myUseCurrentWindow;
   private ScrollType myScrollType = ScrollType.CENTER;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
@@ -262,7 +262,7 @@ public class OpenFileDescriptor implements Navigatable, Comparable<OpenFileDescr
   }
 
   @Override
-  public int compareTo(OpenFileDescriptor o) {
+  public int compareTo(@NotNull OpenFileDescriptor o) {
     int i = myProject.getName().compareTo(o.myProject.getName());
     if (i != 0) return i;
     i = myFile.getName().compareTo(o.myFile.getName());

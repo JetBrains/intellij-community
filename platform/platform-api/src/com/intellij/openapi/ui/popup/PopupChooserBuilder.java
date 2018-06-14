@@ -66,6 +66,8 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   private boolean myCancelOnWindowDeactivation = true;
   private boolean myUseForXYLocation;
   @Nullable private Processor<JBPopup> myCouldPin;
+  private int myVisibleRowCount = 15;
+  private boolean myAutoPackHeightOnFiltering = true;
 
   public interface PopupComponentAdapter<T> {
     JComponent getComponent();
@@ -282,6 +284,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
 
   public Function<Object, String> getItemsNamer() {
     return myItemsNamer;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> setAutoPackHeightOnFiltering(boolean autoPackHeightOnFiltering) {
+    myAutoPackHeightOnFiltering = autoPackHeightOnFiltering;
+    return this;
+  }
+
+  public boolean isAutoPackHeightOnFiltering() {
+    return myAutoPackHeightOnFiltering;
   }
 
   @Override
@@ -555,6 +567,16 @@ public class PopupChooserBuilder<T> implements IPopupChooserBuilder<T> {
   public IPopupChooserBuilder<T> setFont(Font f) {
     myChooserComponent.setFont(f);
     return this;
+  }
+
+  @Override
+  public IPopupChooserBuilder<T> setVisibleRowCount(int visibleRowCount) {
+    myVisibleRowCount = visibleRowCount;
+    return this;
+  }
+
+  public int getVisibleRowCount() {
+    return myVisibleRowCount;
   }
 
   @Override

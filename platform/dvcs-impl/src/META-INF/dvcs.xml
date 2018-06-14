@@ -19,6 +19,11 @@
       <reference id="Vcs.CherryPick"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
     </group>
+    <group id="Dvcs.FileHistory.ContextMenu">
+      <separator/>
+      <reference id="Vcs.CherryPick"/>
+      <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
+    </group>
 
     <group id="Dvcs.Log.Toolbar">
       <reference id="Vcs.CherryPick"/>

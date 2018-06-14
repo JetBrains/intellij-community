@@ -8,7 +8,8 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('include:')
+            PsiElement(scalar key)('include')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('init.yml')
@@ -19,14 +20,16 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Create directory')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('file:')
+            PsiElement(scalar key)('file')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('path={{ directory }} state=directory')
@@ -37,14 +40,16 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Copy Elasticsearch configuration')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('file:')
+            PsiElement(scalar key)('file')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('path={{ directory }}/config/elasticsearch/ state=directory')
@@ -54,14 +59,16 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('template:')
+            PsiElement(scalar key)('template')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('src=elasticsearch.yml dest={{ directory }}/config/elasticsearch/')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('notify:')
+            PsiElement(scalar key)('notify')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Restart Elasticsearch')
@@ -71,14 +78,16 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('copy:')
+            PsiElement(scalar key)('copy')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('src=logging.yml dest={{ directory }}/config/elasticsearch/')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('notify:')
+            PsiElement(scalar key)('notify')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Restart Elasticsearch')
@@ -88,33 +97,38 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Start Elasticsearch docker container')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('docker:')
+            PsiElement(scalar key)('docker')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('name:')
+                PsiElement(scalar key)('name')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('elasticsearch')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('image:')
+                PsiElement(scalar key)('image')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('elasticsearch:{{ elasticsearch_version }}')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('volumes:')
+                PsiElement(scalar key)('volumes')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -133,7 +147,8 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('ports:')
+                PsiElement(scalar key)('ports')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -145,14 +160,16 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('state:')
+                PsiElement(scalar key)('state')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('started')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('restart_policy:')
+                PsiElement(scalar key)('restart_policy')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('always')
@@ -163,21 +180,24 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Copy Logstash configuration')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('synchronize:')
+            PsiElement(scalar key)('synchronize')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('src={{ logstash_configs }}/ dest={{ directory }}/config/logstash/ delete=yes')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('notify:')
+            PsiElement(scalar key)('notify')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Restart Logstash')
@@ -187,33 +207,38 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Start Logstash docker container')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('docker:')
+            PsiElement(scalar key)('docker')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('name:')
+                PsiElement(scalar key)('name')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('logstash')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('image:')
+                PsiElement(scalar key)('image')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('mkuzmin/logstash')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('volumes:')
+                PsiElement(scalar key)('volumes')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -225,7 +250,8 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('links:')
+                PsiElement(scalar key)('links')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -237,14 +263,16 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('command:')
+                PsiElement(scalar key)('command')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('-f /opt/logstash/config/config/')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('expose:')
+                PsiElement(scalar key)('expose')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -256,7 +284,8 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('ports:')
+                PsiElement(scalar key)('ports')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -268,14 +297,16 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('state:')
+                PsiElement(scalar key)('state')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('started')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('restart_policy:')
+                PsiElement(scalar key)('restart_policy')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('always')
@@ -286,14 +317,16 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Copy Kibana configuration')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('file:')
+            PsiElement(scalar key)('file')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('path={{ directory }}/config/kibana state=directory')
@@ -303,7 +336,8 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('template:')
+            PsiElement(scalar key)('template')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('src=kibana.yml dest={{ directory }}/config/kibana/')
@@ -313,33 +347,38 @@ YAML file
         PsiWhiteSpace(' ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('name:')
+            PsiElement(scalar key)('name')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('Start Kibana docker container')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('docker:')
+            PsiElement(scalar key)('docker')
+            PsiElement(:)(':')
             PsiElement(Eol)('\n')
             PsiElement(indent)('    ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('name:')
+                PsiElement(scalar key)('name')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('kibana')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('image:')
+                PsiElement(scalar key)('image')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('kibana:{{ kibana_version }}')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('volumes:')
+                PsiElement(scalar key)('volumes')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -351,7 +390,8 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('links:')
+                PsiElement(scalar key)('links')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -363,7 +403,8 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('ports:')
+                PsiElement(scalar key)('ports')
+                PsiElement(:)(':')
                 PsiElement(Eol)('\n')
                 PsiElement(indent)('      ')
                 YAML sequence
@@ -375,14 +416,16 @@ YAML file
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('state:')
+                PsiElement(scalar key)('state')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('started')
               PsiElement(Eol)('\n')
               PsiElement(indent)('    ')
               YAML key value
-                PsiElement(scalar key)('restart_policy:')
+                PsiElement(scalar key)('restart_policy')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('always')

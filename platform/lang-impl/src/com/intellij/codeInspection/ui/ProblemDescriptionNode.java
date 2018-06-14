@@ -34,7 +34,7 @@ public class ProblemDescriptionNode extends SuppressableInspectionTreeNode {
   protected final RefEntity myElement;
 
   public ProblemDescriptionNode(RefEntity element,
-                                CommonProblemDescriptor descriptor,
+                                @NotNull CommonProblemDescriptor descriptor,
                                 @NotNull InspectionToolPresentation presentation) {
     this(element, descriptor, presentation, null);
   }
