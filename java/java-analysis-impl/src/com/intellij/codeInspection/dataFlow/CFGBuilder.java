@@ -126,6 +126,21 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to push given DfaValue on stack and bind it to given expression.
+   * <p>
+   * Stack before: ...
+   * <p>
+   * Stack after: ... value
+   *
+   * @param value value to push
+   * @param expression expression which result is being pushed
+   * @return this builder
+   */
+  public CFGBuilder push(DfaValue value, PsiExpression expression) {
+    return add(new PushInstruction(value, expression));
+  }
+
+  /**
    * Generate instructions to pop single DfaValue from stack
    * <p>
    * Stack before: ... value

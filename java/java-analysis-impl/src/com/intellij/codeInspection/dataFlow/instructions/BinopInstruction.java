@@ -21,7 +21,6 @@ import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiPolyadicExpression;
 import com.intellij.psi.PsiType;
@@ -31,18 +30,18 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.psi.JavaTokenType.*;
 
-public class BinopInstruction extends BranchingInstruction {
+public class BinopInstruction extends BranchingInstruction implements ExpressionPushingInstruction {
   private static final TokenSet ourSignificantOperations =
     TokenSet.create(EQEQ, NE, LT, GT, LE, GE, INSTANCEOF_KEYWORD, PLUS, MINUS, AND, PERC, DIV, GTGT, GTGTGT);
   private final IElementType myOperationSign;
   private final @Nullable PsiType myResultType;
   private final int myLastOperand;
 
-  public BinopInstruction(IElementType opSign, @Nullable PsiElement psiAnchor, @Nullable PsiType resultType) {
+  public BinopInstruction(IElementType opSign, @Nullable PsiExpression psiAnchor, @Nullable PsiType resultType) {
     this(opSign, psiAnchor, resultType, -1);
   }
 
-  public BinopInstruction(IElementType opSign, @Nullable PsiElement psiAnchor, @Nullable PsiType resultType, int lastOperand) {
+  public BinopInstruction(IElementType opSign, @Nullable PsiExpression psiAnchor, @Nullable PsiType resultType, int lastOperand) {
     super(psiAnchor);
     myResultType = resultType;
     myOperationSign = ourSignificantOperations.contains(opSign) ? opSign : null;
@@ -53,7 +52,7 @@ public class BinopInstruction extends BranchingInstruction {
    * @return range inside the anchor which evaluates this instruction, or null if the whole anchor evaluates this instruction
    */
   @Nullable
-  public TextRange getAnchorRange() {
+  public TextRange getExpressionRange() {
     if (myLastOperand != -1 && getPsiAnchor() instanceof PsiPolyadicExpression) {
       PsiPolyadicExpression anchor = (PsiPolyadicExpression)getPsiAnchor();
       PsiExpression[] operands = anchor.getOperands();
@@ -62,6 +61,12 @@ public class BinopInstruction extends BranchingInstruction {
       }
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public PsiExpression getExpression() {
+    return (PsiExpression)getPsiAnchor();
   }
 
   @Override

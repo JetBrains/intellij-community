@@ -36,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.psi.CommonClassNames.*;
@@ -53,12 +52,14 @@ class CustomMethodHandlers {
 
   interface CustomMethodHandler {
 
-    List<DfaMemoryState> handle(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
+    @Nullable
+    DfaValue getMethodResult(DfaCallArguments callArguments, DfaMemoryState memState, DfaValueFactory factory);
+
     default CustomMethodHandler compose(CustomMethodHandler other) {
       if (other == null) return this;
       return (args, memState, factory) -> {
-        List<DfaMemoryState> result = this.handle(args, memState, factory);
-        return result.isEmpty() ? other.handle(args, memState, factory) : result;
+        DfaValue result = this.getMethodResult(args, memState, factory);
+        return result == null ? other.getMethodResult(args, memState, factory) : result;
       };
     }
 
@@ -71,16 +72,15 @@ class CustomMethodHandlers {
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("int"),
               (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, false))
     .register(staticCall(JAVA_LANG_MATH, "abs").parameterTypes("long"),
-              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true));
+              (args, memState, factory) -> mathAbs(args.myArguments, memState, factory, true))
+    .register(DfaOptionalSupport.OPTIONAL_OF_NULLABLE,
+              (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory));
 
   public static CustomMethodHandler find(MethodCallInstruction instruction) {
     PsiMethod method = instruction.getTargetMethod();
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
-      handler = (args, memState, factory) -> {
-        DfaValue value = handleConstantCall(args, memState, factory, method);
-        return value == null ? Collections.emptyList() : singleResult(memState, value);
-      };
+      handler = (args, memState, factory) -> handleConstantCall(args, memState, factory, method);
     }
     CustomMethodHandler handler2 = CUSTOM_METHOD_HANDLERS.mapFirst(method);
     return handler == null ? handler2 : handler.compose(handler2);
@@ -190,27 +190,32 @@ class CustomMethodHandlers {
     });
   }
 
-  private static List<DfaMemoryState> indexOf(DfaValue qualifier,
-                                              DfaMemoryState memState,
-                                              DfaValueFactory factory,
-                                              SpecialField specialField) {
+  private static DfaValue indexOf(DfaValue qualifier,
+                                  DfaMemoryState memState,
+                                  DfaValueFactory factory,
+                                  SpecialField specialField) {
     DfaValue length = specialField.createValue(factory, qualifier);
     LongRangeSet range = memState.getValueFact(length, DfaFactType.RANGE);
     long maxLen = range == null || range.isEmpty() ? Integer.MAX_VALUE : range.max();
-    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1)));
+    return factory.getFactValue(DfaFactType.RANGE, LongRangeSet.range(-1, maxLen - 1));
   }
 
-  private static List<DfaMemoryState> mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
+  private static DfaValue ofNullable(DfaValue argument, DfaMemoryState state, DfaValueFactory factory) {
+    if (state.isNull(argument)) {
+      return factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false);
+    }
+    if (state.isNotNull(argument)) {
+      return factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, true);
+    }
+    return null;
+  }
+
+  private static DfaValue mathAbs(DfaValue[] args, DfaMemoryState memState, DfaValueFactory factory, boolean isLong) {
     DfaValue arg = ArrayUtil.getFirstElement(args);
-    if(arg == null) return Collections.emptyList();
+    if (arg == null) return null;
     LongRangeSet range = memState.getValueFact(arg, DfaFactType.RANGE);
-    if (range == null) return Collections.emptyList();
-    return singleResult(memState, factory.getFactValue(DfaFactType.RANGE, range.abs(isLong)));
-  }
-
-  private static List<DfaMemoryState> singleResult(DfaMemoryState state, DfaValue value) {
-    state.push(value);
-    return Collections.singletonList(state);
+    if (range == null) return null;
+    return factory.getFactValue(DfaFactType.RANGE, range.abs(isLong));
   }
 
   private static Object getConstantValue(DfaMemoryState memoryState, DfaValue value) {
