@@ -1638,14 +1638,15 @@ public class JBUI {
         return active ? JBColor.namedColor("Focus.activeWarningBorderColor", 0xe2a53a) :
                         JBColor.namedColor("Focus.inactiveWarningBorderColor",0xffd385);
       }
+    }
 
-      public static class TabbedPane {
-        public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedСolor", 0x357ecc);
-        public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
-        public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
-        public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
-        public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 2);
-      }
+    public static class TabbedPane {
+      public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedColor", 0x357ecc);
+      public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
+      public static final Color DISABLED_TEXT_COLOR = JBColor.namedColor("TabbedPane.disabledText", Gray.x99);
+      public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
+      public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
+      public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 2);
     }
 
     //todo #UX-1 maybe move to popup
