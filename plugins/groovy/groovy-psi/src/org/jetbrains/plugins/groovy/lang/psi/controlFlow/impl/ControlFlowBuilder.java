@@ -1020,7 +1020,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     InstructionImpl tryBegin = startNode(tryBlock);
-    tryBlock.accept(this);
+    if (tryBlock != null) {
+      tryBlock.accept(this);
+    }
     InstructionImpl tryEnd = myHead;
     finishNode(tryBegin);
 
