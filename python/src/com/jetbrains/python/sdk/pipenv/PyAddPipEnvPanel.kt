@@ -18,6 +18,7 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.nio.file.Files
 import javax.swing.Icon
 import javax.swing.JComboBox
 
@@ -112,7 +113,7 @@ class PyAddPipEnvPanel(private val project: Project?,
     val executable = getPipEnvExecutable() ?: return ValidationInfo("Pipenv executable is not found on \$PATH. $tip")
     return when {
       !executable.exists() -> ValidationInfo("File ${executable.absolutePath} is not found. $tip")
-      !executable.canExecute() -> ValidationInfo("Cannot execute ${executable.absolutePath}")
+      Files.isExecutable(executable.toPath()) -> ValidationInfo("Cannot execute ${executable.absolutePath}")
       else -> null
     }
   }
