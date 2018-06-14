@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.util
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import groovy.transform.CompileStatic
@@ -31,5 +32,17 @@ trait ResolveTest {
 
   Collection<? extends GroovyResolveResult> multiResolveByText(String text) {
     referenceByText(text).resolve(false)
+  }
+
+  def <T extends PsiElement> void resolveTest(String text, Class<T> clazz) {
+    def results = multiResolveByText(text)
+    if (clazz == null) {
+      assert results.isEmpty()
+    }
+    else {
+      assert results.size() == 1
+      def resolved = results[0].element
+      assertInstanceOf(resolved, clazz)
+    }
   }
 }

@@ -3,6 +3,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -61,5 +63,17 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
       anchor = getTryBlock();
     }
     return (GrCatchClause)addAfter(clause, anchor);
+  }
+
+  @Override
+  public boolean processDeclarations(@NotNull PsiScopeProcessor processor,
+                                     @NotNull ResolveState state,
+                                     @Nullable PsiElement lastParent,
+                                     @NotNull PsiElement place) {
+    final GrTryResourceList resourceList = getResourceList();
+    if (resourceList != null && lastParent == getTryBlock()) {
+      return resourceList.processDeclarations(processor, state, null, place);
+    }
+    return true;
   }
 }
