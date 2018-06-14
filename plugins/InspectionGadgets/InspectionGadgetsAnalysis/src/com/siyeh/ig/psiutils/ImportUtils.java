@@ -21,6 +21,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleSettingsFacade;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
@@ -469,6 +470,69 @@ public final class ImportUtils {
     final MemberReferenceVisitor visitor = new MemberReferenceVisitor(member);
     context.accept(visitor);
     return visitor.isReferenceFound();
+  }
+
+  private static boolean isReferenceCorrectWithoutQualifier(PsiJavaCodeReferenceElement reference, PsiMember member) {
+    final String referenceName = reference.getReferenceName();
+    if (referenceName == null) {
+      return false;
+    }
+    final Project project = reference.getProject();
+    final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
+    final PsiResolveHelper resolveHelper = psiFacade.getResolveHelper();
+    if (member instanceof PsiMethod) {
+      final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)reference.getParent().copy();
+      final PsiElement qualifier = methodCallExpression.getMethodExpression().getQualifier();
+      assert qualifier != null;
+      qualifier.delete();
+      if (!member.equals(methodCallExpression.resolveMethod())) {
+        return false;
+      }
+    }
+    else if (member instanceof PsiField) {
+      final PsiVariable variable = resolveHelper.resolveAccessibleReferencedVariable(referenceName, reference);
+      if (!member.equals(variable)) {
+        return false;
+      }
+    }
+    else if (member instanceof PsiClass) {
+      final PsiClass aClass = resolveHelper.resolveReferencedClass(referenceName, reference);
+      if (!member.equals(aClass)) {
+        return false;
+      }
+    }
+    return true;
+  }
+
+  public static boolean isAlreadyStaticallyImported(PsiJavaCodeReferenceElement reference) {
+    if (reference instanceof PsiMethodReferenceExpression) return false;
+    PsiJavaCodeReferenceElement qualifier = ObjectUtils.tryCast(reference.getQualifier(), PsiJavaCodeReferenceElement.class);
+    if (qualifier == null) return false;
+    if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class) != null) return false;
+    if (isGenericReference(reference, qualifier)) return false;
+    final PsiMember member = ObjectUtils.tryCast(reference.resolve(), PsiMember.class);
+    if (member == null) return false;
+    if (!(qualifier.resolve() instanceof PsiClass)) return false;
+    return isStaticallyImported(member, reference) &&
+           isReferenceCorrectWithoutQualifier(reference, member);
+  }
+
+  public static boolean isGenericReference(PsiJavaCodeReferenceElement referenceElement, PsiJavaCodeReferenceElement qualifierElement) {
+    final PsiReferenceParameterList qualifierParameterList = qualifierElement.getParameterList();
+    if (qualifierParameterList != null) {
+      final PsiTypeElement[] typeParameterElements = qualifierParameterList.getTypeParameterElements();
+      if (typeParameterElements.length > 0) {
+        return true;
+      }
+    }
+    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
+    if (parameterList != null) {
+      final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
+      if (typeParameterElements.length > 0) {
+        return true;
+      }
+    }
+    return false;
   }
 
   private static class MemberReferenceVisitor extends JavaRecursiveElementWalkingVisitor {

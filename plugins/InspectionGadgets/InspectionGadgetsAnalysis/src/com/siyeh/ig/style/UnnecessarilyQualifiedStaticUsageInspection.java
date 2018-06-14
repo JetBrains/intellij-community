@@ -28,6 +28,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -142,7 +143,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
-    if (isGenericReference(referenceElement, qualifier)) {
+    if (ImportUtils.isGenericReference(referenceElement, qualifier)) {
       return false;
     }
     final PsiElement target = referenceElement.resolve();
@@ -221,24 +222,6 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
         }
       }
       containingClass = ClassUtils.getContainingClass(containingClass);
-    }
-    return false;
-  }
-
-  static boolean isGenericReference(PsiJavaCodeReferenceElement referenceElement, PsiJavaCodeReferenceElement qualifierElement) {
-    final PsiReferenceParameterList qualifierParameterList = qualifierElement.getParameterList();
-    if (qualifierParameterList != null) {
-      final PsiTypeElement[] typeParameterElements = qualifierParameterList.getTypeParameterElements();
-      if (typeParameterElements.length > 0) {
-        return true;
-      }
-    }
-    final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
-    if (parameterList != null) {
-      final PsiTypeElement[] typeParameterElements = parameterList.getTypeParameterElements();
-      if (typeParameterElements.length > 0) {
-        return true;
-      }
     }
     return false;
   }
