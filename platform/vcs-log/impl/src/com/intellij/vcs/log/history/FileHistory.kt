@@ -2,10 +2,15 @@
 package com.intellij.vcs.log.history
 
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.Couple
+import com.intellij.openapi.util.Ref
+import com.intellij.openapi.util.UnorderedPair
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.containers.MultiMap
 import com.intellij.util.containers.Stack
 import com.intellij.vcs.log.data.index.VcsLogPathsIndex
+import com.intellij.vcs.log.data.index.VcsLogPathsIndex.ChangeKind
 import com.intellij.vcs.log.graph.api.LinearGraph
 import com.intellij.vcs.log.graph.api.LiteLinearGraph
 import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
@@ -194,104 +199,150 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   }
 }
 
-abstract class FileNamesData {
-  private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeKind>>>()
+abstract class FileNamesData(filePath: FilePath) {
+  // file -> (commitId -> (parent commitId -> change kind))
+  private val affectedCommits = mutableMapOf<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>()
+  private val commitToRename = MultiMap.createSmart<UnorderedPair<Int>, Rename>()
 
-  val commits: Set<Int>
-    get() = commitToPathAndChanges.keys().toSet()
   val isEmpty: Boolean
-    get() = commitToPathAndChanges.isEmpty
-  var hasRenames = false
-    private set
+    get() = affectedCommits.isEmpty()
+  val hasRenames: Boolean
+    get() = !commitToRename.isEmpty
 
-  protected abstract fun getPathById(pathId: Int): FilePath
+  init {
+    val newPaths = mutableSetOf(filePath)
 
-  fun add(commit: Int,
-          path: FilePath,
-          changes: List<VcsLogPathsIndex.ChangeKind>,
-          parents: List<Int>) {
-    var pathToChanges: MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeKind>>? = commitToPathAndChanges.get(commit)
-    if (pathToChanges == null) {
-      pathToChanges = ContainerUtil.newHashMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeKind>>()
-      commitToPathAndChanges.put(commit, pathToChanges)
-    }
+    while (newPaths.isNotEmpty()) {
+      val commits = newPaths.associate { kotlin.Pair(it, getAffectedCommits(it)) }
+      affectedCommits.putAll(commits)
+      newPaths.clear()
 
-    val parentToChangesMap: MutableMap<Int, VcsLogPathsIndex.ChangeKind> = pathToChanges[path]
-                                                                           ?: ContainerUtil.newHashMap<Int, VcsLogPathsIndex.ChangeKind>()
-    if (!parents.isEmpty()) {
-      LOG.assertTrue(parents.size == changes.size)
-      for (i in changes.indices) {
-        parentToChangesMap[parents[i]] = changes[i]
-      }
-    }
-    else {
-      // initial commit
-      LOG.assertTrue(changes.size == 1)
-      parentToChangesMap[-1] = changes[0]
-    }
-    pathToChanges[path] = parentToChangesMap
-  }
-
-  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): FilePath? {
-    val filesToChangesMap = commitToPathAndChanges.get(commit)
-    LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
-    val changes = filesToChangesMap!![childPath] ?: return childPath
-
-    return when (changes[parent]) {
-      VcsLogPathsIndex.ChangeKind.ADDED -> null
-      else -> childPath
-    }
-  }
-
-  fun getPathInChildRevision(commit: Int, parentIndex: Int, parentPath: FilePath): FilePath? {
-    val filesToChangesMap = commitToPathAndChanges.get(commit)
-    LOG.assertTrue(filesToChangesMap != null, "Missing commit $commit")
-    val changes = filesToChangesMap!![parentPath] ?: return parentPath
-
-    return when (changes[parentIndex]) {
-      VcsLogPathsIndex.ChangeKind.REMOVED -> null
-      else -> parentPath
-    }
-  }
-
-  fun affects(id: Int, path: FilePath): Boolean {
-    return commitToPathAndChanges.containsKey(id) && commitToPathAndChanges.get(id).containsKey(path)
-  }
-
-  fun buildPathsMap(): Map<Int, FilePath> {
-    val result = ContainerUtil.newHashMap<Int, FilePath>()
-
-    commitToPathAndChanges.forEachEntry { commit, filesToChanges ->
-      if (filesToChanges.size == 1) {
-        result[commit] = filesToChanges.keys.first()
-      }
-      else {
-        for ((key, value) in filesToChanges) {
-          val changeData = value.values.find { ch -> !setOf(VcsLogPathsIndex.ChangeKind.REMOVED, VcsLogPathsIndex.ChangeKind.NOT_CHANGED).contains(ch) }
-          if (changeData != null) {
-            result[commit] = key
-            break
+      collectAdditionsDeletions(commits) { ad ->
+        if (commitToRename[ad.commits].any { rename -> ad.matches(rename) }) return@collectAdditionsDeletions
+        findRename(ad.parent, ad.child, ad::matches)?.let { files ->
+          val rename = Rename(files.first, files.second, ad.parent, ad.child)
+          commitToRename.putValue(ad.commits, rename)
+          val otherPath = rename.getOtherPath(ad)!!
+          if (!affectedCommits.containsKey(otherPath)) {
+            newPaths.add(otherPath)
           }
         }
       }
-
-      true
     }
+  }
 
+  private fun collectAdditionsDeletions(commits: Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<ChangeKind>>>,
+                                        action: (AdditionDeletion) -> Unit) {
+    commits.forEach { path, commit, changes ->
+      changes.forEachEntry { parent, change ->
+        createAdditionDeletion(parent, commit, change, path)?.let { ad -> action(ad) }
+        true
+      }
+    }
+  }
+
+  private fun createAdditionDeletion(parent: Int, commit: Int, change: ChangeKind, path: FilePath): AdditionDeletion? {
+    if (parent != commit && (change == ChangeKind.ADDED || change == ChangeKind.REMOVED)) {
+      return AdditionDeletion(path, commit, parent, change == ChangeKind.ADDED)
+    }
+    return null
+  }
+
+  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): FilePath? {
+    val commits = UnorderedPair(commit, parent)
+    val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(commit, childPath) }
+    if (otherPath != null) return otherPath
+
+    val changes = affectedCommits[childPath]?.get(commit) ?: return childPath
+    if (changes[parent] == ChangeKind.ADDED) return null
+    return childPath
+  }
+
+  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: FilePath): FilePath? {
+    val commits = UnorderedPair(commit, parent)
+    val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(parent, parentPath) }
+    if (otherPath != null) return otherPath
+
+    val changes = affectedCommits[parentPath]?.get(commit) ?: return parentPath
+    if (changes[parent] == ChangeKind.REMOVED) return null
+    return parentPath
+  }
+
+  fun affects(commit: Int, path: FilePath): Boolean {
+    return affectedCommits[path]?.get(commit) != null
+  }
+
+  fun getCommits(): Set<Int> {
+    val result = mutableSetOf<Int>()
+    affectedCommits.forEach { _, commit, _ ->
+      result.add(commit)
+    }
     return result
   }
 
-  fun isTrivialMerge(commit: Int, path: FilePath): Boolean {
-    if (!commitToPathAndChanges.containsKey(commit)) return false
-    val data = commitToPathAndChanges.get(commit)[path]
-    // strictly speaking, the criteria for merge triviality is a little bit more tricky than this:
-    // some merges have just reverted changes in one of the branches
-    // they need to be displayed
-    // but we skip them instead
-    return data != null && data.size > 1 && data.containsValue(VcsLogPathsIndex.ChangeKind.NOT_CHANGED)
+  fun buildPathsMap(): Map<Int, FilePath> {
+    val result = mutableMapOf<Int, FilePath>()
+    affectedCommits.forEach { filePath, commit, _ ->
+      result[commit] = filePath
+    }
+    return result
   }
 
-  companion object {
-    private val LOG = Logger.getInstance(FileNamesData::class.java)
+  fun isTrivialMerge(commit: Int, filePath: FilePath): Boolean {
+    return affectedCommits[filePath]?.get(commit)?.let {
+      it.size() > 1 && it.containsValue(ChangeKind.NOT_CHANGED)
+    } ?: false
   }
+
+  abstract fun findRename(parent: Int, child: Int, accept: (Couple<FilePath>) -> Boolean): Couple<FilePath>?
+  abstract fun getAffectedCommits(path: FilePath): TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>
+}
+
+private data class AdditionDeletion(val filePath: FilePath, val child: Int, val parent: Int, val isAddition: Boolean) {
+  val commits
+    get() = UnorderedPair(parent, child)
+
+  fun matches(rename: Rename): Boolean {
+    if (rename.commit1 == parent && rename.commit2 == child) {
+      return if (isAddition) rename.filePath2 == filePath else rename.filePath1 == filePath
+    }
+    else if (rename.commit2 == parent && rename.commit1 == child) {
+      return if (isAddition) rename.filePath1 == filePath else rename.filePath2 == filePath
+    }
+    return false
+  }
+
+  fun matches(files: Couple<FilePath>): Boolean {
+    return (isAddition && files.second == filePath) || (!isAddition && files.first == filePath)
+  }
+}
+
+private data class Rename(val filePath1: FilePath, val filePath2: FilePath, val commit1: Int, val commit2: Int) {
+
+  fun getOtherPath(commit: Int, filePath: FilePath): FilePath? {
+    if (commit == commit1 && filePath == filePath1) return filePath2
+    if (commit == commit2 && filePath == filePath2) return filePath1
+    return null
+  }
+
+  fun getOtherPath(ad: AdditionDeletion): FilePath? {
+    return getOtherPath(if (ad.isAddition) ad.child else ad.parent, ad.filePath)
+  }
+}
+
+internal fun Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>>.forEach(action: (FilePath, Int, TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>) -> Unit) {
+  forEach { (filePath, affectedCommits) ->
+    affectedCommits.forEachEntry { commit, changesMap ->
+      action(filePath, commit, changesMap)
+      true
+    }
+  }
+}
+
+private fun <E, R> Collection<E>.firstNotNull(mapping: (E) -> R): R? {
+  for (e in this) {
+    val value = mapping(e)
+    if (value != null) return value
+  }
+  return null
 }

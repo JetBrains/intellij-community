@@ -15,24 +15,27 @@
  */
 package com.intellij.vcs.log.data.index;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Throwable2Computable;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.io.PersistentMap;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogStorage;
-import com.intellij.vcs.log.history.FileNamesData;
 import com.intellij.vcs.log.impl.FatalErrorHandler;
 import com.intellij.vcs.log.ui.filter.VcsLogMultiplePatternsTextFilter;
 import com.intellij.vcs.log.util.TroveUtil;
 import com.intellij.vcs.log.util.VcsLogUtil;
 import gnu.trove.TIntHashSet;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,9 +46,8 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Set;
 
-import static com.intellij.util.ObjectUtils.notNull;
-
 public class IndexDataGetter {
+  private static final Logger LOG = Logger.getInstance(IndexDataGetter.class);
   @NotNull private final Project myProject;
   @NotNull private final Set<VirtualFile> myRoots;
   @NotNull private final VcsLogPersistentIndex.IndexStorage myIndexStorage;
@@ -262,7 +264,7 @@ public class IndexDataGetter {
     return executeAndCatch(() -> {
       // todo add renames
       Set<FilePath> result = ContainerUtil.newHashSet();
-      myIndexStorage.paths.iterateCommits(path, (changes, commit) -> result.add(changes.first));
+      result.add(path);
       return result;
     }, Collections.emptySet());
   }
@@ -278,8 +280,8 @@ public class IndexDataGetter {
   }
 
   @NotNull
-  public FileNamesData buildFileNamesData(@NotNull FilePath path) {
-    FileNamesData result = new MyFileNamesData();
+  public TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> getAffectedCommits(@NotNull FilePath path) {
+    TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>> affectedCommits = new TIntObjectHashMap<>();
 
     VirtualFile root = VcsLogUtil.getActualRoot(myProject, path);
     if (myRoots.contains(root)) {
@@ -289,21 +291,32 @@ public class IndexDataGetter {
           if (parents == null) {
             throw new CorruptedDataException("No parents for commit " + commit);
           }
-          result.add(commit, changes.first, changes.second, parents);
+
+          TIntObjectHashMap<VcsLogPathsIndex.ChangeKind> changesMap = new TIntObjectHashMap<>();
+          if (parents.size() == 0 && !changes.isEmpty()) {
+            changesMap.put(commit, ContainerUtil.getFirstItem(changes));
+          }
+          else {
+            LOG.assertTrue(parents.size() == changes.size(),
+                           "Commit " + commit + " has " + parents.size() + " parents, but " + changes.size() + " changes.");
+            for (Pair<Integer, VcsLogPathsIndex.ChangeKind> parentAndChanges : ContainerUtil.zip(parents, changes)) {
+              changesMap.put(parentAndChanges.first, parentAndChanges.second);
+            }
+          }
+
+          affectedCommits.put(commit, changesMap);
+
           return null;
         }));
         return null;
       });
     }
-    return result;
+    return affectedCommits;
   }
 
-  private class MyFileNamesData extends FileNamesData {
-    @Override
-    @NotNull
-    protected FilePath getPathById(int pathId) {
-      return notNull(myIndexStorage.paths.getPath(pathId));
-    }
+  @Nullable
+  public Couple<FilePath> findRename(int parent, int child, @NotNull BooleanFunction<Couple<FilePath>> accept) {
+    return executeAndCatch(() -> myIndexStorage.paths.iterateRenames(parent, child, accept));
   }
 
   //

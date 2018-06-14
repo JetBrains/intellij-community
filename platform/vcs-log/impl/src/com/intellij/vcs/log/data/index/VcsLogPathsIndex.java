@@ -17,6 +17,7 @@ package com.intellij.vcs.log.data.index;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
@@ -24,9 +25,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Consumer;
-import com.intellij.util.PathUtil;
-import com.intellij.util.SmartList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.IndexExtension;
@@ -123,6 +122,21 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     myPathsIndexer.getPathsEnumerator().force();
   }
 
+  @Nullable
+  public Couple<FilePath> iterateRenames(int parent, int child, @NotNull BooleanFunction<Couple<FilePath>> accept) throws IOException {
+    Collection<Couple<Integer>> renames = myPathsIndexer.myRenamesMap.get(Couple.of(parent, child));
+    if (renames == null) return null;
+    for (Couple<Integer> rename: renames) {
+      FilePath path1 = getPath(rename.first);
+      FilePath path2 = getPath(rename.second);
+      Couple<FilePath> paths = Couple.of(path1, path2);
+      if (accept.fun(paths)) {
+        return paths;
+      }
+    }
+    return null;
+  }
+
   @NotNull
   public TIntHashSet getCommitsForPaths(@NotNull Collection<FilePath> paths) throws IOException, StorageException {
     TIntHashSet result = new TIntHashSet();
@@ -162,13 +176,11 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     return allPathIds;
   }
 
-  public void iterateCommits(@NotNull FilePath path, @NotNull ObjIntConsumer<Pair<FilePath, List<ChangeKind>>> consumer)
+  public void iterateCommits(@NotNull FilePath path,
+                             @NotNull ObjIntConsumer<List<ChangeKind>> consumer)
     throws IOException, StorageException {
-
     int pathId = myPathsIndexer.myPathsEnumerator.enumerate(new LightFilePath(path));
-    iterateCommitIdsAndValues(pathId, (changesList, commitId) -> {
-      consumer.accept(Pair.create(path, changesList), commitId);
-    });
+    iterateCommitIdsAndValues(pathId, consumer);
   }
 
   @Override
