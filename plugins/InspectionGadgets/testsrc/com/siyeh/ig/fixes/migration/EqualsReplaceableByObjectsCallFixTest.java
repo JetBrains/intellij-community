@@ -27,14 +27,16 @@ import com.siyeh.ig.migration.EqualsReplaceableByObjectsCallInspection;
  */
 public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase {
 
-  public void testSimpleEquals() { doTest(); }
-  public void testSimpleNotEquals() { doTest(); }
+  private EqualsReplaceableByObjectsCallInspection myInspection;
 
-  public void testQualifiedArgument() { doTest(); }
+  public void testSimpleEquals() { doTestNoNullCheck(); }
+  public void testSimpleNotEquals() { doTestNoNullCheck(); }
+
+  public void testQualifiedArgument() { doTestNoNullCheck(); }
   public void testQualifiedReciever() { doTest(); }
 
-  public void testExpressionReciever() { doTest(); }
-  public void testExpressionArgument() { doTest(); }
+  public void testExpressionReciever() { doTestNoNullCheck(); }
+  public void testExpressionArgument() { doTestNoNullCheck(); }
   public void testExpressionArgument2() { doTest(); }
 
   public void testLongEquals() { doTest(); }
@@ -42,8 +44,8 @@ public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase 
   public void testShortEquals() { doTest(); }
   public void testShortNotEquals() { doTest(); }
 
-  public void testSuperEquals() { doTest(); }
-  public void testThisEquals() { doTest(); }
+  public void testSuperEquals() { doTestNoNullCheck(); }
+  public void testThisEquals() { doTestNoNullCheck(); }
 
   public void testQualifiedThisNotEqual() { doTest(); }
   public void testQualifiedSuperEqual() { doTest(); }
@@ -66,8 +68,14 @@ public class EqualsReplaceableByObjectsCallFixTest extends IGQuickFixesTestCase 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-    myFixture.enableInspections(new EqualsReplaceableByObjectsCallInspection());
+    myInspection = new EqualsReplaceableByObjectsCallInspection();
+    myFixture.enableInspections(myInspection);
     myRelativePath = "migration/equals_replaceable_by_objects_call";
     myDefaultHint = InspectionGadgetsBundle.message("equals.replaceable.by.objects.call.quickfix");
+  }
+
+  private void doTestNoNullCheck() {
+    myInspection.checkNotNull = false;
+    doTest();
   }
 }

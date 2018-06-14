@@ -1288,7 +1288,7 @@
                      implementationClass="com.siyeh.ig.migration.BigDecimalLegacyMethodInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="EqualsReplaceableByObjectsCall" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="equals.replaceable.by.objects.call.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.language.level.specific.issues.and.migration.aids7" enabledByDefault="true" level="INFORMATION"
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids7" enabledByDefault="true" level="WEAK WARNING"
                      implementationClass="com.siyeh.ig.migration.EqualsReplaceableByObjectsCallInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="EnumerationCanBeIteration" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="enumeration.can.be.iteration.display.name" groupBundle="messages.InspectionsBundle"
