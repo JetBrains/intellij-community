@@ -62,26 +62,33 @@ public interface UastCallMatcher {
     // for all fields 'null' = doesn't matter
 
     private final String myMethodName;
-    private final String[] myArguments; // array length is arguments count; each element is argument type FQN
+    /**
+     * array length is arguments count; each element is argument type FQN
+     */
+    private final String[] myArguments;
     private final boolean myMatchArgumentTypeInheritors;
-    private final String myReceiverTypeClassFqn; // e.g. for "abc".equals it is String
     private final String myReturnTypeClassFqn;
+    /**
+     * FQN of receiver type class (for method calls)  or  class/object type class (for method references).
+     */
+    private final String myClassFqn;
+
 
     public SimpleUastCallMatcher(@Nullable String methodName,
                                  @Nullable String[] arguments,
                                  boolean matchArgumentTypeInheritors,
-                                 @Nullable String receiverTypeClassFqn,
+                                 @Nullable String classFqn,
                                  @Nullable String returnTypeClassFqn) {
       if (methodName == null &&
           arguments == null &&
-          receiverTypeClassFqn == null &&
+          classFqn == null &&
           returnTypeClassFqn == null) {
         throw new IllegalArgumentException("At least one qualifier must be specified");
       }
       myMethodName = methodName;
       myArguments = arguments;
       myMatchArgumentTypeInheritors = matchArgumentTypeInheritors;
-      myReceiverTypeClassFqn = receiverTypeClassFqn;
+      myClassFqn = classFqn;
       myReturnTypeClassFqn = returnTypeClassFqn;
     }
 
@@ -96,7 +103,11 @@ public interface UastCallMatcher {
 
     @Override
     public boolean testCallableReferenceExpression(@Nullable UCallableReferenceExpression expression) {
-      return false; //TODO implement
+      if (expression == null) return false;
+      return methodNameMatches(expression) &&
+             classMatches(expression) &&
+             returnTypeMatches(expression) &&
+             argumentsMatch(expression);
     }
 
 
@@ -105,14 +116,29 @@ public interface UastCallMatcher {
              myMethodName.equals(expression.getMethodName());
     }
 
+    private boolean methodNameMatches(@NotNull UCallableReferenceExpression expression) {
+      return myMethodName == null ||
+             myMethodName.equals(expression.getCallableName());
+    }
+
     private boolean receiverTypeMatches(@NotNull UCallExpression expression) {
-      return myReceiverTypeClassFqn == null ||
-             myReceiverTypeClassFqn.equals(AnalysisUastUtil.getExpressionReceiverTypeClassFqn(expression));
+      return myClassFqn == null ||
+             myClassFqn.equals(AnalysisUastUtil.getExpressionReceiverTypeClassFqn(expression));
+    }
+
+    private boolean classMatches(@NotNull UCallableReferenceExpression expression) {
+      if (myClassFqn == null) return true;
+      return false; //TODO implement
     }
 
     private boolean returnTypeMatches(@NotNull UCallExpression expression) {
       return myReturnTypeClassFqn == null ||
              myReturnTypeClassFqn.equals(AnalysisUastUtil.getExpressionReturnTypePsiClassFqn(expression));
+    }
+
+    private boolean returnTypeMatches(@NotNull UCallableReferenceExpression expression) {
+      if (myReturnTypeClassFqn == null) return true;
+      return false; //TODO implement
     }
 
     private boolean argumentsMatch(@NotNull UCallExpression expression) {
@@ -153,6 +179,11 @@ public interface UastCallMatcher {
         }
       }
       return true;
+    }
+
+    private boolean argumentsMatch(@NotNull UCallableReferenceExpression expression) {
+      if (myArguments == null) return true;
+      return true; //TODO implement (seems like it only has meaning for static method references)
     }
   }
 

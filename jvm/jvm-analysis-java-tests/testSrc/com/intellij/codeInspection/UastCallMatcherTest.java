@@ -25,6 +25,8 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
+    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
     moduleBuilder.addLibrary("javaUtil", PathUtil.getJarPathForClass(Locale.class));
   }
 
