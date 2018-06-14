@@ -31,6 +31,11 @@
     <todoIndexer filetype="ReST" implementationClass="com.jetbrains.rest.RestTodoIndexer" />
 
     <fileEditorProvider implementation="com.jetbrains.rest.editor.RestSplitEditorProvider"/>
+    <applicationConfigurable groupId="language" instance="com.jetbrains.rest.editor.RestConfigurable"
+                             id="com.jetbrains.rest.editor.RestConfigurable"
+                             displayName="ReStructured Text"/>
+    <applicationService serviceInterface="com.jetbrains.rest.editor.RestSettings"
+        serviceImplementation="com.jetbrains.rest.editor.RestSettings"/>
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
