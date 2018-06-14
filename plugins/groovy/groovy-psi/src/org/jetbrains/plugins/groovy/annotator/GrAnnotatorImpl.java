@@ -33,6 +33,10 @@ public class GrAnnotatorImpl implements Annotator {
       GroovyPsiElement grElement = (GroovyPsiElement)element;
       grElement.accept(new GroovyAnnotator(holder));
 
+      if (groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY2_5)) {
+        grElement.accept(new GroovyAnnotator25(holder));
+      }
+
       if (groovyConfig.isVersionAtLeast(element, GroovyConfigUtils.GROOVY3_0)) {
         grElement.accept(new GroovyAnnotator30(holder));
       } else {

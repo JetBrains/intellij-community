@@ -152,6 +152,7 @@
     <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.immutable.ImmutableTransformationSupport"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.immutable.CopyWithNamedArgumentProvider"/>
 
+    <astTransformationSupport implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedVariantTransformationSupport"/>
     <positionManagerDelegate implementation="org.jetbrains.plugins.groovy.gant.GantPositionManagerHelper"/>
 
     <methodDescriptor lightMethodKey="SwingBuilder_builder_method"
@@ -200,6 +201,7 @@
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.ext.newify.GroovyNewifyNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyNewExprNamedArgumentProvider"/>
     <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.lang.GroovyMethodReturnNamedArgumentProvider" order="last"/>
+    <namedArgumentProvider implementation="org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GroovyNamedVariantArgumentProvider"/>
 
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.lang.resolve.ConstructorMapApplicabilityProvider"/>
     <applicabilityProvider implementation="org.jetbrains.plugins.groovy.ext.newify.NewifyConstructorApplicabilityProvider"/>
@@ -279,6 +281,7 @@
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BuilderAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.griffon.GriffonPropertyListenerAnnotationChecker"/>
     <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.BaseScriptAnnotationChecker"/>
+    <customAnnotationChecker implementation="org.jetbrains.plugins.groovy.annotator.checkers.NamedParamAnnotationChecker"/>
 
     <convertToJava.customMethodInvocator
         implementation="org.jetbrains.plugins.groovy.refactoring.convertToJava.invocators.MapGetterSetterInvocator"/>
