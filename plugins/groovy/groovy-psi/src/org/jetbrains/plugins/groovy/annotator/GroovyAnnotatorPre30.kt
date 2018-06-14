@@ -10,6 +10,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
@@ -27,6 +28,11 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
     super.visitDoWhileStatement(statement)
     holder.createErrorAnnotation(statement.doKeyword, message("unsupported.do.while.statement"))
+  }
+
+  override fun visitTryResourceList(resourceList: GrTryResourceList) {
+    super.visitTryResourceList(resourceList)
+    holder.createErrorAnnotation(resourceList.firstChild, message("unsupported.resource.list"))
   }
 
   override fun visitBinaryExpression(expression: GrBinaryExpression) {
