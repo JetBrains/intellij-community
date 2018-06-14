@@ -74,6 +74,7 @@ import java.util.function.BiFunction;
 import java.util.stream.Collectors;
 
 import static com.intellij.ide.projectView.impl.ProjectRootsUtil.findSourceFolder;
+import static com.intellij.ide.projectView.impl.ShowModulesAction.hasModules;
 import static com.intellij.openapi.roots.ui.configuration.SourceRootPresentation.getSourceRootIcon;
 import static com.intellij.openapi.util.io.FileUtil.getLocationRelativeToUserHome;
 import static com.intellij.openapi.vfs.VfsUtilCore.VFS_SEPARATOR_CHAR;
@@ -215,6 +216,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     model.onValidThread(() -> {
       root.childrenValid = false;
       LOG.debug("whole structure changed");
+      model.setShowModules(hasModules() && root.getSettings().isShowModules());
       treeStructureChanged(null, null, null);
       if (onDone != null) onDone.run();
     });
@@ -534,13 +536,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       model.getChildren(model.getRoot()).forEach(child -> newRoots.put(child, mapper.apply(this, child)));
       roots = newRoots;
       if (newRoots.isEmpty()) return emptyList();
-      ModuleManager manager = getModuleManager(getProject());
-      if (manager == null) return emptyList();
-      boolean hidden = !getSettings().isShowModules();
-      if (!hidden && manager.getModules().length <= 1) hidden = true;
-      boolean flatten = hidden || getSettings().isFlattenModules();
-      if (!flatten && !manager.hasModuleGroups() && !Registry.is("project.qualified.module.names")) flatten = true;
-      return new Group(newRoots.values(), hidden, flatten).createChildren(this, old);
+      return new Group(newRoots.values(), getSettings().isFlattenModules() || !hasModuleGroups(getProject())).createChildren(this, old);
     }
 
     @NotNull
@@ -666,13 +662,21 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @Override
     protected void update(PresentationData presentation) {
+      VirtualFile file = getVirtualFile();
       String title = getTitle();
-      presentation.setPresentableText(title != null ? title : toString());
+      SimpleTextAttributes attributes = SimpleTextAttributes.REGULAR_ATTRIBUTES;
+      if (node.getRootID() instanceof VirtualFile) {
+        ProjectFileIndex index = getProjectFileIndex(getProject());
+        if (index != null && file.equals(index.getContentRootForFile(file))) {
+          attributes = SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES;
+        }
+      }
+      presentation.addText(title != null ? title : toString(), attributes);
       Icon icon = getIcon();
-      if (icon == null && getVirtualFile().isValid()) {
-        icon = getVirtualFile().isDirectory()
+      if (icon == null && file.isValid()) {
+        icon = file.isDirectory()
                ? getFolderIcon(node, null)
-               : getVirtualFile().getFileType().getIcon();
+               : file.getFileType().getIcon();
       }
       presentation.setIcon(icon);
       decorate(presentation);
@@ -956,38 +960,33 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       id = module;
     }
 
-    Group(@NotNull Collection<RootNode> nodes, boolean hidden, boolean flatten) {
+    Group(@NotNull Collection<RootNode> nodes, boolean flatten) {
       id = null;
       if (!nodes.isEmpty()) {
-        if (hidden) {
-          roots.addAll(nodes);
-        }
-        else {
-          HashMap<Module, Group> map = new HashMap<>();
-          nodes.forEach(node -> {
-            Object id = node.node.getRootID();
-            if (id instanceof Module) {
-              Module module = (Module)id;
-              Group group = map.get(module);
-              if (group == null) {
-                group = new Group(module);
-                map.put(module, group);
-              }
-              group.roots.add(node);
+        HashMap<Module, Group> map = new HashMap<>();
+        nodes.forEach(node -> {
+          Object id = node.node.getRootID();
+          if (id instanceof Module) {
+            Module module = (Module)id;
+            Group group = map.get(module);
+            if (group == null) {
+              group = new Group(module);
+              map.put(module, group);
             }
-            else {
-              roots.add(node);
-            }
-          });
-          if (flatten) {
-            groups.putAll(map);
+            group.roots.add(node);
           }
           else {
-            map.forEach((module, group) -> {
-              List<String> path = getModuleNameAsList(module, Registry.is("project.qualified.module.names"));
-              group.roots.forEach(node -> add(node, path, 0));
-            });
+            roots.add(node);
           }
+        });
+        if (flatten) {
+          groups.putAll(map);
+        }
+        else {
+          map.forEach((module, group) -> {
+            List<String> path = getModuleNameAsList(module, Registry.is("project.qualified.module.names"));
+            group.roots.forEach(node -> add(node, path, 0));
+          });
         }
       }
     }
@@ -1149,6 +1148,7 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
     return index == null ? null : index.getModuleForFile(file);
   }
 
+  @Nullable
   private static String getPackageName(@Nullable PsiElement element) {
     if (element instanceof PsiDirectory && element.isValid()) {
       PsiDirectoryFactory factory = PsiDirectoryFactory.getInstance(element.getProject());
@@ -1158,6 +1158,12 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
       }
     }
     return null;
+  }
+
+  private static boolean hasModuleGroups(@Nullable Project project) {
+    if (Registry.is("project.qualified.module.names")) return true;
+    ModuleManager manager = getModuleManager(project);
+    return manager != null && manager.hasModuleGroups();
   }
 
   @NotNull

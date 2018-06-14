@@ -125,10 +125,13 @@ public abstract class ProjectFileListener {
   @Nullable
   public static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
     if (project == null || project.isDisposed()) return null;
-    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file);
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
     VirtualFile ancestor = project.getBaseDir();
     // file does not belong to any content root, but it is located under the project directory
-    return ancestor == null || !isAncestor(ancestor, file, false) ? null : project;
+    if (ancestor == null || !isAncestor(ancestor, file, false)) return null;
+    PsiManager manager = PsiManager.getInstance(project);
+    PsiElement element = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
+    return element == null ? null : project; // ensure that the corresponding file can be shown
   }
 }
