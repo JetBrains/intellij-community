@@ -71,6 +71,7 @@ public class JsonSchemaVfsListener extends BulkVirtualFileListenerAdapter {
       myUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, project);
       myService = service;
       myRunnable = () -> {
+        if (myProject.isDisposed()) return;
         Collection<VirtualFile> scope = new HashSet<>(myDirtySchemas);
         myDirtySchemas.removeAll(scope);
 
