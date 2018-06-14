@@ -3,12 +3,10 @@
     <properties maven-id="com.googlecode.owasp-java-html-sanitizer:owasp-java-html-sanitizer:20180219.1" />
     <CLASSES>
       <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/owasp-java-html-sanitizer/owasp-java-html-sanitizer/20180219.1/owasp-java-html-sanitizer-20180219.1.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/19.0/guava-19.0.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
       <root url="jar://$MAVEN_REPOSITORY$/com/googlecode/owasp-java-html-sanitizer/owasp-java-html-sanitizer/20180219.1/owasp-java-html-sanitizer-20180219.1-sources.jar!/" />
-      <root url="jar://$MAVEN_REPOSITORY$/com/google/guava/guava/19.0/guava-19.0-sources.jar!/" />
     </SOURCES>
   </library>
 </component>
