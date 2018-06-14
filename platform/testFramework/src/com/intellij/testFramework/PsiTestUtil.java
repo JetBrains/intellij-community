@@ -42,6 +42,7 @@ import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -247,7 +248,11 @@ public class PsiTestUtil {
   private static PsiFile createDummyCopy(PsiFile file) {
     LightVirtualFile copy = new LightVirtualFile(file.getName(), file.getText());
     copy.setOriginalFile(file.getViewProvider().getVirtualFile());
-    return Objects.requireNonNull(file.getManager().findFile(copy));
+    PsiFile dummyCopy = Objects.requireNonNull(file.getManager().findFile(copy));
+    if (dummyCopy instanceof PsiFileImpl) {
+      ((PsiFileImpl)dummyCopy).setOriginalFile(file);
+    }
+    return dummyCopy;
   }
 
   public static void checkPsiMatchesTextIgnoringNonCode(PsiFile file) {

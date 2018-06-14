@@ -21,6 +21,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -136,7 +137,16 @@ public class WhileCanBeForeachInspection extends WhileCanBeForeachInspectionBase
           break;
         }
         final PsiExpression expression = assignment.getRExpression();
-        initializer.delete();
+        PsiTypeElement typeElement = iterator.getTypeElement();
+        if (typeElement.isInferredType() &&
+            (expression == null || 
+             PsiType.NULL.equals(expression.getType()) || 
+             expression instanceof PsiArrayInitializerExpression || 
+             expression instanceof PsiFunctionalExpression) &&     
+            PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+          deleteIterator = false;
+          break;
+        }
         iterator.setInitializer(expression);
         final PsiElement statement = assignment.getParent();
         final PsiElement lastChild = statement.getLastChild();
