@@ -440,7 +440,8 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager implement
       return name;
     }
   }
-  void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
+
+  public void setBOMForNewUtf8Files(@NotNull BOMForNewUTF8Files option) {
     myBOMForNewUTF8Files = option;
   }
 
