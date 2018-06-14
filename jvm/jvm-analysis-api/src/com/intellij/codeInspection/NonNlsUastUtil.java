@@ -11,6 +11,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.uast.*;
 
+//TODO it is not intuitive that for Kotlin properties user should use @get:NonNls
+
 /**
  * @see org.jetbrains.annotations.NonNls
  */
@@ -101,7 +103,6 @@ public final class NonNlsUastUtil {
     PsiElement resolved = expression.resolve();
     if (resolved == null) return false;
     UElement resolvedUElement = UastContextKt.toUElement(resolved);
-    //TODO not working with Kotlin properties (resolved = generated getter)
     return isNonNlsAnnotated(resolvedUElement); //TODO does this cover all the cases?
   }
 

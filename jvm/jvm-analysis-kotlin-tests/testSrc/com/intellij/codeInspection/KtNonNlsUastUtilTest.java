@@ -9,7 +9,6 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.uast.ULiteralExpression;
 
-import java.util.HashSet;
 import java.util.Set;
 
 import static com.intellij.codeInspection.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
@@ -27,17 +26,11 @@ public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
     moduleBuilder.addLibrary("annotations", PathUtil.getJarPathForClass(NonNls.class));
   }
 
-  public void _testNonNlsStringLiterals() { //FIXME fails because of Kotlin properties
+  public void testNonNlsStringLiterals() {
     PsiFile file = myFixture.configureByFile("NonNlsStringLiteral.kt");
     Set<ULiteralExpression> expressions = getUElementsOfTypeFromFile(file, ULiteralExpression.class);
     assertSize(20, expressions); // multiline string literal is processed as 4 string literals
-
-    Set<ULiteralExpression> fails = new HashSet<>();
-    for (ULiteralExpression expression: expressions) {
-      boolean res = isNonNlsStringLiteral(expression);
-      if (!res) fails.add(expression);
-    }
-    assertEmpty(fails);
+    expressions.forEach(expression -> assertTrue(isNonNlsStringLiteral(expression)));
   }
 
   public void testPlainStringLiterals() {
