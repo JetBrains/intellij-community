@@ -44,7 +44,6 @@ import com.intellij.testFramework.*;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakList;
 import com.intellij.util.ref.GCUtil;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
@@ -1148,35 +1147,24 @@ public class RangeMarkerTest extends LightPlatformTestCase {
 
     LazyRangeMarkerFactoryImpl factory = (LazyRangeMarkerFactoryImpl)LazyRangeMarkerFactory.getInstance(getProject());
     VirtualFile virtualFile = psiFile.getVirtualFile();
-    LazyRangeMarkerFactoryImpl.LazyMarker marker = (LazyRangeMarkerFactoryImpl.LazyMarker)factory.createRangeMarker(virtualFile, 0);
-    WeakList<LazyRangeMarkerFactoryImpl.LazyMarker> markers = LazyRangeMarkerFactoryImpl.getMarkers(virtualFile);
-    assertSame(marker, assertOneElement(markers));
-
-    assertFalse(marker.isDelegated());
+    RangeMarker marker = factory.createRangeMarker(virtualFile, 0);
     assertTrue(marker.isValid());
     assertEquals(0, marker.getStartOffset());
-    assertFalse(marker.isDelegated());
 
     marker.dispose();
     assertFalse(marker.isValid());
-    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
 
 
-    marker = (LazyRangeMarkerFactoryImpl.LazyMarker)factory.createRangeMarker(virtualFile, 0);
-    assertFalse(marker.isDelegated());
+    marker = factory.createRangeMarker(virtualFile, 0);
     assertTrue(marker.isValid());
     assertEquals(0, marker.getStartOffset());
-    assertFalse(marker.isDelegated());
 
     Document document = marker.getDocument();
     document.insertString(2, "yyy");
-    assertTrue(marker.isDelegated());
     assertTrue(marker.isValid());
     assertEquals(0, marker.getStartOffset());
 
-    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
     marker.dispose();
-    assertEmpty(LazyRangeMarkerFactoryImpl.getMarkers(virtualFile));
   }
 
   public void testNonGreedyMarkersGrowOnAppendingReplace() {
