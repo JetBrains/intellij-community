@@ -16,6 +16,7 @@
 package com.intellij.psi.templateLanguages;
 
 import com.intellij.lang.ASTFactory;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -25,12 +26,19 @@ import org.jetbrains.annotations.Nullable;
 
 public interface TreePatcher {
 
-  /** Inserts toInsert into destinationTree according to parser rules.*/
+  /**
+   * Inserts toInsert into destinationTree according to parser rules.
+   * <br>
+   * Inserting must not change the position (offset) of the new node in the three (otherwise we will receive broken tree)
+   */
   void insert(@NotNull CompositeElement parent, @Nullable TreeElement anchorBefore, @NotNull OuterLanguageElement toInsert);
 
-  /** If leaf need to be split to insert OuterLanguageElement this function is called
+  /**
+   * If leaf need to be split to insert OuterLanguageElement this function is called
+   *
    * @return first part of the split
    */
+  @NotNull
   default LeafElement split(@NotNull LeafElement leaf, int offset, @NotNull CharTable table) {
     CharSequence chars = leaf.getChars();
     LeafElement leftPart = ASTFactory.leaf(leaf.getElementType(), table.intern(chars, 0, offset));
@@ -39,5 +47,20 @@ public interface TreePatcher {
     leftPart.rawInsertAfterMe(rightPart);
     leaf.rawRemove();
     return leftPart;
+  }
+
+  @NotNull
+  default LeafElement removeRange(@NotNull LeafElement leaf,
+                                  @NotNull TextRange rangeToRemove,
+                                  @NotNull CharTable table) {
+    CharSequence chars = leaf.getChars();
+    int startOffset = rangeToRemove.getStartOffset();
+    CharSequence prefix = startOffset == 0 ? "" : chars.subSequence(0, startOffset);
+    CharSequence suffix = chars.subSequence(rangeToRemove.getEndOffset(), chars.length());
+    String res = prefix + suffix.toString();
+    LeafElement newLeaf = ASTFactory.leaf(leaf.getElementType(), table.intern(res));
+    leaf.rawInsertBeforeMe(newLeaf);
+    leaf.rawRemove();
+    return newLeaf;
   }
 }
