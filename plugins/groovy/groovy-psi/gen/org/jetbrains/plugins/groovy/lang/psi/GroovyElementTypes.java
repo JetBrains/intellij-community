@@ -146,6 +146,7 @@ public interface GroovyElementTypes {
   GroovyElementType THROW_STATEMENT = new GroovyElementType("THROW_STATEMENT");
   GroovyElementType TRADITIONAL_FOR_CLAUSE = new GroovyElementType("TRADITIONAL_FOR_CLAUSE");
   GrTraitElementType TRAIT_TYPE_DEFINITION = new GrTraitElementType("TRAIT_TYPE_DEFINITION");
+  GroovyElementType TRY_RESOURCE_LIST = new GroovyElementType("TRY_RESOURCE_LIST");
   GroovyElementType TRY_STATEMENT = new GroovyElementType("TRY_STATEMENT");
   GroovyElementType TUPLE = new GroovyElementType("TUPLE");
   GroovyElementType TUPLE_ASSIGNMENT_EXPRESSION = new GroovyElementType("TUPLE_ASSIGNMENT_EXPRESSION");
