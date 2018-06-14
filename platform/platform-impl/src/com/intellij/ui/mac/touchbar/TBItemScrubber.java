@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.touchbar;
 
 import com.intellij.ui.mac.foundation.ID;
+import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,6 +29,8 @@ class TBItemScrubber extends TBItem {
       if (myListener != null)
         myListener.onItemEvent(this, 0);
     };
+    if (icon instanceof EmptyIcon)
+      icon = null;
     myItems.add(new ItemData(icon, text, nativeAction));
     updateNativePeer();
     return this;
