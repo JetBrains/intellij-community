@@ -316,13 +316,7 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
     actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
-    actionGroup.addAction(new ShowModulesAction(myProject) {
-      @NotNull
-      @Override
-      protected String getId() {
-        return ID;
-      }
-    }).setAsSecondary(true);
+    actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
   }
 
