@@ -192,7 +192,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitTryStatement(@NotNull GrTryCatchStatement statement) {
     final GrCatchClause[] clauses = statement.getCatchClauses();
 
-    if (clauses.length == 0 && statement.getFinallyClause() == null) {
+    if (statement.getResourceList() == null && clauses.length == 0 && statement.getFinallyClause() == null) {
       myHolder.createErrorAnnotation(statement.getFirstChild(), GroovyBundle.message("try.without.catch.finally"));
       return;
     }
