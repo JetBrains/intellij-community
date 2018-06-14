@@ -6,6 +6,9 @@ import org.apache.http.client.methods.HttpPost
 import org.apache.http.entity.StringEntity
 import org.apache.http.impl.client.HttpClients
 import org.apache.http.util.EntityUtils
+import java.net.URLEncoder
+import java.text.SimpleDateFormat
+import java.util.*
 import java.util.function.Consumer
 
 internal fun report(
@@ -52,7 +55,7 @@ private fun sendNotification(isSuccess: Boolean, report: String) {
   }
   else {
     callSafely {
-      if (teamCityBuildStatusChanged(isSuccess)) {
+      if (isNotificationRequired(isSuccess)) {
         notifySlackChannel(isSuccess, report)
       }
     }
@@ -61,13 +64,27 @@ private fun sendNotification(isSuccess: Boolean, report: String) {
 
 private val BUILD_SERVER = System.getProperty("teamcity.serverUrl")
 private val BUILD_CONF = System.getProperty("teamcity.buildType.id")
+private val DATE_FORMAT = SimpleDateFormat("yyyyMMdd'T'HHmmsszzz")
 
-private fun teamCityBuildStatusChanged(isSuccess: Boolean) =
+private fun isNotificationRequired(isSuccess: Boolean) =
   HttpClients.createDefault().use {
-    val get = HttpGet("$BUILD_SERVER/guestAuth/app/rest/builds?locator=buildType:$BUILD_CONF,count:1")
-    val response = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
-    isSuccess && response.contains("status=\"FAILURE\"") ||
-    !isSuccess && response.contains("status=\"SUCCESS\"")
+    val request = "$BUILD_SERVER/guestAuth/app/rest/builds?locator=buildType:$BUILD_CONF,count:1"
+    if (isSuccess) {
+      val get = HttpGet(request)
+      val previousBuild = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
+      // notify on fail -> success
+      previousBuild.contains("status=\"FAILURE\"")
+    }
+    else {
+      val dayAgo = DATE_FORMAT.format(Calendar.getInstance().let {
+        it.add(Calendar.HOUR, -12)
+        it.time
+      })
+      val get = HttpGet("$request,sinceDate:${URLEncoder.encode(dayAgo, "UTF-8")}")
+      val previousBuild = EntityUtils.toString(it.execute(get).entity, Charsets.UTF_8)
+      // remind of failure once per day
+      previousBuild.contains("count=\"0\"")
+    }
   }
 
 private val CHANNEL_WEB_HOOK = System.getProperty("intellij.icons.slack.channel")
