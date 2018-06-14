@@ -47,6 +47,8 @@ import git4idea.annotate.GitFileAnnotation.LineInfo;
 import git4idea.commands.Git;
 import git4idea.commands.GitCommand;
 import git4idea.commands.GitLineHandler;
+import git4idea.config.GitVcsApplicationSettings;
+import git4idea.config.GitVcsApplicationSettings.AnnotateDetectMovementsOption;
 import git4idea.history.GitFileHistory;
 import git4idea.history.GitHistoryProvider;
 import git4idea.history.GitHistoryUtils;
@@ -155,8 +157,20 @@ public class GitAnnotationProvider implements AnnotationProviderEx {
     VirtualFile root = GitUtil.getGitRoot(repositoryFilePath);
     GitLineHandler h = new GitLineHandler(myProject, root, GitCommand.BLAME);
     h.setStdoutSuppressed(true);
-    h.addParameters("--porcelain", "-l", "-t", "-w");
+    h.addParameters("--porcelain", "-l", "-t");
     h.addParameters("--encoding=UTF-8");
+
+    GitVcsApplicationSettings settings = GitVcsApplicationSettings.getInstance();
+    if (settings.isIgnoreWhitespaces()) {
+      h.addParameters("-w");
+    }
+    if (settings.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.INNER) {
+      h.addParameters("-M");
+    }
+    else if (settings.getAnnotateDetectMovementsOption() == AnnotateDetectMovementsOption.OUTER) {
+      h.addParameters("-C");
+    }
+
     if (revision == null) {
       h.addParameters("HEAD");
     }

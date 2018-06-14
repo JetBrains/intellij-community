@@ -16,6 +16,7 @@
 package git4idea.annotate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsKey;
@@ -36,7 +37,6 @@ import git4idea.GitContentRevision;
 import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitVcs;
-import git4idea.i18n.GitBundle;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -150,9 +150,17 @@ public class GitFileAnnotation extends FileAnnotation {
       fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
     }
 
+    String path = null;
+    if (!VcsUtil.getFilePath(myFile).equals(lineInfo.myFilePath)) {
+      path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
+    }
+
     String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject() + "\n...";
-    return GitBundle.message("annotation.tool.tip", revisionNumber.asString(), lineInfo.getAuthor(),
-                             DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()), commitMessage);
+    return "commit " + revisionNumber.asString() +
+           "\nAuthor: " + lineInfo.getAuthor() +
+           "\nDate: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()) +
+           (path != null ? "\nPath: " + path : "") +
+           "\n\n" + commitMessage;
   }
 
   @Nullable

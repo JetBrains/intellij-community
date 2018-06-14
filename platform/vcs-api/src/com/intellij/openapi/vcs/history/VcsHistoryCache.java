@@ -121,6 +121,12 @@ public class VcsHistoryCache {
     }
   }
 
+  public void clearAnnotations() {
+    synchronized (myLock) {
+      myAnnotationCache.clear();
+    }
+  }
+
   public static class CachedHistory {
     private final FilePath myPath;
     private final List<VcsFileRevision> myRevisions;
