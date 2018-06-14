@@ -15,7 +15,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.javafx.JavaFxHtmlPanel;
 import com.intellij.util.Alarm;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
@@ -48,7 +47,14 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
                .allowUrlProtocols("file", "http", "https", "mailto").allowElements("a")
                .allowAttributes("href", "title").onElements("a")
                .toFactory())
-        .and(Sanitizers.TABLES)
+        .and(new HtmlPolicyBuilder()
+               .allowStandardUrlProtocols()
+               .allowElements("table", "tr", "td", "th", "caption", "thead", "tbody", "tfoot")
+               .allowAttributes("summary").onElements("table")
+               .allowAttributes("align", "valign")
+               .onElements("table", "tr", "td", "th", "thead", "tbody", "tfoot")
+               .allowTextIn("table")
+               .toFactory())
         .and(new HtmlPolicyBuilder()
                .allowElements("code", "tr")
                .allowAttributes("class").onElements("code", "tr")
@@ -56,7 +62,7 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
     }
   };
   @NotNull
-  private final JavaFxHtmlPanel myPanel;
+  private final RestPreviewPanel myPanel;
   @NotNull
   private final VirtualFile myFile;
   private final Project myProject;
@@ -78,7 +84,9 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
     myFile = file;
     myProject = project;
     myDocument = FileDocumentManager.getInstance().getDocument(myFile);
-    myPanel = new JavaFxHtmlPanel();
+    myPanel = RestSettings.getInstance().getCurrentPanel().equals(RestConfigurable.SWING) ?
+              new RestSwingHtmlPanel() :
+              new RestJavaFxHtmlPanel();
 
     if (myDocument != null) {
       myDocument.addDocumentListener(new DocumentListener() {
