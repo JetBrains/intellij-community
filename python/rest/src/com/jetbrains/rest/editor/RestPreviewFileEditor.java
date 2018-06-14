@@ -17,6 +17,7 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.javafx.JavaFxHtmlPanel;
 import com.intellij.util.Alarm;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.owasp.html.HtmlPolicyBuilder;
@@ -28,6 +29,7 @@ import java.beans.PropertyChangeListener;
 
 public class RestPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final static long PARSING_CALL_TIMEOUT_MS = 50L;
+  private final static String NO_PREVIEW = "<h2>No preview available.</h2><br/><br/><h3>Error output:</h3>";
 
   private final static long RENDERING_DELAY_MS = 20L;
 
@@ -140,9 +142,12 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
       return;
     }
 
-    final String html = RestPreviewProvider.getProviders()[0].toHtml(myDocument.getText(), myFile, myProject);
-    if (html == null) {
-      return;
+    final Pair<String, String> htmlAndError = RestPreviewProvider.getProviders()[0].toHtml(myDocument.getText(), myFile, myProject);
+    if (htmlAndError == null) return;
+
+    String html = htmlAndError.getFirst();
+    if (html.isEmpty()) {
+      html = NO_PREVIEW + htmlAndError.getSecond();
     }
 
     // EA-75860: The lines to the top may be processed slowly; Since we're in pooled thread, we can be disposed already.
@@ -154,8 +159,9 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
       if (myLastRequest != null) {
         mySwingAlarm.cancelRequest(myLastRequest);
       }
+      String finalHtml = html;
       myLastRequest = () -> {
-        final String currentHtml = "<html>" + SANITIZER_VALUE.getValue().sanitize(html) + "</html>";
+        final String currentHtml = "<html>" + SANITIZER_VALUE.getValue().sanitize(finalHtml) + "</html>";
         if (!currentHtml.equals(myLastRenderedHtml)) {
           myLastRenderedHtml = currentHtml;
           myPanel.setHtml(myLastRenderedHtml);
