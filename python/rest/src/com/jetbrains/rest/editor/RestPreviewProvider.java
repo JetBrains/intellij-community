@@ -4,6 +4,7 @@ package com.jetbrains.rest.editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -12,7 +13,7 @@ public abstract class RestPreviewProvider {
     ExtensionPointName.create("restructured.text.html.preview.provider");
 
   @Nullable
-  public abstract String toHtml(String text, VirtualFile virtualFile, Project project);
+  public abstract Pair<String, String> toHtml(String text, VirtualFile virtualFile, Project project);
 
   @NotNull
   public static RestPreviewProvider[] getProviders() {
