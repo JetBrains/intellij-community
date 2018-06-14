@@ -52,6 +52,7 @@ public class GitFileAnnotation extends FileAnnotation {
   @NotNull private final List<LineInfo> myLines;
   @Nullable private List<VcsFileRevision> myRevisions;
   @Nullable private TObjectIntHashMap<VcsRevisionNumber> myRevisionMap;
+  @NotNull private final Map<VcsRevisionNumber, String> myCommitMessageMap = new HashMap<>();
 
   private final LineAnnotationAspect DATE_ASPECT = new GitAnnotationAspect(LineAnnotationAspect.DATE, true) {
     @Override
@@ -125,6 +126,10 @@ public class GitFileAnnotation extends FileAnnotation {
     }
   }
 
+  public void setCommitMessage(@NotNull VcsRevisionNumber revisionNumber, @NotNull String message) {
+    myCommitMessageMap.put(revisionNumber, message);
+  }
+
   @Override
   public int getLineCount() {
     return myLines.size();
@@ -144,23 +149,29 @@ public class GitFileAnnotation extends FileAnnotation {
 
     GitRevisionNumber revisionNumber = lineInfo.getRevisionNumber();
 
-    VcsFileRevision fileRevision = null;
-    if (myRevisions != null && myRevisionMap != null &&
-        myRevisionMap.contains(revisionNumber)) {
-      fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
-    }
-
     String path = null;
     if (!VcsUtil.getFilePath(myFile).equals(lineInfo.myFilePath)) {
       path = FileUtil.getLocationRelativeToUserHome(lineInfo.myFilePath.getPresentableUrl());
     }
 
-    String commitMessage = fileRevision != null ? fileRevision.getCommitMessage() : lineInfo.getSubject() + "\n...";
+    String commitMessage = getCommitMessage(revisionNumber);
+    if (commitMessage == null) commitMessage = lineInfo.getSubject() + "\n...";
+
     return "commit " + revisionNumber.asString() +
            "\nAuthor: " + lineInfo.getAuthor() +
            "\nDate: " + DateFormatUtil.formatDateTime(lineInfo.getAuthorDate()) +
            (path != null ? "\nPath: " + path : "") +
            "\n\n" + commitMessage;
+  }
+
+  @Nullable
+  public String getCommitMessage(@NotNull VcsRevisionNumber revisionNumber) {
+    if (myRevisions != null && myRevisionMap != null &&
+        myRevisionMap.contains(revisionNumber)) {
+      VcsFileRevision fileRevision = myRevisions.get(myRevisionMap.get(revisionNumber));
+      return fileRevision.getCommitMessage();
+    }
+    return myCommitMessageMap.get(revisionNumber);
   }
 
   @Nullable
