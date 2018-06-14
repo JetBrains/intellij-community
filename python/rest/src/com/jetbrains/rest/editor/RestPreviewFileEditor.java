@@ -29,7 +29,7 @@ import java.beans.PropertyChangeListener;
 
 public class RestPreviewFileEditor extends UserDataHolderBase implements FileEditor {
   private final static long PARSING_CALL_TIMEOUT_MS = 50L;
-  private final static String NO_PREVIEW = "<h2>No preview available.</h2><br/><br/><h3>Error output:</h3>";
+  private final static String NO_PREVIEW = "<h2>No preview available.</h2><br/><br/>";
 
   private final static long RENDERING_DELAY_MS = 20L;
 
