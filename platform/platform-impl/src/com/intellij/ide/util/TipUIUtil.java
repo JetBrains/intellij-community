@@ -35,6 +35,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.TextAccessor;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ResourceUtil;
@@ -211,12 +212,18 @@ public class TipUIUtil {
               int h = image.getHeight();
               if (hidpi) {
                 // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
-                w /= 2;
-                h /= 2;
+                float k = 2f;
+                if (UIUtil.isJreHiDPI(component)) {
+                  // in JRE-HiDPI mode we want the image to be drawn in its original size w/h, for better quality
+                  k = JBUI.sysScale(component);
+                }
+                w /= k;
+                h /= k;
               }
-              // fit the user scale
-              w = (int)(JBUI.scale((float)w));
-              h = (int)(JBUI.scale((float)h));
+              // round the user scale for better quality
+              int userScale = RoundingMode.ROUND_FLOOR_BIAS.round(JBUI.scale(1f));
+              w = userScale * w;
+              h = userScale * h;
               if (fallbackUpscale) {
                 w *= 2;
                 h *= 2;
