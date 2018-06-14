@@ -52,7 +52,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     if (myBuilder.getTokenType() == DOCUMENT_MARKER) {
       advanceLexer();
     }
-    parseBlockNode(0, false);
+    parseBlockNode(myIndent, false);
     dropEolMarker();
     marker.done(YAMLElementTypes.DOCUMENT);
   }

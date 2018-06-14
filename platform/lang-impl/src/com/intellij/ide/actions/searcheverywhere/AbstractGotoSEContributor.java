@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
+import java.util.Optional;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -121,7 +122,7 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   @Override
   public boolean processSelectedItem(Object selected, int modifiers, String searchText) {
     if (selected instanceof PsiElement) {
-      if (((PsiElement)selected).isValid()) {
+      if (!((PsiElement)selected).isValid()) {
         LOG.warn("Cannot navigate to invalid PsiElement");
         return true;
       }
@@ -158,7 +159,17 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
 
   @Override
   public ListCellRenderer getElementsRenderer(JList<?> list) {
-    return new SearchEverywherePsiRenderer(list);
+    return new SearchEverywherePsiRenderer(list) {
+      @Override
+      public String getElementText(PsiElement element) {
+        if (element instanceof NavigationItem) {
+          return Optional.ofNullable(((NavigationItem)element).getPresentation())
+                         .map(presentation -> presentation.getPresentableText())
+                         .orElse(super.getElementText(element));
+        }
+        return super.getElementText(element);
+      }
+    };
   }
 
   protected boolean isDumbModeSupported() {
