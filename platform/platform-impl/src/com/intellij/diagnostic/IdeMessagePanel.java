@@ -17,6 +17,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
@@ -25,13 +26,13 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.List;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
 
-  private final IdeErrorsIcon myIdeFatal;
+  private final IdeErrorsIcon myIcon;
   private final IdeFrame myFrame;
   private final MessagePool myMessagePool;
 
@@ -43,16 +44,23 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
 
-    myIdeFatal = new IdeErrorsIcon(e -> openErrorsDialog(null), frame != null);
-    myIdeFatal.setVerticalAlignment(SwingConstants.CENTER);
-    add(myIdeFatal, BorderLayout.CENTER);
+    myIcon = new IdeErrorsIcon(frame != null);
+    myIcon.setVerticalAlignment(SwingConstants.CENTER);
+    add(myIcon, BorderLayout.CENTER);
+    new ClickListener() {
+      @Override
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        openErrorsDialog(null);
+        return true;
+      }
+    }.installOn(myIcon);
 
     myFrame = frame;
 
     myMessagePool = messagePool;
     messagePool.addListener(this);
 
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
 
     setOpaque(false);
   }
@@ -111,51 +119,42 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   private void doOpenErrorsDialog(@Nullable LogMessage message) {
-    if (isOtherModalWindowActive()) {
-      return;
-    }
-
     Project project = myFrame != null ? myFrame.getProject() : null;
     myDialog = new IdeErrorsDialog(myMessagePool, project, message) {
       @Override
       protected void dispose() {
         super.dispose();
         myDialog = null;
-        updateFatalErrorsIcon();
+        updateIconAndNotify();
       }
 
       @Override
       protected void updateOnSubmit() {
         super.updateOnSubmit();
-        updateState(computeState());
+        updateIcon(myMessagePool.getState());
       }
     };
-
-    if (myBalloon != null) {
-      myBalloon.hide();
-    }
-
     myDialog.show();
   }
 
-  private void updateState(IdeErrorsIcon.State state) {
-    myIdeFatal.setState(state);
-    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != IdeErrorsIcon.State.NoErrors));
+  private void updateIcon(MessagePool.State state) {
+    myIcon.setState(state);
+    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != MessagePool.State.NoErrors));
   }
 
   @Override
   public void newEntryAdded() {
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
   }
 
   @Override
   public void poolCleared() {
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
   }
 
   @Override
   public void entryWasRead() {
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
   }
 
   private boolean isOtherModalWindowActive() {
@@ -165,27 +164,27 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
            (myDialog == null || myDialog.getWindow() != activeWindow);
   }
 
-  private IdeErrorsIcon.State computeState() {
-    List<AbstractMessage> unsent = myMessagePool.getFatalErrors(true, false);
-    if (unsent.isEmpty()) return IdeErrorsIcon.State.NoErrors;
-    if (unsent.stream().allMatch(AbstractMessage::isRead)) return IdeErrorsIcon.State.ReadErrors;
-    return IdeErrorsIcon.State.UnreadErrors;
-  }
+  private void updateIconAndNotify() {
+    MessagePool.State state = myMessagePool.getState();
+    updateIcon(state);
 
-  private void updateFatalErrorsIcon() {
-    IdeErrorsIcon.State state = computeState();
-    updateState(state);
-
-    if (state == IdeErrorsIcon.State.NoErrors) {
+    if (state == MessagePool.State.NoErrors) {
       myNotificationPopupAlreadyShown = false;
+      if (myBalloon != null) {
+        myBalloon.hide();
+      }
     }
-    else if (state == IdeErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      Project project = myFrame == null ? null : myFrame.getProject();
+    else if (state == MessagePool.State.UnreadErrors && !myNotificationPopupAlreadyShown && isActive(myFrame)) {
+      Project project = myFrame.getProject();
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
         myNotificationPopupAlreadyShown = true;
       }
     }
+  }
+
+  private static boolean isActive(IdeFrame frame) {
+    return frame instanceof Window && ((Window)frame).isActive();
   }
 
   private void showErrorNotification(@NotNull Project project) {
@@ -196,7 +195,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
       @Override
       public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
         notification.expire();
-        doOpenErrorsDialog(null);
+        openErrorsDialog(null);
       }
     });
 
