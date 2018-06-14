@@ -168,7 +168,7 @@ public class CommonDataflow {
     }
 
     @Override
-    public void beforeExpressionPush(@NotNull DfaValue value,
+    protected void beforeExpressionPush(@NotNull DfaValue value,
                                      @NotNull PsiExpression expression,
                                      @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {

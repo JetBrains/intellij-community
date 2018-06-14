@@ -163,30 +163,38 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  public void beforeExpressionPush(@NotNull DfaValue value,
-                                   @NotNull PsiExpression expression,
-                                   @Nullable TextRange range,
-                                   @NotNull DfaMemoryState memState) {
-    PsiElement anchor = extractOptionalOfNullableAnchor(expression);
-    if (anchor != null) {
-      Boolean fact = memState.getValueFact(value, DfaFactType.OPTIONAL_PRESENCE);
-      ThreeState present = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
-      myOfNullableCalls.merge(anchor, present, ThreeState::merge);
+  protected void beforeExpressionPush(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @Nullable TextRange range,
+                                      @NotNull DfaMemoryState memState) {
+    if (expression instanceof PsiMethodCallExpression &&
+        DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test((PsiMethodCallExpression)expression)) {
+      processOfNullableResult(value, memState, ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0]);
     }
   }
 
-  private static PsiElement extractOptionalOfNullableAnchor(PsiExpression expression) {
-    if (expression instanceof PsiMethodCallExpression &&
-        DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test((PsiMethodCallExpression)expression)) {
-      return ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
+  @Override
+  protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
+                                                 @NotNull PsiMethodReferenceExpression methodRef,
+                                                 @NotNull DfaMemoryState state) {
+    if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
+      processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
-    if (expression instanceof PsiMethodReferenceExpression) {
-      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
-      if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
-        return methodRef.getReferenceNameElement();
+    PsiMethod method = ObjectUtils.tryCast(methodRef.resolve(), PsiMethod.class);
+    if (method != null) {
+      List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
+      if (contracts.isEmpty() || !contracts.get(0).isTrivial()) {
+        // Do not track if method reference may have different results
+        myMethodReferenceResults.merge(methodRef, value, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
       }
     }
-    return null;
+  }
+
+  private void processOfNullableResult(@NotNull DfaValue value,
+                                       @NotNull DfaMemoryState memState, PsiElement anchor) {
+    Boolean fact = memState.getValueFact(value, DfaFactType.OPTIONAL_PRESENCE);
+    ThreeState present = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
+    myOfNullableCalls.merge(anchor, present, ThreeState::merge);
   }
 
   @Override
@@ -232,16 +240,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   protected void processArrayStoreTypeMismatch(PsiAssignmentExpression assignmentExpression, PsiType fromType, PsiType toType) {
     if (assignmentExpression != null) {
       myArrayStoreProblems.put(assignmentExpression, Pair.create(fromType, toType));
-    }
-  }
-
-  @Override
-  protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef,
-                                              List<? extends MethodContract> contracts,
-                                              DfaValue res) {
-    if(contracts.isEmpty() || !contracts.get(0).isTrivial()) {
-      // Do not track if method reference may have different results
-      myMethodReferenceResults.merge(methodRef, res, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
     }
   }
 
