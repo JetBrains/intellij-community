@@ -24,7 +24,6 @@ import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.*;
 import java.awt.*;
 import java.awt.event.*;
-import java.awt.geom.Point2D;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.util.LinkedHashMap;
@@ -423,11 +422,6 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
   @Override
   public int viewToModel(JTextComponent tc, Point pt, Position.Bias[] biasReturn) {
     return getVisibleEditorRect().contains(pt) ? super.viewToModel(tc, pt, biasReturn) : -1;
-  }
-
-  @Override
-  public int viewToModel2D(JTextComponent tc, Point2D pt, Position.Bias[] biasReturn) {
-    return getVisibleEditorRect().contains(pt) ? super.viewToModel2D(tc, pt, biasReturn): -1;
   }
 
   /**
