@@ -248,17 +248,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   protected void setUI(ComponentUI newUI) {
     super.setUI(newUI);
-    reinitSettings();
+    reinitSettings(true);
   }
 
   @Override
   public void updateUI() {
     super.updateUI();
-    reinitSettings();
+    reinitSettings(true);
   }
 
-  public void reinitSettings() {
-    updateSize(false, !Boolean.TRUE.equals(myEditor.getUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE)));
+  public void reinitSettings(boolean updateGutterSize) {
+    updateSize(false, updateGutterSize);
     repaint();
   }
 

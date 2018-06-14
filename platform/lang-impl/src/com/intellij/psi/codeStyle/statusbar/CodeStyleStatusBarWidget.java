@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -104,11 +103,6 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    // TODO:<rv> Consider another place for editor update
-    Editor editor = getEditor();
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).reinitSettings();
-    }
     update();
   }
 
