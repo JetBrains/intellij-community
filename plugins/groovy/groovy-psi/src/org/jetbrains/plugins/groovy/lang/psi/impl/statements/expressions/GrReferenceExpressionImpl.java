@@ -98,13 +98,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   @Nullable
   public PsiElement getReferenceNameElement() {
-    final ASTNode lastChild = getNode().getLastChildNode();
-    if (lastChild == null) return null;
-    if (TokenSets.REFERENCE_NAMES.contains(lastChild.getElementType())) {
-      return lastChild.getPsi();
-    }
-
-    return null;
+    return findChildByType(TokenSets.REFERENCE_NAMES);
   }
 
   @Override

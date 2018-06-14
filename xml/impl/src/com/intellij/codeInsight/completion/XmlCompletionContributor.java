@@ -28,6 +28,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
@@ -370,9 +371,13 @@ public class XmlCompletionContributor extends CompletionContributor {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
       context.setAddCompletionChar(false);
-      final CaretModel caretModel = context.getEditor().getCaretModel();
-      context.getEditor().getDocument().insertString(caretModel.getOffset(), ";");
-      caretModel.moveToOffset(caretModel.getOffset() + 1);
+      Editor editor = context.getEditor();
+      final CaretModel caretModel = editor.getCaretModel();
+      int caretOffset = caretModel.getOffset();
+      if (!CharArrayUtil.regionMatches(editor.getDocument().getCharsSequence(), caretOffset, ";")) {
+        editor.getDocument().insertString(caretOffset, ";");
+      }
+      caretModel.moveToOffset(caretOffset + 1);
     }
   }
 }

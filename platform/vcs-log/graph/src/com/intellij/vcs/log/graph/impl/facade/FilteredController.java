@@ -75,4 +75,9 @@ public class FilteredController extends CascadeController {
   public LinearGraph getCompiledGraph() {
     return myCollapsedGraph.getCompiledGraph();
   }
+
+  @NotNull
+  public CollapsedGraph getCollapsedGraph() {
+    return myCollapsedGraph;
+  }
 }

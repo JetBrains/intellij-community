@@ -16,6 +16,7 @@
 package org.jetbrains.idea.devkit.testAssistant;
 
 import com.intellij.codeInsight.daemon.GutterIconNavigationHandler;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -77,7 +78,7 @@ public class TestDataNavigationHandler implements GutterIconNavigationHandler<Ps
     else if (testDataFiles.size() > 1) {
       TestDataGroupVirtualFile groupFile = TestDataUtil.getTestDataGroup(testDataFiles);
       if (groupFile != null) {
-        new OpenFileDescriptor(project, groupFile).navigate(true);
+        PsiNavigationSupport.getInstance().createNavigatable(project, groupFile, -1).navigate(true);
       }
       else {
         showNavigationPopup(project, testDataFiles, point);

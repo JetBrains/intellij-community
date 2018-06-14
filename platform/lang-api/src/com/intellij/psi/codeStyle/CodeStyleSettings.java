@@ -1333,7 +1333,6 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
         }
       }
     }
-    //noinspection deprecation
     return WRAP_WHEN_TYPING_REACHES_RIGHT_MARGIN;
   }
 

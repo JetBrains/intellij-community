@@ -563,6 +563,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     String editorFontName = StringUtil.escapeQuotes(EditorColorsManager.getInstance().getGlobalScheme().getEditorFontName());
     editorKit.getStyleSheet().addRule("code {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("pre {font-family:\"" + editorFontName + "\"}");
+    editorKit.getStyleSheet().addRule(".pre {font-family:\"" + editorFontName + "\"}");
     editorKit.getStyleSheet().addRule("html { padding-bottom: 5px; }");
     editorKit.getStyleSheet().addRule("a { color: #" + ColorUtil.toHex(getLinkColor()) + "; text-decoration: none;}");
     editorKit.getStyleSheet().addRule(".definition { padding: 3px 17px 1px 7px; border-bottom: thin solid #" + ColorUtil.toHex(ColorUtil.mix(DOCUMENTATION_COLOR, BORDER_COLOR, 0.5)) + "; }");
@@ -969,10 +970,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private String decorate(String text) {
-    text = text.trim();
-    text = StringUtil.trimEnd(text, "</html>", true);
-    text = text.trim();
-    text = StringUtil.trimEnd(text, "</body>", true);
+    text = StringUtil.replaceIgnoreCase(text, "</html>", "");
+    text = StringUtil.replaceIgnoreCase(text, "</body>", "");
     boolean hasContent = text.contains(DocumentationMarkup.CONTENT_START);
     if (!hasContent && !text.contains(DocumentationMarkup.DEFINITION_START)) {
       int bodyStart = findContentStart(text);

@@ -52,7 +52,6 @@ import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.*;
@@ -64,11 +63,10 @@ import static com.jetbrains.python.psi.PyUtil.as;
 public class PyDocumentationBuilder {
   private final PsiElement myElement;
   private final PsiElement myOriginalElement;
-  private final ChainIterable<String> myProlog;      // sequence for reassignment info, etc
-  private final ChainIterable<String> myBody;        // sequence for doc string
-  private final ChainIterable<String> myContent;
+  private final ChainIterable<String> myProlog;      // definition header
+  private final ChainIterable<String> myBody;        // definition main part
+  private final ChainIterable<String> myContent;     // sequence for doc string
   private final ChainIterable<String> mySections;
-  private final ChainIterable<String> myEpilog;      // sequence for doc "copied from" notices and such
 
   private final Map<String, ChainIterable<String>> mySectionsMap = FactoryMap.createMap(item -> new ChainIterable<>(), LinkedHashMap::new);
   private final TypeEvalContext myContext;
@@ -82,7 +80,6 @@ public class PyDocumentationBuilder {
     myBody = new ChainIterable<>();
     myContent = new ChainIterable<>();
     mySections = new ChainIterable<>();
-    myEpilog = new ChainIterable<>();
     myContext = TypeEvalContext.userInitiated(myElement.getProject(), myElement.getContainingFile());
   }
 
@@ -141,15 +138,7 @@ public class PyDocumentationBuilder {
       mySections.addItem(DocumentationMarkup.SECTIONS_END);
     }
 
-    final String url = PythonDocumentationProvider.getUrlFor(myElement, myOriginalElement, false);
-    if (url != null) {
-      myEpilog.addItem(BR);
-      myEpilog.addWith(TagBold, $("External documentation:"));
-      myEpilog.addItem(BR);
-      myEpilog.addItem("<a href=\"").addItem(url).addItem("\">").addItem(url).addItem("</a>");
-    }
-
-    if (myBody.isEmpty() && myContent.isEmpty() && myEpilog.isEmpty()) {
+    if (myBody.isEmpty() && myContent.isEmpty()) {
       return null; // got nothing substantial to say!
     }
     else {
@@ -170,29 +159,19 @@ public class PyDocumentationBuilder {
               .add(myContent)
               .addItem(DocumentationMarkup.CONTENT_END);
       }
-      result.add(mySections).add(myEpilog); // pre-assemble; then add stuff to individual cats as needed
+      result.add(mySections); // pre-assemble; then add stuff to individual cats as needed
       return wrapInTag("html", wrapInTag("body", result)).toString();
     }
   }
 
-  private void buildForKeyword(@NotNull final String name) {
+  private void buildForKeyword(@NotNull String name) {
     try {
-      final FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name));
-      try {
+      try (FileReader reader = new FileReader(PythonHelpersLocator.getHelperPath("/tools/python_keywords/" + name))) {
         final String text = FileUtil.loadTextAndClose(reader);
-        myEpilog.addItem(StringUtil.convertLineSeparators(text, "\n"));
-      }
-      catch (IOException ignored) {
-      }
-      finally {
-        try {
-          reader.close();
-        }
-        catch (IOException ignored) {
-        }
+        myContent.addItem(StringUtil.convertLineSeparators(text, "\n"));
       }
     }
-    catch (FileNotFoundException ignored) {
+    catch (IOException ignored) {
     }
   }
 

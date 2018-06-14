@@ -109,10 +109,18 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       if (isInConstructorRef != null) {
         isInConstructorRef.set(method.isConstructor());
       }
+      if (!method.isConstructor() && !PsiType.VOID.equals(method.getReturnType())) {
+        return false;
+      }
     }
     else if (methodParent instanceof PsiLambdaExpression) {
-      isInConstructorRef.set(false);
+      if (isInConstructorRef != null) {
+        isInConstructorRef.set(false);
+      }
       final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
+      if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
+        return false;
+      }
       final PsiElement lambdaBody = lambdaExpression.getBody();
       if (lambdaBody instanceof PsiCodeBlock) {
         codeBlock = (PsiCodeBlock)lambdaBody;

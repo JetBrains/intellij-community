@@ -399,8 +399,9 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
         state.registerIndex(name,
                             createIndex(extension, new MemoryIndexStorage<>(storage, name)),
-                            file -> file instanceof VirtualFileWithId && inputFilter.acceptInput(file),
-                            version,
+                            file -> file instanceof VirtualFileWithId && inputFilter.acceptInput(file) &&
+                                    !GlobalIndexFilter.isExcludedFromIndexViaFilters(file, name),
+                            version + GlobalIndexFilter.getFiltersVersion(name),
                             addedTypes);
         break;
       }
@@ -891,7 +892,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
       //assert project != null : "GlobalSearchScope#getProject() should be not-null for all index queries";
       ensureUpToDate(indexId, project, filter, restrictToFile);
 
-      return ConcurrencyUtil.withLock(index.getReadLock(), ()->myAccessValidator.validate(indexId, ()->computable.convert(index)));
+      return myAccessValidator.validate(indexId, ()->ConcurrencyUtil.withLock(index.getReadLock(), ()->computable.convert(index)));
     }
     catch (StorageException e) {
       scheduleRebuild(indexId, e);

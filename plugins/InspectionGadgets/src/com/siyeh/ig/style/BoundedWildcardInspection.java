@@ -15,6 +15,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.DummyHolderFactory;
 import com.intellij.psi.impl.source.JavaDummyHolder;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
@@ -235,7 +236,8 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
 
     PsiClassReferenceType newParameterType = suggestMethodParameterType(candidate, isExtends);
 
-    PsiMethod methodCopy = createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType);
+    PsiMethod methodCopy = DebugUtil
+      .performPsiModification("Creating method copy", () -> createMethodCopy(project, candidate.method, candidate.methodParameterIndex, newParameterType));
     PsiClass containingClass = candidate.method.getContainingClass();
     PsiField field = findFieldAssignedFromMethodParameter(candidate.methodParameter, method);
     List<PsiElement> superMethodsCalls = new ArrayList<>(); // shouldn't error-check these because they're not generalized yet
@@ -246,7 +248,7 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
       return errorChecks(methodCopy.getBody(), superMethodsCalls);
     }
     // field can be referenced from anywhere in the file
-    PsiClass classCopy = createClassCopy(project, field, containingClass, candidate.method, methodCopy, newParameterType);
+    PsiClass classCopy = DebugUtil.performPsiModification("Creating class copy", () -> createClassCopy(project, field, containingClass, candidate.method, methodCopy, newParameterType));
 
     return errorChecks(classCopy, superMethodsCalls);
   }

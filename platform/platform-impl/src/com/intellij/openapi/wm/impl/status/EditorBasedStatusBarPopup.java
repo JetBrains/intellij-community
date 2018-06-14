@@ -6,6 +6,7 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -172,11 +173,16 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       String toolTipText;
 
       WidgetState state = getWidgetState(file);
-      if (state.noChange) {
+      if (state == WidgetState.NO_CHANGE) {
         return;
       }
 
-      if (state.hidden) {
+      if (state == WidgetState.NO_CHANGE_MAKE_VISIBLE) {
+        myComponent.setVisible(true);
+        return;
+      }
+
+      if (state == WidgetState.HIDDEN) {
         myComponent.setVisible(false);
         return;
       }
@@ -208,16 +214,30 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
   }
 
   protected static class WidgetState {
+    /**
+     * Return this state if you want to hide the widget
+     */
+    public static final WidgetState HIDDEN = new WidgetState();
 
-    public static final WidgetState HIDDEN = new WidgetState("", "", false);
-    public static final WidgetState NO_CHANGE = new WidgetState("", "", false);
-    static {
-      HIDDEN.hidden = true;
-      NO_CHANGE.noChange = true;
+    /**
+     * Return this state if you don't want to change widget presentation
+     */
+    public static final WidgetState NO_CHANGE = new WidgetState();
+
+    /**
+     * Return this state if you want to show widget in its previous state
+     * but without updating its content
+     */
+    public static final WidgetState NO_CHANGE_MAKE_VISIBLE = new WidgetState();
+
+    private final String toolTip;
+    private final String text;
+    private final boolean actionEnabled;
+    private Icon icon;
+
+    private WidgetState() {
+      this("", "", false);
     }
-
-    // todo: update accordingly to UX-252
-    public static final WidgetState DUMB_MODE = new WidgetState(IdeBundle.message("progress.indexing.scanning"), IdeBundle.message("progress.indexing.updating"), false);
 
     public WidgetState(String toolTip, String text, boolean actionEnabled) {
       this.toolTip = toolTip;
@@ -225,16 +245,21 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       this.actionEnabled = actionEnabled;
     }
 
+    /**
+     * Returns a special state for dumb mode (when indexes are not ready).
+     * Your widget should show this state if it depends on indexes, when DumbService.isDumb is true.
+     *
+     * Use myConnection.subscribe(DumbService.DUMB_MODE, your_listener) inside registerCustomListeners,
+     *   and call update() inside listener callbacks, to refresh your widget state when indexes are loaded
+     */
+    public static WidgetState getDumbModeState(String name, String widgetPrefix) {
+      // todo: update accordingly to UX-252
+      return new WidgetState(ActionUtil.getUnavailableMessage(name, false), widgetPrefix + IdeBundle.message("progress.indexing.updating"), false);
+    }
+
     public void setIcon(Icon icon) {
       this.icon = icon;
     }
-
-    private final String toolTip;
-    private final String text;
-    private final boolean actionEnabled;
-    private boolean hidden;
-    private boolean noChange;
-    private Icon icon;
   }
 
   @NotNull

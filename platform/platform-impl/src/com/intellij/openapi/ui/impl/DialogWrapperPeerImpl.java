@@ -37,7 +37,6 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
-import com.intellij.ui.mac.touchbar.TouchBar;
 import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.GraphicsUtil;
@@ -73,7 +72,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private Project myProject;
   private ActionCallback myTypeAheadCallback;
 
-  private TouchBar myTouchBar;
+  private Runnable myTouchBarCloser;
   private List<JButton> myTouchBarButtons;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
@@ -254,7 +253,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
         }
       });
 
-      TouchBarsManager.closeTouchBar(myTouchBar, true);
+      if (myTouchBarCloser != null) {
+        myTouchBarCloser.run();
+        myTouchBarCloser = null;
+      }
     };
 
     UIUtil.invokeLaterIfNeeded(disposer);
@@ -428,7 +430,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     myDialog.getWindow().setAutoRequestFocus(true);
 
     if (myTouchBarButtons != null && myProject != null)
-      myTouchBar = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons, myProject);
+      myTouchBarCloser = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons);
 
     try {
       myDialog.show();

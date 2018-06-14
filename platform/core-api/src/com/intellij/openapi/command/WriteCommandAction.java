@@ -260,7 +260,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult[] results = {result};
 
     doExecuteCommand(() -> {
-      //noinspection deprecation
       ApplicationManager.getApplication().runWriteAction(() -> {
         results[0].run();
         results[0] = null;

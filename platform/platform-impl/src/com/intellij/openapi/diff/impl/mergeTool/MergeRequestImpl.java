@@ -15,19 +15,20 @@
  */
 package com.intellij.openapi.diff.impl.mergeTool;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.*;
 import com.intellij.openapi.diff.impl.incrementalMerge.ChangeCounter;
 import com.intellij.openapi.diff.impl.incrementalMerge.ui.MergePanel2;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -259,10 +260,10 @@ public class MergeRequestImpl extends MergeRequest {
     }
 
     @Override
-    public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+    public Navigatable getOpenFileDescriptor(int offset) {
       VirtualFile file = getFile();
       if (file == null) return null;
-      return new OpenFileDescriptor(myProject, file, offset);
+      return PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
     }
 
     @Override

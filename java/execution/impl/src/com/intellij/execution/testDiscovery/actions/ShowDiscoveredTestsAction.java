@@ -186,7 +186,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
 
     ActiveComponent runButton =
-      createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, initTitle));
+      createButton(RUN_ALL_ACTION_TEXT, AllIcons.Actions.Execute, () -> runAllDiscoveredTests(project, tree, ref, context, initTitle), tree);
 
     Runnable pinActionListener = () -> {
       UsageView view = FindUtil.showInUsageView(null, tree.getTestMethods(), param -> param, initTitle, p -> {
@@ -213,7 +213,7 @@ public class ShowDiscoveredTestsAction extends AnAction {
     KeyStroke findUsageKeyStroke = findUsagesKeyStroke();
     String pinTooltip =
       "Open Find Usages Toolwindow" + (findUsageKeyStroke == null ? "" : " " + KeymapUtil.getKeystrokeText(findUsageKeyStroke));
-    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.Pin_tab, pinActionListener);
+    ActiveComponent pinButton = createButton(pinTooltip, AllIcons.General.Pin_tab, pinActionListener, tree);
 
     final PopupChooserBuilder builder =
       new PopupChooserBuilder(tree)
@@ -304,7 +304,11 @@ public class ShowDiscoveredTestsAction extends AnAction {
     }
   }
 
-  private static ActiveComponent createButton(String text, Icon icon, Runnable listener) {
+  @NotNull
+  private static ActiveComponent createButton(@NotNull String text,
+                                              @NotNull Icon icon,
+                                              @NotNull Runnable listener,
+                                              @NotNull DiscoveredTestsTree tree) {
     return new ActiveComponent.Adapter() {
       @Override
       public JComponent getComponent() {
@@ -312,6 +316,17 @@ public class ShowDiscoveredTestsAction extends AnAction {
         presentation.setText(text);
         presentation.setDescription(text);
         presentation.setIcon(icon);
+
+        presentation.setEnabled(false);
+        tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+          @Override
+          protected void process(TreeModelEvent event, EventType type) {
+            if (!presentation.isEnabled() && tree.getTestCount() != 0) {
+              presentation.setEnabled(true);
+            }
+          }
+        });
+
         return new ActionButton(new AnAction() {
           @Override
           public void actionPerformed(AnActionEvent e) {

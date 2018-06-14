@@ -67,7 +67,7 @@ object UpdateChecker {
    * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
    */
   @Suppress("MemberVisibilityCanBePrivate")
-  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf<String>()
+  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl

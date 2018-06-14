@@ -68,6 +68,10 @@ public class PtyCommandLine extends GeneralCommandLine {
     myInitialRows = initialRows;
   }
 
+  public PtyCommandLine(@NotNull List<String> command) {
+    super(command);
+  }
+
   @NotNull
   @Override
   protected Process startProcess(@NotNull List<String> commands) throws IOException {

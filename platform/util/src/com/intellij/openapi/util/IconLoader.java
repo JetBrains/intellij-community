@@ -210,6 +210,9 @@ public final class IconLoader {
   private static Pair<String, ClassLoader> patchPath(@NotNull String path, ClassLoader classLoader) {
     for (IconPathPatcher patcher : ourPatchers) {
       String newPath = patcher.patchPath(path, classLoader);
+      if (newPath == null) {
+        newPath = patcher.patchPath(path);
+      }
       if (newPath != null) {
         LOG.info("replace '" + path + "' with '" + newPath + "'");
         return Pair.create(newPath, patcher.getContextClassLoader(path, classLoader));
@@ -230,7 +233,8 @@ public final class IconLoader {
       url = ((Class)context).getResource(path);
     }
     else if (context instanceof ClassLoader) {
-      url = ((ClassLoader)context).getResource(path);
+      // Paths in ClassLoader getResource shouldn't start with "/"
+      url = ((ClassLoader)context).getResource(path.startsWith("/") ? path.substring(1) : path);
     }
     else {
       LOG.warn("unexpected: " + context);

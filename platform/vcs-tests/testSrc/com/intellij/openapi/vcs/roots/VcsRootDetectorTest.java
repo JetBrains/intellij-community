@@ -5,6 +5,7 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -123,6 +124,7 @@ public class VcsRootDetectorTest extends VcsRootBaseTest {
 
   // This is a test of performance optimization via limitation: don't scan deep though the whole VFS, i.e. don't detect deep roots
   public void testDontScanDeeperThan2LevelsBelowAContentRoot() throws IOException {
+    Registry.get("vcs.root.detector.folder.depth").setValue(2, getTestRootDisposable());
     VcsRootConfiguration vcsRootConfiguration =
       new VcsRootConfiguration().vcsRoots("community", "content_root/lev1", "content_root2/lev1/lev2/lev3")
         .contentRoots("content_root");

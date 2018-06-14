@@ -164,7 +164,7 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
     return false;
   }
 
-  private static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
+  public static <T> boolean matchesNothing(@Nullable Collection<T> matchingSet) {
     return matchingSet != null && matchingSet.isEmpty();
   }
 

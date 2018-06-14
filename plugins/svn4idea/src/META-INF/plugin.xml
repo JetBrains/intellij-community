@@ -142,9 +142,6 @@
       <configurable id="vcs.Subversion.SSH" displayName="SSH" instance="org.jetbrains.idea.svn.SvnConfigurable$Ssh"/>
     </projectConfigurable>
     <vcsPopupProvider implementation="org.jetbrains.idea.svn.actions.SvnQuickListContentProvider"/>
-
-    <statistics.usagesCollector implementation="org.jetbrains.idea.svn.statistics.SvnWorkingCopyFormatUsagesCollector"/>
-
     <changesViewContent tabName="Subversion Working Copies Information" className="org.jetbrains.idea.svn.WorkingCopiesContent"
                         predicateClassName="org.jetbrains.idea.svn.WorkingCopiesContent$VisibilityPredicate"/>
 

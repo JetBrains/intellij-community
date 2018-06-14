@@ -1,33 +1,26 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.documentation;
 
-import com.intellij.psi.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignature;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
+import kotlin.Pair;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.NamedParamsUtil;
 
 import java.util.Collections;
 import java.util.LinkedHashSet;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -40,6 +33,8 @@ public class GroovyPresentationUtil {
                                                  PsiSubstitutor substitutor,
                                                  TypePresentation typePresentation,
                                                  StringBuilder builder) {
+    if (presentNamedParameters(builder, parameter)) return;
+
     for (PsiAnnotation annotation : parameter.getModifierList().getAnnotations()) {
       builder.append(annotation.getText()).append(' ');
     }
@@ -63,7 +58,7 @@ public class GroovyPresentationUtil {
     }
     else {
       builder.append(parameter.getName());
-      final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<String>());
+      final Set<String> structural = Collections.synchronizedSet(new LinkedHashSet<>());
       ReferencesSearch.search(parameter, parameter.getUseScope()).forEach(ref -> {
         PsiElement parent = ref.getElement().getParent();
         if (parent instanceof GrReferenceExpression) {
@@ -107,6 +102,12 @@ public class GroovyPresentationUtil {
         if (array.length > 1) builder.append("]");
       }
     }
+  }
+
+  private static boolean presentNamedParameters(@NotNull StringBuilder buffer, @NotNull GrParameter parameter) {
+    List<Pair<String, PsiType>> pairs = NamedParamsUtil.collectNamedParams(parameter);
+    StringUtil.join(pairs, pair -> pair.getFirst() + ": " + pair.getSecond().getPresentableText(), ", ", buffer);
+    return !pairs.isEmpty();
   }
 
   public static String getSignaturePresentation(MethodSignature signature) {

@@ -228,15 +228,8 @@ public final class LoadTextUtil {
 
   @NotNull
   private static Charset getDefaultCharsetFromEncodingManager(@NotNull VirtualFile virtualFile) {
-    Charset result = null;
     Charset specifiedExplicitly = EncodingRegistry.getInstance().getEncoding(virtualFile, true);
-    if (specifiedExplicitly != null) {
-      result = specifiedExplicitly;
-    }
-    if (result == null) {
-      result = EncodingRegistry.getInstance().getDefaultCharset();
-    }
-    return result;
+    return ObjectUtils.notNull(specifiedExplicitly, EncodingRegistry.getInstance().getDefaultCharset());
   }
 
   @NotNull
@@ -677,9 +670,8 @@ public final class LoadTextUtil {
     return virtualFile.getUserData(CHARSET_WAS_DETECTED_FROM_BYTES);
   }
 
-  private static void setCharsetAutoDetectionReason(
-    @NotNull VirtualFile virtualFile,
-    @Nullable("null if was not detected, otherwise the reason it was") AutoDetectionReason reason) {
+  private static void setCharsetAutoDetectionReason(@NotNull VirtualFile virtualFile,
+                                                    @Nullable("null if was not detected, otherwise the reason it was") AutoDetectionReason reason) {
     virtualFile.putUserData(CHARSET_WAS_DETECTED_FROM_BYTES, reason);
   }
 

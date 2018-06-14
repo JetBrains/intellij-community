@@ -417,7 +417,7 @@ class GitCommitTest : GitSingleRepoTest() {
       modified("c.java")
     }
 
-    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive) {
+    val expectedIndexContent = if (SystemInfo.isFileSystemCaseSensitive && !Registry.`is`("git.force.commit.using.staging.area")) {
       STAGED_CONTENT
     }
     else {
@@ -528,6 +528,41 @@ class GitCommitTest : GitSingleRepoTest() {
     }
     repo.assertCommitted(2) {
       rename("a.before", "a.after")
+    }
+  }
+
+  fun `test commit rename with conflicting staged rename`() {
+    `assume version where git reset returns 0 exit code on success `()
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area"))
+
+    tac("a.txt", "file content")
+
+    rm("a.txt")
+    touch("b.txt", "file content")
+    touch("c.txt", "file content")
+    git("add a.txt")
+    git("add b.txt")
+
+    val changes = assertChanges {
+      rename("a.txt", "b.txt")
+    }
+
+    git("add c.txt")
+    git("rm b.txt --cached")
+    assertChanges {
+      rename("a.txt", "c.txt")
+    }
+
+    commit(changes)
+
+    assertChanges {
+      added("c.txt")
+    }
+
+    assertMessage("comment", repo.message("HEAD"))
+
+    repo.assertCommitted {
+      rename("a.txt", "b.txt")
     }
   }
 

@@ -327,7 +327,6 @@
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightSuppressedWarningsFactory"/>
     <highlightUsagesHandlerFactory implementation="com.intellij.codeInsight.highlighting.HighlightExceptionsHandlerFactory"/>
     <moduleExtension implementation="com.intellij.openapi.roots.impl.CompilerModuleExtensionImpl"/>
-    <statistics.usagesCollector implementation="com.intellij.openapi.roots.impl.LanguageLevelUsagesCollector"/>
     <projectExtension implementation="com.intellij.openapi.roots.impl.LanguageLevelProjectExtensionImpl$MyProjectExtension"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Generic"/>
     <liveTemplateContext implementation="com.intellij.codeInsight.template.JavaCodeContextType$Statement"/>
@@ -570,7 +569,7 @@
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.declaration.redundancy" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.intellij.codeInspection.lambda.RedundantLambdaParameterTypeInspection"
-                     displayName="Remove redundant lambda parameter types"/>
+                     displayName="Redundant lambda parameter types"/>
     <localInspection groupPath="Java" language="JAVA" shortName="ReplaceInefficientStreamCount"
                      groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"

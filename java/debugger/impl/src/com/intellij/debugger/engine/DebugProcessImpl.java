@@ -309,7 +309,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         ((ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME)).stopListening(arguments);
       }
     }
-    catch (IOException | IllegalConnectorArgumentsException e) {
+    catch (IOException | IllegalConnectorArgumentsException | IllegalArgumentException e) {
       LOG.debug(e);
     }
     catch (ExecutionException e) {

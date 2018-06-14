@@ -207,9 +207,9 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   @NotNull
-  @SuppressWarnings("deprecation")
   public static SdkType[] getAllTypes() {
     List<SdkType> allTypes = new ArrayList<>();
+    //noinspection deprecation
     Collections.addAll(allTypes, ApplicationManager.getApplication().getComponents(SdkType.class));
     Collections.addAll(allTypes, Extensions.getExtensions(EP_NAME));
     return allTypes.toArray(new SdkType[0]);
@@ -258,12 +258,14 @@ public abstract class SdkType implements SdkTypeId {
    * @param selectedSdk        current selected sdk in parentComponent
    * @param sdkCreatedCallback the callback to which the created SDK is passed.
    * @since 2017.1
+   * @implSpec method's implementations should not add sdk to the jdkTable neither  invoke {@link SdkType#setupSdkPaths}. Only create and
+   * and pass to the callback. The rest is done by {@link ProjectSdksModel#setupSdk}
    */
-  @SuppressWarnings("deprecation")
   public void showCustomCreateUI(@NotNull SdkModel sdkModel,
                                  @NotNull JComponent parentComponent,
                                  @Nullable Sdk selectedSdk,
                                  @NotNull Consumer<Sdk> sdkCreatedCallback) {
+    //noinspection deprecation
     showCustomCreateUI(sdkModel, parentComponent, sdkCreatedCallback);
   }
 

@@ -24,8 +24,8 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
 
   private static final Options ADAPTIVE_NON_BLOCKING = new Options() {
     @Override
-    @SuppressWarnings("deprecation")
     public BaseDataReader.SleepingPolicy policy() {
+      //noinspection deprecation
       return new BaseDataReader.AdaptiveSleepingPolicy();
     }
   };

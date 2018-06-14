@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.roots;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,6 +43,9 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
   @NotNull private final ProjectLevelVcsManager myVcsManager;
   @NotNull private final VcsRootChecker[] myCheckers;
 
+  @Nullable private Collection<VcsRoot> myDetectedRoots;
+  @NotNull private final Object LOCK = new Object();
+
   public VcsRootDetectorImpl(@NotNull Project project,
                              @NotNull ProjectRootManager projectRootManager,
                              @NotNull ProjectLevelVcsManager projectLevelVcsManager) {
@@ -51,13 +55,23 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
     myCheckers = Extensions.getExtensions(VcsRootChecker.EXTENSION_POINT_NAME);
   }
 
+  @Override
   @NotNull
   public Collection<VcsRoot> detect() {
-    return detect(myProject.getBaseDir());
+    synchronized (LOCK) {
+      myDetectedRoots = detect(myProject.getBaseDir());
+      return myDetectedRoots;
+    }
+  }
+
+  @Override
+  @NotNull
+  public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+    return doDetect(startDir);
   }
 
   @NotNull
-  public Collection<VcsRoot> detect(@Nullable VirtualFile startDir) {
+  private Collection<VcsRoot> doDetect(@Nullable VirtualFile startDir) {
     if (startDir == null || myCheckers.length == 0) {
       return Collections.emptyList();
     }
@@ -68,7 +82,18 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       if (rootAbove != null) roots.add(rootAbove);
     }
     roots.addAll(scanForRootsInContentRoots());
-    return roots;
+    return Collections.unmodifiableSet(roots);
+  }
+
+  @Override
+  @NotNull
+  public Collection<VcsRoot> getOrDetect() {
+    synchronized (LOCK) {
+      if (myDetectedRoots == null) {
+        detect();
+      }
+      return myDetectedRoots;
+    }
   }
 
   @NotNull
@@ -93,6 +118,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
 
   @NotNull
   private Set<VcsRoot> scanForRootsInsideDir(@NotNull final VirtualFile dir, final int depth) {
+    ProgressManager.checkCanceled();
     LOG.debug("Scanning inside [" + dir + "], depth = " + depth);
     final Set<VcsRoot> roots = new HashSet<>();
     if (depthLimitExceeded(depth)) {
@@ -133,6 +159,7 @@ public class VcsRootDetectorImpl implements VcsRootDetector {
       return null;
     }
 
+    ProgressManager.checkCanceled();
     VirtualFile par = dir.getParent();
     while (par != null && !par.equals(VfsUtil.getUserHomeDir())) {
       AbstractVcs vcs = getVcsFor(par, dir);

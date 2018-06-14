@@ -832,7 +832,6 @@ public abstract class UsefulTestCase extends TestCase {
     }
   }
 
-  @SuppressWarnings("deprecation")
   private static void checkSettingsEqual(CodeStyleSettings expected, CodeStyleSettings settings) {
     if (expected == null || settings == null) return;
 

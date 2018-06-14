@@ -89,7 +89,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
       boolean myAlreadyDone;
       @Override
       protected void process(TreeModelEvent event, EventType type) {
-        if (!myAlreadyDone && myModel.getTestCount() != 0) {
+        if (!myAlreadyDone && getTestCount() != 0) {
           myAlreadyDone = true;
           EdtInvocationManager.getInstance().invokeLater(() -> {
             TreeUtil.collapseAll(DiscoveredTestsTree.this, 0);

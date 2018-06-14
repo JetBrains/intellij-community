@@ -39,6 +39,7 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.function.BiConsumer;
 
 public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, PermanentGraphInfo<CommitId> {
   @NotNull private final PermanentCommitsInfoImpl<CommitId> myPermanentCommitsInfo;
@@ -134,12 +135,22 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   }
 
   @NotNull
+  public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
+                                                   @Nullable Set<CommitId> visibleHeads,
+                                                   @Nullable Set<CommitId> matchingCommits,
+                                                   @NotNull BiConsumer<LinearGraphController, PermanentGraphInfo<CommitId>> preprocessor) {
+    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
+    preprocessor.accept(controller, this);
+    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
+  }
+
+  @NotNull
   @Override
   public VisibleGraph<CommitId> createVisibleGraph(@NotNull SortType sortType,
                                                    @Nullable Set<CommitId> visibleHeads,
                                                    @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController controller = createFilteredController(createBaseController(sortType), sortType, visibleHeads, matchingCommits);
-    return new VisibleGraphImpl<>(controller, this, myGraphColorManager);
+    return createVisibleGraph(sortType, visibleHeads, matchingCommits, (controller, info) -> {
+    });
   }
 
   @NotNull

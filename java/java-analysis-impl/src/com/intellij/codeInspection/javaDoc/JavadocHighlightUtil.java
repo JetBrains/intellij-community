@@ -323,14 +323,14 @@ public class JavadocHighlightUtil {
     });
   }
 
-  static void checkMissingTypeParamTags(@NotNull PsiClass psiClass,
+  static void checkMissingTypeParamTags(@NotNull PsiTypeParameterListOwner parameterListOwner,
                                         @NotNull PsiDocTag[] tags,
                                         @NotNull PsiElement toHighlight,
                                         @NotNull ProblemHolder holder) {
-    if (psiClass.hasTypeParameters()) {
+    if (parameterListOwner.hasTypeParameters()) {
       List<PsiTypeParameter> absentParameters = null;
 
-      for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
+      for (PsiTypeParameter typeParameter : parameterListOwner.getTypeParameters()) {
         if (!hasTagForParameter(tags, typeParameter)) {
           (absentParameters = list(absentParameters)).add(typeParameter);
         }
@@ -369,13 +369,6 @@ public class JavadocHighlightUtil {
         (absentParameters = list(absentParameters)).add(param);
       }
     }
-
-    for (PsiTypeParameter parameter : psiMethod.getTypeParameters()) {
-      if (!hasTagForParameter(tags, parameter)) {
-        (absentParameters = list(absentParameters)).add(parameter);
-      }
-    }
-
 
     if (absentParameters != null) {
       for (PsiNamedElement parameter : absentParameters) {

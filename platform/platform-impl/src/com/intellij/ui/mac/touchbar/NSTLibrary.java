@@ -68,6 +68,4 @@ public interface NSTLibrary extends Library {
   void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
 
   static int priority2mask(byte prio) { return (prio + 128) << BUTTON_PRIORITY_SHIFT; }
-
-  static Action run2act(Runnable run) { return ()->run.run(); }
 }

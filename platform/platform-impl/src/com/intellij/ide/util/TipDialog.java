@@ -17,7 +17,6 @@ package com.intellij.ide.util;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -98,7 +97,6 @@ public class TipDialog extends DialogWrapper{
 
     public void actionPerformed(ActionEvent e){
       myTipPanel.prevTip();
-      UsageTrigger.trigger("tips.of.the.day.prev");
     }
   }
 
@@ -111,7 +109,6 @@ public class TipDialog extends DialogWrapper{
 
     public void actionPerformed(ActionEvent e){
       myTipPanel.nextTip();
-      UsageTrigger.trigger("tips.of.the.day.next");
     }
   }
 

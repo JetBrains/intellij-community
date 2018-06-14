@@ -50,8 +50,8 @@ private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("
 private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
-private val parseNoTypeArgumentsCodeReference: Key<Boolean> = Key.create("groovy.parse.no.type.arguments")
 private val parseAnyTypeElement: Key<Boolean> = Key.create("groovy.parse.any.type.element")
+private val parseQualifiedName: Key<Boolean> = Key.create("groovy.parse.qualified.name")
 private val parseCapitalizedCodeReference: Key<Boolean> = Key.create("groovy.parse.capitalized")
 private val parseDefinitelyTypeElement: Key<Boolean> = Key.create("groovy.parse.definitely.type.element")
 private val referenceWasCapitalized: Key<Boolean> = Key.create("groovy.parse.ref.was.capitalized")
@@ -90,14 +90,6 @@ fun allowDiamond(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
 
 fun isDiamondAllowed(builder: PsiBuilder, level: Int): Boolean = builder[parseDiamonds]
 
-fun noTypeArgsReference(builder: PsiBuilder, level: Int, codeReferenceParser: Parser): Boolean {
-  return builder.withKey(parseNoTypeArgumentsCodeReference, true) {
-    codeReferenceParser.parse(builder, level)
-  }
-}
-
-private val PsiBuilder.noTypeArgsReferenceParsing get() = this[parseNoTypeArgumentsCodeReference]
-
 fun anyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser): Boolean {
   return builder.withKey(parseAnyTypeElement, true) {
     typeElement.parse(builder, level + 1)
@@ -105,6 +97,14 @@ fun anyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser): Boolea
 }
 
 private val PsiBuilder.anyTypeElementParsing get() = this[parseAnyTypeElement]
+
+fun qualifiedName(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
+  return builder.withKey(parseQualifiedName, true) {
+    parser.parse(builder, level)
+  }
+}
+
+fun isQualifiedName(builder: PsiBuilder, level: Int): Boolean = builder[parseQualifiedName]
 
 fun capitalizedTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
   try {
@@ -181,10 +181,6 @@ fun setRefHadTypeArguments(builder: PsiBuilder, level: Int): Boolean {
     builder[referenceHadTypeArguments] = true
   }
   return true
-}
-
-fun codeReferenceTypeArguments(builder: PsiBuilder, level: Int, typeArgumentsParser: Parser): Boolean {
-  return !builder.noTypeArgsReferenceParsing && typeArgumentsParser.parse(builder, level)
 }
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {

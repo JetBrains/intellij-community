@@ -165,7 +165,8 @@
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
-    <statistics.usagesCollector implementation="git4idea.GitStatisticsCollector" />
+    <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
+    <statistics.projectUsagesCollector implementation="git4idea.GitUsagesTriggerCollector"/>
     <vcsRepositoryInitializer implementation="git4idea.repo.GitRepositoryInitializer"/>
 
     <projectService serviceImplementation="git4idea.repo.GitRepositoryManager"/>

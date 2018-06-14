@@ -2,10 +2,10 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.ide.dnd.DnDAware;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
@@ -141,7 +141,8 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
     if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
-      return file != null && !file.isDirectory() ? new OpenFileDescriptor(myProject, file, 0) : null;
+      return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
+                                                                       .createNavigatable(myProject, file, 0) : null;
     }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());

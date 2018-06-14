@@ -43,15 +43,21 @@ public class EqualsReplaceableByObjectsCallInspectionTest extends LightInspectio
   }
 
   public void testEqualsReplaceableByObjectsCall() {
-    doTest();
+    testEqualsReplaceable(false);
   }
 
   public void testEqualsReplaceableByObjectsCallCheckNull() {
+    testEqualsReplaceable(true);
+  }
+
+  protected void testEqualsReplaceable(boolean checkNotNull) {
+    boolean oldNotNull = myInspection.checkNotNull;
     try {
-      myInspection.checkNotNull = true;
+      myInspection.checkNotNull = checkNotNull;
       doTest();
-    } finally {
-      myInspection.checkNotNull = false;
+    }
+    finally {
+      myInspection.checkNotNull = oldNotNull;
     }
   }
 

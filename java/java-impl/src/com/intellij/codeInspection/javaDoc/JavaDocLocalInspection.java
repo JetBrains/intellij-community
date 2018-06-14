@@ -91,7 +91,7 @@ public class JavaDocLocalInspection extends JavaDocLocalInspectionBase {
       additionalTagsPanel.setText(myAdditionalJavadocTags);
       add(additionalTagsPanel, gc);
 
-      JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM);
+      JTabbedPane tabs = new JBTabbedPane(SwingConstants.BOTTOM, JTabbedPane.SCROLL_TAB_LAYOUT);
       String[] tags = {"@author", "@version", "@since"};
       tabs.add(InspectionsBundle.message("inspection.javadoc.option.tab.title.package"),
                createOptionsPanel(new String[]{NONE, PUBLIC}, tags, PACKAGE_OPTIONS));

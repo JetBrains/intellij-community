@@ -19,8 +19,8 @@ import com.intellij.ProjectTopics
 import com.intellij.diff.DiffContentFactory
 import com.intellij.diff.DiffManager
 import com.intellij.diff.requests.SimpleDiffRequest
+import com.intellij.ide.util.PsiNavigationSupport
 import com.intellij.openapi.fileEditor.FileEditor
-import com.intellij.openapi.fileEditor.OpenFileDescriptor
 import com.intellij.openapi.fileTypes.LanguageFileType
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.project.ProjectBundle
@@ -63,7 +63,7 @@ class LibrarySourceNotificationProvider(private val project: Project, notificati
             panel.setText(ProjectBundle.message("library.source.mismatch", offender.name))
             panel.createActionLabel(ProjectBundle.message("library.source.open.class"), {
               if (!project.isDisposed && clsFile.isValid) {
-                OpenFileDescriptor(project, clsFile, -1).navigate(true)
+                PsiNavigationSupport.getInstance().createNavigatable(project, clsFile, -1).navigate(true)
               }
             })
             panel.createActionLabel(ProjectBundle.message("library.source.show.diff"), {

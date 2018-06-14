@@ -31,6 +31,7 @@ import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -43,6 +44,13 @@ public class JavaReferenceAdjuster implements ReferenceAdjuster {
     IElementType elementType = element.getElementType();
     if ((elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) && !isAnnotated(element)) {
       IElementType parentType = element.getTreeParent().getElementType();
+      if (elementType == JavaElementType.REFERENCE_EXPRESSION) {
+        PsiReferenceExpression ref = (PsiReferenceExpression)element.getPsi();
+        if (ImportUtils.isAlreadyStaticallyImported(ref)) {
+          deQualifyImpl((CompositeElement)element);
+          return element;
+        }
+      }
       if (elementType == JavaElementType.JAVA_CODE_REFERENCE || incompleteCode ||
           parentType == JavaElementType.REFERENCE_EXPRESSION || parentType == JavaElementType.METHOD_REF_EXPRESSION) {
         PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getPsi();

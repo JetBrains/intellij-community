@@ -148,16 +148,6 @@ public class PythonDocumentationMap implements PersistentStateComponent<PythonDo
     return null;
   }
 
-  @Nullable
-  public String rootUrlFor(QualifiedName moduleQName) {
-    for (Entry entry : myState.myEntries) {
-      if (moduleQName.matchesPrefix(QualifiedName.fromDottedString(entry.myPrefix))) {
-        return rootForPattern(entry.myUrlPattern);
-      }
-    }
-    return null;
-  }
-
   private static String rootForPattern(String urlPattern) {
     int pos = urlPattern.indexOf('{');
     return pos >= 0 ? urlPattern.substring(0, pos) : urlPattern;

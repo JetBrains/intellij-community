@@ -107,16 +107,6 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
   }
 
   // PY-28227
-  public void testGenericInstantiation() {
-    doTestByText("from typing import Generic\n" +
-                 "\n" +
-                 "<error descr=\"Type 'Generic' cannot be instantiated; it can be used only as a base class\">Generic()</error>\n" +
-                 "\n" +
-                 "B = Generic\n" +
-                 "<error descr=\"Type 'Generic' cannot be instantiated; it can be used only as a base class\">B()</error>");
-  }
-
-  // PY-28227
   public void testGenericParametersTypes() {
     doTestByText("from typing import Generic, TypeVar\n" +
                  "\n" +
@@ -468,6 +458,332 @@ public class PyTypeHintsInspectionTest extends PyInspectionTestCase {
                  "assert issubclass(A, B[int])\n" +
                  "C = B[int]\n" +
                  "assert issubclass(A, C)");
+  }
+
+  // PY-16853
+  public void testParenthesesAndTyping() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import Union\n" +
+                         "\n" +
+                         "def a(b: <error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def c(d):\n" +
+                         "    # type: (<error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>) -> None\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def e(f: <error descr=\"Generics should be specified through square brackets\">Union()</error>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def g(h):\n" +
+                         "    # type: (<error descr=\"Generics should be specified through square brackets\">Union()</error>) -> None\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v1 = <error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>\n" +
+                         "v2 = None  # type: <error descr=\"Generics should be specified through square brackets\">Union(int, str)</error>\n" +
+                         "\n" +
+                         "U = Union\n" +
+                         "def i(j: <error descr=\"Generics should be specified through square brackets\">U(int, str)</error>):\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v3 = <error descr=\"Generics should be specified through square brackets\">U(int, str)</error>\n" +
+                         "\n" +
+                         "with foo() as bar:  # type: <error descr=\"Generics should be specified through square brackets\">Union(int,str)</error>\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "for x in []:  # type: <error descr=\"Generics should be specified through square brackets\">Union(int,str)</error>\n" +
+                         "    pass")
+    );
+  }
+
+  // PY-16853
+  public void testParenthesesAndCustom() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () -> doTestByText("from typing import Generic, TypeVar\n" +
+                         "\n" +
+                         "T = TypeVar(\"T\")\n" +
+                         "\n" +
+                         "class A(Generic[T]):\n" +
+                         "    def __init__(self, v):\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "def a(b: <warning descr=\"Generics should be specified through square brackets\">A(int)</warning>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def c(d):\n" +
+                         "    # type: (<warning descr=\"Generics should be specified through square brackets\">A(int)</warning>) -> None\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def e(f: <warning descr=\"Generics should be specified through square brackets\">A()</warning>):\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "def g(h):\n" +
+                         "    # type: (<warning descr=\"Generics should be specified through square brackets\">A()</warning>) -> None\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v1 = A(int)\n" +
+                         "v2 = None  # type: <warning descr=\"Generics should be specified through square brackets\">A(int)</warning>\n" +
+                         "\n" +
+                         "U = A\n" +
+                         "def i(j: <warning descr=\"Generics should be specified through square brackets\">U(int)</warning>):\n" +
+                         "    pass\n" +
+                         "    \n" +
+                         "v3 = None  # type: <warning descr=\"Generics should be specified through square brackets\">U(int)</warning>")
+    );
+  }
+
+  // PY-20530
+  public void testCallableParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("from typing import Callable\n" +
+                         "\n" +
+                         "a: Callable[..., str]\n" +
+                         "b: Callable[[int], str]\n" +
+                         "c: Callable[[int, str], str]\n" +
+                         "\n" +
+                         "d: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">...</error>]\n" +
+                         "e: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>, str]\n" +
+                         "f: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int, str</error>, str]\n" +
+                         "g: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">(int, str)</error>, str]\n" +
+                         "h: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">int</error>]\n" +
+                         "h: Callable[<error descr=\"'Callable' must be used as 'Callable[[arg, ...], result]'\">(int)</error>, str]")
+    );
+  }
+
+  // PY-20530
+  public void testSelf() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def method(self, i: int):\n" +
+                         "        v1: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
+                         "        v2 = None  # type: <error descr=\"Invalid type 'self'\">self</error>.B\n" +
+                         "        print(self.B)\n" +
+                         "\n" +
+                         "    class B:\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "class self:\n" +
+                         "    pass\n" +
+                         "\n" +
+                         "v: self")
+    );
+  }
+
+  // PY-20530
+  public void testTupleUnpacking() {
+    doTestByText("a1 = undefined()  # type: int\n" +
+                 "\n" +
+                 "b1, (c1, d1) = undefined()  # type: int, (int, str)\n" +
+                 "e1, (f1, g1), h1 = undefined()  # type: int, (str, int), str\n" +
+                 "\n" +
+                 "b2, (c2, d2) = undefined()  # type: <warning descr=\"Type comment cannot be matched with unpacked variables\">int, (int)</warning>\n" +
+                 "e2, (f2, g2), h2 = undefined()  # type: <warning descr=\"Type comment cannot be matched with unpacked variables\">int, (str), str</warning>");
+  }
+
+  // PY-20530
+  public void testAnnotationAndTypeComment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText(
+        "a<warning descr=\"Type(s) specified both in type comment and annotation\">: int</warning> = None  <warning descr=\"Type(s) specified both in type comment and annotation\"># type: int</warning>\n" +
+        "\n" +
+        "def foo(a<warning descr=\"Type(s) specified both in type comment and annotation\">: int</warning>  <warning descr=\"Type(s) specified both in type comment and annotation\"># type: int</warning>\n" +
+        "        ,):\n" +
+        "    pass\n" +
+        "\n" +
+        "def <warning descr=\"Type(s) specified both in type comment and annotation\">bar</warning>(a: int) -> int:\n" +
+        "    <warning descr=\"Type(s) specified both in type comment and annotation\"># type: (int) -> int</warning>\n" +
+        "    pass\n" +
+        "    \n" +
+        "def <warning descr=\"Type(s) specified both in type comment and annotation\">baz1</warning>(a: int):\n" +
+        "    <warning descr=\"Type(s) specified both in type comment and annotation\"># type: (int) -> int</warning>\n" +
+        "    pass\n" +
+        "    \n" +
+        "def <warning descr=\"Type(s) specified both in type comment and annotation\">baz2</warning>(a) -> int:\n" +
+        "    <warning descr=\"Type(s) specified both in type comment and annotation\"># type: (int) -> int</warning>\n" +
+        "    pass"
+      )
+    );
+  }
+
+  // PY-20530
+  public void testValidTypeCommentAndParameters() {
+    doTestByText("from typing import Type\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    pass\n" +
+                 "\n" +
+                 "class Bar(A):\n" +
+                 "    # self is specified\n" +
+                 "    def spam11(self):\n" +
+                 "        # type: (Bar) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg11(self, a, b):\n" +
+                 "        # type: (Bar, str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # self is specified\n" +
+                 "    def spam12(self):\n" +
+                 "        # type: (A) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg12(self, a, b):\n" +
+                 "        # type: (A, str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # self is not specified\n" +
+                 "    def spam2(self):\n" +
+                 "        # type: () -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg2(self, a, b):\n" +
+                 "        # type: (str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # cls is not specified \n" +
+                 "    @classmethod\n" +
+                 "    def spam3(cls):\n" +
+                 "        # type: () -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg3(cls, a, b):\n" +
+                 "        # type: (str, bool) -> None\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    # cls is specified    \n" +
+                 "    @classmethod\n" +
+                 "    def spam41(cls):\n" +
+                 "        # type: (Type[Bar]) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg41(cls, a, b):\n" +
+                 "        # type: (Type[Bar], str, bool) -> None\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    # cls is specified    \n" +
+                 "    @classmethod\n" +
+                 "    def spam42(cls):\n" +
+                 "        # type: (Type[A]) -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg42(cls, a, b):\n" +
+                 "        # type: (Type[A], str, bool) -> None\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    @staticmethod\n" +
+                 "    def spam5():\n" +
+                 "        # type: () -> None\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @staticmethod\n" +
+                 "    def egg5(a, b):\n" +
+                 "        # type: (str, bool) -> None\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    def baz(self, a, b, c, d):\n" +
+                 "        # type: (...) -> None\n" +
+                 "        pass");
+  }
+
+  // PY-20530
+  public void testInvalidTypeCommentAndParameters() {
+    doTestByText("from typing import Type\n" +
+                 "\n" +
+                 "class Bar:\n" +
+                 "    # self is specified\n" +
+                 "    def spam1(self):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Bar, int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg11(self, a, b):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Bar, int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg12(self, a, b):\n" +
+                 "        <warning descr=\"Type signature has too few arguments\"># type: (Bar) -> None</warning>\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # self is not specified\n" +
+                 "    def spam2(self):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Bar'\"># type: (int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    def egg2(self, a, b):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Bar'\"># type: (int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "        \n" +
+                 "    # cls is not specified \n" +
+                 "    @classmethod\n" +
+                 "    def spam3(cls):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Type[Bar]'\"># type: (int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg3(cls, a, b):\n" +
+                 "        <warning descr=\"The type of self 'int' is not a supertype of its class 'Type[Bar]'\"># type: (int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    # cls is specified    \n" +
+                 "    @classmethod\n" +
+                 "    def spam4(cls):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Type[Bar], int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg41(cls, a, b):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (Type[Bar], int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @classmethod\n" +
+                 "    def egg42(cls, a, b):\n" +
+                 "        <warning descr=\"Type signature has too few arguments\"># type: (Type[Bar]) -> None</warning>\n" +
+                 "        pass\n" +
+                 "    \n" +
+                 "    @staticmethod\n" +
+                 "    def spam5():\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (int) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @staticmethod\n" +
+                 "    def egg51(a, b):\n" +
+                 "        <warning descr=\"Type signature has too many arguments\"># type: (int, str, bool) -> None</warning>\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "    @staticmethod\n" +
+                 "    def egg52(a, b):\n" +
+                 "        <warning descr=\"Type signature has too few arguments\"># type: (int) -> None</warning>\n" +
+                 "        pass");
+  }
+
+  // PY-20530
+  public void testTypingMemberParameters() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText(
+        "from typing import Callable, List\n" +
+        "\n" +
+        "foo1: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int]</error>] = None\n" +
+        "foo2: Callable[[int], <error descr=\"Parameters to generic types must be types\">[int, str]</error>] = None\n" +
+        "foo3: List[<error descr=\"Parameters to generic types must be types\">[int]</error>]\n" +
+        "foo4: List[<error descr=\"Parameters to generic types must be types\">[int, str]</error>]\n" +
+        "\n" +
+        "l1 = [int]\n" +
+        "l2 = [int, str]\n" +
+        "\n" +
+        "foo5: Callable[[int], <error descr=\"Parameters to generic types must be types\">l1</error>] = None\n" +
+        "foo6: Callable[[int], <error descr=\"Parameters to generic types must be types\">l2</error>] = None\n" +
+        "foo7: List[<error descr=\"Parameters to generic types must be types\">l1</error>]\n" +
+        "foo8: List[<error descr=\"Parameters to generic types must be types\">l2</error>]"
+      )
+    );
   }
 
   @NotNull

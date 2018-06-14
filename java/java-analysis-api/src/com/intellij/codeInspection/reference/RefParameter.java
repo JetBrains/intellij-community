@@ -37,7 +37,6 @@ public interface RefParameter extends RefJavaElement {
 
   /**
    * @see RefParameter#getActualConstValue()
-   * @return
    */
   @Deprecated
   @Nullable
@@ -53,9 +52,9 @@ public interface RefParameter extends RefJavaElement {
    *
    * @return the parameter value or null if it's different or impossible to determine.
    */
-  @SuppressWarnings("deprecation")
   @Nullable
   default Object getActualConstValue() {
+    //noinspection deprecation
     return getActualValueIfSame();
   }
 

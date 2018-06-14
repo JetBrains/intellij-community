@@ -193,9 +193,9 @@ package_definition ::= modifier_list mb_nl ('package') package_name
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrPackageDefinitionElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
-package_name ::= code_reference { elementType = '' name = 'package name' }
+private package_name ::= qualified_name { name = 'package name' }
 
-import ::= modifier_list mb_nl ('import') 'static'? import_reference import_star? import_alias?
+import ::= modifier_list mb_nl ('import') 'static'? qualified_name import_star? import_alias?
 {
   pin = 3
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrImportStatementElementType'
@@ -246,11 +246,7 @@ annotation ::= '@' annotation_reference after_annotation_reference
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
-annotation_reference ::= no_type_args_code_reference
-{
-  elementType = ''
-  name = 'annotation reference'
-}
+private annotation_reference ::= simple_reference { name = 'annotation reference' }
 private after_annotation_reference ::= mb_nl annotation_argument_list | empty_annotation_argument_list
 annotation_argument_list ::= <<paren_list annotation_member_value_pair>>
 {
@@ -544,12 +540,19 @@ private non_empty_type_argument_list ::= '<' <<comma_list_p type_argument_list_i
   pin = 1
   consumeTokenMethod = 'consumeTokenFast'
 }
-private type_argument_list_item ::= mb_nl <<anyTypeElement type_argument>>
+private type_argument_list_item ::= mb_nl type_argument
 private type_argument_list_end ::= <<mb_nl_group '>'>>
-private type_argument ::= type_element | wildcard_type_element
+private type_argument ::= any_type_element | wildcard_type_element
 {
   name = 'type argument'
 }
+soft_type_argument_list ::= '<' soft_type_argument_list_item soft_type_argument_list_tail* type_argument_list_end
+{
+  consumeTokenMethod = 'consumeTokenFast'
+  elementType = type_argument_list
+}
+private soft_type_argument_list_item ::= type_argument_list_item | clear_variants_and_fail
+private soft_type_argument_list_tail ::= fast_comma mb_nl soft_type_argument_list_item
 // endregion
 
 
@@ -828,10 +831,10 @@ private priority0 ::= unqualified_reference_expression
                     | gstring
                     | regex
                     | parenthesized_expression
-unqualified_reference_expression ::= IDENTIFIER
+unqualified_reference_expression ::= IDENTIFIER soft_type_argument_list?
                                    | 'this'
                                    | 'super'
-                                   | ('in' | 'def' | 'trait') &(reference_dot | '.&')
+                                   | code_reference_identifiers_soft &(reference_dot | '.&')
                                    | (STR_SQ | STR_DQ) &string_literal_as_reference
 {
   elementType = reference_expression
@@ -897,12 +900,10 @@ private p_parenthesized_expression_inner ::= '(' expression ')' { pin = 1}
 
 private priority1_1 ::= new_anonymous_expression | new_expression
 
-new_expression ::= 'new' type_argument_list?
-                   (primitive_type_element | <<allowDiamond code_reference>>)
-                   (call_argument_list_start call_argument_list | array_declaration)
-{
-  pin = 1
-}
+new_expression ::= 'new' type_argument_list? new_expression_tail { pin = 1 }
+private new_expression_tail ::= new_expression_type (call_argument_list_start call_argument_list | array_declaration) { pin = 1 }
+private new_expression_type ::= primitive_type_element | <<allowDiamond code_reference>>
+
 new_anonymous_expression ::= 'new' type_argument_list? anonymous_type_definition
 {
   elementType = new_expression
@@ -984,10 +985,8 @@ private property_expression_identifiers ::= parenthesized_expression | lazy_bloc
 
 private priority1_4 ::= not_expression | cast_expression
 not_expression ::= ('~' | '!') expression { elementType = unary_expression }
-cast_expression ::= &cast_expression_start (cast_expression_pin | cast_expression_no_pin)
+cast_expression ::= &cast_expression_start ('(' type_element ')' priority1_4)
 private cast_expression_start ::= '(' (IDENTIFIER | primitive_type) { consumeTokenMethod = 'consumeTokenFast' }
-private cast_expression_pin ::= '(' capital_type_element ')' not_colon priority1_4 { pin = 4 }
-private cast_expression_no_pin ::= '(' type_element ')' priority1_4
 
 private priority1_5 ::= index_expression | safe_index_expression | postfix_unary_expression
 index_expression ::= expression index_expression_argument_list
@@ -1152,51 +1151,46 @@ capital_type_element ::= (primitive_type_element | capital_class_type_element) a
 
 class_type_element ::= code_reference
 qualified_class_type_element ::= qualified_code_reference
-unqualified_class_type_element ::= unqualified_code_reference
+unqualified_class_type_element ::= short_code_reference
 private capital_class_type_element ::= <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
 
 private array_type_elements ::= array_type_element*
 left array_type_element ::= '[' mb_nl ']' { consumeTokenMethod = 'consumeTokenFast' }
 
 wildcard_type_element ::= '?' wildcard_bound?
-private wildcard_bound ::= ('extends' | 'super') type_element { pin = 1 }
+private wildcard_bound ::= ('extends' | 'super') any_type_element { pin = 1 }
 left disjunction_type_element ::= disjunction_type_element_part+
 private disjunction_type_element_part ::= '|' (type_element | expect_type) { pin = 1 consumeTokenMethod = 'consumeTokenFast' }
 
 private expect_type ::= <<replaceVariants "type">> fail
+private any_type_element ::= <<anyTypeElement type_element>>
 // endregion
 
 
 // region Code references
-code_reference ::= unqualified_code_reference qualified_code_reference_tail*
-import_reference ::= unqualified_code_reference import_reference_tail*
+code_reference ::= short_code_reference code_reference_tail*
+qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
+short_code_reference ::= code_reference_part { elementType = code_reference }
+left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
 {
-  elementType = code_reference
-  name = 'import reference'
-}
-qualified_code_reference ::= unqualified_code_reference qualified_code_reference_tail qualified_code_reference_tail* { elementType = code_reference}
-private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
-
-unqualified_code_reference ::= code_reference_part { elementType = code_reference }
-left qualified_code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
-{
+  pin = 1
   elementType = code_reference
   consumeTokenMethod = 'consumeTokenFast'
 }
-left import_reference_tail ::= code_reference_dot code_reference_part
-{
-  elementType = code_reference
-  pin = 1
-}
+simple_reference ::= short_simple_reference simple_reference_tail* { elementType = code_reference }
+short_simple_reference ::= code_reference_identifier { elementType = code_reference }
+left simple_reference_tail ::= code_reference_dot code_reference_identifier { elementType = code_reference } // don't pin on dot
+
 private code_reference_dot ::= '.' !'*' mb_nl
-private code_reference_part ::= code_reference_identifier code_reference_type_arguments?
+private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
-private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft
+private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
 private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
-private code_reference_type_arguments ::= <<codeReferenceTypeArguments type_argument_list>> <<setRefHadTypeArguments>>
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= code_reference { elementType = '' name = 'type' }
+
+private qualified_name ::= <<qualifiedName code_reference>>
 // endregion
 
 

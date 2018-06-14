@@ -193,6 +193,16 @@ public class YAMLParserTest extends ParsingTestCase {
                "  \n");
   }
 
+  public void testShiftedMap() throws IOException {
+    doCodeTest("    key: ttt\n" +
+               "    ahahah: ppp");
+  }
+
+  public void testShiftedList() throws IOException {
+    doCodeTest("    - item1\n" +
+               "    - item2");
+  }
+
   public void testExplicitMaps() {
     doTest(true);
   }

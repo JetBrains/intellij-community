@@ -27,9 +27,9 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -150,13 +150,9 @@ public class ThreadTracker {
             // give thread a chance to run up to the completion
             || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
-          if (new WaitFor(10000){
-            @Override
-            protected boolean condition() {
-              return !thread.isAlive();
-            }
-          }.isConditionRealized()) {
-            continue;
+          long start = System.currentTimeMillis();
+          while (thread.isAlive() && System.currentTimeMillis() < start + 10000) {
+            UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           }
         }
         StackTraceElement[] stackTrace = thread.getStackTrace();

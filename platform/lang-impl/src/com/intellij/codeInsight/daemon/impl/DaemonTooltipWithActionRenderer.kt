@@ -296,7 +296,7 @@ internal class DaemonTooltipWithActionRenderer(text: String?,
   }
 
   private inner class ShowActionsAction(val reloader: TooltipReloader, val isEnabled: Boolean) : ToggleAction(
-    "Show Quick fixes"), HintManagerImpl.ActionToIgnore {
+    "Show Quick Fixes"), HintManagerImpl.ActionToIgnore {
 
     override fun isSelected(e: AnActionEvent): Boolean {
       return isShowActions()

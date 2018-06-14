@@ -86,7 +86,12 @@ public class VisibleGraphImpl<CommitId> implements VisibleGraph<CommitId> {
     return new ActionControllerImpl();
   }
 
-  private void updatePrintElementGenerator() {
+  @NotNull
+  public LinearGraphController getGraphController() {
+    return myGraphController;
+  }
+
+  void updatePrintElementGenerator() {
     myPrintElementManager = new PrintElementManagerImpl(myGraphController.getCompiledGraph(), myPermanentGraph, myColorManager);
     myPrintElementGenerator = new PrintElementGeneratorImpl(myGraphController.getCompiledGraph(), myPrintElementManager, myShowLongEdges);
   }

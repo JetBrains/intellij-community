@@ -9,6 +9,7 @@ import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonCancel
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonFinish
+import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNew
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonNext
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.buttonOk
 import com.intellij.testGuiFramework.util.scenarios.NewProjectDialogModel.Constants.checkCreateFromArchetype
@@ -80,6 +81,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val buttonOk = "OK"
     const val buttonCancel = "Cancel"
     const val progressSearchingForAppServerLibraries = "Searching for Application Server Libraries"
+    const val buttonNew = "New..."
 
     // groups
     const val groupJava = "Java"
@@ -540,8 +542,9 @@ fun NewProjectDialogModel.createAppServer(serverKind: String, serverInstallPath:
     val list: JListFixture = jList(groupJavaEnterprise)
     assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
     list.clickItem(groupJavaEnterprise)
+    guiTestCase.logUIStep("Add a new application server")
     combobox(textApplicationServer)
-    buttons("New...")[1].click()
+    buttons(buttonNew)[1].click()
     popupClick(serverKind)
     guiTestCase.dialog(serverKind) {
       typeText(serverInstallPath)
@@ -561,8 +564,8 @@ fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
     val list: JListFixture = jList(groupJavaEnterprise)
     assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
     list.clickItem(groupJavaEnterprise)
+    guiTestCase.logUIStep("Check that a application server `$serverName` exists")
     val cmb = combobox(textApplicationServer)
-    println(cmb.listItems())
     assert(combobox(textApplicationServer)
              .listItems()
              .contains(serverName)) { "Appserver `$serverName` doesn't exist" }

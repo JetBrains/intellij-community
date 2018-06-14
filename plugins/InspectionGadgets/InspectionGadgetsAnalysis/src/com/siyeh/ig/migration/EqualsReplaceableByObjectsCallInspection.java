@@ -42,7 +42,7 @@ import javax.swing.*;
  * @author Bas Leijdekkers
  */
 public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
-  public boolean checkNotNull;
+  public boolean checkNotNull = true;
 
   private static final EquivalenceChecker EQUIVALENCE = new NoSideEffectExpressionEquivalenceChecker();
 

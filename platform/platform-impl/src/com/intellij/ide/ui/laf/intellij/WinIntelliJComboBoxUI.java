@@ -571,6 +571,7 @@ public class WinIntelliJComboBoxUI extends DarculaComboBoxUI {
       BorderLayoutPanel panel = JBUI.Panels.simplePanel(c).withBorder(
         list.getComponentOrientation().isLeftToRight() ? JBUI.Borders.empty(0, 5, 0, 1) : JBUI.Borders.empty(0, 1, 0, 5));
       panel.setBackground(c.getBackground());
+      panel.setDelegateAccessibleContextToWrappedComponent(true);
       return panel;
     }
   }
