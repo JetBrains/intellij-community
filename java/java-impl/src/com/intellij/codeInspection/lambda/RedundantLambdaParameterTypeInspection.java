@@ -71,8 +71,9 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
   private static void removeTypes(PsiLambdaExpression lambdaExpression) {
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
-      if (Arrays.stream(parameters).anyMatch(parameter -> parameter.hasModifierProperty(PsiModifier.FINAL) || 
-                                                          AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter,Collections.emptySet()))) {
+      if (PsiUtil.isLanguageLevel11OrHigher(lambdaExpression) &&
+          Arrays.stream(parameters).anyMatch(parameter -> parameter.hasModifierProperty(PsiModifier.FINAL) || 
+                                                          parameter.getAnnotations().length > 0)) {
         for (PsiParameter parameter : parameters) {
           PsiTypeElement element = parameter.getTypeElement();
           if (element != null) {
