@@ -6,12 +6,12 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.vfs.VFileProperty;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.ui.tree.BaseTreeModel;
+import com.intellij.ui.tree.TreeCollector;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.concurrency.Invoker;
@@ -30,6 +30,7 @@ import java.util.function.Predicate;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static com.intellij.ui.tree.TreePathUtil.pathToCustomNode;
+import static com.intellij.ui.tree.project.ProjectFileListener.findArea;
 import static java.util.Collections.emptyList;
 
 public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> implements InvokerSupplier {
@@ -120,10 +121,6 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     return visible;
   }
 
-  private static boolean isExpectedModule(@Nullable Module module, @NotNull VirtualFile file, @NotNull Project project) {
-    return file.isValid() && !project.isDisposed() && module == ProjectFileIndex.getInstance(project).getModuleForFile(file);
-  }
-
   @NotNull
   private static Module[] getModules(@NotNull Project project) {
     ModuleManager manager = ModuleManager.getInstance(project);
@@ -141,6 +138,15 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       if (root.filter == null && filter == null) return;
       root.filter = filter;
       root.resetVisibility();
+      pathChanged(null);
+    });
+  }
+
+  public void setShowModules(boolean showModules) {
+    onValidThread(() -> {
+      if (root.showModules == showModules) return;
+      root.showModules = showModules;
+      root.valid = false; // need to reload content roots
       pathChanged(null);
     });
   }
@@ -211,6 +217,7 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
 
   private static class ProjectNode extends Node<RootNode> {
     volatile VirtualFileFilter filter;
+    volatile boolean showModules;
     final Project project;
 
     ProjectNode(@NotNull Project project) {
@@ -227,15 +234,27 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
     List<RootNode> getChildren(@NotNull List<RootNode> oldList) {
       List<RootNode> list = new SmartList<>();
       Mapper<RootNode> mapper = new Mapper<>(oldList, RootNode::new);
+      TreeCollector<VirtualFile> collector = showModules ? null : TreeCollector.createFileRootsCollector();
       VirtualFile ancestor = project.getBaseDir();
-      if (ancestor != null && isExpectedModule(null, ancestor, project)) {
-        list.add(mapper.apply(ancestor, project));
+      if (ancestor != null && project == findArea(ancestor, project)) {
+        if (collector != null) {
+          collector.add(ancestor);
+        }
+        else {
+          list.add(mapper.apply(ancestor, project));
+        }
       }
       for (Module module: getModules(project)) {
         for (VirtualFile file: getContentRoots(module)) {
-          list.add(mapper.apply(file, module));
+          if (collector != null) {
+            collector.add(file);
+          }
+          else {
+            list.add(mapper.apply(file, module));
+          }
         }
       }
+      if (collector != null) collector.get().forEach(file -> list.add(mapper.apply(file, file)));
       // invalidate all changed file nodes without notifications
       list.forEach(node -> node.invalidateNow(null));
       return list;
@@ -276,6 +295,9 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
       VirtualFile file = getVirtualFile();
       if (!file.isValid()) return emptyList();
 
+      ProjectNode parent = findParent(ProjectNode.class);
+      if (parent == null) return emptyList();
+
       visibility = ThreeState.UNSURE;
 
       VirtualFile[] children = file.getChildren();
@@ -288,19 +310,9 @@ public final class ProjectFileTreeModel extends BaseTreeModel<ProjectFileNode> i
           continue; // ignore invalid symlink
         }
         Object id = getRootID();
-        if (id instanceof VirtualFile) {
+        AreaInstance area = findArea(child, parent.project);
+        if (area != null && (id instanceof VirtualFile || area.equals(id))) {
           list.add(mapper.apply(child, id));
-        }
-        else if (id instanceof Project) {
-          if (isExpectedModule(null, child, (Project)id)) {
-            list.add(mapper.apply(child, id));
-          }
-        }
-        else if (id instanceof Module) {
-          Module module = (Module)id;
-          if (!module.isDisposed() && isExpectedModule(module, child, module.getProject())) {
-            list.add(mapper.apply(child, id));
-          }
         }
       }
       return list;
