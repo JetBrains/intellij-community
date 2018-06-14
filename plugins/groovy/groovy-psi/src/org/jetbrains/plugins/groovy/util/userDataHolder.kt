@@ -3,9 +3,9 @@ package org.jetbrains.plugins.groovy.util
 
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
-import com.intellij.openapi.util.UserDataHolderUnprotected
+import com.intellij.openapi.util.UserDataHolder
 
-internal inline fun <V : Any, R> UserDataHolderUnprotected.withKey(key: Key<V>, value: V?, crossinline computation: () -> R): R {
+internal inline fun <V : Any, R> UserDataHolder.withKey(key: Key<V>, value: V?, crossinline computation: () -> R): R {
   val previous = this[key]
   if (value == previous) {
     return computation()
@@ -19,8 +19,8 @@ internal inline fun <V : Any, R> UserDataHolderUnprotected.withKey(key: Key<V>, 
   }
 }
 
-internal operator fun <V : Any> UserDataHolderUnprotected.get(key: Key<V>): V? {
-  getUserDataUnprotected(key)?.let {
+internal operator fun <V : Any> UserDataHolder.get(key: Key<V>): V? {
+  getUserData(key)?.let {
     return it
   }
   if (key is KeyWithDefaultValue<V>) {
@@ -31,10 +31,6 @@ internal operator fun <V : Any> UserDataHolderUnprotected.get(key: Key<V>): V? {
   return null
 }
 
-internal operator fun UserDataHolderUnprotected.get(key: Key<Boolean>): Boolean {
-  return getUserDataUnprotected(key) == true
-}
+internal operator fun UserDataHolder.get(key: Key<Boolean>): Boolean = getUserData(key) == true
 
-internal operator fun <V : Any> UserDataHolderUnprotected.set(key: Key<V>, value: V?) {
-  putUserDataUnprotected(key, value)
-}
+internal operator fun <V : Any> UserDataHolder.set(key: Key<V>, value: V?): Unit = putUserData(key, value)
