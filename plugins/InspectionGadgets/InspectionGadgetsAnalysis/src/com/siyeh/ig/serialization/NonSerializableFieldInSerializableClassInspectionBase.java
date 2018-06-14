@@ -79,8 +79,7 @@ public class NonSerializableFieldInSerializableClassInspectionBase extends Seria
       if (SerializationUtils.isProbablySerializable(field.getType())) {
         return;
       }
-      final boolean hasWriteObject = SerializationUtils.hasWriteObject(aClass);
-      if (hasWriteObject) {
+      if (SerializationUtils.hasWriteObject(aClass) || SerializationUtils.hasWriteReplace(aClass)) {
         return;
       }
       if (isIgnoredSubclass(aClass)) {
