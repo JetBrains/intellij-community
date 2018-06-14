@@ -14,6 +14,8 @@ import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
+  public enum State { NoErrors, ReadErrors, UnreadErrors }
+
   private static final int MAX_POOL_SIZE = 100;
   private static final int MAX_GROUP_SIZE = 20;
   private static final int GROUP_TIME_SPAN_MS = 1000;
@@ -49,6 +51,14 @@ public class MessagePool {
       TooManyErrorsException e = new TooManyErrorsException();
       myGrouper.addToGroup(new LogMessage(e, null, Collections.emptyList()));
     }
+  }
+
+  public State getState() {
+    if (myErrors.isEmpty()) return State.NoErrors;
+    for (AbstractMessage message: myErrors) {
+      if (!message.isRead()) return State.UnreadErrors;
+    }
+    return State.ReadErrors;
   }
 
   public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
