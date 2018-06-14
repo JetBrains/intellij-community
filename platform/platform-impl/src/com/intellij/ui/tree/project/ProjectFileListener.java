@@ -19,6 +19,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 import static com.intellij.ProjectTopics.PROJECT_ROOTS;
+import static com.intellij.openapi.util.registry.Registry.is;
 import static com.intellij.openapi.vfs.VfsUtilCore.isAncestor;
 import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 import static com.intellij.psi.util.PsiUtilCore.getVirtualFile;
@@ -127,6 +128,7 @@ public abstract class ProjectFileListener {
     if (project == null || project.isDisposed()) return null;
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
+    if (!is("projectView.show.base.dir")) return null;
     VirtualFile ancestor = project.getBaseDir();
     // file does not belong to any content root, but it is located under the project directory
     if (ancestor == null || !isAncestor(ancestor, file, false)) return null;
