@@ -18,14 +18,14 @@ package com.intellij.ide;
 import com.google.common.base.Charsets;
 import com.google.common.collect.ImmutableList;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardOpenOption;
+import java.nio.file.*;
+import java.util.Iterator;
 import java.util.List;
+import java.util.Objects;
 import java.util.stream.Collectors;
 
 public class ThreadDumpsDatabase {
@@ -61,7 +61,39 @@ public class ThreadDumpsDatabase {
       .map(String::trim)
       .filter(line -> !line.isEmpty())
       .map(Paths::get)
-      .filter(Files::isReadable)
+      .map(ThreadDumpsDatabase::fixDirectoryPathAndCheckIfReadable)
+      .filter(Objects::nonNull)
       .collect(Collectors.toList());
+  }
+
+  /**
+   * Performance reports are moved to a different directory once UI is responsive again (path contains duration
+   * of the freeze). If the file pointed by {@code path} doesn't exist, it checks if it exists under such directory.
+   * @returns Path where such report exists, {@code null} otherwise
+   */
+  @Nullable
+  private static Path fixDirectoryPathAndCheckIfReadable(@NotNull Path path) {
+    if (Files.isReadable(path)) {
+      return path;
+    }
+
+    Path directory = path.getParent();
+    try {
+      final String prefix = directory.getFileName() + "-";
+      try (DirectoryStream<Path> paths = Files.newDirectoryStream(
+        directory.getParent(),
+        entry -> entry.getFileName().toString().startsWith(prefix))) {
+        Iterator<Path> iterator = paths.iterator();
+        if (!iterator.hasNext()) {
+          return null;
+        }
+        Path newDirectory = iterator.next();
+        Path newFile = newDirectory.resolve(path.getFileName());
+        return Files.isReadable(newFile) ? newFile : null;
+      }
+    }
+    catch (IOException e) {
+      return null;
+    }
   }
 }
