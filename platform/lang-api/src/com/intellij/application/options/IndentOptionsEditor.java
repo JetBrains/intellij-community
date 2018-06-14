@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsCustomizable;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.ui.OptionGroup;
 import com.intellij.ui.components.fields.IntegerField;
 import org.jetbrains.annotations.ApiStatus;
@@ -31,6 +32,7 @@ import javax.swing.*;
 import static com.intellij.psi.codeStyle.CodeStyleConstraints.*;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_INDENT_SIZE;
 import static com.intellij.psi.codeStyle.CodeStyleDefaults.DEFAULT_TAB_SIZE;
+import static com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS;
 
 @SuppressWarnings({"Duplicates", "deprecation", "DeprecatedIsStillUsed"})
 public class IndentOptionsEditor extends OptionGroup implements CodeStyleSettingsCustomizable {
@@ -57,9 +59,26 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   @Deprecated
   protected JLabel myIndentLabel;
 
+  private final @Nullable LanguageCodeStyleSettingsProvider myProvider;
+
+  public IndentOptionsEditor() {
+    this(null);
+  }
+
+  /**
+   * @param provider The provider which will be used to customize the indent options editor. If {@code null} is passed, no customization
+   *                 will be carried out and thus all the available options will be shown.
+   */
+  public IndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+    myProvider = provider;
+  }
+
   @Override
   public JPanel createPanel() {
     addComponents();
+    if (myProvider != null) {
+      myProvider.customizeSettings(this, INDENT_SETTINGS);
+    }
     return super.createPanel();
   }
 
