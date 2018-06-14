@@ -225,7 +225,7 @@ public class ExpressionUtils {
   @Contract("null -> false")
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
     expression = PsiUtil.deparenthesizeExpression(expression);
-    return expression != null && PsiType.NULL.equals(expression.getType());
+    return expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null;
   }
 
   /**
