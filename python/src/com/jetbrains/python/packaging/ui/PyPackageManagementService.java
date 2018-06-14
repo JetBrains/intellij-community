@@ -124,6 +124,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return result;
   }
 
+  @NotNull
   private static List<String> getAdditionalRepositories() {
     return PyPackageService.getInstance().additionalRepositories;
   }

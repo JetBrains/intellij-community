@@ -159,7 +159,7 @@ public class PyPIPackageUtil {
   }
 
   @NotNull
-  public List<RepoPackage> getAdditionalPackages(List<String> repositories) {
+  public List<RepoPackage> getAdditionalPackages(@NotNull List<String> repositories) {
     return StreamEx.of(myAdditionalPackages.getAllPresent(repositories).values()).flatMap(StreamEx::of).toList();
   }
 
