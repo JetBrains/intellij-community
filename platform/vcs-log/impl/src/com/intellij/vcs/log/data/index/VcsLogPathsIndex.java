@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
@@ -285,9 +286,10 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
             addParentsToResult(result, parentIndex, parentsCount, renamedPath.first, inputData.getRoot(), processedParents);
           }
 
-          for (String modifiedPath : inputData.getModifiedPaths(parentIndex)) {
-            addChangeToResult(result, parentIndex, parentsCount, new LightFilePath(modifiedPath, false), ChangeData.MODIFIED);
-            addParentsToResult(result, parentIndex, parentsCount, modifiedPath, inputData.getRoot(), processedParents);
+          for (Map.Entry<String, Change.Type> modifiedPath : inputData.getModifiedPaths(parentIndex).entrySet()) {
+            addChangeToResult(result, parentIndex, parentsCount, new LightFilePath(modifiedPath.getKey(), false),
+                              createChangeData(modifiedPath.getValue()));
+            addParentsToResult(result, parentIndex, parentsCount, modifiedPath.getKey(), inputData.getRoot(), processedParents);
           }
         }
         catch (IOException e) {
@@ -367,6 +369,18 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     }
 
     @NotNull
+    private static ChangeData createChangeData(@NotNull Change.Type type) {
+      switch (type) {
+        case NEW:
+          return ChangeData.ADDED;
+        case DELETED:
+          return ChangeData.REMOVED;
+        default:
+          return ChangeData.MODIFIED;
+      }
+    }
+
+    @NotNull
     public PersistentEnumeratorBase<LightFilePath> getPathsEnumerator() {
       return myPathsEnumerator;
     }
@@ -408,6 +422,8 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
   public static class ChangeData {
     public static final ChangeData NOT_CHANGED = new ChangeData(ChangeKind.NOT_CHANGED, -1);
     public static final ChangeData MODIFIED = new ChangeData(ChangeKind.MODIFIED, -1);
+    public static final ChangeData ADDED = new ChangeData(ChangeKind.ADDED, -1);
+    public static final ChangeData REMOVED = new ChangeData(ChangeKind.REMOVED, -1);
 
     @NotNull public final ChangeKind kind;
     public final int otherPath;
@@ -440,7 +456,9 @@ public class VcsLogPathsIndex extends VcsLogFullDetailsIndex<List<VcsLogPathsInd
     MODIFIED((byte)0),
     RENAMED_FROM((byte)1),
     RENAMED_TO((byte)2),
-    NOT_CHANGED((byte)3); // we do not want to have nulls in lists
+    NOT_CHANGED((byte)3), // we do not want to have nulls in lists
+    ADDED((byte)4),
+    REMOVED((byte)5);
 
     public final byte id;
 
