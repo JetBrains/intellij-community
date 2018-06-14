@@ -46,6 +46,10 @@ class TBItemAnActionButton extends TBItemButton {
     myAutoVisibility = true;
     myHiddenWhenDisabled = hiddenWhenDisabled;
     myShowMode = showMode;
+
+    if (action instanceof ToggleAction) {
+      myFlags |= NSTLibrary.BUTTON_FLAG_TOGGLE;
+    }
   }
 
   @Override

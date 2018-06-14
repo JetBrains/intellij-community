@@ -107,6 +107,19 @@ class TBItemButton extends TBItem {
     return this;
   }
 
+  TBItemButton setToggle(boolean toggle) {
+    int flags = _applyFlag(myFlags, toggle, NSTLibrary.BUTTON_FLAG_TOGGLE);
+    if (flags != myFlags) {
+      myFlags = flags;
+      if (myNativePeer != ID.NIL) {
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
+        _updateNativePeer();
+      }
+    }
+
+    return this;
+  }
+
   TBItemButton setFlags(boolean isSelected, boolean isDisabled, boolean isColored) {
     int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
     flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);

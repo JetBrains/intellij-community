@@ -57,6 +57,7 @@ public interface NSTLibrary extends Library {
   int BUTTON_FLAG_DISABLED  = 1;
   int BUTTON_FLAG_SELECTED  = 1 << 1;
   int BUTTON_FLAG_COLORED   = 1 << 2;
+  int BUTTON_FLAG_TOGGLE    = 1 << 3;
 
   int BUTTON_PRIORITY_SHIFT     = 3*8;
   int BUTTON_PRIORITY_MASK      = 0xFF << BUTTON_PRIORITY_SHIFT;
