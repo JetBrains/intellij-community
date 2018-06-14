@@ -52,8 +52,9 @@ public class FileHistoryUtil {
     return Collections.emptyList();
   }
 
-  static boolean affectsFile(@NotNull Change change, @NotNull FilePath file) {
-    ContentRevision revision = notNull(chooseNotNull(change.getAfterRevision(), change.getBeforeRevision()));
+  static boolean affectsFile(@NotNull Change change, @NotNull FilePath file, boolean isDeleted) {
+    ContentRevision revision = isDeleted ? change.getBeforeRevision() : change.getAfterRevision();
+    if (revision == null) return false;
     return file.equals(revision.getFile());
   }
 

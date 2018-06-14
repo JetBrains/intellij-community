@@ -17,7 +17,7 @@ import com.intellij.vcs.log.graph.api.permanent.PermanentCommitsInfo
 import com.intellij.vcs.log.graph.api.permanent.PermanentGraphInfo
 import com.intellij.vcs.log.graph.collapsing.CollapsedGraph
 import com.intellij.vcs.log.graph.impl.facade.*
-import com.intellij.vcs.log.graph.utils.BfsUtil
+import com.intellij.vcs.log.graph.utils.BfsUtil.getCorrespondingParent
 import com.intellij.vcs.log.graph.utils.DfsUtil
 import com.intellij.vcs.log.graph.utils.LinearGraphUtils
 import com.intellij.vcs.log.graph.utils.impl.BitSetFlags
@@ -28,14 +28,14 @@ import java.util.function.BiConsumer
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
                                   private val fileNamesData: FileNamesData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
-  val pathsMap = mutableMapOf<Int, FilePath?>()
+  val pathsMap = mutableMapOf<Int, MaybeDeletedFilePath>()
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
     val trivialCandidates = mutableSetOf<Int>()
     pathsMap.forEach { c, p ->
-      if (p != null && fileNamesData.isTrivialMerge(c, p)) {
+      if (fileNamesData.isTrivialMerge(c, p.filePath)) {
         trivialCandidates.add(c)
       }
     }
@@ -50,16 +50,16 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
-                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, FilePath?> {
+                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, MaybeDeletedFilePath> {
     if (fileNamesData.hasRenames) {
       val visibleLinearGraph = controller.compiledGraph
 
-      val row = startCommit?.let {
+      val (row, path) = startCommit?.let {
         findAncestorRowAffectingFile(startCommit, visibleLinearGraph, permanentGraphInfo)
-      } ?: 0
+      } ?: Pair(0, MaybeDeletedFilePath(startPath))
       if (row >= 0) {
         val refiner = FileHistoryRefiner(visibleLinearGraph, permanentGraphInfo, fileNamesData)
-        val (paths, excluded) = refiner.refine(row, startPath)
+        val (paths, excluded) = refiner.refine(row, path)
         if (!excluded.isEmpty()) {
           val hidden = hideCommits(controller, permanentGraphInfo, excluded)
           if (!hidden) LOG.error("Could not hide excluded commits from history for " + startPath.path)
@@ -72,10 +72,22 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   private fun findAncestorRowAffectingFile(commitId: Int,
                                            visibleLinearGraph: LinearGraph,
-                                           permanentGraphInfo: PermanentGraphInfo<Int>): Int {
-    return findVisibleAncestorRow(commitId, visibleLinearGraph, permanentGraphInfo) { nodeId ->
-      fileNamesData.affects(permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId), startPath)
+                                           permanentGraphInfo: PermanentGraphInfo<Int>): Pair<Int, MaybeDeletedFilePath> {
+    val existing = MaybeDeletedFilePath(startPath)
+    val deleted = MaybeDeletedFilePath(startPath, true)
+    val isDeleted: Ref<Boolean> = Ref.create(false)
+    val row = findVisibleAncestorRow(commitId, visibleLinearGraph, permanentGraphInfo) { nodeId ->
+      val id = permanentGraphInfo.permanentCommitsInfo.getCommitId(nodeId)
+      when {
+        fileNamesData.affects(id, existing) -> true
+        fileNamesData.affects(id, deleted) -> {
+          isDeleted.set(true)
+          true
+        }
+        else -> false
+      }
     } ?: -1
+    return Pair(row, if (isDeleted.get()) deleted else existing)
   }
 
   companion object {
@@ -128,12 +140,12 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
   private val permanentCommitsInfo: PermanentCommitsInfo<Int> = permanentGraphInfo.permanentCommitsInfo
   private val permanentLinearGraph: LiteLinearGraph = LinearGraphUtils.asLiteLinearGraph(permanentGraphInfo.linearGraph)
 
-  private val paths = Stack<FilePath>()
+  private val paths = Stack<MaybeDeletedFilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  private val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath?>()
+  private val pathsForCommits = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
   private val excluded = ContainerUtil.newHashSet<Int>()
 
-  fun refine(row: Int, startPath: FilePath): Pair<HashMap<Int, FilePath?>, HashSet<Int>> {
+  fun refine(row: Int, startPath: MaybeDeletedFilePath): Pair<HashMap<Int, MaybeDeletedFilePath>, HashSet<Int>> {
     paths.push(startPath)
     DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
 
@@ -151,33 +163,27 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     val currentNodeId = visibleLinearGraph.getNodeId(currentNode)
     val currentCommit = permanentCommitsInfo.getCommitId(currentNodeId)
 
-    val previousPath = paths.findLast { it != null }!!
-    var currentPath: FilePath? = previousPath
+    val previousPath = paths.last()
+    var currentPath: MaybeDeletedFilePath = previousPath
 
     if (previousNode != DfsUtil.NextNode.NODE_NOT_FOUND) {
       val previousNodeId = visibleLinearGraph.getNodeId(previousNode)
       val previousCommit = permanentCommitsInfo.getCommitId(previousNodeId)
 
-      if (down) {
+      currentPath = if (down) {
         val pathGetter = { parentIndex: Int ->
-          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+          namesData.getPathInParentRevision(previousCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
         }
-        currentPath = findPathWithoutConflict(previousNodeId, pathGetter)
-        if (currentPath == null) {
-          val parentIndex = BfsUtil.getCorrespondingParent(permanentLinearGraph, previousNodeId, currentNodeId, visibilityBuffer)
-          currentPath = pathGetter(parentIndex)
-        }
+        val path = findPathWithoutConflict(previousNodeId, pathGetter)
+        path ?: pathGetter(getCorrespondingParent(permanentLinearGraph, previousNodeId, currentNodeId, visibilityBuffer))
       }
       else {
         val pathGetter = { parentIndex: Int ->
-          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath)
+          namesData.getPathInChildRevision(currentCommit, permanentCommitsInfo.getCommitId(parentIndex), previousPath.filePath)
         }
-        currentPath = findPathWithoutConflict(currentNodeId, pathGetter)
-        if (currentPath == null) {
-          // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
-          val parentIndex = BfsUtil.getCorrespondingParent(permanentLinearGraph, currentNodeId, previousNodeId, visibilityBuffer)
-          currentPath = pathGetter(parentIndex)
-        }
+        val path = findPathWithoutConflict(currentNodeId, pathGetter)
+        // since in reality there is no edge between the nodes, but the whole path, we need to know, which parent is affected by this path
+        path ?: pathGetter(getCorrespondingParent(permanentLinearGraph, currentNodeId, previousNodeId, visibilityBuffer))
       }
     }
 
@@ -185,7 +191,7 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
     paths.push(currentPath)
   }
 
-  private fun findPathWithoutConflict(nodeId: Int, pathGetter: (Int) -> FilePath?): FilePath? {
+  private fun findPathWithoutConflict(nodeId: Int, pathGetter: (Int) -> MaybeDeletedFilePath): MaybeDeletedFilePath? {
     val parents = permanentLinearGraph.getNodes(nodeId, LiteLinearGraph.NodeFilter.DOWN)
     val path = pathGetter(parents.first())
     if (parents.size == 1) return path
@@ -250,28 +256,28 @@ abstract class FileNamesData(filePath: FilePath) {
     return null
   }
 
-  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): FilePath? {
+  fun getPathInParentRevision(commit: Int, parent: Int, childPath: FilePath): MaybeDeletedFilePath {
     val commits = UnorderedPair(commit, parent)
     val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(commit, childPath) }
-    if (otherPath != null) return otherPath
+    if (otherPath != null) return MaybeDeletedFilePath(otherPath)
 
-    val changes = affectedCommits[childPath]?.get(commit) ?: return childPath
-    if (changes[parent] == ChangeKind.ADDED) return null
-    return childPath
+    val changes = affectedCommits[childPath]?.get(commit) ?: return MaybeDeletedFilePath(childPath)
+    return MaybeDeletedFilePath(childPath, changes[parent] == ChangeKind.ADDED)
   }
 
-  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: FilePath): FilePath? {
+  fun getPathInChildRevision(commit: Int, parent: Int, parentPath: FilePath): MaybeDeletedFilePath {
     val commits = UnorderedPair(commit, parent)
     val otherPath = commitToRename.get(commits).firstNotNull { rename -> rename.getOtherPath(parent, parentPath) }
-    if (otherPath != null) return otherPath
+    if (otherPath != null) return MaybeDeletedFilePath(otherPath)
 
-    val changes = affectedCommits[parentPath]?.get(commit) ?: return parentPath
-    if (changes[parent] == ChangeKind.REMOVED) return null
-    return parentPath
+    val changes = affectedCommits[parentPath]?.get(commit) ?: return MaybeDeletedFilePath(parentPath)
+    return MaybeDeletedFilePath(parentPath, changes[parent] == ChangeKind.REMOVED)
   }
 
-  fun affects(commit: Int, path: FilePath): Boolean {
-    return affectedCommits[path]?.get(commit) != null
+  fun affects(commit: Int, path: MaybeDeletedFilePath): Boolean {
+    val changes = affectedCommits[path.filePath]?.get(commit) ?: return false
+    if (path.deleted) return changes.containsValue(ChangeKind.REMOVED)
+    return !changes.containsValue(ChangeKind.REMOVED)
   }
 
   fun getCommits(): Set<Int> {
@@ -282,10 +288,10 @@ abstract class FileNamesData(filePath: FilePath) {
     return result
   }
 
-  fun buildPathsMap(): Map<Int, FilePath> {
-    val result = mutableMapOf<Int, FilePath>()
-    affectedCommits.forEach { filePath, commit, _ ->
-      result[commit] = filePath
+  fun buildPathsMap(): Map<Int, MaybeDeletedFilePath> {
+    val result = mutableMapOf<Int, MaybeDeletedFilePath>()
+    affectedCommits.forEach { filePath, commit, changes ->
+      result[commit] = MaybeDeletedFilePath(filePath, changes.containsValue(ChangeKind.REMOVED))
     }
     return result
   }
@@ -330,6 +336,10 @@ private data class Rename(val filePath1: FilePath, val filePath2: FilePath, val 
   fun getOtherPath(ad: AdditionDeletion): FilePath? {
     return getOtherPath(if (ad.isAddition) ad.child else ad.parent, ad.filePath)
   }
+}
+
+data class MaybeDeletedFilePath(val filePath: FilePath, val deleted: Boolean) {
+  constructor(filePath: FilePath) : this(filePath, false)
 }
 
 internal fun Map<FilePath, TIntObjectHashMap<TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>>>.forEach(action: (FilePath, Int, TIntObjectHashMap<VcsLogPathsIndex.ChangeKind>) -> Unit) {

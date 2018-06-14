@@ -135,9 +135,9 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
       if (revisions.isEmpty()) return VisiblePack.EMPTY
 
       if (dataPack.isFull) {
-        val pathsMap = ContainerUtil.newHashMap<Int, FilePath>()
+        val pathsMap = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
         for (revision in revisions) {
-          pathsMap[getIndex(revision)] = (revision as VcsFileRevisionEx).path
+          pathsMap[getIndex(revision)] = MaybeDeletedFilePath((revision as VcsFileRevisionEx).path)
         }
         val visibleGraph = vcsLogFilterer.createVisibleGraph(dataPack, sortType, null, pathsMap.keys)
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, pathsMap)
@@ -145,10 +145,10 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
 
       val commits = ContainerUtil.newArrayListWithCapacity<GraphCommit<Int>>(revisions.size)
 
-      val pathsMap = ContainerUtil.newHashMap<Int, FilePath>()
+      val pathsMap = ContainerUtil.newHashMap<Int, MaybeDeletedFilePath>()
       for (revision in revisions) {
         val index = getIndex(revision)
-        pathsMap[index] = (revision as VcsFileRevisionEx).path
+        pathsMap[index] = MaybeDeletedFilePath((revision as VcsFileRevisionEx).path)
         commits.add(GraphCommitImpl.createCommit(index, emptyList(), revision.getRevisionDate().time))
       }
 

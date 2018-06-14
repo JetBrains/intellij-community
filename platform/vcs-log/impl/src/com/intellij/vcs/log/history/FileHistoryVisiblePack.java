@@ -26,19 +26,26 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class FileHistoryVisiblePack extends VisiblePack {
-  @NotNull private final Map<Integer, FilePath> myNamesData;
+  @NotNull private final Map<Integer, MaybeDeletedFilePath> myCommitsToPaths;
 
   public FileHistoryVisiblePack(@NotNull DataPackBase dataPack,
                                 @NotNull VisibleGraph<Integer> graph,
                                 boolean canRequestMore,
                                 @NotNull VcsLogFilterCollection filters,
-                                @NotNull Map<Integer, FilePath> namesData) {
+                                @NotNull Map<Integer, MaybeDeletedFilePath> commitsToPaths) {
     super(dataPack, graph, canRequestMore, filters);
-    myNamesData = namesData;
+    myCommitsToPaths = commitsToPaths;
   }
 
   @Nullable
   public FilePath getFilePath(int commit) {
-    return myNamesData.get(commit);
+    MaybeDeletedFilePath filePath = myCommitsToPaths.get(commit);
+    if (filePath == null) return null;
+    return filePath.getFilePath();
+  }
+
+  public boolean isFileDeletedInCommit(int commit) {
+    MaybeDeletedFilePath filePath = myCommitsToPaths.get(commit);
+    return filePath != null && filePath.getDeleted();
   }
 }

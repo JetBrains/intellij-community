@@ -108,24 +108,27 @@ public class FileHistoryUi extends AbstractVcsLogUi {
 
   @Nullable
   public FilePath getPathInCommit(@NotNull Hash hash) {
-    if (myPath.isDirectory()) return myPath;
+    if (myPath.isDirectory() || !(myVisiblePack instanceof FileHistoryVisiblePack)) return myPath;
 
     int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
-    if (myVisiblePack instanceof FileHistoryVisiblePack) {
-      return ((FileHistoryVisiblePack)myVisiblePack).getFilePath(commitIndex);
-    }
-    return myPath;
+    return ((FileHistoryVisiblePack)myVisiblePack).getFilePath(commitIndex);
+  }
+
+  private boolean isFileDeletedInCommit(@NotNull Hash hash) {
+    if (myPath.isDirectory() || !(myVisiblePack instanceof FileHistoryVisiblePack)) return false;
+
+    int commitIndex = myLogData.getStorage().getCommitIndex(hash, myRoot);
+    return ((FileHistoryVisiblePack)myVisiblePack).isFileDeletedInCommit(commitIndex);
   }
 
   @NotNull
   public List<Change> collectRelevantChanges(@NotNull VcsFullCommitDetails details) {
     FilePath filePath = getPathInCommit(details.getId());
     if (filePath == null) return ContainerUtil.emptyList();
-    // todo deal with deleted files
     return FileHistoryUtil.collectRelevantChanges(details,
-                                                  change -> myPath.isDirectory()
-                                                            ? FileHistoryUtil.affectsDirectory(change, myPath)
-                                                            : FileHistoryUtil.affectsFile(change, filePath));
+                                                  change -> filePath.isDirectory()
+                                                            ? FileHistoryUtil.affectsDirectory(change, filePath)
+                                                            : FileHistoryUtil.affectsFile(change, filePath, isFileDeletedInCommit(details.getId())));
   }
 
   @Override
