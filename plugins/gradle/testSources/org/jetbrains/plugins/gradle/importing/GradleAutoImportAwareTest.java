@@ -12,7 +12,7 @@ import org.junit.Test;
 public class GradleAutoImportAwareTest extends GradleImportingTestCase {
 
   @Test
-  public void testDirectoriesNotWatched() throws Exception {
+  public void testCompilerOutputNotWatched() throws Exception {
     createProjectSubFile("src/main/java/my/pack/gradle/A.java");
     final VirtualFile file = createProjectSubFile("buildScripts/myScript.gradle");
     importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
@@ -23,9 +23,12 @@ public class GradleAutoImportAwareTest extends GradleImportingTestCase {
 
     final Module module = ModuleManager.getInstance(myProject).getModules()[0];
     final CompilerModuleExtension compilerModuleExtension = CompilerModuleExtension.getInstance(module);
-    final String outputPath = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl() + "/my/pack/gradle");
+    final String compilerOutputDir = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrl() + "/my/pack/gradle");
+    final String testDataOutputDir = VfsUtilCore.urlToPath(compilerModuleExtension.getCompilerOutputUrlForTests() + "/testData.gradle");
 
-    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(outputPath, myProject));
+    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(compilerOutputDir, myProject));
+    assertNull(gradleAutoImportAware.getAffectedExternalProjectPath(testDataOutputDir, myProject));
+
     assertNotNull(gradleAutoImportAware.getAffectedExternalProjectPath(file.getPath(), myProject));
   }
 }
