@@ -264,6 +264,14 @@ public class EditorWindow {
               }
             }
           }
+          if (myOwner != null) {
+            if (myOwner.getCurrentWindow() != null) {
+              JComponent component = myOwner.getCurrentWindow().myPanel;
+              if (component != null) {
+                IdeFocusManager.findInstance().requestFocus(component.getComponent(0), true);
+              }
+            }
+          }
         }
         else {
           myPanel.revalidate();
