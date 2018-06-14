@@ -91,6 +91,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private int myCalcThreadRestartRequestId = 0;
   private final Object myWorkerRestartRequestLock = new Object();
   private final Alarm listOperationsAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
+  private final Alarm emptyListAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
 
   private Runnable searchFinishedHandler = () -> {};
 
@@ -617,15 +618,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   private void handleEmptyResults() {
-    ApplicationManager.getApplication().invokeLater(() -> {
-      if (!nonProjectCheckBoxLocked && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
-        setUseNonProjectItems(true);
-        return;
-      }
+    assert EventQueue.isDispatchThread() : "Must be EDT";
+    if (!nonProjectCheckBoxLocked && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
+      setUseNonProjectItems(true);
+      return;
+    }
 
-      hideHint();
-    });
-
+    hideHint();
   }
 
   @SuppressWarnings("Duplicates") //todo remove suppress #UX-1
@@ -670,6 +669,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
     private void resetList() {
       listOperationsAlarm.cancelAllRequests();
+      emptyListAlarm.cancelAllRequests();
       listOperationsAlarm.addRequest(() -> {
         Dimension oldSize = getPreferredSize();
         myResultsList.getEmptyText().setText(IdeBundle.message("label.choosebyname.searching"));
@@ -692,7 +692,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       }
 
       if (!anyFound) {
-        handleEmptyResults();
+        emptyListAlarm.addRequest(() -> handleEmptyResults(), 50);
       }
     }
 
@@ -728,7 +728,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
           ScrollingUtil.ensureSelectionExists(myResultsList);
         }
         firePropertyChange("preferredSize", oldSize, getPreferredSize());
-      }, 0);
+      }, 50);
 
       return found;
     }
