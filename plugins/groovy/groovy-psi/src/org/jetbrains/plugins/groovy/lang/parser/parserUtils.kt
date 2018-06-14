@@ -50,7 +50,6 @@ private val currentClassNames: Key<Deque<String>> = KeyWithDefaultValue.create("
 private val parseDiamonds: Key<Boolean> = Key.create("groovy.parse.diamonds")
 private val parseArguments: Key<Boolean> = Key.create("groovy.parse.arguments")
 private val parseApplicationArguments: Key<Boolean> = Key.create("groovy.parse.application.arguments")
-private val parseNoTypeArgumentsCodeReference: Key<Boolean> = Key.create("groovy.parse.no.type.arguments")
 private val parseAnyTypeElement: Key<Boolean> = Key.create("groovy.parse.any.type.element")
 private val parseQualifiedName: Key<Boolean> = Key.create("groovy.parse.qualified.name")
 private val parseCapitalizedCodeReference: Key<Boolean> = Key.create("groovy.parse.capitalized")
@@ -90,14 +89,6 @@ fun allowDiamond(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
 }
 
 fun isDiamondAllowed(builder: PsiBuilder, level: Int): Boolean = builder[parseDiamonds]
-
-fun noTypeArgsReference(builder: PsiBuilder, level: Int, codeReferenceParser: Parser): Boolean {
-  return builder.withKey(parseNoTypeArgumentsCodeReference, true) {
-    codeReferenceParser.parse(builder, level)
-  }
-}
-
-private val PsiBuilder.noTypeArgsReferenceParsing get() = this[parseNoTypeArgumentsCodeReference]
 
 fun anyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser): Boolean {
   return builder.withKey(parseAnyTypeElement, true) {
@@ -190,10 +181,6 @@ fun setRefHadTypeArguments(builder: PsiBuilder, level: Int): Boolean {
     builder[referenceHadTypeArguments] = true
   }
   return true
-}
-
-fun codeReferenceTypeArguments(builder: PsiBuilder, level: Int, typeArgumentsParser: Parser): Boolean {
-  return !builder.noTypeArgsReferenceParsing && typeArgumentsParser.parse(builder, level)
 }
 
 fun parseArgument(builder: PsiBuilder, level: Int, argumentParser: Parser): Boolean {

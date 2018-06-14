@@ -246,11 +246,7 @@ annotation ::= '@' annotation_reference after_annotation_reference
   elementTypeClass = 'org.jetbrains.plugins.groovy.lang.psi.stubs.elements.GrAnnotationElementType'
   consumeTokenMethod = 'consumeTokenFast'
 }
-annotation_reference ::= no_type_args_code_reference
-{
-  elementType = ''
-  name = 'annotation reference'
-}
+private annotation_reference ::= simple_reference { name = 'annotation reference' }
 private after_annotation_reference ::= mb_nl annotation_argument_list | empty_annotation_argument_list
 annotation_argument_list ::= <<paren_list annotation_member_value_pair>>
 {
@@ -1155,7 +1151,7 @@ capital_type_element ::= (primitive_type_element | capital_class_type_element) a
 
 class_type_element ::= code_reference
 qualified_class_type_element ::= qualified_code_reference
-unqualified_class_type_element ::= unqualified_code_reference
+unqualified_class_type_element ::= short_code_reference
 private capital_class_type_element ::= <<capitalizedTypeElement class_type_element <<refWasCapitalized>>>>
 
 private array_type_elements ::= array_type_element*
@@ -1172,23 +1168,24 @@ private any_type_element ::= <<anyTypeElement type_element>>
 
 
 // region Code references
-code_reference ::= unqualified_code_reference qualified_code_reference_tail*
-qualified_code_reference ::= unqualified_code_reference qualified_code_reference_tail qualified_code_reference_tail* { elementType = code_reference}
-private no_type_args_code_reference ::= <<noTypeArgsReference code_reference>>
-
-unqualified_code_reference ::= code_reference_part { elementType = code_reference }
-left qualified_code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
+code_reference ::= short_code_reference code_reference_tail*
+qualified_code_reference ::= short_code_reference code_reference_tail code_reference_tail* { elementType = code_reference}
+short_code_reference ::= code_reference_part { elementType = code_reference }
+left code_reference_tail ::= code_reference_dot code_reference_part <<setRefWasQualified>>
 {
   pin = 1
   elementType = code_reference
   consumeTokenMethod = 'consumeTokenFast'
 }
+simple_reference ::= short_simple_reference simple_reference_tail* { elementType = code_reference }
+short_simple_reference ::= code_reference_identifier { elementType = code_reference }
+left simple_reference_tail ::= code_reference_dot code_reference_identifier { elementType = code_reference } // don't pin on dot
+
 private code_reference_dot ::= '.' !'*' mb_nl
-private code_reference_part ::= code_reference_identifier code_reference_type_arguments?
+private code_reference_part ::= code_reference_identifier [type_argument_list <<setRefHadTypeArguments>>]
 private code_reference_identifier ::= <<codeReferenceIdentifier code_reference_identifiers>>
 private code_reference_identifiers ::= IDENTIFIER | code_reference_identifiers_soft (<<isQualifiedName>> | &'.')
 private code_reference_identifiers_soft ::= 'def' | 'as' | 'in' | 'trait' { consumeTokenMethod = 'consumeTokenFast' }
-private code_reference_type_arguments ::= <<codeReferenceTypeArguments type_argument_list>> <<setRefHadTypeArguments>>
 
 // for the sake of showing 'type expected' message
 type_code_reference ::= code_reference { elementType = '' name = 'type' }
