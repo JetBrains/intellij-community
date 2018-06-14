@@ -79,7 +79,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   private final JTextField mySearchField;
   private final JCheckBox myNonProjectCB;
   private final List<SETab> myTabs = new ArrayList<>();
-  private boolean nonProjectCheckBoxLocked;
+
+  private boolean nonProjectCheckBoxAutoSet = true;
+  private String notFoundString;
 
   private final JBList<Object> myResultsList = new JBList<>();
   private final SearchListModel myListModel = new SearchListModel(); //todo using in different threads? #UX-1
@@ -179,8 +181,12 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
   }
 
   public void setUseNonProjectItems(boolean use) {
+    doSetUseNonProjectItems(use, false);
+  }
+
+  private void doSetUseNonProjectItems(boolean use, boolean isAutoSet) {
     myNonProjectCB.setSelected(use);
-    nonProjectCheckBoxLocked = true;
+    nonProjectCheckBoxAutoSet = isAutoSet;
   }
 
   public boolean isUseNonProjectItems() {
@@ -220,8 +226,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       myNonProjectCB.setDisplayedMnemonicIndex(-1);
       myNonProjectCB.setMnemonic(0);
     }
-    myNonProjectCB.setSelected(false);
-    nonProjectCheckBoxLocked = false;
+    if (nonProjectCheckBoxAutoSet && isUseNonProjectItems()) {
+      doSetUseNonProjectItems(false, true);
+    }
 
     myResultsList.getEmptyText().setText(getEmptyText());
 
@@ -520,13 +527,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     mySearchField.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
-        nonProjectCheckBoxLocked = false;
+        String newSearchString = getSearchPattern();
+        if (nonProjectCheckBoxAutoSet && isUseNonProjectItems()
+            && newSearchString != null && !newSearchString.contains(notFoundString)) {
+          doSetUseNonProjectItems(false, true);
+        }
         rebuildList();
       }
     });
 
     myNonProjectCB.addItemListener(e -> rebuildList());
-    myNonProjectCB.addActionListener(e -> nonProjectCheckBoxLocked = true);
+    myNonProjectCB.addActionListener(e -> nonProjectCheckBoxAutoSet = false);
 
     myResultsList.addMouseListener(new MouseAdapter() {
       @Override
@@ -600,16 +611,6 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     }
   }
 
-  private void gotoSelectedItem(Object value, SearchEverywhereContributor contributor, int modifiers, String searchText) {
-    boolean closePopup = contributor.processSelectedItem(value, modifiers, searchText);
-    if (closePopup) {
-      stopSearching();
-      searchFinishedHandler.run();
-    } else {
-      myResultsList.repaint();
-    }
-  }
-
   private void stopSearching() {
     listOperationsAlarm.cancelAllRequests();
     if (myCalcThread != null && !myCalcThread.isCanceled()) {
@@ -619,8 +620,9 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
 
   private void handleEmptyResults() {
     assert EventQueue.isDispatchThread() : "Must be EDT";
-    if (!nonProjectCheckBoxLocked && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
-      setUseNonProjectItems(true);
+    if (nonProjectCheckBoxAutoSet && !isUseNonProjectItems() && !getSearchPattern().isEmpty()) {
+      doSetUseNonProjectItems(true, true);
+      notFoundString = getSearchPattern();
       return;
     }
 
