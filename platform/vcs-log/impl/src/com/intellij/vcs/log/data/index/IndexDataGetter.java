@@ -260,6 +260,7 @@ public class IndexDataGetter {
   @NotNull
   public Set<FilePath> getKnownNames(@NotNull FilePath path) {
     return executeAndCatch(() -> {
+      // todo add renames
       Set<FilePath> result = ContainerUtil.newHashSet();
       myIndexStorage.paths.iterateCommits(path, (changes, commit) -> result.add(changes.first));
       return result;
@@ -294,7 +295,6 @@ public class IndexDataGetter {
         return null;
       });
     }
-
     return result;
   }
 
