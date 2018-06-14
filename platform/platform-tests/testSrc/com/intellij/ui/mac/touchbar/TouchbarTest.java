@@ -21,7 +21,7 @@ public class TouchbarTest {
     Foundation.init();
     NST.loadLibrary();
 
-    final TouchBar testTB = _createTestScrubberTouchbar();
+    final TouchBar testTB = _createTestButtonsTouchbar();
     testTB.selectVisibleItemsToShow();
     NST.setTouchBar(testTB);
 
@@ -32,10 +32,14 @@ public class TouchbarTest {
   }
 
   private static TouchBar _createTestButtonsTouchbar() {
+    final int configPopoverWidth = 143;
     final TouchBar testTB = new TouchBar("test", false);
     testTB.addButton().setText("test1").setThreadSafeAction(createPrintTextCallback("pressed test1 button"));
     testTB.addButton().setText("test2").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
+    testTB.addButton().setText("test3 with suff").setThreadSafeAction(createPrintTextCallback("pressed test2 button"));
     testTB.addButton().setIcon(ourTestIcon).setThreadSafeAction(createPrintTextCallback("pressed image button"));
+    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very-very-very-very long suffix").setWidth(configPopoverWidth).setThreadSafeAction(createPrintTextCallback("pressed image-text button"));
+    testTB.addButton().setIcon(ourTestIcon).setText("IDEA very long suffix").setWidth(configPopoverWidth + 69).setThreadSafeAction(createPrintTextCallback("pressed image-text 2 button")).setToggle(true);
     return testTB;
   }
 

@@ -3,18 +3,126 @@
 #import "JTypes.h"
 #import "Utils.h"
 
+const NSSize g_defaultMinSize = {72, 30}; // empiric value
+
 @interface NSButtonJAction : NSButton
+@property (nonatomic) NSButtonType btype;
+@property (nonatomic) CGFloat bwidth;
 @property (nonatomic) execute jaction;
+- (id)init;
 - (void)doAction;
++ (Class)cellClass;
+@end
+
+@interface NSButtonCellEx : NSButtonCell
+@property (nonatomic) CGFloat myBorder;
+@property (nonatomic) CGFloat myMargin;
 @end
 
 @implementation NSButtonJAction
+- (id)init {
+    self = [super init];
+    if (self) {
+        self.btype = NSButtonTypeMomentaryLight;
+        self.bwidth = 0;
+        NSCell * cell = [self cell];
+        [cell setLineBreakMode:NSLineBreakByTruncatingTail];
+        [self setBezelStyle:NSRoundedBezelStyle];
+        [self setMargins:2 border:5];
+        // NSLog(@"created button [%@]: cell-class=%@", self, [[self cell] className]);
+    }
+    return self;
+}
+- (void)setMargins:(int)margin border:(int)border {
+    NSCell * cell = [self cell];
+    if ([cell isKindOfClass:[NSButtonCellEx class]]) {
+        NSButtonCellEx * cellEx = cell;
+        cellEx.myBorder = border;
+        cellEx.myMargin = margin;
+    } else
+        nserror(@"setMargin mustn't be called because internal cell isn't kind of NSButtonCellEx");
+}
 - (void)doAction {
     if (self.jaction) {
         nstrace(@"button [%@]: doAction", self);
         (*self.jaction)();
     } else
         nstrace(@"button [%@]: empty action, nothing to execute", self);
+}
++ (Class)cellClass
+{
+    return [NSButtonCellEx class];
+}
+@end
+
+@implementation NSButtonCellEx
+// Uncomment for visual debug
+//
+//-(void)drawBezelWithFrame:(NSRect)frame inView:(NSView *)controlView
+//{
+//    NSLog(@"drawBezelWithFrame: %@", NSStringFromRect(frame));
+//    [super drawBezelWithFrame:frame inView:controlView];
+//
+//    [[NSGraphicsContext currentContext] saveGraphicsState];
+//
+//    CGFloat dashPattern[] = {6,4}; //make your pattern here
+//    NSBezierPath *textViewSurround = [NSBezierPath bezierPathWithRoundedRect:frame xRadius:10 yRadius:10];
+//    [textViewSurround setLineWidth:1.0f];
+//    [textViewSurround setLineDash:dashPattern count:2 phase:0];
+//    [[NSColor colorWithRed:105/255.0 green:211/255.0 blue:232/255.0 alpha:1.0] set];
+//    [textViewSurround stroke];
+//
+//    [NSGraphicsContext restoreGraphicsState];
+//}
+- (NSSize)cellSizeForBounds:(NSRect)rect {
+    if (self.title == nil) {
+        // NSLog(@"\t empty text, use default size %@", NSStringFromSize(g_defaultMinSize));
+        return g_defaultMinSize;
+    }
+    const NSSize txtSize = [self.title sizeWithAttributes:@{ NSFontAttributeName:self.font }];
+    const CGFloat imgW = self.image == nil ? 0 : self.image.size.width;
+    NSSize result = g_defaultMinSize;
+    result.width = txtSize.width + imgW + 2*_myBorder + _myMargin;
+    if (result.width < g_defaultMinSize.width)
+        result.width = g_defaultMinSize.width;
+    // NSLog(@"\t text='%@', text-size = %@, result = %@", self.title, NSStringFromSize(txtSize), NSStringFromSize(result));
+    return result;
+}
+- (void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)controlView {
+//    NSLog(@"drawInteriorWithFrame: %@", NSStringFromRect(frame));
+    if (self.image == nil) {
+        [super drawTitle:self.attributedTitle withFrame:frame inView:controlView];
+        return;
+    }
+
+    if (self.title == nil) {
+        [super drawImage:self.image withFrame:frame inView:controlView];
+        return;
+    }
+
+    const CGFloat imgW = self.image.size.width;
+    NSSize txtSize = [self.title sizeWithAttributes:@{ NSFontAttributeName:self.font }];
+    const CGFloat txtW = txtSize.width;
+    const CGFloat fullW = self.myBorder*2 + txtW + self.myMargin + imgW;
+    NSRect rcImg = frame;
+    NSRect rcTxt = frame;
+    if (fullW <= frame.size.width) {
+        const CGFloat delta = frame.size.width - fullW;
+        rcImg.origin.x = delta/2 + self.myBorder;
+        rcImg.size.width = imgW;
+        rcTxt.origin.x = rcImg.origin.x + imgW + self.myMargin;
+        rcTxt.size.width = txtW + self.myBorder;
+    } else {
+        rcImg.origin.x = self.myBorder;
+        rcImg.size.width = imgW;
+        rcTxt.origin.x = rcImg.origin.x + imgW + self.myMargin;
+        rcTxt.size.width = frame.size.width - self.myBorder - rcTxt.origin.x;
+    }
+
+    if (rcImg.size.width > 0)
+        [super drawImage:self.image withFrame:rcImg inView:controlView];
+    if (rcTxt.size.width > 0)
+        [super drawTitle:self.attributedTitle withFrame:rcTxt inView:controlView];
 }
 @end
 
@@ -28,6 +136,7 @@ const int BUTTON_UPDATE_ALL     = ~0;
 const int BUTTON_FLAG_DISABLED  = 1;
 const int BUTTON_FLAG_SELECTED  = 1 << 1;
 const int BUTTON_FLAG_COLORED   = 1 << 2;
+const int BUTTON_FLAG_TOGGLE    = 1 << 3;
 
 const int BUTTON_PRIORITY_SHIFT     = 3*8;
 const unsigned int BUTTON_PRIORITY_MASK      = 0xFF << BUTTON_PRIORITY_SHIFT;
@@ -60,26 +169,46 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
     if (updateOptions & BUTTON_UPDATE_IMG)
         [button setImage:img];
 
+    if (updateOptions & BUTTON_UPDATE_WIDTH) {
+        button.bwidth = buttonWidth;
+        if (button.bwidth > 0.1f)
+            [button.widthAnchor constraintEqualToConstant:button.bwidth].active = YES;
+        else
+            [button.widthAnchor constraintEqualToAnchor:button.widthAnchor].active = NO;
+    }
+
     if (updateOptions & BUTTON_UPDATE_FLAGS) {
+        const bool toggle = (buttonFlags & BUTTON_FLAG_TOGGLE) != 0;
+        const enum NSButtonType btype = toggle ? NSButtonTypePushOnPushOff : NSButtonTypeMomentaryLight;
+        if (btype != button.btype) {
+            [button setButtonType:btype];
+            if (toggle) {
+                button.bezelColor = NSColor.selectedControlColor;
+            } else {
+                button.bezelColor = NSColor.controlColor;
+            }
+        }
+
         if (buttonFlags & BUTTON_FLAG_COLORED) {
             button.bezelColor = [NSColor colorWithRed:0 green:130/255.f blue:215/255.f alpha:1];
         } else if (buttonFlags & BUTTON_FLAG_SELECTED) {
-            button.bezelColor = NSColor.selectedControlColor;
+            if (toggle) {
+                button.state = NSOnState;
+            } else {
+                button.bezelColor = NSColor.selectedControlColor;
+            }
         } else {
-            button.bezelColor = NSColor.controlColor;
+            if (toggle) {
+                button.state = NSOffState;
+            } else {
+                button.bezelColor = NSColor.controlColor;
+            }
         }
 
         const bool enabled = (buttonFlags & BUTTON_FLAG_DISABLED) == 0;
         if (enabled != button.enabled) {
             [button setEnabled:enabled];
         }
-    }
-
-    if (updateOptions & BUTTON_UPDATE_WIDTH) {
-        if (buttonWidth > 0)
-            [button.widthAnchor constraintEqualToConstant:buttonWidth].active = YES;
-        else
-            [button.widthAnchor constraintEqualToAnchor:button.widthAnchor].active = NO;
     }
 
     if (button.image != nil) {
@@ -102,11 +231,10 @@ id createButton(
         execute jaction
 ) {
     NSString *nsUid = createStringFromUTF8(uid);
-    nstrace(@"create button [%@] (thread: %@)", nsUid, [NSThread currentThread]);
+    // NSLog(@"create button [%@] (thread: %@)", nsUid, [NSThread currentThread]);
 
     NSCustomTouchBarItem *customItemForButton = [[NSCustomTouchBarItem alloc] initWithIdentifier:nsUid]; // create non-autorelease object to be owned by java-wrapper
-    NSButtonJAction *button = [[NSButtonJAction new] autorelease];
-    [button setBezelStyle:NSRoundedBezelStyle];
+    NSButtonJAction *button = [[[NSButtonJAction alloc] init] autorelease];
 
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
     NSString *nstext = createStringFromUTF8(text);
