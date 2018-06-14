@@ -76,7 +76,7 @@ fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
   val result = mutableSetOf<Int>()
   val graph = LinearGraphUtils.asLiteLinearGraph(collapsedGraph.compiledGraph)
 
-  for (v in graph.nodesCount() - 1 downTo 0) {
+  outer@ for (v in graph.nodesCount() - 1 downTo 0) {
     val nodeId = collapsedGraph.compiledGraph.getNodeId(v)
     if (isCandidateNodeId(nodeId)) {
       val downNodes = graph.getNodes(v, LiteLinearGraph.NodeFilter.DOWN)
@@ -84,13 +84,16 @@ fun hideTrivialMerges(collapsedGraph: CollapsedGraph,
         result.add(nodeId)
         hideTrivialMerge(collapsedGraph, graph, v, downNodes.single())
       }
-      else if (downNodes.size == 2) {
-        val lowerParent = downNodes.max()!!
-        val upperParent = downNodes.min()!!
-        if (DfsUtil.isAncestor(graph, lowerParent, upperParent)) {
-          result.add(nodeId)
-          hideTrivialMerge(collapsedGraph, graph, v, upperParent)
+      else if (downNodes.size >= 2) {
+        val sortedParentsIt = downNodes.sortedDescending().iterator()
+        var currentParent = sortedParentsIt.next()
+        while (sortedParentsIt.hasNext()) {
+          val nextParent = sortedParentsIt.next()
+          if (!DfsUtil.isAncestor(graph, currentParent, nextParent)) continue@outer
+          currentParent = nextParent
         }
+        result.add(nodeId)
+        hideTrivialMerge(collapsedGraph, graph, v, currentParent)
       }
     }
   }
