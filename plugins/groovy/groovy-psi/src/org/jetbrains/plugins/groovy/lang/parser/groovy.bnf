@@ -610,6 +610,7 @@ private block_declaration_start ::= declaration_start_modifiers | block_declarat
 private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
 private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) &declaration_lookahead
 private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
+private local_variable_declaration ::= <<parseTailLeftFlat block_declaration_start variable_declaration_tail>>
 
 variable_declaration_tail ::= variable (',' mb_nl variable)*
 {
@@ -711,14 +712,13 @@ default_case_section ::= default_label mb_nl case_level_item+
 case_label ::= 'case' expression ':' { pin = 1 }
 default_label ::= 'default' ':' { elementType = case_label pin = 1 }
 
-try_statement ::= 'try' lazy_block (mb_nl catch_clause)* [mb_nl finally_clause]
-{
-  pin = 1
-}
-catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block
-{
-  pin = 1
-}
+try_statement ::= 'try' try_resource_list? mb_nl lazy_block (mb_nl catch_clause)* [mb_nl finally_clause] { pin = 1 }
+
+try_resource_list ::= '(' try_resource_list_item+ ')' { pin = 1 }
+private try_resource_list_item ::= local_variable_declaration try_resource_list_separator { pin = 1 }
+private try_resource_list_separator ::= &')' | separators | <<newLine>>
+
+catch_clause ::= 'catch' '(' parse_catch_parameter ')' lazy_block { pin = 1 }
 private parse_catch_parameter ::= <<parseTailLeftFlat catch_parameter_start catch_parameter>>
 private catch_parameter_start ::= modifier_list catch_parameter_type_element?
 private catch_parameter_type_element ::= type_element_followed_by_identifier
