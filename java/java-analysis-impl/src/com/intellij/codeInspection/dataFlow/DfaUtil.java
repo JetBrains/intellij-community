@@ -18,7 +18,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.ui.treeStructure.NullNode;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -381,7 +380,7 @@ public class DfaUtil {
 
     @Override
     public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      PsiExpression place = instruction.getPlace();
+      PsiExpression place = instruction.getExpression();
       if (place != null) {
         PlaceResult result = myResults.computeIfAbsent(place, __ -> new PlaceResult());
         ((ValuableDataFlowRunner.MyDfaMemoryState)memState).forVariableStates((variableValue, value) -> {

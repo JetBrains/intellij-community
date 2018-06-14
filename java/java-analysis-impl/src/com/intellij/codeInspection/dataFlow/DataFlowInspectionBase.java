@@ -477,7 +477,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                     Set<PsiElement> reportedAnchors) {
     for (Instruction instruction : runner.getInstructions()) {
       if (instruction instanceof PushInstruction) {
-        PsiExpression place = ((PushInstruction)instruction).getPlace();
+        PsiExpression place = ((PushInstruction)instruction).getExpression();
         DfaValue value = ((PushInstruction)instruction).getValue();
         Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
         if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && !isFlagCheck(place) && reportedAnchors.add(place)) {
@@ -489,20 +489,16 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
   private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
                                                            Set<PsiElement> reportedAnchors,
-                                                           Map<MethodCallInstruction, ThreeState> nullArgs) {
-    nullArgs.forEach((call, nullArg) -> {
-      PsiElement arg = call.getArgumentAnchor(0);
-      if (reportedAnchors.add(arg)) {
-        switch (nullArg) {
-          case YES:
-            holder.registerProblem(arg, "Passing <code>null</code> argument to <code>Optional</code>",
-                                   DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(arg));
-            break;
-          case NO:
-            holder.registerProblem(arg, "Passing a non-null argument to <code>Optional</code>",
-                                   DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(arg));
-            break;
-          default:
+                                                           Map<PsiElement, ThreeState> nullArgs) {
+    nullArgs.forEach((anchor, alwaysPresent) -> {
+      if (alwaysPresent == ThreeState.UNSURE) return;
+      if (reportedAnchors.add(anchor)) {
+        if (alwaysPresent.toBoolean()) {
+          holder.registerProblem(anchor, "Passing a non-null argument to <code>Optional</code>",
+                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithOfFix(anchor));
+        } else {
+          holder.registerProblem(anchor, "Passing <code>null</code> argument to <code>Optional</code>",
+                                 DfaOptionalSupport.createReplaceOptionalOfNullableWithEmptyFix(anchor));
         }
       }
     });
@@ -653,10 +649,12 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                InspectionsBundle.message("dataflow.message.unreachable.switch.label"));
       }
     }
-    else if (psiAnchor != null && !reportedAnchors.contains(psiAnchor) && !isFlagCheck(psiAnchor)) {
+    else if (psiAnchor != null && !isFlagCheck(psiAnchor)) {
       boolean evaluatesToTrue = trueSet.contains(instruction);
       final PsiElement parent = psiAnchor.getParent();
-      if (parent instanceof PsiAssignmentExpression && ((PsiAssignmentExpression)parent).getLExpression() == psiAnchor) {
+      if (parent instanceof PsiAssignmentExpression &&
+          ((PsiAssignmentExpression)parent).getLExpression() == psiAnchor &&
+          reportedAnchors.add(psiAnchor)) {
         holder.registerProblem(
           psiAnchor,
           InspectionsBundle.message("dataflow.message.pointless.assignment.expression", Boolean.toString(evaluatesToTrue)),
@@ -664,19 +662,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         );
       }
       else {
-        if (instruction instanceof BinopInstruction) {
-          TextRange range = ((BinopInstruction)instruction).getAnchorRange();
-          if (range != null) {
-            // report rare cases like a == b == c where "a == b" part is constant
-            String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-            holder.registerProblem(psiAnchor, range, message);
-            // do not add to reported anchors if only part of expression was reported
-            return;
-          }
+        TextRange range =
+          instruction instanceof ExpressionPushingInstruction ? ((ExpressionPushingInstruction)instruction).getExpressionRange() : null;
+        if (range != null) {
+          // report rare cases like a == b == c where "a == b" part is constant
+          String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+          holder.registerProblem(psiAnchor, range, message);
+          // do not add to reported anchors if only part of expression was reported
+        } else if (reportedAnchors.add(psiAnchor)) {
+          reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
         }
-        reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
       }
-      reportedAnchors.add(psiAnchor);
     }
   }
 

@@ -163,8 +163,10 @@ public class StreamChainInliner implements CallInliner {
         myNext.pushResult(builder);
       }
       else {
-        builder.push(builder.getFactory()
-                       .createTypeValue(myCall.getType(), DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod())));
+        DfaValue resultValue =
+          builder.getFactory().createTypeValue(myCall.getType(),
+                                               DfaPsiUtil.getElementNullability(myCall.getType(), myCall.resolveMethod()));
+        builder.push(resultValue, myCall);
       }
     }
 
@@ -214,7 +216,7 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     void pushResult(CFGBuilder builder) {
-      builder.push(myResult);
+      builder.push(myResult, myCall);
     }
   }
 
@@ -630,7 +632,7 @@ public class StreamChainInliner implements CallInliner {
            .ifConditionIs(true)
            .chain(b -> buildStreamCFG(b, firstStep, originalQualifier))
            .end()
-           .push(builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL));
+           .push(builder.getFactory().createTypeValue(call.getType(), Nullability.NOT_NULL), call);
     return true;
   }
 

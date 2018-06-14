@@ -5,6 +5,7 @@ import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -27,7 +28,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
-  private final Map<MethodCallInstruction, ThreeState> myOfNullableCalls = new HashMap<>();
+  private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
@@ -123,7 +124,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myArrayStoreProblems;
   }
 
-  Map<MethodCallInstruction, ThreeState> getOfNullableCalls() {
+  Map<PsiElement, ThreeState> getOfNullableCalls() {
     return myOfNullableCalls;
   }
 
@@ -162,16 +163,36 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
+  public void beforeExpressionPush(@NotNull DfaValue value,
+                                   @NotNull PsiExpression expression,
+                                   @Nullable TextRange range,
+                                   @NotNull DfaMemoryState memState) {
+    PsiElement anchor = extractOptionalOfNullableAnchor(expression);
+    if (anchor != null) {
+      Boolean fact = memState.getValueFact(value, DfaFactType.OPTIONAL_PRESENCE);
+      ThreeState present = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
+      myOfNullableCalls.merge(anchor, present, ThreeState::merge);
+    }
+  }
+
+  private static PsiElement extractOptionalOfNullableAnchor(PsiExpression expression) {
+    if (expression instanceof PsiMethodCallExpression &&
+        DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test((PsiMethodCallExpression)expression)) {
+      return ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()[0];
+    }
+    if (expression instanceof PsiMethodReferenceExpression) {
+      PsiMethodReferenceExpression methodRef = (PsiMethodReferenceExpression)expression;
+      if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
+        return methodRef.getReferenceNameElement();
+      }
+    }
+    return null;
+  }
+
+  @Override
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
                                                DataFlowRunner runner,
                                                DfaMemoryState memState) {
-    if (instruction.matches(DfaOptionalSupport.OPTIONAL_OF_NULLABLE)) {
-      DfaValue arg = memState.peek();
-      ThreeState nullArg = memState.isNull(arg) ? ThreeState.YES : memState.isNotNull(arg) ? ThreeState.NO : ThreeState.UNSURE;
-      // Passing variable with unknown nullity to ofNullable assumes that it can be null
-      memState.applyFact(arg, DfaFactType.CAN_BE_NULL, true);
-      myOfNullableCalls.merge(instruction, nullArg, ThreeState::merge);
-    }
     DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
     if (hasNonTrivialFailingContracts(instruction)) {
       DfaConstValue fail = runner.getFactory().getConstFactory().getContractFail();
@@ -226,7 +247,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiExpression place = instruction.getPlace();
+    PsiExpression place = instruction.getExpression();
     if (!instruction.isReferenceWrite() && place instanceof PsiReferenceExpression) {
       DfaValue dfaValue = instruction.getValue();
       if (dfaValue instanceof DfaVariableValue) {
@@ -253,7 +274,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       if (values.size() == 1) {
         Object singleValue = values.iterator().next();
         if (singleValue != ANY_VALUE) {
-          result.add(Pair.create((PsiReferenceExpression)instruction.getPlace(), (DfaConstValue)singleValue));
+          result.add(Pair.create((PsiReferenceExpression)instruction.getExpression(), (DfaConstValue)singleValue));
         }
       }
     }
