@@ -72,7 +72,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY;
+import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 import static java.util.Locale.ENGLISH;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
@@ -1442,13 +1442,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static AnAction getAction(Component c) {
-    if (c instanceof JComponent) {
-      Object obj = ((JComponent)c).getClientProperty(CUSTOM_COMPONENT_ACTION_PROPERTY);
-      if (obj instanceof AnAction) {
-        return (AnAction)obj;
-      }
-    }
-    return null;
+    return UIUtil.getClientProperty(c, ACTION_KEY);
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {

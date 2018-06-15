@@ -494,7 +494,7 @@ public class EditorSearchSession implements SearchSession,
 
     @Override
     public final void update(AnActionEvent e) {
-      JButton button = (JButton)e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+      JButton button = (JButton)e.getPresentation().getClientProperty(COMPONENT_KEY);
       if (button != null) {
         update(button);
       }
