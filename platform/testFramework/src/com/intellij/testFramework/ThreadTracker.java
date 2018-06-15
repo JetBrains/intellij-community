@@ -160,13 +160,9 @@ public class ThreadTracker {
           continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
         }
 
-        if (isIdleApplicationPoolThread(thread, stackTrace)) {
-          continue;
-        }
-
-        if (isIdleCommonPoolThread(thread, stackTrace)) {
-          continue;
-        }
+        if (isWellKnownOffender(thread)) continue; // check once more because the thread name may be set via race
+        if (isIdleApplicationPoolThread(thread, stackTrace)) continue;
+        if (isIdleCommonPoolThread(thread, stackTrace)) continue;
 
         String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
         Assert.fail(trace);
