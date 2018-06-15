@@ -96,6 +96,14 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testMethod_call_par2() throws Throwable { doTest() }
 
+  void testArgumentsDontWrapAlign() { doTest() }
+
+  void testArgumentsWrapAlways() { doTest() }
+
+  void testArgumentsWrapAlwaysNl() { doTest() }
+
+  void testArgumentsWrapAlwaysAlign() { doTest() }
+
   void testMethod_decl1() throws Throwable { doTest() }
 
   void testMethod_decl2() throws Throwable { doTest() }
