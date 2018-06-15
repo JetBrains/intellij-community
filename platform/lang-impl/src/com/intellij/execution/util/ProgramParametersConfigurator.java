@@ -5,6 +5,10 @@ import com.intellij.execution.CommonProgramRunConfigurationParameters;
 import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.RuntimeConfigurationWarning;
 import com.intellij.execution.configurations.SimpleProgramParameters;
+import com.intellij.ide.macro.EditorMacro;
+import com.intellij.ide.macro.Macro;
+import com.intellij.ide.macro.MacroManager;
+import com.intellij.ide.macro.PromptingMacro;
 import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.module.Module;
@@ -13,6 +17,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
@@ -23,6 +28,7 @@ import org.jetbrains.annotations.SystemIndependent;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -37,7 +43,7 @@ public class ProgramParametersConfigurator {
     Project project = configuration.getProject();
     Module module = getModule(configuration);
 
-    parameters.getProgramParametersList().addParametersString(expandPath(configuration.getProgramParameters(), module, project));
+    parameters.getProgramParametersList().addParametersString(expandMacros(expandPath(configuration.getProgramParameters(), module, project)));
 
     parameters.setWorkingDirectory(getWorkingDir(configuration, project, module));
 
@@ -49,6 +55,23 @@ public class ProgramParametersConfigurator {
 
     parameters.setEnv(envs);
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
+  }
+
+  private static String expandMacros(String path) {
+    if (Registry.is("allow.macros.for.run.configurations")) {
+        Collection<Macro> macros = MacroManager.getInstance().getMacros();
+        for (Macro macro: macros) {
+          String value = StringUtil.notNullize(
+            macro instanceof PromptingMacro || macro instanceof EditorMacro
+            ? null :
+            macro.preview(), "");
+          if (StringUtil.containsWhitespaces(value)) {
+            value = "\"" + value + "\"";
+          }
+          path = path.replace("$" + macro.getName() + "$", value);
+        }
+    }
+    return path;
   }
 
   @Nullable
