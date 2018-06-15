@@ -104,13 +104,13 @@ public class TemporaryPlacesRegistry {
   }
 
   private void addInjectionPlace(TempPlace place) {
-    PsiLanguageInjectionHost element = place.elementPointer.getElement();
-    if (element == null) return;
+    PsiLanguageInjectionHost host = place.elementPointer.getElement();
+    if (host == null) return;
     List<TempPlace> injectionPoints = getInjectionPlacesSafe();
-    element.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+    host.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
 
     for (TempPlace tempPlace : injectionPoints) {
-      if (tempPlace.elementPointer.getElement() == element) {
+      if (tempPlace.elementPointer.getElement() == host) {
         injectionPoints.remove(tempPlace);
         break;
       }
@@ -118,6 +118,8 @@ public class TemporaryPlacesRegistry {
     if (place.language != null) {
       injectionPoints.add(place);
     }
+    host.putUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE, place.language);
+    host.getManager().dropPsiCaches();
   }
 
   public boolean removeHostWithUndo(final Project project, final PsiLanguageInjectionHost host) {
@@ -128,7 +130,7 @@ public class TemporaryPlacesRegistry {
     TempPlace place = new TempPlace(prevLanguage, pointer);
     TempPlace nextPlace = new TempPlace(null, pointer);
     Configuration.replaceInjectionsWithUndo(
-      project, nextPlace, place, Collections.emptyList(),
+      project, host.getContainingFile(), nextPlace, place, Collections.emptyList(),
       (add, remove) -> {
         addInjectionPlace(add);
         return true;
@@ -143,7 +145,7 @@ public class TemporaryPlacesRegistry {
     TempPlace prevPlace = new TempPlace(prevLanguage, pointer);
     TempPlace place = new TempPlace(language, pointer);
     Configuration.replaceInjectionsWithUndo(
-      myProject, place, prevPlace, Collections.emptyList(),
+      myProject, host.getContainingFile(), place, prevPlace, Collections.emptyList(),
       (add, remove) -> {
         addInjectionPlace(add);
         return true;

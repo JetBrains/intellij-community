@@ -18,9 +18,7 @@ package org.intellij.plugins.intelliLang;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.command.undo.GlobalUndoableAction;
-import com.intellij.openapi.command.undo.UndoManager;
-import com.intellij.openapi.command.undo.UndoableAction;
+import com.intellij.openapi.command.undo.*;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.components.State;
@@ -37,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CachedValueImpl;
 import com.intellij.util.FileContentUtil;
@@ -48,6 +45,7 @@ import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
+import one.util.streamex.StreamEx;
 import org.intellij.plugins.intelliLang.inject.InjectorUtils;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionConfigBean;
 import org.intellij.plugins.intelliLang.inject.LanguageInjectionSupport;
@@ -510,9 +508,29 @@ public class Configuration extends SimpleModificationTracker implements Persiste
   }
 
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
-                                final List<? extends PsiElement> psiElementsToRemove,
-                                final PairProcessor<T, T> actualProcessor) {
-    final UndoableAction action = new GlobalUndoableAction() {
+                                                   final List<? extends PsiElement> psiElementsToRemove,
+                                                   final PairProcessor<T, T> actualProcessor) {
+    replaceInjectionsWithUndo(project, null, add, remove, psiElementsToRemove, actualProcessor);
+  }
+
+  /**
+   * @since 2018.3
+   */
+  public static <T> void replaceInjectionsWithUndo(final Project project, @Nullable PsiFile hostFile, final T add, final T remove,
+                                                   final List<? extends PsiElement> psiElementsToRemove,
+                                                   final PairProcessor<T, T> actualProcessor) {
+
+    PsiFile[] psiFiles = StreamEx.ofNullable(hostFile)
+                                 .append(psiElementsToRemove
+                                           .stream()
+                                           .filter(e -> !(e instanceof PsiCompiledElement))
+                                           .map(e -> e.getContainingFile()))
+                                 .toArray(PsiFile.class);
+
+    DocumentReference[] documentReferences = ContainerUtil
+      .map2Array(psiFiles, DocumentReference.class, file -> DocumentReferenceManager.getInstance().create(file.getVirtualFile()));
+
+    final UndoableAction action = new GlobalUndoableAction(documentReferences) {
       @Override
       public void undo() {
         actualProcessor.process(remove, add);
@@ -523,8 +541,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
         actualProcessor.process(add, remove);
       }
     };
-    final List<PsiFile> psiFiles = ContainerUtil.mapNotNull(psiElementsToRemove, o -> o instanceof PsiCompiledElement ? null : o.getContainingFile());
-    WriteCommandAction.writeCommandAction(project, PsiUtilCore.toPsiFileArray(psiFiles))
+    WriteCommandAction.writeCommandAction(project, psiFiles)
                       .withName("Language Injection Configuration Update")
                       .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION)
                       .run(() -> {
