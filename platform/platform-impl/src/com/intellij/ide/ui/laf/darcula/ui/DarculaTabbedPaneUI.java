@@ -163,7 +163,16 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
       case underline:
       default:
-        g.setColor(tabPane.isEnabled() && tabIndex == hoverTab ? HOVER_COLOR : tabPane.getBackground());
+        Color c = tabPane.getBackground();
+        if (tabPane.isEnabled()) {
+          if (tabPane.hasFocus() && isSelected) {
+            c = FOCUS_COLOR;
+          } else if (tabIndex == hoverTab) {
+            c = HOVER_COLOR;
+          }
+        }
+
+        g.setColor(c);
         break;
     }
 
@@ -330,4 +339,8 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
 
   @Override
   protected void paintContentBorderBottomEdge(Graphics g, int tabPlacement, int selectedIndex, int x, int y, int w, int h) {}
-}
+
+  @Override
+  protected void paintFocusIndicator(Graphics g, int tabPlacement, Rectangle[] rects, int tabIndex, Rectangle iconRect, Rectangle textRect,
+                                     boolean isSelected) {}
+  }
