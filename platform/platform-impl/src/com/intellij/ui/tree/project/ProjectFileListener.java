@@ -125,7 +125,7 @@ public abstract class ProjectFileListener {
 
   @Nullable
   public static AreaInstance findArea(@NotNull VirtualFile file, @Nullable Project project) {
-    if (project == null || project.isDisposed()) return null;
+    if (project == null || project.isDisposed() || !file.isValid()) return null;
     Module module = ProjectFileIndex.getInstance(project).getModuleForFile(file, false);
     if (module != null) return module.isDisposed() ? null : module;
     if (!is("projectView.show.base.dir")) return null;
