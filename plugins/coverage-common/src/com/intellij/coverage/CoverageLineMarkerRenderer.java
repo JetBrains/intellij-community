@@ -53,7 +53,6 @@ import com.intellij.ui.ColoredSideBorder;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.LightweightHint;
 import com.intellij.util.Function;
-import com.intellij.util.ImageLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,7 +112,7 @@ public class CoverageLineMarkerRenderer implements ActiveGutterRenderer, LineMar
     g.fillRect(r.x, r.y, r.width, r.height);
     final LineData lineData = getLineData(editor.xyToLogicalPosition(new Point(0, r.y)).line);
     if (lineData != null && lineData.isCoveredByOneTest()) {
-      g.drawImage( ImageLoader.loadFromResource("/gutter/unique.png"), r.x, r.y, 8, 8, editor.getComponent());
+      AllIcons.Gutter.Unique.paintIcon(editor.getComponent(), g, r.x, r.y);
     }
   }
 
