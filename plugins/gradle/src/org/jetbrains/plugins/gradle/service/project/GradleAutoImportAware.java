@@ -101,13 +101,18 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
               .filter(outputUrl -> VfsUtilCore.isEqualOrAncestor(outputUrl, url))
               .isPresent();
 
-    final boolean isInsideModuleCompile = Arrays.stream(ModuleManager.getInstance(project).getModules())
+    if (isInsideProjectCompile) {
+      return true;
+    }
+
+    boolean isInsideModuleCompile = Arrays.stream(ModuleManager.getInstance(project).getModules())
                                                 .map(CompilerModuleExtension::getInstance)
                                                 .filter(Objects::nonNull)
                                                 .flatMap(ex -> Stream.of(ex.getCompilerOutputUrl(), ex.getCompilerOutputUrlForTests()))
                                                 .anyMatch(outputUrl -> VfsUtilCore.isEqualOrAncestor(outputUrl, url));
 
-    return isInsideProjectCompile || isInsideModuleCompile;
+    return
+      isInsideModuleCompile;
   }
 
   @Override
