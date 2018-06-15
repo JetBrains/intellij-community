@@ -202,4 +202,14 @@ public class DfaConstValue extends DfaValue {
   public static boolean isContractFail(DfaValue value) {
     return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == ourThrowable;
   }
+
+  /**
+   * Checks whether given value is a special internal sentinel value returned by {@link Factory#getSentinel()}.
+   *
+   * @param value value to check
+   * @return true if specified value is a sentinel value
+   */
+  public static boolean isSentinel(DfaValue value) {
+    return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == SENTINEL;
+  }
 }

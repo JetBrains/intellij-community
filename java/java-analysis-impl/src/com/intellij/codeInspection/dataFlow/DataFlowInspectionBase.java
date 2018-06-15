@@ -503,24 +503,19 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private void reportConstantReferenceValues(ProblemsHolder holder, DataFlowInstructionVisitor visitor, Set<PsiElement> reportedAnchors) {
-    for (Pair<PsiReferenceExpression, DfaConstValue> pair : visitor.getConstantReferenceValues()) {
-      PsiReferenceExpression ref = pair.first;
-      if (ref.getParent() instanceof PsiReferenceExpression || !reportedAnchors.add(ref)) {
-        continue;
-      }
+    visitor.getConstantReferenceValues().forEach((ref, dfaConst) -> {
+      if (ref.getParent() instanceof PsiReferenceExpression || DfaConstValue.isSentinel(dfaConst)) return;
+      if (!reportedAnchors.add(ref)) return;
 
-      final Object value = pair.second.getValue();
-      PsiVariable constant = pair.second.getConstant();
-      final String presentableName = constant != null ? constant.getName() : String.valueOf(value);
+      final Object value = dfaConst.getValue();
+      PsiVariable constant = dfaConst.getConstant();
       final String exprText = String.valueOf(value);
-      if (presentableName == null || exprText == null) {
-        continue;
-      }
+      final String presentableName = constant != null ? constant.getName() : exprText;
 
       List<LocalQuickFix> fixes = new SmartList<>();
       fixes.add(new ReplaceWithConstantValueFix(presentableName, exprText));
       boolean isAssertion = value instanceof Boolean && isAssertionEffectively(ref, (Boolean)value);
-      if (isAssertion && DONT_REPORT_TRUE_ASSERT_STATEMENTS) continue;
+      if (isAssertion && DONT_REPORT_TRUE_ASSERT_STATEMENTS) return;
       if (holder.isOnTheFly()) {
         fixes.add(new SetInspectionOptionFix(this, "REPORT_CONSTANT_REFERENCE_VALUES",
                                              InspectionsBundle.message("inspection.data.flow.turn.off.constant.references.quickfix"),
@@ -532,9 +527,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
       }
 
       holder.registerProblem(ref, "Value <code>#ref</code> #loc is always '" + presentableName + "'",
-                             ProblemHighlightType.WEAK_WARNING,
-                             fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
-    }
+                             ProblemHighlightType.WEAK_WARNING, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    });
   }
 
   private void reportNullableArgumentsPassedToNonAnnotated(DataFlowInstructionVisitor visitor, ProblemsHolder holder, Set<PsiElement> reportedAnchors) {
