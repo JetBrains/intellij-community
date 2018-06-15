@@ -321,7 +321,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
       if (parent.getTextLength() == length) {
         parent.rawRemove();
-        assert nextLeaf == null || nextOffsetStart > rangeToRemove.getEndOffset();
+        assert nextLeaf == null || nextOffsetStart >= rangeToRemove.getEndOffset();
         return nextLeaf;
       }
     }
