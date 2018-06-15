@@ -248,7 +248,7 @@ ${it.includeTransitiveDeps ? "" : """
       }
       def kotlinVersion = versionFile.text.trim().takeWhile { it != '-' }.toString()
       return ["kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8", "kotlin-reflect", "kotlin-test"].collect {
-        new JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlin", it, kotlinVersion, false, [])
+        new JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlin", it, kotlinVersion, false)
       }
     }
     return []
