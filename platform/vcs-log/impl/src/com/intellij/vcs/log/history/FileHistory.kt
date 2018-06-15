@@ -220,12 +220,8 @@ abstract class FileNamesData {
     private set
 
   val commits: Set<Int>
-    get() {
-      val result = ContainerUtil.newHashSet<Int>()
-      commitToPathAndChanges.forEach { result.add(it) }
-      return result
-    }
-
+    get() = commitToPathAndChanges.keys().toSet()
+  
   protected abstract fun getPathById(pathId: Int): FilePath
 
   fun add(commit: Int,
