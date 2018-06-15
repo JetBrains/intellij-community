@@ -57,8 +57,8 @@ public class ProgramParametersConfigurator {
     parameters.setPassParentEnvs(configuration.isPassParentEnvs());
   }
 
-  private static String expandMacros(String path) {
-    if (Registry.is("allow.macros.for.run.configurations")) {
+  private static String expandMacros(@Nullable String path) {
+    if (path != null && Registry.is("allow.macros.for.run.configurations")) {
         Collection<Macro> macros = MacroManager.getInstance().getMacros();
         for (Macro macro: macros) {
           String value = StringUtil.notNullize(
