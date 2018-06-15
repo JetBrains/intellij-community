@@ -19,7 +19,12 @@ public class UnprotectedUserDataHolder implements UserDataHolder, UserDataHolder
   @Nullable
   @Override
   public <T> T getUserData(@NotNull Key<T> key) {
-    return myUserData != null ? (T)myUserData.get(key) : null;
+    T value = myUserData != null ? (T)myUserData.get(key) : null;
+    if (value == null && key instanceof KeyWithDefaultValue) {
+      value = ((KeyWithDefaultValue<T>)key).getDefaultValue();
+      putUserData(key, value);
+    }
+    return value;
   }
 
   @Override
