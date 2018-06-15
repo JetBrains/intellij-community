@@ -4,7 +4,6 @@
 package com.intellij.dvcs.hosting;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.CalledInBackground;
 import org.jetbrains.annotations.NotNull;
 
@@ -43,12 +42,41 @@ public interface RepositoryListLoader {
    */
   @CalledInBackground
   @NotNull
-  default Pair<List<String>, List<RepositoryListLoadingException>> getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
+  default Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
     try {
-      return Pair.create(getAvailableRepositories(progressIndicator), Collections.emptyList());
+      return new Result(getAvailableRepositories(progressIndicator), Collections.emptyList());
     }
     catch (RepositoryListLoadingException e) {
-      return Pair.create(Collections.emptyList(), Collections.singletonList(e));
+      return new Result(Collections.emptyList(), Collections.singletonList(e));
+    }
+  }
+
+  /**
+   * Result from multiple sources
+   */
+  class Result {
+    @NotNull private final List<String> myUrls;
+    @NotNull private final List<RepositoryListLoadingException> myErrors;
+
+    public Result(@NotNull List<String> urls, @NotNull List<RepositoryListLoadingException> errors) {
+      this.myUrls = urls;
+      this.myErrors = errors;
+    }
+
+    /**
+     * @return all loaded urls (can contain duplicates)
+     */
+    @NotNull
+    public List<String> getUrls() {
+      return myUrls;
+    }
+
+    /**
+     * @return exceptions occurred during loading from some sources
+     */
+    @NotNull
+    public List<RepositoryListLoadingException> getErrors() {
+      return myErrors;
     }
   }
 }
