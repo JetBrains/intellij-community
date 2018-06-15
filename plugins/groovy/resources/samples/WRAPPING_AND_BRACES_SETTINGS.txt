@@ -38,13 +38,6 @@ i = 0
     default:
       doDefault()
     }
-    try {
-      doSomething()
-    } catch (Exception e) {
-      processException(e)
-    } finally {
-      processFinally()
-    }
   }
     public static void test()
         throws Exception {
@@ -55,6 +48,8 @@ i = 0
     class TestInnerClass {}
     interface TestInnerInterface {}
 }
+
+try (def a = r(); def b = r2; def c; def d = r4()) {}catch(Exception e) {processException(e)}finally{processFinally()}
 
 enum Breed {
     Dalmatian(), Labrador(), Dachshund()

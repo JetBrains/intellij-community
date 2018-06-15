@@ -128,6 +128,14 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testTryResourcesSpaces() { doTest() }
 
+  void testTryResourcesDontWrap() { doTest() }
+
+  void testTryResourcesWrapAlways() { doTest() }
+
+  void testTryResourcesWrapAlwaysDontAlign() { doTest() }
+
+  void testTryResourcesWrapAlwaysNl() { doTest() }
+
   void testWhile1() throws Throwable { doTest() }
 
   void testWhile2() throws Throwable { doTest() }

@@ -18,6 +18,8 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.TRY_RESOURCE_LIST;
+
 /**
  * @author Max Medvedev
  */
@@ -91,7 +93,7 @@ public class GroovyWrappingProcessor {
       }
     }
 
-    if (myParentType == GroovyElementTypes.ARGUMENTS) {
+    if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == TRY_RESOURCE_LIST) {
       if (childType == GroovyTokenTypes.mLPAREN || childType == GroovyTokenTypes.mRPAREN) {
         return createNoneWrap();
       }
@@ -106,7 +108,7 @@ public class GroovyWrappingProcessor {
         return getCommonWrap();
       }
       else {
-        return createNormalWrap();
+        return null;
       }
     }
 
@@ -188,6 +190,11 @@ public class GroovyWrappingProcessor {
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == GroovyElementTypes.COMMAND_ARGUMENTS) {
       myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, false);
+    }
+
+    if (myParentType == TRY_RESOURCE_LIST) {
+      myUsedDefaultWrap = true;
+      return Wrap.createWrap(mySettings.RESOURCE_LIST_WRAP, false);
     }
 
     if (myParentType == GroovyElementTypes.FOR_TRADITIONAL_CLAUSE || myParentType == GroovyElementTypes.FOR_IN_CLAUSE) {
