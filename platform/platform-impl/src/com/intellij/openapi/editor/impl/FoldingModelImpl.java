@@ -76,6 +76,13 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
             // Fold region shouldn't disappear even if no one holds a reference to it, so folding tree needs a strong reference to a region
             return region;
           }
+
+          @Override
+          void onRemoved() {
+            for (Getter<FoldRegionImpl> getter: intervals) {
+              removeRegionFromGroup(getter.get());
+            }
+          }
         };
       }
     };

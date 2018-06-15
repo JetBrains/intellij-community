@@ -10,11 +10,13 @@ import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.testFramework.TestFileType;
+import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -368,5 +370,27 @@ public class FoldingTest extends AbstractEditorTest {
     assertTrue(regions[1].isValid());
     List<FoldRegion> newRegionsInGroup = myModel.getGroupedRegions(group);
     assertEquals(Arrays.asList(regions[1]), newRegionsInGroup);
+  }
+
+  public void testAllRegionsFromInvalidNodeAreRemovedFromGroups() {
+    FoldingGroup group = FoldingGroup.newGroup("test");
+    FoldRegion[] regions = new FoldRegion[3];
+    myModel.runBatchFoldingOperation(() -> {
+      regions[0] = myModel.createFoldRegion(1, 4, "a", group, false);
+      regions[1] = myModel.createFoldRegion(3, 4, "b", group, false);
+      regions[2] = myModel.createFoldRegion(20, 30, "c", group, false);
+    });
+    assertNotNull(regions[0]);
+    assertNotNull(regions[1]);
+    assertNotNull(regions[2]);
+    WriteCommandAction.runWriteCommandAction(ourProject, () -> DocumentUtil.executeInBulk(myEditor.getDocument(), true, () -> {
+      myEditor.getDocument().deleteString(1, 3); // make first two regions belong to the same interval tree node
+      myEditor.getDocument().deleteString(1, 2); // invalidate regions
+    }));
+    assertFalse(regions[0].isValid());
+    assertFalse(regions[1].isValid());
+    assertTrue(regions[2].isValid());
+    List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(regions[2].getGroup());
+    assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
   }
 }
