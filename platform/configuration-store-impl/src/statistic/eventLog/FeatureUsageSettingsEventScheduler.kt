@@ -56,17 +56,21 @@ class FeatureUsageSettingsEventScheduler : StartupActivity {
       for (name in ArrayUtilRt.toStringArray(components.keys)) {
         val info = components[name]
         val component = info?.component
-        try {
-          if (component is PersistentStateComponent<*>) {
-            info.stateSpec?.let {
-              logConfigurationState(name, it, component.state, project)
-            }
-          }
-        }
-        catch (e: Exception) {
-          LOG.warn("Error during configuration recording", e)
+        val spec = info?.stateSpec
+        if (spec?.reportStatistic == true && component is PersistentStateComponent<*>) {
+          logConfigurationState(name, spec, getState(component), project)
         }
       }
+    }
+  }
+
+  private fun getState(component: PersistentStateComponent<*>): Any? {
+    return try {
+      component.state
+    }
+    catch (e: Throwable) {
+      LOG.warn("Error during configuration recording", e)
+      null
     }
   }
 }
