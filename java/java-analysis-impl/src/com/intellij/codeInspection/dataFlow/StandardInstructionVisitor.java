@@ -331,8 +331,9 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @NotNull
   private List<DfaMemoryState> handleKnownMethods(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    if (instruction.getTargetMethod() == null) return Collections.emptyList();
-    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(instruction);
+    PsiMethod method = instruction.getTargetMethod();
+    if (method == null) return Collections.emptyList();
+    CustomMethodHandlers.CustomMethodHandler handler = CustomMethodHandlers.find(method);
     if (handler == null) return Collections.emptyList();
     memState = memState.createCopy();
     DfaCallArguments callArguments = popCall(instruction, runner, memState, false);
@@ -784,8 +785,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     }
 
     if (dfaLeft instanceof DfaConstValue && dfaRight instanceof DfaConstValue ||
-        dfaLeft == runner.getFactory().getConstFactory().getContractFail() ||
-        dfaRight == runner.getFactory().getConstFactory().getContractFail()) {
+        DfaConstValue.isContractFail(dfaLeft) || DfaConstValue.isContractFail(dfaRight)) {
       boolean negated = (relationType == RelationType.NE) ^ (DfaMemoryStateImpl.isNaN(dfaLeft) || DfaMemoryStateImpl.isNaN(dfaRight));
       boolean result = dfaLeft == dfaRight ^ negated;
       return makeBooleanResultArray(instruction, runner, memState, result);

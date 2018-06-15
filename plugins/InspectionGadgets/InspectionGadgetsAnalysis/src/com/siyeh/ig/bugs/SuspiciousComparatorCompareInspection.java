@@ -100,11 +100,8 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       }
       PsiMethodCallExpression soleCall = ObjectUtils.tryCast(LambdaUtil.extractSingleExpressionFromBody(body), PsiMethodCallExpression.class);
       if (soleCall != null) {
-        PsiMethod method = soleCall.resolveMethod();
-        if (method != null) {
-          MethodContract contract = ContainerUtil.getOnlyItem(JavaMethodContractUtil.getMethodCallContracts(method, soleCall));
-          if (contract != null && contract.isTrivial() && contract.getReturnValue().isFail()) return;
-        }
+        MethodContract contract = ContainerUtil.getOnlyItem(JavaMethodContractUtil.getMethodCallContracts(soleCall));
+        if (contract != null && contract.isTrivial() && contract.getReturnValue().isFail()) return;
       }
       PsiParameter[] parameters = parameterList.getParameters();
       checkParameterList(parameters, body);
