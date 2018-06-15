@@ -17,6 +17,7 @@
 package com.intellij.ide.navigationToolbar;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
@@ -59,5 +60,10 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
   public void update(final AnActionEvent e){
     final boolean enabled = e.getData(CommonDataKeys.PROJECT) != null;
     e.getPresentation().setEnabled(enabled);
+
+    // see RIDER-15982
+    if (!ActionPlaces.isMainMenuOrActionSearch(e.getPlace())) {
+      e.getPresentation().setText(ActionsBundle.message("action.ShowNavBar.ShortText"));
+    }
   }
 }
