@@ -3,12 +3,12 @@ package org.jetbrains.plugins.groovy.annotator.checkers
 
 import com.intellij.lang.annotation.AnnotationHolder
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil
+import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.GROOVY_TRANSFORM_NAMED_PARAM
 
 class NamedParamAnnotationChecker : CustomAnnotationChecker() {
   override fun checkArgumentList(holder: AnnotationHolder, annotation: GrAnnotation): Boolean {
-    if (GroovyCommonClassNames.GROOVY_TRANSFORM_NAMED_PARAM != annotation.qualifiedName) return false
+    if (GROOVY_TRANSFORM_NAMED_PARAM != annotation.qualifiedName) return false
     val annotationClass = ResolveUtil.resolveAnnotation(annotation) ?: return false
     CustomAnnotationChecker.checkAnnotationArguments(holder, annotationClass, annotation.classReference,
                                                      annotation.parameterList.attributes, false)

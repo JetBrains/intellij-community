@@ -10,6 +10,6 @@ class Cl {
 }
 
 @NamedVariant
-String foo(@NamedParam int shade, Thread t, <error descr="Duplicating named parameter 't' occurs in parameters: 't', 'e'">@NamedDelegate Cl e</error>) {
+String foo(@NamedParam int shade, Thread t, @NamedDelegate Cl <error descr="Duplicate named parameter 't' occurs in parameters: 't', 'e'">e</error>) {
   null
 }

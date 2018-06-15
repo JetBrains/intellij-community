@@ -4,4 +4,4 @@ package org.jetbrains.plugins.groovy.transformations.impl.namedVariant
 import com.intellij.psi.PsiType
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 
-data class NamedParamData(val name: String, val type: PsiType?, val origin: GrParameter)
+internal data class NamedParamData(val name: String, val type: PsiType?, val origin: GrParameter)
