@@ -110,6 +110,8 @@ class GroovyCodeStyleFormatterTest extends GroovyFormatterTestCase {
 
   void testTry2() throws Throwable { doTest() }
 
+  void testTryResourcesSpaces() { doTest() }
+
   void testWhile1() throws Throwable { doTest() }
 
   void testWhile2() throws Throwable { doTest() }
