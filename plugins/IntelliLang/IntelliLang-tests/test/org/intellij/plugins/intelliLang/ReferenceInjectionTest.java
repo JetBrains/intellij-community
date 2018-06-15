@@ -2,7 +2,12 @@ package org.intellij.plugins.intelliLang;
 
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
+import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.fileEditor.TextEditor;
+import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
+import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
@@ -10,6 +15,7 @@ import com.intellij.psi.injection.Injectable;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.Processor;
+import com.intellij.util.ui.UIUtil;
 import org.intellij.plugins.intelliLang.inject.InjectLanguageAction;
 import org.intellij.plugins.intelliLang.inject.UnInjectLanguageAction;
 import org.intellij.plugins.intelliLang.references.FileReferenceInjector;
@@ -88,6 +94,42 @@ public class ReferenceInjectionTest extends LightCodeInsightFixtureTestCase {
 
     UnInjectLanguageAction.invokeImpl(getProject(), myFixture.getEditor(), myFixture.getFile());
     assertNull(getInjectedReferences());
+  }
+
+  public void testUndoLanguageInjection() {
+    myFixture.configureByText("Foo.java", "class Foo {\n" +
+                                          "    String bar() {\n" +
+                                          "        String result = \"{\\\"a<caret>\\\" : 1}\";\n" +
+                                          "        return result;\n" +
+                                          "    }    \n" +
+                                          "}");
+    InjectLanguageAction.invokeImpl(getProject(),
+                                    myFixture.getEditor(),
+                                    myFixture.getFile(),
+                                    Injectable.fromLanguage(Language.findLanguageByID("JSON")));
+    myFixture.checkResult("class Foo {\n" +
+                          "    String bar() {\n" +
+                          "        String result = \"{\\\"a\\\" : 1}\";\n" +
+                          "        return result;\n" +
+                          "    }    \n" +
+                          "}");
+    assertInjectedLangAtCaret("JSON");
+    undo();
+    assertInjectedLangAtCaret(null);
+  }
+
+  private void undo() {
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> {
+      final TestDialog oldTestDialog = Messages.setTestDialog(TestDialog.OK);
+      try {
+        UndoManager undoManager = UndoManager.getInstance(getProject());
+        TextEditor textEditor = TextEditorProvider.getInstance().getTextEditor(getEditor());
+        undoManager.undo(textEditor);
+      }
+      finally {
+        Messages.setTestDialog(oldTestDialog);
+      }
+    });
   }
 
   public void testInjectByAnnotation() {
