@@ -18,9 +18,11 @@ package com.siyeh.ig.bugs;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.StreamApiUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,24 +70,52 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       if (!(type instanceof PsiClassType)) {
         return;
       }
-      final PsiClassType classType = (PsiClassType)type;
-      final PsiClass aClass = classType.resolve();
-      if (aClass == null || !InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
-        return;
-      }
       final PsiExpressionList argumentList = expression.getArgumentList();
       final PsiExpression[] arguments = argumentList.getExpressions();
       if (arguments.length != 1) {
         return;
       }
       final PsiExpression argument = arguments[0];
-      checkCollectionAndArrayTypes(classType, argument, expression);
+
+      final PsiClassType classType = (PsiClassType)type;
+      final PsiClass aClass = classType.resolve();
+      if (aClass == null) {
+        return;
+      }
+      if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_COLLECTION)) {
+        PsiType itemType =
+          GenericsUtil.getVariableTypeByExpressionType(JavaGenericsUtil.getCollectionItemType(classType, expression.getResolveScope()));
+        checkArrayTypes(argument, expression, argument.getType(), itemType);
+      }
+      else if (InheritanceUtil.isInheritor(aClass, CommonClassNames.JAVA_UTIL_STREAM_STREAM)) {
+        PsiType argumentType = getIntFunctionParameterType(argument);
+        if (argumentType != null) {
+          checkArrayTypes(argument, expression, argumentType, StreamApiUtil.getStreamElementType(classType));
+        }
+      }
     }
 
-    private void checkCollectionAndArrayTypes(@NotNull PsiClassType collectionType,
-                                              @NotNull PsiExpression argument,
-                                              @NotNull PsiMethodCallExpression expression) {
-      final PsiType argumentType = argument.getType();
+    private static PsiType getIntFunctionParameterType(PsiExpression argument) {
+      PsiType argumentType;
+      if (argument instanceof PsiFunctionalExpression) {
+        argumentType = ((PsiFunctionalExpression)argument).getFunctionalInterfaceType();
+      }
+      else {
+        argumentType = argument.getType();
+      }
+      if (argumentType instanceof PsiClassType) {
+        argumentType = PsiUtil.convertAnonymousToBaseType(argumentType);
+        if (((PsiClassType)argumentType).getParameterCount() == 1) {
+          return ((PsiClassType)argumentType).getParameters()[0];
+        }
+      }
+      return null;
+    }
+
+    private void checkArrayTypes(@NotNull PsiExpression argument,
+                                 @NotNull PsiMethodCallExpression expression,
+                                 PsiType argumentType, 
+                                 PsiType itemType) {
       if (!(argumentType instanceof PsiArrayType)) {
         return;
       }
@@ -106,13 +136,11 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
         registerError(argument, castArrayType.getComponentType());
       }
       else {
-        final PsiType parameter = GenericsUtil
-          .getVariableTypeByExpressionType(JavaGenericsUtil.getCollectionItemType(collectionType, expression.getResolveScope()));
-        if (parameter == null || componentType.isAssignableFrom(parameter)) {
+        if (itemType == null || componentType.isAssignableFrom(itemType)) {
           return;
         }
-        if (parameter instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)parameter;
+        if (itemType instanceof PsiClassType) {
+          final PsiClassType classType = (PsiClassType)itemType;
           final PsiClass aClass = classType.resolve();
           if (aClass instanceof PsiTypeParameter) {
             final PsiTypeParameter typeParameter = (PsiTypeParameter)aClass;
@@ -127,7 +155,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
             return;
           }
         }
-        registerError(argument, parameter);
+        registerError(argument, itemType);
       }
     }
   }

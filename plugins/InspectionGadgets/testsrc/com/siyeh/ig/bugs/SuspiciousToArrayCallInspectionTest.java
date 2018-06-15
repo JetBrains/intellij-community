@@ -16,7 +16,9 @@
 package com.siyeh.ig.bugs;
 
 import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.siyeh.ig.LightInspectionTestCase;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Bas Leijdekkers
@@ -70,6 +72,21 @@ public class SuspiciousToArrayCallInspectionTest extends LightInspectionTestCase
            "    return x.toArray(/*Array of type 'java.lang.Integer[]' expected*/new Double[0]/**/);\n" +
            "  }\n" +
            "}");
+  }
+  
+  public void testStreams() {
+    doTest("import java.util.stream.Stream;\n" +
+           "class Test {\n" +
+           "    {\n" +
+           "        Stream.of(1.0, 2.0, 3.0).toArray(/*Array of type 'java.lang.Double[]' expected*/Integer[]::new/**/);\n" +
+           "    }\n" +
+           "}");
+  }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_8;
   }
 
   @Override
