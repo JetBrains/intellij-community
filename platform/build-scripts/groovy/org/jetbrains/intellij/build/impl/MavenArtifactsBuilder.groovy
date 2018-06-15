@@ -12,6 +12,8 @@ import org.jetbrains.jps.model.java.JavaResourceRootType
 import org.jetbrains.jps.model.java.JavaSourceRootType
 import org.jetbrains.jps.model.java.JpsJavaDependencyScope
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
+import org.jetbrains.jps.model.library.JpsLibrary
+import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor
 import org.jetbrains.jps.model.library.JpsRepositoryLibraryType
 import org.jetbrains.jps.model.module.JpsLibraryDependency
 import org.jetbrains.jps.model.module.JpsModule
@@ -210,15 +212,16 @@ ${it.includeTransitiveDeps ? "" : """
       }
       else if (dependency instanceof JpsLibraryDependency) {
         def library = (dependency as JpsLibraryDependency).library
-        def repLibrary = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
-        if (repLibrary == null) {
+        def libraryDescriptors = getMavenLibraryDescriptors(library)
+        if (libraryDescriptors.isEmpty()) {
           buildContext.messages.debug(" module '$module.name' depends on non-maven library ${LibraryLicensesListGenerator.getLibraryName(library)}")
           mavenizable = false
         }
         else {
-          def libraryDescriptor = repLibrary.properties.data
-          dependencies << new MavenArtifactDependency(new MavenCoordinates(libraryDescriptor.groupId, libraryDescriptor.artifactId, libraryDescriptor.version),
-                                                      libraryDescriptor.includeTransitiveDependencies, scope)
+          libraryDescriptors.each {
+            dependencies << new MavenArtifactDependency(new MavenCoordinates(it.groupId, it.artifactId, it.version),
+                                                        it.includeTransitiveDependencies, scope)
+          }
         }
       }
     }
@@ -230,6 +233,25 @@ ${it.includeTransitiveDeps ? "" : """
     def artifactData = new MavenArtifactData(generateMavenCoordinates(module.name, buildContext.messages, buildContext.buildNumber), dependencies)
     results[module] = artifactData
     return artifactData
+  }
+
+  private List<JpsMavenRepositoryLibraryDescriptor> getMavenLibraryDescriptors(JpsLibrary library) {
+    def typed = library.asTyped(JpsRepositoryLibraryType.INSTANCE)
+    if (typed != null) {
+      return [typed.properties.data]
+    }
+    if (library.name == "KotlinJavaRuntime") {
+      //todo[nik] remove this when KotlinJavaRuntime will be converted to repository library (we didn't do it yet for historical reasons and to avoid specifying Kotlin version in two places
+      def versionFile = new File(buildContext.paths.kotlinHome, "kotlinc/build.txt")
+      if (!versionFile.exists()) {
+        buildContext.messages.error("Cannot read Kotlin version, $versionFile doesn't exist")
+      }
+      def kotlinVersion = versionFile.text.trim().takeWhile { it != '-' }.toString()
+      return ["kotlin-stdlib", "kotlin-stdlib-jdk7", "kotlin-stdlib-jdk8", "kotlin-reflect", "kotlin-test"].collect {
+        new JpsMavenRepositoryLibraryDescriptor("org.jetbrains.kotlin", it, kotlinVersion, false, [])
+      }
+    }
+    return []
   }
 
   @Immutable
