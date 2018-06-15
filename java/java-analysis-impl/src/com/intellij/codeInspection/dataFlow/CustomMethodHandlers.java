@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
@@ -76,8 +75,7 @@ class CustomMethodHandlers {
     .register(DfaOptionalSupport.OPTIONAL_OF_NULLABLE,
               (args, memState, factory) -> ofNullable(args.myArguments[0], memState, factory));
 
-  public static CustomMethodHandler find(MethodCallInstruction instruction) {
-    PsiMethod method = instruction.getTargetMethod();
+  public static CustomMethodHandler find(PsiMethod method) {
     CustomMethodHandler handler = null;
     if (isConstantCall(method)) {
       handler = (args, memState, factory) -> handleConstantCall(args, memState, factory, method);

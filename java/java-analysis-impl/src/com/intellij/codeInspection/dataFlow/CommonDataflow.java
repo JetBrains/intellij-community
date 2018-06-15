@@ -93,7 +93,7 @@ public class CommonDataflow {
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return null;
     DataFlowRunner runner = new DataFlowRunner(false, block);
-    CommonDataflowVisitor visitor = new CommonDataflowVisitor(runner);
+    CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     if (result != RunnerResult.OK) return null;
     if (!(block instanceof PsiClass)) return visitor.myResult;
@@ -148,14 +148,8 @@ public class CommonDataflow {
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {
-    private DataflowResult myResult;
-    private final DfaConstValue myFail;
+    private DataflowResult myResult = new DataflowResult();
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
-
-    public CommonDataflowVisitor(DataFlowRunner runner) {
-      myFail = runner.getFactory().getConstFactory().getContractFail();
-      myResult = new DataflowResult();
-    }
 
     @Override
     public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction,
@@ -172,7 +166,7 @@ public class CommonDataflow {
                                      @NotNull PsiExpression expression,
                                      @Nullable TextRange range,
                                      @NotNull DfaMemoryState state) {
-      if (range == null && value != myFail) {
+      if (range == null && !DfaConstValue.isContractFail(value)) {
         // Do not track instructions which cover part of expression
         myResult.add(expression, (DfaMemoryStateImpl)state, value);
       }
