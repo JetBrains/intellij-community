@@ -2,6 +2,7 @@
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.ide.ui.LafManager;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
@@ -20,7 +21,7 @@ import java.util.Map;
 /**
  * @author Konstantin Bulenkov
  */
-public class ToolWindowIcon implements Icon {
+public class ToolWindowIcon implements Icon, IconLoader.MenuBarIconProvider {
   private static final Map<Icon, int[]> ourCache = new HashMap<>();
   static {
     LafManager.getInstance().addLafManagerListener(x -> ourCache.clear());
@@ -28,9 +29,11 @@ public class ToolWindowIcon implements Icon {
 
   private final Icon myIcon;
   private final boolean myUseOriginal;
+  private final String myToolWindowId;
 
   public ToolWindowIcon(Icon icon, String toolWindowId) {
     myIcon = icon;
+    myToolWindowId = toolWindowId;
     if (Arrays.asList("Event Log", "Problems").contains(toolWindowId)) {
       myUseOriginal = true;
     } else {
@@ -40,6 +43,9 @@ public class ToolWindowIcon implements Icon {
       myUseOriginal = color == null || color.equals(Gray._108) || color.equals(ColorUtil.fromHex("AFB1B3"));
     }
   }
+
+  @Override
+  public Icon getMenuBarIcon(boolean isDark) { return new ToolWindowIcon(IconLoader.getMenuBarIcon(myIcon, isDark), myToolWindowId); }
 
   @Override
   public void paintIcon(Component c, Graphics g, int x, int y) {

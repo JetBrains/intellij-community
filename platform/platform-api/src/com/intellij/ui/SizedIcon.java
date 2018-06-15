@@ -15,6 +15,7 @@
  */
 package com.intellij.ui;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
@@ -28,7 +29,7 @@ import static java.lang.Math.floor;
 /**
  * @author peter
  */
-public class SizedIcon extends JBUI.CachingScalableJBIcon {
+public class SizedIcon extends JBUI.CachingScalableJBIcon implements IconLoader.MenuBarIconProvider {
   private final int myWidth;
   private final int myHeight;
   private final Icon myDelegate;
@@ -65,6 +66,11 @@ public class SizedIcon extends JBUI.CachingScalableJBIcon {
       return myScaledDelegate = myDelegate;
     }
     return myScaledDelegate = ((ScalableIcon)myDelegate).scale(getScale());
+  }
+
+  @Override
+  public Icon getMenuBarIcon(boolean isDark) {
+    return new SizedIcon(IconLoader.getMenuBarIcon(myDelegate, isDark), myWidth, myHeight);
   }
 
   @Override

@@ -2,6 +2,7 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -211,6 +212,25 @@ public class NSDefaults {
     final Path result = new Path();
     result.myPath.add(new Path.Node("persistentDomainForName:", domain));
     return result.lastValidPos() >= 0;
+  }
+
+  public static boolean isDarkMenuBar() {
+    assert SystemInfo.isMac;
+
+    final Foundation.NSAutoreleasePool pool = new Foundation.NSAutoreleasePool();
+    try {
+      final ID defaults = Foundation.invoke("NSUserDefaults", "standardUserDefaults");
+      if (defaults == null || defaults.equals(ID.NIL))
+        return false;
+      final ID valObj = Foundation.invoke(defaults, "objectForKey:", Foundation.nsString("AppleInterfaceStyle"));
+      if (valObj == null || valObj.equals(ID.NIL))
+        return false;
+
+      final String sval = Foundation.toStringViaUTF8(valObj);
+      return sval != null && sval.equals("Dark");
+    } finally {
+      pool.drain();
+    }
   }
 
   // for debug
