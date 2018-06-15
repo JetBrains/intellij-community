@@ -9,10 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +23,6 @@ import static com.intellij.util.ObjectUtils.tryCast;
 
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
-  private static final Object ANY_VALUE = ObjectUtils.sentinel("ANY_VALUE");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
@@ -34,7 +31,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
-  private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
+  private final Map<PsiReferenceExpression, DfaConstValue> myValues = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
@@ -207,20 +204,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiExpression place = instruction.getExpression();
-    if (!instruction.isReferenceWrite() && place instanceof PsiReferenceExpression) {
-      DfaValue dfaValue = instruction.getValue();
-      if (dfaValue instanceof DfaVariableValue) {
-        DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
-        boolean report = constValue != null && shouldReportConstValue(constValue.getValue());
-        myPossibleVariableValues.putValue(instruction, report ? constValue : ANY_VALUE);
-      }
-    }
-    return super.visitPush(instruction, runner, memState);
-  }
-
-  @Override
   public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     if (!instruction.isStatic()) {
       myEndOfInitializerStates.add(state.createCopy());
@@ -228,18 +211,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return super.visitEndOfInitializer(instruction, runner, state);
   }
 
-  public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {
-    List<Pair<PsiReferenceExpression, DfaConstValue>> result = ContainerUtil.newArrayList();
-    for (PushInstruction instruction : myPossibleVariableValues.keySet()) {
-      Collection<Object> values = myPossibleVariableValues.get(instruction);
-      if (values.size() == 1) {
-        Object singleValue = values.iterator().next();
-        if (singleValue != ANY_VALUE) {
-          result.add(Pair.create((PsiReferenceExpression)instruction.getExpression(), (DfaConstValue)singleValue));
-        }
-      }
-    }
-    return result;
+  public Map<PsiReferenceExpression, DfaConstValue> getConstantReferenceValues() {
+    return myValues;
   }
 
   private static boolean hasNonTrivialFailingContracts(PsiCallExpression call) {
@@ -326,6 +299,24 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
       Boolean isFailing = myFailingCalls.get(call);
       if (isFailing != null || hasNonTrivialFailingContracts(call)) {
         myFailingCalls.put(call, DfaConstValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      DfaConstValue oldValue = myValues.get(expression);
+      if (DfaConstValue.isSentinel(oldValue)) return;
+      if (myValue instanceof DfaVariableValue) {
+        DfaConstValue constValue = myMemState.getConstantValue((DfaVariableValue)myValue);
+        boolean report = constValue != null && shouldReportConstValue(constValue.getValue());
+        if (!report) {
+          constValue = null;
+        }
+        DfaConstValue newValue = constValue != null && (oldValue == null || oldValue == constValue)
+                                 ? constValue
+                                 : myValue.getFactory().getConstFactory().getSentinel();
+        myValues.put(expression, newValue);
       }
     }
 
