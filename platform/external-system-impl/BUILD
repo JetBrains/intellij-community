@@ -41,5 +41,8 @@ iml_module(
         "//tools/idea/platform/testFramework/extensions:intellij.platform.testExtensions[module, test]",
         "//tools/idea/java/execution/impl:intellij.java.execution.impl[module]",
         "//tools/idea:intellij.java.compiler.tests[module, test]",
+        "//tools/idea/.idea/libraries:de.ruedigermoeller_fst",
+        "//tools/idea/.idea/libraries:jackson",
+        "//tools/idea/.idea/libraries:Objenesis",
     ],
 )

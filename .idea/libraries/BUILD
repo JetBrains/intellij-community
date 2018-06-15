@@ -1151,19 +1151,9 @@ java_library(
     name = "de.ruedigermoeller_fst",
     visibility = ["//visibility:public"],
     # do not sort: must match IML order
-    exports = [
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.8.8:jar",
-        "//prebuilts/tools/common/m2/repository/de/ruedigermoeller/fst/2.56:jar",
-        "//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.21.0-GA:jar",
-        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar",
-    ],
+    exports = ["//prebuilts/tools/common/m2/repository/de/ruedigermoeller/fst/2.56:jar"],
     # do not sort: must match IML order
-    runtime_deps = [
-        "//prebuilts/tools/common/m2/repository/com/fasterxml/jackson/core/jackson-core/2.8.8:jar",
-        "//prebuilts/tools/common/m2/repository/de/ruedigermoeller/fst/2.56:jar",
-        "//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.21.0-GA:jar",
-        "//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar",
-    ],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/de/ruedigermoeller/fst/2.56:jar"],
 )
 
 # managed by go/iml_to_build
@@ -1234,4 +1224,20 @@ java_library(
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-gradle-tooling",
         "//prebuilts/tools/common/kotlin-plugin:Kotlin/lib/kotlin-plugin",
     ],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "javassist",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.21.0-GA:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/javassist/javassist/3.21.0-GA:jar"],
+)
+
+# managed by go/iml_to_build
+java_library(
+    name = "Objenesis",
+    visibility = ["//visibility:public"],
+    exports = ["//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar"],
+    runtime_deps = ["//prebuilts/tools/common/m2/repository/org/objenesis/objenesis/2.5.1:jar"],
 )
