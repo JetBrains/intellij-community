@@ -2,12 +2,15 @@
 package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ProjectTopics;
+import com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.injected.editor.VirtualFileWindow;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSProjectUsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -1488,7 +1491,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
               long currentTime = System.nanoTime();
               Long startTime = myProject.getUserData(ProjectImpl.CREATION_TIME);
               if (startTime != null) {
-                LOG.info("Project opening took " + (currentTime - startTime.longValue()) / 1000000 + " ms");
+                long time = (currentTime - startTime.longValue()) / 1000000;
+                FUSProjectUsageTrigger.getInstance(myProject).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.open.time."+(time/1000));
+                FeatureUsageLogger.INSTANCE.log("lifecycle", "project.opening.finished", Collections.singletonMap("time.ms", time));
+
+                LOG.info("Project opening took " + time + " ms");
                 PluginManagerCore.dumpPluginClassStatistics();
               }
             }, myProject.getDisposed());
