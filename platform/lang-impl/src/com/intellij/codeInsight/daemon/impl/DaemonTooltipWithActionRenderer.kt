@@ -26,7 +26,6 @@ import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.ui.*
 import com.intellij.ui.components.JBLabel
-import com.intellij.util.ArrayUtil
 import com.intellij.util.ui.GridBag
 import com.intellij.util.ui.Html
 import com.intellij.util.ui.JBUI
@@ -49,7 +48,7 @@ val runActionCustomShortcutSet: CustomShortcutSet = CustomShortcutSet(
 internal class DaemonTooltipWithActionRenderer(text: String?,
                                                private val tooltipAction: TooltipAction?,
                                                width: Int,
-                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, if (tooltipAction == null) comparable else ArrayUtil.append(comparable, tooltipAction)) {
+                                               comparable: Array<Any>) : DaemonTooltipRenderer(text, width, comparable) {
 
 
   override fun dressDescription(editor: Editor, tooltipText: String, expand: Boolean): String {
