@@ -74,6 +74,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
                               fullBorder ? JBUI.insets(1) : JBUI.insetsTop(1) :
                               fullBorder ? JBUI.insets(0, 1, 1, 1) : JBUI.emptyInsets();
         tabPane.revalidate();
+        tabPane.repaint();
       } else if ("enabled".equals(propName)) {
         for (int ti = 0; ti < tabPane.getTabCount(); ti++) {
           Component tc = tabPane.getTabComponentAt(ti);
@@ -81,13 +82,11 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
             tc.setEnabled(evt.getNewValue() == Boolean.TRUE);
           }
         }
+        tabPane.repaint();
       }
-      tabPane.repaint();
     };
 
-    tabPane.addPropertyChangeListener("JTabbedPane.hasFullBorder", panePropertyListener);
-    tabPane.addPropertyChangeListener("tabLayoutPolicy", panePropertyListener);
-    tabPane.addPropertyChangeListener("enabled", panePropertyListener);
+    tabPane.addPropertyChangeListener(panePropertyListener);
 
     paneMouseListener = new MouseAdapter() {
       public void mouseEntered(MouseEvent e) {
@@ -116,7 +115,7 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   protected void uninstallListeners() {
     super.uninstallListeners();
     if (panePropertyListener != null) {
-      tabPane.removePropertyChangeListener("JTabbedPane.hasFullBorder", panePropertyListener);
+      tabPane.removePropertyChangeListener(panePropertyListener);
     }
 
     if (paneMouseListener != null) {
