@@ -33,7 +33,10 @@ import com.intellij.openapi.paths.WebReference;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -56,8 +59,6 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import gnu.trove.Equality;
 import junit.framework.AssertionFailedError;
-import org.jdom.Element;
-import org.jdom.JDOMException;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -793,31 +794,6 @@ public class PlatformTestUtil {
     }
     finally {
       FileUtilRt.delete(tempDir);
-    }
-  }
-
-  /**
-   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void assertElementsEqual(final Element expected, final Element actual) {
-    if (!JDOMUtil.areElementsEqual(expected, actual)) {
-      assertEquals(JDOMUtil.writeElement(expected), JDOMUtil.writeElement(actual));
-    }
-  }
-
-  /**
-   * @deprecated Use com.intellij.testFramework.assertions.Assertions.assertThat().isEqualTo()
-   */
-  @SuppressWarnings("unused")
-  @Deprecated
-  public static void assertElementEquals(final String expected, final Element actual) {
-    try {
-      assertElementsEqual(JdomKt.loadElement(expected), actual);
-    }
-    catch (IOException | JDOMException e) {
-      throw new AssertionError(e);
     }
   }
 

@@ -161,16 +161,6 @@ public class RunnerMediator {
       mySoftKill = false;
     }
 
-    /** @deprecated use CustomDestroyProcessHandler(GeneralCommandLine commandLine, boolean softKill) (to remove in IDEA 16) */
-    public CustomDestroyProcessHandler(@NotNull Process process, @NotNull GeneralCommandLine commandLine, boolean softKill) {
-      super(process, commandLine.getCommandLineString());
-      mySoftKill = softKill;
-    }
-
-    public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine) throws ExecutionException {
-      this(commandLine, false);
-    }
-
     public CustomDestroyProcessHandler(@NotNull GeneralCommandLine commandLine, final boolean softKill) throws ExecutionException {
       super(commandLine);
       mySoftKill = softKill;

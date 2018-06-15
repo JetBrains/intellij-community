@@ -2587,11 +2587,6 @@ public class UIUtil {
     return null;
   }
 
-  @Deprecated
-  public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
-    return getParentOfType(cls, c);
-  }
-
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
   @Nullable
   public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {

@@ -274,7 +274,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return true;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
@@ -285,7 +284,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
@@ -443,7 +441,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
-  @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);

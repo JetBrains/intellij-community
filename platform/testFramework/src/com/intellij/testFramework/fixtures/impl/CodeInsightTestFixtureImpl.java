@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -1862,13 +1861,4 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myProjectFixture.getTestRootDisposable();
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated
-  public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
-                                                                           @NotNull final Project project,
-                                                                           @NotNull InspectionManagerEx inspectionManager,
-                                                                           @NotNull final InspectionToolWrapper... toolWrappers) {
-    return InspectionsKt.createGlobalContextForTool(scope, project, Arrays.<InspectionToolWrapper<?, ?>>asList(toolWrappers));
-  }
-  //</editor-fold>
 }

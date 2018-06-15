@@ -26,7 +26,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.temp.TempFileSystem;
 import com.intellij.psi.PsiFile;
-import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.StringTokenizer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -43,13 +42,6 @@ public class TestsLocationProviderUtil {
   private static final int MIN_PROXIMITY_THRESHOLD = 1;
 
   private TestsLocationProviderUtil() { }
-
-  /** @deprecated to be removed in IDEA 16 */
-  @SuppressWarnings("unused")
-  public static String extractPath(@NotNull String locationUrl) {
-    int index = locationUrl.indexOf(URLUtil.SCHEME_SEPARATOR);
-    return index >= 0 ? locationUrl.substring(index + URLUtil.SCHEME_SEPARATOR.length()) : null;
-  }
 
   public static List<VirtualFile> findSuitableFilesFor(final String filePath, final Project project) {
     final ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();

@@ -999,18 +999,6 @@ public class ExternalSystemUtil {
     return new ExecutionEnvironment(executor, runner, settings, project);
   }
 
-  /**
-   * @deprecated to be removed in IDEA 2017, use {@link #createExecutionEnvironment}
-   */
-  @Nullable
-  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                                                                       @NotNull String executorId,
-                                                                       @NotNull Project project,
-                                                                       @NotNull ProjectSystemId externalSystemId) {
-    ExecutionEnvironment executionEnvironment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
-    return executionEnvironment == null ? null : Pair.create(executionEnvironment.getRunner(), executionEnvironment);
-  }
-
   @Nullable
   public static RunnerAndConfigurationSettings createExternalSystemRunnerAndConfigurationSettings(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
                                                                                                   @NotNull Project project,

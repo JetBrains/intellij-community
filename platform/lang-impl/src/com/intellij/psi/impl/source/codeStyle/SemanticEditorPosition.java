@@ -19,7 +19,6 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.HighlighterIteratorWrapper;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -173,18 +172,6 @@ public class SemanticEditorPosition {
     return copyAnd(position -> position.moveToLeftParenthesisBackwardsSkippingNested(leftParenthesis, rightParenthesis));
   }
 
-  /**
-   * @deprecated use {@link #moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(SyntaxElement, SyntaxElement, Predicate)} instead. 
-   */
-  @Deprecated
-  public void moveToLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                           @NotNull SyntaxElement rightParenthesis,
-                                                           @NotNull Condition<SyntaxElement> terminationCondition) {
-    moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis,
-                                                              rightParenthesis,
-                                                              self -> terminationCondition.value(self.getCurrElement()));
-  }
-
   public void moveToLeftParenthesisBackwardsSkippingNestedWithPredicate(@NotNull SyntaxElement leftParenthesis,
                                                                         @NotNull SyntaxElement rightParenthesis,
                                                                         @NotNull Predicate<SemanticEditorPosition> terminationCondition) {
@@ -201,18 +188,6 @@ public class SemanticEditorPosition {
       }
       myIterator.retreat();
     }
-  }
-
-  /**
-   * @deprecated use {@link #findLeftParenthesisBackwardsSkippingNestedWithPredicate(SyntaxElement, SyntaxElement, Predicate)} instead. 
-   */
-  @Deprecated 
-  public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNested(@NotNull SyntaxElement leftParenthesis,
-                                                                           @NotNull SyntaxElement rightParenthesis,
-                                                                           @NotNull Condition<SyntaxElement> terminationCondition) 
-  {
-    return findLeftParenthesisBackwardsSkippingNestedWithPredicate(leftParenthesis, rightParenthesis,
-                                                                   self -> terminationCondition.value(self.getCurrElement()));
   }
 
   public SemanticEditorPosition findLeftParenthesisBackwardsSkippingNestedWithPredicate(

@@ -22,14 +22,6 @@ import java.util.concurrent.TimeUnit;
 public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   private static final Logger LOG = Logger.getInstance(BaseOSProcessHandler.class);
 
-  private static final Options ADAPTIVE_NON_BLOCKING = new Options() {
-    @Override
-    public BaseDataReader.SleepingPolicy policy() {
-      //noinspection deprecation
-      return new BaseDataReader.AdaptiveSleepingPolicy();
-    }
-  };
-
   /**
    * {@code commandLine} must not be not empty (for correct thread attribution in the stacktrace)
    */
@@ -55,29 +47,14 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
     return executeOnPooledThread(task);
   }
 
-  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 2018) */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
-    return false;
-  }
-
-  /** @deprecated use {@link #readerOptions()} (to be removed in IDEA 2018) */
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected boolean useNonBlockingRead() {
-    return !Registry.is("output.reader.blocking.mode", false);
-  }
-
   /**
    * Override this method to fine-tune {@link BaseOutputReader} behavior.
    */
   @NotNull
   @SuppressWarnings("deprecation")
   protected Options readerOptions() {
-    if (!useNonBlockingRead()) {
+    if (Registry.is("output.reader.blocking.mode", false)) {
       return Options.BLOCKING;
-    }
-    else if (useAdaptiveSleepingPolicyWhenReadingOutput()) {
-      return ADAPTIVE_NON_BLOCKING;
     }
     else {
       return Options.NON_BLOCKING;

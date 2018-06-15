@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -766,11 +765,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
-  }
-
-  @Override
-  public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
-    mySettings.setSoftWrapAppliancePlace(place);
   }
 
   @Override
@@ -2111,11 +2105,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
     return lineIndex;
-  }
-
-  @Override
-  public int calcColumnNumber(int offset, int lineIndex) {
-    return myView.offsetToLogicalPosition(offset).column;
   }
 
   private VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth) {
@@ -4526,11 +4515,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @NotNull
   public EditorGutter getGutter() {
     return getGutterComponentEx();
-  }
-
-  @Override
-  public int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize) {
-    return myView.offsetToLogicalPosition(offset).column;
   }
 
   public boolean isInDistractionFreeMode() {

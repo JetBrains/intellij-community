@@ -1291,7 +1291,7 @@ public class FindPopupPanel extends JBPanel implements FindUI {
       }
       else {
         try {
-          FindInProjectUtil.createFileMaskRegExp(mask);   // verify that the regexp compiles
+          createFileMaskRegExp(mask);   // verify that the regexp compiles
         }
         catch (PatternSyntaxException ex) {
           return new ValidationInfo(FindBundle.message("find.filter.invalid.file.mask.error", mask), myFileMaskField);
@@ -1399,6 +1399,21 @@ public class FindPopupPanel extends JBPanel implements FindUI {
     for (Component component : components) {
       component.setFont(font);
     }
+  }
+
+  private static void createFileMaskRegExp(@Nullable String filter) throws PatternSyntaxException {
+    if (filter == null) {
+      return;
+    }
+    String pattern;
+    final List<String> strings = StringUtil.split(filter, ",");
+    if (strings.size() == 1) {
+      pattern = PatternUtil.convertToRegex(filter.trim());
+    }
+    else {
+      pattern = StringUtil.join(strings, s -> "(" + PatternUtil.convertToRegex(s.trim()) + ")", "|");
+    }
+    Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
   }
 
   private class MySwitchContextToggleAction extends ToggleAction implements DumbAware {

@@ -20,7 +20,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -58,10 +57,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
@@ -358,11 +353,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   @Override
   public void registerPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
     myCustomPositionManagerFactories.add(factory);
-  }
-
-  @Override
-  public void unregisterPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
-    myCustomPositionManagerFactories.remove(factory);
   }
 
   /* Remoting */

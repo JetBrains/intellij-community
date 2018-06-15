@@ -621,10 +621,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return new XmlHighlightVisitor();
   }
 
-  @Override
-  public int order() {
-    return 1;
-  }
 
   public static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
     String unquotedValue = value.getValue();

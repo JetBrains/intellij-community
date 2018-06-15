@@ -23,16 +23,13 @@ public interface UsageView extends Disposable {
    * Returns {@link UsageTarget} to look usages for
    */
   DataKey<UsageTarget[]> USAGE_TARGETS_KEY = DataKey.create("usageTarget");
-  @Deprecated String USAGE_TARGETS = USAGE_TARGETS_KEY.getName();
 
   /**
    * Returns {@link Usage} which are selected in usage view
    */
   DataKey<Usage[]> USAGES_KEY = DataKey.create("usages");
-  @Deprecated String USAGES = USAGES_KEY.getName();
 
   DataKey<UsageView> USAGE_VIEW_KEY = DataKey.create("UsageView.new");
-  @Deprecated String USAGE_VIEW = USAGE_VIEW_KEY.getName();
 
   DataKey<UsageInfo> USAGE_INFO_KEY = DataKey.create("UsageInfo");
   DataKey<SearchScope> USAGE_SCOPE = DataKey.create("UsageScope");

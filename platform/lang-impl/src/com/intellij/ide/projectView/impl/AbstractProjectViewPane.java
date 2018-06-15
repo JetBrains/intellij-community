@@ -593,19 +593,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         Object component = path.getLastPathComponent();
         if (component instanceof DefaultMutableTreeNode) {
           //noinspection deprecation
-          return getSelectedDirectoriesInAmbiguousCase((DefaultMutableTreeNode)component);
+          return getSelectedDirectoriesInAmbiguousCase(((DefaultMutableTreeNode)component).getUserObject());
         }
         return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    return getSelectedDirectoriesInAmbiguousCase(node.getUserObject());
   }
 
   @NotNull

@@ -406,15 +406,6 @@ public class ExternalResourceManagerExImpl extends ExternalResourceManagerEx imp
   }
 
   @Override
-  public void removeIgnoredResource(@NotNull String url) {
-    ApplicationManager.getApplication().assertWriteAccessAllowed();
-    if (myIgnoredResources.remove(url)) {
-      incModificationCount();
-      fireExternalResourceChanged();
-    }
-  }
-
-  @Override
   public boolean isIgnoredResource(@NotNull String url) {
     if (myIgnoredResources.contains(url)) {
       return true;

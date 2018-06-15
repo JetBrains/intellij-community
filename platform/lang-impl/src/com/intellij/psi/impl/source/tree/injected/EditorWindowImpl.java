@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.LightHighlighterClient;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.impl.TextDrawingCallback;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
@@ -809,36 +808,10 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
     return myDelegate;
   }
 
-  @Override
-  public int calcColumnNumber(@NotNull final CharSequence text, final int start, final int offset, final int tabSize) {
-    int column = 0;
-    for (int i = start; i < offset; i++) {
-      char c = text.charAt(i);
-      if (c == '\t') {
-        column = ((column / tabSize) + 1) * tabSize;
-      }
-      else {
-        column++;
-      }
-    }
-    return column;
-  }
-
-  @Override
-  public int calcColumnNumber(int offset, int lineIndex) {
-    return calcColumnNumber(myDocumentWindow.getImmutableCharSequence(), myDocumentWindow.getLineStartOffset(lineIndex), offset,
-                            EditorUtil.getTabSize(myDelegate));
-  }
-
   @NotNull
   @Override
   public IndentsModel getIndentsModel() {
     return myDelegate.getIndentsModel();
-  }
-
-  @Override
-  public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
-    myDelegate.setSoftWrapAppliancePlace(place);
   }
 
   @Override

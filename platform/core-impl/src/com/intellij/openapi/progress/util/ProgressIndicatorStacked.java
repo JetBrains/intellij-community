@@ -35,5 +35,5 @@ public interface ProgressIndicatorStacked extends ProgressIndicator {
 
   /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead of manually checking counters*/
   @Deprecated
-  int getNonCancelableCount();
+  default int getNonCancelableCount() { return 0; }
 }

@@ -86,12 +86,6 @@ public abstract class ProgressManager extends ProgressIndicatorProvider {
   public abstract void executeNonCancelableSection(@NotNull Runnable runnable);
 
   /**
-   * to be removed in 2017.2
-   */
-  @Deprecated
-  public abstract void setCancelButtonText(String cancelButtonText);
-
-  /**
    * Runs the specified operation in a background thread and shows a modal progress dialog in the
    * main thread while the operation is executing.
    *

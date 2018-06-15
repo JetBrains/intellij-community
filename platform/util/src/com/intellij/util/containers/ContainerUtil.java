@@ -1333,18 +1333,6 @@ public class ContainerUtil extends ContainerUtilRt {
     return result.isEmpty() ? Collections.<T>emptyList() : result;
   }
 
-  /**
-   * @deprecated Use {@link #append(List, Object[])} or {@link #prepend(List, Object[])} instead
-   * @param appendTail specify whether additional values should be appended in front or after the list
-   * @return read-only list consisting of the elements from specified list with some additional values
-   */
-  @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, @NotNull T... values) {
-    return appendTail ? concat(list, list(values)) : concat(list(values), list);
-  }
-
   @NotNull
   @Contract(pure=true)
   public static <T> List<T> append(@NotNull List<? extends T> list, @NotNull T... values) {

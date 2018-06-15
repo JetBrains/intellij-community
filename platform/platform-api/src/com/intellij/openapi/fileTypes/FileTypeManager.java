@@ -133,7 +133,8 @@ public abstract class FileTypeManager extends FileTypeRegistry {
    */
   @Nullable
   @Deprecated() // use getKnownFileTypeOrAssociate(VirtualFile file, Project project) instead
-  public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file);
+  public FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file) { return file.getFileType(); }
+
   @Nullable
   public abstract FileType getKnownFileTypeOrAssociate(@NotNull VirtualFile file, @NotNull Project project);
 

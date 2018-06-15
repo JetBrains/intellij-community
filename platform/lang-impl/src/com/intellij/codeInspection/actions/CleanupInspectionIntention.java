@@ -8,7 +8,10 @@ import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.FileModifier;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.InspectionEngine;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.diagnostic.Logger;
@@ -19,9 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
 import java.util.List;
 
 public class CleanupInspectionIntention implements IntentionAction, HighPriorityAction {
@@ -65,40 +66,6 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     if (!fixesTask.isApplicableFixFound()) {
       HintManager.getInstance().showErrorHint(editor, "Unfortunately '" + myText + "' is currently not available for batch mode\n User interaction is required for each problem found");
     }
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static AbstractPerformFixesTask applyFixes(@NotNull Project project,
-                                                    @NotNull String presentationText,
-                                                    @NotNull List<ProblemDescriptor> descriptions,
-                                                    @Nullable Class quickfixClass,
-                                                             boolean startInWriteAction) {
-    return CleanupInspectionUtil.getInstance()
-        .applyFixes(project, presentationText, descriptions, quickfixClass, startInWriteAction);
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static AbstractPerformFixesTask applyFixesNoSort(@NotNull Project project,
-                                                          @NotNull String presentationText,
-                                                          @NotNull List<ProblemDescriptor> descriptions,
-                                                          @Nullable Class quickfixClass,
-                                                                    boolean startInWriteAction) {
-    return CleanupInspectionUtil.getInstance()
-        .applyFixesNoSort(project, presentationText, descriptions, quickfixClass, startInWriteAction);
-  }
-
-  /**
-   * @deprecated Use {@link CleanupInspectionUtil} instead
-   */
-  @Deprecated
-  public static void sortDescriptions(@NotNull List<ProblemDescriptor> descriptions) {
-    Collections.sort(descriptions, CommonProblemDescriptor.DESCRIPTOR_COMPARATOR);
   }
 
   @Override

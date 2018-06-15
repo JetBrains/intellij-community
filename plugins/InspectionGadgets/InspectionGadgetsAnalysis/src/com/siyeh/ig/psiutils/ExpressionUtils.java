@@ -1122,14 +1122,6 @@ public class ExpressionUtils {
   }
 
   /**
-   * Use {@link ExpressionUtil#isEffectivelyUnqualified} instead
-   */
-  @Deprecated
-  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    return ExpressionUtil.isEffectivelyUnqualified(refExpression);
-  }
-
-  /**
    * Checks whether diff-expression represents a difference between from-expression and to-expression
    *
    * @param from from-expression

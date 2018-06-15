@@ -12,7 +12,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrClassInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -121,13 +120,6 @@ public class GrHighlightUtil {
     int endOffset = parameterList.getTextRange().getEndOffset() + 1;
 
     return new TextRange(startOffset, endOffset);
-  }
-
-  @Deprecated // to be removed
-  @NotNull
-  public static PsiElement getElementToHighlight(@NotNull GrReferenceElement refElement) {
-    final PsiElement refNameElement = refElement.getReferenceNameElement();
-    return refNameElement != null ? refNameElement : refElement;
   }
 
   public static TextRange getClassHeaderTextRange(GrTypeDefinition clazz) {

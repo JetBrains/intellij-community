@@ -186,25 +186,6 @@ public class FindInProjectUtil {
   }
 
   /**
-   * @deprecated to be removed in IDEA 16
-   */
-  @Nullable
-  public static Pattern createFileMaskRegExp(@Nullable String filter) throws PatternSyntaxException {
-    if (filter == null) {
-      return null;
-    }
-    String pattern;
-    final List<String> strings = StringUtil.split(filter, ",");
-    if (strings.size() == 1) {
-      pattern = PatternUtil.convertToRegex(filter.trim());
-    }
-    else {
-      pattern = StringUtil.join(strings, s -> "(" + PatternUtil.convertToRegex(s.trim()) + ")", "|");
-    }
-    return Pattern.compile(pattern, Pattern.CASE_INSENSITIVE);
-  }
-
-  /**
    * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
    */
   public static void findUsages(@NotNull FindModel findModel,

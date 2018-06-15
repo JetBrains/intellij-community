@@ -93,10 +93,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
   };
 
-  /** @deprecated use {@link #getBuilderForType(String)} and {@link #getBuilders()} (to be removed in IDEA 2018) */
-  @SuppressWarnings({"UseOfObsoleteCollectionType", "DeprecatedIsStillUsed"})
-  protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
-
   /** @deprecated use {@link #getCurrentViewType()} (to be removed in IDEA 2018) */
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected String myCurrentViewType;
@@ -115,8 +111,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   public HierarchyBrowserBaseEx(@NotNull Project project, @NotNull PsiElement element) {
     super(project);
 
-    @SuppressWarnings("deprecation") Map<String, HierarchyTreeBuilder> mapView = myBuilders;
-    myType2BuilderMap = mapView;
+    myType2BuilderMap = new Hashtable<>();
 
     setHierarchyBase(element);
 

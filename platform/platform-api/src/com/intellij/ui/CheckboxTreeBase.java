@@ -66,11 +66,6 @@ public class CheckboxTreeBase extends Tree {
     myHelper.initTree(this, this, cellRenderer);
   }
 
-  @Deprecated
-  public void installRenderer(final CheckboxTreeCellRendererBase cellRenderer) {
-    setCellRenderer(cellRenderer);
-  }
-
   /**
    * @deprecated use {@link #setNodeState} to change node state or subscribe to {@link #addCheckboxTreeListener} to get notifications about state changes
    */
@@ -123,10 +118,6 @@ public class CheckboxTreeBase extends Tree {
 
   protected void nodeStateWillChange(CheckedTreeNode node) {
   }
-
-  @SuppressWarnings("unused")
-  @Deprecated
-  protected void adjustParents(final CheckedTreeNode node, final boolean checked) {}
 
   public static class CheckboxTreeCellRendererBase extends JPanel implements TreeCellRenderer {
     private final ColoredTreeCellRenderer myTextRenderer;

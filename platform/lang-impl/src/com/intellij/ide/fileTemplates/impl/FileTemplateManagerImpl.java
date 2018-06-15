@@ -281,12 +281,6 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements Pers
     return templateName.toLowerCase();
   }
 
-  @Override
-  @NotNull
-  public String localizeInternalTemplateName(@NotNull final FileTemplate template) {
-    return template.getName();
-  }
-
   @NonNls
   @NotNull
   private String getDefaultClassTemplateText(@NotNull @NonNls String templateName) {

@@ -127,7 +127,6 @@ public abstract class BaseDataReader {
   }
 
   /** @deprecated use one of default policies (recommended) or implement your own (to be removed in IDEA 2018) */
-  @SuppressWarnings("DeprecatedIsStillUsed")
   public static class AdaptiveSleepingPolicy implements SleepingPolicy {
     private static final int maxSleepTimeWhenIdle = 200;
     private static final int maxIterationsWithCurrentSleepTime = 50;

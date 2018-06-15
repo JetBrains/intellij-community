@@ -883,8 +883,6 @@
 
     <extensionPoint name="aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper"/>
 
-    <extensionPoint name="sourceRootFinder" interface="com.intellij.ide.util.newProjectWizard.SourceRootFinder"/>
-
     <extensionPoint name="inspectionsReportConverter"
                     interface="com.intellij.codeInspection.InspectionsReportConverter"/>
 

@@ -29,8 +29,6 @@ import java.util.Set;
 public interface HighlightInfoType {
   @NonNls String UNUSED_SYMBOL_SHORT_NAME = "unused";
   @NonNls String UNUSED_SYMBOL_DISPLAY_NAME = InspectionsBundle.message("inspection.dead.code.display.name");
-  @Deprecated
-  @NonNls String UNUSED_SYMBOL_ID = "UnusedDeclaration";
 
   HighlightInfoType ERROR = new HighlightInfoTypeImpl(HighlightSeverity.ERROR, CodeInsightColors.ERRORS_ATTRIBUTES);
   HighlightInfoType WARNING = new HighlightInfoTypeImpl(HighlightSeverity.WARNING, CodeInsightColors.WARNINGS_ATTRIBUTES);
@@ -75,13 +73,6 @@ public interface HighlightInfoType {
   @SuppressWarnings("deprecation")
   @Deprecated
   HighlightInfoType INSTANCE_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INSTANCE_FIELD_ATTRIBUTES);
-  /**
-   * @deprecated For Java use JavaHighlightInfoTypes.INSTANCE_FINAL_FIELD or create a language-specific HighlightInfoType.
-   * The field will be removed in version 17.
-   */
-  @SuppressWarnings({"deprecation", "unused"})
-  @Deprecated
-  HighlightInfoType INSTANCE_FINAL_FIELD = new HighlightInfoTypeImpl(SYMBOL_TYPE_SEVERITY, CodeInsightColors.INSTANCE_FINAL_FIELD_ATTRIBUTES);
   /**
    * @deprecated For Java use JavaHighlightInfoTypes.STATIC_FIELD or create a language-specific HighlightInfoType.
    * The field will be removed in version 17.

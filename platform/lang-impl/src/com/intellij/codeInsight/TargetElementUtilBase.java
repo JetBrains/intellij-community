@@ -76,15 +76,6 @@ public abstract class TargetElementUtilBase {
 
 
   @Nullable
-  public abstract PsiElement adjustElement(final Editor editor,
-                                           final int flags,
-                                           @Nullable PsiElement element,
-                                           @Nullable PsiElement contextElement);
-
-  @Nullable
-  public abstract PsiElement adjustReference(@NotNull PsiReference ref);
-
-  @Nullable
   public abstract PsiElement getNamedElement(@Nullable final PsiElement element, final int offsetInElement);
 
   @NotNull
@@ -93,8 +84,6 @@ public abstract class TargetElementUtilBase {
   public abstract PsiElement getGotoDeclarationTarget(final PsiElement element, final PsiElement navElement);
 
   public abstract boolean includeSelfInGotoImplementation(@NotNull final PsiElement element);
-
-  public abstract boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element);
 
   /**
    * @return a scope where element's implementations (Goto/Show Implementations) should be searched

@@ -29,7 +29,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -401,11 +400,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myEntryPointsManager = entryPointsManager = new EntryPointsManagerBase(project) {
         @Override
         public void configureAnnotations() {
-        }
-
-        @Override
-        public JButton createConfigureAnnotationsBtn() {
-          return null;
         }
       };
       Disposer.register(project, entryPointsManager);

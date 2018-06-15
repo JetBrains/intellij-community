@@ -1312,16 +1312,6 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  @Deprecated
-  public void pack() {
-    if (isBusy()) return;
-
-    final Window window = getContentWindow(myContent);
-    if (window != null) {
-      window.pack();
-    }
-  }
-
   public JComponent getComponent() {
     return myComponent;
   }

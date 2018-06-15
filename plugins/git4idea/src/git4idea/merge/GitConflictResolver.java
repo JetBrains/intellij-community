@@ -18,7 +18,6 @@ import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
-import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -111,16 +110,6 @@ public class GitConflictResolver {
       return this;
     }
 
-  }
-
-  /**
-   * @deprecated To remove in IDEA 2017. Use {@link #GitConflictResolver(Project, Git, Collection, Params)}.
-   */
-  @SuppressWarnings("UnusedParameters")
-  @Deprecated
-  public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull GitPlatformFacade facade,
-                             @NotNull Collection<VirtualFile> roots, @NotNull Params params) {
-    this(project, git, roots, params);
   }
 
   public GitConflictResolver(@NotNull Project project, @NotNull Git git, @NotNull Collection<VirtualFile> roots, @NotNull Params params) {

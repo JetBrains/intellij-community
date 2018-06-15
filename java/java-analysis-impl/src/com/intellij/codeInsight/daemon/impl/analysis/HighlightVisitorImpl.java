@@ -113,10 +113,6 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     return new HighlightVisitorImpl(myResolveHelper);
   }
 
-  @Override
-  public int order() {
-    return 0;
-  }
 
   @Override
   public boolean suitableForFile(@NotNull PsiFile file) {

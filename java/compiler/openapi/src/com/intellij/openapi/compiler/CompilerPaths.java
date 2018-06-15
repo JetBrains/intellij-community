@@ -134,16 +134,6 @@ public class CompilerPaths {
     return outPathUrl != null? VirtualFileManager.extractPath(outPathUrl) : null;
   }
 
-  /**
-   * @return path to annotation-processors generated _production_ sources
-    Use {@link #getAnnotationProcessorsGenerationPath(Module, boolean)}
-   */
-  @Deprecated
-  @Nullable
-  public static String getAnnotationProcessorsGenerationPath(Module module) {
-    return getAnnotationProcessorsGenerationPath(module, false);
-  }
-
   @Nullable
   public static String getAnnotationProcessorsGenerationPath(Module module, boolean forTests) {
     final AnnotationProcessingConfiguration config = CompilerConfiguration.getInstance(module.getProject()).getAnnotationProcessingConfiguration(module);

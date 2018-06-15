@@ -139,14 +139,6 @@ public abstract class TaskRepository {
   }
 
   /**
-   * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean, ProgressIndicator)} instead.
-   */
-  @Deprecated
-  public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
-    return getIssues(query, max, since);
-  }
-
-  /**
    * Retrieve tasks from server using its own pagination capabilities and also filtering out closed issues.
    * <p/>
    * Previously used approach with filtering tasks on client side leads to non-filled up popup in "Open Task" action and, as result,

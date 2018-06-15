@@ -191,11 +191,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   }
 
   @Override
-  public void setCancelButtonText(String cancelButtonText) {
-
-  }
-
-  @Override
   public boolean runProcessWithProgressSynchronously(@NotNull Runnable process,
                                                      @NotNull @Nls String progressTitle,
                                                      boolean canBeCanceled,
@@ -661,12 +656,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     synchronized (threadsUnderIndicator) {
       return threadsUnderCanceledIndicator.contains(thread);
     }
-  }
-
-  @NotNull
-  @Override
-  protected final NonCancelableSection startNonCancelableSection() {
-    throw new UnsupportedOperationException();
   }
 
   @Override

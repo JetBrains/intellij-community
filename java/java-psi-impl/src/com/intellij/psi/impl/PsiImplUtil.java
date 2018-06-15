@@ -59,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
@@ -323,11 +322,6 @@ public class PsiImplUtil {
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
-  }
-
-  /** @deprecated use {@link AnnotationTargetUtil#getAnnotationTargets(PsiClass)} (to be removed ion IDEA 17) */
-  public static Set<PsiAnnotation.TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
-    return AnnotationTargetUtil.getAnnotationTargets(annotationType);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */

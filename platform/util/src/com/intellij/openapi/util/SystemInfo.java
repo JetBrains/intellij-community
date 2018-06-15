@@ -193,20 +193,5 @@ public class SystemInfo extends SystemInfoRt {
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
   public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseName() {
-    return null;
-  }
-
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseVersion() {
-    return null;
-  }
-
-  /** @deprecated outdated (to be removed in IDEA 2018) */
-  public static final boolean isOS2 = SystemInfoRt.isOS2;
-
-  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
-  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   //</editor-fold>
 }

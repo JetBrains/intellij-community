@@ -39,8 +39,6 @@ import java.util.Set;
  * and invoke various types of compilations (make, compile, rebuild)
  */
 public abstract class CompilerManager {
-  @Deprecated
-  public static final Key<Key> CONTENT_ID_KEY = Key.create("COMPILATION_CONTENT_ID_CUSTOM_KEY");
   public static final Key<RunConfiguration> RUN_CONFIGURATION_KEY = Key.create("RUN_CONFIGURATION");
   public static final Key<String> RUN_CONFIGURATION_TYPE_ID_KEY = Key.create("RUN_CONFIGURATION_TYPE_ID");
 

@@ -175,20 +175,6 @@ public class JarRepositoryManager {
     return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, true);
   }
 
-  
-  /**
-   * Warning! Suitable to be used from non-AWT thread only. When called from UI thread, may lead to a deadlock
-   * Use loadDependenciesModal() or loadDependenciesAsync() instead
-   */
-  @Deprecated
-  public static Collection<OrderRoot> loadDependencies(@NotNull Project project,
-                                                       @NotNull RepositoryLibraryProperties libraryProps,
-                                                       boolean loadSources,
-                                                       boolean loadJavadoc,
-                                                       @Nullable String copyTo,
-                                                       @Nullable Collection<RemoteRepositoryDescription> repositories) {
-    return loadDependenciesImpl(project, libraryProps, loadSources, loadJavadoc, copyTo, repositories, false);
-  }
 
   private static Collection<OrderRoot> loadDependenciesImpl(@NotNull Project project,
                                                             @NotNull RepositoryLibraryProperties libraryProps,

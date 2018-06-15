@@ -173,11 +173,6 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
     }
   }
 
-  @Deprecated
-  public static boolean isTooLarge(@NotNull VirtualFile vFile) {
-    return isTooLargeForIntelligence(vFile);
-  }
-
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
     if (!checkFileSizeLimit(vFile)) return false;
     return fileSizeIsGreaterThan(vFile, PersistentFSConstants.getMaxIntellisenseFileSize());

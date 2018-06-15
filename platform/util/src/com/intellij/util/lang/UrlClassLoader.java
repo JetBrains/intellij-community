@@ -140,11 +140,6 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
-    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
-
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
