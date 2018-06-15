@@ -5,7 +5,7 @@
 public class ThisIsASampleClass extends C1 implements I1, I2, I3, I4, I5 {
   private int f1 = 1
   private String field2 = ""
-  public void foo1(int i1, int i2, int i3, int i4, int i5, int i6, int i7) {}
+  void m(int i1, long i2, short i3, double i4, byte i5, boolean i6, float i7) {}
   public static void longerMethod() throws Exception1, Exception2, Exception3 {
 // todo something
     int
