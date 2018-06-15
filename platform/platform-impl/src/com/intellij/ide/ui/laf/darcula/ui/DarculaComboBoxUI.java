@@ -133,7 +133,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
           innerShape.lineTo(lw, r.height - bw - lw);
           innerShape.closePath();
 
-          g2.setColor(getArrowButtonBackgroundColor(comboBox.isEnabled()));
+          g2.setColor(getArrowButtonBackgroundColor(comboBox.isEnabled(), comboBox.isEditable()));
           g2.fill(innerShape);
 
           // Paint vertical line
@@ -162,7 +162,7 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   @SuppressWarnings("unused")
   @Deprecated
   protected Color getArrowButtonFillColor(Color defaultColor) {
-    return getArrowButtonBackgroundColor(comboBox.isEnabled());
+    return getArrowButtonBackgroundColor(comboBox.isEnabled(), comboBox.isEditable());
   }
 
   @NotNull
