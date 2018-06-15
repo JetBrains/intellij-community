@@ -54,7 +54,9 @@ public class EqualsReplaceableByObjectsCallInspectionTest extends LightInspectio
     boolean oldNotNull = myInspection.checkNotNull;
     try {
       myInspection.checkNotNull = checkNotNull;
-      doTest();
+
+      myFixture.configureByFile(getTestName(false) + ".java");
+      myFixture.testHighlighting(true, true, false);
     }
     finally {
       myInspection.checkNotNull = oldNotNull;
