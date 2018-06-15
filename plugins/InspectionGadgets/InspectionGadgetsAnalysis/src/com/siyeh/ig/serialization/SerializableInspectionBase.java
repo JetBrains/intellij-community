@@ -55,7 +55,7 @@ public abstract class SerializableInspectionBase extends BaseInspection {
     return EMPTY_COMPONENT_ARRAY;
   }
 
-  protected boolean isIgnoredSubclass(PsiClass aClass) {
+  protected boolean isIgnoredSubclass(@NotNull PsiClass aClass) {
     if (SerializationUtils.isDirectlySerializable(aClass)) {
       return false;
     }

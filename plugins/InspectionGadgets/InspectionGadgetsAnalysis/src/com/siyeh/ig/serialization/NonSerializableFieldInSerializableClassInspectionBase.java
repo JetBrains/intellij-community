@@ -16,10 +16,8 @@
 package com.siyeh.ig.serialization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.PsiAnonymousClass;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
@@ -76,7 +74,12 @@ public class NonSerializableFieldInSerializableClassInspectionBase extends Seria
       if (!SerializationUtils.isSerializable(aClass)) {
         return;
       }
-      if (SerializationUtils.isProbablySerializable(field.getType())) {
+      PsiType fieldType = field.getType();
+      if (SerializationUtils.isProbablySerializable(fieldType)) {
+        return;
+      }
+      PsiClass fieldClass = PsiUtil.resolveClassInClassTypeOnly(fieldType);
+      if (fieldClass != null && isIgnoredSubclass(fieldClass)) {
         return;
       }
       if (SerializationUtils.hasWriteObject(aClass) || SerializationUtils.hasWriteReplace(aClass)) {
