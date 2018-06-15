@@ -2,6 +2,7 @@
 package com.intellij.ui.tree.project;
 
 import com.intellij.openapi.extensions.AreaInstance;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -130,10 +131,7 @@ public abstract class ProjectFileListener {
     if (module != null) return module.isDisposed() ? null : module;
     if (!is("projectView.show.base.dir")) return null;
     VirtualFile ancestor = project.getBaseDir();
-    // file does not belong to any content root, but it is located under the project directory
-    if (ancestor == null || !isAncestor(ancestor, file, false)) return null;
-    PsiManager manager = PsiManager.getInstance(project);
-    PsiElement element = file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
-    return element == null ? null : project; // ensure that the corresponding file can be shown
+    // file does not belong to any content root, but it is located under the project directory and not ignored
+    return ancestor == null || FileTypeRegistry.getInstance().isFileIgnored(file) || !isAncestor(ancestor, file, false) ? null : project;
   }
 }
