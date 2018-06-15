@@ -489,8 +489,8 @@ public final class ScopeViewTreeModel extends BaseTreeModel<AbstractTreeNode> im
 
     @Nullable
     final PsiFileSystemItem findFileSystemItem(@NotNull VirtualFile file) {
-      Project project = getProject();
-      PsiManager manager = project == null ? null : PsiManager.getInstance(project);
+      Project project = !file.isValid() ? null : getProject();
+      PsiManager manager = project == null || project.isDisposed() ? null : PsiManager.getInstance(project);
       return manager == null ? null : file.isDirectory() ? manager.findDirectory(file) : manager.findFile(file);
     }
 
