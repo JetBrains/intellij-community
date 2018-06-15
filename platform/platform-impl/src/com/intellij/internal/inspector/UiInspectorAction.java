@@ -665,6 +665,24 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           return result;
         }
       });
+      new DoubleClickListener(){
+        @Override
+        protected boolean onDoubleClick(MouseEvent event) {
+          int row = table.rowAtPoint(event.getPoint());
+          int column = table.columnAtPoint(event.getPoint());
+          if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
+            Component renderer = table.getCellRenderer(row, column)
+                                        .getTableCellRendererComponent(table, myModel.getValueAt(row, column), false, false, row, column);
+            if (renderer instanceof JLabel) {
+              //noinspection UseOfSystemOutOrSystemErr
+              System.out.println((component != null ? getComponentName(component) : "" )
+                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+              return true;
+            }
+          }
+          return false;
+        }
+      }.installOn(table);
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
