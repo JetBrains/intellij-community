@@ -7,11 +7,14 @@ import com.intellij.concurrency.JobScheduler;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -70,6 +73,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -786,6 +790,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       }
 
       lifecycleListener.appWillBeClosed(restart);
+
+      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close");
+      if (restart) {
+        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
+      }
+      FeatureUsageLogger.INSTANCE.log("lifecycle", getName() + "app.closed", Collections.singletonMap("restart", restart));
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {

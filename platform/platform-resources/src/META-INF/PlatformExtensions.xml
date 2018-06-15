@@ -455,6 +455,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
+    <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector"/>
 
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsOptionsUsagesCollector"/>
     <statistics.usagesCollector implementation="com.intellij.openapi.vcs.statistics.LegacyVcsStatsUsagesCollector"/>
@@ -508,6 +509,7 @@
 
     <preloadingActivity implementation="com.intellij.openapi.actionSystem.impl.ActionPreloader"/>
     <preloadingActivity implementation="com.intellij.ide.ui.search.SearchableOptionPreloader"/>
+    <preloadingActivity implementation="com.intellij.featureStatistics.fusCollectors.UsageTriggerCollectionActivity"/>
 
     <writingAccessProvider implementation="com.intellij.openapi.fileEditor.impl.NonProjectFileWritingAccessProvider" order="first"/>
 
