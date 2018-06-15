@@ -353,7 +353,6 @@ abstract class ComponentStoreImpl : IComponentStore {
             state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
-            FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateSpec, stateClass, project)
             continue
           }
         }
@@ -374,9 +373,11 @@ abstract class ComponentStoreImpl : IComponentStore {
     // we load default state even if isLoadComponentState false - required for app components (for example, at least one color scheme must exists)
     if (defaultState == null) {
       component.noStateLoaded()
+      FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateSpec, stateClass, project)
     }
     else {
       component.loadState(defaultState)
+      FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, defaultState, project)
     }
     return true
   }
