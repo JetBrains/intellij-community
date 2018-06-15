@@ -393,4 +393,9 @@ public class FoldingTest extends AbstractEditorTest {
     List<FoldRegion> regionsInGroup = myModel.getGroupedRegions(regions[2].getGroup());
     assertEquals(Collections.singletonList(regions[2]), regionsInGroup);
   }
+
+  public void testAddingEmptyRegion() {
+    FoldRegion region = addFoldRegion(0, 0, ".");
+    assertNull(region);
+  }
 }
