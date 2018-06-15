@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.widget;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonLanguage;
+import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.fileTypes.FileType;
@@ -34,7 +35,9 @@ import java.util.stream.Collectors;
 
 class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
   private static final String JSON_SCHEMA_BAR = "JSON: ";
+  private static final String JSON_SCHEMA_BAR_OTHER_FILES = "Schema: ";
   private static final String JSON_SCHEMA_TOOLTIP = "JSON Schema: ";
+  private static final String JSON_SCHEMA_TOOLTIP_OTHER_FILES = "Validated by JSON Schema: ";
   private final JsonSchemaService myService;
   private static final String ID = "JSONSchemaSelector";
 
@@ -146,16 +149,23 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return state;
     }
 
+    FileType fileType = file.getFileType();
+    Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+    boolean isJsonFile = language instanceof JsonLanguage;
+
+    String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
+    String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
+
     JsonSchemaFileProvider provider = myService.getSchemaProvider(schemaFile);
     if (provider != null) {
       String providerName = provider.getPresentableName();
       String shortName = StringUtil.trimEnd(StringUtil.trimEnd(providerName, ".json"), "-schema");
-      String name = shortName.startsWith("JSON schema") ? shortName : (JSON_SCHEMA_BAR + shortName);
+      String name = shortName.startsWith("JSON schema") ? shortName : (bar + shortName);
       String kind = provider.getSchemaType() == SchemaType.embeddedSchema || provider.getSchemaType() == SchemaType.schema ? " (bundled)" : "";
-      return new MyWidgetState(JSON_SCHEMA_TOOLTIP + providerName + kind, name, true);
+      return new MyWidgetState(tooltip + providerName + kind, name, true);
     }
 
-    return new MyWidgetState(JSON_SCHEMA_TOOLTIP + getSchemaFileDesc(schemaFile), JSON_SCHEMA_BAR + getPresentableNameForFile(schemaFile),
+    return new MyWidgetState(tooltip + getSchemaFileDesc(schemaFile), bar + getPresentableNameForFile(schemaFile),
                              true);
   }
 

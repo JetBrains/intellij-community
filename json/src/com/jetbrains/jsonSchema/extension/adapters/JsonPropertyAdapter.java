@@ -28,5 +28,4 @@ public interface JsonPropertyAdapter {
   @Nullable JsonValueAdapter getValue();
   @NotNull PsiElement getDelegate();
   @Nullable JsonObjectValueAdapter getParentObject();
-  @Nullable JsonArrayValueAdapter getParentArray();
 }

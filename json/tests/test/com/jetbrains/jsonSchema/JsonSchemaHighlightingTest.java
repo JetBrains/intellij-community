@@ -1,34 +1,44 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema;
 
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
-import com.intellij.openapi.Disposable;
-import com.intellij.openapi.extensions.AreaPicoContainer;
-import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
+import com.intellij.codeInspection.InspectionProfileEntry;
+import com.intellij.json.JsonLanguage;
+import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.PlatformTestUtil;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.intellij.util.containers.Predicate;
 import com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection;
 import org.intellij.lang.annotations.Language;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
 /**
  * @author Irina.Chernushina on 9/21/2015.
  */
-public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
+public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath() + "/json/tests/testData/jsonSchema/highlighting";
+  }
+
+  @Override
+  protected String getTestFileName() {
+    return "config.json";
+  }
+
+  @Override
+  protected InspectionProfileEntry getInspectionProfile() {
+    return new JsonSchemaComplianceInspection();
+  }
+
+  @Override
+  protected Predicate<VirtualFile> getAvailabilityPredicate() {
+    return file -> file.getFileType() instanceof LanguageFileType && ((LanguageFileType)file.getFileType()).getLanguage().isKindOf(
+      JsonLanguage.INSTANCE);
   }
 
   public void testNumberMultipleWrong() throws Exception {
@@ -642,36 +652,6 @@ public class JsonSchemaHighlightingTest extends DaemonAnalyzerTestCase {
 
   static String schema(final String s) {
     return "{\"type\": \"object\", \"properties\": {\"prop\": " + s + "}}";
-  }
-
-  private void doTest(@Language("JSON") @NotNull final String schema, @NotNull final String text) throws Exception {
-    enableInspectionTool(new JsonSchemaComplianceInspection());
-
-    final PsiFile file = createFile(myModule, "config.json", text);
-
-    registerProvider(getProject(), schema);
-    Disposer.register(getTestRootDisposable(), new Disposable() {
-      @Override
-      public void dispose() {
-        JsonSchemaTestServiceImpl.setProvider(null);
-      }
-    });
-    configureByFile(file.getVirtualFile());
-    doTest(file.getVirtualFile(), true, false);
-  }
-
-  public void registerProvider(Project project, @NotNull String schema) throws IOException {
-    File dir = createTempDir("json_schema_test", true);
-    File child = new File(dir, "schema.json");
-    //noinspection ResultOfMethodCallIgnored
-    child.createNewFile();
-    FileUtil.writeToFile(child, schema);
-    VirtualFile schemaFile = getVirtualFile(child);
-    JsonSchemaTestServiceImpl.setProvider(new JsonSchemaTestProvider(schemaFile));
-    AreaPicoContainer container = Extensions.getArea(project).getPicoContainer();
-    String key = JsonSchemaService.class.getName();
-    container.unregisterComponent(key);
-    container.registerComponentImplementation(key, JsonSchemaTestServiceImpl.class);
   }
 
   public void testExclusiveMinMaxV6() throws Exception {
