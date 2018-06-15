@@ -216,13 +216,13 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
 abstract class FileNamesData {
   private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>>()
-  var hasRenames = false
-    private set
 
   val commits: Set<Int>
     get() = commitToPathAndChanges.keys().toSet()
   val isEmpty: Boolean
     get() = commitToPathAndChanges.isEmpty
+  var hasRenames = false
+    private set
 
   protected abstract fun getPathById(pathId: Int): FilePath
 
