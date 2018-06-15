@@ -7,6 +7,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.psi.*;
@@ -36,7 +37,40 @@ public class YAMLUtil {
     }
     return builder.toString();
   }
-  
+
+  /**
+   * This method return flattened key path (consist of ancestors until document).
+   * </p>
+   * YAML are frequently used in configure files. Access to child keys are preformed by dot separator.
+   * <pre>{@code
+   *  top:
+   *    next:
+   *      list:
+   *        - needKey: value
+   * }</pre>
+   * Flattened {@code needKey} is {@code top.next.list[0].needKey}
+   */
+  @ApiStatus.Experimental
+  @NotNull
+  public static String getConfigFullName(@NotNull PsiElement target) {
+    final StringBuilder builder = new StringBuilder();
+    PsiElement element = target;
+    while (element != null) {
+      PsiElement parent = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, YAMLSequenceItem.class);
+      if (element instanceof YAMLKeyValue) {
+        builder.insert(0, ((YAMLKeyValue)element).getKeyText());
+        if (parent != null) {
+          builder.insert(0, '.');
+        }
+      }
+      else if (element instanceof YAMLSequenceItem) {
+        builder.insert(0, "[" + ((YAMLSequenceItem)element).getItemIndex() + "]");
+      }
+      element = parent;
+    }
+    return builder.toString();
+  }
+
   @NotNull
   public static Collection<YAMLKeyValue> getTopLevelKeys(final YAMLFile file) {
     final YAMLValue topLevelValue = file.getDocuments().get(0).getTopLevelValue();
@@ -284,5 +318,5 @@ public class YAMLUtil {
     return offset;
   }
 
-  
+
 }

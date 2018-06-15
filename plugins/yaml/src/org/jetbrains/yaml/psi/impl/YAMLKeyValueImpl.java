@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PlatformIcons;
@@ -14,6 +15,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementGenerator;
+import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.psi.*;
@@ -40,7 +42,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       return result;
     }
     if (isExplicit()) {
-      return findChildByClass(YAMLCompoundValue.class);
+      return findKey();
     }
     return null;
   }
@@ -64,6 +66,9 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
       return "";
     }
 
+    if (keyElement instanceof YAMLScalar) {
+      return ((YAMLScalar)keyElement).getTextValue();
+    }
     if (keyElement instanceof YAMLCompoundValue) {
       return ((YAMLCompoundValue)keyElement).getTextValue();
     }
@@ -192,6 +197,25 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
     }
     else {
       super.accept(visitor);
+    }
+  }
+
+  @Nullable
+  private PsiElement findKey() {
+    PsiElement colon = findChildByType(YAMLTokenTypes.COLON);
+    if (colon == null) {
+      return null;
+    }
+    ASTNode node = colon.getNode();
+    do {
+      node = node.getTreePrev();
+    } while(YAMLElementTypes.BLANK_ELEMENTS.contains(PsiUtilCore.getElementType(node)));
+
+    if (node == null || PsiUtilCore.getElementType(node) == YAMLTokenTypes.QUESTION) {
+      return null;
+    }
+    else {
+      return node.getPsi();
     }
   }
 }
