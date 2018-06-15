@@ -2,6 +2,7 @@
 package com.intellij.configurationStore
 
 import com.intellij.configurationStore.StateStorageManager.ExternalizationSession
+import com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEvents
 import com.intellij.notification.NotificationsManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.ex.DecodeDefaultsUtil
@@ -81,6 +82,10 @@ abstract class ComponentStoreImpl : IComponentStore {
     get() = StateLoadPolicy.LOAD
 
   override abstract val storageManager: StateStorageManager
+
+  internal fun getComponents(): Map<String, ComponentInfo> {
+    return components
+  }
 
   override fun initComponent(component: Any, isService: Boolean) {
     var componentName = ""
@@ -348,6 +353,7 @@ abstract class ComponentStoreImpl : IComponentStore {
             state = deserializeState(Element("state"), stateClass, null)!!
           }
           else {
+            FeatureUsageSettingsEvents.logDefaultConfigurationState(name, stateSpec, stateClass, project)
             continue
           }
         }
@@ -356,7 +362,10 @@ abstract class ComponentStoreImpl : IComponentStore {
           component.loadState(state)
         }
         finally {
-          stateGetter.close()
+          val stateAfterLoad = stateGetter.close()
+          (stateAfterLoad ?: state).let {
+            FeatureUsageSettingsEvents.logConfigurationState(name, stateSpec, it, project)
+          }
         }
         return true
       }

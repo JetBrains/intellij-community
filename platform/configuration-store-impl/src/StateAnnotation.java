@@ -53,6 +53,11 @@ public class StateAnnotation implements State {
   }
 
   @Override
+  public boolean reportStatistic() {
+    return false;
+  }
+
+  @Override
   public Class<? extends Annotation> annotationType() {
     throw new UnsupportedOperationException("Method annotationType not implemented in " + getClass());
   }

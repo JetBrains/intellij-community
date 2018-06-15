@@ -29,7 +29,8 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
       return storage.getState(component, componentName, stateClass, mergeInto, reloadData)
     }
 
-    override fun close() {
+    override fun close() : S? {
+      return null
     }
   }
 }
@@ -37,7 +38,7 @@ fun <S : Any> createStateGetter(isUseLoadedStateAsExisting: Boolean, storage: St
 interface StateGetter<S : Any> {
   fun getState(mergeInto: S? = null): S?
 
-  fun close()
+  fun close(): S?
 }
 
 private class StateGetterImpl<S : Any, T : Any>(private val component: PersistentStateComponent<S>,
@@ -54,9 +55,9 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     return storage.deserializeState(serializedState, stateClass, mergeInto)
   }
 
-  override fun close() {
+  override fun close() : S? {
     if (serializedState == null) {
-      return
+      return null
     }
 
     val stateAfterLoad = try {
@@ -83,5 +84,6 @@ private class StateGetterImpl<S : Any, T : Any>(private val component: Persisten
     }
 
     storage.archiveState(storageData, componentName, serializedStateAfterLoad)
+    return stateAfterLoad
   }
 }

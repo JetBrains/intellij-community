@@ -473,7 +473,7 @@
 
     <statistic.eventLog.featureUsageEventLogger implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLogger"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
-    <postStartupActivity implementation="com.intellij.internal.statistic.eventLog.LogStateEventScheduler"/>
+    <postStartupActivity implementation="com.intellij.configurationStore.statistic.eventLog.FeatureUsageSettingsEventScheduler"/>
 
     <vfs.local.pluggableFileWatcher implementation="com.intellij.openapi.vfs.impl.local.NativeFileWatcherImpl" />
 

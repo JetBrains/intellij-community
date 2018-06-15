@@ -51,6 +51,8 @@ public @interface State {
    */
   boolean externalStorageOnly() default false;
 
+  boolean reportStatistic() default false;
+
   abstract class NameGetter implements Getter<String> {
   }
 }
