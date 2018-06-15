@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -658,9 +658,9 @@ public class AbstractPopup implements JBPopup {
       if (myUseDimServiceForXYLocation) {
         final JRootPane root = myComponent.getRootPane();
         if (root != null) {
-          final Container popupWindow = root.getParent();
-          if (popupWindow != null && popupWindow.isShowing()) {
-            storeLocation(fixLocateByContent(popupWindow.getLocationOnScreen(), true));
+          Point location = getLocationOnScreen(root.getParent());
+          if (location != null) {
+            storeLocation(fixLocateByContent(location, true));
           }
         }
       }
@@ -1080,15 +1080,14 @@ public class AbstractPopup implements JBPopup {
     final MouseAdapter mouseAdapter = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        Point point = (Point)e.getPoint().clone();
-        SwingUtilities.convertPointToScreen(point, e.getComponent());
-
-        final Dimension dimension = myContent.getSize();
-        dimension.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
-        dimension.width += 4;
-        Point locationOnScreen = myContent.getLocationOnScreen();
-        final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
-        if (!bounds.contains(point)) {
+        Rectangle bounds = getBoundsOnScreen(myContent);
+        if (bounds != null) {
+          bounds.x -= 2;
+          bounds.y -= 2;
+          bounds.width += 4;
+          bounds.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
+        }
+        if (bounds == null || !bounds.contains(e.getLocationOnScreen())) {
           cancel();
         }
       }
@@ -1533,12 +1532,9 @@ public class AbstractPopup implements JBPopup {
     }
 
     private boolean withinPopup(final AWTEvent event) {
-      if (!myContent.isShowing()) return false;
-
       final MouseEvent mouse = (MouseEvent)event;
-      final Point point = mouse.getPoint();
-      SwingUtilities.convertPointToScreen(point, mouse.getComponent());
-      return new Rectangle(myContent.getLocationOnScreen(), myContent.getSize()).contains(point);
+      Rectangle bounds = getBoundsOnScreen(myContent);
+      return bounds != null && bounds.contains(mouse.getLocationOnScreen());
     }
   }
 
@@ -1908,5 +1904,16 @@ public class AbstractPopup implements JBPopup {
       component = component.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  private static Point getLocationOnScreen(@Nullable Component component) {
+    return component == null || !component.isShowing() ? null : component.getLocationOnScreen();
+  }
+
+  @Nullable
+  private static Rectangle getBoundsOnScreen(@Nullable Component component) {
+    Point point = getLocationOnScreen(component);
+    return point == null ? null : new Rectangle(point, component.getSize());
   }
 }
