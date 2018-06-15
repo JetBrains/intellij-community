@@ -785,9 +785,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
-    if (isWithinParentheses()) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_TRY_PARENTHESES);
-    }
+    processParentheses(
+      mySettings.SPACE_WITHIN_TRY_PARENTHESES,
+      null,
+      mySettings.RESOURCE_LIST_LPAREN_ON_NEXT_LINE,
+      mySettings.RESOURCE_LIST_RPAREN_ON_NEXT_LINE
+    );
   }
 
   @Override

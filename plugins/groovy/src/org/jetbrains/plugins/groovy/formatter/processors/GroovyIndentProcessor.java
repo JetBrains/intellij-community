@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.formatter.processors;
 
@@ -37,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrThrowsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.*;
@@ -66,6 +53,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrWildcardTypeArgument;
 import static com.intellij.formatting.Indent.*;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.NEXT_LINE_SHIFTED2;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_LPAREN;
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.T_RPAREN;
 
 /**
  * @author ilyas
@@ -467,6 +456,13 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
     if (myChildType == GroovyElementTypes.OPEN_BLOCK) {
       myResult = getBlockIndent(getGroovySettings().BRACE_STYLE);
+    }
+  }
+
+  @Override
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    if (myChildType != T_LPAREN && myChildType != T_RPAREN) {
+      myResult = getContinuationWithoutFirstIndent();
     }
   }
 

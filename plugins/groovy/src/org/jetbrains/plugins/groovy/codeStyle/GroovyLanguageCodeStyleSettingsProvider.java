@@ -102,10 +102,10 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
 
         "INDENT_CASE_FROM_SWITCH",
 
-        //"RESOURCE_LIST_WRAP",
-        //"ALIGN_MULTILINE_RESOURCES",
-        //"RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
-        //"RESOURCE_LIST_RPAREN_ON_NEXT_LINE",
+        "RESOURCE_LIST_WRAP",
+        "ALIGN_MULTILINE_RESOURCES",
+        "RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
+        "RESOURCE_LIST_RPAREN_ON_NEXT_LINE",
 
         "CATCH_ON_NEW_LINE",
         "FINALLY_ON_NEW_LINE",
