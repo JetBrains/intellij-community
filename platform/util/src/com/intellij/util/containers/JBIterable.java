@@ -841,10 +841,16 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @see JBIterable#collect(Collection)
    */
   @NotNull
-  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+  public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
     ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
     Collections.sort(list, comparator);
     return from(list);
+  }
+
+  @Deprecated
+  @NotNull
+  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+    return sort(comparator);
   }
 
   /**
