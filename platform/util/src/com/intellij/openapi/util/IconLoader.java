@@ -485,13 +485,29 @@ public final class IconLoader {
     return icon;
   }
 
+  /**
+   * Returns a copy of the provided {@code icon} with darkness set to {@code dark}.
+   * The method takes effect on a {@link CachedImageIcon} (or its wrapper) only.
+   */
+  public static Icon getDarkIcon(Icon icon, boolean dark) {
+    if (icon instanceof RetrievableIcon) {
+      icon = ((RetrievableIcon)icon).retrieveIcon();
+    }
+    if (icon instanceof CachedImageIcon) {
+      icon = ((CachedImageIcon)icon).copy();
+      ((CachedImageIcon)icon).setDark(dark);
+    }
+    return icon;
+  }
+
   public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
     @NotNull
     private URL myUrl;
-    private volatile boolean dark;
+    private volatile boolean myDark;
+    private volatile boolean myDarkOverriden;
     private volatile int numberOfPatchers = ourPatchers.size();
     private final boolean useCacheOnLoad;
     private int myClearCacheCounter = clearCacheCounter;
@@ -514,7 +530,8 @@ public final class IconLoader {
       myOriginalPath = icon.myOriginalPath;
       myClassLoader = icon.myClassLoader;
       myUrl = icon.myUrl;
-      dark = icon.dark;
+      myDark = icon.myDark;
+      myDarkOverriden = icon.myDarkOverriden;
       numberOfPatchers = icon.numberOfPatchers;
       myFilters = icon.myFilters;
       useCacheOnLoad = icon.useCacheOnLoad;
@@ -527,7 +544,7 @@ public final class IconLoader {
 
     public CachedImageIcon(@NotNull URL url, boolean useCacheOnLoad) {
       myUrl = url;
-      dark = USE_DARK_ICONS;
+      myDark = USE_DARK_ICONS;
       myFilters = new ImageFilter[] {IMAGE_FILTER};
       this.useCacheOnLoad = useCacheOnLoad;
     }
@@ -561,7 +578,7 @@ public final class IconLoader {
         if (isLoaderDisabled()) return EMPTY_ICON;
         myClearCacheCounter = clearCacheCounter;
         myRealIcon = null;
-        dark = USE_DARK_ICONS;
+        if (!myDarkOverriden) myDark = USE_DARK_ICONS;
         setGlobalFilter(IMAGE_FILTER);
         myScaledIconsCache.clear();
         if (numberOfPatchers != ourPatchers.size()) {
@@ -596,7 +613,7 @@ public final class IconLoader {
     }
 
     private boolean isValid() {
-      return dark == USE_DARK_ICONS &&
+      return (!myDarkOverriden && myDark == USE_DARK_ICONS) &&
              getGlobalFilter() == IMAGE_FILTER &&
              numberOfPatchers == ourPatchers.size() &&
              myClearCacheCounter == clearCacheCounter;
@@ -642,6 +659,15 @@ public final class IconLoader {
       return this;
     }
 
+    private synchronized void setDark(boolean dark) {
+      myDarkOverriden = true;
+      if (myDark != dark) {
+        myRealIcon = null;
+        myClearCacheCounter = -1;
+        myDark = dark;
+      }
+    }
+
     @NotNull
     @Override
     public CachedImageIcon copy() {
@@ -653,10 +679,6 @@ public final class IconLoader {
       CachedImageIcon icon = new CachedImageIcon(this);
       icon.myFilters = new ImageFilter[] {getGlobalFilter(), filter};
       return icon;
-    }
-
-    private Image loadFromUrl(@NotNull ScaleContext ctx) {
-      return loadFromUrl(ctx, UIUtil.isUnderDarcula());
     }
 
     private Image loadFromUrl(@NotNull ScaleContext ctx, boolean dark) {
@@ -691,7 +713,7 @@ public final class IconLoader {
         if (icon != null) {
           return icon;
         }
-        Image image = loadFromUrl(ctx);
+        Image image = loadFromUrl(ctx, myDark);
         icon = checkIcon(image, myUrl);
 
         if (icon != null && icon.getIconWidth() * icon.getIconHeight() * 4 < ImageLoader.CACHED_IMAGE_MAX_SIZE) {
