@@ -5,7 +5,6 @@ import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import git4idea.remote.GitRepositoryHostingService;
 import git4idea.remote.InteractiveGitHttpAuthDataProvider;
 import org.jetbrains.annotations.CalledInBackground;
@@ -68,7 +67,7 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
 
       @NotNull
       @Override
-      public Pair<List<String>, List<RepositoryListLoadingException>> getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
+      public Result getAvailableRepositoriesFromMultipleSources(@NotNull ProgressIndicator progressIndicator) {
         List<String> urls = new ArrayList<>();
         List<RepositoryListLoadingException> exceptions = new ArrayList<>();
 
@@ -88,7 +87,7 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
             exceptions.add(new RepositoryListLoadingException("Cannot load repositories from Github", e));
           }
         }
-        return Pair.create(urls, exceptions);
+        return new Result(urls, exceptions);
       }
     };
   }
