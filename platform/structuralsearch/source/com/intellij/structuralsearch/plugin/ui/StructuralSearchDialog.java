@@ -4,6 +4,7 @@ package com.intellij.structuralsearch.plugin.ui;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.template.impl.TemplateEditorUtil;
 import com.intellij.find.FindBundle;
+import com.intellij.find.FindInProjectSettings;
 import com.intellij.find.FindSettings;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
@@ -27,18 +28,25 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.ui.EditorTextField;
+import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -236,7 +244,6 @@ public class StructuralSearchDialog extends DialogWrapper {
           searchCriteriaEdit.removePropertyChangeListener(this);
         }
       });
-
     }
   }
 
@@ -298,6 +305,8 @@ public class StructuralSearchDialog extends DialogWrapper {
         break;
       }
     }
+    myScopePanel.setScope(matchOptions.getScope());
+    myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
 
     final Document document = searchCriteriaEdit.getDocument();
     CommandProcessor.getInstance().executeCommand(searchContext.getProject(), () -> {
@@ -353,8 +362,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     searchCriteriaEdit = createEditor(searchContext, mySavedEditorText != null ? mySavedEditorText : "");
     myEditorPanel.add(BorderLayout.CENTER, searchCriteriaEdit);
 
-    myScopePanel = new ScopePanel(getProject(), myConfiguration.getMatchOptions().getScope());
-    myScopePanel.setEnabled(myShowScopePanel); // todo initiateValidation() on change
+    myScopePanel = new ScopePanel(getProject());
+    myScopePanel.setEnabled(myShowScopePanel);
+    myScopePanel.setScopeCallback(s -> initiateValidation());
 
     myFilterPanel = new FilterPanel(getProject(), getDisposable());
     myFilterPanel.getComponent().setMinimumSize(new Dimension(400, searchCriteriaEdit.getMinimumSize().height));
@@ -607,11 +617,16 @@ public class StructuralSearchDialog extends DialogWrapper {
     super.doOKAction();
     if (!myRunFindActionOnClose) return;
 
-    final SearchScope selectedScope = myScopePanel.getSelectedScope();
-    if (selectedScope == null) return;
+    final SearchScope scope = myScopePanel.getScope();
+    if (scope == null) return;
 
     final FindSettings findSettings = FindSettings.getInstance();
-    findSettings.setDefaultScopeName(selectedScope.getDisplayName());
+    if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
+      final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
+      FindInProjectSettings.getInstance(getProject()).addDirectory(directoryScope.getDirectory().getPresentableUrl());
+    }
+
+    findSettings.setDefaultScopeName(scope.getDisplayName());
     findSettings.setShowResultsInSeparateView(openInNewTab.isSelected());
 
     try {
@@ -658,15 +673,23 @@ public class StructuralSearchDialog extends DialogWrapper {
     return true;
   }
 
-  protected void reportMessage(String message, EditorTextField editor) {
-      com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
-      editor.putClientProperty("JComponent.outline", message == null ? null : "error");
-      editor.setToolTipText(message);
-      editor.repaint();
-      //status.setText(message);
-      //status.setToolTipText(message);
-      //status.revalidate();
-      //statusText.setLabelFor(editor != null ? editor.getContentComponent() : null);
+  protected void reportMessage(String message, JComponent component) {
+    com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
+      component.putClientProperty("JComponent.outline", message == null ? null : "error");
+      component.repaint();
+
+      if (message == null) return;
+      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null).createBalloon();
+      if (component == searchCriteriaEdit) {
+        balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
+      }
+      else {
+        balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
+      }
+      //balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
+      balloon.showInCenterOf(component);
+      Disposer.register(myDisposable, balloon);
+      IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
     });
   }
 
@@ -674,7 +697,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     MatchOptions options = config.getMatchOptions();
 
     if (myShowScopePanel) {
-      final SearchScope scope = myScopePanel.getSelectedScope();
+      final SearchScope scope = myScopePanel.getScope();
       if (scope != null) {
         boolean searchWithinHierarchy = IdeBundle.message("scope.class.hierarchy").equals(scope.getDisplayName());
         // We need to reset search within hierarchy scope during online validation since the scope works with user participation
@@ -687,7 +710,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     ourFtSearchVariant = info != null ? info.getFileType() : null;
     ourDialect = info != null ? info.getDialect() : null;
     ourContext = info != null ? info.getContext() : null;
-    FileType fileType = ourFtSearchVariant;
+    final FileType fileType = ourFtSearchVariant;
     options.setFileType(fileType);
     options.setDialect(ourDialect);
     options.setPatternContext(ourContext);

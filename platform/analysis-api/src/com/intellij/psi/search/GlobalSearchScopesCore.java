@@ -217,7 +217,7 @@ public class GlobalSearchScopesCore {
       myDirectory = psiDirectory.getVirtualFile();
     }
 
-    private DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
+    public DirectoryScope(@NotNull Project project, @NotNull VirtualFile directory, final boolean withSubdirectories) {
       super(project);
       myWithSubdirectories = withSubdirectories;
       myDirectory = directory;
