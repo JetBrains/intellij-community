@@ -179,7 +179,7 @@ internal class FileHistoryFilterer(logData: VcsLogData) : VcsLogFilterer {
         return FileHistoryVisiblePack(dataPack, visibleGraph, false, filters, data.buildPathsMap())
       }
 
-      if (matchesNothing(matchingHeads) || matchesNothing(data.commits)) {
+      if (matchesNothing(matchingHeads) || data.isEmpty) {
         return VisiblePack.EMPTY
       }
 

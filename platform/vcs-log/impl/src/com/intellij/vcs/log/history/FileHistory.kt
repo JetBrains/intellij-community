@@ -221,7 +221,9 @@ abstract class FileNamesData {
 
   val commits: Set<Int>
     get() = commitToPathAndChanges.keys().toSet()
-  
+  val isEmpty: Boolean
+    get() = commitToPathAndChanges.isEmpty
+
   protected abstract fun getPathById(pathId: Int): FilePath
 
   fun add(commit: Int,
