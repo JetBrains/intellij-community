@@ -30,6 +30,10 @@
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
 
+    <completion.contributor order="first" language="yaml"
+                            implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
+    <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider" order="first"/>
+
     <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
     <breadcrumbsInfoProvider implementation="org.jetbrains.yaml.breadcrumbs.YAMLBreadcrumbsInfoProvider"/>
@@ -59,8 +63,20 @@
                      groupKey="inspections.group.name" enabledByDefault="true"
                      implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
 
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLSchemaValidation"
+                     key="inspections.schema.validation.name"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
   </extensions>
-  
+
+  <extensions defaultExtensionNs="Json">
+    <Like.Psi.Walker.Factory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
+    <Schema.Enabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
   </extensions>
