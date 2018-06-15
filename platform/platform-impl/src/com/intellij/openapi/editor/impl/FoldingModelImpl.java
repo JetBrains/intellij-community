@@ -582,8 +582,8 @@ public class FoldingModelImpl implements FoldingModelEx, PrioritizedInternalDocu
       return null;
     }
     if (!isFoldingEnabled() || startOffset >= endOffset ||
-        !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), startOffset) ||
-        !DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), endOffset) ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), startOffset) ||
+        DocumentUtil.isInsideSurrogatePair(myEditor.getDocument(), endOffset) ||
         !myFoldTree.checkIfValidToCreate(startOffset, endOffset)) return null;
 
     FoldRegionImpl region = new FoldRegionImpl(myEditor, startOffset, endOffset, placeholder, group, neverExpands);
