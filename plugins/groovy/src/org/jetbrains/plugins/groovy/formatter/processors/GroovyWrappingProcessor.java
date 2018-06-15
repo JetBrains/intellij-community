@@ -182,7 +182,7 @@ public class GroovyWrappingProcessor {
 
     if (myParentType == GroovyElementTypes.PARAMETERS_LIST) {
       myUsedDefaultWrap = true;
-      return Wrap.createWrap(mySettings.METHOD_PARAMETERS_WRAP, true);
+      return Wrap.createWrap(mySettings.METHOD_PARAMETERS_WRAP, false);
     }
 
     if (myParentType == GroovyElementTypes.ARGUMENTS || myParentType == GroovyElementTypes.COMMAND_ARGUMENTS) {
