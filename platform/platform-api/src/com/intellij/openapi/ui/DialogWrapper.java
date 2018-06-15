@@ -1790,17 +1790,27 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String className = getClass().getName();
-    if (StringUtil.isNotEmpty(className)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(className, exitCode);
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEvents.INSTANCE.logCloseDialog(dialogId, exitCode);
     }
   }
 
   private void logShowDialogEvent() {
-    final String className = getClass().getName();
-    if (StringUtil.isNotEmpty(className)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(className);
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEvents.INSTANCE.logShowDialog(dialogId);
     }
+  }
+
+  /**
+   * The ID will be recorded in user event log, it can be used to understand how often this dialog is used.
+   *
+   * @return null if we shouldn't record the dialog.
+   */
+  @Nullable
+  protected String getLoggedDialogId() {
+    return getClass().getName();
   }
 
   /**

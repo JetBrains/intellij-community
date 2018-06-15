@@ -180,6 +180,12 @@ public class CustomizeIDEWizardDialog extends DialogWrapper implements ActionLis
     super.doOKAction();
   }
 
+  @Nullable
+  @Override
+  protected String getLoggedDialogId() {
+    return null;
+  }
+
   private void initCurrentStep(boolean forward) {
     final AbstractCustomizeWizardStep myCurrentStep = mySteps.get(myIndex);
     myCurrentStep.beforeShown(forward);
