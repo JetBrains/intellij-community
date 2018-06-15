@@ -785,6 +785,10 @@
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
+    </extensionPoint>
+
     <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
     <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
