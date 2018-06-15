@@ -24,18 +24,8 @@ public class YAMLUtil {
 
   @NotNull
   public static String getFullKey(final YAMLKeyValue yamlKeyValue) {
-    final StringBuilder builder = new StringBuilder();
-    YAMLKeyValue element = yamlKeyValue;
-    PsiElement parent;
-    while (element!=null &&
-           (parent = PsiTreeUtil.getParentOfType(element, YAMLKeyValue.class, YAMLDocument.class)) instanceof YAMLKeyValue){
-      if (builder.length()>0){
-        builder.insert(0, '.');
-      }
-      builder.insert(0, element.getKeyText());
-      element = (YAMLKeyValue) parent;
-    }
-    return builder.toString();
+    String fullPath = getConfigFullName(yamlKeyValue);
+    return StringUtil.notNullize(StringUtil.substringAfter(fullPath, "."));
   }
 
   /**

@@ -26,6 +26,8 @@ import javax.swing.*;
  * @author oleg
  */
 public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue {
+  public static final Icon YAML_KEY_ICON = PlatformIcons.PROPERTY_ICON;
+
   public YAMLKeyValueImpl(@NotNull final ASTNode node) {
     super(node);
   }
@@ -147,7 +149,7 @@ public class YAMLKeyValueImpl extends YAMLPsiElementImpl implements YAMLKeyValue
   @NotNull
   @Override
   protected Icon getElementIcon(@IconFlags int flags) {
-    return PlatformIcons.PROPERTY_ICON;
+    return YAML_KEY_ICON;
   }
 
   @Override

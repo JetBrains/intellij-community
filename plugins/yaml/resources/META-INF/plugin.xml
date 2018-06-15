@@ -23,6 +23,8 @@
     <codeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLCodeStyleSettingsProvider"/>
     <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
     <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
+    <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
+    <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
 
     <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
 
