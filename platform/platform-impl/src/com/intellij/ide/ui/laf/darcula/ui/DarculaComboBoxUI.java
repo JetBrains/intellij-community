@@ -197,6 +197,11 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
 
   @Override
   protected Insets getInsets() {
+    Object insets = comboBox.getClientProperty("JComboBox.insets");
+    if (insets instanceof Insets) {
+      return (Insets)insets;
+    }
+
     return getDefaultComboBoxInsets().asUIResource();
   }
 
