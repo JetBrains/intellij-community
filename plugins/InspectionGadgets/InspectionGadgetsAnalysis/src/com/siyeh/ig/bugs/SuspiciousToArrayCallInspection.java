@@ -39,7 +39,8 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
   @NotNull
   protected String buildErrorString(Object... infos) {
     final PsiType type = (PsiType)infos[0];
-    return InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor", type.getCanonicalText());
+    final PsiType foundType = (PsiType)infos[1];
+    return InspectionGadgetsBundle.message("suspicious.to.array.call.problem.descriptor", type.getCanonicalText(), foundType.getCanonicalText());
   }
 
   @Override
@@ -133,7 +134,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
           return;
         }
         final PsiArrayType castArrayType = (PsiArrayType)castType;
-        registerError(argument, castArrayType.getComponentType());
+        registerError(argument, castArrayType.getComponentType(), componentType);
       }
       else {
         if (itemType == null || componentType.isAssignableFrom(itemType)) {
@@ -147,15 +148,15 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
             final PsiReferenceList extendsList = typeParameter.getExtendsList();
             final PsiClassType[] types = extendsList.getReferencedTypes();
             if (types.length == 0) {
-              registerError(argument, TypeUtils.getObjectType(argument));
+              registerError(argument, TypeUtils.getObjectType(argument), componentType);
             }
             else if (types.length == 1) {
-              registerError(argument, types[0]);
+              registerError(argument, types[0], componentType);
             }
             return;
           }
         }
-        registerError(argument, itemType);
+        registerError(argument, itemType, componentType);
       }
     }
   }
