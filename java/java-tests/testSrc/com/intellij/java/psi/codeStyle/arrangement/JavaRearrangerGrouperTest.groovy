@@ -15,6 +15,7 @@
  */
 package com.intellij.java.psi.codeStyle.arrangement
 
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens
 import org.junit.Test
 
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.*
@@ -145,6 +146,58 @@ class Sub extends Base {
   void base2() {}
   void test2() {}
 }''')
+  }
+
+  void "test overridden methods with class"() {
+    doTest(
+      initial: '''\
+class C {
+    public void overridden() {}
+    public void foo() {}
+}
+
+class A {
+    
+    static class X1 extends C {
+        @Override
+        public void overridden() {}
+        @Override
+        public void foo() {}
+    }
+    
+    static class X2 extends C {
+        static class X3 {}
+        
+        @Override
+        public void overridden() {}
+    }
+}
+''',
+      groups: [group(OVERRIDDEN_METHODS)],
+      rules: [rule(StdArrangementTokens.EntryType.METHOD), rule(StdArrangementTokens.EntryType.CLASS)],
+      expected: '''\
+class C {
+    public void overridden() {}
+    public void foo() {}
+}
+
+class A {
+    
+    static class X1 extends C {
+        @Override
+        public void overridden() {}
+        @Override
+        public void foo() {}
+    }
+    
+    static class X2 extends C {
+        @Override
+        public void overridden() {}
+        
+        static class X3 {}
+    }
+}
+''')
   }
 
   void "do not test overriden and utility methods"() {
