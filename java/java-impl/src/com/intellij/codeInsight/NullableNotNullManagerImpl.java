@@ -50,6 +50,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public void setNotNulls(@NotNull String... annotations) {
     LinkedHashSet<String> set = ContainerUtil.newLinkedHashSet(annotations);
     Collections.addAll(set, DEFAULT_NOT_NULLS);
+    set.remove(NULLABLE);
     myNotNulls = new ArrayList<>(set);
   }
 
@@ -57,6 +58,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public void setNullables(@NotNull String... annotations) {
     LinkedHashSet<String> set = ContainerUtil.newLinkedHashSet(annotations);
     Collections.addAll(set, DEFAULT_NULLABLES);
+    set.remove(NOT_NULL);
     myNullables = new ArrayList<>(set);
   }
 
@@ -133,6 +135,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
     readJdomList(state.myNullables, myNullables, DEFAULT_NULLABLES);
     readJdomList(state.myNotNulls, myNotNulls, DEFAULT_NOT_NULLS);
+    myNullables.remove(NOT_NULL);
+    myNotNulls.remove(NULLABLE);
   }
 
   private static void readJdomList(@Nullable Element src, @NotNull List<String> to, @NotNull String[] defaults) {
