@@ -11,7 +11,7 @@ class Foo {
     }
     int j = 0
     while (j < 10) {
-      try {
+      try (def resource = obtainResource()) {
         if (0 < x && x < 10) {
           while (x != y) {
             x = f(x * 3 + 5)

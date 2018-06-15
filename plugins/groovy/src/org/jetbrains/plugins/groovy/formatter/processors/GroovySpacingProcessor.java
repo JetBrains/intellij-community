@@ -34,6 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
@@ -768,7 +769,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitTryStatement(@NotNull GrTryCatchStatement tryCatchStatement) {
-    if (myType2 == GroovyElementTypes.FINALLY_CLAUSE) {
+    if (myType2 == TRY_RESOURCE_LIST) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_TRY_PARENTHESES);
+    }
+    else if (myType2 == GroovyElementTypes.FINALLY_CLAUSE) {
       processTryOnNewLineCondition(mySettings.FINALLY_ON_NEW_LINE, mySettings.SPACE_BEFORE_FINALLY_KEYWORD);
     }
     else if (isOpenBlock(myType2)) {
@@ -776,6 +780,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
     else if (myType2 == GroovyElementTypes.CATCH_CLAUSE) {
       processTryOnNewLineCondition(mySettings.CATCH_ON_NEW_LINE, mySettings.SPACE_BEFORE_CATCH_KEYWORD);
+    }
+  }
+
+  @Override
+  public void visitTryResourceList(@NotNull GrTryResourceList resourceList) {
+    if (isWithinParentheses()) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_TRY_PARENTHESES);
     }
   }
 
