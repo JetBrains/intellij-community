@@ -429,6 +429,7 @@
     <statistics.projectUsagesCollector implementation="com.intellij.openapi.vcs.statistics.VcsNamesUsagesCollector"/>
 
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.collectors.fus.RegistryProjectUsagesCollector"/>
+    <statistics.projectUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.ProjectLifecycleUsageTriggerCollector"/>
     <statistics.applicationUsagesCollector implementation="com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector"/>
     <statistic.eventLog.fusEventLoggerProvider implementation="com.intellij.internal.statistic.eventLog.FeatureUsageFileEventLoggerProvider"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.eventLog.SystemStateMonitor"/>
