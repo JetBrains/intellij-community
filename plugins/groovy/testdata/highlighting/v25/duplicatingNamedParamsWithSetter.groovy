@@ -9,6 +9,6 @@ class E {
 }
 
 @NamedVariant
-String foo(@NamedParam int shade, def s, <error descr="Duplicating named parameter 's' occurs in parameters: 's', 'e'">@NamedDelegate E e</error>) {
+String foo(@NamedParam int shade, def s, @NamedDelegate E <error descr="Duplicate named parameter 's' occurs in parameters: 's', 'e'">e</error>) {
   null
 }

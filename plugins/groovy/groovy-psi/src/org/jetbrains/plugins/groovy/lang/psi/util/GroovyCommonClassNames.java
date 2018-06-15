@@ -55,9 +55,6 @@ public interface GroovyCommonClassNames {
   String GROOVY_TRANSFORM_BASE_SCRIPT = "groovy.transform.BaseScript";
   String GROOVY_TRAIT = "groovy.transform.Trait";
   String GROOVY_TRAIT_IMPLEMENTED = "org.codehaus.groovy.transform.trait.Traits.Implemented";
-  String GROOVY_TRANSFORM_NAMED_VARIANT = "groovy.transform.NamedVariant";
-  String GROOVY_TRANSFORM_NAMED_PARAM = "groovy.transform.NamedParam";
-  String GROOVY_TRANSFORM_NAMED_DELEGATE = "groovy.transform.NamedDelegate";
 
   Set<String> DEFAULT_INSTANCE_EXTENSIONS = unmodifiableSet(newLinkedHashSet(
     "org.codehaus.groovy.runtime.DateGroovyMethods",

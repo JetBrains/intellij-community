@@ -101,7 +101,7 @@ String foo(@NamedParam int param1, @NamedParam String param2) {
     null
 }
 
-foo(par)
+foo(par<caret>)
 ''', CompletionType.BASIC, "param1", "param2")
   }
 }
