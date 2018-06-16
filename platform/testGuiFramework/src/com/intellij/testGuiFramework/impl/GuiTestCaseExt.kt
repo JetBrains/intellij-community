@@ -220,6 +220,8 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
     logTestStep("Going to check whether $expectedNumberOfRunIcons `Run` gutter icons are present")
     GuiTestUtilKt.runOnEdt {
       editor {
+        waitUntilFileIsLoaded()
+        waitUntilErrorAnalysisFinishes()
         assert(gutter.isGutterIconPresent(GutterFixture.GutterIcon.RUN_SCRIPT)) {
           "No `Run` icons found on gutter panel"
         }
@@ -236,7 +238,6 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
             "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
           }
         }
-        waitUntilErrorAnalysisFinishes()
       }
     }
   }
