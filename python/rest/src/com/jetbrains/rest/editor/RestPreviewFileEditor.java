@@ -12,16 +12,12 @@ import com.intellij.openapi.fileEditor.FileEditorLocation;
 import com.intellij.openapi.fileEditor.FileEditorState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Alarm;
 import kotlin.Pair;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.owasp.html.HtmlPolicyBuilder;
-import org.owasp.html.PolicyFactory;
-import org.owasp.html.Sanitizers;
 
 import javax.swing.*;
 import java.beans.PropertyChangeListener;
@@ -32,35 +28,6 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
 
   private final static long RENDERING_DELAY_MS = 20L;
 
-  final static NotNullLazyValue<PolicyFactory> SANITIZER_VALUE = new NotNullLazyValue<PolicyFactory>() {
-    @NotNull
-    @Override
-    protected PolicyFactory compute() {
-      return Sanitizers.BLOCKS
-        .and(Sanitizers.FORMATTING)
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https").allowElements("img")
-               .allowAttributes("alt", "src", "title").onElements("img")
-               .allowAttributes("border", "height", "width").onElements("img")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowUrlProtocols("file", "http", "https", "mailto").allowElements("a")
-               .allowAttributes("href", "title").onElements("a")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowStandardUrlProtocols()
-               .allowElements("table", "tr", "td", "th", "caption", "thead", "tbody", "tfoot")
-               .allowAttributes("summary").onElements("table")
-               .allowAttributes("align", "valign")
-               .onElements("table", "tr", "td", "th", "thead", "tbody", "tfoot")
-               .allowTextIn("table")
-               .toFactory())
-        .and(new HtmlPolicyBuilder()
-               .allowElements("code", "tr")
-               .allowAttributes("class").onElements("code", "tr")
-               .toFactory());
-    }
-  };
   @NotNull
   private final RestPreviewPanel myPanel;
   @NotNull
@@ -169,9 +136,8 @@ public class RestPreviewFileEditor extends UserDataHolderBase implements FileEdi
       }
       String finalHtml = html;
       myLastRequest = () -> {
-        final String currentHtml = "<html>" + SANITIZER_VALUE.getValue().sanitize(finalHtml) + "</html>";
-        if (!currentHtml.equals(myLastRenderedHtml)) {
-          myLastRenderedHtml = currentHtml;
+        if (!finalHtml.equals(myLastRenderedHtml)) {
+          myLastRenderedHtml = finalHtml;
           myPanel.setHtml(myLastRenderedHtml);
         }
 
