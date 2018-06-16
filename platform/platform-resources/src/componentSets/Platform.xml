@@ -184,5 +184,9 @@
     <component>
       <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.notification.impl.ProjectNotificationConfigurationImpl</implementation-class>
+    </component>
   </project-components>
 </idea-plugin>

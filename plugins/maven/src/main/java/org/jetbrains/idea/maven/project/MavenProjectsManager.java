@@ -6,6 +6,7 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.notification.*;
 import com.intellij.notification.impl.NotificationSettings;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
+import com.intellij.notification.impl.ProjectNotificationConfigurationImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
@@ -192,7 +193,8 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   private void showNotificationOrphanMavenProject(final Project project) {
-    final NotificationSettings notificationSettings = NotificationsConfigurationImpl.getSettings(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
+    ProjectNotificationConfigurationImpl projectNotificationConfiguration = project.getComponent(ProjectNotificationConfigurationImpl.class);
+    final NotificationSettings notificationSettings = projectNotificationConfiguration.getSettings(NON_MANAGED_POM_NOTIFICATION_GROUP_ID);
     if (!notificationSettings.isShouldLog() && notificationSettings.getDisplayType().equals(NotificationDisplayType.NONE)) {
       return;
     }
@@ -220,7 +222,7 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
                 "Non-Managed Maven Project Detection",
                 "Disable Notification", CommonBundle.getCancelButtonText(), Messages.getWarningIcon());
               if (result == Messages.YES) {
-                NotificationsConfigurationImpl.getInstanceImpl().changeSettings(
+                projectNotificationConfiguration.changeSettings(
                   NON_MANAGED_POM_NOTIFICATION_GROUP_ID, NotificationDisplayType.NONE, false, false);
                 notification.expire();
               }
