@@ -277,7 +277,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
     return context == null ? JavaPsiFacade.getInstance(getElement().getProject()).findPackage("") : context;
   }
 
-  /** @deprecated use {@code getSuperClasses()} instead */
+  /** @deprecated use {@link #getSuperClasses()} instead */
   @Nullable
   public String[] getExtendClassNames() {
     List<String> result = getSuperClasses();
