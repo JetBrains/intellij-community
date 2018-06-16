@@ -51,7 +51,8 @@ public class ShowPropertiesAction extends BasicAction {
     ToolWindow w = ToolWindowManager.getInstance(vcs.getProject()).getToolWindow(PropertiesComponent.ID);
     PropertiesComponent component;
     if (w == null) {
-      w = ToolWindowManager.getInstance(vcs.getProject()).registerToolWindow(PropertiesComponent.ID, false, ToolWindowAnchor.BOTTOM);
+      w = ToolWindowManager.getInstance(vcs.getProject())
+                           .registerToolWindow(PropertiesComponent.ID, false, ToolWindowAnchor.BOTTOM, vcs.getProject(), true);
       component = new PropertiesComponent();
       Content content = ContentFactory.SERVICE.getInstance().createContent(component, "", false);
       addContent(w.getContentManager(), content, true);
