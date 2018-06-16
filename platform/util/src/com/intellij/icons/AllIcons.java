@@ -446,9 +446,21 @@ public class AllIcons {
     public static final Icon Db_no_suspend_field_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_field_breakpoint.svg"); // 12x12
     public static final Icon Db_no_suspend_method_breakpoint = IconLoader.getIcon("/debugger/db_no_suspend_method_breakpoint.svg"); // 12x12
     public static final Icon Db_obsolete = IconLoader.getIcon("/debugger/db_obsolete.svg"); // 12x12
-    public static final Icon Db_pending_breakpoint = IconLoader.getIcon("/debugger/db_pending_breakpoint.svg"); // 12x12
-    public static final Icon Db_pending_field_breakpoint = IconLoader.getIcon("/debugger/db_pending_field_breakpoint.svg"); // 12x12
-    public static final Icon Db_pending_method_breakpoint = IconLoader.getIcon("/debugger/db_pending_method_breakpoint.svg"); // 12x12
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Db_pending_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_field_breakpoint */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Db_pending_field_breakpoint = IconLoader.getIcon("/debugger/db_field_breakpoint.svg"); // 12x12
+
+    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_method_breakpoint */
+    @SuppressWarnings("unused")
+    @Deprecated
+    public static final Icon Db_pending_method_breakpoint = IconLoader.getIcon("/debugger/db_method_breakpoint.svg"); // 12x12
     public static final Icon Db_primitive = IconLoader.getIcon("/debugger/db_primitive.png"); // 16x16
     public static final Icon Db_set_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
 
@@ -456,21 +468,9 @@ public class AllIcons {
     @SuppressWarnings("unused")
     @Deprecated
     public static final Icon Db_temporary_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_set_breakpoint.svg"); // 12x12
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_field_breakpoint */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_field_breakpoint.svg"); // 12x12
-
-    /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_method_breakpoint */
-    @SuppressWarnings("unused")
-    @Deprecated
-    public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_method_breakpoint.svg"); // 12x12
+    public static final Icon Db_verified_breakpoint = IconLoader.getIcon("/debugger/db_verified_breakpoint.svg"); // 12x12
+    public static final Icon Db_verified_field_breakpoint = IconLoader.getIcon("/debugger/db_verified_field_breakpoint.svg"); // 12x12
+    public static final Icon Db_verified_method_breakpoint = IconLoader.getIcon("/debugger/db_verified_method_breakpoint.svg"); // 12x12
 
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint */
     @SuppressWarnings("unused")
