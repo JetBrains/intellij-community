@@ -506,6 +506,7 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
+      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
       <separator/>
       <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
@@ -588,8 +589,6 @@
 
     <group id="ScopeViewPopupMenu">
       <reference ref="ProjectViewPopupMenu"/>
-      <separator/>
-      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">

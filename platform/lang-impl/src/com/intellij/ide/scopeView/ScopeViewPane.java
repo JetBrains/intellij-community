@@ -18,11 +18,7 @@ import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.ide.util.treeView.AbstractTreeBuilder;
 import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.ActionPlaces;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.LangDataKeys;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.ActionCallback;
@@ -315,9 +311,10 @@ public final class ScopeViewPane extends AbstractProjectViewPane {
 
   @Override
   public void addToolbarActions(DefaultActionGroup actionGroup) {
-    actionGroup.add(ActionManager.getInstance().getAction("ScopeView.EditScopes"));
     actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
+    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
+    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
 
   @Override
