@@ -63,6 +63,8 @@ public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx
   public PsiElement getCustomDocumentationElement(@NotNull Editor editor,
                                                   @NotNull PsiFile file,
                                                   @Nullable PsiElement contextElement) {
+    JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
+    if (service == null || service.getSchemaObject(file.getVirtualFile()) == null) return null;
     return contextElement;
   }
 }
