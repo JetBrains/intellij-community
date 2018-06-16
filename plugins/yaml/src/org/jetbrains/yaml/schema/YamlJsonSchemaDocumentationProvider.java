@@ -64,7 +64,8 @@ public class YamlJsonSchemaDocumentationProvider extends DocumentationProviderEx
                                                   @NotNull PsiFile file,
                                                   @Nullable PsiElement contextElement) {
     JsonSchemaService service = JsonSchemaService.Impl.get(file.getProject());
-    if (service == null || service.getSchemaObject(file.getVirtualFile()) == null) return null;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile == null || service == null || service.getSchemaObject(virtualFile) == null) return null;
     return contextElement;
   }
 }
