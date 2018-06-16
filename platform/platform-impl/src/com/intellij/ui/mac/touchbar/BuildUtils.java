@@ -119,7 +119,7 @@ class BuildUtils {
   static Map<String, ActionGroup> getAltLayouts(@NotNull ActionGroup context) {
     final String ctxId = _getActionId(context);
     if (ctxId == null || ctxId.isEmpty()) {
-      LOG.error("unregistered ActionGroup: " + context);
+      LOG.error("can't load alt-layout for unregistered ActionGroup: " + context);
       return null;
     }
 
@@ -130,7 +130,7 @@ class BuildUtils {
         continue;
       final String gid = _getActionId(act);
       if (gid == null || gid.isEmpty()) {
-        LOG.error("unregistered ActionGroup: " + act);
+        LOG.info("skip loading alt-layout for unregistered ActionGroup: " + act + ", child of " + context);
         continue;
       }
       if (gid.startsWith(ctxId + "_"))
@@ -252,7 +252,7 @@ class BuildUtils {
   // creates releaseOnClose touchbar
   static TouchBar createStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
-    tb.addButton().setText("Stop all").setActionOnEDT(() -> {
+    tb.addButton().setText("Stop All").setActionOnEDT(() -> {
       stoppableDescriptors.forEach((pair) -> { pair.second.run(); });
     });
     final TBItemScrubber stopScrubber = tb.addScrubber();
