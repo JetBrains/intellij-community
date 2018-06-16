@@ -183,6 +183,8 @@ public class PackageViewPane extends AbstractProjectViewPSIPane {
     actionGroup.addAction(new ShowModulesAction(myProject, ID)).setAsSecondary(true);
     actionGroup.addAction(createFlattenModulesAction(() -> true)).setAsSecondary(true);
     actionGroup.addAction(new ShowLibraryContentsAction()).setAsSecondary(true);
+    AnAction editScopesAction = ActionManager.getInstance().getAction("ScopeView.EditScopes");
+    if (editScopesAction != null) actionGroup.addAction(editScopesAction).setAsSecondary(true);
   }
 
   @Override
