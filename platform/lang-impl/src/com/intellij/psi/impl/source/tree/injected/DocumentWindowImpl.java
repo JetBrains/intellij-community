@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -17,6 +18,7 @@ import com.intellij.openapi.editor.ex.LineIterator;
 import com.intellij.openapi.editor.ex.RangeMarkerEx;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
@@ -742,6 +744,9 @@ class DocumentWindowImpl extends UserDataHolderBase implements Disposable, Docum
     }
   }
 
+  /**
+   * @deprecated Use {@link InjectedLanguageManager#intersectWithAllEditableFragments(PsiFile, TextRange)} instead
+   */
   @Deprecated
   @Nullable
   public TextRange intersectWithEditable(@NotNull TextRange rangeToEdit) {
