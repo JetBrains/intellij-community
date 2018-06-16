@@ -111,8 +111,19 @@ public abstract class Invoker implements Disposable {
           // do not care about ReadAction in EDT and in tests without application
           task.run();
         }
-        else if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
-          throw new ProcessCanceledException();
+        else if (getApplication().isReadAccessAllowed()) {
+          if (ProgressIndicatorUtils.isWriting()) throw new ProcessCanceledException();
+          task.run();
+        }
+        else {
+          // try to execute a task until it stops throwing ProcessCanceledException
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
+            if (!canInvoke(task)) break; // stop execution of obsolete task
+            ProgressIndicatorUtils.yieldToPendingWriteActions();
+            if (!canRestart(task, attempt)) break;
+            LOG.debug("Task is restarted");
+            attempt++;
+          }
         }
       }
     }
