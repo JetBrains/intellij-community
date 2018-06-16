@@ -720,6 +720,7 @@ public class ExternalSystemUtil {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   @NotNull
   public static FailureResultImpl createFailureResult(@NotNull Exception exception,
                                                       @NotNull String projectName,

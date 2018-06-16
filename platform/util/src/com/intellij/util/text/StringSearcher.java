@@ -217,6 +217,7 @@ public class StringSearcher {
   /**
    * @deprecated Use {@link #scan(CharSequence)} instead
    */
+  @Deprecated
   public int scan(char[] text, int startOffset, int endOffset){
     final int res = scan(new CharArrayCharSequence(text),text, startOffset, endOffset);
     return res >= 0 ? res: -1;

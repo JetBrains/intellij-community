@@ -20,6 +20,7 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 /**
  * @deprecated Use {@link NodeRenderer} instead
  */
+@Deprecated
 public class SimpleNodeRenderer extends NodeRenderer {
 
 }

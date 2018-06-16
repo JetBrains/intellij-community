@@ -114,6 +114,7 @@ public class FindInProjectUtil {
   }
 
   /** @deprecated to remove in IDEA 2018 */
+  @Deprecated
   @Nullable
   public static PsiDirectory getPsiDirectory(@NotNull FindModel findModel, @NotNull Project project) {
     VirtualFile directory = getDirectory(findModel);
@@ -188,6 +189,7 @@ public class FindInProjectUtil {
   /**
    * @deprecated Use {@link #findUsages(FindModel, Project, Processor, FindUsagesProcessPresentation)} instead. To remove in IDEA 16
    */
+  @Deprecated
   public static void findUsages(@NotNull FindModel findModel,
                                 @Nullable final PsiDirectory psiDirectory,
                                 @NotNull final Project project,

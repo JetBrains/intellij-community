@@ -168,6 +168,7 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   /** @deprecated use {@link #withParentEnvironmentType(ParentEnvironmentType)} (to be removed in IDEA 2018.*) */
+  @Deprecated
   public void setPassParentEnvironment(boolean passParentEnvironment) {
     withParentEnvironmentType(passParentEnvironment ? ParentEnvironmentType.CONSOLE : ParentEnvironmentType.NONE);
   }

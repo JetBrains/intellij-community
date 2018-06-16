@@ -46,6 +46,7 @@ public class FileAttribute {
    * @deprecated
    * @see #FileAttribute(String, int, boolean)
    */
+  @Deprecated
   public FileAttribute(@NonNls @NotNull String id, int version) {
     this(id, version, false);
   }

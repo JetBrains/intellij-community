@@ -128,6 +128,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
   /**
    * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
    */
+  @Deprecated
   public static int adjustOffset(Document document, final int offset) {
     return adjustOffset(null, document, offset);
   }

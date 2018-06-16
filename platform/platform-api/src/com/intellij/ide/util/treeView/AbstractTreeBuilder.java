@@ -231,6 +231,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @see #queueUpdateFrom
    * @deprecated
    */
+  @Deprecated
   public void updateFromRoot() {
     queueUpdate();
   }
@@ -244,6 +245,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @see #queueUpdateFrom
    * @deprecated
    */
+  @Deprecated
   @NotNull
   protected ActionCallback updateFromRootCB() {
     return queueUpdate();
@@ -292,6 +294,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @param element
    * @deprecated
    */
+  @Deprecated
   public void buildNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
@@ -302,6 +305,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @return
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
@@ -344,6 +348,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @param node
    * @deprecated
    */
+  @Deprecated
   public final void updateSubtree(final DefaultMutableTreeNode node) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.updateSubtree(node, true);
@@ -363,6 +368,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @param path
    * @deprecated
    */
+  @Deprecated
   public final void buildNodeForPath(final Object[] path) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForPath(path);
@@ -371,6 +377,7 @@ public class AbstractTreeBuilder implements Disposable {
   /**
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
     AbstractTreeUi ui = getUi();

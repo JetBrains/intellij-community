@@ -315,16 +315,19 @@ public class PsiImplUtil {
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  @Deprecated
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  @Deprecated
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
+  @Deprecated
   @NotNull
   public static PsiAnnotation.TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     return AnnotationTargetUtil.getTargetsForLocation(owner);

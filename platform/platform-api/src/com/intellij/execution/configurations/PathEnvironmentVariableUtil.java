@@ -129,6 +129,7 @@ public class PathEnvironmentVariableUtil {
   }
 
   /** @deprecated obsolete; the behavior is incorporated in {@link GeneralCommandLine#createProcess()} (to be removed in IDEA 2019) */
+  @Deprecated
   @NotNull
   public static String toLocatableExePath(@NotNull String exePath) {
     if (SystemInfo.isMac) {

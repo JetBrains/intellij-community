@@ -35,6 +35,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
    * @param task a task to run
    * @deprecated override {@link #executeTask(Runnable)} instead of this method
    */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   @NotNull
   protected Future<?> executeOnPooledThread(@NotNull final Runnable task) {
@@ -109,12 +110,14 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   }
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected BaseDataReader createErrorDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
     return createErrorDataReader();
   }
 
   /** @deprecated override {@link #createOutputDataReader()} (to be removed in IDEA 2018) */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   protected BaseDataReader createOutputDataReader(@SuppressWarnings("UnusedParameters") BaseDataReader.SleepingPolicy policy) {
     return createOutputDataReader();
@@ -148,6 +151,7 @@ public class BaseOSProcessHandler extends BaseProcessHandler<Process> {
   }
 
   /** @deprecated use {@link BaseOSProcessHandler#executeTask(Runnable)} instead (to be removed in IDEA 2018) */
+  @Deprecated
   public static class ExecutorServiceHolder {
     public static Future<?> submit(@NotNull Runnable task) {
       LOG.warn("Deprecated method. Please use com.intellij.execution.process.BaseOSProcessHandler.executeTask() instead", new Throwable());

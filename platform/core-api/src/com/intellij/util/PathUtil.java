@@ -131,6 +131,7 @@ public class PathUtil {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@code VfsUtil.getLocalFile(file)} instead (to be removed in IDEA 2019) */
+  @Deprecated
   @NotNull
   public static VirtualFile getLocalFile(@NotNull VirtualFile file) {
     if (file.isValid()) {

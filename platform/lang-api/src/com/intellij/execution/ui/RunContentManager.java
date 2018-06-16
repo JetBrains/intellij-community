@@ -44,7 +44,7 @@ public interface RunContentManager {
   }
 
   /** @deprecated Use {@link LangDataKeys#RUN_CONTENT_DESCRIPTOR} instead (to be removed in IDEA 16) */
-  @SuppressWarnings("UnusedDeclaration")
+  @Deprecated @SuppressWarnings("UnusedDeclaration")
   DataKey<RunContentDescriptor> RUN_CONTENT_DESCRIPTOR = LangDataKeys.RUN_CONTENT_DESCRIPTOR;
 
   /**

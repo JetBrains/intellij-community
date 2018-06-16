@@ -79,6 +79,7 @@ public class PerformanceTestInfo {
    * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
    * expected execution time accordingly.
    */
+  @Deprecated
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo useLegacyScaling() {
     useLegacyScaling = true;

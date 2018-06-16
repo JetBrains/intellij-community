@@ -62,6 +62,7 @@ public class PsiFileSystemItemUtil {
   }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(PsiFileSystemItem, PsiFileSystemItem)} instead */
+  @Deprecated
   public static String getNotNullRelativePath(PsiFileSystemItem src, PsiFileSystemItem dst) throws IncorrectOperationException {
     final String s = getRelativePath(src, dst);
     if (s == null) throw new IncorrectOperationException("No way from " + src.getVirtualFile() + " to " + dst.getVirtualFile());
@@ -69,6 +70,7 @@ public class PsiFileSystemItemUtil {
   }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(PsiFileSystemItem, PsiFileSystemItem)} instead */
+  @Deprecated
   @Nullable
   public static String getRelativePath(PsiFileSystemItem src, PsiFileSystemItem dst) {
     final PsiFileSystemItem commonAncestor = getCommonAncestor(src, dst);

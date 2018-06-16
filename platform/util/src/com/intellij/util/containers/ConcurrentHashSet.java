@@ -27,6 +27,7 @@ import java.util.concurrent.ConcurrentMap;
 /**
  * @deprecated use {@link ContainerUtil#newConcurrentSet()} instead
  */
+@Deprecated
 public final class ConcurrentHashSet<K> implements Set<K> {
   private static final Logger LOG = Logger.getInstance(ConcurrentHashSet.class);
   private final ConcurrentMap<K, Boolean> map;

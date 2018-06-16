@@ -558,6 +558,7 @@ public class JBUI {
   /**
    * @deprecated use JBUI.scale(EmptyIcon.create(size)) instead
    */
+  @Deprecated
   @NotNull
   public static EmptyIcon emptyIcon(int size) {
     return scale(EmptyIcon.create(size));

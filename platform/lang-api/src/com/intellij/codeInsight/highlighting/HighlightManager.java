@@ -163,6 +163,7 @@ public abstract class HighlightManager {
   /**
    * @deprecated Use {@link #addOccurrenceHighlights(com.intellij.openapi.editor.Editor, com.intellij.psi.PsiElement[], com.intellij.openapi.editor.markup.TextAttributes, boolean, java.util.Collection)} instead (it does the same thing).
    */
+  @Deprecated
   public abstract void addElementsOccurrenceHighlights(@NotNull Editor editor,
                                                        @NotNull PsiElement[] elements,
                                                        @NotNull TextAttributes attributes,

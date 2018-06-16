@@ -85,6 +85,7 @@ public abstract class WindowManager {
    * @return status bar
    * @deprecated use getStatusBar(Component, Project)
    */
+  @Deprecated
   public abstract StatusBar getStatusBar(@NotNull Component c);
 
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {

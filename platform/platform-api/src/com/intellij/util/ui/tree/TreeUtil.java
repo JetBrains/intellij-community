@@ -749,6 +749,7 @@ public final class TreeUtil {
   /**
    * @deprecated use {@link #listChildren(TreeNode)} instead
    */
+  @Deprecated
   @NotNull
   public static ArrayList<TreeNode> childrenToArray(@NotNull TreeNode node) {
     return (ArrayList<TreeNode>)listChildren(node);

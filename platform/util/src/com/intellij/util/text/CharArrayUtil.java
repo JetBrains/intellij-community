@@ -104,6 +104,7 @@ public class CharArrayUtil {
   /**
    * @deprecated use {@link #fromSequence(CharSequence)}
    */
+  @Deprecated
   @NotNull
   public static char[] fromSequenceStrict(@NotNull CharSequence seq) {
     return fromSequence(seq);

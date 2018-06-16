@@ -205,12 +205,14 @@ public class ZipUtil {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link Decompressor.Zip} */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void extract(@NotNull ZipFile zip, @NotNull File outputDir, @Nullable FilenameFilter filter) throws IOException {
     new Decompressor.Zip(new File(zip.getName())).filter(FileFilterAdapter.wrap(outputDir, filter)).extract(outputDir);
   }
 
   /** @deprecated use {@link Decompressor.Zip} */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2020")
   public static void extractEntry(@NotNull ZipEntry entry, @NotNull InputStream inputStream, @NotNull File outputDir, boolean overwrite) throws IOException {
     File outputFile = newFileForEntry(outputDir, entry.getName());
@@ -235,6 +237,7 @@ public class ZipUtil {
   }
 
   /** @deprecated trivial */
+  @Deprecated
   @ApiStatus.ScheduledForRemoval(inVersion = "2019")
   public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
     ZipFile zipFile = new ZipFile(zip);

@@ -145,10 +145,12 @@ public abstract class FileEditorManager {
   /**
    * @deprecated use addTopComponent
    */
+  @Deprecated
   public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
   /**
    * @deprecated use removeTopComponent
    */
+  @Deprecated
   public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
 
   /**
@@ -187,11 +189,13 @@ public abstract class FileEditorManager {
    * @param listener listener to be added
    * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
+  @Deprecated
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
+  @Deprecated
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
@@ -200,6 +204,7 @@ public abstract class FileEditorManager {
    * @param listener listener to be removed
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
+  @Deprecated
   public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**

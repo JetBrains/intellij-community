@@ -180,6 +180,7 @@ public class ExternalSystemApiUtil {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   @Nullable
   public static ArtifactInfo parseArtifactInfo(@NotNull String fileName) {
     Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
@@ -407,6 +408,7 @@ public class ExternalSystemApiUtil {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
     final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
     if (!changedModels.isEmpty()) {
@@ -424,6 +426,7 @@ public class ExternalSystemApiUtil {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
     for (ModifiableRootModel model : models) {
       if (!model.isDisposed()) {
@@ -435,6 +438,7 @@ public class ExternalSystemApiUtil {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
     final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
     for (ModifiableRootModel modifiableRootModel : models) {
@@ -599,6 +603,7 @@ public class ExternalSystemApiUtil {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
     if (path != null) {
       PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
@@ -777,6 +782,7 @@ public class ExternalSystemApiUtil {
    * @throws InvocationTargetException  as defined by reflection processing
    * @throws ClassNotFoundException     as defined by reflection processing
    */
+  @Deprecated
   @NotNull
   public static <T extends ParametersEnhancer> T reloadIfNecessary(@NotNull final Class<T> clazz)
     throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException

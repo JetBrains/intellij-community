@@ -61,6 +61,7 @@ public class BoundedTaskExecutor extends AbstractExecutorService {
   /**
    * @deprecated use {@link AppExecutorUtil#createBoundedApplicationPoolExecutor(String, Executor, int)} instead
    */
+  @Deprecated
   public BoundedTaskExecutor(@NotNull Executor backendExecutor, int maxSimultaneousTasks) {
     this(ExceptionUtil.getThrowableText(new Throwable("Creation point:")), backendExecutor, maxSimultaneousTasks);
   }

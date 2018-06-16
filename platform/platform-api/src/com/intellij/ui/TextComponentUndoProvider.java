@@ -30,6 +30,7 @@ import javax.swing.undo.UndoManager;
  * @deprecated use {@link com.intellij.util.ui.UIUtil#addUndoRedoActions(javax.swing.text.JTextComponent)}
  * @author yole
  */
+@Deprecated
 public class TextComponentUndoProvider implements Disposable {
   protected final JTextComponent myTextComponent;
   protected final UndoManager myUndoManager = new UndoManager();

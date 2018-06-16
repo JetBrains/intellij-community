@@ -355,6 +355,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   public static VirtualFile getGitRoot(@NotNull FilePath filePath) throws VcsException {
     VirtualFile root = getGitRootOrNull(filePath);
     if (root != null) {
@@ -399,6 +400,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   public static VirtualFile getGitRoot(@NotNull final VirtualFile file) throws VcsException {
     final VirtualFile root = gitRootOrNull(file);
     if (root != null) {
@@ -418,6 +420,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
     return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
@@ -434,6 +437,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @NotNull
   public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) throws VcsException {
     final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);

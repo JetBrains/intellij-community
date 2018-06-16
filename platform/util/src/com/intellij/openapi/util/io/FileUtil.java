@@ -1023,6 +1023,7 @@ public class FileUtil extends FileUtilRt {
    *             Use {@link FileUtilRt#getExtension(String)} instead to get the unchanged extension.
    *             If you need to check whether a file has a specified extension use {@link FileUtilRt#extensionEquals(String, String)}
    */
+  @Deprecated
   @SuppressWarnings("StringToUpperCaseOrToLowerCaseWithoutLocale")
   @NotNull
   public static String getExtension(@NotNull String fileName) {

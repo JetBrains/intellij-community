@@ -511,6 +511,7 @@ public class JdkUtil {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link SimpleJavaParameters#toCommandLine()} (to be removed in IDEA 2018) */
+  @Deprecated
   public static GeneralCommandLine setupJVMCommandLine(final String exePath,
                                                        final SimpleJavaParameters javaParameters,
                                                        final boolean forceDynamicClasspath) {

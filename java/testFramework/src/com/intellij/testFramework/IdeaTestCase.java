@@ -62,6 +62,7 @@ public abstract class IdeaTestCase extends PlatformTestCase {
   /**
    * @deprecated calling this method is no longer necessary
    */
+  @Deprecated
   public static void initPlatformPrefix() {
   }
 

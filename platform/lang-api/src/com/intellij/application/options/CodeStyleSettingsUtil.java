@@ -28,5 +28,6 @@ public abstract class CodeStyleSettingsUtil {
    * @deprecated
    * use CodeStyleSettingsUtil.showCodeStyleSettings (Project, String) instead
    */
+  @Deprecated
   public abstract boolean showCodeStyleSettings(Project project, Class pageToSelect);
 }

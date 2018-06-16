@@ -252,6 +252,7 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
+  @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                           @NotNull TestConsoleProperties consoleProperties,
@@ -261,6 +262,7 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
+  @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
@@ -275,6 +277,7 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 17) */
+  @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
                                      @NotNull final String testFrameworkName,

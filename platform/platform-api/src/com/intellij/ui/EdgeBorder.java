@@ -20,6 +20,7 @@ import com.intellij.util.ui.UIUtil;
 /**
  * @deprecated use IdeBorderFactory.createBorder
  */
+@Deprecated
 public class EdgeBorder extends SideBorder {
   public static final int EDGE_RIGHT = RIGHT;
   public static final int EDGE_BOTTOM = BOTTOM;

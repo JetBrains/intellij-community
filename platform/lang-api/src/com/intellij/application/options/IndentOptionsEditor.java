@@ -197,6 +197,7 @@ public class IndentOptionsEditor extends OptionGroup implements CodeStyleSetting
   /**
    * @deprecated Create {@link IntegerField} and use {@link IntegerField#getValue()} instead.
    */
+  @Deprecated
   protected int getFieldValue(JTextField field, int minValue, int defValue) {
     if (field instanceof IntegerField) {
       return ((IntegerField)field).getValue();

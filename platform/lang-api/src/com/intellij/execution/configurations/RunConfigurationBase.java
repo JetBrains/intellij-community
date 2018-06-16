@@ -269,6 +269,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   /**
    * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
    */
+  @Deprecated
   public boolean isCompileBeforeLaunchAddedByDefault() {
     return true;
   }

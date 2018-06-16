@@ -11,6 +11,7 @@ public abstract class IconPathPatcher {
    * @deprecated
    * @see #patchPath(String, Class)
    */
+  @Deprecated
   @Nullable
   public String patchPath(String path) {
     return patchPath(path, null);

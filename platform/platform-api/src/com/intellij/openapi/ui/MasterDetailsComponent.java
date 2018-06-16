@@ -662,6 +662,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
   /**
    * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
    */
+  @Deprecated
   protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
     for (MyNode rootNode : rootNodes) {
       checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);

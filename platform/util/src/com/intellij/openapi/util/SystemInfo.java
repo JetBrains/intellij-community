@@ -183,15 +183,16 @@ public class SystemInfo extends SystemInfoRt {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
+  @Deprecated
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
-  public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
+  @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
-  public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
+  @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
   //</editor-fold>
 }

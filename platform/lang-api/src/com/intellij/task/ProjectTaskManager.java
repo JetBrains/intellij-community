@@ -144,6 +144,7 @@ public abstract class ProjectTaskManager {
   /**
    * @deprecated use {@link #createBuildTask(boolean, ProjectModelBuildableElement...)}
    */
+  @Deprecated
   public ProjectTask createArtifactsBuildTask(boolean isIncrementalBuild, ProjectModelBuildableElement... artifacts) {
     return createBuildTask(isIncrementalBuild, artifacts);
   }

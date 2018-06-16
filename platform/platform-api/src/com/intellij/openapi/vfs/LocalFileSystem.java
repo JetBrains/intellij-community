@@ -121,5 +121,6 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
 
   /** @deprecated use {@link VfsUtilCore#visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2019) */
+  @Deprecated
   public abstract boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor);
 }

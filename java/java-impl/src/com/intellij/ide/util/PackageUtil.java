@@ -80,6 +80,7 @@ public class PackageUtil {
   /**
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
                                                              String packageName,
@@ -91,6 +92,7 @@ public class PackageUtil {
   /**
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public static PsiDirectory findOrCreateDirectoryForPackage(Project project,
                                                              String packageName,

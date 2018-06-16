@@ -43,6 +43,7 @@ public abstract class ProjectWizardStepFactory {
    * @deprecated Use another version of this method:
    * @see com.intellij.ide.util.projectWizard.ProjectWizardStepFactory#createSourcePathsStep(WizardContext, SourcePathsBuilder, javax.swing.Icon, String)
    */
+  @Deprecated
   public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createSourcePathsStep(WizardContext context, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
@@ -50,6 +51,7 @@ public abstract class ProjectWizardStepFactory {
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
@@ -62,6 +64,7 @@ public abstract class ProjectWizardStepFactory {
   /**
    * @deprecated use {@link #createSupportForFrameworksStep(WizardContext, ModuleBuilder, com.intellij.openapi.roots.ui.configuration.ModulesProvider)} instead
    */
+  @Deprecated
   @Nullable
   public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder);
 

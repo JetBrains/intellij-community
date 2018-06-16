@@ -71,6 +71,7 @@ public abstract class DeploymentUtil {
   /**
    * @deprecated use {@link com.intellij.openapi.util.io.FileUtil#getRelativePath}
    */
+  @Deprecated
   @Nullable
   public static String getRelativePath(@NotNull String basePath, @NotNull final String filePath) {
     if (basePath.equals(filePath)) return "";

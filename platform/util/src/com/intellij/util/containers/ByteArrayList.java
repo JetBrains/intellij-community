@@ -6,6 +6,7 @@ import gnu.trove.TByteArrayList;
 /**
  * @deprecated use {@link TByteArrayList instead}
  */
+@Deprecated
 public class ByteArrayList extends TByteArrayList {
   public ByteArrayList() {
   }

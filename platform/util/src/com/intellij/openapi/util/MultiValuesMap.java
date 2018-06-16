@@ -108,6 +108,7 @@ public class MultiValuesMap<K, V>{
   /**
    * @deprecated this method will return unordered set for ordered map, use {@link #values()} instead
    */
+  @Deprecated
   @NotNull
   public Collection<V> collectValues() {
     Collection<V> result = new HashSet<V>();

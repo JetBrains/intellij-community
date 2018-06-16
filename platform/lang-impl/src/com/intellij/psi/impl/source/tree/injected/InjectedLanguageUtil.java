@@ -588,6 +588,7 @@ public class InjectedLanguageUtil {
   /**
    * @deprecated Use {@link InjectedLanguageManager#getInjectedPsiFiles(PsiElement)} != null instead
    */
+  @Deprecated
   public static boolean hasInjections(@NotNull PsiLanguageInjectionHost host) {
     if (!host.isPhysical()) return false;
     final Ref<Boolean> result = Ref.create(false);
@@ -699,6 +700,7 @@ public class InjectedLanguageUtil {
   /**
    * @deprecated use {@link #putInjectedFileUserData(PsiElement, Language, Key, Object)} instead
    */
+  @Deprecated
   public static <T> void putInjectedFileUserData(MultiHostRegistrar registrar, Key<T> key, T value) {
     LOG.warn("use #putInjectedFileUserData(com.intellij.psi.PsiElement, com.intellij.lang.Language, com.intellij.openapi.util.Key, java.lang.Object)} instead");
     InjectionResult result = ((InjectionRegistrarImpl)registrar).getInjectedResult();
