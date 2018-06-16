@@ -34,7 +34,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
-import com.intellij.util.containers.WeakList;
+import com.intellij.util.containers.UnsafeWeakList;
 import com.intellij.util.ui.ButtonlessScrollBarUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,8 +57,8 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   private final boolean myOneLine;
   private final CaretModelWindow myCaretModelDelegate;
   private final SelectionModelWindow mySelectionModelDelegate;
-  private static final Collection<EditorWindowImpl> allEditors = new WeakList<>();
-  private boolean myDisposed;
+  private static final Collection<EditorWindowImpl> allEditors = new UnsafeWeakList<>(); // guarded by allEditors
+  private volatile boolean myDisposed;
   private final MarkupModelWindow myMarkupModelDelegate;
   private final MarkupModelWindow myDocumentMarkupModelDelegate;
   private final FoldingModelWindow myFoldingModelWindow;
@@ -77,9 +77,6 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
           if (editorWindow.isValid()) {
             return editorWindow;
           }
-        }
-        if (editorWindow.getDocument().areRangesEqual(documentRange)) {
-          //int i = 0;
         }
       }
       window = new EditorWindowImpl(documentRange, editor, injectedFile, documentRange.isOneLine());
@@ -108,12 +105,14 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
 
   static void disposeInvalidEditors() {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
-    Iterator<EditorWindowImpl> iterator = allEditors.iterator();
-    while (iterator.hasNext()) {
-      EditorWindowImpl editorWindow = iterator.next();
-      if (!editorWindow.isValid()) {
-        disposeEditor(editorWindow);
-        iterator.remove();
+    synchronized (allEditors) {
+      Iterator<EditorWindowImpl> iterator = allEditors.iterator();
+      while (iterator.hasNext()) {
+        EditorWindowImpl editorWindow = iterator.next();
+        if (!editorWindow.isValid()) {
+          disposeEditor(editorWindow);
+          iterator.remove();
+        }
       }
     }
   }
@@ -143,7 +142,7 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   public boolean isValid() {
     return !isDisposed() && !myInjectedFile.getProject().isDisposed() && myInjectedFile.isValid() && myDocumentWindow.isValid();
   }
-  
+
   private void checkValid() {
     PsiUtilCore.ensureValid(myInjectedFile);
     if (!isValid()) {
@@ -186,13 +185,13 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
   @NotNull
   public LogicalPosition injectedToHost(@NotNull LogicalPosition pos) {
     checkValid();
-    
+
     int offset = logicalPositionToOffset(pos);
     LogicalPosition samePos = offsetToLogicalPosition(offset);
-    
-    int virtualSpaceDelta = offset < myDocumentWindow.getTextLength() && samePos.line == pos.line && samePos.column < pos.column ? 
+
+    int virtualSpaceDelta = offset < myDocumentWindow.getTextLength() && samePos.line == pos.line && samePos.column < pos.column ?
                             pos.column - samePos.column : 0;
-    
+
     LogicalPosition hostPos = myDelegate.offsetToLogicalPosition(myDocumentWindow.injectedToHost(offset));
     return new LogicalPosition(hostPos.line, hostPos.column + virtualSpaceDelta);
   }
@@ -788,6 +787,7 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
     return myDelegate.getGutter();
   }
 
+  @Override
   public boolean equals(final Object o) {
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
@@ -798,6 +798,7 @@ class EditorWindowImpl extends com.intellij.injected.editor.EditorWindowImpl imp
     return myDelegate.equals(that.myDelegate) && myDocumentWindow.equals(thatWindow);
   }
 
+  @Override
   public int hashCode() {
     return myDocumentWindow.hashCode();
   }
