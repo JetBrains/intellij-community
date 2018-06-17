@@ -25,18 +25,19 @@ import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 
-class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Terminal", project, robot) {
+class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : ToolWindowFixture(toolWindowId, project, robot) {
 
   private val myJBTerminalPanel: JBTerminalPanel
   private val terminalTextBuffer: TerminalTextBuffer
 
   init {
-    val content = this.getContent("") ?: throw Exception("Unable to get content of terminal tool window")
+    val content: Content = this.getContent(getActiveTabName()) ?: throw Exception("Unable to get content of terminal tool window")
     try {
       myJBTerminalPanel = GuiTestUtilKt.withPauseWhenNull {
         getJBTerminalPanel(content)
       }
-    } catch (e: WaitTimedOutError) {
+    }
+    catch (e: WaitTimedOutError) {
       throw ComponentLookupException("Unable to find JBTerminalPanel")
     }
     terminalTextBuffer = myJBTerminalPanel.terminalTextBuffer
@@ -61,6 +62,13 @@ class TerminalFixture(project: Project, robot: Robot): ToolWindowFixture("Termin
     waitUntil(condition = "'$regex' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
       terminalTextBuffer.screenLines.contains(regex)
     }
+  }
+
+  private fun getActiveTabName(): String {
+    for (c in this.contents) {
+      if (c.isSelected) return c.tabName
+    }
+    return ""
   }
 
   private fun getJBTerminalPanel(content: Content): JBTerminalPanel? {
