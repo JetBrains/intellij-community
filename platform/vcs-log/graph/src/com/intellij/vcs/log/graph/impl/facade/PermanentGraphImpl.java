@@ -114,12 +114,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
                                                          @Nullable Set<CommitId> visibleHeads, @Nullable Set<CommitId> matchingCommits) {
     Set<Integer> visibleHeadsIds = visibleHeads != null ? myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true) : null;
     if (matchingCommits != null) {
-      LinearGraphController controller =
-        new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
-      if (visibleHeadsIds != null) {
-        return new BranchFilterController(controller, this, visibleHeadsIds);
-      }
-      return controller;
+      return new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits), visibleHeadsIds);
     }
 
     if (sortType == SortType.LinearBek) {

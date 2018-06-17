@@ -33,9 +33,25 @@ public class FilteredController extends CascadeController {
   protected FilteredController(@NotNull LinearGraphController delegateLinearGraphController,
                                @NotNull PermanentGraphInfo permanentGraphInfo,
                                @NotNull Set<Integer> matchedIds) {
+    this(delegateLinearGraphController, permanentGraphInfo, matchedIds, null);
+  }
+
+  protected FilteredController(@NotNull LinearGraphController delegateLinearGraphController,
+                               @NotNull PermanentGraphInfo permanentGraphInfo,
+                               @NotNull Set<Integer> matchedIds,
+                               @Nullable Set<Integer> visibleHeadsIds) {
     super(delegateLinearGraphController, permanentGraphInfo);
+
     UnsignedBitSet initVisibility = new UnsignedBitSet();
-    for (Integer matchedId : matchedIds) initVisibility.set(matchedId, true);
+    if (visibleHeadsIds != null) {
+      ReachableNodes getter = new ReachableNodes(LinearGraphUtils.asLiteLinearGraph(myPermanentGraphInfo.getLinearGraph()));
+      getter.walk(visibleHeadsIds, node -> {
+        if (matchedIds.contains(node)) initVisibility.set(node, true);
+      });
+    }
+    else {
+      for (Integer matchedId: matchedIds) initVisibility.set(matchedId, true);
+    }
 
     myCollapsedGraph = CollapsedGraph.newInstance(delegateLinearGraphController.getCompiledGraph(), initVisibility);
     DottedFilterEdgesGenerator.update(myCollapsedGraph, 0, myCollapsedGraph.getDelegatedGraph().nodesCount() - 1);
