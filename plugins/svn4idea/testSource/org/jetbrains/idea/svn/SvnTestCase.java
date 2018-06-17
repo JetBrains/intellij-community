@@ -1,5 +1,5 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea;
+package org.jetbrains.idea.svn;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
@@ -43,9 +43,6 @@ import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.SvnApplicationSettings;
-import org.jetbrains.idea.svn.SvnFileUrlMappingImpl;
-import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;

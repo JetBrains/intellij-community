@@ -12,7 +12,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
 import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.SvnTestCase;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
