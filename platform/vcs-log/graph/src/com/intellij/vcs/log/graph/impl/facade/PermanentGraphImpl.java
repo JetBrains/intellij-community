@@ -129,10 +129,7 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
       return baseController;
     }
 
-    if (visibleHeadsIds != null) {
-      return new CollapsedController(baseController, this, visibleHeadsIds);
-    }
-    return new CollapsedController(baseController, this, null);
+    return new CollapsedController(baseController, this, visibleHeadsIds);
   }
 
   @NotNull
