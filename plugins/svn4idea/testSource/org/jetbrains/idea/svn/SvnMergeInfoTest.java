@@ -37,7 +37,7 @@ import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
-public class SvnMergeInfoTest extends Svn17TestCase {
+public class SvnMergeInfoTest extends SvnTestCase {
 
   private static final String CONTENT1 = "123\n456\n123";
   private static final String CONTENT2 = "123\n456\n123\n4";

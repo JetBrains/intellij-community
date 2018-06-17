@@ -24,7 +24,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-public class SvnCommittedViewTest extends Svn17TestCase {
+public class SvnCommittedViewTest extends SvnTestCase {
 
   @Test
   public void testAdd() throws Exception {

@@ -40,7 +40,7 @@ import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
-public class SvnQuickMergeTest extends Svn17TestCase {
+public class SvnQuickMergeTest extends SvnTestCase {
   private SvnVcs myVcs;
   private String myBranchUrl;
   private File myBranchRoot;

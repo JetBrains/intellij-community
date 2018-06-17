@@ -76,6 +76,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myAnotherRepoUrl;
   protected File myPluginRoot;
 
+  protected SvnTestCase() {
+    this("testData");
+  }
+
   protected SvnTestCase(@NotNull String testDataDir) {
     myTestDataDir = testDataDir;
     myWcRootName = "wcroot";

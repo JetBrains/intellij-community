@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -22,7 +22,7 @@ import java.util.Set;
 
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
-public class SvnExternalTest extends Svn17TestCase {
+public class SvnExternalTest extends SvnTestCase {
   private ChangeListManagerImpl clManager;
   private SvnVcs myVcs;
   private Url myMainUrl;

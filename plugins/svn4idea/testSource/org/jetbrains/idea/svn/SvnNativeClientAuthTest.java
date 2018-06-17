@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -29,7 +29,7 @@ import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
-public class SvnNativeClientAuthTest extends Svn17TestCase {
+public class SvnNativeClientAuthTest extends SvnTestCase {
   private SvnVcs myVcs;
   private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;

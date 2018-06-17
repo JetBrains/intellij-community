@@ -3,7 +3,7 @@ package org.jetbrains.idea.svn.history;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.Svn17TestCase;
+import org.jetbrains.idea.svn.SvnTestCase;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
@@ -19,7 +19,7 @@ import static org.jetbrains.idea.svn.commandLine.CommandUtil.format;
 import static org.junit.Assert.assertEquals;
 import static org.junit.Assert.assertNotNull;
 
-public class FirstInBranchTest extends Svn17TestCase {
+public class FirstInBranchTest extends SvnTestCase {
 
   private SvnVcs myVcs;
   private Url myTrunkUrl;

@@ -26,7 +26,7 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 
-public class SvnChangesCorrectlyRefreshedNativeTest extends Svn17TestCase {
+public class SvnChangesCorrectlyRefreshedNativeTest extends SvnTestCase {
   private ChangeListManager clManager;
 
   @Override
