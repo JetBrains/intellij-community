@@ -24,6 +24,7 @@ import com.intellij.packaging.artifacts.Artifact;
  * @author Vladislav.Soroka
  * @since 7/18/2016
  */
+@Deprecated
 public interface ArtifactBuildTask extends ProjectModelBuildTask<Artifact> {
   Artifact getArtifact();
 

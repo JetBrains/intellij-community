@@ -41,6 +41,7 @@ import java.util.Set;
 /**
  * @deprecated Use {@link CommittedChangesBrowser}
  */
+@Deprecated
 public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
 
   private CommittedChangesBrowserUseCase myUseCase;

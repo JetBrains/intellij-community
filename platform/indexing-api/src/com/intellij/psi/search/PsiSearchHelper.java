@@ -27,6 +27,7 @@ public interface PsiSearchHelper {
     /**
      * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
      */
+    @Deprecated
     public static PsiSearchHelper getInstance(@NotNull Project project) {
       return PsiSearchHelper.getInstance(project);
     }

@@ -125,6 +125,7 @@ public class ComplementaryFontsRegistry {
   /**
    * @deprecated Use {{@link #getFontAbleToDisplay(int, int, FontPreferences, FontRenderContext)}} instead.
    */
+  @Deprecated
   @NotNull
   public static FontInfo getFontAbleToDisplay(int codePoint, @JdkConstants.FontStyle int style, @NotNull FontPreferences preferences) {
     return getFontAbleToDisplay(codePoint, style, preferences, null);
@@ -248,6 +249,7 @@ public class ComplementaryFontsRegistry {
   /**
    * @deprecated Use {{@link #getFontAbleToDisplay(int, int, int, String, FontRenderContext)}}
    */
+  @Deprecated
   @NotNull
   public static FontInfo getFontAbleToDisplay(int codePoint, int size, @JdkConstants.FontStyle int style, @NotNull String defaultFontFamily) {
     return getFontAbleToDisplay(codePoint, size, style, defaultFontFamily, null);

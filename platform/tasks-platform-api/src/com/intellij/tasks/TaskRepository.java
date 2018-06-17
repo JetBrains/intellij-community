@@ -108,6 +108,7 @@ public abstract class TaskRepository {
    * @see #createCancellableConnection()
    * @deprecated
    */
+  @Deprecated
   public void testConnection() throws Exception {
   }
 

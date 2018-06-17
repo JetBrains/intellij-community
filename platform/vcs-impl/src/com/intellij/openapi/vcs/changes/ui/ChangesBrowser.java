@@ -15,6 +15,7 @@ import java.util.List;
 /**
  * @deprecated Use {@link SimpleChangesBrowser}
  */
+@Deprecated
 public class ChangesBrowser extends OldChangesBrowserBase<Change> {
 
   public ChangesBrowser(@NotNull Project project,

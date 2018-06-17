@@ -214,6 +214,7 @@ public interface JVMElementFactory {
   PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel);
 
   /** @deprecated use {@link PsiType#annotate(TypeAnnotationProvider)} (to be removed in IDEA 18) */
+  @Deprecated
   PsiClassType createType(@NotNull PsiClass resolve,
                           @NotNull PsiSubstitutor substitutor,
                           @NotNull LanguageLevel languageLevel,

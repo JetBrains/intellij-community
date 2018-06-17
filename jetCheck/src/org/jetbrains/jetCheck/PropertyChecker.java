@@ -57,6 +57,7 @@ public class PropertyChecker {
      * and used in regression tests, because any changes in the test itself or the framework can render the passed argument obsolete.
      * For regression testing, it's recommended to code the failing scenario explicitly.
      */
+    @Deprecated
     @SuppressWarnings("DeprecatedIsStillUsed")
     public Parameters withSeed(long seed) {
       if (serializedData != null) {
@@ -113,6 +114,7 @@ public class PropertyChecker {
      * and used in regression tests, because any changes in the test itself or the framework can render the passed arguments obsolete.
      * For regression testing, it's recommended to code the failing scenario explicitly.
      */
+    @Deprecated
     @SuppressWarnings("DeprecatedIsStillUsed")
     public Parameters recheckingIteration(long seed, int sizeHint) {
       return withSeed(seed).withSizeHint(whatever -> sizeHint).withIterationCount(1);
@@ -125,6 +127,7 @@ public class PropertyChecker {
      * and used in regression tests, because any changes in the test itself or the framework can render the passed argument obsolete.
      * For regression testing, it's recommended to code the failing scenario explicitly.
      */
+    @Deprecated
     @SuppressWarnings("DeprecatedIsStillUsed")
     public Parameters rechecking(@NotNull String serializedData) {
       this.iterationCount = 1;

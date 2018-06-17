@@ -474,7 +474,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   /**
    * @deprecated Use get/setRightMargin() methods instead.
    */
-  @SuppressWarnings("DeprecatedIsStillUsed")
+  @SuppressWarnings({"DeprecatedIsStillUsed", "MissingDeprecatedAnnotation"})
   public int RIGHT_MARGIN = 120;
   /**
    * <b>Do not use this field directly since it doesn't reflect a setting for a specific language which may

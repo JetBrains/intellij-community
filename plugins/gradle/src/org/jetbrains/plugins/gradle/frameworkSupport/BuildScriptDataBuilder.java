@@ -65,6 +65,7 @@ public class BuildScriptDataBuilder {
   /**
    * @deprecated use {@link #buildMainPart()} and {@link #buildConfigurationPart()} instead
    */
+  @Deprecated
   public String build() {
     return buildMainPart();
   }

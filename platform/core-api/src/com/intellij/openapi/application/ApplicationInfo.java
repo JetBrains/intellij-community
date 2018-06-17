@@ -85,6 +85,7 @@ public abstract class ApplicationInfo {
   }
 
   /** @deprecated use {@link #getBuild()} instead (to remove in IDEA 16) */
+  @Deprecated
   @SuppressWarnings("UnusedDeclaration")
   public String getBuildNumber() {
     return getBuild().asString();

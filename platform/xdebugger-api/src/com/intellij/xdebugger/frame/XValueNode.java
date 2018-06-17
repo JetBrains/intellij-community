@@ -57,6 +57,7 @@ public interface XValueNode extends Obsolescent {
   /**
    * @deprecated use {@link #setPresentation(Icon, XValuePresentation, boolean)}
    */
+  @Deprecated
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
   /**

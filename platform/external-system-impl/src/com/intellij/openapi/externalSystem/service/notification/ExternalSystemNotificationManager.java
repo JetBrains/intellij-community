@@ -104,6 +104,7 @@ public class ExternalSystemNotificationManager implements Disposable {
   /**
    * @deprecated build tool window should be used to display 'sync' errors
    */
+  @Deprecated
   public void processExternalProjectRefreshError(@NotNull Throwable error,
                                                  @NotNull String externalProjectName,
                                                  @NotNull ProjectSystemId externalSystemId) {
@@ -125,6 +126,7 @@ public class ExternalSystemNotificationManager implements Disposable {
   /**
    * @deprecated to be removed in 2018.2
    */
+  @Deprecated
   @NotNull
   public NotificationData createNotification(@NotNull Throwable error,
                                              @NotNull String externalProjectName,

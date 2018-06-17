@@ -36,6 +36,7 @@ public interface ProjectManagerListener extends EventListener {
   /**
    * @deprecated Please use {@link VetoableProjectManagerListener}
    */
+  @Deprecated
   default boolean canCloseProject(Project project) {
     return true;
   }

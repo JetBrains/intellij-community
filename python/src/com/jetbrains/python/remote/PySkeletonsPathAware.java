@@ -19,6 +19,7 @@ package com.jetbrains.python.remote;
  * @author traff
  * @deprecated
  */
+@Deprecated
 public interface PySkeletonsPathAware {
 
 }

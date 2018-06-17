@@ -31,6 +31,7 @@ public abstract class MetaDataRegistrar {
    * @param metadataDescriptorClass class of metadata, should be instantiable without parameters
    * @deprecated use {@link #registerMetaData(com.intellij.patterns.ElementPattern, Class)}
    */
+  @Deprecated
   public abstract <T extends PsiMetaData> void registerMetaData(
     ElementFilter filter, Class<T> metadataDescriptorClass);
 

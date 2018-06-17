@@ -308,12 +308,14 @@ public class TabbedPaneWrapper  {
   /**
    * @deprecated Keyboard navigation is installed/deinstalled automatically. This method does nothing now.
    */
+  @Deprecated
   public final void installKeyboardNavigation(){
   }
 
   /**
    * @deprecated Keyboard navigation is installed/deinstalled automatically. This method does nothing now.
    */
+  @Deprecated
   public final void uninstallKeyboardNavigation(){
   }
 

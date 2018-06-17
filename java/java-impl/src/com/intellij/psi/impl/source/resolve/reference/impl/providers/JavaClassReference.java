@@ -278,6 +278,7 @@ public class JavaClassReference extends GenericReference implements PsiJavaRefer
   }
 
   /** @deprecated use {@link #getSuperClasses()} instead */
+  @Deprecated
   @Nullable
   public String[] getExtendClassNames() {
     List<String> result = getSuperClasses();

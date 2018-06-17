@@ -23,6 +23,7 @@ import javax.swing.*;
 /**
  * @deprecated use {@link ProgressWindow} and {@link ProgressIndicatorListener#installToProgress(ProgressIndicatorEx)}
  */
+@Deprecated
 public class ProgressWindowWithNotification extends ProgressWindow {
   public ProgressWindowWithNotification(boolean shouldShowCancel, Project project) {
     super(shouldShowCancel, project);

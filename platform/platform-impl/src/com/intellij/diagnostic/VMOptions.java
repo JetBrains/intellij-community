@@ -180,6 +180,7 @@ public class VMOptions {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #readOption(MemoryKind, boolean)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static int readXmx() {
     return readOption(MemoryKind.HEAP, true);
   }

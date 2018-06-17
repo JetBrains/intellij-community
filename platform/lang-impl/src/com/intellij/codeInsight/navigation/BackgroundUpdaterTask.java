@@ -102,6 +102,7 @@ public abstract class BackgroundUpdaterTask extends Task.Backgroundable {
   /**
    * @deprecated Use {@link #BackgroundUpdaterTask(Project, String, Comparator)} and {@link #updateComponent(PsiElement)} instead
    */
+  @Deprecated
   public boolean updateComponent(@NotNull PsiElement element, @Nullable Comparator comparator) {
     final UsageView view = myUsageView.get();
     if (view != null && !((UsageViewImpl)view).isDisposed()) {

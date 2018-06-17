@@ -31,6 +31,7 @@ public abstract class GradleFrameworkSupportProvider extends FrameworkSupportInM
   /**
    * @deprecated use {@link #addSupport(ProjectId, Module, ModifiableRootModel, ModifiableModelsProvider, BuildScriptDataBuilder)}
    */
+  @Deprecated
   public void addSupport(@NotNull Module module, @NotNull ModifiableRootModel rootModel,
                          @NotNull ModifiableModelsProvider modifiableModelsProvider,
                          @NotNull BuildScriptDataBuilder buildScriptData) {

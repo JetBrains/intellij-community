@@ -28,6 +28,7 @@ public abstract class DirectoryInfo {
    * @return {@code true} if the whole directory is located under project content or library roots and not excluded or ignored
    * @deprecated use {@link #isInProject(VirtualFile)} instead, this method doesn't take {@link ContentEntry#getExcludePatterns()} into account
    */
+  @Deprecated
   public abstract boolean isInProject();
 
   /**
@@ -45,6 +46,7 @@ public abstract class DirectoryInfo {
    * @return {@code true} if the whole directory is located in project content, output or library root but excluded from the project
    * @deprecated use {@link #isExcluded(VirtualFile)} instead, this method doesn't take {@link ContentEntry#getExcludePatterns()} into account
    */
+  @Deprecated
   public abstract boolean isExcluded();
 
   /**
@@ -63,12 +65,14 @@ public abstract class DirectoryInfo {
   /**
    * @deprecated use {@link #isInModuleSource(VirtualFile)} instead, this method doesn't take {@link ContentEntry#getExcludePatterns() exclude patterns} into account
    */
+  @Deprecated
   public abstract boolean isInModuleSource();
 
   /**
    * @return {@code true} if {@code file} located under this directory is located in library sources.
    * @deprecated use {@link #isInLibrarySource(VirtualFile)} instead, this method doesn't take {@link SyntheticLibrary#getExcludeFileCondition()} into account
    */
+  @Deprecated
   public abstract boolean isInLibrarySource();
 
   /**

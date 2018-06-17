@@ -132,6 +132,7 @@ public abstract class NullableNotNullManager {
   }
 
   /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
+  @Deprecated
   public PsiAnnotation copyNotNullAnnotation(PsiModifierListOwner owner) {
     NullabilityAnnotationInfo info = findOwnNullabilityAnnotationInfo(owner);
     if (info == null || info.getNullability() != Nullability.NOT_NULL) return null;

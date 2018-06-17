@@ -38,5 +38,6 @@ public interface PsiClassStub<T extends PsiClass> extends PsiMemberStub<T> {
   @Nullable String getSourceFileName();
 
   /** @deprecated use {@link PsiJavaFileStub#getLanguageLevel()} (to be removed in IDEA 18) */
+  @Deprecated
   LanguageLevel getLanguageLevel();
 }
