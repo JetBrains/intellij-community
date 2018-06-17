@@ -146,12 +146,12 @@ public abstract class FileEditorManager {
    * @deprecated use addTopComponent
    */
   @Deprecated
-  public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
+  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {}
   /**
    * @deprecated use removeTopComponent
    */
   @Deprecated
-  public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
+  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {}
 
   /**
    * Adds the specified component above the editor and paints a separator line below it.

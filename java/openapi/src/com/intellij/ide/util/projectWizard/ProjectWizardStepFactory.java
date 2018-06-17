@@ -16,15 +16,12 @@
 package com.intellij.ide.util.projectWizard;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkType;
 import com.intellij.openapi.projectRoots.SdkTypeId;
-import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
@@ -39,37 +36,11 @@ public abstract class ProjectWizardStepFactory {
 
   public abstract ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext);
 
-  /**
-   * @deprecated Use another version of this method:
-   * @see com.intellij.ide.util.projectWizard.ProjectWizardStepFactory#createSourcePathsStep(WizardContext, SourcePathsBuilder, javax.swing.Icon, String)
-   */
-  @Deprecated
-  public abstract ModuleWizardStep createSourcePathsStep(ModuleWizardStep nameAndLocationStep, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
-
   public abstract ModuleWizardStep createSourcePathsStep(WizardContext context, SourcePathsBuilder builder, Icon icon, @NonNls String helpId);
-
-  /**
-   * @deprecated
-   */
-  @Deprecated
-  public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(WizardContext context, SdkType type, JavaModuleBuilder builder, Computable<Boolean> isVisibile, Icon icon, @NonNls String helpId);
 
   public abstract ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext);
-
-  @Nullable
-  public abstract Sdk getNewProjectSdk(WizardContext wizardContext);
-
-  /**
-   * @deprecated use {@link #createSupportForFrameworksStep(WizardContext, ModuleBuilder, com.intellij.openapi.roots.ui.configuration.ModulesProvider)} instead
-   */
-  @Deprecated
-  @Nullable
-  public abstract ModuleWizardStep createSupportForFrameworksStep(WizardContext context, ModuleBuilder builder);
-
-  @Nullable
-  public abstract ModuleWizardStep createSupportForFrameworksStep(@NotNull WizardContext context, @NotNull ModuleBuilder builder, @NotNull ModulesProvider modulesProvider);
 
   public abstract ModuleWizardStep createJavaSettingsStep(@NotNull SettingsStep settingsStep, @NotNull ModuleBuilder moduleBuilder, @NotNull Condition<SdkTypeId> sdkFilter);
 }

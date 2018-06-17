@@ -2,7 +2,6 @@
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -119,8 +118,4 @@ public abstract class LocalFileSystem extends NewVirtualFileSystem {
    * @param handler the handler instance.
    */
   public abstract void unregisterAuxiliaryFileOperationsHandler(@NotNull LocalFileOperationsHandler handler);
-
-  /** @deprecated use {@link VfsUtilCore#visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public abstract boolean processCachedFilesInSubtree(@NotNull VirtualFile file, @NotNull Processor<VirtualFile> processor);
 }

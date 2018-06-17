@@ -188,17 +188,6 @@ public class EditorHyperlinkSupport {
     return getHyperlinkAt(myEditor.logicalPositionToOffset(new LogicalPosition(line, col)));
   }
 
-  /**
-   * @deprecated for binary compatibility with older plugins
-   * @see #createHyperlink(int, int, TextAttributes, HyperlinkInfo)
-   */
-  public void addHyperlink(final int highlightStartOffset,
-                           final int highlightEndOffset,
-                           @Nullable final TextAttributes highlightAttributes,
-                           @NotNull final HyperlinkInfo hyperlinkInfo) {
-    createHyperlink(highlightStartOffset, highlightEndOffset, highlightAttributes, hyperlinkInfo);
-  }
-
   @NotNull
   public RangeHighlighter createHyperlink(int highlightStartOffset,
                                           int highlightEndOffset,

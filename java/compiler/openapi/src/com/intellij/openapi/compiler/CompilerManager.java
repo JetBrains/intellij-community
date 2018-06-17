@@ -75,6 +75,7 @@ public abstract class CompilerManager {
    * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
    * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
    */
+  @Deprecated
   public abstract void addTranslatingCompiler(@NotNull TranslatingCompiler compiler, Set<FileType> inputTypes, Set<FileType> outputTypes);
 
   /**
@@ -92,12 +93,6 @@ public abstract class CompilerManager {
    */
   @NotNull
   public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass);
-
-  /**
-   * @deprecated use {@link #getCompilers(Class)} instead
-   */
-  @NotNull
-  public abstract <T  extends Compiler> T[] getCompilers(@NotNull Class<T> compilerClass, CompilerFilter filter);
 
   /**
    * Registers the type as a compilable type so that Compile action will be enabled on files of this type.
@@ -219,11 +214,6 @@ public abstract class CompilerManager {
    * Same as {@link #make(CompileScope, CompileStatusNotification)} but with modal progress window instead of background progress
    */
   public abstract void makeWithModalProgress(@NotNull CompileScope scope, @Nullable CompileStatusNotification callback);
-
-  /**
-   * @deprecated use {@link #make(CompileScope, CompileStatusNotification)} instead
-   */
-  public abstract void make(@NotNull CompileScope scope, CompilerFilter filter, @Nullable CompileStatusNotification callback);
 
   /**
    * Checks if compile scope given is up-to-date

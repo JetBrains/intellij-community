@@ -16,7 +16,6 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.execution.rmi.RemoteUtil;
-import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.externalSystem.ExternalSystemAutoImportAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
@@ -28,7 +27,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -38,7 +36,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExternalProjectSystemRegistry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.ProjectModelExternalSource;
 import com.intellij.openapi.roots.libraries.Library;
@@ -54,7 +51,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.*;
 import com.intellij.util.containers.*;
 import com.intellij.util.containers.Stack;
-import com.intellij.util.lang.UrlClassLoader;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -64,13 +60,8 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
-import java.net.URL;
 import java.util.*;
 import java.util.Queue;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 import static com.intellij.util.PlatformUtils.*;
 
@@ -79,11 +70,8 @@ import static com.intellij.util.PlatformUtils.*;
  * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemApiUtil {
-  private static final String LAST_USED_PROJECT_PATH_PREFIX = "LAST_EXTERNAL_PROJECT_PATH_";
 
   @NotNull public static final String PATH_SEPARATOR = "/";
-
-  @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^.]+?)?");
 
   @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
 
@@ -175,19 +163,6 @@ public class ExternalSystemApiUtil {
 
   public static boolean isExternalSystemLibrary(@NotNull Library library, @NotNull ProjectSystemId externalSystemId) {
     return library.getName() != null && StringUtil.startsWithIgnoreCase(library.getName(), externalSystemId.getId() + ": ");
-  }
-
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Deprecated
-  @Nullable
-  public static ArtifactInfo parseArtifactInfo(@NotNull String fileName) {
-    Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
-    if (!matcher.matches()) {
-      return null;
-    }
-    return new ArtifactInfo(matcher.group(1), null, matcher.group(2));
   }
 
   public static void orderAwareSort(@NotNull List<?> data) {
@@ -405,68 +380,6 @@ public class ExternalSystemApiUtil {
     return null;
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Deprecated
-  public static void commitChangedModels(boolean synchronous, Project project, List<Library.ModifiableModel> models) {
-    final List<Library.ModifiableModel> changedModels = ContainerUtil.findAll(models, model -> model.isChanged());
-    if (!changedModels.isEmpty()) {
-      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-        @Override
-        public void execute() {
-          for (Library.ModifiableModel modifiableModel : changedModels) {
-            modifiableModel.commit();
-          }
-        }
-      });
-    }
-  }
-
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Deprecated
-  public static void disposeModels(@NotNull Collection<ModifiableRootModel> models) {
-    for (ModifiableRootModel model : models) {
-      if (!model.isDisposed()) {
-        model.dispose();
-      }
-    }
-  }
-
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Deprecated
-  public static void commitModels(boolean synchronous, Project project, List<ModifiableRootModel> models) {
-    final List<ModifiableRootModel> changedModels = ContainerUtilRt.newArrayList();
-    for (ModifiableRootModel modifiableRootModel : models) {
-      if (modifiableRootModel.isDisposed()) {
-        continue;
-      }
-      if (modifiableRootModel.isChanged()) {
-        changedModels.add(modifiableRootModel);
-      } else {
-        modifiableRootModel.dispose();
-      }
-    }
-    // Commit only if there are changes. #executeProjectChangeAction acquires a write lock
-    if (!changedModels.isEmpty()) {
-      executeProjectChangeAction(synchronous, new DisposeAwareProjectChange(project) {
-        @Override
-        public void execute() {
-          for (ModifiableRootModel modifiableRootModel : changedModels) {
-            // double check
-            if (!modifiableRootModel.isDisposed()) {
-              modifiableRootModel.commit();
-            }
-          }
-        }
-      });
-    }
-  }
-
   public static void executeProjectChangeAction(@NotNull final DisposeAwareProjectChange task) {
     executeProjectChangeAction(true, task);
   }
@@ -598,16 +511,6 @@ public class ExternalSystemApiUtil {
       }
     }
     return true;
-  }
-
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Deprecated
-  public static void storeLastUsedExternalProjectPath(@Nullable String path, @NotNull ProjectSystemId externalSystemId) {
-    if (path != null) {
-      PropertiesComponent.getInstance().setValue(LAST_USED_PROJECT_PATH_PREFIX + externalSystemId.getReadableName(), path);
-    }
   }
 
   @NotNull
@@ -756,68 +659,6 @@ public class ExternalSystemApiUtil {
    */
   public static boolean isInProcessMode(ProjectSystemId externalSystemId) {
     return Registry.is(externalSystemId.getId() + ExternalSystemConstants.USE_IN_PROCESS_COMMUNICATION_REGISTRY_KEY_SUFFIX, false);
-  }
-
-  /**
-   * There is a possible case that methods of particular object should be executed with classpath different from the one implied
-   * by the current class' class loader. External system offers {@link ParametersEnhancer#enhanceLocalProcessing(List)} method
-   * for defining that custom classpath.
-   * <p/>
-   * It's also possible that particular implementation of {@link ParametersEnhancer} is compiled using dependency to classes
-   * which are provided by the {@link ParametersEnhancer#enhanceLocalProcessing(List) expanded classpath}. E.g. a class
-   * {@code 'A'} might use method of class {@code 'B'} and 'A' is located at the current (system/plugin) classpath but
-   * {@code 'B'} is not. We need to reload {@code 'A'} using its expanded classpath then, i.e. create new class loaded
-   * with that expanded classpath and load {@code 'A'} by it.
-   * <p/>
-   * This method allows to do that.
-   *
-   * @deprecated to be removed in 2018.2
-   *
-   * @param clazz  custom classpath-aware class which instance should be created (is assumed to have a no-args constructor)
-   * @param <T>    target type
-   * @return       newly created instance of the given class loaded by custom classpath-aware loader
-   * @throws IllegalAccessException     as defined by reflection processing
-   * @throws InstantiationException     as defined by reflection processing
-   * @throws NoSuchMethodException      as defined by reflection processing
-   * @throws InvocationTargetException  as defined by reflection processing
-   * @throws ClassNotFoundException     as defined by reflection processing
-   */
-  @Deprecated
-  @NotNull
-  public static <T extends ParametersEnhancer> T reloadIfNecessary(@NotNull final Class<T> clazz)
-    throws IllegalAccessException, InstantiationException, NoSuchMethodException, InvocationTargetException, ClassNotFoundException
-  {
-    T instance = clazz.newInstance();
-    List<URL> urls = ContainerUtilRt.newArrayList();
-    instance.enhanceLocalProcessing(urls);
-    if (urls.isEmpty()) {
-      return instance;
-    }
-
-    final ClassLoader baseLoader = clazz.getClassLoader();
-    Method method = baseLoader.getClass().getMethod("getUrls");
-    if (method != null) {
-      //noinspection unchecked
-      urls.addAll((Collection<URL>)method.invoke(baseLoader));
-    }
-    UrlClassLoader loader = new UrlClassLoader(UrlClassLoader.build().urls(urls).parent(baseLoader.getParent())) {
-      @Override
-      protected Class<?> loadClass(String name, boolean resolve) throws ClassNotFoundException {
-        if (name.equals(clazz.getName())) {
-          return super.loadClass(name, resolve);
-        }
-        else {
-          try {
-            return baseLoader.loadClass(name);
-          }
-          catch (ClassNotFoundException e) {
-            return super.loadClass(name, resolve);
-          }
-        }
-      }
-    };
-    //noinspection unchecked
-    return (T)loader.loadClass(clazz.getName()).newInstance();
   }
 
   public static ProjectModelExternalSource toExternalSource(@NotNull ProjectSystemId systemId) {

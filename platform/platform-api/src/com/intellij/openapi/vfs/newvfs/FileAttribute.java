@@ -42,15 +42,6 @@ public class FileAttribute {
     this(id, UNDEFINED_VERSION, false);
   }
 
-  /**
-   * @deprecated
-   * @see #FileAttribute(String, int, boolean)
-   */
-  @Deprecated
-  public FileAttribute(@NonNls @NotNull String id, int version) {
-    this(id, version, false);
-  }
-
   public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
     this(version, fixedSize, id);
     boolean added = ourRegisteredIds.add(id);

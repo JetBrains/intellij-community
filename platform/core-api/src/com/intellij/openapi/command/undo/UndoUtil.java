@@ -22,7 +22,6 @@ package com.intellij.openapi.command.undo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -41,14 +40,6 @@ public class UndoUtil {
     final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return;
     CommandProcessor.getInstance().addAffectedDocuments(project, document);
-  }
-
-  /**
-   * @deprecated please use {@link CommandProcessor#addAffectedFiles} instead
-   */
-  @Deprecated
-  public static void markVirtualFileForUndo(@NotNull Project project, @NotNull VirtualFile file) {
-    CommandProcessor.getInstance().addAffectedFiles(project, file);
   }
 
   public static void disableUndoFor(@NotNull Document document) {

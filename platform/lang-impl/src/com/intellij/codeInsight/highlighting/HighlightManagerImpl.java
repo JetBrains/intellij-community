@@ -151,15 +151,6 @@ public class HighlightManagerImpl extends HighlightManager {
   }
 
   @Override
-  public void addElementsOccurrenceHighlights(@NotNull Editor editor,
-                                              @NotNull PsiElement[] elements,
-                                              @NotNull TextAttributes attributes,
-                                              boolean hideByTextChange,
-                                              Collection<RangeHighlighter> outHighlighters) {
-    addOccurrenceHighlights(editor, elements, attributes, hideByTextChange, outHighlighters);
-  }
-
-  @Override
   public void addOccurrenceHighlight(@NotNull Editor editor,
                                      int start,
                                      int end,

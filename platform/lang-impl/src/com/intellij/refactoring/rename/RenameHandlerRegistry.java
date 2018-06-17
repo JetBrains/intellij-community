@@ -31,16 +31,12 @@ import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.refactoring.util.RadioUpDownListener;
 import com.intellij.util.ArrayUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.util.Iterator;
-import java.util.Map;
-import java.util.Set;
-import java.util.TreeMap;
+import java.util.*;
 
 /**
  * @author dsl
@@ -107,14 +103,6 @@ public class RenameHandlerRegistry {
 
   private static String getHandlerTitle(RenameHandler renameHandler) {
     return renameHandler instanceof TitledHandler ? StringUtil.capitalize(((TitledHandler)renameHandler).getActionTitle().toLowerCase()) : renameHandler.toString();
-  }
-
-  /**
-   * @deprecated
-   * @see RenameHandler#EP_NAME
-   */
-  public void registerHandler(RenameHandler handler) {
-    myHandlers.add(handler);
   }
 
   private static class HandlersChooser extends DialogWrapper {

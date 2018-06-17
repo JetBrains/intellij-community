@@ -23,7 +23,6 @@ import com.intellij.navigation.ChooseByNameRegistry;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.ui.IdeUICustomization;
@@ -80,12 +79,6 @@ public class GotoSymbolModel2 extends FilteringGotoByModel<Language> {
     return IdeBundle.message("label.no.matches.found");
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    // Some combination like Alt+N, Ant+O, etc are a dead symbols, therefore
-    // we have to change mnemonics for Mac users.
-    return SystemInfo.isMac?'P':'n';
-  }
 
   @Override
   public boolean loadInitialCheckBoxState() {

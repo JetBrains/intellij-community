@@ -98,10 +98,6 @@ public class GotoFileModel extends FilteringGotoByModel<FileType> implements Dum
     return IdeBundle.message("checkbox.include.non.project.files", IdeUICustomization.getInstance().getProjectConceptName());
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return SystemInfo.isMac?'P':'n';
-  }
 
   @Override
   public String getNotInMessage() {

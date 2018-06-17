@@ -78,16 +78,6 @@ public abstract class WindowManager {
    */
   public abstract StatusBar getStatusBar(Project project);
 
-  /**
-   * Get the status bar for the component, it may be either the main status bar or the status bar for an undocked window
-   *
-   * @param c a component
-   * @return status bar
-   * @deprecated use getStatusBar(Component, Project)
-   */
-  @Deprecated
-  public abstract StatusBar getStatusBar(@NotNull Component c);
-
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
     return null;
   }
@@ -104,13 +94,6 @@ public abstract class WindowManager {
    * The method properly works in multi-monitor configuration.
    */
   public abstract boolean isInsideScreenBounds(int x, int y, int width);
-
-  /**
-   * Tests whether the specified point is inside of screen bounds. Note, that
-   * all parameters are in screen coordinate system.
-   * The method properly works in multi-monitor configuration.
-   */
-  public abstract boolean isInsideScreenBounds(int x, int y);
 
   @NotNull
   public abstract IdeFrame[] getAllProjectFrames();

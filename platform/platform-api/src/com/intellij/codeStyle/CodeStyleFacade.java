@@ -81,12 +81,6 @@ public abstract class CodeStyleFacade {
   public abstract int getIndentSize(FileType fileType);
 
   /**
-   * @deprecated
-   */
-  @Deprecated
-  public abstract boolean isSmartTabs(final FileType fileType);
-
-  /**
    * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */

@@ -150,11 +150,6 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     doAddContent(content, -1);
   }
 
-  @Override
-  public void addContent(@NotNull final Content content, final Object constraints) {
-    doAddContent(content, -1);
-  }
-
   private void doAddContent(@NotNull final Content content, final int index) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     if (myContents.contains(content)) {

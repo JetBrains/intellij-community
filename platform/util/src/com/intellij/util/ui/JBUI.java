@@ -555,15 +555,6 @@ public class JBUI {
     return insets(0, 0, 0, r);
   }
 
-  /**
-   * @deprecated use JBUI.scale(EmptyIcon.create(size)) instead
-   */
-  @Deprecated
-  @NotNull
-  public static EmptyIcon emptyIcon(int size) {
-    return scale(EmptyIcon.create(size));
-  }
-
   @NotNull
   @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {

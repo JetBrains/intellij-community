@@ -717,20 +717,6 @@ public class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @Deprecated
-  @NotNull
-  public static FailureResultImpl createFailureResult(@NotNull Exception exception,
-                                                      @NotNull String projectName,
-                                                      @NotNull ProjectSystemId externalSystemId,
-                                                      @NotNull Project project) {
-    ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
-    NotificationData notificationData = notificationManager.createNotification(exception, projectName, externalSystemId, project);
-    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
-  }
-
   @NotNull
   private static FailureResultImpl createFailureResult(@NotNull Exception exception,
                                                        @NotNull ProjectSystemId externalSystemId,

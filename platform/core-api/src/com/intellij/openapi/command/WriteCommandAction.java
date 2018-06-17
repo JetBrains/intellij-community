@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
@@ -374,13 +373,4 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     return writeCommandAction(project).compute(computable);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /**
-   * @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018)
-   */
-  @SuppressWarnings("unused")
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
-    return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
-  }
-  //</editor-fold>}
 }

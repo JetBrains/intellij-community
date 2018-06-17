@@ -746,15 +746,6 @@ public final class TreeUtil {
     selectNode(tree, treeNode);
   }
 
-  /**
-   * @deprecated use {@link #listChildren(TreeNode)} instead
-   */
-  @Deprecated
-  @NotNull
-  public static ArrayList<TreeNode> childrenToArray(@NotNull TreeNode node) {
-    return (ArrayList<TreeNode>)listChildren(node);
-  }
-
   @NotNull
   public static List<TreeNode> listChildren(@NotNull final TreeNode node) {
     //ApplicationManager.getApplication().assertIsDispatchThread();
