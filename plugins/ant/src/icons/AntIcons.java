@@ -16,6 +16,8 @@ public class AntIcons {
   public static final Icon AntBuildXml = load("/icons/AntBuildXml.png"); // 16x16
   public static final Icon AntInstallation = load("/icons/antInstallation.png"); // 16x16
   public static final Icon Build = load("/icons/build.png"); // 16x16
+  public static final Icon LogDebug = load("/icons/logDebug.svg");
+  public static final Icon LogVerbose = load("/icons/logVerbose.svg");
   public static final Icon Message = load("/icons/message.png"); // 16x16
   public static final Icon MetaTarget = load("/icons/metaTarget.png"); // 16x16
   public static final Icon Properties = load("/icons/properties.png"); // 16x16

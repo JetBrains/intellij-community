@@ -44,19 +44,26 @@ public class ConsoleViewContentType {
 
   public static final ColorKey CONSOLE_BACKGROUND_KEY = ColorKey.createColorKey("CONSOLE_BACKGROUND_KEY");
 
-  public static final TextAttributesKey NORMAL_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_NORMAL_OUTPUT");
+  public static final TextAttributesKey LOG_DEBUG_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_DEBUG_OUTPUT");
+  public static final TextAttributesKey LOG_VERBOSE_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_VERBOSE_OUTPUT");
+  public static final TextAttributesKey LOG_INFO_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_INFO_OUTPUT");
   public static final TextAttributesKey LOG_WARNING_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_WARNING_OUTPUT");
-  public static final TextAttributesKey ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_ERROR_OUTPUT");
   public static final TextAttributesKey LOG_ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("LOG_ERROR_OUTPUT");
   public static final TextAttributesKey LOG_EXPIRED_ENTRY = TextAttributesKey.createTextAttributesKey("LOG_EXPIRED_ENTRY");
+  public static final TextAttributesKey NORMAL_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_NORMAL_OUTPUT");
+  public static final TextAttributesKey ERROR_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_ERROR_OUTPUT");
   public static final TextAttributesKey USER_INPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_USER_INPUT");
   public static final TextAttributesKey SYSTEM_OUTPUT_KEY = TextAttributesKey.createTextAttributesKey("CONSOLE_SYSTEM_OUTPUT");
 
-  public static final ConsoleViewContentType NORMAL_OUTPUT = new ConsoleViewContentType("NORMAL_OUTPUT", NORMAL_OUTPUT_KEY);
+  public static final ConsoleViewContentType LOG_DEBUG_OUTPUT = new ConsoleViewContentType("LOG_DEBUG_OUTPUT", LOG_DEBUG_OUTPUT_KEY);
+  public static final ConsoleViewContentType LOG_VERBOSE_OUTPUT = new ConsoleViewContentType("LOG_VERBOSE_OUTPUT", LOG_VERBOSE_OUTPUT_KEY);
+  public static final ConsoleViewContentType LOG_INFO_OUTPUT = new ConsoleViewContentType("LOG_INFO_OUTPUT", LOG_INFO_OUTPUT_KEY);
   public static final ConsoleViewContentType LOG_WARNING_OUTPUT = new ConsoleViewContentType("LOG_WARNING_OUTPUT", LOG_WARNING_OUTPUT_KEY);
+  public static final ConsoleViewContentType LOG_ERROR_OUTPUT = new ConsoleViewContentType("LOG_ERROR_OUTPUT", LOG_ERROR_OUTPUT_KEY);
+  public static final ConsoleViewContentType NORMAL_OUTPUT = new ConsoleViewContentType("NORMAL_OUTPUT", NORMAL_OUTPUT_KEY);
   public static final ConsoleViewContentType ERROR_OUTPUT = new ConsoleViewContentType("ERROR_OUTPUT", ERROR_OUTPUT_KEY);
-  public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_INPUT", USER_INPUT_KEY);
   public static final ConsoleViewContentType SYSTEM_OUTPUT = new ConsoleViewContentType("SYSTEM_OUTPUT", SYSTEM_OUTPUT_KEY);
+  public static final ConsoleViewContentType USER_INPUT = new ConsoleViewContentType("USER_INPUT", USER_INPUT_KEY);
 
   public static final ConsoleViewContentType[] OUTPUT_TYPES = {NORMAL_OUTPUT, ERROR_OUTPUT, USER_INPUT, SYSTEM_OUTPUT};
 
