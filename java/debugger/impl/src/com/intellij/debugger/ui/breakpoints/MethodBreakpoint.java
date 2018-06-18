@@ -374,7 +374,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return AllIcons.Debugger.Db_verified_method_breakpoint;
+    return isSuspend() ? AllIcons.Debugger.Db_verified_method_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_method_breakpoint;
   }
 
   @NotNull
