@@ -85,6 +85,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Function;
 import java.util.function.Predicate;
+import java.util.jar.JarFile;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static org.junit.Assert.assertEquals;
@@ -771,7 +772,7 @@ public class PlatformTestUtil {
     }
   }
 
-  public static void assertJarFilesEqual(File file1, File file2) throws IOException {
+  private static void assertJarFilesEqual(File file1, File file2) throws IOException {
     final File tempDir = FileUtilRt.createTempDirectory("assert_jar_tmp", null, false);
     try {
       final File tempDirectory1 = new File(tempDir, "tmp1");
@@ -779,8 +780,12 @@ public class PlatformTestUtil {
       FileUtilRt.createDirectory(tempDirectory1);
       FileUtilRt.createDirectory(tempDirectory2);
 
-      new Decompressor.Zip(file1).extract(tempDirectory1);
-      new Decompressor.Zip(file2).extract(tempDirectory2);
+      try (JarFile jarFile1 = new JarFile(file1)) {
+        try (JarFile jarFile2 = new JarFile(file2)) {
+          new Decompressor.Zip(new File(jarFile1.getName())).extract(tempDirectory1);
+          new Decompressor.Zip(new File(jarFile2.getName())).extract(tempDirectory2);
+        }
+      }
 
       final VirtualFile dirAfter = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tempDirectory1);
       Assert.assertNotNull(tempDirectory1.toString(), dirAfter);
