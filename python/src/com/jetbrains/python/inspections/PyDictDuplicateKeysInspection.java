@@ -20,6 +20,7 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.containers.MultiMap;
@@ -115,7 +116,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     @Nullable
     private String getKeyValue(@NotNull PsiElement node) {
       if (node instanceof PyStringLiteralExpression) {
-        return ((PyStringLiteralExpression)node).getStringValue();
+        return wrapStringKey(((PyStringLiteralExpression)node).getStringValue());
       }
 
       if (node instanceof PyNumericLiteralExpression) {
@@ -139,7 +140,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
 
         if (keys.size() > 1) {
           for (PsiElement key : keys) {
-            registerProblem(key, "Dictionary contains duplicate keys '" + keyValue + "'", quickFixes);
+            registerProblem(key, "Dictionary contains duplicate keys '" + unwrapStringKey(keyValue) + "'", quickFixes);
           }
         }
       }
@@ -162,7 +163,7 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
         final ASTNode node = ((PyKeywordArgument)argument).getKeywordNode();
         final String keyValue = ((PyKeywordArgument)argument).getKeyword();
         if (node != null && keyValue != null) {
-          return Pair.createNonNull(node.getPsi(), keyValue);
+          return Pair.createNonNull(node.getPsi(), wrapStringKey(keyValue));
         }
       }
 
@@ -172,6 +173,16 @@ public class PyDictDuplicateKeysInspection extends PyInspection {
     private static boolean isDict(@NotNull PyCallExpression expression) {
       final PyExpression callee = expression.getCallee();
       return callee != null && "dict".equals(callee.getText());
+    }
+
+    @NotNull
+    private static String wrapStringKey(@NotNull String key) {
+      return "'" + key + "'";
+    }
+
+    @NotNull
+    private static String unwrapStringKey(@NotNull String key) {
+      return StringUtil.unquoteString(key, '\'');
     }
   }
 }
