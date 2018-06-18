@@ -46,6 +46,8 @@ import java.util.Map;
 import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
+import static com.intellij.build.ExecutionNode.getEventResultIcon;
+
 /**
  * @author Vladislav.Soroka
  */
@@ -171,24 +173,11 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     }
 
     public Icon getIcon() {
-      return getIcon(result);
+      return getEventResultIcon(result);
     }
 
     public boolean isRunning() {
       return endTime == -1;
-    }
-
-    private static Icon getIcon(EventResult result) {
-      if (result == null) {
-        return ExecutionNodeProgressAnimator.getCurrentFrame();
-      }
-      if (result instanceof FailureResult) {
-        return AllIcons.Process.State.RedExcl;
-      }
-      if (result instanceof SkippedResult) {
-        return AllIcons.Process.State.YellowStr;
-      }
-      return AllIcons.Process.State.GreenOK;
     }
   }
 
