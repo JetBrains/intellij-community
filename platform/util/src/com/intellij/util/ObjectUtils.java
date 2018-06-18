@@ -117,6 +117,12 @@ public class ObjectUtils {
     return null;
   }
 
+  @Contract("null, _ -> null")
+  @Nullable
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Convertor<T, S> convertor) {
+    return obj == null ? null : convertor.convert(obj);
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
     if (clazz.isInstance(obj)) consumer.consume((T)obj);
