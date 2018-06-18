@@ -61,6 +61,9 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
 
   public static final String HELP_ID = "reference.toolWindows.hierarchy";
 
+  /** @deprecated use {@link #getBuilderForType(String)} and {@link #getBuilders()} (to be removed in IDEA 2018) */
+  @Deprecated protected final Hashtable<String, HierarchyTreeBuilder> myBuilders = new Hashtable<>();
+
   private static final OccurenceNavigator EMPTY_NAVIGATOR = new OccurenceNavigator() {
     @Override
     public boolean hasNextOccurence() {
