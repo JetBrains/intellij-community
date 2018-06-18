@@ -29,7 +29,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.actions.AnnotateToggleAction;
@@ -47,7 +46,6 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer;
 import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog;
-import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog2;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vcs.versionBrowser.ChangesBrowserSettingsEditor;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -498,18 +496,10 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                                            @NotNull MergeDialogCustomizer mergeDialogCustomizer) {
     if (files.isEmpty()) return Collections.emptyList();
     VfsUtil.markDirtyAndRefresh(false, false, false, ArrayUtil.toObjectArray(files, VirtualFile.class));
-    if (Registry.is("vcs.new.multiple.file.merge")) {
-      final MultipleFileMergeDialog2 fileMergeDialog = new MultipleFileMergeDialog2(myProject, files, provider, mergeDialogCustomizer);
-      AppIcon.getInstance().requestAttention(myProject, true);
-      fileMergeDialog.show();
-      return fileMergeDialog.getProcessedFiles();
-    }
-    else {
-      final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
-      AppIcon.getInstance().requestAttention(myProject, true);
-      fileMergeDialog.show();
-      return fileMergeDialog.getProcessedFiles();
-    }
+    final MultipleFileMergeDialog fileMergeDialog = new MultipleFileMergeDialog(myProject, files, provider, mergeDialogCustomizer);
+    AppIcon.getInstance().requestAttention(myProject, true);
+    fileMergeDialog.show();
+    return fileMergeDialog.getProcessedFiles();
   }
 
   public void openCommittedChangesTab(final AbstractVcs vcs,

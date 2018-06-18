@@ -415,6 +415,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       .setHideOnKeyOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setHideOnAction(false)
+      .setShadow(false)
       .createBalloon();
     if (balloonLayout != null) {
       class MyListener implements JBPopupListener, Runnable {
