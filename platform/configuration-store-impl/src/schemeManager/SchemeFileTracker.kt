@@ -48,7 +48,9 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
 
   private data class AddScheme(private val file: VirtualFile) : SchemeChangeEvent {
     override fun SchemeFileTracker.execute() {
-      schemeCreatedExternally(file)
+      if (file.isValid) {
+        schemeCreatedExternally(file)
+      }
     }
   }
 
@@ -85,6 +87,10 @@ internal class SchemeFileTracker(private val schemeManager: SchemeManagerImpl<An
       }
 
       val file = event.file
+      if (!file.isValid) {
+        continue
+      }
+
       val fileName = file.name
       val changedScheme = findExternalizableSchemeByFileName(fileName)
 
