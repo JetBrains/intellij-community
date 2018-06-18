@@ -7,6 +7,7 @@ import com.intellij.debugger.engine.events.DebuggerCommandImpl;
 import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -54,7 +55,9 @@ public abstract class BreakpointWithHighlighter<P extends JavaBreakpointProperti
 
   protected abstract Icon getDisabledIcon(boolean isMuted);
 
-  protected abstract Icon getInvalidIcon(boolean isMuted);
+  protected Icon getInvalidIcon(boolean isMuted) {
+    return AllIcons.Debugger.Db_invalid_breakpoint;
+  }
 
   protected Icon getSetIcon(boolean isMuted) {
     return null;
