@@ -494,7 +494,7 @@ public final class IconLoader {
    */
   public static Icon getDarkIcon(Icon icon, boolean dark) {
     if (icon instanceof RetrievableIcon) {
-      icon = ((RetrievableIcon)icon).retrieveIcon();
+      icon = getOrigin((RetrievableIcon)icon);
     }
     if (icon instanceof CachedImageIcon) {
       icon = ((CachedImageIcon)icon).copy();
@@ -799,6 +799,18 @@ public final class IconLoader {
     Icon getMenuBarIcon(boolean isDark);
   }
 
+  private static Icon getOrigin(RetrievableIcon icon) {
+    final int maxDeep = 10;
+    Icon origin = icon.retrieveIcon();
+    int level = 0;
+    while (origin instanceof RetrievableIcon && level < maxDeep) {
+      ++level;
+      origin = ((RetrievableIcon)origin).retrieveIcon();
+    }
+    if (origin instanceof RetrievableIcon && level >= maxDeep)
+      LOG.error("can't calculate origin icon (too deep in hierarchy), src: " + icon);
+    return origin;
+  }
 
   private static class LabelHolder {
     /**
