@@ -136,11 +136,6 @@ public class ProgressIndicatorUtils {
     if (!progressIndicator.isCanceled()) progressIndicator.cancel();
   }
 
-  public static boolean isWriting() {
-    Application application = ApplicationManager.getApplication();
-    return application instanceof ApplicationEx && isWriting((ApplicationEx)application);
-  }
-
   private static boolean isWriting(ApplicationEx application) {
     return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
