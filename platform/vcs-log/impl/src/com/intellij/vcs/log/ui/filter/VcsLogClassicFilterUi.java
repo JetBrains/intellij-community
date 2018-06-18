@@ -161,19 +161,25 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     if (StringUtil.isEmptyOrSpaces(text)) {
       return Pair.empty();
     }
-    List<String> hashes = ContainerUtil.newArrayList();
-    for (String word : StringUtil.split(text, " ")) {
-      if (!StringUtil.isEmptyOrSpaces(word) && word.matches(HASH_PATTERN)) {
-        hashes.add(word);
-      }
-      else {
-        break;
-      }
-    }
 
     VcsLogTextFilter textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
-    VcsLogHashFilterImpl hashFilter = hashes.isEmpty() ? null : new VcsLogHashFilterImpl(hashes);
+    VcsLogHashFilterImpl hashFilter = createHashFilter(text);
     return Pair.create(textFilter, hashFilter);
+  }
+
+  @Nullable
+  private static VcsLogHashFilterImpl createHashFilter(@NotNull String text) {
+    List<String> hashes = ContainerUtil.newArrayList();
+    for (String word: StringUtil.split(text, " ")) {
+      if (StringUtil.isEmptyOrSpaces(word) || !word.matches(HASH_PATTERN)) {
+        return null;
+      }
+      hashes.add(word);
+    }
+    if (hashes.isEmpty()) {
+      return null;
+    }
+    return new VcsLogHashFilterImpl(hashes);
   }
 
   /**
