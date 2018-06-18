@@ -61,11 +61,12 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     myProvider.filterElements(pattern, element -> {
+      if (progressIndicator.isCanceled()) return false;
+
       if (!everywhere && element.value instanceof GotoActionModel.ActionWrapper && !((GotoActionModel.ActionWrapper) element.value).isAvailable()) {
         return true;
       }
 
-      if (progressIndicator.isCanceled()) return false;
       if (element == null) {
         LOG.error("Null action has been returned from model");
         return true;
