@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -112,7 +113,7 @@ public abstract class Invoker implements Disposable {
           task.run();
         }
         else if (getApplication().isReadAccessAllowed()) {
-          if (ProgressIndicatorUtils.isWriting()) throw new ProcessCanceledException();
+          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
           task.run();
         }
         else {
