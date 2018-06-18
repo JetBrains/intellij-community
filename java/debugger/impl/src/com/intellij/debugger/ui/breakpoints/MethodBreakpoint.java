@@ -374,7 +374,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return null; //return isMuted? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint;
+    return AllIcons.Debugger.Db_verified_method_breakpoint;
   }
 
   @NotNull

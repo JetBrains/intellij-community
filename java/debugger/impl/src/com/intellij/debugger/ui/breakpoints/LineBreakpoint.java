@@ -72,11 +72,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return null;
-    //if (isRemoveAfterHit()) {
-    //  return isMuted ? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
-    //}
-    //return isMuted? AllIcons.Debugger.Db_muted_breakpoint : AllIcons.Debugger.Db_set_breakpoint;
+    return AllIcons.Debugger.Db_verified_breakpoint;
   }
 
   @Override
