@@ -50,6 +50,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
+  public boolean isShownInSeparateTab() {
+    return true;
+  }
+
+  @Override
   public ContributorSearchResult<Object> search(String pattern,
                                                 boolean everywhere,
                                                 SearchEverywhereContributorFilter<Void> filter,

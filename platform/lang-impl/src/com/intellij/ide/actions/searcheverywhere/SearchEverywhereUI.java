@@ -395,11 +395,13 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     contributorsPanel.add(allTab);
     myTabs.add(allTab);
 
-    contributors.forEach(contributor -> {
-      SETab tab = new SETab(contributor);
-      contributorsPanel.add(tab);
-      myTabs.add(tab);
-    });
+    contributors.stream()
+                .filter(SearchEverywhereContributor::isShownInSeparateTab)
+                .forEach(contributor -> {
+                  SETab tab = new SETab(contributor);
+                  contributorsPanel.add(tab);
+                  myTabs.add(tab);
+                });
     switchToTab(allTab);
 
     return contributorsPanel;

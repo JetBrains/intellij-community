@@ -54,6 +54,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return getClass().getSimpleName();
   }
 
+  @Override
+  public boolean isShownInSeparateTab() {
+    return true;
+  }
+
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
