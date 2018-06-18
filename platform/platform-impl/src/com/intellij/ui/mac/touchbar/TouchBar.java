@@ -102,9 +102,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
   @NotNull TBItemButton addButton() { return myItems.addButton(); }
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
-    return myItems.addAnActionButton(act, hiddenWhenDisabled, showMode, modality);
-  }
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) { return myItems.addAnActionButton(act, showMode, modality); }
   @NotNull TBItemGroup addGroup() { return myItems.addGroup(); }
   @NotNull TBItemScrubber addScrubber() { return myItems.addScrubber(); }
   @NotNull TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {

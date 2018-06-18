@@ -36,9 +36,9 @@ class ItemsContainer {
     return butt;
   }
 
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) {
     final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
-    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act, hiddenWhenDisabled, showMode, modality);
+    final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act, showMode, modality);
     myItems.add(butt);
     return butt;
   }

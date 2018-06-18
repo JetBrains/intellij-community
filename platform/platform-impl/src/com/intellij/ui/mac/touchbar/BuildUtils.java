@@ -69,6 +69,7 @@ class BuildUtils {
                                     ICustomizer customizer) {
     _traverse(actionGroup, new ILeafVisitor() {
       private int mySeparatorCounter = 0;
+      private boolean myCompactMode = false;
 
       @Override
       public void visit(AnAction act) {
@@ -100,7 +101,9 @@ class BuildUtils {
 
         final boolean isRunConfigPopover = actId != null && actId.contains("RunConfiguration");
         final int mode = isRunConfigPopover ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
-        final TBItemAnActionButton butt = out.addAnActionButton(act, false, mode, modality);
+        final TBItemAnActionButton butt = out.addAnActionButton(act, mode, modality);
+        if (myCompactMode)
+          butt.setHiddenWhenDisabled(true);
 
         if (isRunConfigPopover)
           butt.setWidth(ourRunConfigurationPopoverWidth);
@@ -108,6 +111,9 @@ class BuildUtils {
         if (customizer != null)
           customizer.customize(butt);
       }
+
+      @Override
+      public void setCompactMode(boolean isCompactGroup) { myCompactMode = isCompactGroup; }
     }, filter);
   }
 
@@ -201,7 +207,7 @@ class BuildUtils {
             continue;
 
           // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
-          result.addAnActionButton(anAct, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
+          result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
         }
       }
     }
@@ -220,13 +226,13 @@ class BuildUtils {
       final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
       if (anAct == null)
         continue;
-      group.addAnActionButton(anAct, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb);
+      group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb);
     }
 
     if (jbdef != null) {
       final AnAction anAct = _createAnAction(jbdef.getAction(), jbdef, false);
       if (anAct != null)
-        group.addAnActionButton(anAct, false, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setFlags(false, false, true);
+        group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setFlags(false, false, true);
     }
 
     result.selectVisibleItemsToShow();
@@ -285,6 +291,7 @@ class BuildUtils {
   }
   interface ILeafVisitor {
     void visit(AnAction leaf);
+    void setCompactMode(boolean isCompactGroup);
   }
 
   private static String _getActionId(AnAction act) {
@@ -314,7 +321,12 @@ class BuildUtils {
           // System.out.printf("filter child group: i=%d, childId='%s', group='%s', group id='%s'\n", i, childId, group.toString(), groupId);
           continue;
         }
+        final boolean isCompactGroup = child instanceof CompactActionGroup;
+        if (isCompactGroup)
+          visitor.setCompactMode(true);
         _traverse((ActionGroup)child, visitor, filter);
+        if (isCompactGroup)
+          visitor.setCompactMode(false);
       } else
         visitor.visit(child);
     }
