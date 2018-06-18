@@ -18,10 +18,7 @@ import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.openapi.vfs.impl.http.RemoteFileInfo;
 import com.intellij.openapi.wm.StatusBarWidget;
 import com.intellij.openapi.wm.impl.status.EditorBasedStatusBarPopup;
-import com.jetbrains.jsonSchema.extension.JsonSchemaEnabler;
-import com.jetbrains.jsonSchema.extension.JsonSchemaFileProvider;
-import com.jetbrains.jsonSchema.extension.JsonSchemaInfo;
-import com.jetbrains.jsonSchema.extension.SchemaType;
+import com.jetbrains.jsonSchema.extension.*;
 import com.jetbrains.jsonSchema.ide.JsonSchemaService;
 import com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider;
 import com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl;
@@ -82,8 +79,17 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       return WidgetState.HIDDEN;
     }
 
+    FileType fileType = file.getFileType();
+    Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
+    boolean isJsonFile = language instanceof JsonLanguage;
+
     if (!hasAccessToSymbols()) {
-      return WidgetState.getDumbModeState("JSON schema service", "JSON: ");
+      return WidgetState.getDumbModeState("JSON schema service", isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES);
+    }
+
+    JsonWidgetSuppressor[] suppressors = JsonWidgetSuppressor.EXTENSION_POINT_NAME.getExtensions();
+    if (Arrays.stream(suppressors).anyMatch(s -> s.suppressSwitcherWidget(file, myProject))) {
+      return WidgetState.HIDDEN;
     }
 
     Collection<VirtualFile> schemaFiles = myService.getSchemaFilesForFile(file);
@@ -148,10 +154,6 @@ class JsonSchemaStatusWidget extends EditorBasedStatusBarPopup {
       state.setWarning(true);
       return state;
     }
-
-    FileType fileType = file.getFileType();
-    Language language = fileType instanceof LanguageFileType ? ((LanguageFileType)fileType).getLanguage() : null;
-    boolean isJsonFile = language instanceof JsonLanguage;
 
     String tooltip = isJsonFile ? JSON_SCHEMA_TOOLTIP : JSON_SCHEMA_TOOLTIP_OTHER_FILES;
     String bar = isJsonFile ? JSON_SCHEMA_BAR : JSON_SCHEMA_BAR_OTHER_FILES;
