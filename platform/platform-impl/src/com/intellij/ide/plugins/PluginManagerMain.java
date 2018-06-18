@@ -128,6 +128,11 @@ public abstract class PluginManagerMain implements Disposable {
     return isDevelopedByJetBrains(plugin.getVendor());
   }
 
+  public static boolean isDevelopedByJetBrains(@Nullable PluginId pluginId) {
+    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
+    return plugin == null || plugin.isBundled() || isDevelopedByJetBrains(plugin.getVendor());
+  }
+
   public static boolean isDevelopedByJetBrains(@Nullable String vendorString) {
     if (vendorString == null) return false;
     for (String vendor : StringUtil.split(vendorString, ",")) {
