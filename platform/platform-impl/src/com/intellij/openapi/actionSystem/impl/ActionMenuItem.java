@@ -16,6 +16,7 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.components.JBCheckBoxMenuItem;
 import com.intellij.ui.plaf.beg.BegMenuItemUI;
@@ -356,6 +357,12 @@ public class ActionMenuItem extends JBCheckBoxMenuItem {
         }
         else if (Presentation.PROP_TEXT.equals(name)) {
           setText(myPresentation.getText());
+          if(Registry.is("ide.action.menu.item.pack.on.text.update", false)) {
+            Window window = UIUtil.getWindow(ActionMenuItem.this);
+            if (window != null) window.pack();
+            ActionMenuItemUpdateCollector instance = ActionMenuItemUpdateCollector.getInstance();
+            instance.record(myAction.getAction(), myPlace, this.toString());
+          }
         }
         else if (Presentation.PROP_ICON.equals(name) || Presentation.PROP_DISABLED_ICON.equals(name) || SELECTED.equals(name)) {
           updateIcon(myAction.getAction());

@@ -239,6 +239,7 @@
 
     <applicationService serviceInterface="com.intellij.execution.process.ProcessHandlerFactory"
                         serviceImplementation="com.intellij.execution.process.ProcessHandlerFactoryImpl" />
+    <applicationService serviceImplementation="com.intellij.openapi.actionSystem.impl.ActionMenuItemUpdateCollector"/>
 
     <projectService serviceInterface="com.intellij.openapi.vfs.ReadonlyStatusHandler"
                     serviceImplementation="com.intellij.openapi.vcs.readOnlyHandler.ReadonlyStatusHandlerImpl"/>
