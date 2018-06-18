@@ -104,13 +104,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
       else {
         argumentType = argument.getType();
       }
-      if (argumentType instanceof PsiClassType) {
-        argumentType = PsiUtil.convertAnonymousToBaseType(argumentType);
-        if (((PsiClassType)argumentType).getParameterCount() == 1) {
-          return ((PsiClassType)argumentType).getParameters()[0];
-        }
-      }
-      return null;
+      return PsiUtil.substituteTypeParameter(argumentType, "java.util.function.IntFunction", 0, false);
     }
 
     private void checkArrayTypes(@NotNull PsiExpression argument,
