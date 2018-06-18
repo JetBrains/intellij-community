@@ -32,7 +32,7 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
   }
 
   override fun execute(editor: Editor) {
-    ActionsCollector.getInstance().record("tooltip.actions.execute")
+    ActionsCollector.getInstance().record("tooltip.actions.execute", this::class.java)
 
     val project = editor.project ?: return
     val psiFile = PsiDocumentManager.getInstance(project).getPsiFile(editor.document) ?: return
@@ -52,7 +52,7 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
   }
 
   override fun showAllActions(editor: Editor) {
-    ActionsCollector.getInstance().record("tooltip.actions.show.all")
+    ActionsCollector.getInstance().record("tooltip.actions.show.all", this::class.java)
 
     editor.caretModel.moveToOffset(myActualOffset)
     val project = editor.project ?: return
