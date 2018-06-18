@@ -6,6 +6,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.util.ResolveTest
 
 @CompileStatic
@@ -28,8 +29,12 @@ class ResolveLocalTest extends LightGroovyTestCase implements ResolveTest {
   void 'test resource variable from another resource'() {
     resolveTest 'try (def a; def b = <caret>a) {}', GrVariable
   }
-  
+
   void 'test forward resource variable'() {
     resolveTest 'try (def b = <caret>a; def a) {}', null
+  }
+
+  void 'test parameter from resource initializer'() {
+    resolveTest 'def foo(param) { try (def a = <caret>param) {} }', GrParameter
   }
 }
