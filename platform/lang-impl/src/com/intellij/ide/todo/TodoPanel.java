@@ -413,6 +413,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }, 300);
   }
 
+  TreeExpander getTreeExpander() {
+    return myTreeExpander;
+  }
+  
   private final class MyTreeExpander implements TreeExpander {
     @Override
     public boolean canCollapse() {
