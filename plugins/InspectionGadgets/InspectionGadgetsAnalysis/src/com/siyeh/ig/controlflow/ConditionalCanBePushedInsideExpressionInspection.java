@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -85,15 +86,16 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       if (!match.isPartialMatch()) {
         return;
       }
+      CommentTracker commentTracker = new CommentTracker();
       final PsiElement leftDiff = match.getLeftDiff();
       final PsiElement rightDiff = match.getRightDiff();
-      final String expression = "(" + conditionalExpression.getCondition().getText() + " ? " +
-                                leftDiff.getText() + " : " + rightDiff.getText() + ")";
+      final String expression = "(" + commentTracker.text(conditionalExpression.getCondition()) + " ? " +
+                                commentTracker.text(leftDiff) + " : " + commentTracker.text(rightDiff) + ")";
       final PsiExpression newConditionalExpression =
         JavaPsiFacade.getElementFactory(project).createExpressionFromText(expression, conditionalExpression);
-      final PsiElement replacedConditionalExpression = leftDiff.replace(newConditionalExpression);
+      final PsiElement replacedConditionalExpression = commentTracker.replaceAndRestoreComments(leftDiff, newConditionalExpression);
       ParenthesesUtils.removeParentheses((PsiExpression)replacedConditionalExpression, false);
-      conditionalExpression.replace(thenExpression);
+      new CommentTracker().replaceAndRestoreComments(conditionalExpression, thenExpression);
     }
   }
 
