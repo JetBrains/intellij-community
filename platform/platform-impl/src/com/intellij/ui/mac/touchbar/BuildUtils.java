@@ -181,7 +181,7 @@ class BuildUtils {
 
     if (defIndex >= 0)
       group.addButton().setText(DialogWrapper.extractMnemonic(buttons[defIndex]).second).setThreadSafeAction(actions[defIndex])
-           .setFlags(false, false, true);
+           .setColored(true);
 
     result.setPrincipal(gr);
     result.selectVisibleItemsToShow();
@@ -232,7 +232,7 @@ class BuildUtils {
     if (jbdef != null) {
       final AnAction anAct = _createAnAction(jbdef.getAction(), jbdef, false);
       if (anAct != null)
-        group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setFlags(false, false, true);
+        group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setColored(true);
     }
 
     result.selectVisibleItemsToShow();
