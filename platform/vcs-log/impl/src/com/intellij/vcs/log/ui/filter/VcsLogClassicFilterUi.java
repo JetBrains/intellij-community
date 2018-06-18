@@ -171,16 +171,8 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
       }
     }
 
-    VcsLogTextFilter textFilter;
-    VcsLogHashFilterImpl hashFilter;
-    if (!hashes.isEmpty()) { // text is ignored if there are hashes in the text
-      textFilter = null;
-      hashFilter = new VcsLogHashFilterImpl(hashes);
-    }
-    else {
-      textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
-      hashFilter = null;
-    }
+    VcsLogTextFilter textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
+    VcsLogHashFilterImpl hashFilter = hashes.isEmpty() ? null : new VcsLogHashFilterImpl(hashes);
     return Pair.create(textFilter, hashFilter);
   }
 
