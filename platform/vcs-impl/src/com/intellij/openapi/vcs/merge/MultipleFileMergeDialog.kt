@@ -52,7 +52,7 @@ import javax.swing.tree.TreeNode
 /**
  * @author yole
  */
-open class MultipleFileMergeDialog2(
+open class MultipleFileMergeDialog(
   private val project: Project,
   files: List<VirtualFile>,
   private val mergeProvider: MergeProvider,
@@ -71,7 +71,7 @@ open class MultipleFileMergeDialog2(
   private var groupByDirectory = VcsConfiguration.getInstance(project).GROUP_MULTIFILE_MERGE_BY_DIRECTORY
 
   private val virtualFileRenderer = object : ChangesBrowserNodeRenderer(project, { !groupByDirectory }, false) {
-    override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog2.peer.window, IdeFocusManager.getInstance(project).focusOwner)
+    override fun calcFocusedState() = UIUtil.isAncestor(this@MultipleFileMergeDialog.peer.window, IdeFocusManager.getInstance(project).focusOwner)
   }
 
   init {
@@ -232,11 +232,20 @@ open class MultipleFileMergeDialog2(
   @NonNls
   override fun getDimensionServiceKey(): String = "MultipleFileMergeDialog"
 
+  @JvmSuppressWildcards
+  protected open fun beforeResolve(files: Collection<VirtualFile>): Boolean {
+    return true
+  }
+
   private fun acceptRevision(resolution: MergeSession.Resolution) {
     assert(resolution == MergeSession.Resolution.AcceptedYours || resolution == MergeSession.Resolution.AcceptedTheirs)
 
     FileDocumentManager.getInstance().saveAllDocuments()
     val files = getSelectedFiles()
+
+    if (!beforeResolve(files)) {
+      return
+    }
 
     try {
       if (mergeSession is MergeSessionEx) {
@@ -399,7 +408,7 @@ open class MultipleFileMergeDialog2(
 
 
   companion object {
-    private val LOG = Logger.getInstance(MultipleFileMergeDialog2::class.java)
+    private val LOG = Logger.getInstance(MultipleFileMergeDialog::class.java)
   }
 
 }

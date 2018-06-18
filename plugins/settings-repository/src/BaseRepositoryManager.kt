@@ -20,6 +20,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
@@ -167,7 +168,7 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): L
 
   var processedFiles: List<VirtualFile>? = null
   invokeAndWaitIfNeed {
-    val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
+    val fileMergeDialog = MultipleFileMergeDialog(ProjectManager.getInstance().defaultProject, files, mergeProvider, object : MergeDialogCustomizer() {
       override fun getMultipleFileDialogTitle() = "Settings Repository: Files Merged with Conflicts"
     })
     fileMergeDialog.show()
