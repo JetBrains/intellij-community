@@ -7,7 +7,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
 public interface JsonWidgetSuppressor {
-  ExtensionPointName<JsonWidgetSuppressor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.Json.Widget.Suppressor");
+  ExtensionPointName<JsonWidgetSuppressor> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonWidgetSuppressor");
 
   /**
    * Allows to suppress JSON widget for particular files

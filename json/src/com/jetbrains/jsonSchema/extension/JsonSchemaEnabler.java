@@ -11,7 +11,7 @@ import com.intellij.openapi.vfs.VirtualFile;
  * This API is new in IntelliJ IDEA Platform 2018.2
  */
 public interface JsonSchemaEnabler {
-  ExtensionPointName<JsonSchemaEnabler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.Json.Schema.Enabler");
+  ExtensionPointName<JsonSchemaEnabler> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.json.jsonSchemaEnabler");
 
   /**
    * This method should return true if JSON schema mechanism should become applicable to corresponding file.
