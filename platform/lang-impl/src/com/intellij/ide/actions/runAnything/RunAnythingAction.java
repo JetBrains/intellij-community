@@ -21,7 +21,6 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
-import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
@@ -69,7 +68,10 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.*;
+import com.intellij.util.Alarm;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -90,6 +92,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -118,18 +121,11 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @NotNull
     @Override
     protected Boolean compute() {
-      for (RunAnythingProvider provider: RunAnythingProvider.EP_NAME.getExtensions()) {
-        if (provider instanceof RunAnythingRunConfigurationProvider
-            || provider instanceof RunAnythingRecentProjectProvider
-            || provider instanceof RunAnythingRecentCommandProvider
-            || provider instanceof RunAnythingCommandExecutionProvider) {
-          continue;
-        }
-
-        return !PlatformUtils.isIntelliJ() || PluginManagerCore.isPluginClass(provider.getClass().getName());
-      }
-
-      return false;
+      return Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+                   .anyMatch(provider -> !(provider instanceof RunAnythingRunConfigurationProvider ||
+                                           provider instanceof RunAnythingRecentProjectProvider ||
+                                           provider instanceof RunAnythingRecentCommandProvider ||
+                                           provider instanceof RunAnythingCommandExecutionProvider));
     }
   };
   private RunAnythingAction.MyListRenderer myRenderer;
