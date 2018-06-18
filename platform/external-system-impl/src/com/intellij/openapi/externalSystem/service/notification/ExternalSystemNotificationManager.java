@@ -57,6 +57,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -124,8 +125,9 @@ public class ExternalSystemNotificationManager implements Disposable {
   }
 
   /**
-   * @deprecated to be removed in 2018.2
+   * @deprecated to be removed in 2018.3
    */
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   @Deprecated
   @NotNull
   public NotificationData createNotification(@NotNull Throwable error,

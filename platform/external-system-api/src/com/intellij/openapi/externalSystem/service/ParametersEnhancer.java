@@ -17,6 +17,7 @@ package com.intellij.openapi.externalSystem.service;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 import java.net.URL;
@@ -59,10 +60,11 @@ public interface ParametersEnhancer {
    * </ul>
    * </pre>
    *
-   * @deprecated to be removed in 2018.2
+   * @deprecated to be removed in 2018.3
    *
    * @param urls
    */
   @Deprecated
+  @ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
   default void enhanceLocalProcessing(@NotNull List<URL> urls) {}
 }

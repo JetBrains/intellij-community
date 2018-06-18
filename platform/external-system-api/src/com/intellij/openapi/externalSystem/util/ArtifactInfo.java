@@ -15,12 +15,15 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Denis Zhdanov
  * @since 1/16/13 6:26 PM
  */
+@ApiStatus.ScheduledForRemoval(inVersion = "2018.3")
+@Deprecated
 public class ArtifactInfo {
 
   @Nullable private final String myName;
