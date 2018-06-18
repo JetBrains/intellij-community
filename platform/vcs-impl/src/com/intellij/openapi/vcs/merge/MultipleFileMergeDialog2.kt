@@ -247,15 +247,13 @@ open class MultipleFileMergeDialog2(
 
     try {
       if (mergeSession is MergeSessionEx) {
-        val supportedFiles = files.filter { file -> mergeSession.canMerge(file) }
+        mergeSession.acceptFilesRevisions(files, resolution)
 
-        mergeSession.acceptFilesRevisions(supportedFiles, resolution)
-
-        for (file in supportedFiles) {
+        for (file in files) {
           checkMarkModifiedProject(file)
         }
 
-        markFilesProcessed(supportedFiles, resolution)
+        markFilesProcessed(files, resolution)
       }
       else {
         for (file in files) {
