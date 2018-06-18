@@ -268,7 +268,10 @@ public class PyArgumentListInspection extends PyInspection {
     }
     else {
       // all mappings have unmapped arguments so we couldn't determine desired argument list and suggest appropriate quick fixes
-      holder.registerProblem(node, addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.unexpected.arg(s)"), mappings, context));
+      holder.registerProblem(
+        node,
+        addPossibleCalleesRepresentation(PyBundle.message("INSP.unexpected.arg(s)"), mappings, context, holder.isOnTheFly())
+      );
     }
   }
 
@@ -288,7 +291,7 @@ public class PyArgumentListInspection extends PyInspection {
               ContainerUtil.exists(mappings.get(0).getUnmappedParameters(), parameter -> parameter.getName() == null)) {
             holder.registerProblem(
               psi,
-              addPossibleCalleesRepresentationAndWrapInHtml(PyBundle.message("INSP.parameter(s).unfilled"), mappings, context)
+              addPossibleCalleesRepresentation(PyBundle.message("INSP.parameter(s).unfilled"), mappings, context, holder.isOnTheFly())
             );
           }
           else {
@@ -303,27 +306,43 @@ public class PyArgumentListInspection extends PyInspection {
   }
 
   @NotNull
-  private static String addPossibleCalleesRepresentationAndWrapInHtml(@NotNull String prefix,
-                                                                      @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                                      @NotNull TypeEvalContext context) {
-    final String possibleCalleesRepresentation = XmlStringUtil.escapeString(calculatePossibleCalleesRepresentation(mappings, context));
-    return XmlStringUtil.wrapInHtml(prefix + "<br>" + PyBundle.message("INSP.possible.callees") + ":<br>" + possibleCalleesRepresentation);
+  private static String addPossibleCalleesRepresentation(@NotNull String prefix,
+                                                         @NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
+                                                         @NotNull TypeEvalContext context,
+                                                         boolean isOnTheFly) {
+    final String separator = isOnTheFly ? "<br>" : " ";
+    final String possibleCalleesRepresentation = calculatePossibleCalleesRepresentation(mappings, context, isOnTheFly);
+
+    if (isOnTheFly) {
+      return XmlStringUtil.wrapInHtml(
+        prefix + separator +
+        PyBundle.message("INSP.possible.callees") + ":" + separator +
+        XmlStringUtil.escapeString(possibleCalleesRepresentation)
+      );
+    }
+    else {
+      return prefix + "." + separator +
+             PyBundle.message("INSP.possible.callees") + ":" + separator +
+             possibleCalleesRepresentation;
+    }
   }
 
   @NotNull
   private static String calculatePossibleCalleesRepresentation(@NotNull List<PyCallExpression.PyArgumentsMapping> mappings,
-                                                               @NotNull TypeEvalContext context) {
+                                                               @NotNull TypeEvalContext context,
+                                                               boolean isOnTheFly) {
     return StreamEx
       .of(mappings)
       .map(PyCallExpression.PyArgumentsMapping::getMarkedCallee)
       .nonNull()
       .map(markedCallee -> calculatePossibleCalleeRepresentation(markedCallee, context))
       .nonNull()
-      .collect(Collectors.joining("<br>"));
+      .collect(Collectors.joining(isOnTheFly ? "<br>" : " "));
   }
 
   @Nullable
-  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallExpression.PyMarkedCallee markedCallee, @NotNull TypeEvalContext context) {
+  private static String calculatePossibleCalleeRepresentation(@NotNull PyCallExpression.PyMarkedCallee markedCallee,
+                                                              @NotNull TypeEvalContext context) {
     final String name = markedCallee.getElement() != null ? markedCallee.getElement().getName() : "";
     final List<PyCallableParameter> callableParameters = markedCallee.getCallableType().getParameters(context);
     if (callableParameters == null) return null;
