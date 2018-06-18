@@ -11,7 +11,10 @@ import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingCommandExecutionProvider;
 import com.intellij.ide.actions.runAnything.activity.RunAnythingProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentCommandProvider;
+import com.intellij.ide.actions.runAnything.activity.RunAnythingRecentProjectProvider;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingCompletionGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGeneralGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
@@ -87,7 +90,6 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
-import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,8 +118,18 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @NotNull
     @Override
     protected Boolean compute() {
-      return Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
-                   .anyMatch(provider -> !PlatformUtils.isIntelliJ() || PluginManagerCore.isPluginClass(provider.getClass().getName()));
+      for (RunAnythingProvider provider: RunAnythingProvider.EP_NAME.getExtensions()) {
+        if (provider instanceof RunAnythingRunConfigurationProvider
+            || provider instanceof RunAnythingRecentProjectProvider
+            || provider instanceof RunAnythingRecentCommandProvider
+            || provider instanceof RunAnythingCommandExecutionProvider) {
+          continue;
+        }
+
+        return !PlatformUtils.isIntelliJ() || PluginManagerCore.isPluginClass(provider.getClass().getName());
+      }
+
+      return false;
     }
   };
   private RunAnythingAction.MyListRenderer myRenderer;
