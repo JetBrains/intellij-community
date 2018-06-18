@@ -18,6 +18,7 @@ import com.intellij.ide.actions.runAnything.groups.RunAnythingGroup;
 import com.intellij.ide.actions.runAnything.groups.RunAnythingRecentGroup;
 import com.intellij.ide.actions.runAnything.items.RunAnythingItem;
 import com.intellij.ide.actions.runAnything.ui.RunAnythingScrollingUtil;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
@@ -52,10 +53,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.popup.ComponentPopupBuilder;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
-import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -92,6 +90,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.plaf.TextUI;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -116,6 +115,14 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
   private static final Border RENDERER_BORDER = JBUI.Borders.empty(1, 0);
   private static final Icon RUN_ANYTHING_POPPED_ICON = new PoppedIcon(AllIcons.Actions.Run_anything, 16, 16);
   private static final String HELP_PLACEHOLDER = "?";
+  private static final NotNullLazyValue<Boolean> IS_ACTION_ENABLED = new NotNullLazyValue<Boolean>() {
+    @NotNull
+    @Override
+    protected Boolean compute() {
+      return Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
+                   .anyMatch(provider -> PluginManagerCore.isPluginClass(provider.getClass().getName()));
+    }
+  };
   private RunAnythingAction.MyListRenderer myRenderer;
   private MySearchTextField myPopupField;
   private JBPopup myPopup;
@@ -557,6 +564,13 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
         }
       });
     }
+  }
+
+  @Override
+  public void update(AnActionEvent e) {
+    boolean isEnabled = IS_ACTION_ENABLED.getValue();
+    e.getPresentation().setVisible(isEnabled);
+    e.getPresentation().setEnabled(isEnabled);
   }
 
   @Override
