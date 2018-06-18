@@ -34,6 +34,7 @@ import com.intellij.xdebugger.XDebuggerUtil;
 import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
+import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.sun.jdi.*;
 import com.sun.jdi.event.LocatableEvent;
 import org.jetbrains.annotations.NonNls;
@@ -66,13 +67,8 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
   }
 
   @Override
-  protected Icon getInvalidIcon(boolean isMuted) {
-    return AllIcons.Debugger.Db_invalid_breakpoint;
-  }
-
-  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isSuspend() ? AllIcons.Debugger.Db_verified_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_breakpoint;
+    return XDebuggerUtilImpl.getVerifiedIcon(myXBreakpoint);
   }
 
   @Override

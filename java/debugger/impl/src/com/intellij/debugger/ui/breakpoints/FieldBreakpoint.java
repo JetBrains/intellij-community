@@ -74,11 +74,6 @@ public class FieldBreakpoint extends BreakpointWithHighlighter<JavaFieldBreakpoi
   }
 
   @Override
-  protected Icon getInvalidIcon(boolean isMuted) {
-    return AllIcons.Debugger.Db_invalid_breakpoint;
-  }
-
-  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
     return isSuspend() ? AllIcons.Debugger.Db_verified_field_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_field_breakpoint;
   }
