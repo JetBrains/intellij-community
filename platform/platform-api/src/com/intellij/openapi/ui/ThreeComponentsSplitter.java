@@ -443,7 +443,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   /**
-   * Sets component which is located as the "secont" splitted area. The method doesn't validate and
+   * Sets component which is located as the "second" split area. The method doesn't validate and
    * repaint the splitter.
    *
    */
