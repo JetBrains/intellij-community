@@ -139,6 +139,8 @@ class TBItemButton extends TBItem {
   }
 
   void update(Icon icon, String text, boolean isSelected, boolean isDisabled) {
+    if (icon != null) icon = IconLoader.getDarkIcon(icon, true);
+
     int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
     flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
     _update(icon, text, myAction, myWidth, flags);
