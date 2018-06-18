@@ -6,8 +6,7 @@ import com.intellij.openapi.util.io.FileUtil.filesEqual
 import org.jetbrains.idea.svn.api.Url
 import java.io.File
 
-// TODO: is17Copy is currently true in all constructor usages - remove this field and revise is17Copy() usages
-class WorkingCopy(val file: File, val url: Url, val is17Copy: Boolean) {
+class WorkingCopy(val file: File, val url: Url) {
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (other !is WorkingCopy) return false

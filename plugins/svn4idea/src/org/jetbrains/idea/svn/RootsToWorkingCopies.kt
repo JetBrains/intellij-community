@@ -79,7 +79,7 @@ class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
       val svnInfo = myVcs.getInfo(workingCopyRoot)
 
       if (svnInfo != null && svnInfo.url != null) {
-        workingCopy = WorkingCopy(workingCopyRoot, svnInfo.url, true)
+        workingCopy = WorkingCopy(workingCopyRoot, svnInfo.url)
       }
     }
 
