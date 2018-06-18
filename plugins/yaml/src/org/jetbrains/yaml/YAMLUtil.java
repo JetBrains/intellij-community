@@ -42,7 +42,7 @@ public class YAMLUtil {
    */
   @ApiStatus.Experimental
   @NotNull
-  public static String getConfigFullName(@NotNull PsiElement target) {
+  public static String getConfigFullName(@NotNull YAMLPsiElement target) {
     final StringBuilder builder = new StringBuilder();
     PsiElement element = target;
     while (element != null) {
