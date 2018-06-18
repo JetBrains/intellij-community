@@ -1103,7 +1103,8 @@
         <reference ref="RunConfiguration"/>
         <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
         <reference ref="Stop"/>
-        <separator/>
+        <separator text="type.small"/>
+        <separator text="type.large"/>
         <reference ref="Vcs.UpdateProject"/>
         <reference ref="CheckinProject"/>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
@@ -1115,7 +1116,7 @@
           <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
           <reference ref="Forward"/>
-          <separator text="type.big"/>
+          <separator text="type.large"/>
           <reference ref="ToggleBookmark"/>
           <reference ref="ToggleLineBreakpoint"/>
           <separator text="type.flexible"/>
@@ -1139,18 +1140,18 @@
         <reference ref="Pause"/>
         <reference ref="Resume"/>
         <reference ref="Stop"/>
-        <separator/>
+        <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
-        <separator/>
+        <separator text="type.small"/>
         <reference ref="StepOver"/>
         <reference ref="StepInto"/>
         <reference ref="StepOut"/>
-        <separator/>
+        <separator text="type.small"/>
         <reference ref="EvaluateExpression"/>
         <group id="TouchBarDebug_alt" text="Debugger with Alt key">
-          <separator/>
+          <separator text="type.small"/>
           <reference ref="ViewBreakpoints"/>
-          <separator/>
+          <separator text="type.small"/>
           <reference ref="ForceStepOver"/>
           <reference ref="ForceStepInto"/>
           <reference ref="SmartStepInto"/>

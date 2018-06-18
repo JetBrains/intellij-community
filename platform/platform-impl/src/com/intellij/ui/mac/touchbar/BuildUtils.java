@@ -31,8 +31,18 @@ import java.util.Map;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
-  private static final String ourLargeSeparatorText = "type.big";
+
+  // https://developer.apple.com/design/human-interface-guidelines/macos/touch-bar/touch-bar-visual-design/
+  //
+  // Spacing type	Width between controls
+  // Default	        16px
+  // Small fixed space	32px
+  // Large fixed space	64px
+  // Flexible space	Varies. Matches the available space.
+  private static final String ourSmallSeparatorText = "type.small";
+  private static final String ourLargeSeparatorText = "type.large";
   private static final String ourFlexibleSeparatorText = "type.flexible";
+
   private static final int ourRunConfigurationPopoverWidth = 143;
 
   private static final String RUNNERS_GROUP_TOUCHBAR = "RunnerActionsTouchbar";
@@ -66,10 +76,15 @@ class BuildUtils {
           final Separator sep = (Separator)act;
           int increment = 1;
           if (sep.getText() != null) {
-            if (sep.getText().equals(ourLargeSeparatorText)) increment = 2;
-            if (sep.getText().equals(ourFlexibleSeparatorText)) increment = 3;
+            if (sep.getText().equals(ourSmallSeparatorText))
+              out.addSpacing(false);
+            else if (sep.getText().equals(ourLargeSeparatorText))
+              out.addSpacing(true);
+            else if (sep.getText().equals(ourFlexibleSeparatorText))
+              out.addFlexibleSpacing();
+          } else {
+            mySeparatorCounter += increment;
           }
-          mySeparatorCounter += increment;
           return;
         }
         if (mySeparatorCounter > 0) {
