@@ -14,6 +14,7 @@ import com.intellij.openapi.vcs.checkin.CheckinChangeListSpecificComponent
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.ui.RefreshableOnComponent
 import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.ui.IdeBorderFactory.createTitledBorder
 import com.intellij.ui.ScrollPaneFactory.createScrollPane
 import com.intellij.util.ui.JBUI
 import com.intellij.util.ui.JBUI.Panels.simplePanel
@@ -125,7 +126,7 @@ class CommitOptionsPanel(private val myCommitPanel: CheckinProjectPanel,
 
   companion object {
     fun verticalPanel(title: String) = JPanel(VerticalFlowLayout(0, 5)).apply {
-      border = com.intellij.ui.IdeBorderFactory.createTitledBorder(title)
+      border = createTitledBorder(title)
     }
   }
 }
