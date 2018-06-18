@@ -66,10 +66,7 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.*;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.AbstractPopup;
-import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.Consumer;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -120,7 +117,7 @@ public class RunAnythingAction extends AnAction implements CustomComponentAction
     @Override
     protected Boolean compute() {
       return Arrays.stream(RunAnythingProvider.EP_NAME.getExtensions())
-                   .anyMatch(provider -> PluginManagerCore.isPluginClass(provider.getClass().getName()));
+                   .anyMatch(provider -> !PlatformUtils.isIntelliJ() || PluginManagerCore.isPluginClass(provider.getClass().getName()));
     }
   };
   private RunAnythingAction.MyListRenderer myRenderer;
