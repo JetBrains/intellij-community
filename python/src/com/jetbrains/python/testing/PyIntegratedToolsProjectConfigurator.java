@@ -17,6 +17,7 @@ package com.jetbrains.python.testing;
 
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -112,7 +113,7 @@ public class PyIntegratedToolsProjectConfigurator implements DirectoryProjectCon
         }
       }
       else if (docFormat == DocStringFormat.PLAIN) {
-        docFormat = checkDocstring(file, module);    // detect docstring type
+        docFormat = ReadAction.compute(() -> checkDocstring(file, module));    // detect docstring type
         if (docFormat != DocStringFormat.PLAIN) {
           LOG.debug("Docstring format '" + docFormat + "' was detected from content of the file '" + file.getPath() + "'");
         }
