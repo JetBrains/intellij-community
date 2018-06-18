@@ -162,7 +162,7 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     resultsScroll.setBorder(null);
     resultsScroll.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 
-    resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.SearchEverywhere.maxListHeght()));
+    resultsScroll.setPreferredSize(JBUI.size(670, JBUI.CurrentTheme.SearchEverywhere.maxListHeight()));
     pnl.add(resultsScroll, BorderLayout.CENTER);
 
     String hint = IdeBundle.message("searcheverywhere.history.shortcuts.hint",
@@ -328,12 +328,17 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
     ExtendableTextField.Extension searchExtension = new ExtendableTextField.Extension() {
       @Override
       public Icon getIcon(boolean hovered) {
-        return AllIcons.Actions.Search;
+        return AllIcons.Actions.Find;
       }
 
       @Override
       public boolean isIconBeforeText() {
         return true;
+      }
+
+      @Override
+      public int getIconGap() {
+        return JBUI.scale(10);
       }
     };
     ExtendableTextField.Extension hintExtension = new ExtendableTextField.Extension() {
