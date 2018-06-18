@@ -105,10 +105,6 @@ public abstract class AbstractIndentParser implements PsiParser {
     return tokenSet.contains(getTokenType());
   }
 
-  protected static boolean tokenIn(@Nullable final IElementType elementType, @NotNull final TokenSet tokenSet) {
-    return tokenSet.contains(elementType);
-  }
-
   @NotNull
   protected String getTokenText() {
     String result = myBuilder.getTokenText();
