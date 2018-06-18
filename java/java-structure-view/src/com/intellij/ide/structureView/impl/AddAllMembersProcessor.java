@@ -15,6 +15,7 @@ import java.util.Map;
 /**
  * @deprecated use conflict-filter processor with duplicates resolver {@link com.intellij.psi.scope.processor.ConflictFilterProcessor}
  */
+@Deprecated
 public class AddAllMembersProcessor implements PsiScopeProcessor {
   private final Collection<PsiElement> myAllMembers;
   private final PsiClass myPsiClass;

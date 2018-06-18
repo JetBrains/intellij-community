@@ -59,13 +59,6 @@ public abstract class IdeaTestCase extends PlatformTestCase {
     return StdModuleTypes.JAVA;
   }
 
-  /**
-   * @deprecated calling this method is no longer necessary
-   */
-  @Deprecated
-  public static void initPlatformPrefix() {
-  }
-
   protected static void sortClassesByName(@NotNull PsiClass[] classes) {
     Arrays.sort(classes, (o1, o2) -> o1.getName().compareTo(o2.getName()));
   }

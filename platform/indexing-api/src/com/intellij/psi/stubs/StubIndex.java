@@ -49,6 +49,7 @@ public abstract class StubIndex {
   /**
    * @deprecated use {@link #getElements(StubIndexKey, Object, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope, Class)}
    */
+  @Deprecated
   public abstract <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                     @NotNull Key key,
                                                                     @NotNull Project project,
@@ -57,22 +58,24 @@ public abstract class StubIndex {
   /**
    * @deprecated use {@link #getElements(StubIndexKey, Object, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope, Class)}
    */
+  @Deprecated
   public <Key, Psi extends PsiElement> Collection<Psi> get(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                    @NotNull Key key,
-                                                                    @NotNull Project project,
-                                                                    @Nullable final GlobalSearchScope scope,
-                                                                    IdFilter filter) {
+                                                           @NotNull Key key,
+                                                           @NotNull Project project,
+                                                           @Nullable final GlobalSearchScope scope,
+                                                           IdFilter filter) {
     return get(indexKey, key, project, scope);
   }
 
   /**
    * @deprecated use processElements
    */
+  @Deprecated
   public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                @NotNull Key key,
-                                                                @NotNull Project project,
-                                                                @Nullable GlobalSearchScope scope,
-                                                                @NotNull Processor<? super Psi> processor) {
+                                                       @NotNull Key key,
+                                                       @NotNull Project project,
+                                                       @Nullable GlobalSearchScope scope,
+                                                       @NotNull Processor<? super Psi> processor) {
     return processElements(indexKey, key, project, scope, (Class<Psi>)PsiElement.class, processor);
   }
 
@@ -86,12 +89,13 @@ public abstract class StubIndex {
   /**
    * @deprecated use processElements
    */
+  @Deprecated
   public <Key, Psi extends PsiElement> boolean process(@NotNull StubIndexKey<Key, Psi> indexKey,
-                                                                @NotNull Key key,
-                                                                @NotNull Project project,
-                                                                @Nullable GlobalSearchScope scope,
-                                                                @SuppressWarnings("UnusedParameters") IdFilter idFilter,
-                                                                @NotNull Processor<? super Psi> processor) {
+                                                       @NotNull Key key,
+                                                       @NotNull Project project,
+                                                       @Nullable GlobalSearchScope scope,
+                                                       @SuppressWarnings("UnusedParameters") IdFilter idFilter,
+                                                       @NotNull Processor<? super Psi> processor) {
     return process(indexKey, key, project, scope, processor);
   }
 
@@ -118,6 +122,7 @@ public abstract class StubIndex {
   /**
    * @deprecated use {@link #getElements(StubIndexKey, Object, com.intellij.openapi.project.Project, com.intellij.psi.search.GlobalSearchScope, Class)}
    */
+  @Deprecated
   public <Key, Psi extends PsiElement> Collection<Psi> safeGet(@NotNull StubIndexKey<Key, Psi> indexKey,
                                                                @NotNull Key key,
                                                                @NotNull final Project project,

@@ -142,6 +142,7 @@ public class SpellCheckerManager implements Disposable {
    * {@link SpellCheckerManager#acceptWordAsCorrect(String, Project)} or
    * {@link ProjectDictionaryState#getProjectDictionary() and {@link CachedDictionaryState#getDictionary()}} instead
    */
+  @Deprecated
   public EditableDictionary getUserDictionary() {
     return new AggregatedDictionary(myProjectDictionary, myAppDictionary);
   }

@@ -72,7 +72,7 @@ public interface CodeInsightColors {
    * For Java-related code use JavaHighlightingColors.IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES.
    * The field will be removed in future versions.
    */
-  TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
+  @Deprecated TextAttributesKey IMPLICIT_ANONYMOUS_CLASS_PARAMETER_ATTRIBUTES = TextAttributesKey.DUMMY_DEPRECATED_ATTRIBUTES;
   /**
    * @deprecated as of version 16. 
    * For non-Java code use DefaultLanguageHighlighterColors.INSTANCE_FIELD or define your own. 

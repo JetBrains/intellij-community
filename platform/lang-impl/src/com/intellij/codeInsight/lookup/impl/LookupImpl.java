@@ -1092,8 +1092,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     }
   }
 
-  @Override
-  public void showItemPopup(JBPopup hint) {
+  private void showItemPopup(JBPopup hint) {
     final Rectangle bounds = getCurrentItemBounds();
     hint.show(new RelativePoint(getComponent(), new Point(bounds.x + bounds.width, bounds.y)));
   }

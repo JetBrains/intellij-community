@@ -129,14 +129,7 @@ public class RenameDialog extends RefactoringDialog {
     super.dispose();
   }
 
-  @SuppressWarnings("deprecation")
   protected boolean isToSearchForTextOccurrencesForRename() {
-    return isToSearchForTextOccurencesForRename();
-  }
-
-  /** @deprecated use/override {@link #isToSearchForTextOccurrencesForRename()} instead (to be deleted in IDEA 2018) */
-  @SuppressWarnings({"SpellCheckingInspection", "DeprecatedIsStillUsed"})
-  protected boolean isToSearchForTextOccurencesForRename() {
     return RenamePsiElementProcessor.forElement(myPsiElement).isToSearchForTextOccurrences(myPsiElement);
   }
 

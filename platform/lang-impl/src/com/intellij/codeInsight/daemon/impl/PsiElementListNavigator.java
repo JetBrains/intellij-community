@@ -197,6 +197,7 @@ public class PsiElementListNavigator {
   /**
    * @deprecated use {@link #navigateOrCreatePopup(NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask, Consumer)}
    */
+  @Deprecated
   @Nullable
   public static JBPopup navigateOrCreatePopup(@NotNull final NavigatablePsiElement[] targets,
                                               final String title,
@@ -211,6 +212,7 @@ public class PsiElementListNavigator {
   /**
    * @deprecated use {@link #openTargets(Editor, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
    */
+  @Deprecated
   public static void openTargets(Editor e, NavigatablePsiElement[] targets, String title, final String findUsagesTitle,
                                  ListCellRenderer listRenderer, @Nullable ListBackgroundUpdaterTask listUpdaterTask) {
     openTargets(e, targets, title, findUsagesTitle, listRenderer, (BackgroundUpdaterTask)listUpdaterTask);
@@ -219,6 +221,7 @@ public class PsiElementListNavigator {
   /**
    * @deprecated use {@link #openTargets(MouseEvent, NavigatablePsiElement[], String, String, ListCellRenderer, BackgroundUpdaterTask)} instead
    */
+  @Deprecated
   public static void openTargets(MouseEvent e,
                                  NavigatablePsiElement[] targets,
                                  String title,

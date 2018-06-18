@@ -96,12 +96,14 @@ public abstract class ElementPresentationManager {
    * @deprecated
    * @see com.intellij.ide.presentation.Presentation#provider()
    */
+  @Deprecated
   public static void registerNameProvider(Function<Object, String> function) { ourNameProviders.add(function); }
 
   /**
    * @deprecated
    * @see Documentation
    */
+  @Deprecated
   public static void registerDocumentationProvider(Function<Object, String> function) { ourDocumentationProviders.add(function); }
 
 

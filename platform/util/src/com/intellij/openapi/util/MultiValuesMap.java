@@ -105,20 +105,6 @@ public class MultiValuesMap<K, V>{
     return myBaseMap.containsKey(key);
   }
 
-  /**
-   * @deprecated this method will return unordered set for ordered map, use {@link #values()} instead
-   */
-  @Deprecated
-  @NotNull
-  public Collection<V> collectValues() {
-    Collection<V> result = new HashSet<V>();
-    for (Collection<V> v : myBaseMap.values()) {
-      result.addAll(v);
-    }
-
-    return result;
-  }
-
   @Nullable
   public V getFirst(final K key) {
     Collection<V> values = myBaseMap.get(key);

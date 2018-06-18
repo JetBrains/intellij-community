@@ -25,6 +25,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 /**
  * @deprecated To be removed in 2017.3
  */
+@Deprecated
 public abstract class GrExpressionTypeCalculator {
 
   public static final ExtensionPointName<GrExpressionTypeCalculator> EP_NAME =

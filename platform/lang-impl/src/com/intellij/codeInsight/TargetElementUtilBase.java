@@ -29,11 +29,8 @@ import java.util.Collection;
 /**
  * @deprecated Use {@link TargetElementUtil} instead. To be removed in IntelliJ IDEA 16.
  */
+@Deprecated
 public abstract class TargetElementUtilBase {
-  public static final int REFERENCED_ELEMENT_ACCEPTED = 0x01;
-  public static final int ELEMENT_NAME_ACCEPTED = 0x02;
-  public static final int LOOKUP_ITEM_ACCEPTED = 0x08;
-
   public static TargetElementUtilBase getInstance() {
     return TargetElementUtil.getInstance();
   }

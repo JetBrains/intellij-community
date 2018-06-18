@@ -250,6 +250,7 @@ public abstract class GotoTargetHandler implements CodeInsightActionHandler {
   /**
    * @deprecated, use getChooserTitle(PsiElement, String, int, boolean) instead
    */
+  @Deprecated
   @NotNull
   protected String getChooserTitle(PsiElement sourceElement, String name, int length) {
     LOG.warn("Please override getChooserTitle(PsiElement, String, int, boolean) instead");

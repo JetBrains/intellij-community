@@ -21,7 +21,7 @@ public class EnforcedPlainTextFileTypeFactory extends FileTypeFactory {
   /**
    * @deprecated use {@link #getEnforcedPlainTextIcon()} instead 
    */
-  public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon();
+  @Deprecated public static final LayeredIcon ENFORCED_PLAIN_TEXT_ICON = new LayeredIcon();
   public static final String ENFORCED_PLAIN_TEXT = "Enforced Plain Text";
 
   private static final Icon ENFORCED_PLAIN_TEXT_LAZY_ICON = new IconLoader.LazyIcon() {

@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLUtil;
+import org.jetbrains.yaml.psi.YAMLPsiElement;
 
 public class YAMLQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
@@ -17,7 +18,7 @@ public class YAMLQualifiedNameProvider implements QualifiedNameProvider {
   @Nullable
   @Override
   public String getQualifiedName(PsiElement element) {
-    return YAMLUtil.getConfigFullName(element);
+    return element instanceof YAMLPsiElement ? YAMLUtil.getConfigFullName(element) : null;
   }
 
   @Nullable

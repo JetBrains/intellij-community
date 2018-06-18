@@ -88,6 +88,7 @@ public class ModuleData extends AbstractNamedData implements Named, ExternalConf
   /**
    * @deprecated the result of the method can be incorrect for modules with duplicated names, consider to use getModuleFileDirectoryPath instead
    */
+  @Deprecated
   @NotNull
   public String getModuleFilePath() {
     return ExternalSystemApiUtil

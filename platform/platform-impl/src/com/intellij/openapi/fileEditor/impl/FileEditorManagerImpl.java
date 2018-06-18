@@ -1390,15 +1390,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Persis
     return result.toArray(new FileEditor[0]);
   }
 
-  @Override
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    addTopComponent(editor, annotationComponent);
-  }
-
-  @Override
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    removeTopComponent(editor, annotationComponent);
-  }
 
   @NotNull
   public List<JComponent> getTopComponents(@NotNull FileEditor editor) {

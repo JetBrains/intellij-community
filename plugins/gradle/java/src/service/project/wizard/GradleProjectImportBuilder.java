@@ -50,6 +50,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   /**
    * @deprecated use {@link GradleProjectImportBuilder#GradleProjectImportBuilder(ProjectDataManager)}
    */
+  @Deprecated
   public GradleProjectImportBuilder(@NotNull com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager dataManager) {
     this((ProjectDataManager)dataManager);
   }

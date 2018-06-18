@@ -14,8 +14,4 @@ public class ByteArrayList extends TByteArrayList {
   public ByteArrayList(int capacity) {
     super(capacity);
   }
-
-  public ByteArrayList(byte[] values) {
-    super(values);
-  }
 }

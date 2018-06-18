@@ -63,5 +63,6 @@ public interface ParametersEnhancer {
    *
    * @param urls
    */
+  @Deprecated
   default void enhanceLocalProcessing(@NotNull List<URL> urls) {}
 }

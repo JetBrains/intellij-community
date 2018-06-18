@@ -90,6 +90,7 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   /** @deprecated use {@link #openErrorsDialog(LogMessage)} (to be removed in IDEA 2019) */
+  @Deprecated
   @SuppressWarnings("SpellCheckingInspection")
   public void openFatals(@Nullable LogMessage message) {
     openErrorsDialog(message);

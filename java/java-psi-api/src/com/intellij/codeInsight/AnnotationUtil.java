@@ -667,16 +667,6 @@ public class AnnotationUtil {
     return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipExternal));
   }
 
-  /** @deprecated use {@link #isAnnotated(PsiModifierListOwner, String, int)} (to be removed in IDEA 2019) */
-  @Deprecated
-  public static boolean isAnnotated(@NotNull PsiModifierListOwner listOwner,
-                                    @NotNull String annotationFQN,
-                                    boolean checkHierarchy,
-                                    boolean skipExternal,
-                                    boolean skipInferred) {
-    return isAnnotated(listOwner, annotationFQN, flags(checkHierarchy, skipExternal, skipInferred));
-  }
-
   private static @Flags int flags(boolean checkHierarchy, boolean skipExternal, boolean skipInferred) {
     int flags = CHECK_TYPE;
     if (checkHierarchy) flags |= CHECK_HIERARCHY;

@@ -123,6 +123,7 @@ public interface XDebugSession extends AbstractDebuggerSession {
   /**
    * @deprecated use {@link #breakpointReached(XBreakpoint, String, XSuspendContext)} instead
    */
+  @Deprecated
   boolean breakpointReached(@NotNull XBreakpoint<?> breakpoint, @NotNull XSuspendContext suspendContext);
 
   /**

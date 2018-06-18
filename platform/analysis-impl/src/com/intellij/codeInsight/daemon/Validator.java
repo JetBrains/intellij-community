@@ -36,6 +36,7 @@ public interface Validator<T extends PsiElement> {
     /**
      * @deprecated Use {@link #addMessage(PsiElement, String, ErrorType)} instead
      */
+    @Deprecated
     void addMessage(PsiElement context, String message, @MagicConstant(intValues = {INFO, WARNING, ERROR}) int type);
     void addMessage(PsiElement context, String message, @NotNull ErrorType type);
   }

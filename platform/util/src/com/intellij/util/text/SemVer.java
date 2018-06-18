@@ -121,15 +121,4 @@ public final class SemVer implements Comparable<SemVer> {
 
     return null;
   }
-
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@code ObjectUtils.notNull(SemVer.parseFromText(...), SemVer.UNKNOWN)} (to be removed in IDEA 2019) */
-  @Deprecated
-  @SuppressWarnings("SpellCheckingInspection")
-  public static SemVer parseFromTextNonNullize(@Nullable final String text) {
-    if (text == null) return UNKNOWN;
-    final SemVer ver = parseFromText(text);
-    return ver == null ? UNKNOWN : ver;
-  }
-  //</editor-fold>
 }

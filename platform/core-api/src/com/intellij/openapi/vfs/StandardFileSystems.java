@@ -47,6 +47,7 @@ public class StandardFileSystems {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use ArchiveFileSystem#getRootByLocal(VirtualFile) (to remove in IDEA 2018) */
+  @Deprecated
   public static VirtualFile getJarRootForLocalFile(@NotNull VirtualFile local) {
     return jar().findFileByPath(local.getPath() + URLUtil.JAR_SEPARATOR);
   }

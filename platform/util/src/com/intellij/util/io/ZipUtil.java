@@ -236,18 +236,5 @@ public class ZipUtil {
     }
   }
 
-  /** @deprecated trivial */
-  @Deprecated
-  @ApiStatus.ScheduledForRemoval(inVersion = "2019")
-  public static boolean isZipContainsEntry(File zip, String relativePath) throws IOException {
-    ZipFile zipFile = new ZipFile(zip);
-    try {
-      return zipFile.getEntry(relativePath) != null;
-    }
-    finally {
-      zipFile.close();
-    }
-  }
-
   //</editor-fold>
 }

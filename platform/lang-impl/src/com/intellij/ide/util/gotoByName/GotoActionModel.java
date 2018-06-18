@@ -137,10 +137,6 @@ public class GotoActionModel implements ChooseByNameModel, Comparator<Object>, D
     return IdeBundle.message("checkbox.disabled.included");
   }
 
-  @Override
-  public char getCheckBoxMnemonic() {
-    return 'd';
-  }
 
   @Override
   public String getNotInMessage() {

@@ -170,6 +170,7 @@ public class UsageInfo {
    * @deprecated for the range in element use {@link #getRangeInElement} instead,
    *             for the whole text range in the file covered by this usage info, use {@link #getSegment()}
    */
+  @Deprecated
   public TextRange getRange() {
     return getRangeInElement();
   }

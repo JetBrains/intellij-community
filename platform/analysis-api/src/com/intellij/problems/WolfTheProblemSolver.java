@@ -57,6 +57,7 @@ public abstract class WolfTheProblemSolver {
   /**
    * @deprecated register extensions to {@link #FILTER_EP_NAME} instead
    */
+  @Deprecated
   public abstract void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable);
   public abstract void queue(VirtualFile suspiciousFile);
 }

@@ -180,6 +180,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
    * @deprecated use toTestString
    * @return
    */
+  @Deprecated
   @Nullable
   @NonNls public String getTestPresentation() {
     if (myName != null) {
@@ -242,6 +243,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
+  @Deprecated
   protected String getToolTip() {
     return getPresentation().getTooltip();
   }
@@ -249,6 +251,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
+  @Deprecated
   @Nullable
   public TextAttributesKey getAttributesKey() {
     return getPresentation().getTextAttributesKey();
@@ -257,6 +260,7 @@ public abstract class AbstractTreeNode<T> extends PresentableNodeDescriptor<Abst
   /**
    * @deprecated use {@link #getPresentation()} instead
    */
+  @Deprecated
   @Nullable
   public String getLocationString() {
     return getPresentation().getLocationString();

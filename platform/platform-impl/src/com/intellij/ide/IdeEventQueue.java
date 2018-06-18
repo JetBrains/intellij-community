@@ -271,6 +271,7 @@ public class IdeEventQueue extends EventQueue {
   }
 
   /** @deprecated use {@link #addActivityListener(Runnable, Disposable)} (to be removed in IDEA 17) */
+  @Deprecated
   public void addActivityListener(@NotNull final Runnable runnable) {
     synchronized (myLock) {
       myActivityListeners.add(runnable);

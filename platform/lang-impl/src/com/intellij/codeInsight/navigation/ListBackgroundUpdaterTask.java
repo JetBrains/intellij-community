@@ -39,6 +39,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
   /**
    * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
+  @Deprecated
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
     this(project, title, null);
   }

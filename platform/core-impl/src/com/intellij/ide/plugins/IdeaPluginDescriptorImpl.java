@@ -151,6 +151,7 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   /** @deprecated changing a plugin path after loading is not expected (to be removed in IDEA 2019) */
+  @Deprecated
   public void setPath(@SuppressWarnings("unused") File path) { }
 
   public void readExternal(@NotNull Document document, @NotNull URL url, @NotNull JDOMXIncluder.PathResolver pathResolver) throws InvalidDataException {
@@ -556,11 +557,13 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
   }
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @Deprecated
   public String getDownloads() {
     return null;
   }
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDate (to be removed in IDEA 2019) */
+  @Deprecated
   public long getDate() {
     return 0;
   }

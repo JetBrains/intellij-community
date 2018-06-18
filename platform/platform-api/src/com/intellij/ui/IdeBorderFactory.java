@@ -103,16 +103,6 @@ public class IdeBorderFactory {
     return createTitledBorder(s, true);
   }
 
-  @Deprecated
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont) {
-    return createTitledBorder(title, hasIndent);
-  }
-
-  @Deprecated
-  public static IdeaTitledBorder createTitledBorder(String title, boolean hasBoldFont, boolean hasIndent, boolean hasSmallFont, Insets insets) {
-    return createTitledBorder(title, hasIndent, insets);
-  }
-
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent) {
     Insets insets = new Insets(TITLED_BORDER_TOP_INSET, TITLED_BORDER_LEFT_INSET, TITLED_BORDER_BOTTOM_INSET, TITLED_BORDER_RIGHT_INSET);
     return createTitledBorder(title, hasIndent, insets);
@@ -121,12 +111,6 @@ public class IdeBorderFactory {
   public static IdeaTitledBorder createTitledBorder(String title, boolean hasIndent, Insets insets) {
     int indent = hasIndent ? TITLED_BORDER_INDENT : 0;
     return new IdeaTitledBorder(title, indent, insets);
-  }
-
-  @Deprecated
-  // Don't remove, used in TeamCity plugin.
-  public static TitledBorder createTitledHeaderBorder(String title) {
-    return new IdeaTitledBorder(title, 10, new Insets(5, 0, 10, 0));
   }
 
   private static Color getBorderColor() {

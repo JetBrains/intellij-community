@@ -33,7 +33,7 @@ public interface ChooseByNameModel {
    * @deprecated Mark mnemonic char with '&' ('&&' for mac if mnemonic char is 'N') in checkbox name instead
    */
   @Deprecated
-  char getCheckBoxMnemonic();
+  default char getCheckBoxMnemonic() { return 0; }
 
 
   boolean loadInitialCheckBoxState();

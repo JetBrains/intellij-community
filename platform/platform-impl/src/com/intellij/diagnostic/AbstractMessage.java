@@ -97,6 +97,7 @@ public abstract class AbstractMessage {
   }
 
   /** @deprecated use {@link #getIncludedAttachments()} instead (to be removed in IDEA 2020) */
+  @Deprecated
   public List<Attachment> getAttachments() {
     return getIncludedAttachments();
   }

@@ -22,6 +22,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
+  @Deprecated
   protected PostfixTemplateWithExpressionSelector(@NotNull String name,
                                                   @NotNull String key,
                                                   @NotNull String example,
@@ -32,6 +33,7 @@ public abstract class PostfixTemplateWithExpressionSelector extends PostfixTempl
   /**
    * @deprecated use {@link #PostfixTemplateWithExpressionSelector(String, String, String, PostfixTemplateExpressionSelector, PostfixTemplateProvider)}
    */
+  @Deprecated
   protected PostfixTemplateWithExpressionSelector(@NotNull String name,
                                                   @NotNull String example,
                                                   @NotNull PostfixTemplateExpressionSelector selector) {
