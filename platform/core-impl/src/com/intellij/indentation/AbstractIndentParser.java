@@ -171,12 +171,12 @@ public abstract class AbstractIndentParser implements PsiParser {
     errorMarker.error(message);
   }
   
-  protected void errorUntilEof(@NotNull String message) {
+  protected void errorUntilEof() {
     PsiBuilder.Marker errorMarker = mark();
     while (!eof()) {
       advance();
     }
-    errorMarker.error(message);
+    errorMarker.error("Unexpected token");
   }
 
   protected void expectEolOrEof() {
