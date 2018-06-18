@@ -6,10 +6,7 @@ package com.intellij.ide.todo;
 import com.intellij.find.FindModel;
 import com.intellij.find.impl.FindInProjectUtil;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.DataManager;
-import com.intellij.ide.IdeBundle;
-import com.intellij.ide.OccurenceNavigator;
-import com.intellij.ide.TreeExpander;
+import com.intellij.ide.*;
 import com.intellij.ide.actions.NextOccurenceToolbarAction;
 import com.intellij.ide.actions.PreviousOccurenceToolbarAction;
 import com.intellij.ide.todo.nodes.TodoFileNode;
@@ -418,6 +415,10 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
     }, 300);
   }
 
+  TreeExpander getTreeExpander() {
+    return myTreeExpander;
+  }
+  
   private final class MyTreeExpander implements TreeExpander {
     @Override
     public boolean canCollapse() {

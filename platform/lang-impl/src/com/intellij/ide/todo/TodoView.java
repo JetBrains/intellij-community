@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.todo;
 
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,6 +23,7 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsListener;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
@@ -28,6 +31,7 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.xmlb.annotations.Attribute;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -175,6 +179,48 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     myPanels.add(changeListTodos);
     myPanels.add(currentFileTodos);
     myPanels.add(scopeBasedTodos);
+    TreeExpander proxyExpander = new TreeExpander() {
+      @Override
+      public boolean canExpand() {
+        TreeExpander expander = getExpander();
+        return expander != null && expander.canExpand();
+      }
+
+      @Override
+      public void expandAll() {
+        TreeExpander expander = getExpander();
+        if (expander != null) {
+          expander.expandAll();
+        }
+      }
+
+      @Nullable
+      private TreeExpander getExpander() {
+        Content selectedContent = myContentManager.getSelectedContent();
+        if (selectedContent != null && selectedContent.getComponent() instanceof TodoPanel) {
+          return ((TodoPanel)selectedContent.getComponent()).getTreeExpander();
+        }
+        return null;
+      }
+
+      @Override
+      public void collapseAll() {
+        TreeExpander expander = getExpander();
+        if (expander != null) {
+          expander.collapseAll();
+        }
+      }
+
+      @Override
+      public boolean canCollapse() {
+        TreeExpander expander = getExpander();
+        return expander != null && expander.canCollapse();
+      }
+    };
+
+    ((ToolWindowEx)toolWindow)
+      .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
+                       CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
   }
 
   @NotNull
