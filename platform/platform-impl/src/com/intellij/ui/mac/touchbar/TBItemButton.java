@@ -123,10 +123,8 @@ class TBItemButton extends TBItem {
     return this;
   }
 
-  TBItemButton setFlags(boolean isSelected, boolean isDisabled, boolean isColored) {
-    int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
-    flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
-    flags = _applyFlag(flags, isColored, NSTLibrary.BUTTON_FLAG_COLORED);
+  TBItemButton setColored(boolean isColored) {
+    final int flags = _applyFlag(myFlags, isColored, NSTLibrary.BUTTON_FLAG_COLORED);
     if (flags != myFlags) {
       myFlags = flags;
       if (myNativePeer != ID.NIL) {
@@ -183,14 +181,21 @@ class TBItemButton extends TBItem {
     final String text = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_TEXT) != 0 ? myText : null;
     final NSTLibrary.Action callback = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_ACTION) != 0 ? myNativeCallback : null;
 //    System.out.printf("_updateNativePeer, button [%s]: updateOptions 0x%X\n", myUid, myUpdateOptions);
-    NST.updateButton(myNativePeer, myUpdateOptions, myWidth, myFlags, text, icon, callback);
+    final int validFlags = _validateFlags();
+    NST.updateButton(myNativePeer, myUpdateOptions, myWidth, validFlags, text, icon, callback);
     myUpdateOptions = 0;
   }
 
   @Override
   synchronized protected ID _createNativePeer() {
 //    System.out.printf("_createNativePeer, button [%s]\n", myUid);
-    return NST.createButton(myUid, myWidth, myFlags, myText, myIcon, myNativeCallback);
+    return NST.createButton(myUid, myWidth, _validateFlags(), myText, myIcon, myNativeCallback);
+  }
+
+  private int _validateFlags() {
+    if ((myFlags & NSTLibrary.BUTTON_FLAG_COLORED) != 0 && (myFlags & NSTLibrary.BUTTON_FLAG_DISABLED) != 0)
+      return myFlags & ~NSTLibrary.BUTTON_FLAG_COLORED;
+    return myFlags;
   }
 
   private static int _applyFlag(int src, boolean include, int flag) {
