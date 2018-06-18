@@ -49,6 +49,7 @@ import com.intellij.util.PathUtil
 import com.jetbrains.python.inspections.PyPackageRequirementsInspection
 import com.jetbrains.python.packaging.*
 import com.jetbrains.python.sdk.*
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor
 import icons.PythonIcons
 import org.jetbrains.annotations.SystemDependent
 import java.io.File
@@ -80,9 +81,17 @@ var Sdk.isPipEnv: Boolean
   get() = sdkAdditionalData is PyPipEnvSdkAdditionalData
   set(value) {
     val oldData = sdkAdditionalData
-    val newData = when (oldData) {
-      is PythonSdkAdditionalData -> PyPipEnvSdkAdditionalData(oldData)
-      else -> PyPipEnvSdkAdditionalData()
+    val newData = if (value) {
+      when (oldData) {
+        is PythonSdkAdditionalData -> PyPipEnvSdkAdditionalData(oldData)
+        else -> PyPipEnvSdkAdditionalData()
+      }
+    }
+    else {
+      when (oldData) {
+        is PyPipEnvSdkAdditionalData -> PythonSdkAdditionalData(PythonSdkFlavor.getFlavor(this))
+        else -> oldData
+      }
     }
     val modificator = sdkModificator
     modificator.sdkAdditionalData = newData
