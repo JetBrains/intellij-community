@@ -149,7 +149,9 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
       if (argumentExpression == null) {
         return;
       }
-      registerError(expression, ProblemHighlightType.INFORMATION, qualifierExpression.getText(), argumentExpression.getText(), true);
+      if (isOnTheFly()) {
+        registerError(expression, ProblemHighlightType.INFORMATION, qualifierExpression.getText(), argumentExpression.getText(), true);
+      }
     }
 
     private boolean processNotNullCheck(PsiBinaryExpression expression) {
@@ -220,8 +222,10 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
               final PsiExpression expressionToReplace = checkEqualityBefore(expression, equal, qualifierExpression, argumentExpression);
               ProblemHighlightType highlightType = checkNotNull || expression != expressionToReplace ?
                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
-              registerError(expressionToReplace, highlightType,
-                            nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              if (isOnTheFly() || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+                registerError(expressionToReplace, highlightType,
+                              nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              }
               return true;
             }
           }
