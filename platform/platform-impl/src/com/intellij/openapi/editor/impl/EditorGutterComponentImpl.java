@@ -746,7 +746,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   private boolean logicalLinesMatchVisualOnes() {
     return myEditor.getSoftWrapModel().getSoftWrapsIntroducedLinesNumber() == 0 &&
-           ArrayUtil.isEmpty(myEditor.getFoldingModel().fetchTopLevel());
+           myEditor.getFoldingModel().getTotalNumberOfFoldedLines() == 0;
   }
 
   void clearLineToGutterRenderersCache() {
