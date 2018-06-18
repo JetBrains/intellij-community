@@ -119,8 +119,8 @@ public class ObjectUtils {
 
   @Contract("null, _ -> null")
   @Nullable
-  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Convertor<T, S> convertor) {
-    return obj == null ? null : convertor.convert(obj);
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<T, S> function) {
+    return obj == null ? null : function.fun(obj);
   }
 
   @SuppressWarnings("unchecked")
