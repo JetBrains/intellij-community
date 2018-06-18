@@ -269,7 +269,7 @@ class ContentTabLabel extends BaseLabel {
     }
 
     if (map.get(true) != null) {
-      right = ICONS_GAP + 4;
+      right = ICONS_GAP + JBUI.scale(4);
 
       for (AdditionalIcon icon : map.get(true)) {
         icon.setX(iconWidth + size.width + ICONS_GAP - right);
@@ -281,41 +281,6 @@ class ContentTabLabel extends BaseLabel {
     myIconWithInsetsWidth = iconWidth + right + left;
 
     return new Dimension(iconWidth + size.width, size.height);
-  }
-
-  private int updateAndGetInsetsWidth() {
-    if(myAdditionalIcons == null) return 0;
-
-    Map<Boolean, List<AdditionalIcon>> map =
-      myAdditionalIcons.stream().filter(icon -> icon.getAvailable()).collect(Collectors.groupingBy(icon -> icon.getAfterText()));
-
-    int right = DEFAULT_HORIZONTAL_INSET;
-    int left = DEFAULT_HORIZONTAL_INSET;
-
-    int iconWidth = 0;
-
-    if (map.get(false) != null) {
-      iconWidth = ICONS_GAP;
-
-      for (AdditionalIcon icon : map.get(false)) {
-        iconWidth += icon.getIconWidth() + ICONS_GAP;
-      }
-
-      left = iconWidth;
-      iconWidth = 0;
-    }
-
-    if (map.get(true) != null) {
-      right = ICONS_GAP + JBUI.scale(4);
-
-      for (AdditionalIcon icon : map.get(true)) {
-        iconWidth += icon.getIconWidth() + ICONS_GAP;
-      }
-    }
-
-    setBorder(JBUI.Borders.empty(0, left, 0, right));
-
-    return iconWidth + right + left;
   }
 
   @Override
