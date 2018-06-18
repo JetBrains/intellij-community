@@ -34,6 +34,9 @@ public class NullableNotNullManagerTest extends LightPlatformTestCase {
   public void testCannotAddNotNullToNullable() {
     assertNotNull(myManager);
     checkAnnotations();
+    myManager.setNotNulls("foo.NotNull");
+    checkAnnotations();
+    assertTrue(myManager.getNotNulls().contains("foo.NotNull"));
     myManager.setNotNulls(AnnotationUtil.NULLABLE);
     myManager.setNullables(AnnotationUtil.NOT_NULL);
     checkAnnotations();
