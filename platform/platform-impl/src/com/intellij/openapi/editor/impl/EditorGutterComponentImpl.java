@@ -118,6 +118,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  private boolean myLineToGutterRenderersCacheForLogicalLines;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   private int myIconsAreaWidth;
   private int myLineNumberAreaWidth;
@@ -743,11 +744,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  private boolean logicalLinesMatchVisualOnes() {
+    return myEditor.getSoftWrapModel().getSoftWrapsIntroducedLinesNumber() == 0 &&
+           ArrayUtil.isEmpty(myEditor.getFoldingModel().fetchTopLevel());
+  }
+
   void clearLineToGutterRenderersCache() {
     myLineToGutterRenderers = null;
   }
 
   private void buildGutterRenderersCache() {
+    myLineToGutterRenderersCacheForLogicalLines = logicalLinesMatchVisualOnes();
     myLineToGutterRenderers = new TIntObjectHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
@@ -824,14 +831,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   private List<GutterMark> getGutterRenderers(int line) {
-    if (myLineToGutterRenderers == null) {
+    if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
     return myLineToGutterRenderers.get(line);
   }
 
   private void processGutterRenderers(@NotNull TIntObjectProcedure<List<GutterMark>> processor) {
-    if (myLineToGutterRenderers == null) {
+    if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
     myLineToGutterRenderers.forEachEntry(processor);
