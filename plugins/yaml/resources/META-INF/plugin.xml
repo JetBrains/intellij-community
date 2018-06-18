@@ -73,8 +73,8 @@
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.json">
-    <Json.Like.Psi.Walker.Factory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
-    <Json.Schema.Enabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+    <jsonLikePsiWalkerFactory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
+    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
