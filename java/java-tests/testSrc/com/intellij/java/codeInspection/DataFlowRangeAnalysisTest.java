@@ -64,4 +64,6 @@ public class DataFlowRangeAnalysisTest extends DataFlowInspectionTestCase {
 
   public void testLongRangePlusMinus() { doTest(); }
   public void testFebruary31() { doTest(); }
+
+  public void testManyAdditionsDoNotCauseExponentialBlowUp() { doTest(); }
 }
