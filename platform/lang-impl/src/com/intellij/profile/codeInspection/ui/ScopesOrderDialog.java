@@ -31,6 +31,7 @@ public class ScopesOrderDialog extends DialogWrapper {
   private final InspectionProfileImpl myInspectionProfile;
   private final Project myProject;
   private final JPanel myPanel;
+  private final MyModel myModel;
 
   public ScopesOrderDialog(final @NotNull Component parent,
                            final InspectionProfileImpl inspectionProfile,
@@ -38,8 +39,11 @@ public class ScopesOrderDialog extends DialogWrapper {
     super(parent, true);
     myInspectionProfile = inspectionProfile;
     myProject = project;
+    myModel = new MyModel();
+    reloadScopeList();
+    myOptionsList.setModel(myModel);
+    myOptionsList.setSelectedIndex(0);
 
-    fillList();
     final JPanel listPanel = ToolbarDecorator.createDecorator(myOptionsList).setMoveDownAction(new AnActionButtonRunnable() {
       @Override
       public void run(AnActionButton anActionButton) {
@@ -54,6 +58,7 @@ public class ScopesOrderDialog extends DialogWrapper {
       @Override
       public void actionPerformed(AnActionEvent e) {
         ShowSettingsUtil.getInstance().editConfigurable(project, new ScopeChooserConfigurable(project));
+        reloadScopeList();
       }
     }).disableRemoveAction().disableAddAction().createPanel();
     final JLabel descr = new JLabel("<html><p>If file appears in two or more scopes, it will be " +
@@ -68,9 +73,8 @@ public class ScopesOrderDialog extends DialogWrapper {
     setTitle("Scopes Order");
   }
 
-  private void fillList() {
-    MyModel model = new MyModel();
-    model.removeAllElements();
+  private void reloadScopeList() {
+    myModel.removeAllElements();
 
     final List<String> scopes = new ArrayList<>();
     for (final NamedScopesHolder holder : NamedScopesHolder.getAllNamedScopeHolders(myProject)) {
@@ -83,10 +87,8 @@ public class ScopesOrderDialog extends DialogWrapper {
     scopes.remove(CustomScopesProviderEx.getAllScope().getName());
     Collections.sort(scopes, new ScopeOrderComparator(myInspectionProfile));
     for (String scopeName : scopes) {
-      model.addElement(scopeName);
+      myModel.addElement(scopeName);
     }
-    myOptionsList.setModel(model);
-    myOptionsList.setSelectedIndex(0);
   }
 
   @Nullable
