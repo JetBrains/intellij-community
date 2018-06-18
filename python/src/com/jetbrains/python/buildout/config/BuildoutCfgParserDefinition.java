@@ -75,7 +75,7 @@ public class BuildoutCfgParserDefinition implements ParserDefinition, BuildoutCf
     return new BuildoutCfgFile(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

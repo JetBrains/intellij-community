@@ -96,7 +96,7 @@ public class PythonParserDefinition implements ParserDefinition {
     return new PyFileImpl(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode left, ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode left, ASTNode right) {
     // see LanguageTokenSeparatorGenerator instead
     return SpaceRequirements.MAY;
   }
