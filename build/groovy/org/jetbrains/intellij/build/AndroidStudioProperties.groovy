@@ -332,7 +332,7 @@ class AndroidStudioProperties extends BaseIdeaProperties {
       }
 
       buildContext.ant.unzip(
-        src: "$root/prebuilts/tools/common/kotlin-gradle-plugin/kotlin-m2repository.zip",
+        src: "$root/bazel-bin/tools/base/third_party/kotlin/kotlin-m2repository.zip",
         dest: "$targetDirectory/gradle/m2repository")
     }
   }
