@@ -92,7 +92,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     }
   }
 
-  public void compilerActivityStarted() {
+  void compilerActivityStarted() {
     final ExcludeEntryDescription[] excludeEntryDescriptions =
       CompilerConfiguration.getInstance(myService.getProject()).getExcludedEntriesConfiguration().getExcludeEntryDescriptions();
     synchronized (myLock) {
@@ -119,7 +119,7 @@ public class DirtyScopeHolder extends UserDataHolderBase {
     });
   }
 
-  public void compilerActivityFinished() {
+  void compilerActivityFinished() {
     final List<Module> compiledModules = ReadAction.compute(() -> {
       final Project project = myService.getProject();
       if (project.isDisposed()) {

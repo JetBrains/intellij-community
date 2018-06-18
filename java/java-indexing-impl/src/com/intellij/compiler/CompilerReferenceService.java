@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 /**
  * The service is intended to provide an information about class/method/field usages or classes hierarchy that is obtained on compilation time.
- * It means that this service should not affect any find usages result when initial project is not compiled or project language is not support
+ * It means that this service should not affect any find usages result when initial project is not compiled or project language is not supported
  * by {@link LanguageCompilerRefAdapter} extension. Any result provided by this service should be valid even if some part of a given project was
  * modified after compilation.
  */

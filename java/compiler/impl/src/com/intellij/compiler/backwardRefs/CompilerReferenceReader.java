@@ -42,7 +42,7 @@ public abstract class CompilerReferenceReader<Index extends CompilerReferenceInd
 
   @Nullable
   public abstract TIntHashSet findReferentFileIds(@NotNull CompilerRef ref, boolean checkBaseClassAmbiguity) throws StorageException;
-  
+
   @Nullable
   public abstract TIntHashSet findFileIdsWithImplicitToString(@NotNull CompilerRef ref) throws StorageException;
 
