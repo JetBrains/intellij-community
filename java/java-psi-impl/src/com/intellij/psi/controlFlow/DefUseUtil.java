@@ -429,6 +429,9 @@ public class DefUseUtil {
         final Set<PsiElement> res = new THashSet<>();
         class Inner {
           private void traverse(int index) {
+            if (visited[index]) {
+              return;
+            }
             visited [index] = true;
 
             if (defs ()) {
