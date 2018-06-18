@@ -44,7 +44,7 @@ class TBItemAnActionButton extends TBItemButton {
 
     setAction(this::_performAction, true, modality);
 
-    if (action instanceof ToggleAction) {
+    if (action instanceof Toggleable) {
       myFlags |= NSTLibrary.BUTTON_FLAG_TOGGLE;
     }
   }
@@ -105,7 +105,7 @@ class TBItemAnActionButton extends TBItemButton {
     }
 
     boolean isSelected = false;
-    if (myAnAction instanceof ToggleAction) {
+    if (myAnAction instanceof Toggleable) {
       final Object selectedProp = presentation.getClientProperty(Toggleable.SELECTED_PROPERTY);
       isSelected = selectedProp != null && selectedProp == Boolean.TRUE;
     }
