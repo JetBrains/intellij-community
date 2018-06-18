@@ -20,6 +20,8 @@ class RestPythonPreviewProvider : RestPreviewProvider() {
     val commandLine = REST_RUNNER.newCommandLine(sdk, Lists.newArrayList("rst2html"))
     val output = PySdkUtil.getProcessOutput(commandLine, virtualFile.parent.path, null, 5000,
                                             text.toByteArray(CharsetToolkit.UTF8_CHARSET), true)
-    return if (output.isCancelled || output.isTimeout) null else Pair(output.stdout, "<h3>Error output:</h3>" + output.stderr)
+    return if (output.isCancelled || output.isTimeout)
+      Pair("", "Failed to generate html.")
+    else Pair(output.stdout, "<h3>Error output:</h3>" + output.stderr)
   }
 }
