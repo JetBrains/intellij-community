@@ -1081,6 +1081,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+        transferFocus();
       }
       finally {
         finish();
@@ -1145,6 +1146,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
           myLayeredPane.validate();
           myLayeredPane.repaint();
         }
+        transferFocus();
       }
       finally {
         finish();
