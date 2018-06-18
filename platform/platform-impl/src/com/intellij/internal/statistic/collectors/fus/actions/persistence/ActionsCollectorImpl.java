@@ -2,8 +2,6 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
-import com.intellij.ide.plugins.IdeaPluginDescriptor;
-import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
@@ -53,8 +51,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   private static boolean isDevelopedByJetBrains(@NotNull Class aClass) {
     final PluginId pluginId = PluginManagerCore.getPluginByClassName(aClass.getName());
-    final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
-    return plugin == null || plugin.isBundled() || PluginManagerMain.isDevelopedByJetBrains(plugin);
+    return PluginManagerMain.isDevelopedByJetBrains(pluginId);
   }
 
   private State myState = new State();
