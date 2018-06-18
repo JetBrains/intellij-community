@@ -43,7 +43,7 @@ class RecursiveStopwatch(val clock: () -> Long) {
    * The amount of time accumulated on the stopwatch, prior to it being paused. -1 if the stopwatch
    * is currently stopped.
    */
-  var myAccumulated = -1L
+  private var myAccumulated = -1L
 
   constructor() : this({ System.currentTimeMillis() })
 
@@ -53,7 +53,7 @@ class RecursiveStopwatch(val clock: () -> Long) {
    */
   fun start(): Long {
     val currentTime = clock()
-    val result = if (myStartTime == -1L) myAccumulated else myAccumulated + currentTime - myStartTime
+    val result = if (myStartTime == -1L) myAccumulated else myAccumulated + Math.max(0, currentTime - myStartTime)
     myStartTime = currentTime
     myAccumulated = 0L
     return result
@@ -68,6 +68,9 @@ class RecursiveStopwatch(val clock: () -> Long) {
    * number of milliseconds.
    */
   fun end(stateToResume: Long = -1): Long {
+    if (stateToResume < -1L) {
+      throw IllegalArgumentException("stateToResume must be at least -1. Value was ${stateToResume}")
+    }
     if (stateToResume == -1L && myAccumulated == -1L) {
       return -1L
     }
@@ -78,7 +81,9 @@ class RecursiveStopwatch(val clock: () -> Long) {
         result = myAccumulated
       }
       else {
-        result = myAccumulated + currentTime - myStartTime
+        // It's possible for [currentTime] to be less than [myStartTime] if the
+        // user adjusted their system clock in the meantime.
+        result = myAccumulated + Math.max(currentTime - myStartTime, 0)
       }
     }
     if (stateToResume != -1L) {
@@ -100,7 +105,7 @@ class RecursiveStopwatch(val clock: () -> Long) {
    */
   fun pause(): Long {
     if (myStartTime != -1L) {
-      myAccumulated += clock() - myStartTime;
+      myAccumulated += Math.max(0, clock() - myStartTime)
       myStartTime = -1L
     }
     return myAccumulated
@@ -111,7 +116,7 @@ class RecursiveStopwatch(val clock: () -> Long) {
    */
   fun resume() {
     if (myAccumulated == -1L) {
-      return;
+      return
     }
     if (myStartTime == -1L) {
       myStartTime = clock()

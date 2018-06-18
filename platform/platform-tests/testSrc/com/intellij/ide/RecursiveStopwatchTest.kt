@@ -26,6 +26,25 @@ class RecursiveStopwatchTest {
   var stopwatch = RecursiveStopwatch({ currentTime })
 
   /**
+   * Verifies the behavior of [RecursiveStopwatch] in the event that the system time decreases (for example, during a daylight saving
+   * time switch or a network time sync that reduces the system clock). In such cases, [RecursiveStopwatch] is expected to return
+   * 0 elapsed time.
+   */
+  @Test
+  fun testBadSystemClock() {
+    currentTime = -10L
+    stopwatch.start()
+    currentTime = -20L
+    Assert.assertEquals(0L, stopwatch.end())
+    currentTime = -30L
+    stopwatch.start()
+    currentTime = -40L
+    Assert.assertEquals(0L, stopwatch.start())
+    currentTime = -50L
+    Assert.assertEquals(0L, stopwatch.pause())
+  }
+
+    /**
    * Verifies that elapsed time is computed correctly.
    */
   @Test

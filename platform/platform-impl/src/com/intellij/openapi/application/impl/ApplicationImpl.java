@@ -1200,7 +1200,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         // via SystemHealthMonitor.
         long t = System.currentTimeMillis();
         myLock.writeLock();
-        long elapsed = System.currentTimeMillis() - t;
+        long elapsed = Math.max(0, System.currentTimeMillis() - t);
         SystemHealthMonitor.recordWriteLockWaitTime(elapsed);
         if (LOG.isDebugEnabled()) {
           if (elapsed != 0) {
