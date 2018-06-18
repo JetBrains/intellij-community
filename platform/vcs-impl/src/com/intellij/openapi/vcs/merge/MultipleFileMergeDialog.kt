@@ -336,6 +336,9 @@ open class MultipleFileMergeDialog(
     val requestFactory = DiffRequestFactory.getInstance()
     val files = getSelectedFiles()
     if (files.isEmpty()) return
+    if (!beforeResolve(files)) {
+      return
+    }
 
     for (file in files) {
       val mergeData: MergeData
