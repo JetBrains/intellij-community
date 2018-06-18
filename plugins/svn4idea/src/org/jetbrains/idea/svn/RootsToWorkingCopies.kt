@@ -1,142 +1,115 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package org.jetbrains.idea.svn
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.progress.BackgroundTaskQueue;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ZipperUpdater;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.VcsListener;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Alarm;
-import org.jetbrains.annotations.CalledInBackground;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.api.Url;
-import org.jetbrains.idea.svn.info.Info;
-
-import java.io.File;
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
-
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.progress.BackgroundTaskQueue
+import com.intellij.openapi.progress.ProgressIndicator
+import com.intellij.openapi.progress.Task
+import com.intellij.openapi.util.ZipperUpdater
+import com.intellij.openapi.vcs.ProjectLevelVcsManager
+import com.intellij.openapi.vcs.VcsListener
+import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import com.intellij.openapi.vfs.VirtualFile
+import com.intellij.util.Alarm
+import org.jetbrains.annotations.CalledInBackground
+import org.jetbrains.idea.svn.SvnUtil.isAncestor
+import org.jetbrains.idea.svn.api.Url
 
 // 1. listen to roots changes
 // 2. - possibly - to deletion/checkouts??? what if WC roots can be
-public class RootsToWorkingCopies implements VcsListener {
-  private final Object myLock;
-  private final Map<VirtualFile, WorkingCopy> myRootMapping;
-  private final Set<VirtualFile> myUnversioned;
-  private final BackgroundTaskQueue myQueue;
-  private final Project myProject;
-  private final ZipperUpdater myZipperUpdater;
-  private final Runnable myRechecker;
-  private final SvnVcs myVcs;
-
-  public RootsToWorkingCopies(final SvnVcs vcs) {
-    myProject = vcs.getProject();
-    myQueue = new BackgroundTaskQueue(myProject, "SVN VCS roots authorization checker");
-    myLock = new Object();
-    myRootMapping = new HashMap<>();
-    myUnversioned = new HashSet<>();
-    myVcs = vcs;
-    myRechecker = () -> {
-      final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs);
-      synchronized (myLock) {
-        clear();
-        for (VirtualFile root : roots) {
-          addRoot(root);
-        }
-      }
-    };
-    myZipperUpdater = new ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, myProject);
-  }
-
-  private void addRoot(final VirtualFile root) {
-    myQueue.run(new Task.Backgroundable(myProject, "Looking for '" + root.getPath() + "' working copy root", false) {
-      public void run(@NotNull ProgressIndicator indicator) {
-        calculateRoot(root);
-      }
-    });
-  }
-
-  @Nullable
-  @CalledInBackground
-  public WorkingCopy getMatchingCopy(final Url url) {
-    assert (! ApplicationManager.getApplication().isDispatchThread()) || ApplicationManager.getApplication().isUnitTestMode();
-    if (url == null) return null;
-
-    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject));
-    synchronized (myLock) {
-      for (VirtualFile root : roots) {
-        final WorkingCopy wcRoot = getWcRoot(root);
-        if (wcRoot != null && (isAncestor(wcRoot.getUrl(), url) || isAncestor(url, wcRoot.getUrl()))) {
-          return wcRoot;
-        }
+class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
+  private val myLock = Any()
+  private val myProject = myVcs.project
+  private val myRootMapping = mutableMapOf<VirtualFile, WorkingCopy>()
+  private val myUnversioned = mutableSetOf<VirtualFile>()
+  private val myQueue = BackgroundTaskQueue(myProject, "SVN VCS roots authorization checker")
+  private val myZipperUpdater = ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, myProject)
+  private val myRechecker = Runnable {
+    val roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)
+    synchronized(myLock) {
+      clear()
+      for (root in roots) {
+        addRoot(root)
       }
     }
-    return null;
+  }
+
+  private fun addRoot(root: VirtualFile) {
+    myQueue.run(object : Task.Backgroundable(myProject, "Looking for '${root.path}' working copy root", false) {
+      override fun run(indicator: ProgressIndicator) {
+        calculateRoot(root)
+      }
+    })
   }
 
   @CalledInBackground
-  @Nullable
-  public WorkingCopy getWcRoot(@NotNull VirtualFile root) {
-    assert (! ApplicationManager.getApplication().isDispatchThread()) || ApplicationManager.getApplication().isUnitTestMode();
+  fun getMatchingCopy(url: Url?): WorkingCopy? {
+    assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
+    if (url == null) return null
 
-    synchronized (myLock) {
-      if (myUnversioned.contains(root)) return null;
-      final WorkingCopy existing = myRootMapping.get(root);
-      if (existing != null) return existing;
+    val roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(SvnVcs.getInstance(myProject))
+    synchronized(myLock) {
+      for (root in roots) {
+        val wcRoot = getWcRoot(root)
+        if (wcRoot != null && (isAncestor(wcRoot.url, url) || isAncestor(url, wcRoot.url))) {
+          return wcRoot
+        }
+      }
     }
-    return calculateRoot(root);
+    return null
   }
 
-  @Nullable
-  private WorkingCopy calculateRoot(@NotNull VirtualFile root) {
-    File workingCopyRoot = SvnUtil.getWorkingCopyRoot(virtualToIoFile(root));
-    WorkingCopy workingCopy = null;
+  @CalledInBackground
+  fun getWcRoot(root: VirtualFile): WorkingCopy? {
+    assert(!ApplicationManager.getApplication().isDispatchThread || ApplicationManager.getApplication().isUnitTestMode)
+
+    synchronized(myLock) {
+      if (myUnversioned.contains(root)) return null
+      val existing = myRootMapping[root]
+      if (existing != null) return existing
+    }
+    return calculateRoot(root)
+  }
+
+  private fun calculateRoot(root: VirtualFile): WorkingCopy? {
+    val workingCopyRoot = SvnUtil.getWorkingCopyRoot(virtualToIoFile(root))
+    var workingCopy: WorkingCopy? = null
 
     if (workingCopyRoot != null) {
-      final Info svnInfo = myVcs.getInfo(workingCopyRoot);
+      val svnInfo = myVcs.getInfo(workingCopyRoot)
 
-      if (svnInfo != null && svnInfo.getURL() != null) {
-        workingCopy = new WorkingCopy(workingCopyRoot, svnInfo.getURL(), true);
+      if (svnInfo != null && svnInfo.url != null) {
+        workingCopy = WorkingCopy(workingCopyRoot, svnInfo.url, true)
       }
     }
 
-    return registerWorkingCopy(root, workingCopy);
+    return registerWorkingCopy(root, workingCopy)
   }
 
-  private WorkingCopy registerWorkingCopy(@NotNull VirtualFile root, @Nullable WorkingCopy resolvedWorkingCopy) {
-    synchronized (myLock) {
+  private fun registerWorkingCopy(root: VirtualFile, resolvedWorkingCopy: WorkingCopy?): WorkingCopy? {
+    synchronized(myLock) {
       if (resolvedWorkingCopy == null) {
-        myRootMapping.remove(root);
-        myUnversioned.add(root);
-      } else {
-        myUnversioned.remove(root);
-        myRootMapping.put(root, resolvedWorkingCopy);
+        myRootMapping.remove(root)
+        myUnversioned.add(root)
+      }
+      else {
+        myUnversioned.remove(root)
+        myRootMapping[root] = resolvedWorkingCopy
       }
     }
-    return resolvedWorkingCopy;
+    return resolvedWorkingCopy
   }
 
-  public void clear() {
-    synchronized (myLock) {
-      myRootMapping.clear();
-      myUnversioned.clear();
-      myZipperUpdater.stop();
-    }
+  fun clear() = synchronized(myLock) {
+    myRootMapping.clear()
+    myUnversioned.clear()
+    myZipperUpdater.stop()
   }
-  
-  public void directoryMappingChanged() {
+
+  override fun directoryMappingChanged() {
     // todo +- here... shouldnt be
-    myVcs.getAuthNotifier().clear();
+    myVcs.authNotifier.clear()
 
-    myZipperUpdater.queue(myRechecker);
+    myZipperUpdater.queue(myRechecker)
   }
 }
