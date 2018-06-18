@@ -18,7 +18,7 @@ if test -n "$JEDITERM_SOURCE"
   set -e JEDITERM_SOURCE
 end
 
-function override_jb_variables {
+function override_jb_variables
   for variable in (env)
   	set name_and_value (string split -m 2 "=" -- $variable)
   	set name $name_and_value[1]
@@ -30,6 +30,6 @@ function override_jb_variables {
   		end
   	end
   end
-}
+end
 
 override_jb_variables
