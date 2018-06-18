@@ -347,7 +347,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
   private static class MyDocument extends DocumentImpl {
     public MyDocument() {
-      super("");
+      super("", true);
     }
 
     @Override
