@@ -33,7 +33,7 @@ public interface PythonDocumentationLinkProvider {
    * This method was used to provide the fallback URL in case the one returned by {@link #getExternalDocumentationUrl(PsiElement, PsiElement)}
    * doesn't exist. This check is not performed any longer to avoid UI sluggishness.
    *
-   * @deprecated Do your best to provide a valid URL in {@link #getExternalDocumentationUrl(PsiElement, PsiElement)}
+   * @deprecated Do your best to provide a valid URL in {@link #getExternalDocumentationUrl(PsiElement, PsiElement)}. To be removed in 2019.2.
    */
   @Deprecated
   default String getExternalDocumentationRoot(Sdk sdk) {
