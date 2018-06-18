@@ -1136,27 +1136,27 @@
       </group>
       <group id="TouchBarDebug" text="Debugger">
         <reference ref="Rerun"/>
-        <reference ref="Pause"/>
         <reference ref="Resume"/>
+        <reference ref="Pause"/>
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
-        <separator text="type.small"/>
-        <reference ref="StepOver"/>
-        <reference ref="StepInto"/>
-        <reference ref="StepOut"/>
-        <separator text="type.small"/>
-        <reference ref="EvaluateExpression"/>
-        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
-          <separator text="type.small"/>
-          <reference ref="ViewBreakpoints"/>
-          <separator text="type.small"/>
-          <reference ref="ForceStepOver"/>
-          <reference ref="ForceStepInto"/>
-          <reference ref="SmartStepInto"/>
-          <reference ref="RunToCursor"/>
+        <separator text="type.large"/>
+        <group id="TouchBarDebug.StepButtons" compact="true">
+          <reference ref="StepOver"/>
+          <reference ref="StepInto"/>
+          <reference ref="StepOut"/>
         </group>
-        <group id="TouchBarDebug_cmd" text="Debugger with Cmd key"/>
+        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
+          <reference ref="ViewBreakpoints"/>
+          <separator text="type.flexible"/>
+          <group id="TouchBarDebug.ForceStepButtons" compact="true">
+            <reference ref="ForceStepOver"/>
+            <reference ref="ForceStepInto"/>
+            <reference ref="SmartStepInto"/>
+            <reference ref="RunToCursor"/>
+          </group>
+        </group>
       </group>
     </group>
   </actions>

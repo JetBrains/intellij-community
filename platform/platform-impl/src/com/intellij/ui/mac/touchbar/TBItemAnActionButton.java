@@ -29,23 +29,20 @@ class TBItemAnActionButton extends TBItemButton {
 
   private final AnAction myAnAction;
   private final String myActionId;
+  private final int myShowMode;
 
   private boolean myAutoVisibility = true;
-  private final boolean myHiddenWhenDisabled;
-  private final int myShowMode;
+  private boolean myHiddenWhenDisabled = false;
 
   private Component myComponent;
 
-  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
+  TBItemAnActionButton(@NotNull String uid, @Nullable ItemListener listener, @NotNull AnAction action, int showMode, ModalityState modality) {
     super(uid, listener);
     myAnAction = action;
+    myShowMode = showMode;
     myActionId = ActionManager.getInstance().getId(myAnAction);
 
     setAction(this::_performAction, true, modality);
-
-    myAutoVisibility = true;
-    myHiddenWhenDisabled = hiddenWhenDisabled;
-    myShowMode = showMode;
 
     if (action instanceof ToggleAction) {
       myFlags |= NSTLibrary.BUTTON_FLAG_TOGGLE;
@@ -72,6 +69,8 @@ class TBItemAnActionButton extends TBItemButton {
 
   boolean isAutoVisibility() { return myAutoVisibility; }
   void setAutoVisibility(boolean autoVisibility) { myAutoVisibility = autoVisibility; }
+
+  void setHiddenWhenDisabled(boolean hiddenWhenDisabled) { myHiddenWhenDisabled = hiddenWhenDisabled; }
 
   AnAction getAnAction() { return myAnAction; }
 
