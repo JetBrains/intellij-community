@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -31,6 +32,8 @@ class TBItemScrubber extends TBItem {
     };
     if (icon instanceof EmptyIcon)
       icon = null;
+    else if (icon != null)
+      icon = IconLoader.getDarkIcon(icon, true);
     myItems.add(new ItemData(icon, text, nativeAction));
     updateNativePeer();
     return this;

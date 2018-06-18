@@ -4,6 +4,7 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,6 +25,8 @@ class TBItemButton extends TBItem {
   TBItemButton(@NotNull String uid, @Nullable ItemListener listener) { super(uid, listener); }
 
   TBItemButton setIcon(Icon icon) {
+    if (icon != null) icon = IconLoader.getDarkIcon(icon, true);
+
     if (!_equals(icon, myIcon)) {
       myIcon = icon;
       if (myNativePeer != ID.NIL) {

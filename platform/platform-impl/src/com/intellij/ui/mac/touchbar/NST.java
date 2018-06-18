@@ -4,7 +4,6 @@ package com.intellij.ui.mac.touchbar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.mac.foundation.ID;
@@ -234,7 +233,6 @@ public class NST {
     if (icon == null)
       return null;
 
-    icon = IconLoader.getDarkIcon(icon, true);
     final int w = Math.round(icon.getIconWidth()*scale);
     final int h = Math.round(icon.getIconHeight()*scale);
     final WritableRaster
