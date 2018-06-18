@@ -347,7 +347,14 @@ public class BraceHighlightingHandler {
 
   @NotNull
   private FileType getFileTypeByIterator(@NotNull HighlighterIterator iterator) {
-    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, iterator.getStart()).getFileType();
+    int start;
+    try {
+      start = iterator.getStart();
+    }
+    catch (IndexOutOfBoundsException e) {
+      throw new RuntimeException("Error getting file type for " + myEditor + ", text length: " + myDocument.getTextLength(), e);
+    }
+    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, start).getFileType();
   }
 
   @NotNull
