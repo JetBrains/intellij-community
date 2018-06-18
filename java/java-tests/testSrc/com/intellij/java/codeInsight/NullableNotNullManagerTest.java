@@ -24,7 +24,7 @@ public class NullableNotNullManagerTest extends LightPlatformTestCase {
   @Override
   protected void tearDown() throws Exception {
     try {
-      myManager.loadState(new NullableNotNullManagerImpl.StateBean());
+      myManager.loadState(new Element("x"));
     }
     finally {
       super.tearDown();
@@ -40,17 +40,6 @@ public class NullableNotNullManagerTest extends LightPlatformTestCase {
     myManager.setNotNulls(AnnotationUtil.NULLABLE);
     myManager.setNullables(AnnotationUtil.NOT_NULL);
     checkAnnotations();
-  }
-
-  public void testCannotDeserializeNotNullToNullable() {
-    NullableNotNullManagerImpl.StateBean state = myManager.getState();
-    Element tmp = state.myNotNulls;
-    state.myNotNulls = state.myNullables;
-    state.myNullables = tmp;
-
-    myManager.loadState(state);
-    assertFalse(myManager.getNotNulls().contains(AnnotationUtil.NULLABLE));
-    assertFalse(myManager.getNullables().contains(AnnotationUtil.NOT_NULL));
   }
 
   private void checkAnnotations() {

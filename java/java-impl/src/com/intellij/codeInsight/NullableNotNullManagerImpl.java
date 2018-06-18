@@ -5,7 +5,10 @@ import com.intellij.codeInspection.dataFlow.HardcodedContracts;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.DefaultJDOMExternalizer;
+import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.java.stubs.index.JavaAnnotationIndex;
@@ -14,8 +17,6 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.xmlb.annotations.Tag;
-import com.intellij.util.xmlb.annotations.XCollection;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -27,20 +28,15 @@ import static com.intellij.codeInsight.AnnotationUtil.NOT_NULL;
 import static com.intellij.codeInsight.AnnotationUtil.NULLABLE;
 
 @State(name = "NullableNotNullManager")
-public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<NullableNotNullManagerImpl.StateBean> {
+public class NullableNotNullManagerImpl extends NullableNotNullManager implements PersistentStateComponent<Element> {
   public static final String TYPE_QUALIFIER_NICKNAME = "javax.annotation.meta.TypeQualifierNickname";
-  private List<String> myNullables = ContainerUtil.newArrayList(DEFAULT_NULLABLES);
-  private List<String> myNotNulls = ContainerUtil.newArrayList(DEFAULT_NOT_NULLS);
+  private static final String INSTRUMENTED_NOT_NULLS_TAG = "instrumentedNotNulls";
 
-  public static class StateBean {
-    @Tag("option") public Element myNullables = null;
-    @Tag("option") public Element myNotNulls = null;
-    @XCollection(style = XCollection.Style.v2) public List<String> instrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
-    public String myDefaultNullable = NULLABLE;
-    public String myDefaultNotNull = NOT_NULL;
-  }
-
-  private StateBean myState = new StateBean();
+  public String myDefaultNullable = NULLABLE;
+  public String myDefaultNotNull = NOT_NULL;
+  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNullables = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NULLABLES));
+  @SuppressWarnings("deprecation") public final JDOMExternalizableStringList myNotNulls = new JDOMExternalizableStringList(Arrays.asList(DEFAULT_NOT_NULLS));
+  private List<String> myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
 
   public NullableNotNullManagerImpl(Project project) {
     super(project);
@@ -51,7 +47,8 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     LinkedHashSet<String> set = ContainerUtil.newLinkedHashSet(annotations);
     Collections.addAll(set, DEFAULT_NOT_NULLS);
     set.removeAll(Arrays.asList(DEFAULT_NULLABLES));
-    myNotNulls = new ArrayList<>(set);
+    myNotNulls.clear();
+    myNotNulls.addAll(set);
   }
 
   @Override
@@ -59,31 +56,32 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     LinkedHashSet<String> set = ContainerUtil.newLinkedHashSet(annotations);
     Collections.addAll(set, DEFAULT_NULLABLES);
     set.removeAll(Arrays.asList(DEFAULT_NOT_NULLS));
-    myNullables = new ArrayList<>(set);
+    myNullables.clear();
+    myNullables.addAll(set);
   }
 
   @Override
   @NotNull
   public String getDefaultNullable() {
-    return myState.myDefaultNullable;
+    return myDefaultNullable;
   }
 
   @Override
   public void setDefaultNullable(@NotNull String defaultNullable) {
     LOG.assertTrue(getNullables().contains(defaultNullable));
-    myState.myDefaultNullable = defaultNullable;
+    myDefaultNullable = defaultNullable;
   }
 
   @Override
   @NotNull
   public String getDefaultNotNull() {
-    return myState.myDefaultNotNull;
+    return myDefaultNotNull;
   }
 
   @Override
   public void setDefaultNotNull(@NotNull String defaultNotNull) {
     LOG.assertTrue(getNotNulls().contains(defaultNotNull));
-    myState.myDefaultNotNull = defaultNotNull;
+    myDefaultNotNull = defaultNotNull;
   }
 
   @Override
@@ -101,12 +99,12 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   @NotNull
   @Override
   public List<String> getInstrumentedNotNulls() {
-    return Collections.unmodifiableList(myState.instrumentedNotNulls);
+    return Collections.unmodifiableList(myInstrumentedNotNulls);
   }
 
   @Override
   public void setInstrumentedNotNulls(@NotNull List<String> names) {
-    myState.instrumentedNotNulls = ContainerUtil.sorted(names);
+    myInstrumentedNotNulls = ContainerUtil.sorted(names);
   }
 
   @Override
@@ -117,37 +115,58 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @SuppressWarnings("deprecation")
   @Override
-  public StateBean getState() {
-    StateBean state = myState;
+  public Element getState() {
+    Element component = new Element("component");
 
-    state.myNullables = new Element("option").setAttribute("name", "myNullables").addContent(new Element("value"));
-    new JDOMExternalizableStringList(myNullables).writeExternal(state.myNullables.getChild("value"));
-
-    state.myNotNulls = new Element("option").setAttribute("name", "myNotNulls").addContent(new Element("value"));
-    new JDOMExternalizableStringList(myNotNulls).writeExternal(state.myNotNulls.getChild("value"));
-
-    return state;
-  }
-
-  @Override
-  public void loadState(@NotNull StateBean state) {
-    myState = state;
-
-    readJdomList(state.myNullables, myNullables, DEFAULT_NULLABLES);
-    readJdomList(state.myNotNulls, myNotNulls, DEFAULT_NOT_NULLS);
-    myNullables.removeAll(Arrays.asList(DEFAULT_NOT_NULLS));
-    myNotNulls.removeAll(Arrays.asList(DEFAULT_NULLABLES));
-  }
-
-  private static void readJdomList(@Nullable Element src, @NotNull List<String> to, @NotNull String[] defaults) {
-    to.clear();
-    Element value = src != null ? src.getChild("value") : null;
-    if (value != null) {
-      //noinspection deprecation
-      JDOMExternalizableStringList.readList(to, value);
+    if (!hasDefaultValues()) {
+      try {
+        DefaultJDOMExternalizer.writeExternal(this, component);
+      }
+      catch (WriteExternalException e) {
+        LOG.error(e);
+      }
     }
-    if (to.isEmpty()) {
-      Collections.addAll(to, defaults);
+
+    if (myInstrumentedNotNulls.size() != 1 || !NOT_NULL.equals(myInstrumentedNotNulls.get(0))) {
+      // poor man's @XCollection(style = XCollection.Style.v2)
+      Element instrumentedNotNulls = new Element(INSTRUMENTED_NOT_NULLS_TAG);
+      for (String value : myInstrumentedNotNulls) {
+        instrumentedNotNulls.addContent(new Element("option").setAttribute("value", value));
+      }
+      component.addContent(instrumentedNotNulls);
+    }
+
+    return component;
+  }
+
+  private boolean hasDefaultValues() {
+    return NOT_NULL.equals(myDefaultNotNull) &&
+           NULLABLE.equals(myDefaultNullable) &&
+           new HashSet<>(myNullables).equals(ContainerUtil.newHashSet(DEFAULT_NULLABLES)) &&
+           new HashSet<>(myNotNulls).equals(ContainerUtil.newHashSet(DEFAULT_NOT_NULLS));
+  }
+
+  @SuppressWarnings("deprecation")
+  @Override
+  public void loadState(@NotNull Element state) {
+    try {
+      DefaultJDOMExternalizer.readExternal(this, state);
+      if (myNullables.isEmpty()) {
+        Collections.addAll(myNullables, DEFAULT_NULLABLES);
+      }
+      if (myNotNulls.isEmpty()) {
+        Collections.addAll(myNullables, DEFAULT_NOT_NULLS);
+      }
+    }
+    catch (InvalidDataException e) {
+      LOG.error(e);
+    }
+
+    Element instrumented = state.getChild(INSTRUMENTED_NOT_NULLS_TAG);
+    if (instrumented != null) {
+      myInstrumentedNotNulls = ContainerUtil.mapNotNull(instrumented.getChildren("option"), o -> o.getAttributeValue("value"));
+    } else {
+      myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
     }
   }
 
