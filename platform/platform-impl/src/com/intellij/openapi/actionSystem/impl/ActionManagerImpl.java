@@ -1314,7 +1314,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Disposab
         }
 
         Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);
-        if (component != null && !component.isShowing()) {
+        if (component != null && !component.isShowing() && !ActionPlaces.TOUCHBAR_GENERAL.equals(place)) {
           result.setRejected();
           return;
         }
