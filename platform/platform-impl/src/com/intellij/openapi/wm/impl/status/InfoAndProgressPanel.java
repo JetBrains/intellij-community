@@ -703,7 +703,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         } else {
           suspender.suspendProcess(null);
         }
-        ActionsCollector.getInstance().record(suspender.isSuspended() ? "Progress Paused" : "Progress Resumed");
+        ActionsCollector.getInstance().record(
+          suspender.isSuspended() ? "Progress Paused" : "Progress Resumed",
+          MyInlineProgressIndicator.class
+        );
       }).setFillBg(false);
       suspendButton.setVisible(false);
 
