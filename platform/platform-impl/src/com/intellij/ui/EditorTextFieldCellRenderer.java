@@ -16,7 +16,6 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
@@ -188,7 +187,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     void setTextToEditor(String text) {
       myEditor.getMarkupModel().removeAllHighlighters();
-      WriteAction.run(() -> myEditor.getDocument().setText(text));
+      myEditor.getDocument().setText(text);
       ((EditorImpl)myEditor).resetSizes();
       myEditor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
