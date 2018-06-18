@@ -72,9 +72,9 @@
                      implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
   </extensions>
 
-  <extensions defaultExtensionNs="Json">
-    <Like.Psi.Walker.Factory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
-    <Schema.Enabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+  <extensions defaultExtensionNs="com.intellij.json">
+    <Json.Like.Psi.Walker.Factory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
+    <Json.Schema.Enabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
   </extensions>
 
   <extensions defaultExtensionNs="com.intellij.spellchecker">
