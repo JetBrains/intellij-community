@@ -413,6 +413,7 @@
 
     <group id="ToolbarRunGroup">
       <separator/>
+      <reference ref="RunAnything"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
