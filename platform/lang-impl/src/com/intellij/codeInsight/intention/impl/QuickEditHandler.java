@@ -22,6 +22,7 @@ import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CommonShortcuts;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionManager;
@@ -204,17 +205,22 @@ public class QuickEditHandler implements Disposable, DocumentListener {
         editor.putUserData(QuickEditAction.QUICK_EDIT_HANDLER, this);
         final FoldingModel foldingModel = editor.getFoldingModel();
         foldingModel.runBatchFoldingOperation(() -> {
+          CharSequence sequence = myNewDocument.getImmutableCharSequence();
           for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
             String replacement = o.getUserData(REPLACEMENT_KEY);
             if (StringUtil.isEmpty(replacement)) continue;
-            FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
+            int start = o.getStartOffset();
+            int end = o.getEndOffset();
+            start += StringUtil.countChars(sequence, '\n', start, end, true);
+            end -= StringUtil.countChars(sequence, '\n', end, start, true);
+            FoldRegion region = start <= end ? foldingModel.addFoldRegion(start, end, replacement) : null;
             if (region != null) region.setExpanded(false);
           }
         });
       }
-      SwingUtilities.invokeLater(() -> myEditor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE));
-
     }
+    ApplicationManager.getApplication().invokeLater(
+      () -> myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER), ModalityState.any());
   }
 
   public static void showBalloon(Editor editor, PsiFile newFile, JComponent component) {
