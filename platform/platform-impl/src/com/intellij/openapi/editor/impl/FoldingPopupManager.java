@@ -42,9 +42,9 @@ class FoldingPopupManager implements EditorMouseListener, EditorMouseMotionListe
       FoldRegion fold = ((EditorEx)editor).getFoldingModel().getFoldingPlaceholderAt(point);
       TooltipController controller = TooltipController.getInstance();
       if (fold != null && !fold.shouldNeverExpand()) {
-        DocumentFragment range = createDocumentFragment(fold);
         myAlarm.addRequest(() -> {
-          if (!editor.getComponent().isShowing()) return;
+          if (!editor.getComponent().isShowing() || !fold.isValid() || fold.isExpanded()) return;
+          DocumentFragment range = createDocumentFragment(fold);
           Point p = SwingUtilities.convertPoint((Component)mouseEvent.getSource(), point,
                                                 editor.getComponent().getRootPane().getLayeredPane());
           controller.showTooltip(editor, p, new DocumentFragmentTooltipRenderer(range), false, FOLDING_TOOLTIP_GROUP);
