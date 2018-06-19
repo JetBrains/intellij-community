@@ -113,7 +113,7 @@ class PyAddPipEnvPanel(private val project: Project?,
     val executable = getPipEnvExecutable() ?: return ValidationInfo("Pipenv executable is not found on \$PATH. $tip")
     return when {
       !executable.exists() -> ValidationInfo("File ${executable.absolutePath} is not found. $tip")
-      Files.isExecutable(executable.toPath()) -> ValidationInfo("Cannot execute ${executable.absolutePath}")
+      !Files.isExecutable(executable.toPath()) -> ValidationInfo("Cannot execute ${executable.absolutePath}")
       else -> null
     }
   }
