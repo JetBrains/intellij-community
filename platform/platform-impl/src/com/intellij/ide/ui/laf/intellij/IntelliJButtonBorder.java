@@ -2,7 +2,6 @@
 package com.intellij.ide.ui.laf.intellij;
 
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonPainter;
-import com.intellij.ui.Gray;
 import com.intellij.util.ui.JBInsets;
 
 import javax.swing.*;
@@ -19,13 +18,15 @@ public class IntelliJButtonBorder extends DarculaButtonPainter {
     Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
     Rectangle r = new Rectangle(b.getSize());
     JBInsets.removeFrom(r, b.getInsets());
+    boolean defButton = isDefaultButton(b);
 
     return button.isEnabled() ? borderColor != null ? borderColor :
-        button.hasFocus() ?
-        UIManager.getColor(isDefaultButton(b) ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor") :
-        isDefaultButton(b) ?
-          new GradientPaint(0, 0, new Color(0x4779ba), 0, r.height, new Color(0x3167ad)) :
-          new GradientPaint(0, 0, Gray.xBF, 0, r.height, Gray.xB8)
+      button.hasFocus() ?
+        UIManager.getColor(defButton ? "Button.darcula.defaultFocusedOutlineColor" : "Button.darcula.focusedOutlineColor") :
+        new GradientPaint(0, 0,
+                          UIManager.getColor(defButton ? "Button.darcula.outlineDefaultStartColor" : "Button.darcula.outlineStartColor"),
+                          0, r.height,
+                          UIManager.getColor(defButton ? "Button.darcula.outlineDefaultEndColor" : "Button.darcula.outlineEndColor"))
       : UIManager.getColor("Button.darcula.disabledOutlineColor");
   }
 }
