@@ -79,7 +79,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   protected final TodoTreeBuilder myTodoTreeBuilder;
   private MyVisibilityWatcher myVisibilityWatcher;
   private UsagePreviewPanel myUsagePreviewPanel;
-  private MyAutoScrollToSourceHandler myAtoScrollToSourceHandler;
+  private MyAutoScrollToSourceHandler myAutoScrollToSourceHandler;
 
   /**
    * @param currentFileMode if {@code true} then view doesn't have "Group By Packages" and "Flatten Packages"
@@ -177,8 +177,8 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
       toolbarGroup.add(groupBy);
     }
 
-    myAtoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
-    myAtoScrollToSourceHandler.install(myTree);
+    myAutoScrollToSourceHandler = new MyAutoScrollToSourceHandler();
+    myAutoScrollToSourceHandler.install(myTree);
 
     toolbarGroup.add(new MyPreviewAction());
     toolBarPanel.add(ActionManager.getInstance().createActionToolbar(ActionPlaces.TODO_VIEW_TOOLBAR, toolbarGroup, false).getComponent());
@@ -226,7 +226,7 @@ abstract class TodoPanel extends SimpleToolWindowPanel implements OccurenceNavig
   }
 
   protected AnAction createAutoScrollToSourceAction() {
-    return myAtoScrollToSourceHandler.createToggleAction();
+    return myAutoScrollToSourceHandler.createToggleAction();
   }
 
   protected JComponent createCenterComponent() {
