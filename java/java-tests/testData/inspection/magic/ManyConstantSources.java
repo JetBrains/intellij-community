@@ -24,13 +24,13 @@ class Const2 {
   public static final int I = 4;
 }
 
-public class X {
+class X {
 
   void f(@MagicConstant(intValues = {Const1.X, Const2.I}) int x) {
     /////////// BAD
-    f(0);
-    f(1);
-    f(Const1.X | Const2.I);
+    f(<warning descr="Should be one of: Const1.X, Const2.I">0</warning>);
+    f(<warning descr="Should be one of: Const1.X, Const2.I">1</warning>);
+    f(<warning descr="Should be one of: Const1.X, Const2.I">Const1.X | Const2.I</warning>);
 
     ////////////// GOOD
     f(Const1.X);
@@ -41,9 +41,9 @@ public class X {
 
   void f2(@MagicConstant(valuesFromClass = Const1.class, intValues = {Const2.I}) int x) {
     /////////// BAD
-    f2(0);
-    f2(1);
-    f2(Const1.X | Const2.I);
+    f2(<warning descr="Should be one of: Const2.I, Const1.X">0</warning>);
+    f2(<warning descr="Should be one of: Const2.I, Const1.X">1</warning>);
+    f2(<warning descr="Should be one of: Const2.I, Const1.X">Const1.X | Const2.I</warning>);
 
     ////////////// GOOD
     f2(Const1.X);
@@ -54,11 +54,11 @@ public class X {
 
   void f3(@MagicConstant(flags = {Const1.X, Const2.I}) int x) {
     /////////// BAD
-    f3(2);
-    f3(1);
-    f(Const1.X | Const2.I);
+    f3(<warning descr="Should be one of: Const1.X, Const2.I or their combination">2</warning>);
+    f3(<warning descr="Should be one of: Const1.X, Const2.I or their combination">1</warning>);
+    f(<warning descr="Should be one of: Const1.X, Const2.I">Const1.X | Const2.I</warning>);
     int i = Const1.X | 4;
-    f3(i);
+    f3(<warning descr="Should be one of: Const1.X, Const2.I or their combination">i</warning>);
 
     ////////////// GOOD
     f3(Const1.X);
@@ -69,8 +69,8 @@ public class X {
 
   void f4(@MagicConstant(flagsFromClass = Const1.class, flags = {Const2.I}) int x) {
     /////////// BAD
-    f4(-3);
-    f4(1);
+    f4(<warning descr="Should be one of: Const2.I, Const1.X or their combination">-3</warning>);
+    f4(<warning descr="Should be one of: Const2.I, Const1.X or their combination">1</warning>);
     
     ////////////// GOOD
     f4(Const1.X);
