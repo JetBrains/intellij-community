@@ -31,6 +31,10 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) return WidgetState.HIDDEN;
     CodeStyleSettings.IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
+    CodeStyleSettings.IndentOptions projectIndentOptions = CodeStyle.getIndentOptionsByFileType(psiFile);
+    if (projectIndentOptions.equals(indentOptions)) {
+      return WidgetState.HIDDEN;
+    }
     return createWidgetState(indentOptions);
   }
 
