@@ -8,6 +8,7 @@ import circlet.runtime.*
 import circlet.settings.*
 import com.intellij.openapi.project.*
 import com.intellij.ui.components.*
+import com.intellij.uiDesigner.core.*
 import klogging.*
 import kotlinx.coroutines.experimental.*
 import runtime.async.*
@@ -20,18 +21,24 @@ private val LOG = KLoggers.logger("circlet.reviews.ReviewsFormKt")
 class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     Lifetimed by NestedLifetimed(parentLifetime) {
 
-    lateinit var panel: JPanel
-        private set
+    val panel = JPanel(GridLayoutManager(1, 1))
 
-    private lateinit var list: JBList<CodeReviewWithCount>
     private val model = ReviewsListModel()
+    private val list = JBList<CodeReviewWithCount>(model)
 
     private val reloader = updater<Unit>("Reviews Reloader") {
         reloadImpl()
     }
 
     init {
-        list.model = model
+        panel.add(
+            list,
+            GridConstraints().apply {
+                row = 0
+                column = 0
+                fill = GridConstraints.FILL_BOTH
+            }
+        )
     }
 
     fun reload() {
