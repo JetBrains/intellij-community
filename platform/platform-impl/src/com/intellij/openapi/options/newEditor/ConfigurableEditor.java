@@ -3,7 +3,7 @@ package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
-import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -71,7 +71,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       if (myConfigurable != null) {
         ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
-        FeatureUsageUiEvents.INSTANCE.logResetConfigurable(getConfigurableEventId(myConfigurable));
+        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(getConfigurableEventId(myConfigurable), myConfigurable.getClass());
       }
     }
   };
@@ -243,7 +243,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       updateCurrent(configurable, false);
       postUpdateCurrent(configurable);
       if (configurable != null) {
-        FeatureUsageUiEvents.INSTANCE.logSelectConfigurable(getConfigurableEventId(configurable));
+        FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(getConfigurableEventId(configurable), configurable.getClass());
       }
     });
     return callback;
@@ -315,7 +315,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       try {
         configurable.apply();
         final String key = getConfigurableEventId(configurable);
-        FeatureUsageUiEvents.INSTANCE.logApplyConfigurable(key);
+        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(key, configurable.getClass());
       }
       catch (ConfigurationException exception) {
         return exception;

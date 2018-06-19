@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -1792,14 +1792,14 @@ public abstract class DialogWrapper {
   private void logCloseDialogEvent(int exitCode) {
     final String dialogId = getLoggedDialogId();
     if (StringUtil.isNotEmpty(dialogId)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(dialogId, exitCode);
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
     }
   }
 
   private void logShowDialogEvent() {
     final String dialogId = getLoggedDialogId();
     if (StringUtil.isNotEmpty(dialogId)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(dialogId);
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
     }
   }
 
