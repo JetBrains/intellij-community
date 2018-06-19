@@ -714,7 +714,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more than 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+        int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+        for (int i = 0; i < componentCount; i++) {
+          final Component component = getComponent(i);
+          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+            maxRowWidth -= getChildPreferredSize(i).width;
+          }
+        }
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
             xOffset = 0;
@@ -764,7 +770,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
+        int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
+        for (int i = 0; i < componentCount; i++) {
+          final Component component = getComponent(i);
+          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+            maxRowWidth -= getChildPreferredSize(i).width;
+          }
+        }
+
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (xOffset + d.width > maxRowWidth) { // place component at new row
