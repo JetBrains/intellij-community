@@ -23,6 +23,18 @@ public class ReplaceSwitchWithIflIntentionTest extends IPPTestCase {
     doTest();
   }
 
+  public void testReplaceInteger() {
+    doTest();
+  }
+
+  public void testReplaceChar() {
+    doTest();
+  }
+
+  public void testReplaceCharacter() {
+    doTest();
+  }
+
   @Override
   protected String getIntentionName() {
     return "Replace 'switch' with 'if'";
