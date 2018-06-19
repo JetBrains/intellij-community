@@ -1,6 +1,5 @@
 package circlet.tools
 
-import circlet.messages.*
 import circlet.utils.*
 import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
@@ -16,18 +15,6 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
         Disposer.register(content, panel)
 
         content.isCloseable = false
-
-        val contentManager = toolWindow.contentManager
-
-        contentManager.addContentManagerListener(object : ContentManagerAdapter() {
-            override fun contentAdded(event: ContentManagerEvent) {
-                content.updateDisplayName()
-            }
-
-            override fun contentRemoved(event: ContentManagerEvent) {
-                content.updateDisplayName()
-            }
-        })
 
         val toolWindowVisible = toolWindow.isVisible
 
@@ -45,7 +32,7 @@ class CircletToolWindowFactory : ToolWindowFactory, DumbAware {
             }
         })
 
-        contentManager.addContent(content)
+        toolWindow.contentManager.addContent(content)
 
         if (toolWindowVisible) {
             panel.reload()
@@ -61,12 +48,3 @@ val Project.toolWindow: ToolWindow?
     get() = computeSafe {
         toolWindowManager.getToolWindow(CircletToolWindowFactory.TOOL_WINDOW_ID)
     }
-
-private fun Content.updateDisplayName() {
-    displayName = if (manager.contentCount > 1) {
-        CircletBundle.message("review-list-content.display-name")
-    }
-    else {
-        ""
-    }
-}
