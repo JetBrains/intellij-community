@@ -153,8 +153,14 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-        thickness = Math.max(thickness, 0.5 + thickness * metrics.getUnderlineThickness());
-        double offset = Math.min(height - thickness, Math.max(1, 0.5 + metrics.getUnderlineOffset()));
+        double offset;
+        if (UIUtil.isJreHiDPI(g)) {
+          thickness *= metrics.getUnderlineThickness();
+          offset = Math.min(height - thickness, metrics.getUnderlineOffset());
+        } else {
+          thickness = (int)(Math.max(thickness, 0.5 + thickness * metrics.getUnderlineThickness()));
+          offset = (int)(Math.min(height - thickness, (int)Math.max(1, 0.5 + metrics.getUnderlineOffset())));
+        }
         if (offset < 1) {
           offset = height > 3 ? 1 : 0;
           thickness = height - offset;
