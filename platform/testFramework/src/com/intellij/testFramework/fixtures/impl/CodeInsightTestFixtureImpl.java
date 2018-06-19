@@ -1486,6 +1486,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public String getFoldingDescription(boolean withCollapseStatus) {
     final Editor topEditor = getHostEditor();
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+    return getFoldingData(topEditor, withCollapseStatus);
+  }
+
+  @NotNull
+  public static String getFoldingData(Editor topEditor, boolean withCollapseStatus) {
     return getTagsFromSegments(topEditor.getDocument().getText(),
                                Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
@@ -1540,8 +1545,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertNotNull(expectedContent);
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
-    final String cleanContent = expectedContent.replaceAll("<" + FOLD + "\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>", "")
-      .replace("</" + FOLD + ">", "");
+    final String cleanContent = removeFoldingMarkers(expectedContent);
     if (destinationFileName == null) {
       configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
     }
@@ -1560,6 +1564,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (!expectedContent.equals(actual)) {
       throw new FileComparisonFailure(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
     }
+  }
+
+  @NotNull
+  public static String removeFoldingMarkers(String expectedContent) {
+    return expectedContent.replaceAll("<" + FOLD + "\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>", "")
+      .replace("</" + FOLD + ">", "");
   }
 
   @Override
