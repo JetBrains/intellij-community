@@ -7,6 +7,7 @@ import circlet.platform.api.*
 import circlet.runtime.*
 import circlet.settings.*
 import com.intellij.openapi.project.*
+import com.intellij.ui.components.*
 import klogging.*
 import kotlinx.coroutines.experimental.*
 import runtime.async.*
@@ -22,8 +23,15 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     lateinit var panel: JPanel
         private set
 
+    private lateinit var list: JBList<CodeReviewWithCount>
+    private val model = ReviewsListModel()
+
     private val reloader = updater<Unit>("Reviews Reloader") {
         reloadImpl()
+    }
+
+    init {
+        list.model = model
     }
 
     fun reload() {
@@ -39,7 +47,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     private fun reload(reviews: List<CodeReviewWithCount>) {
-        println("reviews = $reviews") // TODO
+        model.elements = reviews
     }
 }
 
