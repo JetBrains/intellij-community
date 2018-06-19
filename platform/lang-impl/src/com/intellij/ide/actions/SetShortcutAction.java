@@ -27,7 +27,6 @@ public class SetShortcutAction extends AnAction implements DumbAware {
     if (seDialog == null) {
       return;
     }
-    seDialog.cancel();
 
     KeymapManager km = KeymapManager.getInstance();
     Keymap activeKeymap = km != null ? km.getActiveKeymap() : null;
@@ -41,6 +40,7 @@ public class SetShortcutAction extends AnAction implements DumbAware {
       return;
     }
 
+    seDialog.cancel();
     String id = ActionManager.getInstance().getId(action);
     KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, component);
   }
@@ -52,6 +52,13 @@ public class SetShortcutAction extends AnAction implements DumbAware {
     Project project = e.getProject();
     JBPopup seDialog = project == null ? null : project.getUserData(SearchEverywhereAction.SEARCH_EVERYWHERE_POPUP);
     if (seDialog == null) {
+      presentation.setEnabled(false);
+      return;
+    }
+
+    KeymapManager km = KeymapManager.getInstance();
+    Keymap activeKeymap = km != null ? km.getActiveKeymap() : null;
+    if (activeKeymap == null) {
       presentation.setEnabled(false);
       return;
     }
