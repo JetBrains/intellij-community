@@ -53,5 +53,6 @@
     <orderEntry type="library" name="org.apache.httpcomponents:fluent-hc" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
     <orderEntry type="library" name="netty-handler" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
   </component>
 </module>

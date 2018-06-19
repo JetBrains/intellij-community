@@ -431,6 +431,9 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", version: "0.0.6", license: "Apache 2.0",
                        url: "https://github.com/javadelight/delight-rhino-sandbox", licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
 
+    new LibraryLicense(name: "error-prone-annotations", libraryName: "error-prone-annotations", version: "2.3.1", license: "Apache 2.0",
+                       url: "https://github.com/google/error-prone", licenseUrl: "https://github.com/google/error-prone/blob/master/COPYING"),
+
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("CoverageReport"),
