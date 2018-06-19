@@ -349,7 +349,10 @@ def enable_thrift_logging():
     logger.addHandler(ch)
 
 
-def start_server():
+def start_server(port):
+    if port is None:
+        port = 0
+
     # 0. General stuff
 
     #replace exit (see comments on method)
@@ -371,7 +374,7 @@ def start_server():
     # `InterpreterInterface` implements all methods required for the handler
     server_handler = interpreter
 
-    server_socket = start_rpc_server_and_make_client('', 0, server_service, client_service, server_handler)
+    server_socket = start_rpc_server_and_make_client('', port, server_service, client_service, server_handler)
 
 
     # 2. Print server port for the IDE
@@ -603,4 +606,4 @@ if __name__ == '__main__':
 
         pydevconsole.start_client(host, port)
     elif mode == 'server':
-        pydevconsole.start_server()
+        pydevconsole.start_server(port)
