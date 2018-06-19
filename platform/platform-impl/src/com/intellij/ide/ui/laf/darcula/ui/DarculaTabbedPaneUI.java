@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
@@ -57,9 +58,18 @@ public class DarculaTabbedPaneUI extends BasicTabbedPaneUI {
   protected void installDefaults() {
     super.installDefaults();
 
+    modifyFontSize();
+
     Object rStyle = UIManager.get("TabbedPane.tabFillStyle");
     tabStyle = rStyle != null ? TabStyle.valueOf(rStyle.toString()) : TabStyle.underline;
     contentBorderInsets = tabPane.getTabLayoutPolicy() == JTabbedPane.WRAP_TAB_LAYOUT ? JBUI.insetsTop(1) : JBUI.emptyInsets();
+  }
+
+  private void modifyFontSize() {
+    if (SystemInfo.isMac || SystemInfo.isLinux) {
+      Font font = tabPane.getFont();
+      tabPane.setFont(tabPane.getFont().deriveFont((float)font.getSize() - JBUI.scale(1.0f)));
+    }
   }
 
   @Override
