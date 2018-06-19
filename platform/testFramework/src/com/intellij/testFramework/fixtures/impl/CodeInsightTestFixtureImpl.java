@@ -39,7 +39,6 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -108,8 +107,6 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
-import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
@@ -559,16 +556,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (filePaths.length != 0) {
       configureByFilesInner(filePaths);
     }
-    List<HighlightInfo> infos = doHighlighting();
-    List<IntentionAction> actions = new ArrayList<>();
-    for (HighlightInfo info : infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          actions.add(pair.getFirst().getAction());
-        }
-      }
-    }
-    return actions;
+    return myEditorTestFixture.getAllQuickFixes();
   }
 
   @Override
@@ -1701,26 +1689,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Crumb> getBreadcrumbsAtCaret() {
-    PsiElement element = getFile().findElementAt(getCaretOffset());
-    if (element == null) {
-      return Collections.emptyList();
-    }
-    final Language language = element.getContainingFile().getLanguage();
-
-    final BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
-
-    if (provider == null) {
-      return Collections.emptyList();
-    }
-
-    List<Crumb> result = new ArrayList<>();
-    while (element != null) {
-      if (provider.acceptElement(element)) {
-        result.add(new Crumb.Impl(provider, element));
-      }
-      element = provider.getParent(element);
-    }
-    return ContainerUtil.reverse(result);
+    return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
   @NotNull
