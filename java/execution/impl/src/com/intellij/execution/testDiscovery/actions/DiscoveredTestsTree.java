@@ -44,7 +44,7 @@ class DiscoveredTestsTree extends Tree implements DataProvider {
     setModel(new AsyncTreeModel(myModel));
     HintUpdateSupply.installHintUpdateSupply(this, DiscoveredTestsTree::obj2psi);
     TreeUIHelper.getInstance().installTreeSpeedSearch(this, o -> {
-      Object component = o.getLastPathComponent();
+      Object component = obj2psi(o.getLastPathComponent());
       return component instanceof PsiMember ? ((PsiMember)component).getName() : null;
     }, true);
     getSelectionModel().setSelectionMode(TreeSelectionModel.CONTIGUOUS_TREE_SELECTION);
