@@ -37,6 +37,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -447,10 +448,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         return null;
       }
       final int methodOffset = method.getTextOffset();
-      if (methodOffset < 0) {
-        return null;
-      }
-      if (document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
+      if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
         return null;
       }
 
