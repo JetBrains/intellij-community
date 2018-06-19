@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
+import com.intellij.ide.actions.SetShortcutAction;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -108,6 +109,17 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
   @Override
   public Object getDataForItem(Object element, String dataId) {
+    if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
+      Object value = ((GotoActionModel.MatchedValue)element).value;
+      if (value instanceof GotoActionModel.ActionWrapper) {
+        value = ((GotoActionModel.ActionWrapper)value).getAction();
+      }
+
+      if (value instanceof AnAction) {
+        return value;
+      }
+    }
+
     return null;
   }
 

@@ -896,5 +896,10 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
     <action class="com.intellij.ide.actions.SelectInProjectViewAction" id="SelectInProjectView" text="Select in Project View" />
+
+    <action id="SetShortcutAction"
+            class="com.intellij.ide.actions.SetShortcutAction"
+            use-shortcut-of="ShowIntentionActions"
+    />
   </actions>
 </idea-plugin>
