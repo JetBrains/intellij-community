@@ -1,0 +1,18 @@
+Index: platform/util/src/com/intellij/openapi/util/IconLoader.java
+IDEA additional info:
+Subsystem: com.intellij.openapi.diff.impl.patch.CharsetEP
+<+>UTF-8
+===================================================================
+--- community/platform/util/src/com/intellij/openapi/util/IconLoader.java	(revision 6e709e4711fe4b82610d3389fa521c25c78b42ff)
++++ community/platform/util/src/com/intellij/openapi/util/IconLoader.java	(revision 6acb76606568117574654091f9cf84f61e35c8f9)
+@@ -194,6 +194,10 @@
+     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
+ 
+     URL myURL = findURL(path, classLoader);
++    // Some plugins use findIcon("icon.png",IconContainer.class)
++    if (myURL == null) {
++      myURL = findURL(path, aClass);
++    }
+     if (myURL == null) {
+       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
+       return null;
