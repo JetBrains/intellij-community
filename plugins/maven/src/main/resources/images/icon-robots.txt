@@ -1,0 +1,1 @@
+deprecated: offlineMode.png -> com.intellij.icons.AllIcons@/actions/offlineMode.svg; to be removed in IDEA 2020 - use AllIcons.Actions.OfflineMode

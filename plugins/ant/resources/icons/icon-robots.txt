@@ -1,0 +1,1 @@
+deprecated: properties.png -> com.intellij.icons.AllIcons@/actions/properties.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Properties
