@@ -108,7 +108,7 @@ open class DistinctByKeyHandler(callNumber: Int, private val myCall: Intermediat
       doReturn(myTime2ValueAfter.set(dsl.currentTime(), lambdaArg))
     }
 
-    callsAfter.add(dsl.createPeekCall(myTypeAfter, lambda.toCode()))
+    callsAfter.add(dsl.createPeekCall(myTypeAfter, lambda))
     return callsAfter
   }
 

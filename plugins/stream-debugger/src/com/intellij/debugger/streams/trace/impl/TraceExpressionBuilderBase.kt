@@ -89,7 +89,7 @@ abstract class TraceExpressionBuilderBase(protected val dsl: Dsl, private val ha
   private fun createTimePeekCall(elementType: GenericType): IntermediateStreamCall {
     val lambda = dsl.lambda("x") {
       doReturn(dsl.updateTime())
-    }.toCode()
+    }
 
     return dsl.createPeekCall(elementType, lambda)
   }
