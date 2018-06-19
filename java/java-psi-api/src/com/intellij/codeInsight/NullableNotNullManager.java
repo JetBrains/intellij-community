@@ -96,21 +96,21 @@ public abstract class NullableNotNullManager {
 
   @Nullable
   public PsiAnnotation copyNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityAnnotationInfo(original);
+    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
     if (info == null || info.getNullability() != Nullability.NOT_NULL) return null;
     return copyAnnotation(info.getAnnotation(), generated);
   }
 
   @Nullable
   public PsiAnnotation copyNullableAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityAnnotationInfo(original);
+    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
     if (info == null || info.getNullability() != Nullability.NULLABLE) return null;
     return copyAnnotation(info.getAnnotation(), generated);
   }
 
   @Nullable
   public PsiAnnotation copyNullableOrNotNullAnnotation(@NotNull PsiModifierListOwner original, @NotNull PsiModifierListOwner generated) {
-    NullabilityAnnotationInfo info = findOwnNullabilityAnnotationInfo(original);
+    NullabilityAnnotationInfo info = findOwnNullabilityInfo(original);
     if (info == null) return null;
     return copyAnnotation(info.getAnnotation(), generated);
   }
@@ -133,7 +133,7 @@ public abstract class NullableNotNullManager {
 
   /** @deprecated use {@link #copyNotNullAnnotation(PsiModifierListOwner, PsiModifierListOwner)} (to be removed in IDEA 17) */
   public PsiAnnotation copyNotNullAnnotation(PsiModifierListOwner owner) {
-    NullabilityAnnotationInfo info = findOwnNullabilityAnnotationInfo(owner);
+    NullabilityAnnotationInfo info = findOwnNullabilityInfo(owner);
     if (info == null || info.getNullability() != Nullability.NOT_NULL) return null;
     return copyAnnotation(owner, info.getAnnotation());
   }
@@ -194,7 +194,7 @@ public abstract class NullableNotNullManager {
    * @return own nullability annotation info.
    */
   @Nullable
-  public NullabilityAnnotationInfo findOwnNullabilityAnnotationInfo(@NotNull PsiModifierListOwner owner) {
+  public NullabilityAnnotationInfo findOwnNullabilityInfo(@NotNull PsiModifierListOwner owner) {
     PsiType type = getOwnerType(owner);
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
@@ -217,7 +217,7 @@ public abstract class NullableNotNullManager {
    * @return effective nullability annotation info, or null if not found.
    */
   @Nullable
-  public NullabilityAnnotationInfo findEffectiveNullabilityAnnotationInfo(@NotNull PsiModifierListOwner owner) {
+  public NullabilityAnnotationInfo findEffectiveNullabilityInfo(@NotNull PsiModifierListOwner owner) {
     PsiType type = getOwnerType(owner);
     if (type == null || TypeConversionUtil.isPrimitiveAndNotNull(type)) return null;
 
@@ -437,7 +437,7 @@ public abstract class NullableNotNullManager {
    * @return found nullability; {@link Nullability#UNKNOWN} if not specified or non-applicable
    */
   public static Nullability getNullability(@NotNull PsiModifierListOwner owner) {
-    NullabilityAnnotationInfo info = getInstance(owner.getProject()).findEffectiveNullabilityAnnotationInfo(owner);
+    NullabilityAnnotationInfo info = getInstance(owner.getProject()).findEffectiveNullabilityInfo(owner);
     return info == null ? Nullability.UNKNOWN : info.getNullability();
   }
 

@@ -510,7 +510,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   private static void checkNotNullFieldsInitialized(PsiField field, NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
-    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(field);
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(field);
     if (info == null ||
         info.getNullability() != Nullability.NOT_NULL ||
         HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
@@ -580,7 +580,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @NotNull
   private static String getPresentableAnnoName(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityAnnotationInfo(owner);
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
     String name = info == null ? null : info.getAnnotation().getQualifiedName();
     if (name == null) {
       return "???";
@@ -775,7 +775,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                fix);
       }
       if (isNotNullParameterOverridingNonAnnotated(nullableManager, parameter, superParameters)) {
-        NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityAnnotationInfo(parameter);
+        NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
         assert info != null;
         PsiAnnotation notNullAnnotation = info.getAnnotation();
         boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
@@ -828,7 +828,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       elementToHighlight = parameter.getNameIdentifier();
     }
     else {
-      NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityAnnotationInfo(parameter);
+      NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
       if (info == null || info.getNullability() != Nullability.NOT_NULL || info.isInferred()) return;
       PsiAnnotation notNullAnnotation = info.getAnnotation();
       boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
