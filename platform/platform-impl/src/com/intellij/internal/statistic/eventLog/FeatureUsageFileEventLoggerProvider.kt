@@ -10,6 +10,6 @@ class FeatureUsageFileEventLoggerProvider : FeatureUsageEventLoggerProvider {
   }
 
   override fun isEnabled() : Boolean {
-    return StatisticsUploadAssistant.isSendAllowed() && Registry.`is`("feature.usage.event.log.collect.and.upload")
+    return StatisticsUploadAssistant.isSendAllowed() || Registry.`is`("feature.usage.event.log.collect.and.upload")
   }
 }
