@@ -121,7 +121,7 @@ public class MakeVoidQuickFix implements LocalQuickFix {
             }
             if (returnStatement != null && returnStatement.getReturnValue() != null) {
               returnStatement.getReturnValue().delete();
-              if (UnnecessaryReturnInspection.isReturnRedundant(returnStatement, false, null)) {
+              if (UnnecessaryReturnInspection.isReturnRedundant(returnStatement, false, true, null)) {
                 returnStatement.delete();
               }
             }
