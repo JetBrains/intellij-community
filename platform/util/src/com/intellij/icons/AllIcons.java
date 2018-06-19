@@ -160,7 +160,7 @@ public class AllIcons {
     /** @deprecated to be removed in IDEA 2020 - use AllIcons.Actions.MoveTo2 */
     @SuppressWarnings("unused")
     @Deprecated
-    public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/moveTo2.png"); // 16x16
+    public static final Icon MoveToStandardPlace = IconLoader.getIcon("/actions/MoveTo2.png"); // 16x16
     public static final Icon MoveUp = IconLoader.getIcon("/actions/moveUp.svg"); // 16x16
     public static final Icon Multicaret = IconLoader.getIcon("/actions/multicaret.svg"); // 16x16
     public static final Icon New = IconLoader.getIcon("/actions/new.svg"); // 16x16
