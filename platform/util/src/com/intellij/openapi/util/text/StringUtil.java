@@ -2384,7 +2384,10 @@ public class StringUtil extends StringUtilRt {
   @Contract(pure = true)
   public static int countChars(@NotNull CharSequence text, char c, int start, int end, boolean stopAtOtherChar) {
     int count = 0;
-    for (int i = start, len = Math.min(text.length(), end); i < len; ++i) {
+    boolean forward = start <= end;
+    start = forward ? Math.max(0, start) : Math.min(text.length(), start);
+    end = forward ? Math.min(text.length(), end) : Math.max(0, end);
+    for (int i = forward ? start : start - 1; forward && i < end || !forward && i >= end; i += forward ? 1 : -1) {
       if (text.charAt(i) == c) {
         count++;
       }

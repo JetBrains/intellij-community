@@ -618,6 +618,8 @@ public class StringUtilTest {
     assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
     assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
     assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
+    assertEquals(3, StringUtil.countChars("aaabcddddefghdaaaa", 'a', -20, 20, true));
+    assertEquals(4, StringUtil.countChars("aaabcddddefghdaaaa", 'a', 20, -20, true));
   }
 
   @Test
