@@ -209,7 +209,7 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
         .orElse(null);
     if (buildInfo != null) {
       String title = buildInfo.getTitle();
-      String viewName = getViewName();
+      String viewName = getViewName().split(" ")[0];
       String tabName = viewName + ": " + StringUtil.trimStart(title, viewName);
       if (buildsMap.size() > 1) {
         tabName += String.format(" and %d more", buildsMap.size() - 1);
