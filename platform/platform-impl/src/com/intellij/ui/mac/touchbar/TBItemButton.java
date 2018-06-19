@@ -14,7 +14,7 @@ import javax.swing.*;
 class TBItemButton extends TBItem {
   protected @Nullable Icon myIcon;
   protected @Nullable String myText;
-  protected int myWidth = -1;
+  protected int myLayoutBits = 0;
   protected int myFlags = 0;
 
   private @Nullable Runnable myAction;
@@ -83,12 +83,24 @@ class TBItemButton extends TBItem {
 
     return this;
   }
+  TBItemButton setWidth(int width) { return setLayout(width, 0, 2, 8); }
 
-  TBItemButton setWidth(int width) {
-    if (width != myWidth) {
-      myWidth = width;
+  TBItemButton setLayout(int width, int widthFlags, int margin, int border) {
+    if (width < 0)
+      width = 0;
+    if (margin < 0)
+      margin = 0;
+    if (border < 0)
+      border = 0;
+
+    int newLayout = width & NSTLibrary.LAYOUT_WIDTH_MASK;
+    newLayout |= widthFlags;
+    newLayout |= NSTLibrary.margin2mask((byte)margin);
+    newLayout |= NSTLibrary.border2mask((byte)border);
+    if (myLayoutBits != newLayout) {
+      myLayoutBits = newLayout;
       if (myNativePeer != ID.NIL) {
-        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_WIDTH;
+        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_LAYOUT;
         _updateNativePeer();
       }
     }
@@ -141,7 +153,7 @@ class TBItemButton extends TBItem {
 
     int flags = _applyFlag(myFlags, isSelected, NSTLibrary.BUTTON_FLAG_SELECTED);
     flags = _applyFlag(flags, isDisabled, NSTLibrary.BUTTON_FLAG_DISABLED);
-    _update(icon, text, myAction, myWidth, flags);
+    _update(icon, text, myAction, flags);
   }
 
   private static boolean _equals(Icon ic0, Icon ic1) {
@@ -150,7 +162,7 @@ class TBItemButton extends TBItem {
     return ic0 != null ? ic0.equals(ic1) : ic1.equals(ic0);
   }
 
-  synchronized private void _update(Icon icon, String text, Runnable action, int buttWidth, int buttFlags) {
+  synchronized private void _update(Icon icon, String text, Runnable action, int buttFlags) {
     if (myNativePeer != ID.NIL) {
       if (!_equals(icon, myIcon)) {
         // NOTE: some of layered buttons (like 'stop' or 'debug') can change the icon-object permanently (every second) without any visible differences
@@ -161,15 +173,12 @@ class TBItemButton extends TBItem {
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_TEXT;
       if (action != myAction)
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_ACTION;
-      if (buttWidth != myWidth)
-        myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_WIDTH;
       if (buttFlags != myFlags)
         myUpdateOptions |= NSTLibrary.BUTTON_UPDATE_FLAGS;
     }
     myIcon = icon;
     myText = text;
     myAction = action;
-    myWidth = buttWidth;
     myFlags = buttFlags;
     if (myUpdateOptions != 0)
       updateNativePeer();
@@ -182,14 +191,14 @@ class TBItemButton extends TBItem {
     final NSTLibrary.Action callback = (myUpdateOptions & NSTLibrary.BUTTON_UPDATE_ACTION) != 0 ? myNativeCallback : null;
 //    System.out.printf("_updateNativePeer, button [%s]: updateOptions 0x%X\n", myUid, myUpdateOptions);
     final int validFlags = _validateFlags();
-    NST.updateButton(myNativePeer, myUpdateOptions, myWidth, validFlags, text, icon, callback);
+    NST.updateButton(myNativePeer, myUpdateOptions, myLayoutBits, validFlags, text, icon, callback);
     myUpdateOptions = 0;
   }
 
   @Override
   synchronized protected ID _createNativePeer() {
 //    System.out.printf("_createNativePeer, button [%s]\n", myUid);
-    return NST.createButton(myUid, myWidth, _validateFlags(), myText, myIcon, myNativeCallback);
+    return NST.createButton(myUid, myLayoutBits, _validateFlags(), myText, myIcon, myNativeCallback);
   }
 
   private int _validateFlags() {
