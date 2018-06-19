@@ -137,6 +137,19 @@ public class ObjectUtils {
     return obj;
   }
 
+  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction test) {
+    int low = fromIndex;
+    int high = toIndex - 1;
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      int cmp = test.fun(mid);
+      if (cmp < 0) low = mid + 1;
+      else if (cmp > 0) high = mid - 1;
+      else return mid;
+    }
+    return -(low + 1);
+  }
+
   private static class Sentinel {
     private final String myName;
 
