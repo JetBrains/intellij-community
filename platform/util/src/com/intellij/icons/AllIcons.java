@@ -1742,6 +1742,7 @@ public class AllIcons {
   public static class Toolwindows {
     public static final Icon Documentation = IconLoader.getIcon("/toolwindows/documentation.svg"); // 13x13
     public static final Icon Problems = IconLoader.getIcon("/toolwindows/problems.svg"); // 13x13
+    public static final Icon ProblemsEmpty = IconLoader.getIcon("/toolwindows/problemsEmpty.svg"); // 13x13
     public static final Icon ToolWindowAnt = IconLoader.getIcon("/toolwindows/toolWindowAnt.svg"); // 13x13
     public static final Icon ToolWindowBuild = IconLoader.getIcon("/toolwindows/toolWindowBuild.svg"); // 13x13
     public static final Icon ToolWindowChanges = IconLoader.getIcon("/toolwindows/toolWindowChanges.svg"); // 13x13
@@ -1757,6 +1758,7 @@ public class AllIcons {
     public static final Icon ToolWindowModuleDependencies = IconLoader.getIcon("/toolwindows/toolWindowModuleDependencies.svg"); // 13x13
     public static final Icon ToolWindowPalette = IconLoader.getIcon("/toolwindows/toolWindowPalette.svg"); // 13x13
     public static final Icon ToolWindowPreview = IconLoader.getIcon("/toolwindows/toolWindowPreview.png"); // 13x13
+    public static final Icon ToolWindowProfiler = IconLoader.getIcon("/toolwindows/toolWindowProfiler.svg"); // 13x13
     public static final Icon ToolWindowProject = IconLoader.getIcon("/toolwindows/toolWindowProject.svg"); // 13x13
     public static final Icon ToolWindowRun = IconLoader.getIcon("/toolwindows/toolWindowRun.svg"); // 13x13
     public static final Icon ToolWindowStructure = IconLoader.getIcon("/toolwindows/toolWindowStructure.svg"); // 13x13
