@@ -25,12 +25,10 @@ class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
   private val myQueue = BackgroundTaskQueue(myProject, "SVN VCS roots authorization checker")
   private val myZipperUpdater = ZipperUpdater(200, Alarm.ThreadToUse.POOLED_THREAD, myProject)
   private val myRechecker = Runnable {
+    clear()
     val roots = ProjectLevelVcsManager.getInstance(myProject).getRootsUnderVcs(myVcs)
-    synchronized(myLock) {
-      clear()
-      for (root in roots) {
-        addRoot(root)
-      }
+    for (root in roots) {
+      addRoot(root)
     }
   }
 
@@ -100,9 +98,11 @@ class RootsToWorkingCopies(private val myVcs: SvnVcs) : VcsListener {
     return resolvedWorkingCopy
   }
 
-  fun clear() = synchronized(myLock) {
-    myRootMapping.clear()
-    myUnversioned.clear()
+  fun clear() {
+    synchronized(myLock) {
+      myRootMapping.clear()
+      myUnversioned.clear()
+    }
     myZipperUpdater.stop()
   }
 
