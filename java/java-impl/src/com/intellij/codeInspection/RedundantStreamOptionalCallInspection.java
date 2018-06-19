@@ -25,12 +25,16 @@ import java.util.Set;
 import java.util.function.Predicate;
 
 import static com.intellij.util.ObjectUtils.tryCast;
-import static com.siyeh.ig.callMatcher.CallMatcher.anyOf;
-import static com.siyeh.ig.callMatcher.CallMatcher.staticCall;
+import static com.siyeh.ig.callMatcher.CallMatcher.*;
 import static com.siyeh.ig.psiutils.StreamApiUtil.findSubsequentCall;
 
 public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(RedundantStreamOptionalCallInspection.class);
+  private static final CallMatcher NATURAL_OR_REVERSED_COMPARATOR = anyOf(
+    staticCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "naturalOrder", "reverseOrder").parameterCount(0),
+    staticCall(CommonClassNames.JAVA_UTIL_COLLECTIONS, "reverseOrder").parameterCount(0)
+  );
+  private static final CallMatcher COMPARATOR_REVERSE = instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "reversed").parameterCount(0);
   private static final Set<String> INTERESTING_NAMES =
     ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered", "flatMap");
   private static final Set<String> CALLS_MAKING_SORT_USELESS = ContainerUtil.set("sorted", "anyMatch", "allMatch", "noneMatch", "count");
@@ -133,8 +137,13 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
             break;
           case "sorted":
             if (args.length <= 1) {
-              PsiMethodCallExpression furtherCall =
-                findSubsequentCall(call, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTOR, CALLS_KEEPING_SORT_ORDER::contains);
+              PsiMethodCallExpression furtherCall = call;
+              do {
+                furtherCall = findSubsequentCall(furtherCall, CALLS_MAKING_SORT_USELESS::contains, UNORDERED_COLLECTOR,
+                                                 CALLS_KEEPING_SORT_ORDER::contains);
+              }
+              while (furtherCall != null && "sorted".equals(furtherCall.getMethodExpression().getReferenceName()) &&
+                     !sortingCancelsPreviousSorting(call, furtherCall));
               if (furtherCall != null) {
                 String furtherCallName = furtherCall.getMethodExpression().getReferenceName();
                 LocalQuickFix additionalFix = null;
@@ -208,6 +217,30 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                                ArrayUtil.prepend(new RemoveCallFix(methodName), additionalFixes));
       }
     };
+  }
+
+  private static boolean sortingCancelsPreviousSorting(PsiMethodCallExpression call, PsiMethodCallExpression furtherCall) {
+    PsiExpression comparator = skipReversed(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
+    PsiExpression nextComparator = skipReversed(ArrayUtil.getFirstElement(furtherCall.getArgumentList().getExpressions()));
+    if (EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(comparator, nextComparator)) {
+      return true;
+    }
+    boolean isNatural = comparator == null || NATURAL_OR_REVERSED_COMPARATOR.matches(comparator);
+    boolean isNextNatural = nextComparator == null || NATURAL_OR_REVERSED_COMPARATOR.matches(nextComparator);
+    return isNatural && isNextNatural;
+  }
+
+  private static PsiExpression skipReversed(PsiExpression comparator) {
+    comparator = PsiUtil.skipParenthesizedExprDown(comparator);
+    while (comparator instanceof PsiMethodCallExpression) {
+      PsiMethodCallExpression call = (PsiMethodCallExpression)comparator;
+      PsiExpression qualifier = call.getMethodExpression().getQualifierExpression();
+      if (!COMPARATOR_REVERSE.test(call) || qualifier == null) {
+        break;
+      }
+      comparator = PsiUtil.skipParenthesizedExprDown(qualifier);
+    }
+    return comparator;
   }
 
   static boolean isUnorderedToCollection(PsiMethodCallExpression call) {
