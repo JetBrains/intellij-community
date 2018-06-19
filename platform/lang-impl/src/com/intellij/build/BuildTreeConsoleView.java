@@ -54,6 +54,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeCellRenderer;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.awt.event.FocusEvent;
+import java.awt.event.FocusListener;
 import java.io.File;
 import java.util.*;
 import java.util.List;
@@ -136,6 +138,17 @@ public class BuildTreeConsoleView implements ConsoleView, DataProvider, BuildCon
     EditSourceOnEnterKeyHandler.install(treeTable, null);
 
     TreeTableTree tree = treeTable.getTree();
+    treeTable.addFocusListener(new FocusListener() {
+      @Override
+      public void focusGained(FocusEvent e) {
+        treeTable.setSelectionBackground(UIUtil.getTreeSelectionBackground(true));
+      }
+
+      @Override
+      public void focusLost(FocusEvent e) {
+        treeTable.setSelectionBackground(UIUtil.getTreeSelectionBackground(false));
+      }
+    });
     final TreeCellRenderer treeCellRenderer = tree.getCellRenderer();
     tree.setCellRenderer(new TreeCellRenderer() {
       @Override
