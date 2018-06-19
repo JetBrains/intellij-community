@@ -2,8 +2,6 @@
 package com.intellij.ide;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.util.registry.Registry;
 
 public abstract class RemoteDesktopService {
   public static RemoteDesktopService getInstance() {
@@ -12,10 +10,6 @@ public abstract class RemoteDesktopService {
 
   public static boolean isRemoteSession() {
     return getInstance().isRemoteDesktopConnected();
-  }
-
-  public static boolean isAnimationDisabled() {
-    return (!SystemInfo.isWin8OrNewer || Registry.is("animation.disabled.on.remote.desktop")) && isRemoteSession();
   }
 
   public abstract boolean isRemoteDesktopConnected();

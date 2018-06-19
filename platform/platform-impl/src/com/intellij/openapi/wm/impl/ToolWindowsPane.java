@@ -887,7 +887,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         // Show component.
-        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isAnimationDisabled()) {
+        if (!myDirtyMode && UISettings.getInstance().getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           // Prepare top image. This image is scrolling over bottom image.
           final Image topImage = myLayeredPane.getTopImage();
           final Graphics topGraphics = topImage.getGraphics();
@@ -1104,7 +1104,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements UISettingsLi
     public final void run() {
       try {
         final UISettings uiSettings = UISettings.getInstance();
-        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isAnimationDisabled()) {
+        if (!myDirtyMode && uiSettings.getAnimateWindows() && !RemoteDesktopService.isRemoteSession()) {
           final Rectangle bounds = myComponent.getBounds();
           // Prepare top image. This image is scrolling over bottom image. It contains
           // picture of component is being removed.
