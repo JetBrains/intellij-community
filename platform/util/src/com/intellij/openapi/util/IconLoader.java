@@ -194,6 +194,10 @@ public final class IconLoader {
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
 
     URL myURL = findURL(path, classLoader);
+    // Some plugins use findIcon("icon.png",IconContainer.class)
+    if (myURL == null) {
+      myURL = findURL(path, aClass);
+    }
     if (myURL == null) {
       if (strict) throw new RuntimeException("Can't find icon in '" + path + "' near " + aClass);
       return null;
