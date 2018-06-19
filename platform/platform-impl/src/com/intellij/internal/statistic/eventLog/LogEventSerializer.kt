@@ -72,8 +72,9 @@ object LogEventSerializer {
     return toJson(event).toString()
   }
 
-  fun fromString(line: String): LogEvent {
-    return gson.fromJson(line, LogEvent::class.java)
+  fun fromString(line: String): LogEvent? {
+    val event = gson.fromJson(line, LogEvent::class.java)
+    return if (event.isValid()) event else null
   }
 }
 
