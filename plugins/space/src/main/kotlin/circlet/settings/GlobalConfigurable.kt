@@ -2,10 +2,11 @@ package circlet.settings
 
 import circlet.messages.*
 import com.intellij.openapi.options.*
+import com.intellij.uiDesigner.core.*
 import javax.swing.*
 
 class GlobalConfigurable : SearchableConfigurable {
-    private val form = GlobalConfigurableForm()
+    private val panel = JPanel(GridLayoutManager(1, 1))
 
     override fun isModified(): Boolean = false
 
@@ -16,5 +17,5 @@ class GlobalConfigurable : SearchableConfigurable {
     override fun apply() {
     }
 
-    override fun createComponent(): JComponent? = form.panel
+    override fun createComponent(): JComponent? = panel
 }
