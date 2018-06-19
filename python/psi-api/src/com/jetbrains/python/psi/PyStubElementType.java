@@ -43,6 +43,7 @@ public abstract class PyStubElementType<StubT extends StubElement, PsiT extends 
   public void indexStub(@NotNull final StubT stub, @NotNull final IndexSink sink) {
   }
 
+  @Override
   @NotNull
   public String getExternalId() {
     return "py." + super.toString();

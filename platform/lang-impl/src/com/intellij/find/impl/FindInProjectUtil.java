@@ -132,10 +132,10 @@ public class FindInProjectUtil {
     VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(path);
     if (virtualFile == null || !virtualFile.isDirectory()) {
       virtualFile = null;
-      @SuppressWarnings("deprecation") VirtualFileSystem[] fileSystems = ApplicationManager.getApplication().getComponents(VirtualFileSystem.class);
+      VirtualFileSystem[] fileSystems = ApplicationManager.getApplication().getComponents(VirtualFileSystem.class);
       for (VirtualFileSystem fs : fileSystems) {
         if (fs instanceof LocalFileProvider) {
-          @SuppressWarnings("deprecation") VirtualFile file = ((LocalFileProvider)fs).findLocalVirtualFileByPath(path);
+          VirtualFile file = ((LocalFileProvider)fs).findLocalVirtualFileByPath(path);
           if (file != null && file.isDirectory()) {
             if (file.getChildren().length > 0) {
               virtualFile = file;
@@ -249,7 +249,7 @@ public class FindInProjectUtil {
                                  @NotNull final PsiFile psiFile,
                                  @NotNull int[] offsetRef,
                                  int maxUsages,
-                                 @NotNull Processor<UsageInfo> consumer) {
+                                 @NotNull Processor<? super UsageInfo> consumer) {
     int count = 0;
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
@@ -532,7 +532,7 @@ public class FindInProjectUtil {
 
   private static void addSourceDirectoriesFromLibraries(@NotNull Project project,
                                                         @NotNull VirtualFile directory,
-                                                        @NotNull Collection<VirtualFile> outSourceRoots) {
+                                                        @NotNull Collection<? super VirtualFile> outSourceRoots) {
     ProjectFileIndex index = ProjectFileIndex.SERVICE.getInstance(project);
     // if we already are in the sources, search just in this directory only
     if (!index.isInLibraryClasses(directory)) return;
