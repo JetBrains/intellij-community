@@ -32,6 +32,20 @@ open class LogEvent(session: String,
     return true
   }
 
+  @Suppress("SENSELESS_COMPARISON")
+    /**
+     * Checks event is valid after deserialization, e.g. no fields are missing
+     */
+  fun isValid(): Boolean {
+    if (session == null || build == null || bucket == null) return false
+    if (time < 0) return false
+
+    if (group == null || !group.isValid()) return false
+    if (event == null || !event.isValid()) return false
+
+    return true
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -60,6 +74,12 @@ open class LogEvent(session: String,
 }
 
 class LogEventRecorder(val id: String, val version: String) {
+
+  @Suppress("SENSELESS_COMPARISON")
+  fun isValid(): Boolean {
+    return id != null && version != null
+  }
+
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
     if (javaClass != other?.javaClass) return false
@@ -96,6 +116,11 @@ class LogEventAction(id: String, var count: Int = 1) : LogEventBaseAction(id) {
 
 open class LogEventBaseAction(val id: String) {
   var data: MutableMap<String, Any> = Collections.emptyMap()
+
+  @Suppress("SENSELESS_COMPARISON")
+  fun isValid(): Boolean {
+    return id != null && data != null
+  }
 
   open fun increment() {
   }
