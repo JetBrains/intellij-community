@@ -111,8 +111,8 @@ public class ObjectsRequireNonNullIntention extends Intention {
       if (ClassUtils.findClass("java.util.Objects", element) == null) {
         return false;
       }
-      final NullabilityAnnotationInfo
-        info = NullableNotNullManager.getInstance(variable.getProject()).findEffectiveNullabilityAnnotationInfo(variable);
+      final NullabilityAnnotationInfo info =
+        NullableNotNullManager.getInstance(variable.getProject()).findEffectiveNullabilityInfo(variable);
       if (info != null && info.getNullability() == Nullability.NOT_NULL && !info.isExternal() && !info.isInferred()) {
         return true;
       }
