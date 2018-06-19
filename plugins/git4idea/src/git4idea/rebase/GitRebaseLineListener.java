@@ -15,7 +15,6 @@
  */
 package git4idea.rebase;
 
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Key;
 import git4idea.commands.GitLineHandlerAdapter;
 
@@ -31,10 +30,8 @@ public class GitRebaseLineListener extends GitLineHandlerAdapter {
 
   @Override
   public synchronized void onLineAvailable(String line, Key outputType) {
-    if (outputType == ProcessOutputTypes.STDOUT) {
-      if (PROGRESS.matcher(line).matches()) {
-        myProgressLine = line;
-      }
+    if (PROGRESS.matcher(line).matches()) {
+      myProgressLine = line;
     }
   }
 
