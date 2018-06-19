@@ -171,7 +171,7 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
   private static VcsLogHashFilterImpl createHashFilter(@NotNull String text) {
     List<String> hashes = ContainerUtil.newArrayList();
     for (String word: StringUtil.split(text, " ")) {
-      if (StringUtil.isEmptyOrSpaces(word) || !word.matches(HASH_PATTERN)) {
+      if (!word.matches(HASH_PATTERN)) {
         return null;
       }
       hashes.add(word);
