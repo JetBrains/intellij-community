@@ -14,12 +14,62 @@ object LogEventSerializer {
     registerTypeAdapter(LogEventBaseAction::class.java, LogEventJsonDeserializer()).
     registerTypeAdapter(LogEventBaseAction::class.java, LogEventJsonSerializer()).create()
 
-  fun toString(session: Any): String {
-    return gson.toJson(session)
+  fun toString(session: LogEventRecordRequest, writer: OutputStreamWriter) {
+    writer.write(toString(session))
   }
 
-  fun toString(session: Any, writer: OutputStreamWriter) {
-    gson.toJson(session, writer)
+  /**
+   * Serialize request manually so it won't be changed by scrambling
+   */
+  fun toString(request: LogEventRecordRequest): String {
+    val obj = JsonObject()
+    obj.addProperty("product", request.product)
+    obj.addProperty("user", request.user)
+
+    val records = JsonArray()
+    for (record in request.records) {
+      val events = JsonArray()
+      for (event in record.events) {
+        events.add(toJson(event))
+      }
+
+      val recordObj = JsonObject()
+      recordObj.add("events", events)
+      records.add(recordObj)
+    }
+
+    obj.add("records", records)
+    return obj.toString()
+  }
+
+  /**
+   * Serialize events manually so it won't be changed by scrambling
+   */
+  fun toJson(event: LogEvent): JsonObject {
+    val obj = JsonObject()
+    obj.addProperty("session", event.session)
+    obj.addProperty("build", event.build)
+    obj.addProperty("bucket", event.bucket)
+    obj.addProperty("time", event.time)
+
+    val group = JsonObject()
+    group.addProperty("id", event.group.id)
+    group.addProperty("version", event.group.version)
+
+    val action = JsonObject()
+    if (event.event is LogEventAction) {
+      action.addProperty("count", event.event.count)
+    }
+    action.add("data", gson.toJsonTree(event.event.data))
+    action.addProperty("id", event.event.id)
+
+    obj.add("group", group)
+    obj.add("event", action)
+    return obj
+  }
+
+  fun toString(event: LogEvent): String {
+    return toJson(event).toString()
   }
 
   fun fromString(line: String): LogEvent {
@@ -47,7 +97,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEventBaseAction> {
     return action
   }
 
-  fun createAction(obj : JsonObject) : LogEventBaseAction {
+  fun createAction(obj: JsonObject): LogEventBaseAction {
     val id = obj.get("id").asString
     if (obj.has("count")) {
       val count = obj.get("count").asJsonPrimitive
