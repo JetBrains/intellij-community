@@ -1714,6 +1714,17 @@ public class ToolWindowManagerImpl extends ToolWindowManagerEx implements Persis
       JComponent frameComponent = lastFocusedFrame != null ? lastFocusedFrame.getComponent() : null;
       Window lastFocusedWindow = frameComponent != null ? SwingUtilities.getWindowAncestor(frameComponent) : null;
       activeWindow = ObjectUtils.notNull(lastFocusedWindow, activeWindow);
+      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(lastFocusedFrame.getProject()));
+      EditorsSplitters splitters = fem.getSplittersFor(activeWindow);
+      return splitters != null ? splitters : fem.getSplitters();
+    }
+
+    if (activeWindow instanceof IdeFrame.Child) {
+      Project project = ((IdeFrame.Child)activeWindow).getProject();
+      activeWindow = WindowManager.getInstance().getFrame(project);
+      FileEditorManagerEx fem = FileEditorManagerEx.getInstanceEx(Objects.requireNonNull(project));
+      EditorsSplitters splitters = activeWindow != null ? fem.getSplittersFor(activeWindow) : null;
+      return splitters != null ? splitters : fem.getSplitters();
     }
 
     final IdeFrame frame = FocusManagerImpl.getInstance().getLastFocusedFrame();
