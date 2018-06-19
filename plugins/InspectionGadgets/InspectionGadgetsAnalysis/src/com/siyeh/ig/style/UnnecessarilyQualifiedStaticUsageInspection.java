@@ -28,7 +28,6 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ClassUtils;
-import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -143,7 +142,7 @@ public class UnnecessarilyQualifiedStaticUsageInspection extends BaseInspection 
       return false;
     }
     final PsiJavaCodeReferenceElement qualifier = (PsiJavaCodeReferenceElement)qualifierElement;
-    if (ImportUtils.isGenericReference(referenceElement, qualifier)) {
+    if (GenericsUtil.isGenericReference(referenceElement, qualifier)) {
       return false;
     }
     final PsiElement target = referenceElement.resolve();
