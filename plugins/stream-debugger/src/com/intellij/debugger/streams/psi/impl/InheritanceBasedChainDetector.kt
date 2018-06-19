@@ -2,7 +2,7 @@
 package com.intellij.debugger.streams.psi.impl
 
 import com.intellij.debugger.streams.psi.ChainDetector
-import com.intellij.lang.jvm.JvmModifier;
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.psi.PsiClass
 import com.intellij.psi.PsiMethod
 import com.intellij.psi.PsiMethodCallExpression
@@ -15,7 +15,8 @@ import com.intellij.psi.util.InheritanceUtil
 class InheritanceBasedChainDetector(private val baseClassName: String) : ChainDetector {
   override fun isTerminationCall(callExpression: PsiMethodCallExpression): Boolean {
     val method = callExpression.resolveMethod() ?: return false
-    return isStreamType(method.parent as? PsiClass) && !isStreamType(method.returnType)
+    val qualifierType = callExpression.methodExpression.qualifierExpression?.type
+    return (isStreamType(qualifierType) || isStreamType(method.parent as? PsiClass)) && !isStreamType(method.returnType)
   }
 
   override fun isIntermediateCall(callExpression: PsiMethodCallExpression): Boolean {
