@@ -1109,7 +1109,6 @@
         <reference ref="CheckinProject"/>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
           <separator text="type.flexible"/>
-          <reference ref="RevealGroup"/>
         </group>
         <group id="TouchBarDefault_cmd" text="Default with Cmd key">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
@@ -1120,11 +1119,11 @@
           <reference ref="ToggleBookmark"/>
           <reference ref="ToggleLineBreakpoint"/>
           <separator text="type.flexible"/>
-          <reference ref="FindUsages"/>
+          <reference ref="ShowUsages"/>
         </group>
         <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd key">
           <separator text="type.flexible"/>
-          <reference ref="ShowUsages"/>
+          <reference ref="FindUsages"/>
         </group>
         <group id="TouchBarDefault_shift" text="Default with Shift key">
           <!--Use Shift to show Refactor actions/-->

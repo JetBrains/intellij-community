@@ -171,6 +171,8 @@ class BuildUtils {
 
     // NOTE: buttons are placed from right to left, see SheetController.layoutButtons
     int defIndex = -1;
+    if (defaultButton != null)
+      defaultButton = defaultButton.trim();
     final int len = Math.min(buttons.length, actions.length);
     for (int c = len - 1; c >= 0; --c) {
       final String sb = buttons[c];
