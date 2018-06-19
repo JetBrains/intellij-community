@@ -44,6 +44,9 @@ class BuildUtils {
   private static final String ourFlexibleSeparatorText = "type.flexible";
 
   private static final int ourRunConfigurationPopoverWidth = 143;
+  private static final int BUTTON_MIN_WIDTH_DLG = 107;
+  private static final int BUTTON_BORDER = 16;
+  private static final int BUTTON_IMAGE_MARGIN = 2;
 
   private static final String RUNNERS_GROUP_TOUCHBAR = "RunnerActionsTouchbar";
 
@@ -176,12 +179,14 @@ class BuildUtils {
         defIndex = c;
         continue;
       }
-      group.addButton().setText(DialogWrapper.extractMnemonic(sb).second).setThreadSafeAction(actions[c]);
+      final TBItemButton tbb = group.addButton().setText(DialogWrapper.extractMnemonic(sb).second).setThreadSafeAction(actions[c]);
+      _setDialogLayout(tbb);
     }
 
-    if (defIndex >= 0)
-      group.addButton().setText(DialogWrapper.extractMnemonic(buttons[defIndex]).second).setThreadSafeAction(actions[defIndex])
-           .setColored(true);
+    if (defIndex >= 0) {
+      final TBItemButton tbb = group.addButton().setText(DialogWrapper.extractMnemonic(buttons[defIndex]).second).setThreadSafeAction(actions[defIndex]).setColored(true);
+      _setDialogLayout(tbb);
+    }
 
     result.setPrincipal(gr);
     result.selectVisibleItemsToShow();
@@ -207,7 +212,8 @@ class BuildUtils {
             continue;
 
           // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
-          result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
+          final TBItemButton tbb = result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
+          _setDialogLayout(tbb);
         }
       }
     }
@@ -226,13 +232,16 @@ class BuildUtils {
       final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
       if (anAct == null)
         continue;
-      group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb);
+      final TBItemButton tbb = group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb);
+      _setDialogLayout(tbb);
     }
 
     if (jbdef != null) {
       final AnAction anAct = _createAnAction(jbdef.getAction(), jbdef, false);
-      if (anAct != null)
-        group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setColored(true);
+      if (anAct != null) {
+        final TBItemButton tbb = group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setColored(true);
+        _setDialogLayout(tbb);
+      }
     }
 
     result.selectVisibleItemsToShow();
@@ -281,6 +290,12 @@ class BuildUtils {
       stopScrubber.addItem(sd.first.getIcon(), sd.first.getDisplayName(), sd.second);
     tb.selectVisibleItemsToShow();
     return tb;
+  }
+
+  private static void _setDialogLayout(TBItemButton button) {
+    if (button == null)
+      return;
+    button.setLayout(BUTTON_MIN_WIDTH_DLG, NSTLibrary.LAYOUT_FLAG_MIN_WIDTH, BUTTON_IMAGE_MARGIN, BUTTON_BORDER);
   }
 
   interface INodeFilter {

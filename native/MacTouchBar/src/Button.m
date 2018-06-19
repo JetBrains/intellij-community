@@ -74,6 +74,20 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 //
 //    [NSGraphicsContext restoreGraphicsState];
 //}
+//- (void)drawDebugRect:(NSRect)frame color:(NSColor *)col {
+//    // NSLog(@"drawDebugRect: %@", NSStringFromRect(frame));
+//
+//    [[NSGraphicsContext currentContext] saveGraphicsState];
+//
+//    if (col == nil)
+//        col = [NSColor colorWithRed:105/255.0 green:211/255.0 blue:232/255.0 alpha:1.0];
+//    [col set];
+//    [col setStroke];
+//    [col setFill];
+//    NSFrameRect(frame);
+//
+//    [NSGraphicsContext restoreGraphicsState];
+//}
 - (NSSize)cellSizeForBounds:(NSRect)rect {
     if (self.title == nil) {
         // NSLog(@"\t empty text, use default size %@", NSStringFromSize(g_defaultMinSize));
@@ -90,43 +104,56 @@ const NSSize g_defaultMinSize = {72, 30}; // empiric value
 }
 - (void)drawInteriorWithFrame:(NSRect)frame inView:(NSView *)controlView {
 //    NSLog(@"drawInteriorWithFrame: %@", NSStringFromRect(frame));
-    if (self.image == nil) {
-        [super drawTitle:self.attributedTitle withFrame:frame inView:controlView];
-        return;
-    }
-
-    if (self.title == nil) {
+    if (self.title == nil || self.title.length <= 0) {
         [super drawImage:self.image withFrame:frame inView:controlView];
         return;
     }
 
-    const CGFloat imgW = self.image.size.width;
+    const CGFloat imgW = self.image == nil ? 0 : self.image.size.width;
+    const CGFloat imgWithMargin = imgW > 0 ? self.myMargin + imgW : 0;
+
     NSSize txtSize = [self.title sizeWithAttributes:@{ NSFontAttributeName:self.font }];
     const CGFloat txtW = txtSize.width;
-    const CGFloat fullW = self.myBorder*2 + txtW + self.myMargin + imgW;
+    const CGFloat fullW = self.myBorder*2 + txtW + imgWithMargin;
     NSRect rcImg = frame;
+    rcImg.size.width = imgW;
     NSRect rcTxt = frame;
     if (fullW <= frame.size.width) {
         const CGFloat delta = frame.size.width - fullW;
-        rcImg.origin.x = delta/2 + self.myBorder;
-        rcImg.size.width = imgW;
-        rcTxt.origin.x = rcImg.origin.x + imgW + self.myMargin;
-        rcTxt.size.width = txtW + self.myBorder;
+        if (imgW > 0) {
+            rcImg.origin.x = delta/2 + self.myBorder;
+            rcTxt.origin.x = rcImg.origin.x + imgWithMargin;
+            rcTxt.size.width = txtW + 1;
+        } else {
+            rcTxt.origin.x = delta/2 + self.myBorder;
+            rcTxt.size.width = txtW + 1;
+        }
     } else {
-        rcImg.origin.x = self.myBorder;
-        rcImg.size.width = imgW;
-        rcTxt.origin.x = rcImg.origin.x + imgW + self.myMargin;
-        rcTxt.size.width = frame.size.width - self.myBorder - rcTxt.origin.x;
+        if (imgW > 0) {
+            rcImg.origin.x = self.myBorder;
+            rcTxt.origin.x = rcImg.origin.x + imgWithMargin;
+            rcTxt.size.width = frame.size.width - self.myBorder - rcTxt.origin.x;
+        } else {
+            rcTxt.origin.x = self.myBorder;
+            rcTxt.size.width = frame.size.width - self.myBorder*2;
+        }
     }
 
-    if (rcImg.size.width > 0)
+    if (imgW > 0) {
         [super drawImage:self.image withFrame:rcImg inView:controlView];
-    if (rcTxt.size.width > 0)
+//        NSColor * col = [NSColor colorWithRed:105/255.0 green:211/255.0 blue:0/255.0 alpha:1.0];
+//        [self drawDebugRect:rcImg color:col];
+    }
+    if (rcTxt.size.width > 0) {
         [super drawTitle:self.attributedTitle withFrame:rcTxt inView:controlView];
+//        NSColor * col = [NSColor colorWithRed:105/255.0 green:0/255.0 blue:255/255.0 alpha:1.0];
+//        [self drawDebugRect:rcTxt color:col];
+    }
+//  [self drawDebugRect:frame color:nil];
 }
 @end
 
-const int BUTTON_UPDATE_WIDTH   = 1;
+const int BUTTON_UPDATE_LAYOUT   = 1;
 const int BUTTON_UPDATE_FLAGS   = 1 << 1;
 const int BUTTON_UPDATE_TEXT    = 1 << 2;
 const int BUTTON_UPDATE_IMG     = 1 << 3;
@@ -138,14 +165,35 @@ const int BUTTON_FLAG_SELECTED  = 1 << 1;
 const int BUTTON_FLAG_COLORED   = 1 << 2;
 const int BUTTON_FLAG_TOGGLE    = 1 << 3;
 
-const int BUTTON_PRIORITY_SHIFT     = 3*8;
-const unsigned int BUTTON_PRIORITY_MASK      = 0xFF << BUTTON_PRIORITY_SHIFT;
+const unsigned int LAYOUT_WIDTH_MASK       = 0x0FFF;
+const unsigned int LAYOUT_FLAG_MIN_WIDTH   = 1 << 15;
+const unsigned int LAYOUT_FLAG_MAX_WIDTH   = 1 << 14;
+
+const unsigned int LAYOUT_MARGIN_SHIFT     = 2*8;
+const unsigned int LAYOUT_MARGIN_MASK      = 0xFF << LAYOUT_MARGIN_SHIFT;
+const unsigned int LAYOUT_BORDER_SHIFT     = 3*8;
+const unsigned int LAYOUT_BORDER_MASK      = 0xFF << LAYOUT_BORDER_SHIFT;
+
+const int BUTTON_PRIORITY_SHIFT         = 3*8;
+const unsigned int BUTTON_PRIORITY_MASK = 0xFF << BUTTON_PRIORITY_SHIFT;
 
 static int _getPriority(int flags) {
     return (flags & BUTTON_PRIORITY_MASK) >> BUTTON_PRIORITY_SHIFT;
 }
 
-static void _setButtonData(NSButtonJAction *button, int updateOptions, int buttonWidth, int buttonFlags, NSString *nstext, NSImage *img, execute jaction) {
+static int _getWidth(int layoutBits) {
+    return (layoutBits & LAYOUT_WIDTH_MASK);
+}
+
+static int _getMargin(int layoutBits) {
+    return (layoutBits & LAYOUT_MARGIN_MASK) >> LAYOUT_MARGIN_SHIFT;
+}
+
+static int _getBorder(int layoutBits) {
+    return (layoutBits & LAYOUT_BORDER_MASK) >> LAYOUT_BORDER_SHIFT;
+}
+
+static void _setButtonData(NSButtonJAction *button, int updateOptions, int layoutBits, int buttonFlags, NSString *nstext, NSImage *img, execute jaction) {
     if (updateOptions & BUTTON_UPDATE_ACTION) {
         button.jaction = jaction;
         if (jaction) {
@@ -169,12 +217,36 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
     if (updateOptions & BUTTON_UPDATE_IMG)
         [button setImage:img];
 
-    if (updateOptions & BUTTON_UPDATE_WIDTH) {
-        button.bwidth = buttonWidth;
-        if (button.bwidth > 0.1f)
-            [button.widthAnchor constraintEqualToConstant:button.bwidth].active = YES;
-        else
+    if (updateOptions & BUTTON_UPDATE_LAYOUT) {
+        const int width = _getWidth(layoutBits);
+        button.bwidth = width;
+        if (width > 0) {
+            bool isMinWidth = (layoutBits & LAYOUT_FLAG_MIN_WIDTH) != 0;
+            bool isMaxWidth = (layoutBits & LAYOUT_FLAG_MAX_WIDTH) != 0;
+            if (isMinWidth && isMaxWidth) {
+                nserror(@"invalid arguments specified: both min and max bits are 1");
+            }
+            if (isMinWidth) {
+                //NSLog(@"set min width %d", width);
+                [button.widthAnchor constraintGreaterThanOrEqualToConstant:button.bwidth].active = YES;
+            } else if (isMaxWidth) {
+                //NSLog(@"set max width %d", width);
+                [button.widthAnchor constraintLessThanOrEqualToConstant:button.bwidth].active = YES;
+            } else {
+                //NSLog(@"set const width %d", width);
+                [button.widthAnchor constraintEqualToConstant:button.bwidth].active = YES;
+            }
+        } else
             [button.widthAnchor constraintEqualToAnchor:button.widthAnchor].active = NO;
+
+        { // process margins
+            const int margin = _getMargin(layoutBits);
+            const int border = _getBorder(layoutBits);
+            if (margin > 0 || border > 0) {
+                [button setMargins:margin border:border];
+                //NSLog(@"set insets: m=%d b=%d", margin, border);
+            }
+        }
     }
 
     if (updateOptions & BUTTON_UPDATE_FLAGS) {
@@ -224,7 +296,7 @@ static void _setButtonData(NSButtonJAction *button, int updateOptions, int butto
 // NOTE: called from AppKit-thread (creation when TB becomes visible), uses default autorelease-pool (create before event processing)
 id createButton(
         const char *uid,
-        int buttonWidth,
+        int layoutBits,
         int buttonFlags,
         const char *text,
         const char *raster4ByteRGBA, int w, int h,
@@ -238,7 +310,7 @@ id createButton(
 
     NSImage *img = createImgFrom4ByteRGBA((const unsigned char *) raster4ByteRGBA, w, h);
     NSString *nstext = createStringFromUTF8(text);
-    _setButtonData(button, BUTTON_UPDATE_ALL, buttonWidth, buttonFlags, nstext, img, jaction);
+    _setButtonData(button, BUTTON_UPDATE_ALL, layoutBits, buttonFlags, nstext, img, jaction);
     customItemForButton.view = button; // NOTE: view is strong
 
     const int prio = _getPriority(buttonFlags);
@@ -254,7 +326,7 @@ id createButton(
 void updateButton(
         id buttObj,
         int updateOptions,
-        int buttonWidth,
+        int layoutBits,
         int buttonFlags,
         const char *text,
         const char *raster4ByteRGBA, int w, int h,
@@ -269,13 +341,13 @@ void updateButton(
 
     if ([NSThread isMainThread]) {
         nstrace(@"sync update button [%@] (main thread: %@)", container.identifier, [NSThread currentThread]);
-        _setButtonData(button, updateOptions, buttonWidth, buttonFlags, nstext, img, jaction);
+        _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
     } else {
         nstrace(@"async update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
         dispatch_async(dispatch_get_main_queue(), ^{
             // NOTE: block is copied, img/text objects is automatically retained
             // nstrace(@"\tperform update button [%@] (thread: %@)", container.identifier, [NSThread currentThread]);
-            _setButtonData(button, updateOptions, buttonWidth, buttonFlags, nstext, img, jaction);
+            _setButtonData(button, updateOptions, layoutBits, buttonFlags, nstext, img, jaction);
         });
     }
 

@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.Keymap;
@@ -228,7 +229,8 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
           }
         });
         panel.add(myShowFnCheckbox, BorderLayout.SOUTH);
-      }
+      } else
+        Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
     }
 
     return panel;
