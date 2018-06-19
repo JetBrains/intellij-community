@@ -29,7 +29,10 @@ public interface DocumentWindow extends Document {
   @NotNull
   Document getDelegate();
 
-  int hostToInjectedUnescaped(int hostOffset);
+  @Deprecated
+  default int hostToInjectedUnescaped(int hostOffset) {
+    return injectedToHost(hostOffset);
+  }
 
   int injectedToHost(int injectedOffset);
 
