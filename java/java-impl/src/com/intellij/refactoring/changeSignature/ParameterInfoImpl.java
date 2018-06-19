@@ -17,12 +17,14 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -169,5 +171,25 @@ public class ParameterInfoImpl implements JavaParameterInfo {
 
   public void setDefaultValue(final String defaultValue) {
     this.defaultValue = defaultValue;
+  }
+
+  /**
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to the removal of specified method parameter
+   *
+   * @param method method to remove a parameter from
+   * @param parameterToRemove parameter to remove
+   * @return an array of ParameterInfoImpl entries.
+   */
+  @NotNull
+  public static ParameterInfoImpl[] getParameterInfosAfterRemoval(PsiMethod method, PsiParameter parameterToRemove) {
+    List<ParameterInfoImpl> result = new ArrayList<>();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      if (!Comparing.equal(parameter, parameterToRemove)) {
+        result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
+      }
+    }
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 }

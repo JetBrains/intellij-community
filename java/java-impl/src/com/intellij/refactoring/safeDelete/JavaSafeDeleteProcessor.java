@@ -18,6 +18,7 @@ package com.intellij.refactoring.safeDelete;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
 import com.intellij.codeInsight.daemon.impl.quickfix.RemoveUnusedVariableUtil;
 import com.intellij.codeInsight.generation.GetterSetterPrototypeProvider;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,6 +42,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.changeSignature.ContractConverter;
+import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.refactoring.changeSignature.inCallers.AbstractJavaMemberCallerChooser;
 import com.intellij.refactoring.safeDelete.usageInfo.*;
 import com.intellij.refactoring.util.ConflictsUtil;
@@ -52,9 +55,12 @@ import com.intellij.usages.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.tree.TreeUtil;
+import one.util.streamex.StreamEx;
+import org.apache.commons.lang.ArrayUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -465,6 +471,25 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
   public void prepareForDeletion(final PsiElement element) throws IncorrectOperationException {
     if (element instanceof PsiVariable) {
       ((PsiVariable)element).normalizeDeclaration();
+    }
+    if (element instanceof PsiParameter && element.getParent() instanceof PsiParameterList) {
+      PsiParameterList parameterList = (PsiParameterList)element.getParent();
+      PsiMethod method = ObjectUtils.tryCast(parameterList.getParent(), PsiMethod.class);
+      if (method != null) {
+        PsiAnnotation contract = method.getModifierList().findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+        if (contract != null) {
+          ParameterInfoImpl[] info = ParameterInfoImpl.getParameterInfosAfterRemoval(method, (PsiParameter)element);
+          try {
+            PsiAnnotation newContract =
+              ContractConverter.convertContract(method, StreamEx.of(parameterList.getParameters()).map(PsiParameter::getName).toArray(
+                ArrayUtils.EMPTY_STRING_ARRAY), info);
+            if (newContract != null && newContract != contract) {
+              contract.replace(newContract);
+            }
+          }
+          catch (ContractConverter.ContractConversionException ignored) { }
+        }
+      }
     }
   }
 
