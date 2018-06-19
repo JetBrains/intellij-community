@@ -20,7 +20,8 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
     }
 
     val repositoryManager = icsManager.repositoryManager
-    e.presentation.isEnabledAndVisible = repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()
+    e.presentation.isEnabledAndVisible = (repositoryManager.isRepositoryExists() && repositoryManager.hasUpstream()) ||
+      (syncType == SyncType.MERGE && icsManager.readOnlySourcesManager.repositories.isNotEmpty())
   }
 
   override fun actionPerformed(event: AnActionEvent) {
@@ -28,12 +29,15 @@ internal abstract class SyncAction(private val syncType: SyncType) : DumbAwareAc
   }
 }
 
-fun syncAndNotify(syncType: SyncType, project: Project?, notifyIfUpToDate: Boolean = true) {
+private fun syncAndNotify(syncType: SyncType, project: Project?) {
   try {
-    if (!icsManager.syncManager.sync(syncType, project) && !notifyIfUpToDate) {
-      return
+    val message = if (icsManager.syncManager.sync(syncType, project)) {
+      icsMessage("sync.done.message")
     }
-    NOTIFICATION_GROUP.createNotification(icsMessage("sync.done.message"), NotificationType.INFORMATION).notify(project)
+    else {
+      icsMessage("sync.up.to.date.message")
+    }
+    NOTIFICATION_GROUP.createNotification(message, NotificationType.INFORMATION).notify(project)
   }
   catch (e: Exception) {
     LOG.warn(e)
