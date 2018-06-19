@@ -220,7 +220,7 @@ public class MethodReturnTypeFix extends LocalQuickFixAndIntentionActionOnPsiEle
                                                                                    false, null,
                                                                                    myName,
                                                                                    returnType,
-                                                                                   ParameterInfoImpl.getParameterInfosAfterRemoval(targetMethod, null),
+                                                                                   ParameterInfoImpl.fromMethod(targetMethod),
                                                                                    methodSignatureChangeVisitor);
       processor.run();
     }

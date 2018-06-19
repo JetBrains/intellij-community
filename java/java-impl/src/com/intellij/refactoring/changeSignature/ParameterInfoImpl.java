@@ -17,7 +17,6 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -140,16 +139,6 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return getTypeText().endsWith("...");
   }
 
-  public static ParameterInfoImpl[] fromMethod(PsiMethod method) {
-    List<ParameterInfoImpl> result = new ArrayList<>();
-    final PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
-    }
-    return result.toArray(new ParameterInfoImpl[0]);
-  }
-
   @Override
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
@@ -174,19 +163,36 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   }
 
   /**
-   * Returns an array of {@code ParameterInfoImpl} entries which correspond to the removal of specified method parameter
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to given method signature.
    *
-   * @param method method to remove a parameter from
-   * @param parameterToRemove parameter to remove
-   * @return an array of ParameterInfoImpl entries.
+   * @param method method to create an array from
+   * @return an array of ParameterInfoImpl entries
    */
   @NotNull
-  public static ParameterInfoImpl[] getParameterInfosAfterRemoval(PsiMethod method, PsiParameter parameterToRemove) {
+  public static ParameterInfoImpl[] fromMethod(@NotNull PsiMethod method) {
+    List<ParameterInfoImpl> result = new ArrayList<>();
+    final PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
+    }
+    return result.toArray(new ParameterInfoImpl[0]);
+  }
+
+  /**
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to given method signature with given parameter removed.
+   *
+   * @param method method to create an array from
+   * @param parameterToRemove parameter to remove from method signature
+   * @return an array of ParameterInfoImpl entries
+   */
+  @NotNull
+  public static ParameterInfoImpl[] fromMethodExceptParameter(@NotNull PsiMethod method, @NotNull PsiParameter parameterToRemove) {
     List<ParameterInfoImpl> result = new ArrayList<>();
     PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
       PsiParameter parameter = parameters[i];
-      if (!Comparing.equal(parameter, parameterToRemove)) {
+      if (!parameterToRemove.equals(parameter)) {
         result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
       }
     }

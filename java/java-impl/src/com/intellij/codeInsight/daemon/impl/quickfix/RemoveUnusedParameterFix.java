@@ -66,7 +66,7 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
                                                                       false, null,
                                                                       method.getName(),
                                                                       method.getReturnType(),
-                                                                      ParameterInfoImpl.getParameterInfosAfterRemoval(method, parameter));
+                                                                      ParameterInfoImpl.fromMethodExceptParameter(method, parameter));
     processor.run();
   }
 

@@ -478,7 +478,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
       if (method != null) {
         PsiAnnotation contract = method.getModifierList().findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
         if (contract != null) {
-          ParameterInfoImpl[] info = ParameterInfoImpl.getParameterInfosAfterRemoval(method, (PsiParameter)element);
+          ParameterInfoImpl[] info = ParameterInfoImpl.fromMethodExceptParameter(method, (PsiParameter)element);
           try {
             PsiAnnotation newContract =
               ContractConverter.convertContract(method, StreamEx.of(parameterList.getParameters()).map(PsiParameter::getName).toArray(
