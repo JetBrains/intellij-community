@@ -26,7 +26,7 @@ class JBIterableSupport : LibrarySupportBase() {
       if (arguments.isEmpty()) {
         return@DistinctOperation DistinctTraceHandler(num, call, dsl)
       }
-      return@DistinctOperation DistinctByKeyHandler(num, call, dsl)
+      return@DistinctOperation DistinctByKeyHandler(num, call, dsl, functionApplyName = "fun")
     })
 
     addIntermediateOperationsSupport(ConcatOperation("append", AppendResolver()))
