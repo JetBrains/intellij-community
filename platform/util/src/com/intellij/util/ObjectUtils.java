@@ -119,7 +119,7 @@ public class ObjectUtils {
 
   @Contract("null, _ -> null")
   @Nullable
-  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<T, S> function) {
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
     return obj == null ? null : function.fun(obj);
   }
 
