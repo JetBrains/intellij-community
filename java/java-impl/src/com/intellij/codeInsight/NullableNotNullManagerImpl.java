@@ -44,20 +44,16 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
 
   @Override
   public void setNotNulls(@NotNull String... annotations) {
-    LinkedHashSet<String> set = ContainerUtil.newLinkedHashSet(annotations);
-    Collections.addAll(set, DEFAULT_NOT_NULLS);
-    set.removeAll(Arrays.asList(DEFAULT_NULLABLES));
     myNotNulls.clear();
-    myNotNulls.addAll(set);
+    Collections.addAll(myNotNulls, annotations);
+    normalizeDefaults();
   }
 
   @Override
   public void setNullables(@NotNull String... annotations) {
-    LinkedHashSet<String> set = ContainerUtil.newLinkedHashSet(annotations);
-    Collections.addAll(set, DEFAULT_NULLABLES);
-    set.removeAll(Arrays.asList(DEFAULT_NOT_NULLS));
     myNullables.clear();
-    myNullables.addAll(set);
+    Collections.addAll(myNullables, annotations);
+    normalizeDefaults();
   }
 
   @Override
@@ -151,12 +147,7 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
   public void loadState(@NotNull Element state) {
     try {
       DefaultJDOMExternalizer.readExternal(this, state);
-      if (myNullables.isEmpty()) {
-        Collections.addAll(myNullables, DEFAULT_NULLABLES);
-      }
-      if (myNotNulls.isEmpty()) {
-        Collections.addAll(myNullables, DEFAULT_NOT_NULLS);
-      }
+      normalizeDefaults();
     }
     catch (InvalidDataException e) {
       LOG.error(e);
@@ -168,6 +159,13 @@ public class NullableNotNullManagerImpl extends NullableNotNullManager implement
     } else {
       myInstrumentedNotNulls = ContainerUtil.newArrayList(NOT_NULL);
     }
+  }
+
+  private void normalizeDefaults() {
+    myNotNulls.removeAll(ContainerUtil.newHashSet(DEFAULT_NULLABLES));
+    myNullables.removeAll(ContainerUtil.newHashSet(DEFAULT_NOT_NULLS));
+    myNullables.addAll(ContainerUtil.filter(DEFAULT_NULLABLES, s -> !myNullables.contains(s)));
+    myNotNulls.addAll(ContainerUtil.filter(DEFAULT_NOT_NULLS, s -> !myNotNulls.contains(s)));
   }
 
   private List<PsiClass> getAllNullabilityNickNames() {
