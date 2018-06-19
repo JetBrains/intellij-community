@@ -37,7 +37,8 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
   private static final CallMatcher COMPARATOR_REVERSE = instanceCall(CommonClassNames.JAVA_UTIL_COMPARATOR, "reversed").parameterCount(0);
   private static final Set<String> INTERESTING_NAMES =
     ContainerUtil.set("map", "filter", "distinct", "sorted", "sequential", "parallel", "unordered", "flatMap");
-  private static final Set<String> CALLS_MAKING_SORT_USELESS = ContainerUtil.set("sorted", "anyMatch", "allMatch", "noneMatch", "count");
+  private static final Set<String> CALLS_MAKING_SORT_USELESS = ContainerUtil.set("sorted", "anyMatch", "allMatch", "noneMatch", "count",
+                                                                                 "min", "max");
   private static final Set<String> CALLS_KEEPING_SORT_ORDER =
     ContainerUtil.set("filter", "distinct", "boxed", "asLongStream", "asDoubleStream");
   private static final Set<String> CALLS_KEEPING_ELEMENTS_DISTINCT =
@@ -146,6 +147,10 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                      !sortingCancelsPreviousSorting(call, furtherCall));
               if (furtherCall != null) {
                 String furtherCallName = furtherCall.getMethodExpression().getReferenceName();
+                if (("max".equals(furtherCallName) || "min".equals(furtherCallName)) &&
+                    !sortingCancelsPreviousSorting(call, furtherCall)) {
+                  return;
+                }
                 LocalQuickFix additionalFix = null;
                 if ("toSet".equals(furtherCallName) || "toCollection".equals(furtherCallName)) {
                   additionalFix = new CollectToOrderedSetFix();
