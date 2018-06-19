@@ -16,6 +16,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
@@ -27,10 +28,7 @@ import com.intellij.util.ThreeState;
 import com.intellij.util.containers.MultiMap;
 import git4idea.branch.GitRebaseParams;
 import git4idea.changes.GitChangeUtils;
-import git4idea.commands.Git;
-import git4idea.commands.GitCommandResult;
-import git4idea.commands.GitLineHandlerListener;
-import git4idea.commands.GitUntrackedFilesOverwrittenByOperationDetector;
+import git4idea.commands.*;
 import git4idea.merge.GitConflictResolver;
 import git4idea.rebase.GitSuccessfulRebase.SuccessType;
 import git4idea.repo.GitRepository;
@@ -45,6 +43,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.event.HyperlinkEvent;
 import java.util.*;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.openapi.vcs.VcsNotifier.IMPORTANT_ERROR_NOTIFICATION;
@@ -214,10 +214,10 @@ public class GitRebaseProcess {
     while (true) {
       GitRebaseProblemDetector rebaseDetector = new GitRebaseProblemDetector();
       GitUntrackedFilesOverwrittenByOperationDetector untrackedDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
-      GitRebaseLineListener progressListener = new GitRebaseLineListener();
+      GitRebaseProgressListener progressListener = new GitRebaseProgressListener();
       GitCommandResult result = callRebase(repository, customMode, rebaseDetector, untrackedDetector, progressListener);
 
-      boolean somethingRebased = customMode != null || progressListener.getResult().current > 1;
+      boolean somethingRebased = customMode != null || progressListener.currentCommit > 1;
 
       if (result.success()) {
         if (rebaseDetector.hasStoppedForEditing()) {
@@ -313,7 +313,7 @@ public class GitRebaseProcess {
     return findRootsWithLocalChanges(repositories);
   }
 
-  private boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
+  private static boolean shouldBeRefreshed(@NotNull GitRebaseStatus rebaseStatus) {
     return rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS ||
            ((GitSuccessfulRebase)rebaseStatus).getSuccessType() != SuccessType.UP_TO_DATE;
   }
@@ -568,5 +568,19 @@ public class GitRebaseProcess {
   private static GitRepository findRootBySkippedCommit(@NotNull final String hash,
                                                        @NotNull MultiMap<GitRepository, GitRebaseUtils.CommitInfo> skippedCommits) {
     return find(skippedCommits.keySet(),  repository-> exists(skippedCommits.get(repository),  info-> info.revision.asString().equals(hash)));
+  }
+
+  private static class GitRebaseProgressListener extends GitLineHandlerAdapter {
+    private static final Pattern PROGRESS = Pattern.compile("^Rebasing \\((\\d+)/(\\d+)\\)$"); // `Rebasing (2/3)` means 2nd commit from 3
+
+    private int currentCommit;
+
+    @Override
+    public void onLineAvailable(@NotNull String line, @NotNull Key outputType) {
+      Matcher matcher = PROGRESS.matcher(line);
+      if (matcher.matches()) {
+        currentCommit = Integer.parseInt(matcher.group(1));
+      }
+    }
   }
 }
