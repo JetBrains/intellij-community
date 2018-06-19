@@ -2,6 +2,7 @@
 package com.intellij.debugger.streams.lib.impl
 
 import com.intellij.debugger.streams.resolve.AppendResolver
+import com.intellij.debugger.streams.resolve.FilteredMapResolver
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctByKeyHandler
 import com.intellij.debugger.streams.trace.impl.handler.unified.DistinctTraceHandler
 
@@ -31,5 +32,7 @@ class JBIterableSupport : LibrarySupportBase() {
     addIntermediateOperationsSupport(ConcatOperation("append", AppendResolver()))
 
     addIntermediateOperationsSupport(SortedOperation("sorted"), SortedOperation("collect"))
+
+    addIntermediateOperationsSupport(OrderBasedOperation("filterMap", FilteredMapResolver()))
   }
 }
