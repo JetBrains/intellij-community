@@ -5,6 +5,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.TreeExpander;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.PersistentStateComponent;
@@ -121,6 +122,18 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
     };
     allTodosContent.setComponent(myAllTodos);
     Disposer.register(this, myAllTodos);
+    if (toolWindow instanceof ToolWindowEx) {
+      DefaultActionGroup group = new DefaultActionGroup() {
+        {
+          getTemplatePresentation().setText("View Options");
+          setPopup(true);
+          add(myAllTodos.createAutoScrollToSourceAction());
+          addSeparator();
+          addAll(myAllTodos.createGroupByActionGroup());
+        }
+      };
+      ((ToolWindowEx)toolWindow).setAdditionalGearActions(group);
+    }
 
     Content currentFileTodosContent = contentFactory.createContent(null, IdeBundle.message("title.todo.current.file"), false);
     CurrentFileTodosPanel currentFileTodos = new CurrentFileTodosPanel(myProject, state.current, currentFileTodosContent) {
