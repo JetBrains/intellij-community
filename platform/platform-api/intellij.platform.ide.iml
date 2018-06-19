@@ -32,5 +32,7 @@
     <orderEntry type="library" name="JDOM" level="project" />
     <orderEntry type="library" name="jackson" level="project" />
     <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="delight-rhino-sandbox" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="rhino" level="project" />
   </component>
 </module>
