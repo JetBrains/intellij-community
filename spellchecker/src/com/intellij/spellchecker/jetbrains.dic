@@ -251,6 +251,7 @@ hardlink
 hardlinks
 hashbang
 hashcode
+hashtable
 hateoas
 haxe
 hazelcast
