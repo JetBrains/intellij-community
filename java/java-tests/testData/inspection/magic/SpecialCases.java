@@ -19,10 +19,10 @@ class SpecialCases {
   void test() {
     Calendar instance = Calendar.getInstance();
     if(instance.get(Calendar.DAY_OF_WEEK) == Calendar.MONDAY) {}
-    if(instance.get(Calendar.DAY_OF_WEEK) == <warning descr="Should be one of: Calendar.SUNDAY, Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, Calendar.FRIDAY, Calendar.SATURDAY">Calendar.FEBRUARY</warning>) {}
-    if(instance.get(Calendar.MONTH) == <warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, Calendar.JUNE, Calendar.JULY, Calendar.AUGUST, Calendar.SEPTEMBER, Calendar.OCTOBER, Calendar.NOVEMBER, Calendar.DECEMBER">Calendar.MONDAY</warning>) {}
+    if(instance.get(Calendar.DAY_OF_WEEK) == <warning descr="Should be one of: Calendar.SUNDAY, Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, ...">Calendar.FEBRUARY</warning>) {}
+    if(instance.get(Calendar.MONTH) == <warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, ...">Calendar.MONDAY</warning>) {}
     if(instance.get(Calendar.MONTH) == Calendar.FEBRUARY) {}
-    if(instance.get(Calendar.MONTH) == <warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, Calendar.JUNE, Calendar.JULY, Calendar.AUGUST, Calendar.SEPTEMBER, Calendar.OCTOBER, Calendar.NOVEMBER, Calendar.DECEMBER">Calendar.AM</warning>) {}
+    if(instance.get(Calendar.MONTH) == <warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, ...">Calendar.AM</warning>) {}
     if(instance.get(Calendar.AM_PM) == Calendar.AM) {}
     if(instance.get(Calendar.AM_PM) == <warning descr="Should be one of: Calendar.AM, Calendar.PM">Calendar.MONDAY</warning>) {}
     if(instance.get(Calendar.DATE) == 1) {}

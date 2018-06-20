@@ -38,6 +38,7 @@ import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashSet;
+import one.util.streamex.Joining;
 import one.util.streamex.StreamEx;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nls;
@@ -552,17 +553,17 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static void registerProblem(@NotNull PsiExpression argument, @NotNull AllowedValues allowedValues, @NotNull ProblemsHolder holder) {
-    String values = StringUtil.join(allowedValues.values,
-                                    value -> {
-                                      if (value instanceof PsiReferenceExpression) {
-                                        PsiElement resolved = ((PsiReferenceExpression)value).resolve();
-                                        if (resolved instanceof PsiVariable) {
-                                          return PsiFormatUtil.formatVariable((PsiVariable)resolved, PsiFormatUtilBase.SHOW_NAME |
-                                                                                                     PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
-                                        }
-                                      }
-                                      return value.getText();
-                                    }, ", ");
+    Function<PsiAnnotationMemberValue, String> formatter = value -> {
+      if (value instanceof PsiReferenceExpression) {
+        PsiElement resolved = ((PsiReferenceExpression)value).resolve();
+        if (resolved instanceof PsiVariable) {
+          return PsiFormatUtil.formatVariable((PsiVariable)resolved,
+                                              PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_CONTAINING_CLASS, PsiSubstitutor.EMPTY);
+        }
+      }
+      return value.getText();
+    };
+    String values = StreamEx.of(allowedValues.values).map(formatter).collect(Joining.with(", ").cutAfterDelimiter().maxCodePoints(100));
     String message = "Should be one of: " + values + (allowedValues.canBeOred ? " or their combination" : "");
     holder.registerProblem(argument, message, suggestMagicConstant(argument, allowedValues));
   }
