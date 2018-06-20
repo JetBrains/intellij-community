@@ -555,6 +555,11 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     DocumentReference[] documentReferences = ContainerUtil
       .map2Array(psiFiles, DocumentReference.class, file -> DocumentReferenceManager.getInstance().create(file.getVirtualFile()));
 
+    if (documentReferences.length == 0) {
+      LOG.error("documentReferences array is empty, undo-redo for language injection will not be registered for any document/file," +
+                " please pass a proper `hostFile`, current hostFile = '" + hostFile + "'"); //refer IDEA-109366
+    }
+
     final UndoableAction action = new GlobalUndoableAction(documentReferences) {
       @Override
       public void undo() {
