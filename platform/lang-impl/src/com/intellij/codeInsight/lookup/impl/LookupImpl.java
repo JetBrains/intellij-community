@@ -34,13 +34,13 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.util.CollectConsumer;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -997,7 +997,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   private void doHide(final boolean fireCanceled, final boolean explicitly) {
     if (myDisposed) {
-      LOG.error(disposeTrace);
+      LOG.error(formatDisposeTrace());
     }
     else {
       myHidden = true;
@@ -1023,11 +1023,11 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     myOffsets.restorePrefix();
   }
 
-  private static String staticDisposeTrace = null;
-  private String disposeTrace = null;
+  private static Throwable staticDisposeTrace = null;
+  private Throwable disposeTrace = null;
 
   public static String getLastLookupDisposeTrace() {
-    return staticDisposeTrace;
+    return ExceptionUtil.getThrowableText(staticDisposeTrace);
   }
 
   @Override
@@ -1035,18 +1035,22 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
     ApplicationManager.getApplication().assertIsDispatchThread();
     assert myHidden;
     if (myDisposed) {
-      LOG.error(disposeTrace);
+      LOG.error(formatDisposeTrace());
       return;
     }
 
     myOffsets.disposeMarkers();
+    disposeTrace = new Throwable();
     myDisposed = true;
-    disposeTrace = DebugUtil.currentStackTrace() + "\n============";
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Disposing lookup:\n" + disposeTrace);
+      LOG.debug("Disposing lookup:", disposeTrace);
     }
     //noinspection AssignmentToStaticFieldFromInstanceMethod
     staticDisposeTrace = disposeTrace;
+  }
+
+  private String formatDisposeTrace() {
+    return ExceptionUtil.getThrowableText(disposeTrace) + "\n============";
   }
 
   public void refreshUi(boolean mayCheckReused, boolean onExplicitAction) {
@@ -1088,7 +1092,7 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable,
 
   public void checkValid() {
     if (myDisposed) {
-      throw new AssertionError("Disposed at: " + disposeTrace);
+      throw new AssertionError("Disposed at: " + formatDisposeTrace());
     }
   }
 
