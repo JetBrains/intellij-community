@@ -79,8 +79,11 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
   // Fixtures could be used only by test functions or other fixtures.
   val fixture = forWhat.isFixture()
   val pyTestEnabled = TestRunnerService.getInstance(module).projectConfiguration == pyTestName
-
-  return if (fixture || (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext))) {
+  return if (
+    fixture ||
+    (pyTestEnabled && isTestElement(forWhat, ThreeState.NO, typeEvalContext)) ||
+    (PyTestFixtureSubjectDetectorExtension.EP_NAME.extensions.find { it.isSubjectForFixture(forWhat) } != null)
+  ) {
     StubIndex.getElements(PyDecoratorStubIndex.KEY, decoratorName, module.project,
                           GlobalSearchScope.union(
                             arrayOf(module.moduleContentScope, GlobalSearchScope.moduleRuntimeScope(module, true))),
@@ -88,8 +91,7 @@ internal fun getFixtures(module: Module, forWhat: PyFunction, typeEvalContext: T
       .mapNotNull { createFixture(it) }
       .filterNot { fixture && it.name == forWhat.name } // Do not suggest fixture for itself
   }
-  else {
-    emptyList()
-  }
+  else emptyList()
 }
+
 
