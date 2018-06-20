@@ -8,19 +8,40 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.util.containers.ContainerUtil
 import java.util.*
 
+fun newLogEvent(session: String,
+                build: String,
+                bucket: String,
+                time: Long,
+                recorderId: String,
+                recorderVersion: String,
+                event: LogEventBaseAction): LogEvent {
+  return LogEvent(session, build, bucket, time, recorderId, recorderVersion, event)
+}
+
+fun newLogEvent(session: String,
+                build: String,
+                bucket: String,
+                recorderId: String,
+                recorderVersion: String,
+                type: String,
+                isState: Boolean = false): LogEvent {
+  val event: LogEventBaseAction = if (isState) LogStateEventAction(escape(type)) else LogEventAction(escape(type))
+  return LogEvent(session, build, bucket, System.currentTimeMillis(), recorderId, recorderVersion, event)
+}
+
 open class LogEvent(session: String,
                     build: String,
                     bucket: String,
+                    eventTime: Long,
                     recorderId: String,
                     recorderVersion: String,
-                    type: String,
-                    isState: Boolean = false) {
+                    action: LogEventBaseAction) {
   val session: String = escape(session)
   val build: String = escape(build)
   val bucket: String = escape(bucket)
-  val time: Long = System.currentTimeMillis()
+  val time: Long = eventTime
   val group: LogEventRecorder = LogEventRecorder(escape(recorderId), escape(recorderVersion))
-  val event: LogEventBaseAction = if (isState) LogStateEventAction(escape(type)) else LogEventAction(escape(type))
+  val event: LogEventBaseAction = action
 
   fun shouldMerge(next: LogEvent): Boolean {
     if (session != next.session) return false
@@ -29,20 +50,6 @@ open class LogEvent(session: String,
     if (group.id != next.group.id) return false
     if (group.version != next.group.version) return false
     if (!event.shouldMerge(next.event)) return false
-    return true
-  }
-
-  @Suppress("SENSELESS_COMPARISON")
-    /**
-     * Checks event is valid after deserialization, e.g. no fields are missing
-     */
-  fun isValid(): Boolean {
-    if (session == null || build == null || bucket == null) return false
-    if (time < 0) return false
-
-    if (group == null || !group.isValid()) return false
-    if (event == null || !event.isValid()) return false
-
     return true
   }
 
@@ -74,11 +81,6 @@ open class LogEvent(session: String,
 }
 
 class LogEventRecorder(val id: String, val version: String) {
-
-  @Suppress("SENSELESS_COMPARISON")
-  fun isValid(): Boolean {
-    return id != null && version != null
-  }
 
   override fun equals(other: Any?): Boolean {
     if (this === other) return true
@@ -116,11 +118,6 @@ class LogEventAction(id: String, var count: Int = 1) : LogEventBaseAction(id) {
 
 open class LogEventBaseAction(val id: String) {
   var data: MutableMap<String, Any> = Collections.emptyMap()
-
-  @Suppress("SENSELESS_COMPARISON")
-  fun isValid(): Boolean {
-    return id != null && data != null
-  }
 
   open fun increment() {
   }
