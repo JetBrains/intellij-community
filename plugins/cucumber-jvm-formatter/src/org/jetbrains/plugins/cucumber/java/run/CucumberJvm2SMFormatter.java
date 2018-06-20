@@ -7,6 +7,7 @@ import cucumber.api.formatter.Formatter;
 import gherkin.events.PickleEvent;
 
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -118,25 +119,11 @@ public class CucumberJvm2SMFormatter implements Formatter {
                              getFeatureFileDescription(currentFilePath)));
   }
   private static void handleTestStepStarted(TestStepStarted event) {
-    if (event.testStep.isHook()) {
-      return;
-    }
-
     outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), getStepLocation(event.testStep),
                              getStepName(event.testStep)));
   }
 
   private static void handleTestStepFinished(TestStepFinished event) {
-    if (event.testStep.isHook()) {
-      if (event.result.getStatus() == FAILED) {
-        outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), "", getStepName(event.testStep)));
-
-        outCommand(String.format(TEMPLATE_TEST_FAILED, getCurrentTime(), "",
-                                 escape(event.result.getErrorMessage()), getStepName(event.testStep), ""));
-      } else {
-        return;
-      }
-    }
     if (event.result.getStatus() == PASSED) {
       // write nothing
     } else if (event.result.getStatus() == SKIPPED || event.result.getStatus() == PENDING) {
@@ -158,13 +145,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void handleTestSourceRead(TestSourceRead event) {
     closeCurrentScenarioOutline();
-
-    String[] lines = event.source.split("\n");
-    if (lines.length > 0) {
-      pathToDescription.put(event.uri, lines[0]);
-    } else {
-      pathToDescription.put(event.uri, event.source);
-    }
+    pathToDescription.put(event.uri, getFeatureName(event.source));
   }
 
   private void closeCurrentScenarioOutline() {
@@ -177,7 +158,29 @@ public class CucumberJvm2SMFormatter implements Formatter {
   }
 
   private static String getStepLocation(TestStep step) {
-    return step.getStepLocation() + ":" + step.getStepLine();
+    if (step.isHook()) {
+      try {
+        Field definitionMatchField = step.getClass().getSuperclass().getDeclaredField("definitionMatch");
+        definitionMatchField.setAccessible(true);
+        Object definitionMatchFieldValue = definitionMatchField.get(step);
+        
+        Field hookDefinitionField = definitionMatchFieldValue.getClass().getDeclaredField("hookDefinition");
+        hookDefinitionField.setAccessible(true);
+        Object hookDefinitionFieldValue = hookDefinitionField.get(definitionMatchFieldValue);
+
+        Field methodField = hookDefinitionFieldValue.getClass().getDeclaredField("method");
+        methodField.setAccessible(true);
+        Object methodFieldValue = methodField.get(hookDefinitionFieldValue);
+        if (methodFieldValue instanceof Method) {
+          Method method = (Method)methodFieldValue;
+          return String.format("java:test://%s/%s", method.getDeclaringClass().getName(), method.getName());
+        }
+      }
+      catch (Exception ignored) {
+      }
+      return "";
+    }
+    return FILE_RESOURCE_PREFIX + step.getStepLocation() + ":" + step.getStepLine();
   }
 
   private static String getStepName(TestStep step) {
