@@ -12,7 +12,7 @@ import com.jetbrains.python.psi.types.TypeEvalContext
  */
 object PyTestFixtureInspectionExtension : PyInspectionExtension() {
   override fun ignoreUnused(local: PsiElement, evalContext: TypeEvalContext) =
-    local is PyNamedParameter && hasFixture(local, evalContext)
+    local is PyNamedParameter && local.isFixture(evalContext)
 
   override fun ignoreShadowed(element: PsiElement): Boolean = element is PyFunction && element.isFixture()
 }
