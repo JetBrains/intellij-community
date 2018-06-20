@@ -19,7 +19,7 @@ class Test {
     x = x + (get() ? 0 : 1<<18);
     x = x + (get() ? 0 : 1<<17);
 
-    if (<warning descr="Condition 'x < 0' is always 'false'">x < 0</warning>) {
+    if (x < 0) {
       System.out.println("Impossible");
     }
   }
