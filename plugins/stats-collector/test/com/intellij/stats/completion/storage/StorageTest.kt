@@ -133,22 +133,8 @@ class FileLoggerTest : PlatformTestCase() {
     fun `test delete old stuff`() {
         writeKb(4096)
 
-        var files = filesProvider.getDataFiles()
-
-        val totalSize = files.fold(0L, { total, file -> total + file.length() })
-        assertThat(totalSize > 2 * 1024 * 1024).isTrue()
-
-        val firstBefore = files
-          .map { it.name.substringAfter('_').toInt() }
-          .sorted()
-          .first()
-        
-        assertThat(firstBefore).isEqualTo(0)
-        
-        filesProvider.cleanupOldFiles()
-        files = filesProvider.getDataFiles()
-
-        val totalSizeAfterCleanup = files.fold(0L, { total, file -> total + file.length() })
+        val files = filesProvider.getDataFiles()
+        val totalSizeAfterCleanup = files.fold(0L) { total, file -> total + file.length() }
         assertThat(totalSizeAfterCleanup < 2 * 1024 * 1024).isTrue()
 
         val firstAfter = files
