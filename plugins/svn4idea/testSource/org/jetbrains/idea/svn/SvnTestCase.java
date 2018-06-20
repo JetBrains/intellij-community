@@ -8,7 +8,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
@@ -116,13 +115,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       assert isRepoRootCreated : myRepoRoot;
 
       myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
-      if (!myPluginRoot.isDirectory()) {
-        // try standalone mode
-        Class aClass = SvnTestCase.class;
-        String rootPath = PathManager.getResourceRoot(aClass, "/" + aClass.getName().replace('.', '/') + ".class");
-        myPluginRoot = new File(rootPath).getParentFile().getParentFile().getParentFile();
-      }
-
       File svnBinDir = new File(myPluginRoot, getTestDataDir() + "/svn/bin");
       File svnExecutable = null;
       if (SystemInfo.isWindows) {
