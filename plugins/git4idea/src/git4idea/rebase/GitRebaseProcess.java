@@ -130,7 +130,7 @@ public class GitRebaseProcess {
     try (AccessToken ignore = DvcsUtil.workingTreeChangeStarted(myProject, "Rebase")) {
       if (!saveDirtyRootsInitially(repositoriesToRebase)) return;
 
-      GitRepository failed = null;
+      GitRepository latestRepository = null;
       for (GitRepository repository : repositoriesToRebase) {
         GitRebaseResumeMode customMode = null;
         if (repository == myRebaseSpec.getOngoingRebase()) {
@@ -144,21 +144,23 @@ public class GitRebaseProcess {
         if (customMode == GitRebaseResumeMode.CONTINUE) {
           myDirtyScopeManager.dirDirtyRecursively(repository.getRoot());
         }
+
+        latestRepository = repository;
         statuses.put(repository, rebaseStatus);
         if (shouldBeRefreshed(rebaseStatus)) {
           refreshVfs(repository.getRoot(), changes);
         }
         if (rebaseStatus.getType() != GitRebaseStatus.Type.SUCCESS) {
-          failed = repository;
           break;
         }
       }
 
-      if (failed == null) {
+      GitRebaseStatus.Type latestStatus = statuses.get(latestRepository).getType();
+      if (latestStatus == GitRebaseStatus.Type.SUCCESS || latestStatus == GitRebaseStatus.Type.NOT_STARTED) {
         LOG.debug("Rebase completed successfully.");
         mySaver.load();
       }
-      if (failed == null) {
+      if (latestStatus == GitRebaseStatus.Type.SUCCESS) {
         notifySuccess(getSuccessfulRepositories(statuses), getSkippedCommits(statuses));
       }
 
@@ -227,8 +229,7 @@ public class GitRebaseProcess {
       boolean somethingRebased = customMode != null || progressListener.currentCommit > 1;
 
       if (rebaseCommandResult.wasCancelledInCommitList()) {
-        LOG.info("Rebase was cancelled");
-        throw new ProcessCanceledException();
+        return GitRebaseStatus.notStarted();
       }
       else if (rebaseCommandResult.wasCancelledInCommitMessage()) {
         showStoppedForEditingMessage();
