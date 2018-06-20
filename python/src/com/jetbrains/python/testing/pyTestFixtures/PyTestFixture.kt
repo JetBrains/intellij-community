@@ -38,7 +38,7 @@ internal fun getFixture(element: PyNamedParameter, typeEvalContext: TypeEvalCont
 /**
  * @return Boolean If named parameter has fixture or not
  */
-internal fun hasFixture(element: PyNamedParameter, typeEvalContext: TypeEvalContext) = getFixture(element, typeEvalContext) != null
+fun PyNamedParameter.isFixture(typeEvalContext: TypeEvalContext) = getFixture(this, typeEvalContext) != null
 
 /**
  * @return Boolean is function decorated as fixture
