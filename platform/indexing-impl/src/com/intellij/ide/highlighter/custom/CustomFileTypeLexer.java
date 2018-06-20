@@ -62,11 +62,11 @@ public final class CustomFileTypeLexer extends AbstractCustomLexer {
 
     ArrayList<TokenParser> tokenParsers = new ArrayList<>();
     tokenParsers.add(new WhitespaceParser());
-    if (lineCommentParser != null) {
-      tokenParsers.add(lineCommentParser);
-    }
     if (multilineCommentParser != null) {
       tokenParsers.add(multilineCommentParser);
+    }
+    if (lineCommentParser != null) {
+      tokenParsers.add(lineCommentParser);
     }
     tokenParsers.add(keywordParser);
     tokenParsers.add(quotedStringParser);
