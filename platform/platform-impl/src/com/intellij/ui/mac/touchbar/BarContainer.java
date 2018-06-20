@@ -10,7 +10,8 @@ enum BarType {
   DEFAULT,
   DEBUGGER, // debugger must use context of focused component (for example, to use selected text in the Editor)
   POPUP,
-  DIALOG
+  DIALOG,
+  EDITOR_SEARCH
 }
 
 class BarContainer {

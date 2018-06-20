@@ -3,10 +3,7 @@
  */
 package com.intellij.find;
 
-import com.intellij.find.editorHeaderActions.ContextAwareShortcutProvider;
-import com.intellij.find.editorHeaderActions.ShowMoreOptions;
-import com.intellij.find.editorHeaderActions.Utils;
-import com.intellij.find.editorHeaderActions.VariantsCompletionAction;
+import com.intellij.find.editorHeaderActions.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -26,6 +23,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
+import com.intellij.ui.mac.TouchbarActionsProvider;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -46,7 +44,7 @@ import java.util.List;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
+public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider, TouchbarActionsProvider {
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -78,6 +76,7 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
 
   private boolean myMultilineMode;
   private String myStatusText = "";
+  private DefaultActionGroup myTouchbarActions;
 
   @NotNull
   public static Builder buildFor(@Nullable Project project, @NotNull JComponent component) {
@@ -223,6 +222,16 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     if (myReplaceTextComponent != null) {
       myReplaceTextComponent.selectAll();
     }
+  }
+
+  @Override
+  public @Nullable ActionGroup getTouchbarActions() {
+    if (myTouchbarActions == null) {
+      myTouchbarActions = new DefaultActionGroup();
+      myTouchbarActions.add(new PrevOccurrenceAction());
+      myTouchbarActions.add(new NextOccurrenceAction());
+    }
+    return myTouchbarActions;
   }
 
   public void setStatusText(@NotNull String status) {
