@@ -488,7 +488,23 @@ public class CodeCompletionHandlerBase {
     if (context.shouldAddCompletionChar()) {
       WriteAction.run(() -> addCompletionChar(context, item, editor, completionChar));
     }
+    checkPsiTextConcistency(indicator);
+
     return context;
+  }
+
+  private static void checkPsiTextConcistency(CompletionProcessEx indicator) {
+    PsiFile psiFile = PsiUtilBase.getPsiFileInEditor(InjectedLanguageUtil.getTopLevelEditor(indicator.getEditor()), indicator.getProject());
+    if (psiFile != null) {
+      if (Registry.is("ide.check.stub.text.consistency") ||
+          ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
+        StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        if (PsiDocumentManager.getInstance(psiFile.getProject()).hasUncommitedDocuments()) {
+          PsiDocumentManager.getInstance(psiFile.getProject()).commitAllDocuments();
+          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
+        }
+      }
+    }
   }
 
   public static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
@@ -549,13 +565,6 @@ public class CodeCompletionHandlerBase {
       }
       finally {
         context.stopWatching();
-      }
-
-      if (psiFile.isValid()) {
-        if (Registry.is("ide.check.stub.text.consistency") ||
-            ApplicationManager.getApplication().isUnitTestMode() && !ApplicationInfoImpl.isInStressTest()) {
-          StubTextInconsistencyException.checkStubTextConsistency(psiFile);
-        }
       }
 
       EditorModificationUtil.scrollToCaret(editor);
