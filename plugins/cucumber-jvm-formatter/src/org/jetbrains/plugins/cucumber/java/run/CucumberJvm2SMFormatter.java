@@ -158,13 +158,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
 
   private void handleTestSourceRead(TestSourceRead event) {
     closeCurrentScenarioOutline();
-
-    String[] lines = event.source.split("\n");
-    if (lines.length > 0) {
-      pathToDescription.put(event.uri, lines[0]);
-    } else {
-      pathToDescription.put(event.uri, event.source);
-    }
+    pathToDescription.put(event.uri, getFeatureName(event.source));
   }
 
   private void closeCurrentScenarioOutline() {
