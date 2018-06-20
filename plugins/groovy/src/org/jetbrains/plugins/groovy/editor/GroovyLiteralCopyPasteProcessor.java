@@ -55,7 +55,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     if (tokenType == GroovyTokenTypes.mSTRING_LITERAL || tokenType == GroovyTokenTypes.mGSTRING_LITERAL) {
       final String text = token.getText();
       if (text == null) return null;
-      return GroovyStringLiteralManipulator.getLiteralRange(text);
+      return GroovyStringLiteralManipulator.getLiteralRange(text).shiftRight(node.getStartOffset());
     }
     if (tokenType == GroovyTokenTypes.mREGEX_CONTENT) {
       return token.getTextRange();
