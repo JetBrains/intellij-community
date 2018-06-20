@@ -958,8 +958,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
     if (annotation != null) {
       final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
-      if (referenceElement != null && referenceElement.resolve() != null) {
-        return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+      if (referenceElement != null) {
+        JavaResolveResult resolveResult = referenceElement.advancedResolve(false);
+        if (resolveResult.getElement() != null &&
+            resolveResult.isValidResult() &&
+            !nullableManager.getDefaultNotNull().equals(annotation.getQualifiedName())) {
+          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+        }
       }
     }
     return null;
