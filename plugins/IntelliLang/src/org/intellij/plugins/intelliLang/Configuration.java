@@ -468,7 +468,7 @@ public class Configuration extends SimpleModificationTracker implements Persiste
       }
     }
     if (!originalInjections.isEmpty()) {
-      replaceInjectionsWithUndo(host.getProject(), newInjections, originalInjections, Collections.emptyList());
+      replaceInjectionsWithUndo(host.getProject(), host.getContainingFile(), newInjections, originalInjections, Collections.emptyList());
       return true;
     }
     return false;
@@ -488,15 +488,33 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     return Collections.unmodifiableList(myInjections.get(injectorId));
   }
 
+  /**
+   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, List, List, List)},
+   * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
+   * especially when {@code psiElementsToRemove} is null (IDEA-109366)
+   * To be removed in IDEA 2019.2
+   */
+  @Deprecated
   public void replaceInjectionsWithUndo(final Project project,
-                                final List<? extends BaseInjection> newInjections,
-                                final List<? extends BaseInjection> originalInjections,
-                                final List<? extends PsiElement> psiElementsToRemove) {
-    replaceInjectionsWithUndo(project, newInjections, originalInjections, psiElementsToRemove,
+                                        final List<? extends BaseInjection> newInjections,
+                                        final List<? extends BaseInjection> originalInjections,
+                                        final List<? extends PsiElement> psiElementsToRemove) {
+    replaceInjectionsWithUndo(project, null, newInjections, originalInjections, psiElementsToRemove);
+  }
+
+  /**
+   * @since 2018.3
+   */
+  public void replaceInjectionsWithUndo(Project project,
+                                        @Nullable PsiFile hostFile,
+                                        List<? extends BaseInjection> newInjections,
+                                        List<? extends BaseInjection> originalInjections,
+                                        List<? extends PsiElement> psiElementsToRemove) {
+    replaceInjectionsWithUndo(project, hostFile, newInjections, originalInjections, psiElementsToRemove,
                               (add, remove) -> {
                                 replaceInjectionsWithUndoInner(add, remove);
-                                if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null || ContainerUtil.find(remove,
-                                                                                                                        LANGUAGE_INJECTION_CONDITION) != null) {
+                                if (ContainerUtil.find(add, LANGUAGE_INJECTION_CONDITION) != null ||
+                                    ContainerUtil.find(remove, LANGUAGE_INJECTION_CONDITION) != null) {
                                   FileContentUtil.reparseOpenedFiles();
                                 }
                                 return true;
@@ -507,6 +525,13 @@ public class Configuration extends SimpleModificationTracker implements Persiste
     replaceInjections(add, remove, false);
   }
 
+  /**
+   * @deprecated use {@link #replaceInjectionsWithUndo(Project, PsiFile, Object, Object, List, PairProcessor)},
+   * and consider passing non-null {@code hostFile} to make undo-redo registered for this file,
+   * especially when {@code psiElementsToRemove} is null (IDEA-109366)
+   * To be removed in IDEA 2019.2
+   */
+  @Deprecated
   public static <T> void replaceInjectionsWithUndo(final Project project, final T add, final T remove,
                                                    final List<? extends PsiElement> psiElementsToRemove,
                                                    final PairProcessor<T, T> actualProcessor) {

@@ -129,7 +129,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
                                                                          newInjection.setPlaceEnabled(placeText, false);
                                                                          return InjectorUtils.canBeRemoved(newInjection)? null : newInjection;
                                                                        });
-    configuration.replaceInjectionsWithUndo(project, newInjections, originalInjections, annotations);
+    configuration.replaceInjectionsWithUndo(project, host.getContainingFile(), newInjections, originalInjections, annotations);
     return true;
   }
 
@@ -152,7 +152,8 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       newInjection.mergeOriginalPlacesFrom(copy, false);
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
       configuration.replaceInjectionsWithUndo(
-        project, Collections.singletonList(newInjection), Collections.singletonList(originalInjection), Collections.<PsiAnnotation>emptyList());
+        project, psiElement.getContainingFile(), Collections.singletonList(newInjection), Collections.singletonList(originalInjection),
+        Collections.<PsiAnnotation>emptyList());
     }
     return true;
 
@@ -378,10 +379,12 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       originalCopy.setPlaceEnabled(currentPlace.getText(), true);
       methodParameterInjection = createFrom(project, originalCopy, contextMethod, false);
     }
-    mergePlacesAndAddToConfiguration(project, configuration, methodParameterInjection, originalInjection);
+    mergePlacesAndAddToConfiguration(project, contextMethod.getContainingFile(), configuration, methodParameterInjection,
+                                     originalInjection);
   }
 
   private static void mergePlacesAndAddToConfiguration(@NotNull Project project,
+                                                       @Nullable PsiFile psiFile,
                                                        @NotNull Configuration configuration,
                                                        @NotNull MethodParameterInjection injection,
                                                        @Nullable BaseInjection originalInjection) {
@@ -390,7 +393,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
       newInjection.mergeOriginalPlacesFrom(originalInjection, true);
     }
     configuration.replaceInjectionsWithUndo(
-      project, Collections.singletonList(newInjection),
+      project, psiFile, Collections.singletonList(newInjection),
       ContainerUtil.createMaybeSingletonList(originalInjection),
       Collections.emptyList());
   }
