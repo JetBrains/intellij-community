@@ -18,6 +18,8 @@ package com.intellij.build;
 import com.intellij.build.events.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.projectView.PresentationData;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
@@ -183,7 +185,32 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   public static boolean isFailed(@Nullable EventResult result) {
-    return result instanceof FailureResult;
+    // Android Studio: Warnings from SyncIssues are added to FailureResult for now, will change once SuccessResult#getWarnings is used
+    if (result instanceof FailureResult) {
+      for (Failure failure : ((FailureResult)result).getFailures()) {
+        Notification notification = failure.getNotification();
+        if (notification == null || notification.getType() == NotificationType.ERROR) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  // Android Studio: Check if at least one of the failures is a warning
+  public static boolean hasWarnings(@Nullable EventResult result) {
+    if (result instanceof FailureResult) {
+      for (Failure failure : ((FailureResult)result).getFailures()) {
+        Notification notification = failure.getNotification();
+        if (notification != null && notification.getType() == NotificationType.WARNING) {
+          return true;
+        }
+      }
+    }
+    else if (result instanceof SuccessResult) {
+      return !((SuccessResult)result).getWarnings().isEmpty();
+    }
+    return false;
   }
 
   public static boolean isSkipped(@Nullable EventResult result) {
@@ -191,7 +218,8 @@ public class ExecutionNode extends CachingSimpleNode {
   }
 
   public boolean isRunning() {
-    return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult);
+    // Android Studio: it is not running if it already has warnings
+    return endTime <= 0 && !isSkipped(myResult) && !isFailed(myResult) && !hasWarnings(myResult);
   }
 
   public void setResult(@Nullable EventResult result) {
@@ -289,7 +317,8 @@ public class ExecutionNode extends CachingSimpleNode {
              isFailed(myResult) ? NODE_ICON_ERROR :
              isSkipped(myResult) ? NODE_ICON_SKIPPED :
              myErrors.get() > 0 ? NODE_ICON_ERROR :
-             myWarnings.get() > 0 ? NODE_ICON_WARNING :
+             // Android Studio: Show warning icon if it is not failed but has warnings
+             hasWarnings(myResult) || myWarnings.get() > 0 ? NODE_ICON_WARNING :
              NODE_ICON_OK;
     }
   }
