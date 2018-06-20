@@ -157,14 +157,14 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
           if (!hasSeparator) {
             hasSeparator = true;
             group.addSeparator();
-            group.add(new AnAction(intention.getText() + " before parameter '" + parameter.getName() + "'") {
-              @Override
-              public void actionPerformed(AnActionEvent e) {
-                PsiDocumentManager.getInstance(project).commitAllDocuments();
-                intention.makeAnnotationsExplicit(project, file, parameter);
-              }
-            });
           }
+          group.add(new AnAction(intention.getText() + " on parameter '" + parameter.getName() + "'") {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              PsiDocumentManager.getInstance(project).commitAllDocuments();
+              intention.makeAnnotationsExplicit(project, file, parameter);
+            }
+          });
         }
       }
     }
