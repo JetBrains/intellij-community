@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.editor;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.editorActions.JoinRawLinesHandlerDelegate;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
@@ -22,7 +23,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
@@ -316,7 +316,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
   private static int getStringToJoinMaxLength(Request request, int symbolsToSkip) {
     int leftLineStartOffset = getLeftLineStartOffset(request);
-    final int margin = CodeStyleSettingsManager.getInstance().getCurrentSettings().getRightMargin(PythonLanguage.getInstance());
+    final int margin = CodeStyle.getLanguageSettings(request.leftElem.getContainingFile(), PythonLanguage.getInstance()).RIGHT_MARGIN;
     int leftLineLength = request.document.getLineEndOffset(request.document.getLineNumber(leftLineStartOffset)) - leftLineStartOffset;
     return margin - leftLineLength - symbolsToSkip;
   }

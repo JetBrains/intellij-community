@@ -15,9 +15,9 @@
  */
 package com.jetbrains.python;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 /**
@@ -35,7 +35,7 @@ public class PyJoinLinesTest extends PyTestCase {
   private void doTestWithCodeStyleSettings() {
     CodeStyleSettings settings = new CodeStyleSettings();
     settings.setRightMargin(PythonLanguage.getInstance(), 79);
-    CodeStyleSettingsManager.getInstance().setTemporarySettings(settings);
+    CodeStyle.setTemporarySettings(myFixture.getProject(), settings);
 
     doTest();
   }
