@@ -43,4 +43,41 @@ public class CucumberJvmSMFormatterUtil {
     }
     return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("[", "|[").replace("]", "|]");
   }
+
+  private static boolean isWhitespace(char c) {
+    return c == ' ' || c == '\t' || c == '\n';
+  }
+
+  /**
+   * Gets feature title from @param featureHeader
+   * From code:
+   * <pre>{@code
+   *     @wip
+   *     Feature: super puper
+   *       my feature
+   * }</pre>
+   * should only line:
+   * <pre>{@code
+   *   Feature: super puper
+   * }</pre> returned
+   */
+  public static String getFeatureName(String featureHeader) {
+    int i = featureHeader.indexOf(":");
+    if (i < 0) {
+      return featureHeader;
+    }
+
+    int start = i;
+    while (start >= 0 && !isWhitespace(featureHeader.charAt(start))) {
+      start--;
+    }
+    start++;
+
+    int end = i;
+    while (end < featureHeader.length() && featureHeader.charAt(end) != '\n') {
+      end++;
+    }
+
+    return featureHeader.substring(start, end);
+  }
 }

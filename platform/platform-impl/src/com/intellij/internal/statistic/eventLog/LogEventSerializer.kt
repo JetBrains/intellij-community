@@ -5,14 +5,14 @@ package com.intellij.internal.statistic.eventLog
 
 import com.google.common.reflect.TypeToken
 import com.google.gson.*
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.util.containers.hash.HashMap
 import java.io.OutputStreamWriter
 import java.lang.reflect.Type
 
 object LogEventSerializer {
-  private val gson = GsonBuilder().
-    registerTypeAdapter(LogEventBaseAction::class.java, LogEventJsonDeserializer()).
-    registerTypeAdapter(LogEventBaseAction::class.java, LogEventJsonSerializer()).create()
+  private val LOG = Logger.getInstance(LogEventSerializer::class.java)
+  private val gson = GsonBuilder().registerTypeAdapter(LogEvent::class.java, LogEventJsonDeserializer()).create()
 
   fun toString(session: LogEventRecordRequest, writer: OutputStreamWriter) {
     writer.write(toString(session))
@@ -73,18 +73,36 @@ object LogEventSerializer {
   }
 
   fun fromString(line: String): LogEvent? {
-    val event = gson.fromJson(line, LogEvent::class.java)
-    return if (event.isValid()) event else null
+    return try {
+      gson.fromJson(line, LogEvent::class.java)
+    }
+    catch (e : Exception) {
+      LOG.trace("Failed deserializing event: '${e.message}'")
+      null
+    }
   }
 }
 
-class LogEventJsonDeserializer : JsonDeserializer<LogEventBaseAction> {
+/**
+ * Deserialize events manually so they won't be changed by scrambling
+ */
+class LogEventJsonDeserializer : JsonDeserializer<LogEvent> {
   @Throws(JsonParseException::class)
-  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LogEventBaseAction {
+  override fun deserialize(json: JsonElement, typeOfT: Type, context: JsonDeserializationContext): LogEvent {
     val obj = json.asJsonObject
-    val action = createAction(obj)
-    if (obj.has("data")) {
-      val dataObj = obj.getAsJsonObject("data")
+    val session = obj["session"].asString
+    val build = obj["build"].asString
+    val bucket = obj["bucket"].asString
+    val time = obj["time"].asLong
+
+    val group = obj["group"].asJsonObject
+    val groupId = group["id"].asString
+    val groupVersion = group["version"].asString
+
+    val actionObj = obj["event"].asJsonObject
+    val action = createAction(actionObj)
+    if (actionObj.has("data")) {
+      val dataObj = actionObj.getAsJsonObject("data")
       for ((key, value) in context.deserialize<HashMap<String, Any>>(dataObj, object : TypeToken<HashMap<String, Any>>() {}.type)) {
         if (value is Double && value % 1 == 0.0) {
           val intValue = Math.round(value).toInt()
@@ -95,7 +113,7 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEventBaseAction> {
         }
       }
     }
-    return action
+    return newLogEvent(session, build, bucket, time, groupId, groupVersion, action)
   }
 
   fun createAction(obj: JsonObject): LogEventBaseAction {
@@ -107,19 +125,5 @@ class LogEventJsonDeserializer : JsonDeserializer<LogEventBaseAction> {
       }
     }
     return LogStateEventAction(id)
-  }
-}
-
-class LogEventJsonSerializer : JsonSerializer<LogEventBaseAction> {
-  override fun serialize(src: LogEventBaseAction?, typeOfSrc: Type?, context: JsonSerializationContext?): JsonElement {
-    if (context != null) {
-      if (src is LogEventAction) {
-        return context.serialize(src, LogEventAction::class.java)
-      }
-      else if (src is LogStateEventAction) {
-        return context.serialize(src, LogStateEventAction::class.java)
-      }
-    }
-    return JsonObject()
   }
 }

@@ -47,24 +47,24 @@ public class SharedImplUtil {
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeParent());
   }
 
-  public static PsiElement getFirstChild(ASTNode element) {
+  public static PsiElement getFirstChild(@NotNull ASTNode element) {
     return SourceTreeToPsiMap.treeElementToPsi(element.getFirstChildNode());
   }
 
   @Nullable
-  public static PsiElement getLastChild(ASTNode element) {
+  public static PsiElement getLastChild(@NotNull ASTNode element) {
     return SourceTreeToPsiMap.treeElementToPsi(element.getLastChildNode());
   }
 
-  public static PsiElement getNextSibling(ASTNode thisElement) {
+  public static PsiElement getNextSibling(@NotNull ASTNode thisElement) {
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreeNext());
   }
 
-  public static PsiElement getPrevSibling(ASTNode thisElement) {
+  public static PsiElement getPrevSibling(@NotNull ASTNode thisElement) {
     return SourceTreeToPsiMap.treeElementToPsi(thisElement.getTreePrev());
   }
 
-  public static PsiFile getContainingFile(ASTNode thisElement) {
+  public static PsiFile getContainingFile(@NotNull ASTNode thisElement) {
     FileASTNode node = findFileElement(thisElement);
     PsiElement psi = node == null ? null : node.getPsi();
     if (psi == null || psi instanceof PsiFile) return (PsiFile)psi;
@@ -186,7 +186,7 @@ public class SharedImplUtil {
     return count;
   }
 
-  public static void acceptChildren(PsiElementVisitor visitor, ASTNode root) {
+  public static void acceptChildren(@NotNull PsiElementVisitor visitor, @NotNull ASTNode root) {
     ASTNode childNode = root.getFirstChildNode();
 
     while (childNode != null) {
@@ -203,7 +203,7 @@ public class SharedImplUtil {
     }
   }
 
-  public static PsiElement doReplace(PsiElement psiElement, TreeElement treeElement, PsiElement newElement) {
+  public static PsiElement doReplace(@NotNull PsiElement psiElement, @NotNull TreeElement treeElement, @NotNull PsiElement newElement) {
     CompositeElement treeParent = treeElement.getTreeParent();
     LOG.assertTrue(treeParent != null);
     CheckUtil.checkWritable(psiElement);

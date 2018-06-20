@@ -235,8 +235,8 @@ public class X {
 
   class ExternalAnnotations {
     void f() {
-      java.util.Calendar.getInstance().set(2000,<warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, Calendar.JUNE, Calendar.JULY, Calendar.AUGUST, Calendar.SEPTEMBER, Calendar.OCTOBER, Calendar.NOVEMBER, Calendar.DECEMBER">9</warning>,0)<EOLError descr="';' expected"></EOLError>
-      new javax.swing.JLabel("text", <warning descr="Should be one of: SwingConstants.LEFT, SwingConstants.CENTER, SwingConstants.RIGHT, SwingConstants.LEADING, SwingConstants.TRAILING">3</warning>);
+      java.util.Calendar.getInstance().set(2000,<warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, ...">9</warning>,0)<EOLError descr="';' expected"></EOLError>
+      new javax.swing.JLabel("text", <warning descr="Should be one of: SwingConstants.LEFT, SwingConstants.CENTER, SwingConstants.RIGHT, SwingConstants.LEADING, ...">3</warning>);
     }
   }
   static class OverrideX extends X {

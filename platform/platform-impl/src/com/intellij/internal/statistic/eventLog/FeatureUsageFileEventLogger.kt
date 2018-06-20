@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ConcurrencyUtil
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -17,10 +18,9 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.Executors
 
 class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
-  private val myLogExecutor = Executors.newSingleThreadExecutor()
+  private val myLogExecutor = ConcurrencyUtil.newSingleThreadExecutor(javaClass.simpleName)
 
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
   private val build = ApplicationInfo.getInstance().build.asBuildNumber()
@@ -78,7 +78,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
     myLogExecutor.execute(Runnable {
-      val event = LogEvent(sessionId, build, bucket, recorderId, recorderVersion, action, isState)
+      val event = newLogEvent(sessionId, build, bucket, recorderId, recorderVersion, action, isState)
       for (datum in data) {
         event.event.addData(datum.key, datum.value)
       }
@@ -88,9 +88,10 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   private fun dispose(logger: Logger) {
     myLogExecutor.execute(Runnable {
-      log(logger, LogEvent(sessionId, build, bucket, "lifecycle", recorderVersion, "ideaapp.closed", false))
+      log(logger, newLogEvent(sessionId, build, bucket, "lifecycle", recorderVersion, "ideaapp.closed", false))
       logLastEvent(logger)
     })
+    myLogExecutor.shutdown()
   }
 
   private fun log(logger: Logger, event: LogEvent) {

@@ -397,6 +397,9 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border, ErrorB
   protected Dimension getSizeWithButton(Dimension size, Dimension editorSize) {
     Insets i = getInsets();
     Dimension abSize = arrowButton.getPreferredSize();
+    if (abSize == null) {
+      abSize = JBUI.emptySize();
+    }
 
     if (isCompact(comboBox) && size != null) {
       JBInsets.removeFrom(size, padding); // don't count paddings in compact mode

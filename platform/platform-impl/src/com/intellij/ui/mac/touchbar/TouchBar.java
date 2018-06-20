@@ -60,9 +60,19 @@ class TouchBar implements NSTLibrary.ItemCreator {
     myReleaseOnClose = releaseOnClose;
   }
 
-  static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
+  static TouchBar buildFromCustomizedGroup(@NotNull String touchbarName, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
     final TouchBar result = new TouchBar(touchbarName, replaceEsc);
     BuildUtils.addCustomizedActionGroup(result.myItems, customizedGroup);
+    result.selectVisibleItemsToShow();
+    return result;
+  }
+
+  static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
+    final TouchBar result = new TouchBar(touchbarName, replaceEsc);
+    BuildUtils.addActionGroupButtons(
+      result.myItems, customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED,
+      null, null
+    );
     result.selectVisibleItemsToShow();
     return result;
   }
@@ -181,7 +191,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
     });
   }
 
-  private void _closeSelf() { TouchBarsManager.closeTouchBar(this); }
+  private void _closeSelf() { TouchBarsManager.removeTouchBar(this); }
 
   private void _stopTimer() {
     if (myTimerListener != null) {

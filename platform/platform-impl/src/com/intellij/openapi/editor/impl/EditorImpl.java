@@ -67,6 +67,8 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
+import com.intellij.ui.mac.TouchbarActionsProvider;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.*;
@@ -1806,6 +1808,9 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myHeaderPanel.revalidate();
     myHeaderPanel.repaint();
+
+    final ActionGroup tbActions = header instanceof TouchbarActionsProvider ? ((TouchbarActionsProvider)header).getTouchbarActions() : null;
+    TouchBarsManager.onUpdateEditorHeader(this, header, tbActions);
   }
 
   @Override

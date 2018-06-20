@@ -217,6 +217,8 @@
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.MainMenuCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.IntentionsCollector"/>
     <applicationService serviceImplementation="com.intellij.internal.statistic.collectors.fus.actions.persistence.ToolWindowCollector"/>
+    <applicationService serviceInterface="com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents"
+                        serviceImplementation="com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsImpl"/>
 
     <applicationService serviceImplementation="com.intellij.openapi.util.DimensionService"/>
     <applicationService serviceInterface="com.intellij.openapi.util.WindowStateService"

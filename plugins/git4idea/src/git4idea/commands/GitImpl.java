@@ -617,9 +617,9 @@ public class GitImpl extends GitImplBase {
 
   @NotNull
   @Override
-  public GitCommandResult rebase(@NotNull GitRepository repository,
-                                 @NotNull GitRebaseParams parameters,
-                                 @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebase(@NotNull GitRepository repository,
+                                       @NotNull GitRebaseParams parameters,
+                                       @NotNull GitLineHandlerListener... listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
@@ -633,34 +633,34 @@ public class GitImpl extends GitImplBase {
       }
       return runWithEditor(handler, editorHandler);
     }
-    return runCommand(handler);
+    return GitRebaseCommandResult.normal(runCommand(handler));
   }
 
   @NotNull
   @Override
-  public GitCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebaseAbort(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandler handler = new GitLineHandler(repository.getProject(), repository.getRoot(), GitCommand.REBASE);
     handler.addParameters("--abort");
     addListeners(handler, listeners);
-    return runCommand(handler);
+    return GitRebaseCommandResult.normal(runCommand(handler));
   }
 
   @NotNull
   @Override
-  public GitCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebaseContinue(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
     return rebaseResume(repository, GitRebaseResumeMode.CONTINUE, listeners);
   }
 
   @NotNull
   @Override
-  public GitCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
+  public GitRebaseCommandResult rebaseSkip(@NotNull GitRepository repository, @NotNull GitLineHandlerListener... listeners) {
     return rebaseResume(repository, GitRebaseResumeMode.SKIP, listeners);
   }
 
   @NotNull
-  private GitCommandResult rebaseResume(@NotNull GitRepository repository,
-                                        @NotNull GitRebaseResumeMode rebaseMode,
-                                        @NotNull GitLineHandlerListener[] listeners) {
+  private GitRebaseCommandResult rebaseResume(@NotNull GitRepository repository,
+                                              @NotNull GitRebaseResumeMode rebaseMode,
+                                              @NotNull GitLineHandlerListener[] listeners) {
     Project project = repository.getProject();
     VirtualFile root = repository.getRoot();
     GitLineHandler handler = new GitLineHandler(project, root, GitCommand.REBASE, REBASE_CONFIG_PARAMS);
@@ -670,27 +670,18 @@ public class GitImpl extends GitImplBase {
   }
 
   @NotNull
-  private GitCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
+  private GitRebaseCommandResult runWithEditor(@NotNull GitLineHandler handler, @NotNull GitRebaseEditorHandler editorHandler) {
     GitRebaseEditorService service = GitRebaseEditorService.getInstance();
     service.configureHandler(handler, editorHandler.getHandlerNo());
     try {
       GitCommandResult result = runCommand(handler);
-      return editorHandler.wasEditorCancelled() ? toCancelledResult(result) : result;
+      if (editorHandler.wasCommitListEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitList(result);
+      if (editorHandler.wasUnstructuredEditorCancelled()) return GitRebaseCommandResult.cancelledInCommitMessage(result);
+      return GitRebaseCommandResult.normal(result);
     }
     finally {
       service.unregisterHandler(editorHandler.getHandlerNo());
     }
-  }
-
-  @NotNull
-  private static GitCommandResult toCancelledResult(@NotNull GitCommandResult result) {
-    int exitCode = result.getExitCode() == 0 ? 1 : result.getExitCode();
-    return new GitCommandResult(false, exitCode, result.getErrorOutput(), result.getOutput()) {
-      @Override
-      public boolean cancelled() {
-        return true;
-      }
-    };
   }
 
   @VisibleForTesting

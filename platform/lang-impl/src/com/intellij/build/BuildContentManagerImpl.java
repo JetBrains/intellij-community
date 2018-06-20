@@ -383,6 +383,9 @@ public class BuildContentManagerImpl implements BuildContentManager {
       myProcessHandler.putUserData(RunContentManagerImpl.ALWAYS_USE_DEFAULT_STOPPING_BEHAVIOUR_KEY, Boolean.TRUE);
       GeneralSettings.ProcessCloseConfirmation rc =
         TerminateRemoteProcessDialog.show(myProject, myProcessHandler.getExecutionName(), myProcessHandler);
+      if(myProcessHandler == null) { // process finished before the dialog close
+        return true;
+      }
       if (rc == null) { // cancel
         return false;
       }
