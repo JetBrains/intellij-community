@@ -31,7 +31,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xdebugger.XDebuggerUtil;
-import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
@@ -296,7 +295,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   private String getDisplayInfoInternal(boolean showPackageInfo, int totalTextLength) {
     if(isValid()) {
-      final int lineNumber = myXBreakpoint.getSourcePosition().getLine() + 1;
+      final int lineNumber = getLineIndex() + 1;
       String className = getClassName();
       final boolean hasClassInfo = className != null && className.length() > 0;
       final String methodName = getMethodName();
@@ -304,7 +303,7 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
       final boolean hasMethodInfo = displayName != null && displayName.length() > 0;
       if (hasClassInfo || hasMethodInfo) {
         final StringBuilder info = new StringBuilder();
-        boolean isFile = myXBreakpoint.getSourcePosition().getFile().getName().equals(className);
+        boolean isFile = getFileName().equals(className);
         String packageName = null;
         if (hasClassInfo) {
           final int dotIndex = className.lastIndexOf(".");
@@ -441,10 +440,9 @@ public class LineBreakpoint<P extends JavaBreakpointProperties> extends Breakpoi
 
   @Nullable
   public String getMethodName() {
-    XSourcePosition position = myXBreakpoint.getSourcePosition();
+    SourcePosition position = getSourcePosition();
     if (position != null) {
-      int offset = position.getOffset();
-      return findOwnerMethod(DebuggerUtilsEx.getPsiFile(myXBreakpoint.getSourcePosition(), myProject), offset);
+      return findOwnerMethod(position.getFile(), position.getOffset());
     }
     return null;
   }
