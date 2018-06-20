@@ -136,8 +136,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
         else {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-          double offset = 0.5 - metrics.getStrikethroughOffset();
-          double thickness = Math.max(1, 0.5 + metrics.getStrikethroughThickness());
+          double devPixel = PaintUtil.devPixel(g);
+          double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g);
+          double thickness = PaintUtil.alignToInt(Math.max(devPixel, metrics.getStrikethroughThickness()), g);
           drawLine(g, x, y - offset, width, thickness, this);
         }
       }
@@ -153,17 +154,15 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-        double offset;
-        if (UIUtil.isJreHiDPI(g)) {
-          thickness *= metrics.getUnderlineThickness();
-          offset = Math.min(height - thickness, metrics.getUnderlineOffset());
-        } else {
-          thickness = (int)(Math.max(thickness, 0.5 + thickness * metrics.getUnderlineThickness()));
-          offset = (int)(Math.min(height - thickness, (int)Math.max(1, 0.5 + metrics.getUnderlineOffset())));
+        double devPixel = PaintUtil.devPixel(g);
+        thickness = PaintUtil.alignToInt(Math.max(thickness, thickness * metrics.getUnderlineThickness()), g);
+        double offset = Math.min(height - thickness, Math.max(devPixel, metrics.getUnderlineOffset()));
+        if (offset < devPixel) {
+          offset = height > 3 * devPixel ? devPixel : 0;
+          thickness = PaintUtil.alignToInt(height - offset, g);
         }
-        if (offset < 1) {
-          offset = height > 3 ? 1 : 0;
-          thickness = height - offset;
+        else {
+          offset = PaintUtil.alignToInt(offset, g);
         }
         drawLine(g, x, y + offset, width, thickness, painter);
       }
