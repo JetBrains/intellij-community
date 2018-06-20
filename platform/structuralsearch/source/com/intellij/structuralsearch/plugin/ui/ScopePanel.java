@@ -17,6 +17,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.structuralsearch.Scopes;
+import com.intellij.ui.JBCardLayout;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -40,7 +41,7 @@ class ScopePanel extends JPanel {
   private Consumer<SearchScope> myCallback;
 
   private final ActionToolbarImpl myToolbar;
-  private final JPanel myScopeDetailsPanel = new JPanel(new CardLayout());
+  private final JPanel myScopeDetailsPanel = new JPanel(new JBCardLayout());
   private final ModulesComboBox myModulesComboBox = new ModulesComboBox();
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
@@ -120,7 +121,7 @@ class ScopePanel extends JPanel {
       myScopesComboBox.init(myProject, true, false, selectedScope.getDisplayName());
     }
     myToolbar.updateActionsImmediately();
-    ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
+    ((JBCardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
   }
 
   public void setScopeCallback(Consumer<SearchScope> callback) {
@@ -171,10 +172,11 @@ class ScopePanel extends JPanel {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
+        ((JBCardLayout)myScopeDetailsPanel.getLayout()).swipe(myScopeDetailsPanel, myScopeType.toString(),
+                                                              ScopePanel.this.myScopeType.compareTo(myScopeType) > 0 ? JBCardLayout.SwipeDirection.FORWARD : JBCardLayout.SwipeDirection.BACKWARD);
         ScopePanel.this.myScopeType = myScopeType;
         setScopeFromUI(myScopeType);
         myToolbar.updateActionsImmediately();
-        ((CardLayout)myScopeDetailsPanel.getLayout()).show(myScopeDetailsPanel, myScopeType.toString());
       }
     }
 
