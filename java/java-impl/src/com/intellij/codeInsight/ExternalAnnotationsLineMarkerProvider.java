@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.LineMarkerProviderDescriptor;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionActionDelegate;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.codeInsight.intention.PriorityAction;
 import com.intellij.codeInsight.intention.impl.AnnotateIntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -40,7 +41,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.event.MouseEvent;
 import java.util.Collection;
+import java.util.Comparator;
 import java.util.List;
+import java.util.stream.Stream;
 
 public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
   private static final Function<PsiElement, String> ourTooltipProvider = nameIdentifier -> {
@@ -129,11 +132,16 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
     @Nullable
     private static JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
       final DefaultActionGroup group = new DefaultActionGroup();
-      for (final IntentionAction action : IntentionManager.getInstance().getAvailableIntentionActions()) {
-        if (shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file)) {
-          group.add(new ApplyIntentionAction(action, action.getText(), editor, file));
-        }
-      }
+      Comparator<IntentionAction> comparator =
+        Comparator.comparing((IntentionAction action) ->
+                               action instanceof PriorityAction ? ((PriorityAction)action).getPriority() : PriorityAction.Priority.NORMAL)
+                  .thenComparing(IntentionAction::getText);
+      Stream.of(IntentionManager.getInstance().getAvailableIntentionActions())
+            .map(action -> action instanceof IntentionActionDelegate ? ((IntentionActionDelegate)action).getDelegate() : action)
+            .filter(action -> shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file))
+            .sorted(comparator)
+            .map(action -> new ApplyIntentionAction(action, action.getText(), editor, file))
+            .forEach(group::add);
       addParameterAnnotationActions(file, project, editor, group);
 
       if (group.getChildrenCount() > 0) {
@@ -175,8 +183,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
              action instanceof EditContractIntention ||
              action instanceof ToggleSourceInferredAnnotations ||
              action instanceof MakeInferredAnnotationExplicit ||
-             action instanceof MakeExternalAnnotationExplicit ||
-             action instanceof IntentionActionDelegate && shouldShowInGutterPopup(((IntentionActionDelegate)action).getDelegate());
+             action instanceof MakeExternalAnnotationExplicit;
     }
   }
 }
