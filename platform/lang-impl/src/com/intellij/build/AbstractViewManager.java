@@ -16,13 +16,13 @@
 package com.intellij.build;
 
 import com.intellij.build.events.*;
-import com.intellij.execution.ExecutionBundle;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.notification.Notification;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.Toggleable;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.AtomicClearableLazyValue;
@@ -105,8 +105,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       buildsView = myBuildsViewValue.getValue();
       if (!buildsView.shouldConsume(event)) {
         buildsView = myPinnedViews.stream()
-          .filter(pinnedView -> pinnedView.shouldConsume(event))
-          .findFirst().orElse(null);
+                                  .filter(pinnedView -> pinnedView.shouldConsume(event))
+                                  .findFirst().orElse(null);
       }
     }
     if (buildsView != null) {
@@ -120,7 +120,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     toolbarActions.removeAll();
     toolbarActions.addAll(view.createConsoleActions());
     toolbarActions.add(new PinBuildViewAction(buildsView));
-    toolbarActions.add(new CloseBuildContentAction(buildsView));
   }
 
   @Nullable
@@ -154,6 +153,15 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
     isDisposed.set(true);
     myPinnedViews.clear();
     myBuildsViewValue.drop();
+  }
+
+  void onBuildsViewRemove(@NotNull MultipleBuildsView buildsView) {
+    if (myBuildsViewValue.getValue() == buildsView) {
+      myBuildsViewValue.drop();
+    }
+    else {
+      myPinnedViews.remove(buildsView);
+    }
   }
 
   static class BuildInfo extends DefaultBuildDescriptor {
@@ -205,8 +213,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
 
     AbstractViewManager.BuildInfo buildInfo =
       buildsMap.keySet().stream()
-        .reduce((b1, b2) -> b1.getStartTime() <= b2.getStartTime() ? b1 : b2)
-        .orElse(null);
+               .reduce((b1, b2) -> b1.getStartTime() <= b2.getStartTime() ? b1 : b2)
+               .orElse(null);
     if (buildInfo != null) {
       String title = buildInfo.getTitle();
       String viewName = getViewName().split(" ")[0];
@@ -260,47 +268,6 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
       }
       e.getPresentation().setText(text);
       e.getPresentation().setEnabledAndVisible(true);
-    }
-  }
-
-  private class CloseBuildContentAction extends AnAction implements DumbAware {
-    private MultipleBuildsView myBuildsView;
-
-    public CloseBuildContentAction(MultipleBuildsView buildsView) {
-      myBuildsView = buildsView;
-      AnAction action = ActionManager.getInstance().getAction(IdeActions.ACTION_CLOSE);
-      copyFrom(action);
-      registerCustomShortcutSet(action.getShortcutSet(), buildsView.getContent().getPreferredFocusableComponent());
-
-      final Presentation templatePresentation = getTemplatePresentation();
-      templatePresentation.setIcon(AllIcons.Actions.Cancel);
-      templatePresentation.setText(ExecutionBundle.message("close.tab.action.name"));
-      templatePresentation.setDescription(null);
-    }
-
-    @Override
-    public void actionPerformed(AnActionEvent e) {
-      if (myBuildsView == null) return;
-      Content content = myBuildsView.getContent();
-      if (!content.isValid()) return;
-      content.getManager().removeContent(content, true, true, true);
-      if (myBuildsViewValue.getValue() == myBuildsView) {
-        myBuildsViewValue.drop();
-      }
-      else {
-        myPinnedViews.remove(myBuildsView);
-      }
-      myBuildsView = null;
-    }
-
-    @Override
-    public void update(AnActionEvent e) {
-      if (myBuildsView != null && myBuildsView.hasRunningBuilds()) {
-        e.getPresentation().setEnabled(false);
-      }
-      else {
-        e.getPresentation().setEnabled(myBuildsView != null);
-      }
     }
   }
 }
