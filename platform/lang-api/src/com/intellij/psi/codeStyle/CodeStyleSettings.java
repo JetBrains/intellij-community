@@ -24,6 +24,7 @@ import com.intellij.util.Processor;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ClassMap;
+import com.intellij.util.containers.JBIterable;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -794,6 +795,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
   @Override
   public void readExternal(Element element) throws InvalidDataException {
     myVersion = getVersion(element);
+    notifySettingsBeforeLoading();
     DefaultJDOMExternalizer.readExternal(this, element);
     if (LAYOUT_STATIC_IMPORTS_SEPARATELY) {
       // add <all other static imports> entry if there is none
@@ -855,6 +857,7 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     mySoftMargins.deserializeFrom(element);
 
     migrateLegacySettings();
+    notifySettingsLoaded();
   }
 
   @Override
@@ -1392,6 +1395,16 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
       }
       myVersion = CURR_VERSION;
     }
+  }
+
+  private void notifySettingsBeforeLoading() {
+    JBIterable.from(myCustomSettings.values())
+              .forEach(CustomCodeStyleSettings::beforeLoading);
+  }
+
+  private void notifySettingsLoaded() {
+    JBIterable.from(myCustomSettings.values())
+              .forEach(CustomCodeStyleSettings::afterLoaded);
   }
 
   @SuppressWarnings("deprecation")
