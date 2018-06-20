@@ -133,7 +133,8 @@ public class Generator<T> {
   public static <T> Generator<T> anyOf(List<? extends Generator<? extends T>> alternatives) {
     if (alternatives.isEmpty()) throw new IllegalArgumentException("No alternatives to choose from");
     return from(data -> {
-      int index = ((AbstractDataStructure)data).generateNonShrinkable(integers(0, alternatives.size() - 1));
+      ((AbstractDataStructure) data).changeKind(StructureKind.CHOICE);
+      int index = ((AbstractDataStructure)data).drawInt(IntDistribution.uniform(0, alternatives.size() - 1));
       return data.generate(alternatives.get(index));
     });
   }
@@ -296,6 +297,7 @@ public class Generator<T> {
   }
 
   private static <T> List<T> generateList(Generator<T> itemGenerator, DataStructure data, int size) {
+    ((AbstractDataStructure) data).changeKind(StructureKind.LIST);
     List<T> list = new ArrayList<>(size);
     for (int i = 0; i < size; i++) {
       list.add(data.generate(itemGenerator));

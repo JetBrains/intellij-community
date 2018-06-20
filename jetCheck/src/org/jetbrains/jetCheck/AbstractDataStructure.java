@@ -35,4 +35,5 @@ abstract class AbstractDataStructure implements DataStructure {
 
   abstract <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<? super T> condition);
 
+  abstract void changeKind(StructureKind kind);
 }
