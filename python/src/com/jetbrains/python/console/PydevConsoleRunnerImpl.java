@@ -71,7 +71,6 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.jetbrains.python.PythonHelper;
 import com.jetbrains.python.console.actions.ShowVarsAction;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.debugger.PyDebugRunner;
@@ -356,13 +355,7 @@ public class PydevConsoleRunnerImpl implements PydevConsoleRunner {
       exeGroup.addParametersString(runParams.getInterpreterOptions());
     }
 
-    ParamsGroup group = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    if (group == null) {
-      group = cmd.getParametersList().addParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
-    }
-    PythonHelper.CONSOLE.addToGroup(group, cmd);
-
-    group.addParameters("--mode=client", "--port=" + port);
+    PydevConsoleCli.setupPythonConsoleScriptInClientMode(cmd, port);
 
     return cmd;
   }
