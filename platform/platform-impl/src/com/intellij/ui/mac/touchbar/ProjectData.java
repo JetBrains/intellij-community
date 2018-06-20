@@ -8,12 +8,18 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
+import java.awt.*;
 import java.awt.event.InputEvent;
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -23,7 +29,8 @@ class ProjectData {
   private static final Logger LOG = Logger.getInstance(ProjectData.class);
 
   private final @NotNull Project myProject;
-  private final Map<BarType, BarContainer> myBars = new HashMap<>();
+  private final Map<BarType, BarContainer> myPermanentBars = new HashMap<>();
+  private final Map<Editor, EditorData> myEditors = new HashMap<>();
 
   private AtomicInteger myActiveDebugSessions = new AtomicInteger(0);
 
@@ -51,14 +58,81 @@ class ProjectData {
     });
   }
 
+  boolean isDisposed() { return myProject.isDisposed(); }
+
   @Nullable BarContainer get(BarType type) {
-    BarContainer result = myBars.get(type);
+    BarContainer result = myPermanentBars.get(type);
     if (result == null) {
       result = new BarContainer(type, TouchBar.EMPTY, null);
       _fillBarContainer(result);
-      myBars.put(type, result);
+      myPermanentBars.put(type, result);
     }
     return result;
+  }
+
+  @Nullable BarContainer findByComponent(Component child) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    for (EditorData editorData : myEditors.values()) {
+      final JComponent ecmp = editorData.editorHeader;
+      if (child == ecmp || SwingUtilities.isDescendingFrom(child, ecmp)) {
+        // System.out.println("focused header: " + ecmp);
+        if (editorData.containerSearch == null) {
+          LOG.error("focused header of editor: " + editorData.editor + ", but BarContainer wasn't created, header: " + ecmp);
+          continue;
+        }
+        return editorData.containerSearch;
+      }
+    }
+
+    if (myActiveDebugSessions.get() <= 0)
+      return null;
+
+    final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(myProject);
+    if (twm == null)
+      return null;
+
+    final ToolWindow dtw = twm.getToolWindow(ToolWindowId.DEBUG);
+    final ToolWindow rtw = twm.getToolWindow(ToolWindowId.RUN_DASHBOARD);
+
+    final Component compD = dtw != null ? dtw.getComponent() : null;
+    final Component compR = rtw != null ? rtw.getComponent() : null;
+    if (compD == null && compR == null)
+      return null;
+
+    if (
+      child == compD || child == compR
+      || (compD != null && SwingUtilities.isDescendingFrom(child, compD))
+      || (compR != null && SwingUtilities.isDescendingFrom(child, compR))
+    )
+      return get(BarType.DEBUGGER);
+
+    return null;
+  }
+
+  EditorData registerEditor(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final EditorData result = new EditorData(editor);
+    myEditors.put(editor, result);
+    return result;
+  }
+
+  EditorData getEditorData(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    return myEditors.get(editor);
+  }
+
+  void removeEditor(@NotNull Editor editor) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
+    final EditorData removed = myEditors.remove(editor);
+    if (removed == null) {
+      LOG.error("try to remove unregistered editor: " + editor);
+      return;
+    }
+
+    removed.release();
   }
 
   private void _fillBarContainer(@NotNull BarContainer container) {
@@ -94,22 +168,23 @@ class ProjectData {
           // System.out.println("ERROR: zero mask for modId="+modId);
           continue;
         }
-        alts.put(mask, TouchBar.buildFromGroup(type.name() + "_" + modId, strmod2alt.get(modId), replaceEsc));
+        alts.put(mask, TouchBar.buildFromCustomizedGroup(type.name() + "_" + modId, strmod2alt.get(modId), replaceEsc));
       }
     }
 
-    container.set(TouchBar.buildFromGroup(type.name(), mainLayout, replaceEsc), alts);
+    container.set(TouchBar.buildFromCustomizedGroup(type.name(), mainLayout, replaceEsc), alts);
   }
 
   void releaseAll() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myBars.forEach((t, bc)->bc.release());
-    myBars.clear();
+    myPermanentBars.forEach((t, bc)->bc.release());
+    myPermanentBars.clear();
+    myEditors.forEach((e, ed) -> ed.release());
   }
 
   void reloadAll() {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myBars.forEach((t, bc)->{
+    myPermanentBars.forEach((t, bc)->{
       bc.release();
       _fillBarContainer(bc);
     });
@@ -117,8 +192,10 @@ class ProjectData {
 
   void forEach(BiConsumer<? super BarType, ? super BarContainer> proc) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    myBars.forEach(proc);
+    myPermanentBars.forEach(proc);
   }
+
+  Collection<BarContainer> getAllContainers() { return myPermanentBars.values(); }
 
   int getDbgSessions() { return myActiveDebugSessions.get(); }
 
@@ -141,5 +218,20 @@ class ProjectData {
     for (String sub: spl)
       mask |= _str2mask(sub);
     return mask;
+  }
+
+  static class EditorData {
+    final @NotNull Editor editor;
+    JComponent editorHeader;
+
+    ActionGroup actionsSearch;
+    BarContainer containerSearch;
+
+    EditorData(Editor editor) { this.editor = editor; }
+    void release() {
+      if (containerSearch != null)
+        containerSearch.release();
+      containerSearch = null;
+    }
   }
 }
