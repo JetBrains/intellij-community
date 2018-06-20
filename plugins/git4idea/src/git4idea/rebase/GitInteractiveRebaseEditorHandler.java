@@ -62,7 +62,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
    */
   protected boolean myRebaseEditorShown = false;
 
-  private boolean myEditorCancelled;
+  private boolean myCommitListCancelled;
+  private boolean myUnstructuredEditorCancelled;
 
   public GitInteractiveRebaseEditorHandler(@NotNull GitRebaseEditorService service, @NotNull Project project, @NotNull VirtualFile root) {
     myService = service;
@@ -75,8 +76,8 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
     ensureOpen();
     try {
       if (myRebaseEditorShown) {
-        myEditorCancelled = !handleUnstructuredEditor(path);
-        return myEditorCancelled ? ERROR_EXIT_CODE : 0;
+        myUnstructuredEditorCancelled = !handleUnstructuredEditor(path);
+        return myUnstructuredEditorCancelled ? ERROR_EXIT_CODE : 0;
       }
       else {
         setRebaseEditorShown();
@@ -85,7 +86,7 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
           return 0;
         }
         else {
-          myEditorCancelled = true;
+          myCommitListCancelled = true;
           return ERROR_EXIT_CODE;
         }
       }
@@ -204,7 +205,12 @@ public class GitInteractiveRebaseEditorHandler implements Closeable, GitRebaseEd
   }
 
   @Override
-  public boolean wasEditorCancelled() {
-    return myEditorCancelled;
+  public boolean wasCommitListEditorCancelled() {
+    return myCommitListCancelled;
+  }
+
+  @Override
+  public boolean wasUnstructuredEditorCancelled() {
+    return myUnstructuredEditorCancelled;
   }
 }

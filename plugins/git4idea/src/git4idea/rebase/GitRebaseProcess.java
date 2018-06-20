@@ -215,21 +215,26 @@ public class GitRebaseProcess {
       GitRebaseProblemDetector rebaseDetector = new GitRebaseProblemDetector();
       GitUntrackedFilesOverwrittenByOperationDetector untrackedDetector = new GitUntrackedFilesOverwrittenByOperationDetector(root);
       GitRebaseProgressListener progressListener = new GitRebaseProgressListener();
-      GitCommandResult result = callRebase(repository, customMode, rebaseDetector, untrackedDetector, progressListener);
+      GitRebaseCommandResult rebaseCommandResult = callRebase(repository, customMode, rebaseDetector, untrackedDetector, progressListener);
+      GitCommandResult result = rebaseCommandResult.getCommandResult();
 
       boolean somethingRebased = customMode != null || progressListener.currentCommit > 1;
 
-      if (result.success()) {
+      if (rebaseCommandResult.wasCancelledInCommitList()) {
+        LOG.info("Rebase was cancelled");
+        throw new ProcessCanceledException();
+      }
+      else if (rebaseCommandResult.wasCancelledInCommitMessage()) {
+        showStoppedForEditingMessage();
+        return new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, skippedCommits);
+      }
+      else if (result.success()) {
         if (rebaseDetector.hasStoppedForEditing()) {
           showStoppedForEditingMessage();
           return new GitRebaseStatus(GitRebaseStatus.Type.SUSPENDED, skippedCommits);
         }
         LOG.debug("Successfully rebased " + repoName);
         return GitSuccessfulRebase.parseFromOutput(result.getOutput(), skippedCommits);
-      }
-      else if (result.cancelled()) {
-        LOG.info("Rebase was cancelled");
-        throw new ProcessCanceledException();
       }
       else if (rebaseDetector.isDirtyTree() && customMode == null && !retryWhenDirty) {
         // if the initial dirty tree check doesn't find all local changes, we are still ready to stash-on-demand,
@@ -291,9 +296,9 @@ public class GitRebaseProcess {
   }
 
   @NotNull
-  private GitCommandResult callRebase(@NotNull GitRepository repository,
-                                      @Nullable GitRebaseResumeMode mode,
-                                      @NotNull GitLineHandlerListener... listeners) {
+  private GitRebaseCommandResult callRebase(@NotNull GitRepository repository,
+                                            @Nullable GitRebaseResumeMode mode,
+                                            @NotNull GitLineHandlerListener... listeners) {
     if (mode == null) {
       GitRebaseParams params = assertNotNull(myRebaseSpec.getParams());
       return myGit.rebase(repository, params, listeners);

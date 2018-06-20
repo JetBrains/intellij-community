@@ -42,7 +42,16 @@ public interface GitRebaseEditorHandler {
   UUID getHandlerNo();
 
   /**
-   * Return true if the editing was cancelled by user.
+   * Tells if the interactive rebase editor (with the list of commits to rebase) was cancelled by user.
+   * @see #wasUnstructuredEditorCancelled()
    */
-  boolean wasEditorCancelled();
+  boolean wasCommitListEditorCancelled();
+
+  /**
+   * Tells if the commit message editor (appearing e.g. during squash or reword) was cancelled by user.
+   * <br/><br/>
+   * Note: Returning true obviously implies that {@link #wasCommitListEditorCancelled()} if false.
+   * @see #wasCommitListEditorCancelled()
+   */
+  boolean wasUnstructuredEditorCancelled();
 }
