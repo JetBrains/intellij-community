@@ -12,6 +12,10 @@ ManifestDPIAware true
 !include WinVer.nsh
 !include x64.nsh
 !define JAVA_REQUIREMENT 1.8
+;admin users
+;!define Environment '"SYSTEM\CurrentControlSet\Control\Session Manager\Environment"'
+;users
+!define Environment 'Environment'
 
 ; Product with version (IntelliJ IDEA #xxxx).
 
@@ -38,6 +42,13 @@ Var productDir
 Var control_fields
 Var max_fields
 Var silentMode
+Var pathEnvVar
+
+; position of controls for Installation Options dialog
+var launcherShortcut
+var secondLauncherShortcut
+var addToPath
+var downloadJRE
 
 ;------------------------------------------------------------------------------
 ; include "Modern User Interface"
@@ -51,6 +62,7 @@ Var silentMode
 !include LogicLib.nsh
 
 ${UnStrStr}
+${StrStr}
 ${UnStrLoc}
 ${UnStrRep}
 ${StrRep}
@@ -319,6 +331,14 @@ done:
 FunctionEnd
 
 
+Function getControllPostions
+  !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcutToLauncher"
+  !insertmacro INSTALLOPTIONS_READ $secondLauncherShortcut "Desktop.ini" "Settings" "DesktopShortcutToSecondLauncher"
+  !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
+  !insertmacro INSTALLOPTIONS_READ $downloadJRE "Desktop.ini" "Settings" "DownloadJRE"
+FunctionEnd
+
+
 Function ConfirmDesktopShortcut
   !insertmacro MUI_HEADER_TEXT "$(installation_options)" "$(installation_options_prompt)"
   ${StrRep} $0 ${PRODUCT_EXE_FILE} "64.exe" ".exe"
@@ -330,11 +350,13 @@ Function ConfirmDesktopShortcut
     StrCpy $R0 "${MUI_PRODUCT} launcher"
     StrCpy $R1 ""
   ${EndIf}
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Text" $R0
+
+  Call getControllPostions
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
 
   ${If} $R1 != ""
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Text" $R1
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Text" $R1
   ${EndIf}
 
   ; if jre x86 for the build is available then add checkbox to Installation Options dialog
@@ -348,15 +370,15 @@ Function ConfirmDesktopShortcut
     ${Else}
       ; download jre32
       StrCpy $downloadJreX86 "1"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Flags" "DISABLED"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Flags" "DISABLED"
 
       ; create shortcut for launcher 32
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "State" "1"
-      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "Flags" "DISABLED"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" "1"
+      !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Flags" "DISABLED"
     ${EndIf}
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $downloadJreX86
-    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Text" "Download and install JRE x86 by JetBrains"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $downloadJreX86
+    !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Text" "Download and install JRE x86 by JetBrains"
   ${EndIf}
 custom_pre_actions:
   Call customPreInstallActions
@@ -403,7 +425,7 @@ FunctionEnd
 
 
 Function downloadJre
-  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field 4" "State"
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $downloadJRE" "State"
   ${If} $R0 == 1
     inetc::get ${LINK_TO_JRE} "$TEMP\jre.tar.gz" /END
     Pop $0
@@ -444,6 +466,7 @@ Page custom ConfirmDesktopShortcut
 !define MUI_ABORTWARNING
 !insertmacro MUI_PAGE_INSTFILES
 !define MUI_FINISHPAGE_RUN_NOTCHECKED
+!define MUI_FINISHPAGE_REBOOTLATER_DEFAULT
 !define MUI_FINISHPAGE_RUN
 !define MUI_FINISHPAGE_RUN_FUNCTION PageFinishRun
 !insertmacro MUI_PAGE_FINISH
@@ -529,6 +552,8 @@ FunctionEnd
 
 
 Function silentConfigReader
+  ; read Desktop.ini
+  Call getControllPostions
   ${GetParameters} $R0
   ClearErrors
 
@@ -544,21 +569,21 @@ launcher_32:
   ClearErrors
   ${ConfigRead} "$R1" "launcher32=" $R3
   IfErrors launcher_64
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
 
 launcher_64:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
   IfErrors download_jre32
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
 
 download_jre32:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors associations
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
 associations:
   ClearErrors
@@ -896,11 +921,32 @@ command_exists:
   pop $0
 FunctionEnd
 
+
+Function getPathEnvVar
+  ReadRegStr $pathEnvVar HKCU ${Environment} "Path"
+FunctionEnd
+
+
+Function createProductEnvVar
+  WriteRegStr HKCU ${Environment} "${MUI_PRODUCT}" "$INSTDIR\bin;"
+FunctionEnd
+
+
+Function updatePathEnvVar
+  ${StrStr} $R0 $pathEnvVar "%${MUI_PRODUCT}%"
+  StrCmp $R0 "" absent done
+absent:
+  WriteRegExpandStr HKCU ${Environment} "Path" "$pathEnvVar;%${MUI_PRODUCT}%"
+done:
+FunctionEnd
+
+
 ;------------------------------------------------------------------------------
 ; Installer sections
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
   CreateDirectory $INSTDIR
+  Call getControllPostions
   Call customInstallActions
   SetRegView 32
 
@@ -917,25 +963,33 @@ Section "IDEA Files" CopyIdeaFiles
   Call downloadJre
 
 shortcuts:
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 2" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $launcherShortcut" "State"
   StrCmp $R2 1 "" exe_64
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER}.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE}" "" "" "" SW_SHOWNORMAL
 exe_64:
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 3" "State"
-  StrCmp $R2 1 "" skip_desktop_shortcut
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field $secondLauncherShortcut" "State"
+  StrCmp $R2 1 "" add_to_path
   CreateShortCut "$DESKTOP\${PRODUCT_FULL_NAME_WITH_VER} x64.lnk" \
                  "$INSTDIR\bin\${PRODUCT_EXE_FILE_64}" "" "" "" SW_SHOWNORMAL
 
-skip_desktop_shortcut:
+add_to_path:
+  !insertmacro INSTALLOPTIONS_READ $R0 "Desktop.ini" "Field $addToPath" "State"
+  ${If} $R0 == 1
+    Call getPathEnvVar
+    Call createProductEnvVar
+    CALL updatePathEnvVar
+    SetRebootFlag true
+  ${EndIf}
+
   !insertmacro INSTALLOPTIONS_READ $R1 "Desktop.ini" "Settings" "NumFields"
   IntCmp $R1 ${INSTALL_OPTION_ELEMENTS} do_association done do_association
 do_association:
   StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}
 get_user_choice:
-  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
+  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $launcherShortcut" "State"
   StrCmp $R3 1 "" next_association
-  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
+  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $launcherShortcut" "Text"
   call ProductAssociation
 next_association:
   IntOp $R2 $R2 + 1
@@ -1274,7 +1328,7 @@ Function un.isIDEInUse
   IfFileExists $R0 0 done
   CopyFiles $R0 "$R0_copy"
   ClearErrors
-  Delete $R0"
+  Delete $R0
   IfFileExists $R0 done
   CopyFiles "$R0_copy" $R0
 done:
