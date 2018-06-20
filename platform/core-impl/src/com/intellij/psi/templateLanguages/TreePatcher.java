@@ -27,14 +27,14 @@ import org.jetbrains.annotations.Nullable;
 public interface TreePatcher {
 
   /**
-   * Inserts toInsert into destinationTree according to parser rules.
+   * Inserts toInsert into tree
    * <br>
-   * Inserting must not change the position (offset) of the new node in the three (otherwise we will receive broken tree)
+   * @apiNote Inserting must not change the position (offset) of the new node in the three (otherwise we will receive broken tree)
    */
   void insert(@NotNull CompositeElement parent, @Nullable TreeElement anchorBefore, @NotNull OuterLanguageElement toInsert);
 
   /**
-   * If leaf need to be split to insert OuterLanguageElement this function is called
+   * Method splits the leaf into two leaves with the same type as the original leaf  
    *
    * @return first part of the split
    */
@@ -49,6 +49,10 @@ public interface TreePatcher {
     return leftPart;
   }
 
+  /**
+   * The method removes "middle" part of the leaf and returns the new leaf with content of the right and left parts
+   * e.g. if we process whitespace leaf " \n " and range "1, 2" the result will be new leaf with content "  "
+   */
   @NotNull
   default LeafElement removeRange(@NotNull LeafElement leaf,
                                   @NotNull TextRange rangeToRemove,
