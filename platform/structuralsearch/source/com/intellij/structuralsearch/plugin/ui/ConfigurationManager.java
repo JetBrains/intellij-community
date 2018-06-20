@@ -51,6 +51,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
     configurations.clear();
     historyConfigurations.clear();
     readConfigurations(state, configurations, historyConfigurations);
+    historyConfigurations.forEach(c -> c.getMatchOptions().initScope(myProject));
   }
 
   public void addHistoryConfiguration(Configuration configuration) {
@@ -75,6 +76,7 @@ public class ConfigurationManager implements PersistentStateComponent<Element> {
                                          @NotNull Collection<Configuration> configurations,
                                          @NotNull Collection<Configuration> historyConfigurations) {
     for (final Configuration configuration : configurations) {
+      configuration.getMatchOptions().setScope(null);
       saveConfiguration(element, configuration);
     }
 
