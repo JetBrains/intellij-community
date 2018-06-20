@@ -17,15 +17,12 @@ package com.jetbrains.python.console
 
 import com.intellij.codeInsight.hint.HintManager
 import com.intellij.execution.console.LanguageConsoleView
-import com.intellij.execution.console.ProcessBackedConsoleExecuteActionHandler
 import com.intellij.execution.process.ProcessHandler
 import com.intellij.execution.ui.ConsoleViewContentType
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.command.CommandProcessor
 import com.intellij.openapi.editor.markup.TextAttributes
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.util.PsiTreeUtil
-import com.jetbrains.python.PythonFileType
 import com.jetbrains.python.console.pydev.ConsoleCommunication
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener
 import com.jetbrains.python.psi.LanguageLevel
@@ -168,9 +165,6 @@ open class PydevConsoleExecuteActionHandler(private val myConsoleView: LanguageC
   override fun inputRequested() {
     isEnabled = true
   }
-
-  val pythonIndent: Int
-    get() = CodeStyleSettingsManager.getSettings(project).getIndentSize(PythonFileType.INSTANCE)
 
   override val cantExecuteMessage: String
     get() {

@@ -16,6 +16,7 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Iterables;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -142,8 +143,7 @@ public class PyIndentUtil {
   }
 
   public static boolean areTabsUsedForIndentation(@NotNull Project project) {
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
-    return codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
+    return CodeStyle.getSettings(project).useTabCharacter(PythonFileType.INSTANCE);
   }
 
   public static char getIndentCharacter(@NotNull Project project) {
