@@ -900,30 +900,35 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
       int startIndex;
       int endIndex;
       if (insertPoint < 0) {
-        // no items of this contributor
+        // no items of this contributor - add to the end of list
         startIndex = listElements.size();
         listElements.addAll(pairsToAdd);
         if (hasMore) {
           listElements.add(Pair.create(MORE_ELEMENT, contributor));
         }
         endIndex = listElements.size() - 1;
+        fireIntervalAdded(this, startIndex, endIndex);
       } else {
-        // contributor elements already exists in list
-        if (isMoreElement(insertPoint)) {
-          listElements.remove(insertPoint);
-        } else {
+        // contributor elements already exists in list - add before 'more' element
+        boolean hadMoreBeforeAdd = isMoreElement(insertPoint);
+        if (!hadMoreBeforeAdd) {
           insertPoint += 1;
         }
         startIndex = insertPoint;
-        endIndex = startIndex + pairsToAdd.size();
+        endIndex = startIndex + pairsToAdd.size() - 1;
         listElements.addAll(insertPoint, pairsToAdd);
-        if (hasMore) {
+
+        if (hasMore && !hadMoreBeforeAdd) {
           listElements.add(insertPoint + pairsToAdd.size(), Pair.create(MORE_ELEMENT, contributor));
           endIndex += 1;
         }
-      }
+        fireIntervalAdded(this, startIndex, endIndex);
 
-      fireIntervalAdded(this, startIndex, endIndex);
+        if (hadMoreBeforeAdd && !hasMore) {
+          listElements.remove(endIndex + 1);
+          fireIntervalRemoved(this, endIndex + 1, endIndex + 1);
+        }
+      }
     }
 
     public void clear() {
