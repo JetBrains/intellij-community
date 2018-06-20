@@ -16,10 +16,7 @@ import com.intellij.codeInsight.javadoc.NonCodeAnnotationGenerator;
 import com.intellij.codeInspection.dataFlow.EditContractIntention;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ApplyIntentionAction;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -35,14 +32,14 @@ import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.MouseEvent;
-import java.util.Collection;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
 import java.util.stream.Stream;
 
 public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDescriptor {
@@ -131,20 +128,14 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
 
     @Nullable
     private static JBPopup createActionGroupPopup(PsiFile file, Project project, Editor editor) {
-      final DefaultActionGroup group = new DefaultActionGroup();
-      Comparator<IntentionAction> comparator =
-        Comparator.comparing((IntentionAction action) ->
-                               action instanceof PriorityAction ? ((PriorityAction)action).getPriority() : PriorityAction.Priority.NORMAL)
-                  .thenComparing(IntentionAction::getText);
-      Stream.of(IntentionManager.getInstance().getAvailableIntentionActions())
-            .map(action -> action instanceof IntentionActionDelegate ? ((IntentionActionDelegate)action).getDelegate() : action)
-            .filter(action -> shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file))
-            .sorted(comparator)
-            .map(action -> new ApplyIntentionAction(action, action.getText(), editor, file))
-            .forEach(group::add);
-      addParameterAnnotationActions(file, project, editor, group);
+      List<AnAction> actions = StreamEx.of(getMethodActions(file, project, editor),
+                                           getParameterAnnotationActions(file, project, editor))
+                                       .remove(List::isEmpty)
+                                       .intersperse(Collections.singletonList(Separator.create()))
+                                       .toFlatList(l -> l);
 
-      if (group.getChildrenCount() > 0) {
+      if (!actions.isEmpty()) {
+        final DefaultActionGroup group = new DefaultActionGroup(actions);
         final DataContext context = SimpleDataContext.getProjectContext(null);
         return JBPopupFactory.getInstance()
           .createActionGroupPopup(null, group, context, JBPopupFactory.ActionSelectionAid.SPEEDSEARCH, true);
@@ -153,20 +144,31 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
       return null;
     }
 
-    private static void addParameterAnnotationActions(PsiFile file, Project project, Editor editor, DefaultActionGroup group) {
+    @NotNull
+    private static List<AnAction> getMethodActions(PsiFile file, Project project, Editor editor) {
+      Comparator<IntentionAction> comparator =
+        Comparator.comparing((IntentionAction action) ->
+                               action instanceof PriorityAction ? ((PriorityAction)action).getPriority() : PriorityAction.Priority.NORMAL)
+                  .thenComparing(IntentionAction::getText);
+      return Stream.of(IntentionManager.getInstance().getAvailableIntentionActions())
+                   .map(action -> action instanceof IntentionActionDelegate ? ((IntentionActionDelegate)action).getDelegate() : action)
+                   .filter(action -> shouldShowInGutterPopup(action) && action.isAvailable(project, editor, file))
+                   .sorted(comparator)
+                   .map(action -> new ApplyIntentionAction(action, action.getText(), editor, file))
+                   .collect(Collectors.toList());
+    }
+
+    @NotNull
+    private static List<AnAction> getParameterAnnotationActions(@NotNull PsiFile file, Project project, Editor editor) {
       final PsiElement leaf = file.findElementAt(editor.getCaretModel().getOffset());
-      if (leaf == null) return;
+      if (leaf == null) return Collections.emptyList();
       PsiMethod method = ObjectUtils.tryCast(leaf.getParent(), PsiMethod.class);
-      if (method == null) return;
-      boolean hasSeparator = false;
+      if (method == null) return Collections.emptyList();
+      List<AnAction> actions = new ArrayList<>();
       for (PsiParameter parameter: method.getParameterList().getParameters()) {
         MakeInferredAnnotationExplicit intention = new MakeInferredAnnotationExplicit();
         if (intention.isAvailable(project, file, parameter)) {
-          if (!hasSeparator) {
-            hasSeparator = true;
-            group.addSeparator();
-          }
-          group.add(new AnAction(intention.getText() + " on parameter '" + parameter.getName() + "'") {
+          actions.add(new AnAction(intention.getText() + " on parameter '" + parameter.getName() + "'") {
             @Override
             public void actionPerformed(AnActionEvent e) {
               PsiDocumentManager.getInstance(project).commitAllDocuments();
@@ -175,6 +177,7 @@ public class ExternalAnnotationsLineMarkerProvider extends LineMarkerProviderDes
           });
         }
       }
+      return actions;
     }
 
     private static boolean shouldShowInGutterPopup(IntentionAction action) {
