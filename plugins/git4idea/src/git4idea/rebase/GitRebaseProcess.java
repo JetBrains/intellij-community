@@ -22,6 +22,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsNotifier;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.ThreeState;
@@ -90,6 +91,7 @@ public class GitRebaseProcess {
   @Nullable private final GitRebaseResumeMode myCustomMode;
   @NotNull private final GitChangesSaver mySaver;
   @NotNull private final ProgressManager myProgressManager;
+  @NotNull private final VcsDirtyScopeManager myDirtyScopeManager;
 
   public GitRebaseProcess(@NotNull Project project, @NotNull GitRebaseSpec rebaseSpec, @Nullable GitRebaseResumeMode customMode) {
     myProject = project;
@@ -102,6 +104,7 @@ public class GitRebaseProcess {
     myNotifier = VcsNotifier.getInstance(myProject);
     myRepositoryManager = getRepositoryManager(myProject);
     myProgressManager = ProgressManager.getInstance();
+    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
   }
 
   public void rebase() {
@@ -138,6 +141,9 @@ public class GitRebaseProcess {
 
         GitRebaseStatus rebaseStatus = rebaseSingleRoot(repository, customMode, getSuccessfulRepositories(statuses));
         repository.update(); // make the repo state info actual ASAP
+        if (customMode == GitRebaseResumeMode.CONTINUE) {
+          myDirtyScopeManager.dirDirtyRecursively(repository.getRoot());
+        }
         statuses.put(repository, rebaseStatus);
         if (shouldBeRefreshed(rebaseStatus)) {
           refreshVfs(repository.getRoot(), changes);
