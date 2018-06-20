@@ -91,6 +91,7 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
       log(logger, LogEvent(sessionId, build, bucket, "lifecycle", recorderVersion, "ideaapp.closed", false))
       logLastEvent(logger)
     })
+    myLogExecutor.shutdown()
   }
 
   private fun log(logger: Logger, event: LogEvent) {
