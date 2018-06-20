@@ -12,7 +12,7 @@ import javax.swing.*;
 import java.awt.*;
 
 public class RestConfigurable implements SearchableConfigurable, Configurable.NoScroll {
-  public static final String ID = "com.jetbrains.rest.editor.RestConfigurable";
+  public static final String ID = "restructured.text.topic";
   private final JPanel myPanel = new JPanel(new BorderLayout());
   private final ComboBox<String> myComboBox;
   public static final String JAVA_FX = "JavaFX";
