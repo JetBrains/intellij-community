@@ -128,7 +128,7 @@ class ProjectData {
 
     final EditorData removed = myEditors.remove(editor);
     if (removed == null) {
-      LOG.error("try to remove unregistered editor: " + editor);
+      // System.out.println("try to remove unregistered editor: " + editor);
       return;
     }
 
