@@ -422,6 +422,12 @@ public class ShowIntentionsPass extends TextEditorHighlightingPass {
     }
 
     List<PsiElement> elements = PsiTreeUtil.collectParents(psiElement, PsiElement.class, true, e -> e instanceof PsiDirectory);
+    PsiElement elementToTheLeft = psiElement.getContainingFile().findElementAt(offset - 1);
+    if (elementToTheLeft != psiElement && elementToTheLeft != null) {
+      List<PsiElement> parentsOnTheLeft =
+        PsiTreeUtil.collectParents(elementToTheLeft, PsiElement.class, true, e -> e instanceof PsiDirectory || elements.contains(e));
+      elements.addAll(parentsOnTheLeft);
+    }
 
     final Set<String> dialectIds = InspectionEngine.calcElementDialectIds(elements);
     final LocalInspectionToolSession session = new LocalInspectionToolSession(hostFile, 0, hostFile.getTextLength());
