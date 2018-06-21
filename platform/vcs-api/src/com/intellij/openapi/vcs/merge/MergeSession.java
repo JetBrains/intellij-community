@@ -41,9 +41,14 @@ public interface MergeSession {
   ColumnInfo[] getMergeInfoColumns();
 
   /**
-   * Returns true if a merge operation can be invoked for the specified virtual file, false otherwise.
+   * Returns true if the given virtual file can be merged by its content.
+   * <br/><br/>
+   * It means that the Merge dialog can be shown for this file, and Accept Yours/Theirs can be called on this file.
+   * <br/><br/>
+   * Note that {@link MergeSessionEx} can be used to Accept Yours/Theirs via a custom procedure,
+   * for example, via calling a VCS command.
    *
-   * @param file a file shown in the dialog.
+   * @param file a file with conflicts shown in the dialog.
    * @return true if the merge dialog can be shown, false otherwise.
    */
   boolean canMerge(@NotNull VirtualFile file);
