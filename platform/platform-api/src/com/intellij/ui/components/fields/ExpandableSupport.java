@@ -110,7 +110,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     UIUtil.addUndoRedoActions(area);
 
     JBScrollPane pane = new JBScrollPane(area);
-    addExtension(pane, createCollapseExtension(this));
+    addExtension(pane, createCollapseExtension());
 
     Insets insets = getInsets(source);
     //TODO: support scroll pane
@@ -177,18 +177,18 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     }
   }
 
-  public static Extension createCollapseExtension(@NotNull Expandable expandable) {
+  public Extension createCollapseExtension() {
     return Extension.create(AllIcons.General.CollapseComponent,
                             AllIcons.General.CollapseComponentHover,
                             createTooltipText("Collapse", "CollapseExpandableComponent"),
-                            expandable::collapse);
+                            this::collapse);
   }
 
-  public static Extension createExpandExtension(@NotNull Expandable expandable) {
+  public Extension createExpandExtension() {
     return Extension.create(AllIcons.General.ExpandComponent,
                             AllIcons.General.ExpandComponentHover,
                             createTooltipText("Expand", "ExpandExpandableComponent"),
-                            expandable::collapse);
+                            this::expand);
   }
 
   private static void addExtension(@NotNull JScrollPane pane, @NotNull Extension extension) {
