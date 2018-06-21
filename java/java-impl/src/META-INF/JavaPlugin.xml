@@ -789,7 +789,7 @@
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantComparatorComparing"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING"
-                     key="inspection.redundant.comparator.comparing.display.name" bundle="messages.InspectionsBundle"
+                     key="inspection.simplifiable.comparator.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.RedundantComparatorComparingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousListRemoveInLoop"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
