@@ -3,10 +3,10 @@ package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.components.State;
@@ -51,7 +51,7 @@ public class ActionsCollectorImpl extends ActionsCollector implements Persistent
 
   private static boolean isDevelopedByJetBrains(@NotNull Class aClass) {
     final PluginId pluginId = PluginManagerCore.getPluginByClassName(aClass.getName());
-    return PluginManagerMain.isDevelopedByJetBrains(pluginId);
+    return StatisticsUtilKt.isDevelopedByJetBrains(pluginId);
   }
 
   private State myState = new State();
