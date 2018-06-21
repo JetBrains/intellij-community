@@ -96,7 +96,7 @@ public interface UastCallMatcher {
     public boolean testCallExpression(@Nullable UCallExpression expression) {
       if (expression == null || expression.getMethodName() == null) return false; // null method name for constructor calls
       return methodNameMatches(expression) &&
-             receiverTypeMatches(expression) &&
+             classMatches(expression) &&
              returnTypeMatches(expression) &&
              argumentsMatch(expression);
     }
@@ -121,7 +121,7 @@ public interface UastCallMatcher {
              myMethodName.equals(expression.getCallableName());
     }
 
-    private boolean receiverTypeMatches(@NotNull UCallExpression expression) {
+    private boolean classMatches(@NotNull UCallExpression expression) {
       return myClassFqn == null ||
              myClassFqn.equals(AnalysisUastUtil.getExpressionReceiverTypeClassFqn(expression));
     }
@@ -157,26 +157,26 @@ public interface UastCallMatcher {
 
         UExpression argumentExpression = argumentExpressions.get(i);
         PsiType argumentExpressionType = argumentExpression.getExpressionType();
+        if (requiredArgumentTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(argumentExpressionType))) {
+          continue;
+        }
         if (!myMatchArgumentTypeInheritors) {
-          if (!requiredArgumentTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(argumentExpressionType))) {
-            return false;
-          }
+          return false;
         }
-        else {
-          PsiClass argumentExpressionTypeClass = AnalysisUastUtil.getTypePsiClass(argumentExpressionType);
-          if (argumentExpressionTypeClass == null) return false;
 
-          //TODO probably this can be optimized using BFS
-          LinkedHashSet<PsiClass> expressionTypeSupers = InheritanceUtil.getSuperClasses(argumentExpressionTypeClass);
-          boolean argumentMatches = false;
-          for (PsiClass expressionTypeSuper : expressionTypeSupers) {
-            if (requiredArgumentTypeClassFqn.equals(expressionTypeSuper.getQualifiedName())) {
-              argumentMatches = true;
-              break;
-            }
+        PsiClass argumentExpressionTypeClass = AnalysisUastUtil.getTypePsiClass(argumentExpressionType);
+        if (argumentExpressionTypeClass == null) return false;
+
+        //TODO probably this can be optimized using BFS
+        LinkedHashSet<PsiClass> expressionTypeSupers = InheritanceUtil.getSuperClasses(argumentExpressionTypeClass);
+        boolean argumentMatches = false;
+        for (PsiClass expressionTypeSuper : expressionTypeSupers) {
+          if (requiredArgumentTypeClassFqn.equals(expressionTypeSuper.getQualifiedName())) {
+            argumentMatches = true;
+            break;
           }
-          if (!argumentMatches) return false;
         }
+        if (!argumentMatches) return false;
       }
       return true;
     }
@@ -197,8 +197,8 @@ public interface UastCallMatcher {
   class Builder {
     private String myMethodName;
     private String[] myArguments;
-    private boolean myMatchArgumentTypeInheritors;
-    private String myReceiverTypeClassFqn;
+    private boolean myMatchArgumentTypeInheritors = true;
+    private String myClassFqn;
     private String myReturnTypeClassFqn;
 
     @NotNull
@@ -208,8 +208,8 @@ public interface UastCallMatcher {
     }
 
     @NotNull
-    public Builder withReceiverType(@NotNull String receiverTypeClassFqn) {
-      myReceiverTypeClassFqn = receiverTypeClassFqn;
+    public Builder withClassFqn(@NotNull String classFqn) {
+      myClassFqn = classFqn;
       return this;
     }
 
@@ -242,7 +242,7 @@ public interface UastCallMatcher {
       return new SimpleUastCallMatcher(myMethodName,
                                        myArguments,
                                        myMatchArgumentTypeInheritors,
-                                       myReceiverTypeClassFqn,
+                                       myClassFqn,
                                        myReturnTypeClassFqn);
     }
   }

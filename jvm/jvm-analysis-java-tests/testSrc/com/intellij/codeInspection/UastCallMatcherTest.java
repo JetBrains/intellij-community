@@ -36,11 +36,11 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
     assertSize(5, expressions);
 
     assertEquals(0, matchCallExpression(
-      builder().withReceiverType("java.util.ArrayList").build(),
+      builder().withClassFqn("java.util.ArrayList").build(),
       expressions)
     );
     assertEquals(0, matchCallExpression(
-      builder().withReceiverType("java.util.ArrayList").withMethodName("size").build(),
+      builder().withClassFqn("java.util.ArrayList").withMethodName("size").build(),
       expressions)
     );
     assertEquals(0, matchCallExpression(
@@ -48,16 +48,16 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
       expressions)
     );
     assertEquals(0, matchCallExpression(
-      builder().withReceiverType("java.util.ArrayList").withMethodName("addAll").withArgumentsCount(1).build(),
+      builder().withClassFqn("java.util.ArrayList").withMethodName("addAll").withArgumentsCount(1).build(),
       expressions)
     );
     assertEquals(0, matchCallExpression(
-      builder().withReceiverType("java.util.ArrayList").withMethodName("addAll").withArgumentTypes("java.util.Collection").build(),
+      builder().withClassFqn("java.util.ArrayList").withMethodName("addAll").withArgumentTypes("java.util.Collection").build(),
       expressions)
     );
 
     assertEquals(4, matchCallExpression(
-      builder().withReceiverType("java.lang.String").build(),
+      builder().withClassFqn("java.lang.String").build(),
       expressions
     ));
     assertEquals(2, matchCallExpression(
@@ -65,7 +65,7 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
       expressions
     ));
     assertEquals(2, matchCallExpression(
-      builder().withReceiverType("java.lang.String").withMethodName("toUpperCase").build(),
+      builder().withClassFqn("java.lang.String").withMethodName("toUpperCase").build(),
       expressions
     ));
 

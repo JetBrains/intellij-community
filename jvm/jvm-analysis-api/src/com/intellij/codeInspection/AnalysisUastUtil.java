@@ -53,9 +53,12 @@ public final class AnalysisUastUtil {
 
   @Nullable
   public static String getTypeClassFqn(@Nullable PsiType type) {
-    PsiClass psiClass = getTypePsiClass(type);
-    if (psiClass == null) return null;
-    return psiClass.getQualifiedName();
+    if (type == null) return null;
+    return type.getCanonicalText().replaceAll("<.*?>", ""); // workaround
+    //TODO https://youtrack.jetbrains.com/issue/KT-25024
+    //PsiClass psiClass = getTypePsiClass(type);
+    //if (psiClass == null) return null;
+    //return psiClass.getQualifiedName();
   }
 
   //TODO use UastContext#isExpressionValueUsed ?
