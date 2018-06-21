@@ -1105,8 +1105,10 @@
         <reference ref="Stop"/>
         <separator text="type.small"/>
         <separator text="type.large"/>
-        <reference ref="Vcs.UpdateProject"/>
-        <reference ref="CheckinProject"/>
+        <group id="TouchBarDefaultOptionalGroup">
+          <reference ref="Vcs.UpdateProject"/>
+          <reference ref="CheckinProject"/>
+        </group>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
           <separator text="type.flexible"/>
         </group>

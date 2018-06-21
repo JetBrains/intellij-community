@@ -20,8 +20,6 @@ import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
@@ -49,26 +47,18 @@ public class TouchBarsManager {
 
     ApplicationManager.getApplication().getMessageBus().connect().subscribe(ProjectManager.TOPIC, new ProjectManagerListener() {
       @Override
-      public void projectOpened(Project project) {
+      public void projectOpened(@NotNull Project project) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
         // System.out.println("opened project " + project + ", set default touchbar");
 
-        final ProjectData pd = _getProjData(project);
-        ourStack.showContainer(pd.get(BarType.DEFAULT));
+        final ProjectData pd = new ProjectData(project);
+        final ProjectData prev = ourProjectData.put(project, pd);
+        if (prev != null) {
+          LOG.error("previous project data wasn't removed: " + project);
+          prev.releaseAll();
+        }
 
-        project.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
-          @Override
-          public void stateChanged() {
-            final ToolWindowManagerEx twm = ToolWindowManagerEx.getInstanceEx(project);
-            final String activeId = twm.getActiveToolWindowId();
-            if (activeId != null && (activeId.equals(ToolWindowId.DEBUG) || activeId.equals(ToolWindowId.RUN_DASHBOARD))) {
-              // System.out.println("stateChanged, dbgSessionsCount=" + pd.getDbgSessions());
-              if (pd.getDbgSessions() <= 0)
-                return;
-
-              ourStack.showContainer(pd.get(BarType.DEBUGGER));
-            }
-          }
-        });
+        pd.get(BarType.DEFAULT).show();
 
         project.getMessageBus().connect().subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionListener() {
           @Override
@@ -77,6 +67,7 @@ public class TouchBarsManager {
           }
           @Override
           public void processTerminated(@NotNull String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler, int exitCode) {
+            // TODO: probably, need to remove debugger-panel from stack completely
             ourStack.pop(topContainer -> {
               if (topContainer.getType() != BarType.DEBUGGER)
                 return false;
@@ -92,9 +83,15 @@ public class TouchBarsManager {
       }
 
       @Override
-      public void projectClosed(Project project) {
-        // System.out.println("closed project " + project + ", hide touchbar");
-        final ProjectData pd = _getProjData(project);
+      public void projectClosed(@NotNull Project project) {
+        ApplicationManager.getApplication().assertIsDispatchThread();
+        // System.out.println("closed project: " + project);
+
+        final ProjectData pd = ourProjectData.get(project);
+        if (pd == null) {
+          LOG.error("project data already was removed: " + project);
+          return;
+        }
         ourStack.removeAll(pd.getAllContainers());
         pd.releaseAll();
         ourProjectData.remove(project);
@@ -139,8 +136,14 @@ public class TouchBarsManager {
         if (pd.isDisposed())
           continue;
 
+        if (pd.checkToolWindowContents((Component)e.getSource())) {
+          // System.out.println("tool window gained focus: " + e);
+          return;
+        }
+
         final BarContainer parent = pd.findByComponent((Component)e.getSource());
         if (parent != null) {
+          // System.out.println("component gained focus: " + e);
           ourStack.showContainer(parent);
           return;
         }
@@ -152,20 +155,32 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     final Project proj = editor.getProject();
-    if (proj == null)
+    if (proj == null || proj.isDisposed())
       return;
 
-    final ProjectData pd = _getProjData(proj);
+    final ProjectData pd = ourProjectData.get(proj);
+    if (pd == null) {
+      LOG.error("can't find project data to register editor: " + editor + ", project: " + proj);
+      return;
+    }
+
     pd.registerEditor(editor);
 
     if (editor instanceof EditorEx)
       ((EditorEx)editor).addFocusListener(new FocusChangeListener() {
       @Override
       public void focusGained(Editor editor) {
+        // System.out.println("reset optional-context of default because editor window gained focus: " + editor);
+        pd.get(BarType.DEFAULT).setOptionalContextVisible(null);
+
         final boolean hasDebugSession = pd.getDbgSessions() > 0;
-        if (!hasDebugSession)
+        if (!hasDebugSession) {
+          // System.out.println("elevate default because editor window gained focus: " + editor);
           ourStack.elevateContainer(pd.get(BarType.DEFAULT));
+        }
       }
       @Override
       public void focusLost(Editor editor) {}
@@ -176,11 +191,16 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     final Project proj = editor.getProject();
     if (proj == null)
       return;
 
-    final ProjectData pd = _getProjData(proj);
+    final ProjectData pd = ourProjectData.get(proj);
+    if (pd == null)
+      return;
+
     pd.removeEditor(editor);
   }
 
@@ -188,14 +208,21 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return;
 
+    ApplicationManager.getApplication().assertIsDispatchThread();
+
     final Project proj = editor.getProject();
     if (proj == null)
       return;
 
-    final ProjectData pd = _getProjData(proj);
+    final ProjectData pd = ourProjectData.get(proj);
+    if (pd == null) {
+      LOG.error("can't find project data to update header of editor: " + editor + ", project: " + proj);
+      return;
+    }
+
     final ProjectData.EditorData ed = pd.getEditorData(editor);
     if (ed == null) {
-      LOG.error("can't find editor-data for editor: " + editor);
+      LOG.error("can't find editor-data to update header of editor: " + editor + ", project: " + proj);
       return;
     }
 
@@ -269,6 +296,8 @@ public class TouchBarsManager {
       ourStack.removeTouchBar(tb);
   }
 
+  static void showContainer(@NotNull BarContainer container) { ourStack.showContainer(container); }
+
   private static void _showTempTouchBar(TouchBar tb, BarType type) {
     if (tb == null)
       return;
@@ -279,16 +308,6 @@ public class TouchBarsManager {
   private static boolean _hasAnyActiveSession(Project proj, ProcessHandler handler/*already terminated*/) {
     final ProcessHandler[] processes = ExecutionManager.getInstance(proj).getRunningProcesses();
     return Arrays.stream(processes).anyMatch(h -> h != null && h != handler && (!h.isProcessTerminated() && !h.isProcessTerminating()));
-  }
-
-  private static @NotNull ProjectData _getProjData(@NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    ProjectData result = ourProjectData.get(project);
-    if (result == null) {
-      result = new ProjectData(project);
-      ourProjectData.put(project, result);
-    }
-    return result;
   }
 
   private static void _updateCurrentTouchbar() {
