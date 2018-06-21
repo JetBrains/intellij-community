@@ -24,6 +24,9 @@ import org.w3c.dom.html.HTMLAnchorElement;
 import java.net.URL;
 
 public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewPanel {
+  private volatile int myYScrollPosition = 0;
+  private volatile int myXScrollPosition = 0;
+
   public RestJavaFxHtmlPanel() {
     super();
     LafManager.getInstance().addLafManagerListener(new RestLafManagerListener());
@@ -34,6 +37,12 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
 
       webView.getEngine().getLoadWorker().stateProperty().addListener(new HyperlinkRedirectListener(webView));
       updateLaf(LafManager.getInstance().getCurrentLookAndFeel() instanceof DarculaLookAndFeelInfo);
+
+      webView.getEngine().getLoadWorker().stateProperty().addListener((ov, oldState, newState) -> {
+        if (newState == Worker.State.SUCCEEDED) {
+          scrollTo(webView, myXScrollPosition, myYScrollPosition);
+        }
+      });
     });
   }
 
@@ -96,5 +105,26 @@ public class RestJavaFxHtmlPanel extends JavaFxHtmlPanel implements RestPreviewP
         }
       };
     }
+  }
+
+  private static void scrollTo(WebView view, int x, int y) {
+    view.getEngine().executeScript("window.scrollTo(" + x + ", " + y + ")");
+  }
+
+  private static int getVScrollValue(WebView view) {
+    return (Integer) view.getEngine().executeScript("document.body.scrollTop");
+  }
+
+  private static int getHScrollValue(WebView view) {
+    return (Integer) view.getEngine().executeScript("document.body.scrollLeft");
+  }
+
+  @Override
+  public void setHtml(@NotNull String html) {
+    runInPlatformWhenAvailable(() -> {
+      myYScrollPosition = getVScrollValue(getWebViewGuaranteed());
+      myXScrollPosition = getHScrollValue(getWebViewGuaranteed());
+    });
+    super.setHtml(html);
   }
 }
