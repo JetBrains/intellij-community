@@ -2,9 +2,8 @@
 package com.intellij.ui.mac;
 
 import com.intellij.openapi.actionSystem.ActionGroup;
-import org.jetbrains.annotations.Nullable;
+import com.intellij.openapi.actionSystem.DataKey;
 
-public interface TouchbarActionsProvider {
-  @Nullable
-  ActionGroup getTouchbarActions();
+public interface TouchbarDataKeys {
+  DataKey<ActionGroup> ACTIONS_KEY = DataKey.create("TouchBarActions");
 }

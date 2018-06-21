@@ -23,7 +23,7 @@ import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.SearchTextField;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.components.panels.Wrapper;
-import com.intellij.ui.mac.TouchbarActionsProvider;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
@@ -44,7 +44,7 @@ import java.util.List;
 import static java.awt.event.InputEvent.CTRL_DOWN_MASK;
 import static java.awt.event.InputEvent.META_DOWN_MASK;
 
-public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider, TouchbarActionsProvider {
+public class SearchReplaceComponent extends EditorHeaderComponent implements DataProvider {
   private final EventDispatcher<Listener> myEventDispatcher = EventDispatcher.create(Listener.class);
 
   private final MyTextComponentWrapper mySearchFieldWrapper;
@@ -224,16 +224,6 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
     }
   }
 
-  @Override
-  public @Nullable ActionGroup getTouchbarActions() {
-    if (myTouchbarActions == null) {
-      myTouchbarActions = new DefaultActionGroup();
-      myTouchbarActions.add(new PrevOccurrenceAction());
-      myTouchbarActions.add(new NextOccurrenceAction());
-    }
-    return myTouchbarActions;
-  }
-
   public void setStatusText(@NotNull String status) {
     myStatusText = status;
   }
@@ -278,6 +268,14 @@ public class SearchReplaceComponent extends EditorHeaderComponent implements Dat
   public Object getData(@NonNls String dataId) {
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
       return mySearchTextComponent.getText();
+    }
+    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
+      if (myTouchbarActions == null) {
+        myTouchbarActions = new DefaultActionGroup();
+        myTouchbarActions.add(new PrevOccurrenceAction());
+        myTouchbarActions.add(new NextOccurrenceAction());
+      }
+      return myTouchbarActions;
     }
     return myDataProviderDelegate != null ? myDataProviderDelegate.getData(dataId) : null;
   }

@@ -7,6 +7,7 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.ActionGroup;
+import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -21,6 +22,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -182,7 +184,7 @@ public class TouchBarsManager {
     pd.removeEditor(editor);
   }
 
-  public static void onUpdateEditorHeader(@NotNull Editor editor, JComponent header, ActionGroup actions) {
+  public static void onUpdateEditorHeader(@NotNull Editor editor, JComponent header) {
     if (!isTouchBarAvailable())
       return;
 
@@ -197,6 +199,7 @@ public class TouchBarsManager {
       return;
     }
 
+    final ActionGroup actions = header instanceof DataProvider ? TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)header) : null;
     if (header == null) {
       // System.out.println("set null header");
       ed.editorHeader = null;
