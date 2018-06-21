@@ -18,6 +18,7 @@ import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.BitUtil;
 import com.intellij.util.DocumentUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.text.CharArrayUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -569,7 +570,7 @@ abstract class LineLayout {
       int start = Math.max(startOffset, targetStartOffset);
       int end = Math.min(endOffset, targetEndOffset);
       BidiRun subRun = new BidiRun(level, start, end);
-      List<Chunk> subChunks = new ArrayList<>();
+      List<Chunk> subChunks = new SmartList<>();
       Document document = view.getEditor().getDocument();
       for (Chunk chunk : getChunks(document.getImmutableCharSequence(), document.getLineStartOffset(line))) {
         if (chunk.endOffset <= start) continue;
