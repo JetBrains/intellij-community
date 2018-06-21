@@ -818,6 +818,12 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       }
     }
 
+    @Nullable
+    @Override
+    public PsiElement getElementToMakeWritable(@NotNull PsiFile currentFile) {
+      return currentFile;
+    }
+
     private static void replace(@NotNull Project project,
                                 @NotNull PsiElement startElement,
                                 @NotNull List<PsiAnnotationMemberValue> values) {
