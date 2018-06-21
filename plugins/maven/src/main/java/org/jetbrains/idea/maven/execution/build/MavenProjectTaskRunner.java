@@ -1,12 +1,16 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.execution.build;
 
+import com.intellij.execution.Executor;
+import com.intellij.execution.configurations.ModuleBasedConfiguration;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.execution.configurations.RunConfigurationModule;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.externalSystem.ExternalSystemModulePropertyManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -34,6 +38,7 @@ import java.util.regex.Pattern;
 
 import static java.util.Collections.emptyList;
 import static java.util.stream.Collectors.joining;
+import static org.jetbrains.idea.maven.utils.MavenUtil.isMavenModule;
 
 /**
  * @author ibessonov
@@ -58,11 +63,47 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
   public boolean canRun(@NotNull ProjectTask projectTask) {
     if (projectTask instanceof ModuleBuildTask) {
       Module module = ((ModuleBuildTask)projectTask).getModule();
-      if (MavenRunner.getInstance(module.getProject()).getSettings().isDelegateBuildToMaven()) {
-        return ExternalSystemModulePropertyManager.getInstance(module).isMavenized();
+      if (isDelegatedToMaven(module)) {
+        return isMavenModule(module);
       }
     }
+
+    if (projectTask instanceof ExecuteRunConfigurationTask) {
+      ExecuteRunConfigurationTask task = (ExecuteRunConfigurationTask)projectTask;
+      RunProfile runProfile = task.getRunProfile();
+      if (runProfile instanceof ModuleBasedConfiguration) {
+        RunConfigurationModule module = ((ModuleBasedConfiguration)runProfile).getConfigurationModule();
+        if (isDelegatedToMaven(module.getModule())) {
+          if (!isMavenModule(module.getModule())) {
+            return false;
+          }
+          for (MavenExecutionEnvironmentProvider environmentProvider: MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+            if (environmentProvider.isApplicable(task)) {
+              return true;
+            }
+          }
+        }
+      }
+    }
+
     return false;
+  }
+
+  private static boolean isDelegatedToMaven(Module module) {
+    return MavenRunner.getInstance(module.getProject()).getSettings().isDelegateToMaven();
+  }
+
+  @Nullable
+  @Override
+  public ExecutionEnvironment createExecutionEnvironment(@NotNull Project project,
+                                                         @NotNull ExecuteRunConfigurationTask task,
+                                                         @Nullable Executor executor) {
+    for (MavenExecutionEnvironmentProvider environmentProvider : MavenExecutionEnvironmentProvider.EP_NAME.getExtensions()) {
+      if (environmentProvider.isApplicable(task)) {
+        return environmentProvider.createExecutionEnvironment(project, task, executor);
+      }
+    }
+    return null;
   }
 
   private static <T extends ProjectTask> List<? extends T>

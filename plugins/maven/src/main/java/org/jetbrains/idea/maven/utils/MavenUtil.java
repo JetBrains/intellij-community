@@ -939,6 +939,10 @@ public class MavenUtil {
     return (V)res;
   }
 
+  public static boolean isMavenModule(@Nullable Module module) {
+    return module != null && MavenProjectsManager.getInstance(module.getProject()).isMavenizedModule(module);
+  }
+
   public static String getArtifactName(String packaging, Module module, boolean exploded) {
     return module.getName() + ":" + packaging + (exploded ? " exploded" : "");
   }
