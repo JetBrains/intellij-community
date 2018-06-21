@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -137,26 +136,25 @@ public class PyFunctionBuilder {
     return this;
   }
 
-  public PyFunction addFunction(PsiElement target, final LanguageLevel languageLevel) {
-    return (PyFunction)target.add(buildFunction(target.getProject(), languageLevel));
+  public PyFunction addFunction(PsiElement target) {
+    return (PyFunction)target.add(buildFunction());
   }
 
-  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor, final LanguageLevel languageLevel) {
-    return (PyFunction)target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
+  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor) {
+    return (PyFunction)target.addAfter(buildFunction(), anchor);
   }
 
-  public PyFunction buildFunction(Project project, final LanguageLevel languageLevel) {
-    PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    String text = buildText(project, generator, languageLevel);
-    return generator.createFromText(languageLevel, PyFunction.class, text);
+  public PyFunction buildFunction() {
+    PyElementGenerator generator = PyElementGenerator.getInstance(mySettingAnchor.getProject());
+    return generator.createFromText(LanguageLevel.forElement(mySettingAnchor), PyFunction.class, buildText(generator));
   }
 
-  private String buildText(Project project, PyElementGenerator generator, LanguageLevel languageLevel) {
+  private String buildText(PyElementGenerator generator) {
     StringBuilder builder = new StringBuilder();
     for (String decorator : myDecorators) {
       final StringBuilder decoratorAppender = builder.append('@' + decorator);
       if (myDecoratorValues.containsKey(decorator)) {
-        final PyCallExpression fakeCall = generator.createCallExpression(languageLevel, "fakeFunction");
+        final PyCallExpression fakeCall = generator.createCallExpression(LanguageLevel.forElement(mySettingAnchor), "fakeFunction");
         fakeCall.getArgumentList().addArgument(generator.createStringLiteralFromString(myDecoratorValues.get(decorator)));
         decoratorAppender.append(fakeCall.getArgumentList().getText());
       }

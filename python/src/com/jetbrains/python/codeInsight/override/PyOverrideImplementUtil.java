@@ -156,11 +156,10 @@ public class PyOverrideImplementUtil {
     }
 
     PyFunction element = null;
-    final LanguageLevel languageLevel = LanguageLevel.forElement(statementList);
     for (PyMethodMember newMember : Lists.reverse(newMembers)) {
       final PyFunction baseFunction = (PyFunction)newMember.getPsiElement();
       final PyFunctionBuilder builder = buildOverriddenFunction(pyClass, baseFunction, implement);
-      final PyFunction function = builder.addFunctionAfter(statementList, anchor, languageLevel);
+      final PyFunction function = builder.addFunctionAfter(statementList, anchor);
 
       addImports(baseFunction, function);
       element = CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(function);
