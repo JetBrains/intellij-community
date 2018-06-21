@@ -20,10 +20,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.Comparator;
-import java.util.List;
+import java.util.*;
 import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -162,6 +159,19 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
     @Override
     public Comparator<PsiElement> getComparator() {
       return Comparator.comparing(el -> ((PsiEnumConstant)el).getName());
+    }
+
+    @Override
+    public boolean isSuitableElements(List<PsiElement> elements) {
+      Set<String> names = elements.stream().map(element -> ((PsiEnumConstant)element).getName()).collect(Collectors.toSet());
+      for (PsiElement element: elements) {
+        PsiEnumConstant enumConstant = (PsiEnumConstant)element;
+        if(StreamEx.ofTree((PsiElement)enumConstant.getArgumentList(), el -> StreamEx.of(el.getChildren()))
+                .select(PsiReferenceExpression.class)
+                .map(ref -> ref.getReferenceName())
+                .anyMatch(refName -> names.contains(refName))) return false;
+      }
+      return true;
     }
   }
 
