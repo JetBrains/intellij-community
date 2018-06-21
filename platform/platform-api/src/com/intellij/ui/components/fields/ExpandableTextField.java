@@ -40,7 +40,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
   }
 
   protected List<ExtendableTextComponent.Extension> createExtensions() {
-    return singletonList(ExpandableSupport.createExpandExtension(support));
+    return singletonList(support.createExpandExtension());
   }
 
   public String getTitle() {
