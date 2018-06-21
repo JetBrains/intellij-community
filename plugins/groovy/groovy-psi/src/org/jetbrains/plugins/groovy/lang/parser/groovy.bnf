@@ -1077,7 +1077,7 @@ tuple ::= '(' unqualified_reference_expression (',' unqualified_reference_expres
 // region Applications
 expression_or_application ::= <<notApplicationArguments expression_or_application_inner>> { elementType = '' name = '' }
 private expression_or_application_inner ::= expression application*
-private application ::= <<parseApplication application_ref application_expression application_call application_index>>
+private application ::= no_nl <<parseApplication application_ref application_expression application_call application_index>>
 {
   extends = expression
 }
@@ -1262,4 +1262,5 @@ private external clear_variants ::= clearVariants
 private external clear_error ::= clearError
 private external fail ::= noMatch
 private external end_of_file ::= eof
+private external no_nl ::= noNewLine
 // endregion
