@@ -111,7 +111,7 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     val associatedPath = if (!shared) projectBasePath else null
     val sdk = createSdkByGenerateTask(task, existingSdks, baseSdkField.selectedSdk, associatedPath, null) ?: return null
     if (!shared) {
-      sdk.associateWithModule(module, newProjectPath != null)
+      sdk.associateWithModule(module, newProjectPath)
     }
     excludeDirectoryFromProject(root, project)
     with(PySdkSettings.instance) {
