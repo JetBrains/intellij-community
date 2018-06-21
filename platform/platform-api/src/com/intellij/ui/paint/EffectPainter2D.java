@@ -2,10 +2,13 @@
 package com.intellij.ui.paint;
 
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.JBHiDPIScaledImage;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.WavePainter2D;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.TestOnly;
 
 import java.awt.*;
 import java.awt.font.LineMetrics;
@@ -136,9 +139,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
         else {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-          double devPixel = PaintUtil.devPixel(g);
           double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g);
-          double thickness = PaintUtil.alignToInt(Math.max(devPixel, metrics.getStrikethroughThickness()), g);
+          @SuppressWarnings("TestOnlyProblems")
+          double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), g, font), g);
           drawLine(g, x, y - offset, width, thickness, this);
         }
       }
@@ -149,17 +152,22 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     return height > 7 && Registry.is("ide.text.effect.new.scale") ? height / 2 : 3;
   }
 
+  @SuppressWarnings("TestOnlyProblems")
   private static void paintUnderline(Graphics2D g, double x, double y, double width, double height, Font font, double thickness, EffectPainter2D painter) {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
         double devPixel = PaintUtil.devPixel(g);
-        thickness = PaintUtil.alignToInt(Math.max(thickness, thickness * metrics.getUnderlineThickness()), g);
-        double offset = Math.min(height - thickness, Math.max(devPixel, metrics.getUnderlineOffset()));
+        double underlineThickness = maybeScaleFontMetricsThickness(metrics.getUnderlineThickness(), g, font);
+        double underlineOffset = Math.max(devPixel, metrics.getUnderlineOffset());
+
+        thickness = PaintUtil.alignToInt(thickness * underlineThickness, g);
+        double offset = Math.min(height - thickness, underlineOffset);
+
         if (offset < devPixel) {
           offset = height > 3 * devPixel ? devPixel : 0;
-          thickness = PaintUtil.alignToInt(height - offset, g);
+          thickness = PaintUtil.alignToInt(Math.min(thickness, height - offset), g);
         }
         else {
           offset = PaintUtil.alignToInt(offset, g);
@@ -178,6 +186,12 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
         drawLineCentered(g, x, y, width, height, thickness, painter);
       }
     }
+  }
+
+  @TestOnly
+  public static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Graphics2D g, @NotNull Font font) {
+    double minValue = PaintUtil.alignToInt(JBUI.getFontScale(font.getSize2D()), g, RoundingMode.ROUND_FLOOR_BIAS);
+    return Math.max(fontMetricsThickness, minValue);
   }
 
   private static void drawLineCentered(Graphics2D g, double x, double y, double width, double height, double thickness, EffectPainter2D painter) {
