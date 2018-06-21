@@ -23,7 +23,7 @@ class ResolveLocalTest extends LightGroovyTestCase implements ResolveTest {
   }
 
   void 'test resource variable from finally block'() {
-    resolveTest 'try (def a) {} finally { println <caret>a }', null
+    resolveTest 'try (def a) {} finally { println <caret>a }', GrVariable
   }
 
   void 'test resource variable from another resource'() {
