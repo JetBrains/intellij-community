@@ -461,6 +461,11 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   }
 
   public void testIllegalWhitespaces() { doTest(false); }
+  
+  public void testMarkUsedDefaultAnnotationMethodUnusedInspection() {
+    setLanguageLevel(LanguageLevel.JDK_1_5);
+    doTest(true);
+  }
 
   // must stay public for PicoContainer to work
   public static class MyAnnotator implements Annotator {
