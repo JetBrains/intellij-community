@@ -139,7 +139,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       newText = text;
     }
 
-    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(project);
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
     if (addLinebreak(text, line, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd()) {
       newText += "\n";
     }
@@ -263,7 +263,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   private static boolean shouldPasteOnPreviousLine(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
-    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file.getProject());
+    final boolean useTabs = PyIndentUtil.areTabsUsedForIndentation(file);
     final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS == null || text.endsWith("\n")) {
       return true;
