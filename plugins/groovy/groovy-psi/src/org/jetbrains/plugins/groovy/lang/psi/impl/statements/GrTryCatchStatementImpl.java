@@ -71,8 +71,7 @@ public class GrTryCatchStatementImpl extends GroovyPsiElementImpl implements GrT
                                      @Nullable PsiElement lastParent,
                                      @NotNull PsiElement place) {
     final GrTryResourceList resourceList = getResourceList();
-    if (resourceList == null) return true;
-    if (lastParent == getTryBlock() || lastParent == getFinallyClause()) {
+    if (resourceList != null && lastParent == getTryBlock()) {
       return resourceList.processDeclarations(processor, state, null, place);
     }
     return true;
