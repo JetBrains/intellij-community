@@ -89,8 +89,8 @@ public class MavenProjectTaskRunner extends ProjectTaskRunner {
     return false;
   }
 
-  private static boolean isDelegatedToMaven(Module module) {
-    return MavenRunner.getInstance(module.getProject()).getSettings().isDelegateToMaven();
+  private static boolean isDelegatedToMaven(@Nullable Module module) {
+    return module != null && MavenRunner.getInstance(module.getProject()).getSettings().isDelegateToMaven();
   }
 
   @Nullable
