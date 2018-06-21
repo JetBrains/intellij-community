@@ -20,6 +20,10 @@ public class RestSwingHtmlPanel implements RestPreviewPanel {
 
   @Override
   public void setHtml(@NotNull String html) {
+    final int body = html.indexOf("<body>");
+    if (body > 0) {
+      html = "<html>" + html.substring(body);
+    }
     myPane.setText(html);
   }
 
