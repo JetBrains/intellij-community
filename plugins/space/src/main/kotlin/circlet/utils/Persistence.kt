@@ -16,6 +16,18 @@ object IdeaPersistence : Persistence {
         PasswordSafe.getInstance().setPassword(createCredentialAttributes(key), null)
     }
 
+    override suspend fun batchPut(keyValuePairs: List<Pair<String, String>>) {
+        TODO("not implemented")
+    }
+
+    override suspend fun batchGet(keys: List<String>): List<Pair<String, String?>> {
+        TODO("not implemented")
+    }
+
+    override suspend fun batchDelete(keys: List<String>) {
+        TODO("not implemented")
+    }
+
     override suspend fun clear() {
     }
 
