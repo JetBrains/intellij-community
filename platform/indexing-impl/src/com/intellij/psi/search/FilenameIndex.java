@@ -44,11 +44,10 @@ public class FilenameIndex {
   /**
    * @deprecated Not to be used.
    */
-  @Deprecated
-  public @NonNls static final ID<String, Void> NAME = ID.create("FilenameIndex");
+  @NonNls @Deprecated public static final ID<String, Void> NAME = ID.create("FilenameIndex");
 
   @NotNull
-  public static String[] getAllFilenames(Project project) {
+  public static String[] getAllFilenames(@Nullable Project project) {
     Set<String> names = new THashSet<>();
     getService().processAllFileNames((String s) -> {
       names.add(s);
@@ -57,24 +56,26 @@ public class FilenameIndex {
     return ArrayUtil.toStringArray(names);
   }
 
-  public static void processAllFileNames(Processor<String> processor, GlobalSearchScope scope, IdFilter filter) {
+  public static void processAllFileNames(@NotNull Processor<String> processor, @NotNull GlobalSearchScope scope, @Nullable IdFilter filter) {
     getService().processAllFileNames(processor, scope, filter);
   }
 
-  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
+  @NotNull
+  public static Collection<VirtualFile> getVirtualFilesByName(final Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
     return getService().getVirtualFilesByName(project, name, scope, null);
   }
 
+  @NotNull
   public static Collection<VirtualFile> getVirtualFilesByName(final Project project,
-                                                              final String name,
+                                                              @NotNull String name,
                                                               boolean caseSensitively,
-                                                              final GlobalSearchScope scope) {
+                                                              @NotNull GlobalSearchScope scope) {
     if (caseSensitively) return getVirtualFilesByName(project, name, scope);
     return getVirtualFilesByNameIgnoringCase(name, scope, project, null);
   }
 
   @NotNull
-  public static PsiFile[] getFilesByName(final Project project, final String name, final GlobalSearchScope scope) {
+  public static PsiFile[] getFilesByName(@NotNull Project project, @NotNull String name, @NotNull GlobalSearchScope scope) {
     return (PsiFile[])getFilesByName(project, name, scope, false);
   }
 
@@ -149,8 +150,8 @@ public class FilenameIndex {
   }
 
   @NotNull
-  public static PsiFileSystemItem[] getFilesByName(final Project project,
-                                                   final String name,
+  public static PsiFileSystemItem[] getFilesByName(@NotNull Project project,
+                                                   @NotNull String name,
                                                    @NotNull final GlobalSearchScope scope,
                                                    boolean includeDirs) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
