@@ -7,6 +7,7 @@ import circlet.platform.api.*
 import circlet.runtime.*
 import circlet.settings.*
 import com.intellij.openapi.project.*
+import com.intellij.ui.*
 import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import klogging.*
@@ -31,8 +32,15 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     init {
+        list.selectionMode = ListSelectionModel.SINGLE_SELECTION
+        list.cellRenderer = ReviewListCellRenderer()
+
+        val scrollPane = ScrollPaneFactory.createScrollPane(
+            list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
+        )
+
         panel.add(
-            list,
+            scrollPane,
             GridConstraints().apply {
                 row = 0
                 column = 0
@@ -47,7 +55,8 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     private suspend fun reloadImpl() {
         val reviews = project.clientOrNull?.codeReview?.listReviews(
-            BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null, null, null, null, null, ReviewSorting.CreatedAtDesc
+            BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null, null,
+            null, null, null, ReviewSorting.CreatedAtDesc
         )?.data ?: return
 
         reload(reviews)
