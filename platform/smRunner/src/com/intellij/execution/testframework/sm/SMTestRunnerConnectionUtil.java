@@ -236,7 +236,9 @@ public class SMTestRunnerConnectionUtil {
       if (URLUtil.FILE_PROTOCOL.equals(protocol)) {
         return FileUrlProvider.INSTANCE.getLocation(protocol, path, project, scope);
       }
-      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)) {
+      else if (!DumbService.isDumb(project) || DumbService.isDumbAware(myLocator)
+               // Android Studio: add the following check due to our custom handling of dumb mode during Gradle builds
+               || DumbService.getInstance(project).isAlternativeResolveEnabled()) {
         return myLocator.getLocation(protocol, path, metainfo, project, scope);
       }
       else {
