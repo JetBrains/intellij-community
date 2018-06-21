@@ -2,10 +2,10 @@
 package com.intellij.internal.statistic.collectors.fus.actions.persistence;
 
 import com.intellij.ide.plugins.PluginManagerCore;
-import com.intellij.ide.plugins.PluginManagerMain;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.internal.statistic.utils.StatisticsUtilKt;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.util.text.StringUtil;
@@ -60,7 +60,7 @@ public class ToolWindowCollector implements PersistentStateComponent<ToolWindowC
     for (ToolWindowEP ep : ToolWindowEP.EP_NAME.getExtensions()) {
       if (StringUtil.equals(toolWindowId, ep.id)) {
         final PluginId id = StringUtil.isNotEmpty(ep.factoryClass) ? PluginManagerCore.getPluginByClassName(ep.factoryClass) : null;
-        return PluginManagerMain.isDevelopedByJetBrains(id);
+        return StatisticsUtilKt.isDevelopedByJetBrains(id);
       }
     }
     return false;

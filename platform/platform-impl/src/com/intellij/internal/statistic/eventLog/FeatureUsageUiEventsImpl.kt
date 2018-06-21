@@ -2,7 +2,7 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.ide.plugins.PluginManagerCore
-import com.intellij.ide.plugins.PluginManagerMain
+import com.intellij.internal.statistic.utils.isDevelopedByJetBrains
 import com.intellij.openapi.ui.DialogWrapper
 import com.intellij.util.containers.ContainerUtil
 
@@ -80,6 +80,6 @@ class FeatureUsageUiEventsImpl : FeatureUsageUiEvents {
 
   private fun toReport(context: Class<*>, name: String, defaultValue: String): String {
     val pluginId = PluginManagerCore.getPluginByClassName(context.name)
-    return if (PluginManagerMain.isDevelopedByJetBrains(pluginId)) name else defaultValue
+    return if (isDevelopedByJetBrains(pluginId)) name else defaultValue
   }
 }
