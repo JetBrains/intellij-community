@@ -15,6 +15,7 @@
  */
 package com.intellij.testGuiFramework.fixtures
 
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.terminal.JBTerminalPanel
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
@@ -29,6 +30,7 @@ class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : To
 
   private val myJBTerminalPanel: JBTerminalPanel
   private val terminalTextBuffer: TerminalTextBuffer
+  private val LOG: Logger = Logger.getInstance("#com.intellij.testGuiFramework.fixtures.TerminalFixture")
 
   init {
     val content: Content = this.getContent(getActiveTabName()) ?: throw Exception("Unable to get content of terminal tool window")
@@ -53,9 +55,16 @@ class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : To
   }
 
   fun waitUntilTextAppeared(text: String, timeoutInSeconds: Int = 60) {
-    waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
-      terminalTextBuffer.screenLines.contains(text)
+    try {
+      waitUntil(condition = "'$text' appeared in terminal", timeoutInSeconds = timeoutInSeconds) {
+        terminalTextBuffer.screenLines.contains(text)
+      }
     }
+    finally {
+      LOG.info("Text to find: $text")
+      LOG.info("Terminal text: ${terminalTextBuffer.screenLines}")
+    }
+
   }
 
   fun waitUntilRegExAppeared(regex: Regex, timeoutInSeconds: Int = 60) {
