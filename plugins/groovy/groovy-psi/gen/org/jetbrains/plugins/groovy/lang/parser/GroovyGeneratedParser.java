@@ -711,9 +711,15 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<parseApplication application_ref application_expression application_call application_index>>
+  // no_nl <<parseApplication application_ref application_expression application_call application_index>>
   static boolean application(PsiBuilder b, int l) {
-    return parseApplication(b, l + 1, application_ref_parser_, application_expression_parser_, application_call_parser_, application_index_parser_);
+    if (!recursion_guard_(b, l, "application")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = noNewLine(b, l + 1);
+    r = r && parseApplication(b, l + 1, application_ref_parser_, application_expression_parser_, application_call_parser_, application_index_parser_);
+    exit_section_(b, m, null, r);
+    return r;
   }
 
   /* ********************************************************** */

@@ -401,3 +401,5 @@ fun newLine(builder: PsiBuilder, level: Int): Boolean {
   val currentStart = builder.rawTokenTypeStart(0)
   return contains(builder.originalText, prevStart, currentStart, '\n')
 }
+
+fun noNewLine(builder: PsiBuilder, level: Int): Boolean = !newLine(builder, level)
