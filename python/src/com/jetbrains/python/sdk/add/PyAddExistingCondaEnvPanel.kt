@@ -56,7 +56,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     return when (sdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
         if (!makeSharedField.isSelected) {
-          associateWithModule(module, newProjectPath != null)
+          associateWithModule(module, newProjectPath)
         }
       }
       else -> sdk

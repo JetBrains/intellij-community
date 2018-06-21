@@ -58,7 +58,7 @@ class PythonSdkConfigurator : DirectoryProjectConfigurator {
     findDetectedAssociatedEnvironment(module, existingSdks)?.let {
       val newSdk = it.setupAssociated(existingSdks, module.basePath) ?: return
       SdkConfigurationUtil.addSdk(newSdk)
-      newSdk.associateWithModule(module, false)
+      newSdk.associateWithModule(module, null)
       SdkConfigurationUtil.setDirectoryProjectSdk(project, newSdk)
       return
     }

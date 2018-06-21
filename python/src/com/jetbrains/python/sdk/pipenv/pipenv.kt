@@ -155,7 +155,7 @@ fun setupPipEnvSdkUnderProgress(project: Project?,
   val suggestedName = "Pipenv (${PathUtil.getFileName(projectPath)})"
   return createSdkByGenerateTask(task, existingSdks, null, projectPath, suggestedName)?.apply {
     isPipEnv = true
-    associateWithModule(module, newProjectPath != null)
+    associateWithModule(module, newProjectPath)
   }
 }
 
@@ -282,7 +282,7 @@ class UsePipEnvQuickFix(sdk: Sdk?, module: Module) : LocalQuickFix {
         SdkConfigurationUtil.addSdk(newSdk)
       }
       else {
-        sdk.associateWithModule(module, false)
+        sdk.associateWithModule(module, null)
       }
       project.pythonSdk = sdk
       module.pythonSdk = sdk

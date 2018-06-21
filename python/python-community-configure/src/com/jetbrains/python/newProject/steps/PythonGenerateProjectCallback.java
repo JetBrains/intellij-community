@@ -20,7 +20,6 @@ import com.intellij.ide.util.projectWizard.ProjectSettingsStepBase;
 import com.intellij.ide.util.projectWizard.WebProjectTemplate;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
@@ -29,12 +28,8 @@ import com.intellij.platform.ProjectGeneratorPeer;
 import com.intellij.util.BooleanFunction;
 import com.jetbrains.python.newProject.PyNewProjectSettings;
 import com.jetbrains.python.newProject.PythonProjectGenerator;
-import com.jetbrains.python.sdk.PythonSdkAdditionalData;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.List;
 
 public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.AbstractCallback<T> {
 
@@ -71,13 +66,6 @@ public class PythonGenerateProjectCallback<T> extends AbstractNewProjectStep.Abs
 
     if (newProject != null && generator instanceof PythonProjectGenerator) {
       SdkConfigurationUtil.setDirectoryProjectSdk(newProject, sdk);
-      final List<Sdk> sdks = PythonSdkType.getAllSdks();
-      for (Sdk s : sdks) {
-        final SdkAdditionalData additionalData = s.getSdkAdditionalData();
-        if (additionalData instanceof PythonSdkAdditionalData) {
-          ((PythonSdkAdditionalData)additionalData).reAssociateWithCreatedProject(newProject);
-        }
-      }
       ((PythonProjectGenerator)generator).afterProjectGenerated(newProject);
     }
   }
