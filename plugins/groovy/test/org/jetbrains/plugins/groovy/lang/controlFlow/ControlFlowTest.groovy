@@ -88,6 +88,8 @@ class ControlFlowTest extends LightCodeInsightFixtureTestCase {
 
   void testTry11() { doTest() }
 
+  void testTryResources() { doTest() }
+
   void testWhile1() { doTest() }
 
   void testWhile2() { doTest() }
