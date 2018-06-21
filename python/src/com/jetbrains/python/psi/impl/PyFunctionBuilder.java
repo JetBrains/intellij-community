@@ -36,6 +36,7 @@ public class PyFunctionBuilder {
   private final List<String> myParameters = new ArrayList<>();
   private final List<String> myStatements = new ArrayList<>();
   private final List<String> myDecorators = new ArrayList<>();
+  private final PsiElement mySettingAnchor;
   private String myAnnotation = null;
   @NotNull
   private final Map<String, String> myDecoratorValues = new HashMap<>();
@@ -74,12 +75,6 @@ public class PyFunctionBuilder {
     return functionBuilder;
   }
 
-  @Deprecated
-  public PyFunctionBuilder(@NotNull String name) {
-    myName = name;
-    myDocStringGenerator = null;
-  }
-
   /**
    * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
    *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
@@ -88,8 +83,9 @@ public class PyFunctionBuilder {
   public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
     myName = name;
     myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormatOrPlain(settingsAnchor), 
-                                                       PyIndentUtil.getIndentFromSettings(settingsAnchor.getProject()), 
+                                                       PyIndentUtil.getIndentFromSettings(settingsAnchor.getContainingFile()),
                                                        settingsAnchor);
+    mySettingAnchor = settingsAnchor;
   }
 
   /**
@@ -179,7 +175,7 @@ public class PyFunctionBuilder {
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
 
-    final String indent = PyIndentUtil.getIndentFromSettings(project);
+    final String indent = PyIndentUtil.getIndentFromSettings(mySettingAnchor.getContainingFile());
     // There was original docstring or some parameters were added via parameterWithType()
     if (!myDocStringGenerator.isNewMode() || myDocStringGenerator.hasParametersToAdd()) {
       final String docstring = PyIndentUtil.changeIndent(myDocStringGenerator.buildDocString(), true, indent);
