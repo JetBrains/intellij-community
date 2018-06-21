@@ -120,12 +120,15 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @Nullable
   @Override
   public CancellableConnection createCancellableConnection() {
-    return new HttpTestConnection(new HttpGet(getIssuesUrl())) {
+    return new HttpTestConnection(new HttpGet()) {
       @Override
-      protected void doTest() throws Exception {
+      protected void test() throws Exception {
         // Reload API version
-        myApiVersion = fetchApiVersion();
-        super.doTest();
+        myCurrentRequest = getApiVersionRequest();
+        myApiVersion = fetchApiVersion((HttpGet)myCurrentRequest);
+
+        myCurrentRequest = new HttpGet(getIssuesUrl());
+        super.test();
       }
     };
   }
@@ -197,6 +200,7 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
    */
   @Nullable
   public GitlabIssue fetchIssue(int projectId, int issueId) throws Exception {
+    ensureApiVersionDiscovered();
     ensureProjectsDiscovered();
     final HttpGet request = new HttpGet(getRestApiUrl("projects", projectId, "issues", issueId));
     final ResponseHandler<GitlabIssue> handler = new GsonSingleObjectDeserializer<>(GSON, GitlabIssue.class, true);
@@ -271,18 +275,23 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
 
   private void ensureApiVersionDiscovered() throws Exception {
     if (myApiVersion == null) {
-      myApiVersion = fetchApiVersion();
+      myApiVersion = fetchApiVersion(getApiVersionRequest());
     }
   }
 
   @NotNull
-  private ApiVersion fetchApiVersion() throws IOException {
-    final HttpResponse response = getHttpClient().execute(new HttpGet(StringUtil.trimEnd(getUrl(), "/") + "/api/v4/version"));
+  private ApiVersion fetchApiVersion(@NotNull HttpGet request) throws IOException {
+    final HttpResponse response = getHttpClient().execute(request);
     if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
       return ApiVersion.V4;
     }
     // The same endpoint for API version 3 is either unavailable (before v8.13) or 410 Gone.
     return ApiVersion.V3;
+  }
+
+  @NotNull
+  private HttpGet getApiVersionRequest() {
+    return new HttpGet(StringUtil.trimEnd(getUrl(), "/") + "/api/v4/version");
   }
 
   @Nullable
