@@ -814,6 +814,8 @@
                     serviceImplementation="com.intellij.ide.structureView.impl.StructureViewFactoryImpl"/>
     <projectService serviceInterface="com.intellij.codeInspection.InspectionManager"
                     serviceImplementation="com.intellij.codeInspection.ex.InspectionManagerEx"/>
+    <documentationProvider implementation="com.intellij.codeInspection.actions.InspectionDescriptionDocumentationProvider"/>
+
     <projectService serviceInterface="com.intellij.usageView.UsageViewManager"
                     serviceImplementation="com.intellij.usageView.impl.UsageViewManagerImpl"/>
     <applicationService serviceInterface="com.intellij.ide.projectView.impl.ProjectViewSharedSettings"

@@ -81,7 +81,7 @@ public class RunInspectionAction extends GotoActionBase {
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         ApplicationManager.getApplication().invokeLater(
-          () -> runInspection(project, ((InspectionToolWrapper)element).getShortName(), virtualFile, psiElement, psiFile));
+          () -> runInspection(project, (((InspectionElement)element)).getToolWrapper().getShortName(), virtualFile, psiElement, psiFile));
       }
     }, false);
   }
