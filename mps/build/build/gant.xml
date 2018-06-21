@@ -153,10 +153,6 @@
 
     <target name="patch" description="Apply MPS patches to IDEA Community sources">
         <echo message="Applying MPS patches to IDEA Community sources..."/>
-
-        <!--TODO: remove after update to 182.3341-->
-        <antcall target="icons-patch"/>
-
         <property name="patchFile"
                   value="${basedir}/patches/Custom_project_settings_store_folder_name_and__project_file_extension_for_MPS_.patch"/>
         <exec executable="git" dir="${community.folder}" failonerror="true">
@@ -168,28 +164,6 @@
             <arg value="apply"/>
             <arg value="${patchFile}"/>
         </exec>
-    </target>
-
-    <!--TODO: remove after update to 182.3341-->
-    <target name="icons-patch" depends="icons-patch-check" if="${apply.icons.patch}">
-        <property name="patchFile"
-                  value="${basedir}/patches/Add_fallback_to_findURL_icon_by_class_if_findURL_by_ClassLoader_couldn't_found_icon_.patch"/>
-        <exec executable="git" dir="${community.folder}" failonerror="true">
-            <arg value="apply"/>
-            <arg value="--check"/>
-            <arg value="${patchFile}"/>
-        </exec>
-        <exec executable="git" dir="${community.folder}">
-            <arg value="apply"/>
-            <arg value="${patchFile}"/>
-        </exec>
-    </target>
-
-    <!--TODO: remove after update to 182.3341-->
-    <target name="icons-patch-check" description="Temporary patch for Idea 182.3208.16 build">
-        <condition property="apply.icons.patch" value="true" else="false">
-            <equals arg1="${mps.idea.community.build.number}" arg2="182.3208.16.1"/>
-        </condition>
     </target>
 
     <!-- ===================================================== -->
