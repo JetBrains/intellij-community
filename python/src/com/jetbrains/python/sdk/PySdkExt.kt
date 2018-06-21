@@ -93,10 +93,10 @@ fun createSdkByGenerateTask(generateSdkHomePath: Task.WithResult<String, Executi
                                        false, null, suggestedName) ?: return null
 }
 
-fun Sdk.associateWithModule(module: Module?, isNewProject: Boolean) {
+fun Sdk.associateWithModule(module: Module?, newProjectPath: String?) {
   getOrCreateAdditionalData().apply {
     when {
-      isNewProject -> associateWithNewProject()
+      newProjectPath != null -> associateWithModulePath(newProjectPath)
       module != null -> associateWithModule(module)
     }
   }

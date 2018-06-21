@@ -18,7 +18,6 @@ package com.jetbrains.python.sdk;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkAdditionalData;
 import com.intellij.openapi.util.JDOMExternalizer;
@@ -54,7 +53,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   private final PythonSdkFlavor myFlavor;
   private String myAssociatedModulePath;
-  private boolean myAssociateWithNewProject;
 
   public PythonSdkAdditionalData(@Nullable PythonSdkFlavor flavor) {
     myFlavor = flavor;
@@ -67,7 +65,6 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
     myAddedPaths = from.myAddedPaths.clone(ApplicationManager.getApplication());
     myExcludedPaths = from.myExcludedPaths.clone(ApplicationManager.getApplication());
     myAssociatedModulePath = from.myAssociatedModulePath;
-    myAssociateWithNewProject = from.myAssociateWithNewProject;
   }
 
   @NotNull
@@ -99,25 +96,17 @@ public class PythonSdkAdditionalData implements SdkAdditionalData {
 
   public void setAssociatedModulePath(@Nullable String associatedModulePath) {
     myAssociatedModulePath = associatedModulePath;
-    myAssociateWithNewProject = false;
   }
 
   public void associateWithModule(@NotNull Module module) {
     final String path = PySdkExtKt.getBasePath(module);
     if (path != null) {
-      myAssociatedModulePath = FileUtil.toSystemIndependentName(path);
+      associateWithModulePath(path);
     }
-    myAssociateWithNewProject = false;
   }
 
-  public void associateWithNewProject() {
-    myAssociateWithNewProject = true;
-  }
-
-  public void reAssociateWithCreatedProject(@NotNull Project project) {
-    if (myAssociateWithNewProject) {
-      setAssociatedModulePath(project.getBasePath());
-    }
+  public void associateWithModulePath(@NotNull String modulePath) {
+    myAssociatedModulePath = FileUtil.toSystemIndependentName(modulePath);
   }
 
   public void save(@NotNull final Element rootElement) {

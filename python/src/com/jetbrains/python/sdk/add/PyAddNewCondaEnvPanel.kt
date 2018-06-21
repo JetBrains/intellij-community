@@ -123,7 +123,7 @@ class PyAddNewCondaEnvPanel(private val project: Project?,
     val associatedPath = if (!shared) projectBasePath else null
     val sdk = createSdkByGenerateTask(task, existingSdks, null, associatedPath, null) ?: return null
     if (!shared) {
-      sdk.associateWithModule(module, newProjectPath != null)
+      sdk.associateWithModule(module, newProjectPath)
     }
     PyCondaPackageService.getInstance().PREFERRED_CONDA_PATH = condaPath
     return sdk
