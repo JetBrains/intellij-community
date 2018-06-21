@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -17,8 +18,10 @@ import com.intellij.structuralsearch.MatchVariableConstraint;
 import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.ui.table.TableView;
@@ -38,6 +41,8 @@ import javax.swing.table.JTableHeader;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -49,16 +54,15 @@ public class FilterPanel {
   final JBListTable myFilterTable;
   final ListTableModel<Filter> myTableModel;
 
-  @NotNull private final Project myProject;
+  @NotNull final Project myProject;
   private CompiledPattern myCompiledPattern;
   MatchVariableConstraint myConstraint;
   StructuralSearchProfile myProfile;
 
+  int myFilterCount = 0;
   final Header myHeader = new Header();
-  private final TextFilter myTextFilter = new TextFilter();
-  private final CountFilter myCountFilter = new CountFilter();
-  private final TypeFilter myTypeFilter = new TypeFilter();
-  private final ReferenceFilter myReferenceFilter = new ReferenceFilter();
+  private final List<FilterAction> myFilters =
+    Arrays.asList(new TextFilter(), new CountFilter(), new TypeFilter(), new ReferenceFilter(), new ScriptFilter());
 
   public FilterPanel(@NotNull Project project, StructuralSearchProfile profile, Disposable parent) {
     myProject = project;
@@ -126,18 +130,7 @@ public class FilterPanel {
 
   void showAddFilterPopup(Component component, RelativePoint point) {
     myFilterTable.getTable().requestFocus();
-    final DefaultActionGroup group = new DefaultActionGroup();
-    group.add(myTextFilter);
-    group.add(myCountFilter);
-    group.add(myTypeFilter);
-    group.add(myReferenceFilter);
-
-    group.add(new AnAction("Script") {
-      @Override
-      public void actionPerformed(AnActionEvent e) {
-        assert false : "not implemented";
-      }
-    });
+    final DefaultActionGroup group = new DefaultActionGroup(myFilters);
     final DataContext context = DataManager.getInstance().getDataContext(component);
     final ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup("Add Filter", group, context,
                                                                                 JBPopupFactory.ActionSelectionAid.ALPHA_NUMBERING, true, null);
@@ -156,16 +149,18 @@ public class FilterPanel {
     myCompiledPattern = compiledPattern;
   }
 
-  public void setFilters(MatchVariableConstraint constraint) {
+  public boolean isInitialized() {
+    return myConstraint != null;
+  }
+
+  public void initFilters(@NotNull MatchVariableConstraint constraint) {
     myConstraint = constraint;
     final String varName = myConstraint.getName();
     final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
     final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
     final boolean target = myConstraint.isPartOfSearchResults();
     myTableModel.setItems(new SmartList<>());
-    myTextFilter.init(nodes, completePattern, target);
-    myCountFilter.init(nodes, completePattern, target);
-    myTypeFilter.init(nodes, completePattern, target);
+    myFilters.forEach(f -> f.init(nodes, completePattern, target));
 
     final String message = Configuration.CONTEXT_VAR_NAME.equals(varName)
                            ? "No filters added for the complete match."
@@ -234,11 +229,6 @@ public class FilterPanel {
     }
 
     @Override
-    public int position() {
-      return 1;
-    }
-
-    @Override
     protected boolean hasFilter() {
       return !StringUtil.isEmpty(myConstraint.getRegExp());
     }
@@ -272,7 +262,10 @@ public class FilterPanel {
         private final JCheckBox myWordsCheckBox = new JCheckBox("Words", false);
         private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
         private final JLabel myNameLabel = new JLabel("name=");
-        private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create("Text of the match is checked against the provided pattern.");
+        private final ContextHelpLabel myHelpLabel =
+          ContextHelpLabel.create("<p>Text of the match is checked against the provided pattern." +
+                                  "<p>Use \"!\" to invert the pattern." +
+                                  "<p>Regular expressions are supported.");
 
         protected void layoutComponents() {
           final GroupLayout layout = new GroupLayout(this);
@@ -313,7 +306,7 @@ public class FilterPanel {
 
         @Override
         protected void loadValues() {
-          myTextField.setText(myConstraint.getRegExp());
+          myTextField.setText((myConstraint.isInvertRegExp() ? "!" : "") + myConstraint.getRegExp());
           myWordsCheckBox.setSelected(myConstraint.isWholeWordsOnly());
           myHierarchyCheckBox.setSelected(myConstraint.isWithinHierarchy());
           myHierarchyCheckBox.setVisible(showHierarchy);
@@ -321,7 +314,15 @@ public class FilterPanel {
 
         @Override
         public void saveValues() {
-          myConstraint.setRegExp(myTextField.getText());
+          final String text = myTextField.getText();
+          if (text.startsWith("!")) {
+            myConstraint.setRegExp(text.substring(1));
+            myConstraint.setInvertRegExp(true);
+          }
+          else {
+            myConstraint.setRegExp(text);
+            myConstraint.setInvertRegExp(false);
+          }
           myConstraint.setWholeWordsOnly(myWordsCheckBox.isSelected());
           myConstraint.setWithinHierarchy(myHierarchyCheckBox.isSelected());
         }
@@ -333,7 +334,7 @@ public class FilterPanel {
 
         @Override
         public JComponent[] getFocusableComponents() {
-          return new JComponent[] {myTextField};
+          return array(myTextField);
         }
       };
     }
@@ -346,11 +347,6 @@ public class FilterPanel {
 
     CountFilter() {
       super("Count");
-    }
-
-    @Override
-    public int position() {
-      return 2;
     }
 
     @Override
@@ -421,11 +417,13 @@ public class FilterPanel {
         @Override
         protected void loadValues() {
           myMinField.setMinValue(myMinZero ? 0 : 1);
+          myMinField.setMaxValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
           myMinField.setDefaultValue(myMinZero ? 0 : 1);
           myMinField.setDefaultValueText(myMinZero ? "0" : "1");
           myMinField.setValue(myConstraint.getMinCount());
           myMinField.selectAll();
 
+          myMaxField.setMinValue(myMinZero ? 0 : 1);
           myMaxField.setMaxValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
           myMaxField.setDefaultValue(myMaxUnlimited ? Integer.MAX_VALUE : 1);
           myMaxField.setDefaultValueText(myMaxUnlimited ? SSRBundle.message("editvarcontraints.unlimited") : "1");
@@ -446,7 +444,7 @@ public class FilterPanel {
 
         @Override
         public JComponent[] getFocusableComponents() {
-          return new JComponent[] {myMinField, myMaxField};
+          return array(myMinField, myMaxField);
         }
       };
     }
@@ -456,11 +454,6 @@ public class FilterPanel {
 
     TypeFilter() {
       super("Type");
-    }
-
-    @Override
-    public int position() {
-      return 3;
     }
 
     @Override
@@ -495,6 +488,9 @@ public class FilterPanel {
         private final EditorTextField myTextField = createTextComponent("");
         private final JLabel myTypeLabel = new JLabel("type=");
         private final JCheckBox myHierarchyCheckBox = new JCheckBox("Within type hierarchy", false);
+        private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(
+          "<p>The type of the matched expression is checked against the provided \"|\"-separated patterns. " +
+          "<p>Use \"!\" to invert the pattern.");
 
         protected void layoutComponents() {
           final GroupLayout layout = new GroupLayout(this);
@@ -507,6 +503,7 @@ public class FilterPanel {
                     layout.createSequentialGroup()
                           .addComponent(myTypeLabel)
                           .addComponent(myTextField)
+                          .addComponent(myHelpLabel)
                   )
                   .addComponent(myHierarchyCheckBox)
           );
@@ -516,6 +513,7 @@ public class FilterPanel {
                     layout.createParallelGroup(GroupLayout.Alignment.CENTER)
                           .addComponent(myTypeLabel)
                           .addComponent(myTextField)
+                          .addComponent(myHelpLabel)
                   )
                   .addComponent(myHierarchyCheckBox)
           );
@@ -547,7 +545,7 @@ public class FilterPanel {
 
         @Override
         public JComponent[] getFocusableComponents() {
-          return new JComponent[] { myTextField };
+          return array(myTextField);
         }
       };
     }
@@ -557,11 +555,6 @@ public class FilterPanel {
 
     ReferenceFilter() {
       super("Reference");
-    }
-
-    @Override
-    public int position() {
-      return 4;
     }
 
     @Override
@@ -582,18 +575,175 @@ public class FilterPanel {
 
     @Override
     protected void setLabel(SimpleColoredComponent component) {
-      component.append("reference");
+      component.append("reference=");
       if (myConstraint.isInvertReference()) component.append("!");
       component.append(myConstraint.getReferenceConstraint());
+    }
+
+    @Override
+    public FilterEditor getEditor() {
+      return new FilterEditor(myConstraint) {
+
+        private final JLabel myLabel = new JLabel("reference=");
+        private final TextFieldWithAutoCompletion<String> textField =
+          TextFieldWithAutoCompletion.create(myProject, Collections.emptyList(), false, "");
+        private final String shortcut =
+          KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
+        private final ContextHelpLabel myHelpLabel = ContextHelpLabel.create(
+          "<p>Preconfigured search patterns can be autocompleted with " +
+          shortcut + ".<p>The referenced element is checked against the provided pattern.\n\n" +
+          "<p>Use \"!\" to invert the pattern.");
+
+        @Override
+        protected void layoutComponents() {
+          textField.setVariants(ConfigurationManager.getInstance(myProject).getAllConfigurationNames());
+          final GroupLayout layout = new GroupLayout(this);
+          setLayout(layout);
+          layout.setAutoCreateContainerGaps(true);
+
+          layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                  .addComponent(myLabel)
+                  .addComponent(textField)
+                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+                  .addComponent(myHelpLabel)
+          );
+          layout.setVerticalGroup(
+            layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(myLabel)
+                  .addComponent(textField)
+                  .addComponent(myHelpLabel)
+          );
+        }
+
+        @Override
+        protected void loadValues() {
+          textField.setText((myConstraint.isInvertReference() ? "!" : "") + myConstraint.getReferenceConstraint());
+        }
+
+        @Override
+        protected void saveValues() {
+          final String text = textField.getText();
+          if (text.startsWith("!")) {
+            myConstraint.setReferenceConstraint(text.substring(1));
+            myConstraint.setInvertReference(true);
+          }
+          else {
+            myConstraint.setReferenceConstraint(text);
+            myConstraint.setInvertReference(false);
+          }
+        }
+
+        @Override
+        public JComponent getPreferredFocusedComponent() {
+          return textField;
+        }
+
+        @Override
+        public JComponent[] getFocusableComponents() {
+          return array(textField);
+        }
+      };
+    }
+  }
+
+  private class ScriptFilter extends FilterAction {
+
+    ScriptFilter() {
+      super("Script");
+    }
+
+    @Override
+    protected boolean hasFilter() {
+      return !StringUtil.isEmpty(myConstraint.getScriptCodeConstraint());
+    }
+
+    @Override
+    protected void clearFilter() {
+      myConstraint.setScriptCodeConstraint("");
+    }
+
+    @Override
+    public boolean isApplicable(List<PsiElement> nodes, boolean completePattern, boolean target) {
+      return true;
+    }
+
+    @Override
+    protected void setLabel(SimpleColoredComponent component) {
+      component.append("script=").append(StringUtil.unquoteString(myConstraint.getScriptCodeConstraint()));
+    }
+
+    @Override
+    public FilterEditor getEditor() {
+      return new FilterEditor(myConstraint) {
+
+        private final JLabel myLabel = new JLabel("script=");
+        private final ExpandableTextField myTextField = new ExpandableTextField(a -> Collections.singletonList(a), a -> a.get(0));
+        private ContextHelpLabel myHelpLabel;
+
+        @Override
+        protected void layoutComponents() {
+          final String[] variableNames = {Configuration.CONTEXT_VAR_NAME, ScriptLog.SCRIPT_LOG_VAR_NAME};
+          myHelpLabel = ContextHelpLabel.create(
+            "<p>Use GroovyScript IntelliJ API to filter the search results." +
+            "<p>Available variables: " + String.join(", ", variableNames));
+
+          final GroupLayout layout = new GroupLayout(this);
+          setLayout(layout);
+          layout.setAutoCreateContainerGaps(true);
+
+          layout.setHorizontalGroup(
+            layout.createSequentialGroup()
+                  .addComponent(myLabel)
+                  .addComponent(myTextField)
+                  .addPreferredGap(LayoutStyle.ComponentPlacement.RELATED, 1, 1)
+                  .addComponent(myHelpLabel)
+          );
+          layout.setVerticalGroup(
+            layout.createParallelGroup(GroupLayout.Alignment.CENTER)
+                  .addComponent(myLabel)
+                  .addComponent(myTextField)
+                  .addComponent(myHelpLabel)
+          );
+        }
+
+        @Override
+        protected void loadValues() {
+          myTextField.setText(StringUtil.unquoteString(myConstraint.getScriptCodeConstraint()));
+        }
+
+        @Override
+        protected void saveValues() {
+          myConstraint.setScriptCodeConstraint('"' + myTextField.getText() + '"');
+        }
+
+        @Override
+        public JComponent getPreferredFocusedComponent() {
+          return myTextField;
+        }
+
+        @Override
+        public JComponent[] getFocusableComponents() {
+          return array(myTextField);
+        }
+      };
     }
   }
 
   private abstract class FilterAction extends AnAction implements Filter {
 
     protected final SimpleColoredComponent myLabel = new SimpleColoredComponent();
+    private final int myPosition;
 
     protected FilterAction(@Nullable String text) {
       super(text);
+      myFilterCount++;
+      myPosition = myFilterCount;
+    }
+
+    @Override
+    public final int position() {
+      return myPosition;
     }
 
     public final void init(List<PsiElement> nodes, boolean completePattern, boolean target) {
@@ -636,7 +786,7 @@ public class FilterPanel {
       }
     }
 
-    public final void addFilter() {
+    private void addFilter() {
       getTemplatePresentation().setEnabledAndVisible(false);
       final JBTable table = myFilterTable.getTable();
       TableUtil.stopEditing(table);
@@ -702,11 +852,14 @@ public class FilterPanel {
 
     protected abstract void saveValues();
 
+    public <T> T[] array(T... ts) {
+      return ts;
+    }
   }
 
   private interface Filter {
     int position();
-    SimpleColoredComponent getRenderer();
+    JComponent getRenderer();
     default FilterEditor getEditor() {
       return null;
     }

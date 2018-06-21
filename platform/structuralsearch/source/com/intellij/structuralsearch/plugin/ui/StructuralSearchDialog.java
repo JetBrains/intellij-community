@@ -207,6 +207,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false);
       myFilterPanel.setCompiledPattern(compiledPattern);
+      if (!myFilterPanel.isInitialized()) {
+        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+      }
       return compiledPattern != null;
     } catch (MalformedPatternException e) {
       return false;
@@ -232,8 +235,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           if (editor == null) return;
           TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
           SubstitutionShortInfoHandler.install(editor, variableName ->
-            myFilterPanel.setFilters(myConfiguration.getMatchOptions().getVariableConstraint(variableName)));
-          //myFilterPanel.setFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+            myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
           editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
           final Project project = mySearchContext.getProject();
           final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(mySearchCriteriaEdit.getDocument());
