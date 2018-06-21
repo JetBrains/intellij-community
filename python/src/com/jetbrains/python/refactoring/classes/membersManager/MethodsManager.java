@@ -107,8 +107,7 @@ class MethodsManager extends MembersManager<PyFunction> {
       for (final PyClass destClass : to) {
         final PyFunctionBuilder functionBuilder = PyFunctionBuilder.copySignature(function, DECORATORS_MAY_BE_COPIED_TO_ABSTRACT);
         functionBuilder.decorate(PyNames.ABSTRACTMETHOD);
-        final LanguageLevel level = LanguageLevel.forElement(destClass);
-        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction(destClass.getProject(), level));
+        PyClassRefactoringUtil.addMethods(destClass, false, functionBuilder.buildFunction());
         classesToAddMetaAbc.add(destClass);
       }
     }
