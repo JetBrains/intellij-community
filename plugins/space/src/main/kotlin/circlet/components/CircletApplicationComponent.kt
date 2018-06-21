@@ -1,6 +1,8 @@
 package circlet.components
 
+import circlet.client.api.impl.*
 import circlet.klogging.impl.*
+import circlet.platform.client.serialization.*
 import circlet.runtime.*
 import com.intellij.openapi.components.*
 import klogging.impl.*
@@ -11,5 +13,7 @@ class CircletApplicationComponent : ApplicationComponent {
         KLoggerStaticFactory.customFactory = ErrorToWarningKLoggers
 
         mutableUiDispatch = ApplicationUiDispatch
+
+        ApiClassesDeserializer(ExtendableSerializationRegistry.global).registerDeserializers()
     }
 }
