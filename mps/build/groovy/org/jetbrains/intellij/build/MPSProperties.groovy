@@ -51,7 +51,6 @@ class MPSProperties extends ProductProperties {
                 withProjectLibrary("purejavacomm") // for terminal plugin
                 withoutProjectLibrary("Ant")
                 withoutProjectLibrary("Gradle")
-                withoutProjectLibrary("com.twelvemonkeys.imageio:imageio-tiff:3.2.1")
                 excludeFromModule("intellij.java.resources", "META-INF/IdeaPlugin.xml")
                 excludeFromModule("intellij.java.resources", "componentSets/*")
                 excludeFromModule("intellij.java.resources", "ProductivityFeaturesRegistry.xml")
