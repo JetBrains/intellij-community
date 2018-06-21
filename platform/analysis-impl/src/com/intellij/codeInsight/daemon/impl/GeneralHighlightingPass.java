@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
@@ -56,7 +42,9 @@ import com.intellij.util.NotNullProducer;
 import com.intellij.util.SmartList;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.containers.Stack;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -479,16 +467,45 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
 
     for (TodoItem todoItem : todoItems) {
       ProgressManager.checkCanceled();
-      TextRange range = todoItem.getTextRange();
+
+      TextRange textRange = todoItem.getTextRange();
+      List<TextRange> additionalRanges = todoItem.getAdditionalTextRanges();
+
+      StringJoiner joiner = new StringJoiner("\n");
+      JBIterable.of(textRange).append(additionalRanges).forEach(
+        range -> joiner.add(text.subSequence(range.getStartOffset(), range.getEndOffset()))
+      );
+      String description = joiner.toString();
+      String tooltip = XmlStringUtil.escapeString(StringUtil.shortenPathWithEllipsis(description, 1024)).replace("\n", "<br>");
+
       TextAttributes attributes = todoItem.getPattern().getAttributes().getTextAttributes();
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO).range(range);
-      builder.textAttributes(attributes);
-      String description = text.subSequence(range.getStartOffset(), range.getEndOffset()).toString();
-      builder.description(description);
-      builder.unescapedToolTip(StringUtil.shortenPathWithEllipsis(description, 1024));
-      HighlightInfo info = builder.createUnconditionally();
-      (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
+      addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributes, description, tooltip, textRange);
+      if (!additionalRanges.isEmpty()) {
+        TextAttributes attributesForAdditionalLines = attributes.clone();
+        attributesForAdditionalLines.setErrorStripeColor(null);
+        for (TextRange range: additionalRanges) {
+          addTodoItem(startOffset, endOffset, priorityRange, insideResult, outsideResult, attributesForAdditionalLines, description,
+                      tooltip, range);
+        }
+      }
     }
+  }
+
+  private static void addTodoItem(int restrictStartOffset,
+                                  int restrictEndOffset,
+                                  @NotNull ProperTextRange priorityRange,
+                                  @NotNull Collection<HighlightInfo> insideResult,
+                                  @NotNull Collection<HighlightInfo> outsideResult,
+                                  TextAttributes attributes,
+                                  String description, String tooltip, TextRange range) {
+    if (range.getStartOffset() >= restrictEndOffset || range.getEndOffset() <= restrictStartOffset) return;
+    HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO)
+                                      .range(range)
+                                      .textAttributes(attributes)
+                                      .description(description)
+                                      .escapedToolTip(tooltip)
+                                      .createUnconditionally();
+    (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
   }
 
   private static boolean shouldHighlightTodos(PsiTodoSearchHelper helper, PsiFile file) {
