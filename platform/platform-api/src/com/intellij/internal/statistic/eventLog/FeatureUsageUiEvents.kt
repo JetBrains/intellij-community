@@ -4,7 +4,12 @@ package com.intellij.internal.statistic.eventLog
 import com.intellij.openapi.components.ServiceManager
 
 fun getUiEventLogger(): FeatureUsageUiEvents {
-  return ServiceManager.getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+  return try {
+    ServiceManager.getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+  }
+  catch (e : Exception) {
+    EmptyFeatureUsageUiEvents
+  }
 }
 
 interface FeatureUsageUiEvents {
