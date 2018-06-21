@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.event.ActionEvent;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -54,28 +55,29 @@ class BuildUtils {
     _initExecutorsGroup();
   }
 
-  static void addCustomizedActionGroup(ItemsContainer out, ActionGroup customizedGroup) {
-    final String groupId = _getActionId(customizedGroup);
-    if (groupId == null) {
-      LOG.error("unregistered group: " + customizedGroup);
-      return;
-    }
-    addActionGroupButtons(out, customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED,
-                          nodeId -> nodeId.contains(groupId + "_"), null);
-  }
-
   static void addActionGroupButtons(ItemsContainer out,
                                     ActionGroup actionGroup,
                                     ModalityState modality,
                                     int showMode,
-                                    INodeFilter filter,
-                                    ICustomizer customizer) {
-    _traverse(actionGroup, new ILeafVisitor() {
+                                    String filterGroupPrefix,
+                                    String optionalCtxName,
+                                    boolean forceUpdateOptionCtx) {
+    _traverse(actionGroup, new IGroupVisitor() {
       private int mySeparatorCounter = 0;
-      private boolean myCompactMode = false;
+      private LinkedList<Pair<ActionGroup, String>> myNodePath = new LinkedList<>();
 
       @Override
-      public void visit(AnAction act) {
+      public boolean enterNode(@NotNull ActionGroup groupNode) {
+        final String groupName = getActionId(groupNode);
+        if (filterGroupPrefix != null && groupName != null && groupName.startsWith(filterGroupPrefix))
+          return false;
+
+        myNodePath.add(Pair.create(groupNode, groupName));
+        return true;
+      }
+
+      @Override
+      public void visitLeaf(AnAction act) {
         if (act instanceof Separator) {
           final Separator sep = (Separator)act;
           int increment = 1;
@@ -99,25 +101,32 @@ class BuildUtils {
           mySeparatorCounter = 0;
         }
 
-        final String actId = _getActionId(act);
+        final String actId = getActionId(act);
         // if (actId == null || actId.isEmpty())   System.out.println("unregistered action: " + act);
 
         final boolean isRunConfigPopover = actId != null && actId.contains("RunConfiguration");
         final int mode = isRunConfigPopover ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
         final TBItemAnActionButton butt = out.addAnActionButton(act, mode, modality);
-        if (myCompactMode)
+        if (_isCompactParent())
           butt.setHiddenWhenDisabled(true);
+        if (forceUpdateOptionCtx || _isOptionalParent())
+          butt.myOptionalContextName = optionalCtxName;
 
         if (isRunConfigPopover)
           butt.setWidth(ourRunConfigurationPopoverWidth);
-
-        if (customizer != null)
-          customizer.customize(butt);
       }
 
       @Override
-      public void setCompactMode(boolean isCompactGroup) { myCompactMode = isCompactGroup; }
-    }, filter);
+      public void leaveNode(ActionGroup groupNode) { myNodePath.removeLast(); }
+
+      private boolean _isCompactParent() { return !myNodePath.isEmpty() && myNodePath.getLast().first instanceof CompactActionGroup; }
+      private boolean _isOptionalParent() {
+        if (myNodePath.isEmpty())
+          return false;
+        final String gname = myNodePath.getLast().second;
+        return optionalCtxName != null && optionalCtxName.equals(gname);
+      }
+    });
   }
 
   static ActionGroup getCustomizedGroup(@NotNull String barId) {
@@ -128,7 +137,7 @@ class BuildUtils {
     for (AnAction act : kids) {
       if (!(act instanceof ActionGroup))
         continue;
-      final String gid = _getActionId(act);
+      final String gid = getActionId(act);
       if (gid == null || gid.isEmpty()) {
         LOG.error("unregistered ActionGroup: " + act);
         continue;
@@ -141,7 +150,7 @@ class BuildUtils {
   }
 
   static Map<String, ActionGroup> getAltLayouts(@NotNull ActionGroup context) {
-    final String ctxId = _getActionId(context);
+    final String ctxId = getActionId(context);
     if (ctxId == null || ctxId.isEmpty()) {
       LOG.error("can't load alt-layout for unregistered ActionGroup: " + context);
       return null;
@@ -152,7 +161,7 @@ class BuildUtils {
     for (AnAction act : kids) {
       if (!(act instanceof ActionGroup))
         continue;
-      final String gid = _getActionId(act);
+      final String gid = getActionId(act);
       if (gid == null || gid.isEmpty()) {
         LOG.info("skip loading alt-layout for unregistered ActionGroup: " + act + ", child of " + context);
         continue;
@@ -300,23 +309,18 @@ class BuildUtils {
     button.setLayout(BUTTON_MIN_WIDTH_DLG, NSTLibrary.LAYOUT_FLAG_MIN_WIDTH, BUTTON_IMAGE_MARGIN, BUTTON_BORDER);
   }
 
-  interface INodeFilter {
-    boolean skip(String nodeId);
-  }
-  interface ICustomizer {
-    void customize(TBItem item);
-  }
-  interface ILeafVisitor {
-    void visit(AnAction leaf);
-    void setCompactMode(boolean isCompactGroup);
+  interface IGroupVisitor {
+    boolean enterNode(ActionGroup groupNode); // returns false when must skip node
+    void visitLeaf(AnAction leaf);
+    void leaveNode(ActionGroup groupNode);
   }
 
-  private static String _getActionId(AnAction act) {
+  static String getActionId(AnAction act) {
     return ActionManager.getInstance().getId(act instanceof CustomisedActionGroup ? ((CustomisedActionGroup)act).getOrigin() : act);
   }
 
-  private static void _traverse(@NotNull ActionGroup group, ILeafVisitor visitor, INodeFilter filter) {
-    String groupId = _getActionId(group);
+  private static void _traverse(@NotNull ActionGroup group, @NotNull IGroupVisitor visitor) {
+    String groupId = getActionId(group);
     if (groupId == null) groupId = "unregistered";
 
     final AnAction[] children = group.getChildren(null);
@@ -327,25 +331,22 @@ class BuildUtils {
         continue;
       }
 
-      String childId = _getActionId(child);
-      if (childId == null) childId = "unregistered";
-
       if (child instanceof ActionGroup) {
-        ActionGroup actionGroup = (ActionGroup)child;
-        //if (actionGroup.isPopup()) System.out.println(String.format("add child with isPopup=true: i=%d, childId='%s', group='%s', group id='%s'", i, childId, group.toString(), groupId));
-
-        if (filter != null && filter.skip(childId)) {
-          // System.out.printf("filter child group: i=%d, childId='%s', group='%s', group id='%s'\n", i, childId, group.toString(), groupId);
+        final @NotNull ActionGroup childGroup = (ActionGroup)child;
+        final boolean visitNode = visitor.enterNode(childGroup);
+        if (!visitNode) {
+          // System.out.printf("filter child group: i=%d, childId='%s', group='%s', group id='%s'\n", i, _getActionId(child), group.toString(), groupId);
           continue;
         }
-        final boolean isCompactGroup = child instanceof CompactActionGroup;
-        if (isCompactGroup)
-          visitor.setCompactMode(true);
-        _traverse((ActionGroup)child, visitor, filter);
-        if (isCompactGroup)
-          visitor.setCompactMode(false);
+
+        //if (actionGroup.isPopup()) System.out.println(String.format("add child with isPopup=true: i=%d, childId='%s', group='%s', group id='%s'", i, childId, group.toString(), groupId));
+        try {
+          _traverse((ActionGroup)child, visitor);
+        } finally {
+          visitor.leaveNode(childGroup);
+        }
       } else
-        visitor.visit(child);
+        visitor.visitLeaf(child);
     }
   }
 

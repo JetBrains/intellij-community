@@ -9,13 +9,12 @@ import org.jetbrains.annotations.Nullable;
 abstract class TBItem {
   final @NotNull String myUid;
   final @Nullable ItemListener myListener;
-  protected @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
-  protected boolean myIsVisible = true;
+  @NotNull ID myNativePeer = ID.NIL; // java wrapper holds native object
+  boolean myIsVisible = true;
+
+  @Nullable String myOptionalContextName;
 
   TBItem(@NotNull String uid, ItemListener listener) { myUid = uid; myListener = listener; }
-
-  void setVisible(boolean visible) { myIsVisible = visible; }
-  boolean isVisible() { return myIsVisible; }
 
   @Override
   public String toString() { return myUid; }
