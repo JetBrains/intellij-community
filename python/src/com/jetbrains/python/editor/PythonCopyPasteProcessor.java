@@ -117,7 +117,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final PsiElement element = file.findElementAt(caretOffset);
     if (PsiTreeUtil.getParentOfType(element, PyStringLiteralExpression.class) != null) return text;
 
-    text = addLeadingSpacesToNormalizeSelection(project, text);
+    text = addLeadingSpacesToNormalizeSelection(file, text);
     final String fragmentIndent = PyIndentUtil.findCommonIndent(text, false);
     final String newIndent = inferBestIndent(file, document, caretOffset, lineNumber, fragmentIndent);
 
@@ -147,12 +147,12 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   @NotNull
-  private static String addLeadingSpacesToNormalizeSelection(@NotNull Project project, @NotNull String text) {
+  private static String addLeadingSpacesToNormalizeSelection(@NotNull PsiFile file, @NotNull String text) {
     if (!fragmentBeginsWithBlockStatement(text)) {
       return text;
     }
 
-    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(project, "dummy.py", text, false);
+    final PyExpressionCodeFragmentImpl fragment = new PyExpressionCodeFragmentImpl(file.getProject(), "dummy.py", text, false);
     //fragment.setContext(file);
     final PyStatementListContainer statement = as(fragment.getFirstChild(), PyStatementListContainer.class);
     if (statement == null) {
@@ -164,7 +164,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
       return text;
     }
     
-    final String indentStep = PyIndentUtil.getIndentFromSettings(project);
+    final String indentStep = PyIndentUtil.getIndentFromSettings(file);
     final String bodyIndent = PyIndentUtil.getElementIndent(statement.getStatementList());
     final String expectedBodyIndent = statementIndent + indentStep;
     if (bodyIndent.startsWith(expectedBodyIndent)) {

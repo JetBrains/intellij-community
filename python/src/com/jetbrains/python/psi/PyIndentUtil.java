@@ -18,17 +18,14 @@ package com.jetbrains.python.psi;
 import com.google.common.collect.Iterables;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.jetbrains.python.PythonFileType;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -109,7 +106,7 @@ public class PyIndentUtil {
 
   @NotNull
   private static String getExpectedBlockIndent(@NotNull PyStatementList anchor) {
-    final String indentStep = getIndentFromSettings(anchor.getProject());
+    final String indentStep = getIndentFromSettings(anchor.getContainingFile());
     final PyStatementList parentBlock = PsiTreeUtil.getParentOfType(anchor, PyStatementList.class, true);
     if (parentBlock != null) {
       return getElementIndent(parentBlock) + indentStep;
@@ -154,13 +151,6 @@ public class PyIndentUtil {
   public static String getIndentFromSettings(@NotNull PsiFile file) {
     final boolean useTabs = areTabsUsedForIndentation(file);
     return useTabs ? "\t" : StringUtil.repeatSymbol(' ', getIndentSizeFromSettings(file));
-  }
-
-  @NotNull
-  public static String getIndentFromSettings(@NotNull Project project) {
-    final CommonCodeStyleSettings.IndentOptions indentOptions = CodeStyle.getSettings(project).getIndentOptions(PythonFileType.INSTANCE);
-    final boolean useTabs = indentOptions.USE_TAB_CHARACTER;
-    return useTabs ? "\t" : StringUtil.repeatSymbol(' ', indentOptions.INDENT_SIZE);
   }
 
   @NotNull
