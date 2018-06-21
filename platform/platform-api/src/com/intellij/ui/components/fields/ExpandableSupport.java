@@ -8,19 +8,14 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.ui.Expandable;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBScrollBar;
-import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.fields.ExtendableTextComponent.Extension;
 import com.intellij.util.Function;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.ApiStatus.Experimental;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.AncestorListener;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.ComponentListener;
 import java.awt.event.KeyEvent;
@@ -32,19 +27,18 @@ import static java.awt.event.InputEvent.CTRL_MASK;
 import static java.beans.EventHandler.create;
 import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
 
 @Experimental
 public abstract class ExpandableSupport<Source extends JComponent> implements Expandable {
   private static final int MINIMAL_WIDTH = 50;
   private final Source source;
-  private final Function<String, String> onShow;
-  private final Function<String, String> onHide;
+  private final Function<? super String, String> onShow;
+  private final Function<? super String, String> onHide;
   private JBPopup popup;
   private String title;
   private String comment;
 
-  public ExpandableSupport(@NotNull Source source, Function<String, String> onShow, Function<String, String> onHide) {
+  public ExpandableSupport(@NotNull Source source, Function<? super String, String> onShow, Function<? super String, String> onHide) {
     this.source = source;
     this.onShow = onShow != null ? onShow : Function.ID;
     this.onHide = onHide != null ? onHide : Function.ID;
@@ -53,15 +47,16 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     source.addComponentListener(create(ComponentListener.class, this, "collapse"));
   }
 
-  protected abstract boolean isEditable(@NotNull Source source);
+  protected abstract Content prepare(@NotNull Source source, @NotNull Function<? super String, String> onShow);
 
-  protected abstract int getCaretPosition(@NotNull Source source);
+  protected interface Content {
+    @NotNull
+    JComponent getContentComponent();
 
-  protected abstract String getText(@NotNull Source source);
+    JComponent getFocusableComponent();
 
-  protected abstract void setText(@NotNull Source source, String text, int caret);
-
-  protected abstract Insets getInsets(@NotNull Source source);
+    void cancel(@NotNull Function<? super String, String> onHide);
+  }
 
   public final String getTitle() {
     return title;
@@ -93,30 +88,9 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
   public final void expand() {
     if (popup != null || !source.isEnabled()) return;
 
-    Font font = source.getFont();
-    FontMetrics metrics = font == null ? null : source.getFontMetrics(font);
-    int height = metrics == null ? 16 : metrics.getHeight();
-    Dimension size = new Dimension(height * 32, height * 16);
-
-    JTextArea area = new JTextArea(onShow.fun(getText(source)));
-    area.putClientProperty(Expandable.class, this);
-    area.setEditable(isEditable(source));
-    area.setBackground(source.getBackground());
-    area.setForeground(source.getForeground());
-    area.setFont(font);
-    area.setWrapStyleWord(true);
-    area.setLineWrap(true);
-    setCaretPositionSafely(area, getCaretPosition(source));
-    UIUtil.addUndoRedoActions(area);
-
-    JBScrollPane pane = new JBScrollPane(area);
-    addExtension(pane, createCollapseExtension());
-
-    Insets insets = getInsets(source);
-    //TODO: support scroll pane
-
-    JBInsets.addTo(size, insets);
-    JBInsets.addTo(size, pane.getInsets());
+    Content content = prepare(source, onShow);
+    JComponent component = content.getContentComponent();
+    Dimension size = component.getPreferredSize();
     if (size.width - MINIMAL_WIDTH < source.getWidth()) size.width = source.getWidth();
 
     Point location = new Point(0, 0);
@@ -133,12 +107,11 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
         location.y -= size.height - source.getHeight();
       }
     }
-    pane.setPreferredSize(size);
-    pane.setViewportBorder(BorderFactory.createEmptyBorder(insets.top, insets.left, insets.bottom, insets.right));
+    component.setPreferredSize(size);
 
     popup = JBPopupFactory
       .getInstance()
-      .createComponentPopupBuilder(pane, area)
+      .createComponentPopupBuilder(component, content.getFocusableComponent())
       .setMayBeParent(true) // this creates a popup as a dialog with alwaysOnTop=false
       .setFocusable(true)
       .setRequestFocus(true)
@@ -156,9 +129,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
       }, getKeyStroke(KeyEvent.VK_ENTER, CTRL_MASK))))
       .setCancelCallback(() -> {
         try {
-          if (isEditable(source)) {
-            setText(source, onHide.fun(area.getText()), area.getCaretPosition());
-          }
+          content.cancel(onHide);
           popup = null;
           return true;
         }
@@ -169,14 +140,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     popup.show(new RelativePoint(location));
   }
 
-  private static void setCaretPositionSafely(JTextComponent component, int caret) {
-    try {
-      component.setCaretPosition(caret);
-    }
-    catch (Exception ignored) {
-    }
-  }
-
+  @NotNull
   public Extension createCollapseExtension() {
     return Extension.create(AllIcons.General.CollapseComponent,
                             AllIcons.General.CollapseComponentHover,
@@ -184,6 +148,7 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
                             this::collapse);
   }
 
+  @NotNull
   public Extension createExpandExtension() {
     return Extension.create(AllIcons.General.ExpandComponent,
                             AllIcons.General.ExpandComponentHover,
@@ -191,96 +156,28 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
                             this::expand);
   }
 
-  private static void addExtension(@NotNull JScrollPane pane, @NotNull Extension extension) {
-    pane.setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
-    JScrollBar vsb = pane.getVerticalScrollBar();
-    if (vsb != null) {
-      vsb.add(JBScrollBar.LEADING, new JLabel(extension.getIcon(false)) {{
-        setToolTipText(extension.getTooltip());
-        setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
-        setBorder(JBUI.Borders.empty(5, 0, 5, 5));
-        addMouseListener(new MouseAdapter() {
-          @Override
-          public void mouseEntered(MouseEvent event) {
-            setIcon(extension.getIcon(true));
-          }
+  @NotNull
+  public static JLabel createLabel(@NotNull Extension extension) {
+    return new JLabel(extension.getIcon(false)) {{
+      setToolTipText(extension.getTooltip());
+      setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
+      addMouseListener(new MouseAdapter() {
+        @Override
+        public void mouseEntered(MouseEvent event) {
+          setIcon(extension.getIcon(true));
+        }
 
-          @Override
-          public void mouseExited(MouseEvent event) {
-            setIcon(extension.getIcon(false));
-          }
+        @Override
+        public void mouseExited(MouseEvent event) {
+          setIcon(extension.getIcon(false));
+        }
 
-          @Override
-          public void mousePressed(MouseEvent event) {
-            Runnable action = extension.getActionOnClick();
-            if (action != null) action.run();
-          }
-        });
-      }});
-      JViewport viewport = pane.getViewport();
-      if (viewport != null) {
-        Component view = viewport.getView();
-        if (view != null) vsb.setBackground(view.getBackground());
-      }
-    }
-  }
-
-
-  static class TextComponent<Source extends JTextComponent> extends ExpandableSupport<Source> {
-    TextComponent(@NotNull Source source, Function<String, String> onShow, Function<String, String> onHide) {
-      super(source, onShow, onHide);
-    }
-
-    @Override
-    protected boolean isEditable(@NotNull Source source) {
-      return source.isEditable();
-    }
-
-    @Override
-    protected int getCaretPosition(@NotNull Source source) {
-      return source.getCaretPosition();
-    }
-
-    @Override
-    protected String getText(@NotNull Source source) {
-      return source.getText();
-    }
-
-    @Override
-    protected void setText(@NotNull Source source, String text, int caret) {
-      source.setText(text);
-      setCaretPositionSafely(source, caret);
-    }
-
-    @Override
-    protected Insets getInsets(@NotNull Source source) {
-      Insets insets = source.getInsets();
-      Insets margin = source.getMargin();
-      if (margin != null) {
-        insets.top += margin.top;
-        insets.left += margin.left;
-        insets.right += margin.right;
-        insets.bottom += margin.bottom;
-      }
-      return insets;
-    }
-  }
-
-  static final class Area extends TextComponent<JTextArea> {
-    Area(@NotNull JTextArea area, Function<String, String> onShow, Function<String, String> onHide) {
-      super(area, onShow, onHide);
-    }
-
-    @Override
-    protected void setText(@NotNull JTextArea source, String text, int caret) {
-      super.setText(source, text, 0);
-    }
-
-    @Override
-    protected Insets getInsets(@NotNull JTextArea source) {
-      //noinspection UnnecessaryLocalVariable //TODO: support scroll pane
-      Insets insets = super.getInsets(source);
-      return insets;
-    }
+        @Override
+        public void mousePressed(MouseEvent event) {
+          Runnable action = extension.getActionOnClick();
+          if (action != null) action.run();
+        }
+      });
+    }};
   }
 }
