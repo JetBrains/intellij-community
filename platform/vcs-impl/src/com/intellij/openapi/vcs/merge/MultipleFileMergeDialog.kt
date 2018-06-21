@@ -274,8 +274,6 @@ open class MultipleFileMergeDialog(
   }
 
   private fun acceptFileRevision(file: VirtualFile, resolution: MergeSession.Resolution) {
-    if (mergeSession?.canMerge(file)  == false) return
-
     if (!DiffUtil.makeWritable(project, file)) {
       throw IOException("File is read-only: " + file.presentableName)
     }
