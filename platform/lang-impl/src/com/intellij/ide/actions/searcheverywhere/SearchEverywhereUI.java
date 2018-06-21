@@ -19,6 +19,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -574,6 +575,11 @@ public class SearchEverywhereUI extends BorderLayoutPanel implements Disposable,
         ApplicationManager.getApplication().invokeLater(() -> rebuildList());
       }
     });
+
+    ApplicationManager.getApplication()
+                      .getMessageBus()
+                      .connect(this)
+                      .subscribe(ProgressWindow.TOPIC, pw -> Disposer.register(pw,() -> myResultsList.repaint()));
   }
 
   private void elementsSelected(int[] indexes, int modifiers) {
