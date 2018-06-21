@@ -16,7 +16,6 @@
 package com.intellij.ui.mac.foundation;
 
 import com.intellij.openapi.util.text.StringUtil;
-import java.util.HashMap;
 import com.sun.jna.*;
 import com.sun.jna.ptr.PointerByReference;
 import org.jetbrains.annotations.NotNull;
@@ -24,10 +23,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.UnsupportedEncodingException;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
+import java.util.*;
 
 /**
  * @author spleaner
@@ -392,6 +388,27 @@ public class Foundation {
 
     public ID at(int index) {
       return invoke(myDelegate, "objectAtIndex:", index);
+    }
+  }
+
+  public static class NSData {
+    private final ID myDelegate;
+
+    public NSData(ID delegate) {
+      myDelegate = delegate;
+    }
+
+    public int length() {
+      return invoke(myDelegate, "length").intValue();
+    }
+
+    public byte[] bytes() {
+      byte[] result = new byte[length()];
+      Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
+      for (int i = 0; i < result.length; ++i) {
+        result[i] = data.getByte(i);
+      }
+      return result;
     }
   }
 
