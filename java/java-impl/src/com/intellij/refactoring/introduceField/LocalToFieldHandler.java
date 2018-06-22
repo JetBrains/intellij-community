@@ -192,16 +192,19 @@ public abstract class LocalToFieldHandler {
 
   private static PsiStatement addInitializationToSetUp(final PsiLocalVariable local, final PsiField field, final PsiElementFactory factory)
                                                                                                                              throws IncorrectOperationException {
-    PsiMethod inClass = TestFrameworks.getInstance().findOrCreateSetUpMethod(field.getContainingClass());
+    PsiClass containingClass = field.getContainingClass();
+    PsiMethod inClass = TestFrameworks.getInstance().findOrCreateSetUpMethod(containingClass);
     assert inClass != null;
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
     final PsiCodeBlock body = inClass.getBody();
     assert body != null;
+    ChangeContextUtil.encodeContextInfo(assignment, false);
     if (PsiTreeUtil.isAncestor(body, local, false)) {
       assignment = (PsiStatement)body.addBefore(assignment, PsiTreeUtil.getParentOfType(local, PsiStatement.class));
     } else {
       assignment = (PsiStatement)body.add(assignment);
     }
+    ChangeContextUtil.decodeContextInfo(assignment, containingClass, factory.createExpressionFromText("this", null));
     appendComments(local, assignment);
     local.delete();
     return assignment;
@@ -231,7 +234,7 @@ public abstract class LocalToFieldHandler {
             if ("super".equals(text) && enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
               ChangeContextUtil.encodeContextInfo(assignment, false);
               final PsiStatement statement = (PsiStatement)body.addAfter(assignment, first);
-              ChangeContextUtil.decodeContextInfo(statement, field.getContainingClass(), thisAccessExpr);
+              ChangeContextUtil.decodeContextInfo(statement, aClass, thisAccessExpr);
               appendComments(local, statement);
               local.delete();
               return statement;
@@ -241,7 +244,7 @@ public abstract class LocalToFieldHandler {
         if (enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
           ChangeContextUtil.encodeContextInfo(assignment, false);
           final PsiStatement statement = (PsiStatement)body.addBefore(assignment, first);
-          ChangeContextUtil.decodeContextInfo(statement, field.getContainingClass(), thisAccessExpr);
+          ChangeContextUtil.decodeContextInfo(statement, aClass, thisAccessExpr);
           appendComments(local, statement);
           local.delete();
           return statement;
@@ -250,7 +253,7 @@ public abstract class LocalToFieldHandler {
 
       ChangeContextUtil.encodeContextInfo(assignment, false);
       assignment = (PsiStatement)body.add(assignment);
-      ChangeContextUtil.decodeContextInfo(assignment, field.getContainingClass(), thisAccessExpr);
+      ChangeContextUtil.decodeContextInfo(assignment, aClass, thisAccessExpr);
       added = true;
     }
     if (!added && enclosingConstructor == null) {
