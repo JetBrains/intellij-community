@@ -14,6 +14,7 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
+import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
@@ -93,7 +94,7 @@ public class MavenApplicationConfigurationExecutionEnvironmentProvider implement
       throw new RuntimeException(ExecutionBundle.message("run.configuration.cannot.find.vm.executable"));
     }
 
-    String workingDirectory = applicationConfiguration.getWorkingDirectory();
+    String workingDirectory = ProgramParametersUtil.getWorkingDir(applicationConfiguration, project, module);
 
     List<String> goals = runnerParameters.getGoals();
     if (isNotEmpty(workingDirectory)) {
