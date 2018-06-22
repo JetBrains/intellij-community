@@ -62,7 +62,7 @@ public class CaptureStorage {
       Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
       if (stack != null) {
         Throwable exception = new Throwable();
-        currentStacks.add(new InsertMatch(stack, exception));
+        currentStacks.add(InsertMatch.create(stack, exception));
         if (DEBUG) {
           System.out.println("insert " + getCallerDescriptor(exception) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
         }
@@ -225,24 +225,54 @@ public class CaptureStorage {
     }
   }
 
-  private static class InsertMatch {
+  private static abstract class InsertMatch {
     private final CapturedStack myStack;
-    private final Throwable myException;
 
-    static final InsertMatch EMPTY = new InsertMatch(null, null) {
+    static final InsertMatch EMPTY = new InsertMatch(null) {
       @Override
       int getDepth() {
         return 0;
       }
     };
 
-    private InsertMatch(CapturedStack stack, Throwable exception) {
+    private InsertMatch(CapturedStack stack) {
       myStack = stack;
-      myException = exception;
     }
 
-    int getDepth() {
-      return getStackTraceDepth(myException);
+    static InsertMatch create(CapturedStack stack, Throwable throwable) {
+      return ourJavaLangAccess != null
+             ? new WithDepth(stack, ourJavaLangAccess.getStackTraceDepth(throwable))
+             : new WithThrowable(stack, throwable);
+    }
+
+    abstract int getDepth();
+
+    static class WithDepth extends InsertMatch {
+      final int myDepth;
+
+      public WithDepth(CapturedStack stack, int depth) {
+        super(stack);
+        myDepth = depth;
+      }
+
+      @Override
+      public int getDepth() {
+        return myDepth;
+      }
+    }
+
+    static class WithThrowable extends InsertMatch {
+      final Throwable myThrowable;
+
+      public WithThrowable(CapturedStack stack, Throwable throwable) {
+        super(stack);
+        this.myThrowable = throwable;
+      }
+
+      @Override
+      int getDepth() {
+        return myThrowable.getStackTrace().length;
+      }
     }
   }
 
@@ -311,10 +341,6 @@ public class CaptureStorage {
       access = null;
     }
     ourJavaLangAccess = access;
-  }
-  // TODO: this is a workaround for java 9 where SharedSecrets are not available
-  private static int getStackTraceDepth(Throwable exception) {
-    return ourJavaLangAccess != null ? ourJavaLangAccess.getStackTraceDepth(exception) : exception.getStackTrace().length;
   }
 
   private static void handleException(Throwable e) {
