@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
@@ -65,17 +66,17 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public ActionOrGroup fromString(@Nullable @NonNls final String value, ConvertContext context) {
     if (StringUtil.isEmptyOrSpaces(value)) return null;
 
-    final ActionOrGroup[] result = {null};
+    Ref<ActionOrGroup> result = Ref.create();
     PairProcessor<String, ActionOrGroup> findProcessor = (s, actionOrGroup) -> {
       if (isRelevant(actionOrGroup) &&
           Comparing.strEqual(value, s)) {
-        result[0] = actionOrGroup;
+        result.set(actionOrGroup);
         return false;
       }
       return true;
     };
     processActionOrGroup(context, findProcessor);
-    return result[0];
+    return result.get();
   }
 
   @Nullable
@@ -86,7 +87,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Override
   public String getErrorMessage(@Nullable String s, ConvertContext context) {
-    return "Cannot resolve action or group '" + s + "'";
+    return "Cannot resolve " + getResultTypes() + " '" + s + "'";
   }
 
   @Nullable
@@ -117,6 +118,11 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     return true;
   }
 
+  protected String getResultTypes() {
+    return "action or group";
+  }
+
+
   public static class OnlyActions extends ActionOrGroupResolveConverter {
     @Override
     protected boolean isRelevant(ActionOrGroup actionOrGroup) {
@@ -124,8 +130,8 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     }
 
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
-      return "Cannot resolve action '" + s + "'";
+    protected String getResultTypes() {
+      return "action";
     }
   }
 
@@ -136,10 +142,11 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     }
 
     @Override
-    public String getErrorMessage(@Nullable String s, ConvertContext context) {
-      return "Cannot resolve group '" + s + "'";
+    protected String getResultTypes() {
+      return "group";
     }
   }
+
 
   private static boolean processActionOrGroup(ConvertContext context, final PairProcessor<String, ActionOrGroup> processor) {
     final Project project = context.getProject();
