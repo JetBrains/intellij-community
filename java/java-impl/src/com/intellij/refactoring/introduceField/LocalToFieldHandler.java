@@ -175,7 +175,7 @@ public abstract class LocalToFieldHandler {
   private static PsiExpressionStatement createAssignment(PsiLocalVariable local, String fieldname, PsiElementFactory factory) {
     try {
       String pattern = fieldname + "=0;";
-      PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, null);
+      PsiExpressionStatement statement = (PsiExpressionStatement)factory.createStatementFromText(pattern, local);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(local.getProject()).reformat(statement);
 
       PsiAssignmentExpression expr = (PsiAssignmentExpression)statement.getExpression();
@@ -212,6 +212,7 @@ public abstract class LocalToFieldHandler {
     PsiClass aClass = field.getContainingClass();
     PsiMethod[] constructors = aClass.getConstructors();
     PsiStatement assignment = createAssignment(local, field.getName(), factory);
+    PsiExpression thisAccessExpr = factory.createExpressionFromText("this", null);
     boolean added = false;
     for (PsiMethod constructor : constructors) {
       if (constructor == enclosingConstructor) continue;
@@ -228,7 +229,9 @@ public abstract class LocalToFieldHandler {
               continue;
             }
             if ("super".equals(text) && enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+              ChangeContextUtil.encodeContextInfo(assignment, false);
               final PsiStatement statement = (PsiStatement)body.addAfter(assignment, first);
+              ChangeContextUtil.decodeContextInfo(statement, field.getContainingClass(), thisAccessExpr);
               appendComments(local, statement);
               local.delete();
               return statement;
@@ -236,14 +239,18 @@ public abstract class LocalToFieldHandler {
           }
         }
         if (enclosingConstructor == null && PsiTreeUtil.isAncestor(constructor, local, false)) {
+          ChangeContextUtil.encodeContextInfo(assignment, false);
           final PsiStatement statement = (PsiStatement)body.addBefore(assignment, first);
+          ChangeContextUtil.decodeContextInfo(statement, field.getContainingClass(), thisAccessExpr);
           appendComments(local, statement);
           local.delete();
           return statement;
         }
       }
 
+      ChangeContextUtil.encodeContextInfo(assignment, false);
       assignment = (PsiStatement)body.add(assignment);
+      ChangeContextUtil.decodeContextInfo(assignment, field.getContainingClass(), thisAccessExpr);
       added = true;
     }
     if (!added && enclosingConstructor == null) {
