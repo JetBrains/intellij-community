@@ -657,6 +657,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       return false;
     }
 
+    //Here could be false positives iff checkCanClose && !ensureCouldCloseIfUnableToSave(project)
+    //but this saving should be before saving project
+    FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.closed");
+
     final ShutDownTracker shutDownTracker = ShutDownTracker.getInstance();
     shutDownTracker.registerStopperThread(Thread.currentThread());
     try {
@@ -788,7 +792,6 @@ public class ProjectManagerImpl extends ProjectManagerEx implements Disposable {
       LOG.debug("projectClosed");
     }
 
-    FUSProjectUsageTrigger.getInstance(project).trigger(ProjectLifecycleUsageTriggerCollector.class, "project.closed");
     FeatureUsageLogger.INSTANCE.log("lifecycle", "project.closed");
 
     myBusPublisher.projectClosed(project);
