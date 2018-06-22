@@ -62,7 +62,7 @@ class TerminalFixture(project: Project, robot: Robot, toolWindowId: String) : To
     }
     finally {
       LOG.info("Text to find: $text")
-      LOG.info("Terminal text: ${terminalTextBuffer.screenLines}")
+      LOG.info("Terminal text: ${terminalTextBuffer.historyBuffer.lines}")
     }
 
   }
