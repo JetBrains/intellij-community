@@ -2,14 +2,19 @@
 package com.jetbrains.python.sdk.pipenv
 
 import com.intellij.application.options.ModuleListCellRenderer
+import com.intellij.ide.util.PropertiesComponent
+import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.module.ModuleUtil
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
-import com.intellij.openapi.util.SystemInfo
+import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
+import com.intellij.ui.components.JBTextField
 import com.intellij.util.PlatformUtils
+import com.intellij.util.text.nullize
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.PythonModuleTypeBase
 import com.jetbrains.python.sdk.*
@@ -18,9 +23,11 @@ import com.jetbrains.python.sdk.add.PySdkPathChoosingComboBox
 import java.awt.BorderLayout
 import java.awt.Dimension
 import java.awt.event.ItemEvent
+import java.io.File
 import java.nio.file.Files
 import javax.swing.Icon
 import javax.swing.JComboBox
+import javax.swing.event.DocumentEvent
 
 /**
  * The UI panel for adding the pipenv interpreter for the project.
@@ -36,6 +43,7 @@ class PyAddPipEnvPanel(private val project: Project?,
   override val icon: Icon = PIPENV_ICON
 
   private val moduleField: JComboBox<Module>
+
   private val baseSdkField = PySdkPathChoosingComboBox(findBaseSdks(existingSdks), null).apply {
     val preferredSdkPath = PySdkSettings.instance.preferredVirtualEnvBaseSdk
     val detectedPreferredSdk = items.find { it.homePath == preferredSdkPath }
@@ -47,8 +55,20 @@ class PyAddPipEnvPanel(private val project: Project?,
       else -> items.getOrNull(0)
     }
   }
+
   private val installPackagesCheckBox = JBCheckBox("Install packages from Pipfile").apply {
     isVisible = newProjectPath == null
+  }
+
+  private val pipEnvPathField = TextFieldWithBrowseButton().apply {
+    addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor())
+    val field = textField as? JBTextField ?: return@apply
+    detectPipEnvExecutable()?.let {
+      field.emptyText.text = "Auto-detected: ${it.absolutePath}"
+    }
+    PropertiesComponent.getInstance().pipEnvPath?.let {
+      field.text = it
+    }
   }
 
   init {
@@ -63,10 +83,16 @@ class PyAddPipEnvPanel(private val project: Project?,
       preferredSize = Dimension(Int.MAX_VALUE, preferredSize.height)
       addItemListener {
         if (it.stateChange == ItemEvent.SELECTED) {
-          updateInstallPackagesCheckBox()
+          update()
         }
       }
     }
+
+    pipEnvPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent?) {
+        update()
+      }
+    })
 
     val builder = FormBuilder.createFormBuilder().apply {
       if (module == null && modules.size > 1) {
@@ -75,25 +101,36 @@ class PyAddPipEnvPanel(private val project: Project?,
       }
       addLabeledComponent("Base interpreter:", baseSdkField)
       addComponent(installPackagesCheckBox)
+      addLabeledComponent("Pipenv executable:", pipEnvPathField)
     }
     add(builder.panel, BorderLayout.NORTH)
-    updateInstallPackagesCheckBox()
+    update()
   }
 
   override fun getOrCreateSdk(): Sdk? {
     return setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
                                        baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
       PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
+      PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
     }
   }
 
   override fun validateAll(): List<ValidationInfo> =
     listOfNotNull(validatePipEnvExecutable(), validatePipEnvIsNotAdded())
 
+  override fun addChangeListener(listener: Runnable) {
+    pipEnvPathField.textField.document.addDocumentListener(object : DocumentAdapter() {
+      override fun textChanged(e: DocumentEvent?) {
+        listener.run()
+      }
+    })
+    super.addChangeListener(listener)
+  }
+
   /**
-   * Shows the install packages checkbox if we can detect any requirements to install.
+   * Updates the view according to the current state of UI controls.
    */
-  private fun updateInstallPackagesCheckBox() {
+  private fun update() {
     selectedModule?.let {
       installPackagesCheckBox.isEnabled = it.pipFile != null
     }
@@ -109,19 +146,15 @@ class PyAddPipEnvPanel(private val project: Project?,
    * Checks if `pipenv` is available on `$PATH`.
    */
   private fun validatePipEnvExecutable(): ValidationInfo? {
-    val tip = "Specify the correct path to pipenv in ${getSettingsMenuName()} | Tools | Python Integrated Tools."
-    val executable = getPipEnvExecutable() ?: return ValidationInfo("Pipenv executable is not found on \$PATH. $tip")
+    val executable = pipEnvPathField.text.nullize()?.let { File(it) } ?:
+                     detectPipEnvExecutable() ?:
+                     return ValidationInfo("Pipenv executable is not found")
     return when {
-      !executable.exists() -> ValidationInfo("File ${executable.absolutePath} is not found. $tip")
-      !Files.isExecutable(executable.toPath()) -> ValidationInfo("Cannot execute ${executable.absolutePath}")
+      !executable.exists() -> ValidationInfo("File ${executable.absolutePath} is not found")
+      !Files.isExecutable(executable.toPath()) || !executable.isFile -> ValidationInfo("Cannot execute ${executable.absolutePath}")
       else -> null
     }
   }
-  private fun getSettingsMenuName() =
-    when {
-      SystemInfo.isMac -> "Preferences"
-      else -> "Settings"
-    }
 
   /**
    * Checks if the pipenv for the project hasn't been already added.
