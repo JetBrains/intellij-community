@@ -27,10 +27,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.xml.*;
-import com.intellij.util.xml.impl.DomImplUtil;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.DomTarget;
+import com.intellij.util.xml.DomUtil;
+import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -96,16 +97,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
     if (actionOrGroup instanceof Action) {
       Action action = (Action)actionOrGroup;
-      String msg = action.getId().getStringValue() + " in " + DomUtil.getFile(action) + " " + action.isValid() + " ";
-      DomImplUtil.assertValidity(action, msg);
-      final PsiElement element = getPsiElement(actionOrGroup);
-      if (element == null) {
-        throw new IllegalStateException("no PSI: " + msg);
-      }
 
-      LookupElementBuilder builder =
-        LookupElementBuilder.create(ObjectUtils.assertNotNull(element),
-                                    ObjectUtils.assertNotNull(getName(action)));
+      String name = StringUtil.notNullize(getName(action), "<invalid name>");
+      LookupElementBuilder builder = LookupElementBuilder.create(name);
 
       final String text = action.getText().getStringValue();
       if (StringUtil.isNotEmpty(text)) {
@@ -203,6 +197,6 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
 
   @Nullable
   private static String getName(@NotNull ActionOrGroup actionOrGroup) {
-    return ElementPresentationManager.getElementName(actionOrGroup);
+    return actionOrGroup.getId().getStringValue();
   }
 }
