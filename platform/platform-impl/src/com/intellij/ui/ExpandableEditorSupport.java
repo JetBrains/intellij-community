@@ -14,8 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS;
-
 public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> {
   public ExpandableEditorSupport(@NotNull EditorTextField field) {
     super(field, null, null);
@@ -27,21 +25,25 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
 
   protected void initPopupEditor(@NotNull EditorEx editor, Color background) {
     JLabel label = ExpandableSupport.createLabel(createCollapseExtension());
-    label.setBorder(JBUI.Borders.empty(5, 0, 5, 7));
+    label.setBorder(JBUI.Borders.empty(5, 3, 5, 7));
     editor.getContentComponent().putClientProperty(Expandable.class, this);
-    editor.getScrollPane().setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+    editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_AS_NEEDED);
+    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
     editor.getScrollPane().getVerticalScrollBar().setBackground(background);
     editor.getScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, label);
     editor.getScrollPane().setViewportBorder(JBUI.Borders.empty(4, 6));
+    label.setOpaque(true);
   }
 
   protected void initFieldEditor(@NotNull EditorEx editor, Color background) {
     JLabel label = ExpandableSupport.createLabel(createExpandExtension());
-    label.setBorder(JBUI.Borders.empty(2, 0));
+    label.setBorder(JBUI.Borders.empty(2, 2, 2, 0));
     editor.getContentComponent().putClientProperty(Expandable.class, this);
-    editor.getScrollPane().setVerticalScrollBarPolicy(VERTICAL_SCROLLBAR_ALWAYS);
+    editor.getScrollPane().setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+    editor.getScrollPane().setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_ALWAYS);
     editor.getScrollPane().getVerticalScrollBar().setBackground(background);
     editor.getScrollPane().getVerticalScrollBar().add(JBScrollBar.LEADING, label);
+    editor.getScrollPane().getVerticalScrollBar().setOpaque(true);
   }
 
   protected void updateFieldFolding(@NotNull EditorEx editor) {
@@ -62,10 +64,12 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
   @Override
   protected Content prepare(@NotNull EditorTextField field, @NotNull Function<? super String, String> onShow) {
     EditorTextField popup = new EditorTextField(onShow.fun(field.getText()));
+    Color background = field.getBackground();
+    popup.setBackground(background);
     popup.setOneLineMode(false);
     popup.setPreferredSize(new Dimension(field.getWidth(), 5 * field.getHeight()));
     popup.addSettingsProvider(editor -> {
-      initPopupEditor(editor, field.getBackground());
+      initPopupEditor(editor, background);
       copyCaretPosition(editor, field.getEditor());
     });
     return new Content() {
@@ -84,10 +88,8 @@ public class ExpandableEditorSupport extends ExpandableSupport<EditorTextField> 
       public void cancel(@NotNull Function<? super String, String> onHide) {
         field.setText(onHide.fun(popup.getText()));
         Editor editor = field.getEditor();
-        if (editor instanceof EditorEx) {
-          updateFieldFolding((EditorEx)editor);
-          copyCaretPosition(editor, popup.getEditor());
-        }
+        if (editor != null) copyCaretPosition(editor, popup.getEditor());
+        if (editor instanceof EditorEx) updateFieldFolding((EditorEx)editor);
       }
     };
   }
