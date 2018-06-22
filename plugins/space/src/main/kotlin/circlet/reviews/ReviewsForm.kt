@@ -33,7 +33,9 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     init {
         list.selectionMode = ListSelectionModel.SINGLE_SELECTION
-        list.cellRenderer = ReviewListCellRenderer()
+        list.cellRenderer = ReviewListCellRenderer {
+            project.connection.loginModel?.me?.preferredLanguage
+        }
 
         val scrollPane = ScrollPaneFactory.createScrollPane(
             list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
@@ -54,15 +56,13 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     private suspend fun reloadImpl() {
-        project.connection.loginModel?.let { loginModel ->
-            loginModel.clientOrNull?.let { client ->
-                val reviews = client.codeReview.listReviews(
-                    BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null,
-                    null, null, null, null, ReviewSorting.CreatedAtDesc
-                ).data.map { it.toReview(loginModel, client) }
+        project.clientOrNull?.let { client ->
+            val reviews = client.codeReview.listReviews(
+                BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null,
+                null, null, null, null, ReviewSorting.CreatedAtDesc
+            ).data.map { it.toReview(client) }
 
-                reload(reviews)
-            }
+            reload(reviews)
         }
     }
 

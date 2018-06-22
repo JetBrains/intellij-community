@@ -1,12 +1,14 @@
 package circlet.reviews
 
+import circlet.client.api.*
+import circlet.platform.api.*
 import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
 
-class ReviewListCellRenderer : ListCellRenderer<Review> {
+class ReviewListCellRenderer(private val getPreferredLanguage: () -> TID?) : ListCellRenderer<Review> {
     private val panel = JPanel(GridLayoutManager(1, 4))
     private val id = JBLabel()
     private val title = JBLabel()
@@ -53,7 +55,7 @@ class ReviewListCellRenderer : ListCellRenderer<Review> {
         id.text = "#${value.id}"
         title.text = value.title
         timestamp.text = value.timestamp.toString()
-        createdBy.text = value.createdBy
+        createdBy.text = value.createdBy?.fullname(getPreferredLanguage())
 
         val background: Color
         val foreground: Color
