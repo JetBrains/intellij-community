@@ -788,4 +788,57 @@ public class JsonSchemaHighlightingTest extends JsonSchemaHighlightingTestBase {
     doTest(schema, "[<warning>\"1\"</warning>, \"2\"]");
     doTest(schema, "[1, \"2\"]");
   }
+
+  public void testOneOfInsideAllOf() throws Exception {
+    @Language("JSON") String schema = "{\n" +
+                                      "  \"properties\": {\n" +
+                                      "    \"foo\": {\n" +
+                                      "      \"allOf\": [\n" +
+                                      "        {\n" +
+                                      "          \"type\": \"object\"\n" +
+                                      "        }, {\n" +
+                                      "          \"oneOf\": [\n" +
+                                      "            {\n" +
+                                      "              \"type\": \"object\",\n" +
+                                      "              \"properties\": {\n" +
+                                      "                \"provider\": {\n" +
+                                      "                  \"enum\": [\"script\"]\n" +
+                                      "                },\n" +
+                                      "                \"foo21\": {}\n" +
+                                      "              }\n" +
+                                      "            },\n" +
+                                      "            {\n" +
+                                      "              \"type\": \"object\",\n" +
+                                      "              \"properties\": {\n" +
+                                      "                \"provider\": {\n" +
+                                      "                  \"enum\": [\"npm\"]\n" +
+                                      "                },\n" +
+                                      "                \"foo11\": {}\n" +
+                                      "              }\n" +
+                                      "            }\n" +
+                                      "          ]\n" +
+                                      "        }\n" +
+                                      "      ]\n" +
+                                      "    }\n" +
+                                      "  }\n" +
+                                      "}";
+
+    doTest(schema, "{\n" +
+                   "  \"foo\": {\n" +
+                   "    \"provider\": \"npm\"\n" +
+                   "  }\n" +
+                   "}");
+
+    doTest(schema, "{\n" +
+                   "  \"foo\": {\n" +
+                   "    \"provider\": \"script\"\n" +
+                   "  }\n" +
+                   "}");
+
+    doTest(schema, "{\n" +
+                   "  \"foo\": {\n" +
+                   "    \"provider\": <warning>\"etwasanderes\"</warning>\n" +
+                   "  }\n" +
+                   "}");
+  }
 }
