@@ -366,7 +366,7 @@ public class IdeaApplication {
         SwingUtilities.invokeLater(PluginManager::reportPluginError);
 
         FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.start");
-        FeatureUsageLogger.INSTANCE.log("lifecycle", app.getName() + "app.started");
+        FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
       });
     }
 
