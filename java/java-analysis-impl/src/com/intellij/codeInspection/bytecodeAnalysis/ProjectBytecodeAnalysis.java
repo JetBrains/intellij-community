@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -67,6 +53,7 @@ public class ProjectBytecodeAnalysis {
   public static final String NULLABLE_METHOD = "java.annotations.inference.nullable.method";
   public static final String NULLABLE_METHOD_TRANSITIVITY = "java.annotations.inference.nullable.method.transitivity";
   public static final int EQUATIONS_LIMIT = 1000;
+
   private final Project myProject;
   private final boolean nullableMethod;
   private final boolean nullableMethodTransitivity;
@@ -78,7 +65,6 @@ public class ProjectBytecodeAnalysis {
 
   public ProjectBytecodeAnalysis(Project project) {
     myProject = project;
-    //noinspection ConstantConditions
     myEquationProvider = SKIP_INDEX ? new PlainEquationProvider(myProject) : new IndexedEquationProvider(myProject);
     nullableMethod = Registry.is(NULLABLE_METHOD);
     nullableMethodTransitivity = Registry.is(NULLABLE_METHOD_TRANSITIVITY);
@@ -123,7 +109,7 @@ public class ProjectBytecodeAnalysis {
         return PsiAnnotation.EMPTY_ARRAY;
       }
       if (listOwner instanceof PsiMethod) {
-        ArrayList<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
+        List<EKey> allKeys = collectMethodKeys((PsiMethod)listOwner, primaryKey);
         MethodAnnotations methodAnnotations = loadMethodAnnotations((PsiMethod)listOwner, primaryKey, allKeys);
         return toPsi(primaryKey, methodAnnotations);
       } else if (listOwner instanceof PsiParameter) {
@@ -261,58 +247,55 @@ public class ProjectBytecodeAnalysis {
    * @param primaryKey primary compressed key for this method
    * @return compressed keys for this method
    */
-  public static ArrayList<EKey> collectMethodKeys(@NotNull PsiMethod method, EKey primaryKey) {
+  public static List<EKey> collectMethodKeys(@NotNull PsiMethod method, EKey primaryKey) {
     return BytecodeAnalysisConverter.mkInOutKeys(method, primaryKey);
   }
 
-  private ParameterAnnotations loadParameterAnnotations(@NotNull EKey notNullKey)
-    throws EquationsLimitException {
-
-    final Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
+  private ParameterAnnotations loadParameterAnnotations(@NotNull EKey notNullKey) throws EquationsLimitException {
+    Solver notNullSolver = new Solver(new ELattice<>(Value.NotNull, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(notNullKey), notNullSolver);
-
     Map<EKey, Value> notNullSolutions = notNullSolver.solve();
     // subtle point
     boolean notNull =
       (Value.NotNull == notNullSolutions.get(notNullKey)) || (Value.NotNull == notNullSolutions.get(notNullKey.mkUnstable()));
 
-    final Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
-    final EKey nullableKey = new EKey(notNullKey.member, notNullKey.dirKey + 1, true, false);
+    Solver nullableSolver = new Solver(new ELattice<>(Value.Null, Value.Top), Value.Top);
+    EKey nullableKey = new EKey(notNullKey.member, notNullKey.dirKey + 1, true, false);
     collectEquations(Collections.singletonList(nullableKey), nullableSolver);
     Map<EKey, Value> nullableSolutions = nullableSolver.solve();
     // subtle point
     boolean nullable =
       (Value.Null == nullableSolutions.get(nullableKey)) || (Value.Null == nullableSolutions.get(nullableKey.mkUnstable()));
+
     return new ParameterAnnotations(notNull, nullable);
   }
 
-  private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull EKey key, ArrayList<EKey> allKeys)
-    throws EquationsLimitException {
+  private MethodAnnotations loadMethodAnnotations(@NotNull PsiMethod owner, @NotNull EKey key, List<EKey> allKeys) throws EquationsLimitException {
     MethodAnnotations result = new MethodAnnotations();
 
-    final PuritySolver puritySolver = new PuritySolver();
+    PuritySolver puritySolver = new PuritySolver();
     collectPurityEquations(key.withDirection(Pure), puritySolver);
-
     Map<EKey, Effects> puritySolutions = puritySolver.solve();
 
     int arity = owner.getParameterList().getParametersCount();
     BytecodeAnalysisConverter.addEffectAnnotations(puritySolutions, result, key, owner.isConstructor());
 
     EKey failureKey = key.withDirection(Throw);
-    final Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
+    Solver failureSolver = new Solver(new ELattice<>(Value.Fail, Value.Top), Value.Top);
     collectEquations(Collections.singletonList(failureKey), failureSolver);
     if (failureSolver.solve().get(failureKey) == Value.Fail) {
       // Always failing method
       result.contractsValues.put(key, StreamEx.constant("_", arity).joining(",", "\"", "->fail\""));
-    } else {
-      final Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
+    }
+    else {
+      Solver outSolver = new Solver(new ELattice<>(Value.Bot, Value.Top), Value.Top);
       collectEquations(allKeys, outSolver);
       Map<EKey, Value> solutions = outSolver.solve();
       addMethodAnnotations(solutions, result, key, arity);
     }
 
     if (nullableMethod) {
-      final Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
+      Solver nullableMethodSolver = new Solver(new ELattice<>(Value.Bot, Value.Null), Value.Bot);
       EKey nullableKey = key.withDirection(NullableOut);
       if (nullableMethodTransitivity) {
         collectEquations(Collections.singletonList(nullableKey), nullableMethodSolver);
@@ -325,6 +308,7 @@ public class ProjectBytecodeAnalysis {
         result.nullables.add(key);
       }
     }
+
     return result;
   }
 
@@ -332,10 +316,9 @@ public class ProjectBytecodeAnalysis {
     return new EKey(key.member, key.dirKey, stability, false);
   }
 
-  private void collectPurityEquations(EKey key, PuritySolver puritySolver)
-    throws EquationsLimitException {
-    HashSet<EKey> queued = new HashSet<>();
-    ArrayDeque<EKey> queue = new ArrayDeque<>();
+  private void collectPurityEquations(EKey key, PuritySolver puritySolver) throws EquationsLimitException {
+    Set<EKey> queued = new HashSet<>();
+    Deque<EKey> queue = new ArrayDeque<>();
 
     queue.push(key);
     queued.add(key);
@@ -364,7 +347,7 @@ public class ProjectBytecodeAnalysis {
   }
 
   private void collectEquations(List<EKey> keys, Solver solver) throws EquationsLimitException {
-    HashSet<EKey> queued = new HashSet<>();
+    Set<EKey> queued = new HashSet<>();
     Stack<EKey> queue = new Stack<>();
 
     for (EKey key : keys) {
