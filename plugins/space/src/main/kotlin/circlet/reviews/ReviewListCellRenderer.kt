@@ -55,7 +55,7 @@ class ReviewListCellRenderer(private val getPreferredLanguage: () -> TID?) : Lis
         id.text = "#${value.id}"
         title.text = value.title
         timestamp.text = value.timestamp.toString()
-        createdBy.text = value.createdBy?.fullname(getPreferredLanguage())
+        createdBy.text = value.createdBy.fullname(getPreferredLanguage())
 
         val background: Color
         val foreground: Color
