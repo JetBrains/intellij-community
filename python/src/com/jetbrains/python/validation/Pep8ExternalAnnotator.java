@@ -47,6 +47,7 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -181,7 +182,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return null;
     }
     final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.KEY.toString(), file);
-    final CommonCodeStyleSettings commonSettings = CodeStyle.getLanguageSettings(file);
+    final CodeStyleSettings commonSettings = CodeStyle.getSettings(file);
     final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
 
     final List<String> ignoredErrors = Lists.newArrayList(inspection.ignoredErrors);
@@ -195,7 +196,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
 
     return new State(homePath, file.getText(), profile.getErrorLevel(key, file),
-                     ignoredErrors, commonSettings.RIGHT_MARGIN, customSettings.HANG_CLOSING_BRACKETS);
+                     ignoredErrors, commonSettings.getRightMargin(PythonLanguage.getInstance()), customSettings.HANG_CLOSING_BRACKETS);
   }
 
   private static void reportMissingInterpreter() {
