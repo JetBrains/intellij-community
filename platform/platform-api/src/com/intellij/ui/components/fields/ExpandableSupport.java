@@ -28,6 +28,9 @@ import static java.beans.EventHandler.create;
 import static java.util.Collections.singletonList;
 import static javax.swing.KeyStroke.getKeyStroke;
 
+/**
+ * @author Sergey Malenkov
+ */
 @Experimental
 public abstract class ExpandableSupport<Source extends JComponent> implements Expandable {
   private static final int MINIMAL_WIDTH = 50;
@@ -47,29 +50,58 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     source.addComponentListener(create(ComponentListener.class, this, "collapse"));
   }
 
+  /**
+   * @param source the source expandable component covered by the popup
+   * @param onShow a string converter from the source to the popup content
+   * @return a specific content to create the popup
+   */
+  @NotNull
   protected abstract Content prepare(@NotNull Source source, @NotNull Function<? super String, String> onShow);
 
   protected interface Content {
+    /**
+     * @return a component to show on the popup
+     */
     @NotNull
     JComponent getContentComponent();
 
+    /**
+     * @return a component to focus on after showing the popup
+     */
     JComponent getFocusableComponent();
 
+    /**
+     * This method is called after closing the popup.
+     *
+     * @param onHide a string converter from the popup content to the source
+     */
     void cancel(@NotNull Function<? super String, String> onHide);
   }
 
+  /**
+   * @return a text from the popup's header or {@code null} if header is hidden.
+   */
   public final String getTitle() {
     return title;
   }
 
+  /**
+   * @param title a text for the popup's header or {@code null} if header is not needed
+   */
   public final void setTitle(String title) {
     this.title = title;
   }
 
+  /**
+   * @return a text from the popup's footer or {@code null} if footer is hidden.
+   */
   public final String getComment() {
     return comment;
   }
 
+  /**
+   * @param comment a text for the popup's footer or {@code null} if footer is not needed
+   */
   public final void setComment(String comment) {
     this.comment = comment;
   }
