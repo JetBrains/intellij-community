@@ -19,12 +19,13 @@ import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
+import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
+import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author Konstantin Bulenkov
@@ -35,8 +36,21 @@ public class PluginOptionsTopHitProvider extends OptionsTopHitProvider {
   public Collection<OptionDescription> getOptions(@Nullable Project project) {
     ArrayList<OptionDescription> options = new ArrayList<>();
     ApplicationInfoEx applicationInfo = ApplicationInfoEx.getInstanceEx();
-    for (IdeaPluginDescriptor pluginDescriptor : PluginManagerCore.getPlugins()) {
+
+    IdeaPluginDescriptor[] descriptors = PluginManagerCore.getPlugins();
+    Map<PluginId, IdeaPluginDescriptor> pluginsMap =
+      Arrays.stream(descriptors).collect(Collectors.toMap(descriptor -> descriptor.getPluginId(), descriptor -> descriptor));
+
+    for (IdeaPluginDescriptor pluginDescriptor : descriptors) {
       if (applicationInfo.isEssentialPlugin(pluginDescriptor.getPluginId().getIdString())) {
+        continue;
+      }
+
+      boolean allDependentPluginsEnabled = Arrays.stream(pluginDescriptor.getDependentPluginIds())
+                        .map(id -> pluginsMap.get(id))
+                        .filter(Objects::nonNull)
+                        .allMatch(descriptor -> descriptor.isEnabled());
+      if (!allDependentPluginsEnabled) {
         continue;
       }
 
