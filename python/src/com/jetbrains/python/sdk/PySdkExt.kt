@@ -48,8 +48,7 @@ import java.nio.file.Paths
  */
 
 fun findBaseSdks(existingSdks: List<Sdk>): List<Sdk> {
-  // TODO: Filter out non-Python SDKs
-  val existing = existingSdks.filter { it.isSystemWide }
+  val existing = existingSdks.filter { it.sdkType is PythonSdkType && it.isSystemWide }
   val detected = detectSystemWideSdks(existingSdks)
   return existing + detected
 }
