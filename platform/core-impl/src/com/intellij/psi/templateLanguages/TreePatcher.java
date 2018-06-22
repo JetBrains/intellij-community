@@ -29,7 +29,7 @@ public interface TreePatcher {
   /**
    * Inserts toInsert into tree
    * <br>
-   * @apiNote Inserting must not change the position (offset) of the new node in the three (otherwise we will receive broken tree)
+   * @apiNote Inserting must not change the position (offset) of the new node in the tree (otherwise we will receive broken tree)
    */
   void insert(@NotNull CompositeElement parent, @Nullable TreeElement anchorBefore, @NotNull OuterLanguageElement toInsert);
 
@@ -58,10 +58,7 @@ public interface TreePatcher {
                                   @NotNull TextRange rangeToRemove,
                                   @NotNull CharTable table) {
     CharSequence chars = leaf.getChars();
-    int startOffset = rangeToRemove.getStartOffset();
-    CharSequence prefix = startOffset == 0 ? "" : chars.subSequence(0, startOffset);
-    CharSequence suffix = chars.subSequence(rangeToRemove.getEndOffset(), chars.length());
-    String res = prefix + suffix.toString();
+    String res = rangeToRemove.replace(chars.toString(), "");;
     LeafElement newLeaf = ASTFactory.leaf(leaf.getElementType(), table.intern(res));
     leaf.rawInsertBeforeMe(newLeaf);
     leaf.rawRemove();
