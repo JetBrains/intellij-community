@@ -98,8 +98,10 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     if (actionOrGroup instanceof Action) {
       Action action = (Action)actionOrGroup;
 
+      PsiElement psiElement = getPsiElement(action);
       String name = StringUtil.notNullize(getName(action), "<invalid name>");
-      LookupElementBuilder builder = LookupElementBuilder.create(name);
+      LookupElementBuilder builder = psiElement == null ?  LookupElementBuilder.create(name) :
+                                     LookupElementBuilder.create(psiElement, name);
 
       final String text = action.getText().getStringValue();
       if (StringUtil.isNotEmpty(text)) {
