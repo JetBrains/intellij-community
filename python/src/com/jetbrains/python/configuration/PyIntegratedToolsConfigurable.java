@@ -112,6 +112,7 @@ public class PyIntegratedToolsConfigurable implements SearchableConfigurable {
     myRequirementsPathField.addBrowseFolderListener("Choose path to the package requirements file:", null, myProject,
                                                     FileChooserDescriptorFactory.createSingleLocalFileDescriptor());
     myRequirementsPathField.setText(getRequirementsPath());
+    myPipEnvPathField.addBrowseFolderListener(null, null, null, FileChooserDescriptorFactory.createSingleFileDescriptor());
 
     myDocStringsPanel.setBorder(IdeBorderFactory.createTitledBorder("Docstrings"));
     myRestPanel.setBorder(IdeBorderFactory.createTitledBorder("reStructuredText"));
