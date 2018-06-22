@@ -795,7 +795,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       if (restart) {
         FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
       }
-      FeatureUsageLogger.INSTANCE.log("lifecycle", getName() + "app.closed", Collections.singletonMap("restart", restart));
+      FeatureUsageLogger.INSTANCE.log("lifecycle", "app.closed", Collections.singletonMap("restart", restart));
 
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
