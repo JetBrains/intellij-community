@@ -379,7 +379,7 @@ public class IdeaApplication {
         //safe for headless and unit test modes
         UsageTrigger.trigger("lifecycle", app.getName() + "app.started");
         FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.start");
-        FeatureUsageLogger.INSTANCE.log("lifecycle", app.getName() + "app.started");
+        FeatureUsageLogger.INSTANCE.log("lifecycle", "app.started");
       });
     }
 
