@@ -783,6 +783,17 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
+  public static int lastIndexOfNot(@NotNull final int[] src, final int obj) {
+    for (int i = src.length - 1; i >= 0; i--) {
+      final int o = src[i];
+      if (o != obj) {
+          return i;
+      }
+    }
+    return -1;
+  }
+
+  @Contract(pure=true)
   public static <T> int lastIndexOf(@NotNull final T[] src, final T obj, @NotNull Equality<? super T> comparator) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];

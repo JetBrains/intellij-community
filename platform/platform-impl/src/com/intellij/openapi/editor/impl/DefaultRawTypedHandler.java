@@ -16,9 +16,9 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultRawTypedHandler implements TypedActionHandlerEx {
   private final TypedAction myAction;
   private CommandToken myCurrentCommandToken;
-  private boolean myInOuterCommand = false;
+  private boolean myInOuterCommand;
 
-  public DefaultRawTypedHandler(TypedAction action) {
+  DefaultRawTypedHandler(TypedAction action) {
     myAction = action;
   }
 
