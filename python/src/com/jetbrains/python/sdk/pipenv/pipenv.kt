@@ -359,7 +359,7 @@ class PipEnvPipFileWatcherComponent(val project: Project) : ProjectComponent {
           module.pipFileLock == null -> "not found"
           else -> "out of date"
         }
-        val title = "$PIP_FILE_LOCK for ${module.name} is $what"
+        val title = "$PIP_FILE_LOCK is $what"
         val content = "Run <a href='#lock'>pipenv lock</a> or <a href='#update'>pipenv update</a>"
         val notification = LOCK_NOTIFICATION_GROUP.createNotification(title, null, content,
                                                                       NotificationType.INFORMATION) { notification, event ->
