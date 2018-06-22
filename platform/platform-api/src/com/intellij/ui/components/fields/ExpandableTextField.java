@@ -45,6 +45,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     Function<? super String, String> onShow = text -> StringUtil.join(parser.fun(text), "\n");
     Function<? super String, String> onHide = text -> joiner.fun(asList(StringUtil.splitByLines(text)));
     support = new ExpandableSupport<JTextComponent>(this, onShow, onHide) {
+      @NotNull
       @Override
       protected Content prepare(@NotNull JTextComponent field, @NotNull Function<? super String, String> onShow) {
         Font font = field.getFont();
@@ -112,6 +113,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
     setExtensions(createExtensions());
   }
 
+  @NotNull
   protected List<ExtendableTextComponent.Extension> createExtensions() {
     return singletonList(support.createExpandExtension());
   }
@@ -126,7 +128,7 @@ public class ExpandableTextField extends ExtendableTextField implements Expandab
 
   @Override
   public void setEnabled(boolean enabled) {
-    if (!enabled) collapse();
+    if (!enabled) support.collapse();
     super.setEnabled(enabled);
   }
 
