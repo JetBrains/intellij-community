@@ -62,6 +62,8 @@ public abstract class GenerationInfoBase implements GenerationInfo {
 
   @Override
   public void positionCaret(@NotNull Editor editor, boolean toEditMethodBody) {
-    GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
+    if (isMemberValid()) {
+      GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
+    }
   }
 }

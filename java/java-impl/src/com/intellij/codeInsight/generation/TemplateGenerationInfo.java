@@ -45,6 +45,11 @@ public abstract class TemplateGenerationInfo extends GenerationInfoBase implemen
   }
 
   @Override
+  public boolean isMemberValid() {
+    return myElement.getElement() != null;
+  }
+
+  @Override
   public void insert(@NotNull PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException {
     setElement((PsiMethod)GenerateMembersUtil.insert(aClass, getPsiMember(), anchor, before));
   }

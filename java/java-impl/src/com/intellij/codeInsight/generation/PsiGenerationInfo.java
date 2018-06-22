@@ -51,6 +51,11 @@ public class PsiGenerationInfo<T extends PsiMember> extends GenerationInfoBase i
   }
 
   @Override
+  public boolean isMemberValid() {
+    return myMember.getElement() != null;
+  }
+
+  @Override
   public void insert(@NotNull final PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
     T member = getPsiMember();
     final PsiMember existingMember;
