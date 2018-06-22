@@ -3,22 +3,14 @@ package org.jetbrains.plugins.groovy.util
 
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiReference
-import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf
 
 @CompileStatic
-trait ResolveTest {
-
-  abstract CodeInsightTestFixture getFixture()
-
-  GroovyFile configureByText(String text) {
-    return (GroovyFile)fixture.configureByText('_.groovy', text)
-  }
+trait ResolveTest extends BaseTest {
 
   def <T extends PsiReference> T referenceByText(String text, Class<T> refType) {
     final ref = configureByText(text).findReferenceAt(fixture.caretOffset)
