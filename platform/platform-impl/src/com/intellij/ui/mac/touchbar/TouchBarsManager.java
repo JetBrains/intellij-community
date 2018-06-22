@@ -6,6 +6,7 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
@@ -268,7 +269,7 @@ public class TouchBarsManager {
     );
   }
 
-  public static @Nullable Runnable showDlgButtonsBar(List<JButton> jbuttons) {
+  public static @Nullable Disposable showDialogWrapperButtons(List<JButton> jbuttons) {
     if (!isTouchBarAvailable())
       return null;
 
@@ -277,7 +278,7 @@ public class TouchBarsManager {
     return ()->{ourStack.removeTouchBar(tb);};
   }
 
-  public static Runnable showMessageDlgBar(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
+  public static @Nullable Disposable showSheetMessageButtons(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
     if (!isTouchBarAvailable())
       return null;
 

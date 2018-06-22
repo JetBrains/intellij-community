@@ -140,10 +140,8 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    final Runnable closer = _showTouchBar(buttons, defaultButton);
+    _showTouchBar(buttons, defaultButton);
     myWindow.setVisible(true);
-    if (closer != null)
-      closer.run();
     LaterInvocator.leaveModal(myWindow);
 
     Component focusCandidate = beforeShowFocusOwner.get();
@@ -167,9 +165,9 @@ class SheetMessage implements Disposable {
     myWindow.dispose();
   }
 
-  private Runnable _showTouchBar(String[] buttons, String defaultButton) {
+  private void _showTouchBar(String[] buttons, String defaultButton) {
     if (!TouchBarsManager.isTouchBarAvailable())
-      return null;
+      return;
 
     final Runnable[] actions = new Runnable[buttons.length];
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
@@ -177,7 +175,9 @@ class SheetMessage implements Disposable {
       final String sb = buttons[c];
       actions[c] = () -> ApplicationManager.getApplication().invokeLater(() -> myController.setResultAndStartClose(sb), ms);
     }
-    return TouchBarsManager.showMessageDlgBar(buttons, actions, defaultButton);
+    final Disposable tb = TouchBarsManager.showSheetMessageButtons(buttons, actions, defaultButton);
+    if (tb != null)
+      Disposer.register(this, tb);
   }
 
   private static void maximizeIfNeeded(final Window owner) {
