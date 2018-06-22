@@ -143,14 +143,15 @@ public class UserDefinedJsonSchemaConfiguration {
           result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.path));
           break;
         case Pattern:
-          result.add(new PairProcessor<Project, VirtualFile>() {
-            private final Pattern pattern = PatternUtil.fromMask(patternText.path);
-
-            @Override
-            public boolean process(Project project, VirtualFile file) {
-              return JsonSchemaObject.matchPattern(pattern, file.getName());
-            }
-          });
+          String pathText = patternText.path.replace('\\', '/');
+          final Pattern pattern = pathText.isEmpty()
+                                  ? PatternUtil.NOTHING
+                                  : pathText.indexOf('/') >= 0
+                                    ? PatternUtil.compileSafe(".*" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
+                                    : PatternUtil.fromMask(pathText);
+          result.add((project, file) -> JsonSchemaObject.matchPattern(pattern, pathText.indexOf('/') >= 0
+                                                        ? file.getPath()
+                                                        : file.getName()));
           break;
         case Directory:
           result.add((project, vfile) -> {
