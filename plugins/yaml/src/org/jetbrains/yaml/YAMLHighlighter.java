@@ -27,8 +27,6 @@ public class YAMLHighlighter {
   static final String SIGN_ID = "YAML_SIGN";
   @NonNls
   static final String ANCHOR_ID = "YAML_ANCHOR";
-  @NonNls
-  static final String ALIAS_ID = "YAML_ALIAS";
 
   // Text default attrs
   // TODO: RUBY-21691 inline these defaults or move it somewhere
@@ -81,8 +79,8 @@ public class YAMLHighlighter {
   public static final TextAttributesKey TEXT = TextAttributesKey.createTextAttributesKey(TEXT_ID, TEXT_DEFAULT_ATTRS);
   @SuppressWarnings("deprecation")
   public static final TextAttributesKey SIGN = TextAttributesKey.createTextAttributesKey(SIGN_ID, SIGN_DEFAULT_ATTRS);
-  public static final TextAttributesKey ALIAS = TextAttributesKey.createTextAttributesKey(ALIAS_ID, DefaultLanguageHighlighterColors.LABEL);
-  public static final TextAttributesKey ANCHOR = TextAttributesKey.createTextAttributesKey(ANCHOR_ID, ALIAS);
+  public static final TextAttributesKey ANCHOR = TextAttributesKey
+    .createTextAttributesKey(ANCHOR_ID, DefaultLanguageHighlighterColors.IDENTIFIER);
 
   private YAMLHighlighter() {
   }

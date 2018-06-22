@@ -62,7 +62,6 @@ public class YAMLColorsPage implements ColorSettingsPage {
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.text"), YAMLHighlighter.TEXT),
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.sign"), YAMLHighlighter.SIGN),
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.anchor"), YAMLHighlighter.ANCHOR),
-      new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.alias"), YAMLHighlighter.ALIAS),
       new AttributesDescriptor(YAMLBundle.message("color.settings.yaml.comment"), YAMLHighlighter.COMMENT)
   };
 
