@@ -230,7 +230,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void addDefaultAdvertisements(CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
+      addAdvertisement("Results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
       return;
     }
 
