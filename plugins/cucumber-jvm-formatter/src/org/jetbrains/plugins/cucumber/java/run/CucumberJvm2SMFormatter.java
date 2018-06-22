@@ -6,6 +6,7 @@ import cucumber.api.event.*;
 import cucumber.api.formatter.Formatter;
 import gherkin.events.PickleEvent;
 
+import java.io.PrintStream;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.HashMap;
@@ -22,8 +23,17 @@ public class CucumberJvm2SMFormatter implements Formatter {
   private String currentFilePath;
   private int currentScenarioOutlineLine;
   private String currentScenarioOutlineName;
+  private final PrintStream myOut;
+  private final String myCurrentTimeValue;
 
   public CucumberJvm2SMFormatter() {
+    //noinspection UseOfSystemOutOrSystemErr
+    this(System.out, null);
+  }
+
+  public CucumberJvm2SMFormatter(PrintStream out, String currentTimeValue) {
+    myOut = out;
+    myCurrentTimeValue = currentTimeValue;
     outCommand(String.format(TEMPLATE_ENTER_THE_MATRIX, getCurrentTime()));
     outCommand(String.format(TEMPLATE_SCENARIO_COUNTING_STARTED, 0, getCurrentTime()));
   }
@@ -109,7 +119,7 @@ public class CucumberJvm2SMFormatter implements Formatter {
                              event.testCase.getUri() + ":" + event.testCase.getLine(), getScenarioName(event.testCase)));
   }
 
-  private static void handleTestCaseFinished(TestCaseFinished event) {
+  private void handleTestCaseFinished(TestCaseFinished event) {
     outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(), getScenarioName(event.testCase)));
   }
 
@@ -118,12 +128,12 @@ public class CucumberJvm2SMFormatter implements Formatter {
     outCommand(String.format(TEMPLATE_TEST_SUITE_FINISHED, getCurrentTime(),
                              getFeatureFileDescription(currentFilePath)));
   }
-  private static void handleTestStepStarted(TestStepStarted event) {
+  private void handleTestStepStarted(TestStepStarted event) {
     outCommand(String.format(TEMPLATE_TEST_STARTED, getCurrentTime(), getStepLocation(event.testStep),
                              getStepName(event.testStep)));
   }
 
-  private static void handleTestStepFinished(TestStepFinished event) {
+  private void handleTestStepFinished(TestStepFinished event) {
     if (event.result.getStatus() == PASSED) {
       // write nothing
     } else if (event.result.getStatus() == SKIPPED || event.result.getStatus() == PENDING) {
@@ -193,9 +203,8 @@ public class CucumberJvm2SMFormatter implements Formatter {
     return escape(stepName);
   }
 
-  private static void outCommand(String s) {
-    //noinspection UseOfSystemOutOrSystemErr
-    System.out.println(s);
+  private void outCommand(String s) {
+    myOut.println(s);
   }
 
   private static PickleEvent getPickleEvent(TestCase testCase) {
@@ -227,5 +236,12 @@ public class CucumberJvm2SMFormatter implements Formatter {
       return SCENARIO_OUTLINE_CAPTION + testCase.getLine();
     }
     return escape(testCase.getName());
+  }
+
+  private String getCurrentTime() {
+    if (myCurrentTimeValue != null) {
+      return myCurrentTimeValue;
+    }
+    return CucumberJvmSMFormatterUtil.getCurrentTime();
   }
 }
