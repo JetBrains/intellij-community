@@ -189,7 +189,11 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
   }
 
   @TestOnly
-  public static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Graphics2D g, @NotNull Font font) {
+  public static double maybeScaleFontMetricsThickness_TestOnly(double fontMetricsThickness, @NotNull Graphics2D g, @NotNull Font font) {
+    return maybeScaleFontMetricsThickness(fontMetricsThickness, g, font);
+  }
+
+  private static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Graphics2D g, @NotNull Font font) {
     double minValue = PaintUtil.alignToInt(JBUI.getFontScale(font.getSize2D()), g, RoundingMode.ROUND_FLOOR_BIAS);
     return Math.max(fontMetricsThickness, minValue);
   }
