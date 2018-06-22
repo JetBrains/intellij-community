@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker;
 
 import com.google.common.collect.Maps;
@@ -24,9 +24,11 @@ import com.intellij.spellchecker.engine.SpellCheckerFactory;
 import com.intellij.spellchecker.engine.SuggestionProvider;
 import com.intellij.spellchecker.settings.SpellCheckerSettings;
 import com.intellij.spellchecker.state.CachedDictionaryState;
+import com.intellij.spellchecker.state.DictionaryStateListener;
 import com.intellij.spellchecker.state.ProjectDictionaryState;
 import com.intellij.spellchecker.util.SpellCheckerBundle;
 import com.intellij.spellchecker.util.Strings;
+import com.intellij.util.EventDispatcher;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -62,6 +64,8 @@ public class SpellCheckerManager implements Disposable {
     "dictionaries" + File.separator + System.getProperty("user.name").replace('.', '_') + ".xml";
   public static final String CACHED_DICTIONARY_FILE = "cachedDictionary.xml";
 
+  private final EventDispatcher<DictionaryStateListener> myUserDictionaryListenerEventDispatcher = EventDispatcher.create(DictionaryStateListener.class);
+
   public static SpellCheckerManager getInstance(Project project) {
     return ServiceManager.getService(project, SpellCheckerManager.class);
   }
@@ -77,6 +81,11 @@ public class SpellCheckerManager implements Disposable {
     myAppDictionaryPath = getOptionsPath() + File.separator + CACHED_DICTIONARY_FILE;
     myCustomDictFileListener = new CustomDictFileListener(settings);
     LocalFileSystem.getInstance().addVirtualFileListener(myCustomDictFileListener);
+  }
+
+  @SuppressWarnings("unused")  // used in Rider
+  public SpellCheckerEngine getSpellChecker() {
+    return spellChecker;
   }
 
   public void fullConfigurationReload() {
@@ -223,28 +232,42 @@ public class SpellCheckerManager implements Disposable {
           @Override
           public void undo() {
             dictionary.removeFromDictionary(transformed);
+            myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
             restartInspections();
           }
 
           @Override
           public void redo() {
             dictionary.addToDictionary(transformed);
+            myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
             restartInspections();
           }
         });
       }
       dictionary.addToDictionary(transformed);
+      myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(dictionary);
       restartInspections();
     }
   }
 
   public void updateUserDictionary(@NotNull Collection<String> words) {
-    // new
-    ContainerUtil.subtract(words, getUserDictionaryWords()).forEach(myProjectDictionary::addToDictionary);
+    // new for project dictionary
+    Collection<String> addedToProjectWords = ContainerUtil.subtract(words, getUserDictionaryWords());
+    addedToProjectWords.forEach(myProjectDictionary::addToDictionary);
 
-    // deleted
-    ContainerUtil.subtract(myProjectDictionary.getEditableWords(), words).forEach(myProjectDictionary::removeFromDictionary);
-    ContainerUtil.subtract(myAppDictionary.getEditableWords(), words).forEach(myAppDictionary::removeFromDictionary);
+    // deleted from project dictionary
+    Collection<String> deletedFromProjectWords = ContainerUtil.subtract(myProjectDictionary.getEditableWords(), words);
+    deletedFromProjectWords.forEach(myProjectDictionary::removeFromDictionary);
+
+    if (addedToProjectWords.size() + deletedFromProjectWords.size() > 0)
+      myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(myProjectDictionary);
+
+    // deleted from application dictionary
+    Collection<String> deletedFromApplicationWords = ContainerUtil.subtract(myAppDictionary.getEditableWords(), words);
+    deletedFromApplicationWords.forEach(myAppDictionary::removeFromDictionary);
+
+    if (deletedFromApplicationWords.size() > 0)
+      myUserDictionaryListenerEventDispatcher.getMulticaster().dictChanged(myAppDictionary);
 
     restartInspections();
   }
@@ -329,6 +352,12 @@ public class SpellCheckerManager implements Disposable {
     if (fileManager != null) {
       fileManager.openFile(file, true);
     }
+  }
+
+  @SuppressWarnings("unused")  // used in Rider
+  public void addUserDictionaryChangedListener(DictionaryStateListener listener, Disposable parentDisposable) {
+    myUserDictionaryListenerEventDispatcher.addListener(listener);
+    Disposer.register(parentDisposable, () -> myUserDictionaryListenerEventDispatcher.removeListener(listener));
   }
 
   public enum DictionaryLevel {
