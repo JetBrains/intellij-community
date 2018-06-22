@@ -1,10 +1,9 @@
 package circlet.reviews
 
-import circlet.client.api.*
 import javax.swing.*
 
-class ReviewsListModel : AbstractListModel<CodeReviewWithCount>() {
-    var elements: List<CodeReviewWithCount> = listOf()
+class ReviewListModel : AbstractListModel<Review>() {
+    var elements: List<Review> = listOf()
         set(value) {
             fireIntervalRemoved(this, 0, field.size)
 
@@ -13,7 +12,7 @@ class ReviewsListModel : AbstractListModel<CodeReviewWithCount>() {
             fireIntervalAdded(this, 0, field.size)
         }
 
-    override fun getElementAt(index: Int): CodeReviewWithCount = elements[index]
+    override fun getElementAt(index: Int): Review = elements[index]
 
     override fun getSize(): Int = elements.size
 }

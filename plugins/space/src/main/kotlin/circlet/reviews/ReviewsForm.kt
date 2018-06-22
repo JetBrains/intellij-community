@@ -24,8 +24,8 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     val panel = JPanel(GridLayoutManager(1, 1))
 
-    private val model = ReviewsListModel()
-    private val list = JBList<CodeReviewWithCount>(model)
+    private val model = ReviewListModel()
+    private val list = JBList<Review>(model)
 
     private val reloader = updater<Unit>("Reviews Reloader") {
         reloadImpl()
@@ -54,15 +54,19 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     private suspend fun reloadImpl() {
-        val reviews = project.clientOrNull?.codeReview?.listReviews(
-            BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null, null,
-            null, null, null, ReviewSorting.CreatedAtDesc
-        )?.data ?: return
+        project.connection.loginModel?.let { loginModel ->
+            loginModel.clientOrNull?.let { client ->
+                val reviews = client.codeReview.listReviews(
+                    BatchInfo(null, 30), ProjectKey(project.settings.projectKey.value), null,
+                    null, null, null, null, ReviewSorting.CreatedAtDesc
+                ).data.map { it.toReview(loginModel, client) }
 
-        reload(reviews)
+                reload(reviews)
+            }
+        }
     }
 
-    private fun reload(reviews: List<CodeReviewWithCount>) {
+    private fun reload(reviews: List<Review>) {
         model.elements = reviews
     }
 }

@@ -1,13 +1,12 @@
 package circlet.reviews
 
-import circlet.client.api.*
 import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
 
-class ReviewListCellRenderer : ListCellRenderer<CodeReviewWithCount> {
+class ReviewListCellRenderer : ListCellRenderer<Review> {
     private val panel = JPanel(GridLayoutManager(1, 4))
     private val id = JBLabel()
     private val title = JBLabel()
@@ -45,18 +44,16 @@ class ReviewListCellRenderer : ListCellRenderer<CodeReviewWithCount> {
     }
 
     override fun getListCellRendererComponent(
-        list: JList<out CodeReviewWithCount>,
-        value: CodeReviewWithCount?,
+        list: JList<out Review>,
+        value: Review,
         index: Int,
         isSelected: Boolean,
         cellHasFocus: Boolean
     ): Component {
-        val review =  value!!.review
-
-        id.text = "#${review.id}"
-        title.text = review.title
-        timestamp.text = review.timestamp.toString()
-        createdBy.text = review.createdBy.id
+        id.text = "#${value.id}"
+        title.text = value.title
+        timestamp.text = value.timestamp.toString()
+        createdBy.text = value.createdBy
 
         val background: Color
         val foreground: Color
