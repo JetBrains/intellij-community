@@ -238,7 +238,7 @@ public class MavenUtil {
   public static VirtualFile findProfilesXmlFile(VirtualFile pomFile) {
     if (pomFile == null) return null;
     VirtualFile parent = pomFile.getParent();
-    if (parent == null) return null;
+    if (parent == null || !parent.isValid()) return null;
     return parent.findChild(MavenConstants.PROFILES_XML);
   }
 
