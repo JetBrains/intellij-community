@@ -33,7 +33,6 @@ import static javax.swing.KeyStroke.getKeyStroke;
  */
 @Experimental
 public abstract class ExpandableSupport<Source extends JComponent> implements Expandable {
-  private static final int MINIMAL_WIDTH = 50;
   private final Source source;
   private final Function<? super String, String> onShow;
   private final Function<? super String, String> onHide;
@@ -123,7 +122,8 @@ public abstract class ExpandableSupport<Source extends JComponent> implements Ex
     Content content = prepare(source, onShow);
     JComponent component = content.getContentComponent();
     Dimension size = component.getPreferredSize();
-    if (size.width - MINIMAL_WIDTH < source.getWidth()) size.width = source.getWidth();
+    if (size.width - 50 < source.getWidth()) size.width = source.getWidth();
+    if (size.height < 2 * source.getHeight()) size.height = 2 * source.getHeight();
 
     Point location = new Point(0, 0);
     SwingUtilities.convertPointToScreen(location, source);
