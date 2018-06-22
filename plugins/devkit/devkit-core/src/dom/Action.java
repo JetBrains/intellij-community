@@ -31,32 +31,6 @@ import java.util.List;
 @Presentation(typeName = "Action")
 public interface Action extends ActionOrGroup {
 
-	/**
-	 * Returns the value of the popup child.
-	 * Attribute popup
-	 * @return the value of the popup child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getPopup();
-
-
-	/**
-	 * Returns the value of the icon child.
-	 * Attribute icon
-	 * @return the value of the icon child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getIcon();
-
-
-	/**
-	 * Returns the value of the description child.
-	 * Attribute description
-	 * @return the value of the description child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getDescription();
-
 
 	/**
 	 * Returns the value of the class child.
@@ -71,25 +45,6 @@ public interface Action extends ActionOrGroup {
         @Convert(PluginPsiClassConverter.class)
         GenericAttributeValue<PsiClass> getClazz();
 
-
-	/**
-	 * Returns the value of the text child.
-	 * Attribute text
-	 * @return the value of the text child.
-	 */
-	@NotNull
-	@Stubbed
-	GenericAttributeValue<String> getText();
-
-	/**
-	 * Returns the value of the id child.
-	 * Attribute id
-	 * @return the value of the id child.
-	 */
-	@NotNull
-	@Required
-	@Stubbed
-	GenericAttributeValue<String> getId();
 
 	/**
 	 * Returns the list of keyboard-shortcut children.

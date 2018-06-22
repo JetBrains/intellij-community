@@ -32,38 +32,12 @@ import java.util.List;
 public interface Group extends Actions, ActionOrGroup {
 
 	/**
-	 * Returns the value of the popup child.
-	 * Attribute popup
-	 * @return the value of the popup child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getPopup();
-
-	/**
 	 * Returns the value of the compact child.
 	 * Attribute popup
 	 * @return the value of the compact child.
 	 */
 	@NotNull
 	GenericAttributeValue<Boolean> getCompact();
-
-
-	/**
-	 * Returns the value of the icon child.
-	 * Attribute icon
-	 * @return the value of the icon child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getIcon();
-
-
-	/**
-	 * Returns the value of the description child.
-	 * Attribute description
-	 * @return the value of the description child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getDescription();
 
 
 	/**
@@ -78,14 +52,6 @@ public interface Group extends Actions, ActionOrGroup {
         @Convert(PluginPsiClassConverter.class)
 	GenericAttributeValue<PsiClass> getClazz();
 
-
-	/**
-	 * Returns the value of the text child.
-	 * Attribute text
-	 * @return the value of the text child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getText();
 
 
 	/**
