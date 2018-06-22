@@ -61,13 +61,13 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
 
   @Override
   @NotNull
-    public UsageGroupingRule[] getActiveRules(Project project) {
+    public UsageGroupingRule[] getActiveRules(@NotNull Project project) {
         return myUsageGroupingRules;
     }
 
     @Override
     @NotNull
-    public AnAction[] createGroupingActions(UsageView view) {
+    public AnAction[] createGroupingActions(@NotNull UsageView view) {
         return AnAction.EMPTY_ARRAY;
     }
 
