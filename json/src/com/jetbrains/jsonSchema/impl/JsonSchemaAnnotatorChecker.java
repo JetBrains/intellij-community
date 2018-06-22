@@ -388,7 +388,7 @@ class JsonSchemaAnnotatorChecker {
       reportInvalidPatternProperties(s);
       reportPatternErrors(s);
     }
-    result.myExcludingSchemas.stream().flatMap(Set::stream).filter(s -> schemaFile.equals(s.getSchemaFile()))
+    result.myExcludingSchemas.stream().flatMap(Collection::stream).filter(s -> schemaFile.equals(s.getSchemaFile()))
       .forEach(schema -> {
         reportInvalidPatternProperties(schema);
         reportPatternErrors(schema);
@@ -484,7 +484,7 @@ class JsonSchemaAnnotatorChecker {
 
   @NotNull
   private static Pair<JsonSchemaObject, JsonSchemaAnnotatorChecker> processSchemasVariants(
-    @NotNull final Collection<JsonSchemaObject> collection,
+    @NotNull final Collection<? extends JsonSchemaObject> collection,
     @NotNull final JsonValueAdapter value, boolean isOneOf) {
 
     final JsonSchemaAnnotatorChecker checker = new JsonSchemaAnnotatorChecker();
@@ -517,7 +517,7 @@ class JsonSchemaAnnotatorChecker {
   }
 
   private final static JsonSchemaType[] NO_TYPES = new JsonSchemaType[0];
-  private static JsonSchemaType[] getExpectedTypes(final Collection<JsonSchemaObject> schemas) {
+  private static JsonSchemaType[] getExpectedTypes(final Collection<? extends JsonSchemaObject> schemas) {
     final List<JsonSchemaType> list = new ArrayList<>();
     for (JsonSchemaObject schema : schemas) {
       final JsonSchemaType type = schema.getType();
