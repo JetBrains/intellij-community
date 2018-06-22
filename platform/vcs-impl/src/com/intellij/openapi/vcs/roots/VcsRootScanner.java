@@ -34,16 +34,16 @@ import java.util.concurrent.TimeUnit;
 public class VcsRootScanner implements BulkFileListener, ModuleRootListener {
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
-  @NotNull private final VcsRootChecker[] myCheckers;
+  @NotNull private final List<VcsRootChecker> myCheckers;
 
   @NotNull private final Alarm myAlarm;
   private static final long WAIT_BEFORE_SCAN = TimeUnit.SECONDS.toMillis(1);
 
-  public static void start(@NotNull Project project, @NotNull VcsRootChecker[] checkers) {
+  public static void start(@NotNull Project project, @NotNull List<VcsRootChecker> checkers) {
     new VcsRootScanner(project, checkers).scheduleScan();
   }
 
-  private VcsRootScanner(@NotNull Project project, @NotNull VcsRootChecker[] checkers) {
+  private VcsRootScanner(@NotNull Project project, @NotNull List<VcsRootChecker> checkers) {
     myRootProblemNotifier = VcsRootProblemNotifier.getInstance(project);
     myCheckers = checkers;
 
@@ -58,11 +58,8 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener {
   public void after(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       String filePath = event.getPath();
-      for (VcsRootChecker checker : myCheckers) {
-        if (checker.isVcsDir(filePath)) {
-          scheduleScan();
-          break;
-        }
+      if (myCheckers.stream().anyMatch(it -> it.isVcsDir(filePath))) {
+        scheduleScan();
       }
     }
   }
