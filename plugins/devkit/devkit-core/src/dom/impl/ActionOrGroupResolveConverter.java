@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2016 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,16 +22,14 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.references.PomService;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ElementPresentationManager;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.DomImplUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -54,6 +52,14 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     };
     processActionOrGroup(context, collectProcessor);
     return variants;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiElement(@Nullable ActionOrGroup resolvedValue) {
+    if (resolvedValue == null) return null;
+    DomTarget target = DomTarget.getTarget(resolvedValue);
+    return target == null ? super.getPsiElement(resolvedValue) : PomService.convertToPsi(target);
   }
 
   @Nullable
@@ -158,9 +164,9 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   }
 
   private static boolean processPlugins(Collection<IdeaPlugin> plugins, PairProcessor<String, ActionOrGroup> processor) {
-    for (IdeaPlugin plugin : plugins) {
+    for (IdeaPlugin plugin: plugins) {
       final Map<String, ActionOrGroup> forFile = collectForFile(plugin);
-      for (Map.Entry<String, ActionOrGroup> entry : forFile.entrySet()) {
+      for (Map.Entry<String, ActionOrGroup> entry: forFile.entrySet()) {
         if (!processor.process(entry.getKey(), entry.getValue())) return false;
       }
     }
@@ -171,7 +177,7 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
     final XmlFile xmlFile = DomUtil.getFile(plugin);
     return CachedValuesManager.getCachedValue(xmlFile, () -> {
       Map<String, ActionOrGroup> result = new HashMap<>();
-      for (Actions actions : plugin.getActions()) {
+      for (Actions actions: plugin.getActions()) {
         collectRecursive(result, actions);
       }
 
@@ -180,13 +186,13 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   }
 
   private static void collectRecursive(Map<String, ActionOrGroup> result, Actions actions) {
-    for (Action action : actions.getActions()) {
+    for (Action action: actions.getActions()) {
       final String name = getName(action);
       if (!StringUtil.isEmptyOrSpaces(name)) {
         result.put(name, action);
       }
     }
-    for (Group group : actions.getGroups()) {
+    for (Group group: actions.getGroups()) {
       final String name = getName(group);
       if (!StringUtil.isEmptyOrSpaces(name)) {
         result.put(name, group);
