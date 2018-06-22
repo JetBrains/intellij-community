@@ -72,7 +72,9 @@ class GutterFixture(private val myIde: IdeFrameFixture) {
     }
     catch (e: WaitTimedOutError) {
       // time is out and expected icons either not found at all or not found in expected quantity
-      throw  AssertionError("Gutter icons ${expectedIcons.map { "${it.key}(${it.value})" }} not found. Actual state is ${gutterIcons.filterValues { it.isNotEmpty() }}")
+      throw  AssertionError(
+        "Gutter icons ${expectedIcons.map { "${it.key}(${it.value})" }} not found. " +
+        "Actual state is ${gutterIcons.filterValues { it.isNotEmpty() }}")
     }
   }
 
@@ -91,7 +93,8 @@ class GutterFixture(private val myIde: IdeFrameFixture) {
    *
    * @see GutterFixture.GutterIcon
    */
-  fun containsGutterIcon(gutterIcon: GutterIcon, line: Int) = isGutterIconPresent(gutterIcon) && gutterIcons.getValue(gutterIcon).contains(line)
+  fun containsGutterIcon(gutterIcon: GutterIcon, line: Int) =
+    isGutterIconPresent(gutterIcon) && gutterIcons.getValue(gutterIcon).contains(line)
 
   fun isGutterIconPresent(gutterIcon: GutterIcon) = gutterIcons.getValue(gutterIcon).isNotEmpty()
 
