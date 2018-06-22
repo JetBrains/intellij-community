@@ -155,8 +155,10 @@ public class RedundantStreamOptionalCallInspection extends AbstractBaseJavaLocal
                 if ("toSet".equals(furtherCallName) || "toCollection".equals(furtherCallName)) {
                   additionalFix = new CollectToOrderedSetFix();
                 }
-                register(call, InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName),
-                         additionalFix);
+                String message = "sorted".equals(furtherCallName) ?
+                                 InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted.twice") :
+                                 InspectionsBundle.message("inspection.redundant.stream.optional.call.explanation.sorted", furtherCallName);
+                register(call, message, additionalFix);
               }
             }
             break;
