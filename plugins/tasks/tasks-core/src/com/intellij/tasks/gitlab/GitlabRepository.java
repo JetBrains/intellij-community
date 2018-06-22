@@ -2,6 +2,7 @@ package com.intellij.tasks.gitlab;
 
 import com.google.gson.Gson;
 import com.google.gson.reflect.TypeToken;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.Task;
@@ -37,6 +38,7 @@ import static com.intellij.tasks.impl.httpclient.TaskResponseUtil.GsonSingleObje
  */
 @Tag("Gitlab")
 public class GitlabRepository extends NewBaseRepositoryImpl {
+  private static final Logger LOG = Logger.getInstance(GitlabRepository.class);
 
   enum ApiVersion {V3, V4}
 
@@ -282,25 +284,15 @@ public class GitlabRepository extends NewBaseRepositoryImpl {
   @NotNull
   private ApiVersion fetchApiVersion(@NotNull HttpGet request) throws IOException {
     final HttpResponse response = getHttpClient().execute(request);
-    if (response.getStatusLine().getStatusCode() == HttpStatus.SC_OK) {
-      return ApiVersion.V4;
-    }
     // The same endpoint for API version 3 is either unavailable (before v8.13) or 410 Gone.
-    return ApiVersion.V3;
+    final ApiVersion version = response.getStatusLine().getStatusCode() == HttpStatus.SC_OK ? ApiVersion.V4 : ApiVersion.V3;
+    LOG.debug("Version " + version + " of Gitlab API is discovered at " + getUrl());
+    return version;
   }
 
   @NotNull
   private HttpGet getApiVersionRequest() {
     return new HttpGet(StringUtil.trimEnd(getUrl(), "/") + "/api/v4/version");
-  }
-
-  @Nullable
-  public ApiVersion getApiVersion() {
-    return myApiVersion;
-  }
-
-  public void setApiVersion(@Nullable ApiVersion apiVersion) {
-    myApiVersion = apiVersion;
   }
 
   @TestOnly
