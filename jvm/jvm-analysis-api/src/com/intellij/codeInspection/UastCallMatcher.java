@@ -2,6 +2,8 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiClass;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiType;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.ApiStatus;
@@ -58,6 +60,7 @@ public interface UastCallMatcher {
 
   //TODO support primitive types for receiver/return types and arguments
   //TODO support static methods
+  //TODO support inheritors for classFqn
   class SimpleUastCallMatcher implements UastCallMatcher {
     // for all fields 'null' = doesn't matter
 
@@ -127,8 +130,8 @@ public interface UastCallMatcher {
     }
 
     private boolean classMatches(@NotNull UCallableReferenceExpression expression) {
-      if (myClassFqn == null) return true;
-      return false; //TODO implement
+      return myClassFqn == null ||
+             myClassFqn.equals(AnalysisUastUtil.getCallableReferenceClass(expression));
     }
 
     private boolean returnTypeMatches(@NotNull UCallExpression expression) {
@@ -138,7 +141,10 @@ public interface UastCallMatcher {
 
     private boolean returnTypeMatches(@NotNull UCallableReferenceExpression expression) {
       if (myReturnTypeClassFqn == null) return true;
-      return false; //TODO implement
+      PsiElement resolved = expression.resolve();
+      if (!(resolved instanceof PsiMethod)) return false;
+      //TODO doesn't work for generics
+      return myReturnTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(((PsiMethod)resolved).getReturnType()));
     }
 
     private boolean argumentsMatch(@NotNull UCallExpression expression) {
