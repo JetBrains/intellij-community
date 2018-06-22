@@ -94,6 +94,7 @@ public class CustomWagonManager extends DefaultWagonManager {
       if (e.getMessage() != null && e.getMessage().startsWith("Invalid uri")) {
         throw new ResourceDoesNotExistException(e.getMessage(), e);
       }
+      throw e;
     }
   }
 
