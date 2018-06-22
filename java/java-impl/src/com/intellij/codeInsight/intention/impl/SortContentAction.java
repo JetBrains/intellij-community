@@ -773,8 +773,11 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
   private static class EnumConstantDeclarationSortable extends Sortable<EnumConstantDeclarationSortable.EnumContext> {
     static class EnumContext {
       private final @NotNull List<PsiEnumConstant> myEnumConstants;
+      private final @NotNull PsiElement myFirst;
 
-      EnumContext(@NotNull List<PsiEnumConstant> enumConstants) {myEnumConstants = enumConstants;}
+      EnumContext(@NotNull List<PsiEnumConstant> enumConstants, @NotNull PsiElement first) {myEnumConstants = enumConstants;
+        myFirst = first;
+      }
     }
 
     @Override
@@ -804,7 +807,11 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       if (!aClass.isEnum()) return null;
       PsiEnumConstant[] constants = PsiTreeUtil.getChildrenOfType(aClass, PsiEnumConstant.class);
       if (constants == null || constants.length < MIN_ELEMENTS_COUNT) return null;
-      return new EnumContext(Arrays.asList(constants));
+      PsiElement lBrace = aClass.getLBrace();
+      if (lBrace == null) return null;
+      PsiElement nextAfterLbrace = lBrace.getNextSibling();
+      if (nextAfterLbrace == null) return null;
+      return new EnumContext(Arrays.asList(constants), nextAfterLbrace);
     }
 
     @NotNull
@@ -815,7 +822,7 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
 
     @Override
     PsiElement getFirst(EnumContext context) {
-      return context.myEnumConstants.get(0);
+      return context.myFirst;
     }
 
     @Override
@@ -854,21 +861,35 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
         sb.append(elementToPreserve.getText());
         elementToPreserve = elementToPreserve.getNextSibling();
       }
-      PsiClass newEnum = createEnum(aClass, sb.toString());
+      Project project = aClass.getProject();
+      PsiClass newEnum = createEnum(project, sb.toString());
       if (newEnum == null) return;
       PsiElement newClassLBrace = newEnum.getLBrace();
       PsiElement newClassRBrace = newEnum.getRBrace();
       if (newClassLBrace == null || newClassRBrace == null) return;
-      aClass.deleteChildRange(lBrace.getNextSibling(), rBrace.getPrevSibling());
-      aClass.addRangeAfter(newClassLBrace.getNextSibling(), newClassRBrace.getPrevSibling(), lBrace);
+      aClass.deleteChildRange(lBrace, rBrace);
+
+      // Can't use addRangeAfter: when there are whitespaces with comments semicolon inserted
+      StringBuilder finalText = new StringBuilder();
+      for(PsiElement current = newClassLBrace.getNextSibling(); current != newClassRBrace; current = current.getNextSibling()) {
+        finalText.append(current.getText());
+      }
+      PsiClass anEnum = createEnum(project, finalText.toString(), aClass.getText());
+      if (anEnum != null) {
+        aClass.replace(anEnum);
+      }
     }
 
-    private static PsiClass createEnum(PsiClass aClass, String text) {
-      PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(aClass.getProject())
-                                                .createFileFromText("_DUMMY_", JavaFileType.INSTANCE, "enum __DUMMY__ {" + text + "}");
+    private static PsiClass createEnum(Project project, String text, String prefix) {
+      PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(project)
+                                                    .createFileFromText("_DUMMY_", JavaFileType.INSTANCE, prefix + " {" + text + "}");
       PsiClass[] classes = file.getClasses();
       if (classes.length != 1) return null;
       return classes[0];
+    }
+
+    private static PsiClass createEnum(Project project, String text) {
+      return createEnum(project, text, "enum __DUMMY__");
     }
   }
 }
