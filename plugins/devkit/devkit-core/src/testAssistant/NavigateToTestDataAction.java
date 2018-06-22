@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -50,6 +50,12 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
+    final Editor editor = e.getData(CommonDataKeys.EDITOR);
+
+    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
+    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) :
+                                popupFactory.guessBestPopupLocation(dataContext);
+
     List<String> fileNames = findTestDataFiles(dataContext);
     if (fileNames == null || fileNames.isEmpty()) {
       String testData = guessTestData(dataContext);
@@ -61,10 +67,6 @@ public class NavigateToTestDataAction extends AnAction implements TestTreeViewAc
       }
       fileNames = Collections.singletonList(testData);
     }
-
-    final Editor editor = e.getData(CommonDataKeys.EDITOR);
-    final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
-    final RelativePoint point = editor != null ? popupFactory.guessBestPopupLocation(editor) : popupFactory.guessBestPopupLocation(dataContext);
 
     TestDataNavigationHandler.navigate(point, fileNames, project);
   }
