@@ -627,7 +627,7 @@ class GitBranchPopupActions {
     private final String myBranchName;
 
     public CheckoutWithRebaseAction(@NotNull Project project, @NotNull List<GitRepository> repositories, @NotNull String branchName) {
-      super("Checkout with Rebase",
+      super("Checkout and Rebase onto Current",
             String.format("Checkout %s, and rebase it onto %s in one step (like `git rebase HEAD %s`)",
                           getBranchPresentation(branchName), getCurrentBranchPresentation(repositories), branchName),
             null);
