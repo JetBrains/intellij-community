@@ -93,7 +93,7 @@ public class ExecutionNode extends CachingSimpleNode {
     }
     if (StringUtil.isNotEmpty(hint)) {
       if (isNotEmptyName) {
-        hint = "  " + hint;
+        hint = " " + hint;
       }
       presentation.addText(hint, SimpleTextAttributes.GRAY_ATTRIBUTES);
     }
