@@ -524,7 +524,7 @@ NUMBER ('0yabc0')
     
     CharSequence bombed = new SlowCharSequence(text)
     ThrowableRunnable cl = { LexerTestCase.printTokens(bombed, 0, new CustomFileTypeLexer(table)) } as ThrowableRunnable
-    PlatformTestUtil.startPerformanceTest(name, 4500, cl).assertTiming()
+    PlatformTestUtil.startPerformanceTest(name, 5_000, cl).assertTiming()
   }
 
 }
