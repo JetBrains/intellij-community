@@ -74,19 +74,26 @@ public class CustomWagonManager extends DefaultWagonManager {
 
   @Override
   public void getArtifact(Artifact artifact, ArtifactRepository repository) throws TransferFailedException, ResourceDoesNotExistException {
-    if (myInBatchResolve.get() == Boolean.TRUE) {
-      super.getArtifact(artifact, repository);
-      return;
-    }
-
-    if (!takeFromCache(artifact)) {
-      try {
+    try {
+      if (myInBatchResolve.get() == Boolean.TRUE) {
         super.getArtifact(artifact, repository);
+        return;
       }
-      catch (WagonException ignore) {
+
+      if (!takeFromCache(artifact)) {
+        try {
+          super.getArtifact(artifact, repository);
+        }
+        catch (WagonException ignore) {
+        }
+        cache(artifact);
+        myUnresolvedCollector.collectAndSetResolved(artifact);
       }
-      cache(artifact);
-      myUnresolvedCollector.collectAndSetResolved(artifact);
+    }
+    catch (IllegalArgumentException e) {
+      if (e.getMessage() != null && e.getMessage().startsWith("Invalid uri")) {
+        throw new ResourceDoesNotExistException(e.getMessage(), e);
+      }
     }
   }
 
