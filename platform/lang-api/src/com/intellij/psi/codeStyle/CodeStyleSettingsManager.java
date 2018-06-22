@@ -48,14 +48,11 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   public volatile String PREFERRED_PROJECT_CODE_STYLE;
   private volatile CodeStyleSettings myTemporarySettings;
 
-  private List<CodeStyleSettingsListener> myListeners = new ArrayList<>();
+  private final List<CodeStyleSettingsListener> myListeners = new ArrayList<>();
 
-  /**
-   * @deprecated see comments for {@link #getSettings(Project)}
-   */
-  @Deprecated
   public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
-    if (project == null || project.isDefault()) return getInstance();
+    if (project == null || project.isDefault()) //noinspection deprecation
+      return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
     projectSettingsManager.initProjectSettings(project);
     return projectSettingsManager;
@@ -88,6 +85,10 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
     return getInstance(project).getCurrentSettings();
   }
 
+  /**
+   * @deprecated see comments for {@link #getSettings(Project)}
+   */
+  @Deprecated
   @NotNull
   public CodeStyleSettings getCurrentSettings() {
     CodeStyleSettings temporarySettings = myTemporarySettings;

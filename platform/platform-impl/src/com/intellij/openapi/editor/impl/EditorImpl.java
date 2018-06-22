@@ -586,7 +586,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myDocument.addPropertyChangeListener(propertyChangeListener);
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
 
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(myProject).addListener(this);
   }
 
@@ -947,7 +946,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
 
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
 
     if (myBulkUpdateListener != null) {

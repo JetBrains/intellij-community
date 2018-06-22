@@ -97,7 +97,6 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Override
   protected void registerCustomListeners() {
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(getProject()).addListener(this);
   }
 
@@ -142,7 +141,6 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @Override
   public void dispose() {
     if (!myProject.isDisposed()) {
-      //noinspection deprecation
       CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
     }
     super.dispose();

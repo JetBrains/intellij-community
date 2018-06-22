@@ -19,7 +19,7 @@ package com.intellij.application.options;
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
-import com.intellij.application.options.codeStyle.CodeStyleSettingsListener;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -205,7 +205,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       myModel = new CodeStyleSchemesModel(myProject);
       myRootSchemesPanel = new CodeStyleSchemesPanel(myModel, 0);
 
-      myModel.addListener(new CodeStyleSettingsListener(){
+      myModel.addListener(new CodeStyleSchemesModelListener(){
         @Override
         public void currentSchemeChanged(final Object source) {
           if (source != myRootSchemesPanel) {

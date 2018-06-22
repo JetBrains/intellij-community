@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.EventListener;
 
-public interface CodeStyleSettingsListener extends EventListener {
+public interface CodeStyleSchemesModelListener extends EventListener {
   default void currentSchemeChanged(Object source) {
   }
 
