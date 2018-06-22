@@ -316,7 +316,7 @@ public class PyJoinLinesHandler implements JoinRawLinesHandlerDelegate {
 
   private static int getStringToJoinMaxLength(Request request, int symbolsToSkip) {
     int leftLineStartOffset = getLeftLineStartOffset(request);
-    final int margin = CodeStyle.getLanguageSettings(request.leftElem.getContainingFile(), PythonLanguage.getInstance()).RIGHT_MARGIN;
+    final int margin = CodeStyle.getSettings(request.leftElem.getContainingFile()).getRightMargin(PythonLanguage.getInstance());
     int leftLineLength = request.document.getLineEndOffset(request.document.getLineNumber(leftLineStartOffset)) - leftLineStartOffset;
     return margin - leftLineLength - symbolsToSkip;
   }
