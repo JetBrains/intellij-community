@@ -33,7 +33,6 @@ import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.ui.DocumentAdapter
 import com.intellij.ui.components.JBCheckBox
-import com.intellij.util.SystemProperties
 import com.intellij.util.ui.FormBuilder
 import com.jetbrains.python.packaging.PyPackageManager
 import com.jetbrains.python.sdk.*
@@ -149,9 +148,6 @@ class PyAddNewVirtualEnvPanel(private val project: Project?,
     }
   }
 
-  private val projectBasePath: @SystemIndependent String
-    get() = newProjectPath ?: module?.basePath ?: project?.basePath ?: userHome
-
-  private val userHome: @SystemIndependent String
-    get() = FileUtil.toSystemIndependentName(SystemProperties.getUserHome())
+  private val projectBasePath: @SystemIndependent String?
+    get() = newProjectPath ?: module?.basePath ?: project?.basePath
 }
