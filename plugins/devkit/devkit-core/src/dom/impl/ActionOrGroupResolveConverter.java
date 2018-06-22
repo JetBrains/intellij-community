@@ -28,10 +28,7 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.util.PairProcessor;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomTarget;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -95,24 +92,25 @@ public class ActionOrGroupResolveConverter extends ResolvingConverter<ActionOrGr
   @Nullable
   @Override
   public LookupElement createLookupElement(ActionOrGroup actionOrGroup) {
-    if (actionOrGroup instanceof Action) {
-      Action action = (Action)actionOrGroup;
+    PsiElement psiElement = getPsiElement(actionOrGroup);
+    String name = StringUtil.notNullize(getName(actionOrGroup), "<invalid name>");
+    LookupElementBuilder builder = psiElement == null ? LookupElementBuilder.create(name) :
+                                   LookupElementBuilder.create(psiElement, name);
 
-      PsiElement psiElement = getPsiElement(action);
-      String name = StringUtil.notNullize(getName(action), "<invalid name>");
-      LookupElementBuilder builder = psiElement == null ?  LookupElementBuilder.create(name) :
-                                     LookupElementBuilder.create(psiElement, name);
+    builder = builder.withIcon(ElementPresentationManager.getIcon(actionOrGroup));
 
-      final String text = action.getText().getStringValue();
-      if (StringUtil.isNotEmpty(text)) {
-        String withoutMnemonic = StringUtil.replace(text, "_", "");
-        builder = builder.withTailText(" \"" + withoutMnemonic + "\"", true);
-      }
-
-      return builder;
+    final String text = actionOrGroup.getText().getStringValue();
+    if (StringUtil.isNotEmpty(text)) {
+      String withoutMnemonic = StringUtil.replace(text, "_", "");
+      builder = builder.withTailText(" \"" + withoutMnemonic + "\"", true);
     }
 
-    return super.createLookupElement(actionOrGroup);
+    final String description = actionOrGroup.getDescription().getStringValue();
+    if (StringUtil.isNotEmpty(description)) {
+      builder = builder.withTypeText(description);
+    }
+
+    return builder;
   }
 
   protected boolean isRelevant(ActionOrGroup actionOrGroup) {
