@@ -15,6 +15,6 @@ fun CodeReviewWithCount.toReview(client: KCircletClient): Review =
     Review(
         id = review.id,
         title = review.title,
-        createdBy = review.createdBy.resolve(client),
+        createdBy = review.createdBy.resolve(),
         timestamp = DateTime(review.timestamp)
     )
