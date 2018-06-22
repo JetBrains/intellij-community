@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.bugs.EqualsWithItselfInspection;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.*;
 import one.util.streamex.IntStreamEx;
@@ -690,6 +691,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private void reportConstantBoolean(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
+    if (shouldBeSuppressed(psiAnchor)) return;
     boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
     if (!DONT_REPORT_TRUE_ASSERT_STATEMENTS || !isAssertion) {
       List<LocalQuickFix> fixes = new ArrayList<>();
@@ -704,6 +706,17 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                                  "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
       holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
     }
+  }
+
+  private static boolean shouldBeSuppressed(PsiElement anchor) {
+    if (!(anchor instanceof PsiExpression)) return false;
+    PsiExpression expression = (PsiExpression)anchor;
+    while (expression != null && BoolUtils.isNegation(expression)) {
+      expression = BoolUtils.getNegated(expression);
+    }
+    PsiMethodCallExpression call = ObjectUtils.tryCast(expression, PsiMethodCallExpression.class);
+    // Reported by "Equals with itself" inspection; avoid double reporting
+    return call != null && EqualsWithItselfInspection.isEqualsWithItself(call);
   }
 
   private static LocalQuickFix createReplaceWithNullCheckFix(PsiElement psiAnchor, boolean evaluatesToTrue) {
