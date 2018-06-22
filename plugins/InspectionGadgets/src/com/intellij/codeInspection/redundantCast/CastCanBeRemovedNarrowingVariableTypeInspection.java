@@ -4,12 +4,14 @@ package com.intellij.codeInspection.redundantCast;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.RedundantCastUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.HighlightUtils;
 import org.jetbrains.annotations.NotNull;
 
 import static com.intellij.util.ObjectUtils.tryCast;
@@ -51,7 +53,7 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
         if (redundantCast) {
           String message = InspectionsBundle
             .message("inspection.cast.can.be.removed.narrowing.variable.type.message", variable.getName(), castType.getPresentableText());
-          holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType));
+          holder.registerProblem(castTypeElement, message, new CastCanBeRemovedNarrowingVariableTypeFix(variable, castType, isOnTheFly));
         }
       }
     };
@@ -106,10 +108,12 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
   private static class CastCanBeRemovedNarrowingVariableTypeFix implements LocalQuickFix {
     private final String myVariableName;
     private final String myType;
+    private final boolean myOnTheFly;
 
-    public CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type) {
+    public CastCanBeRemovedNarrowingVariableTypeFix(PsiLocalVariable variable, PsiType type, boolean onTheFly) {
       myVariableName = variable.getName();
       myType = type.getPresentableText();
+      myOnTheFly = onTheFly;
     }
 
     @NotNull
@@ -132,7 +136,10 @@ public class CastCanBeRemovedNarrowingVariableTypeInspection extends AbstractBas
       if (var == null) return;
       PsiTypeElement castType = cast.getCastType();
       if (castType == null) return;
-      var.getTypeElement().replace(castType);
+      PsiElement newTypeElement = JavaCodeStyleManager.getInstance(project).shortenClassReferences(var.getTypeElement().replace(castType));
+      if (myOnTheFly) {
+        HighlightUtils.highlightElement(newTypeElement);
+      }
       for (PsiReference reference : ReferencesSearch.search(var).findAll()) {
         if (reference instanceof PsiReferenceExpression) {
           PsiTypeCastExpression castOccurrence =
