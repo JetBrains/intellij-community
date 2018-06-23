@@ -76,7 +76,9 @@ patchPluginXml {
 
   version pluginVersion + "-" + ideaVersion
   // use open until build for last release
-  untilBuild ""
+  if(ideaVersion.contains("LATEST-EAP-SNAPSHOT")) {
+    untilBuild ""
+  }
 }
 
 publishPlugin {
