@@ -162,6 +162,14 @@ class YAMLFormattingContext {
       return computeKeyValuePairIndent(node);
     }
     else {
+      if (nodeType == YAMLTokenTypes.COMMENT) {
+        if (parentType == YAMLElementTypes.SEQUENCE) {
+          return computeSequenceItemIndent(node);
+        }
+        if (parentType == YAMLElementTypes.MAPPING) {
+          return computeKeyValuePairIndent(node);
+        }
+      }
       return YAMLElementTypes.TOP_LEVEL.contains(parentType) ? SAME_AS_PARENT_INDENT : null;
     }
   }
