@@ -16,24 +16,31 @@
 package com.intellij.openapi.vcs.roots;
 
 import com.intellij.ProjectTopics;
+import com.intellij.openapi.application.ReadAction;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vcs.VcsRootChecker;
-import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.util.Alarm;
-import com.intellij.util.messages.MessageBus;
+import com.intellij.vfs.AsyncVfsEventsListener;
+import com.intellij.vfs.AsyncVfsEventsPostProcessor;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
-public class VcsRootScanner implements BulkFileListener, ModuleRootListener {
+public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListener {
 
   @NotNull private final VcsRootProblemNotifier myRootProblemNotifier;
+  @NotNull private final Project myProject;
+  @NotNull private final ProjectRootManager myProjectManager;
   @NotNull private final List<VcsRootChecker> myCheckers;
 
   @NotNull private final Alarm myAlarm;
@@ -44,24 +51,49 @@ public class VcsRootScanner implements BulkFileListener, ModuleRootListener {
   }
 
   private VcsRootScanner(@NotNull Project project, @NotNull List<VcsRootChecker> checkers) {
+    myProject = project;
+    myProjectManager = ProjectRootManager.getInstance(project);
     myRootProblemNotifier = VcsRootProblemNotifier.getInstance(project);
     myCheckers = checkers;
 
-    final MessageBus messageBus = project.getMessageBus();
-    messageBus.connect().subscribe(VirtualFileManager.VFS_CHANGES, this);
-    messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
+    AsyncVfsEventsPostProcessor.getInstance().addListener(this, project);
+    project.getMessageBus().connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
   }
 
   @Override
-  public void after(@NotNull List<? extends VFileEvent> events) {
+  public void filesChanged(@NotNull List<VFileEvent> events) {
     for (VFileEvent event : events) {
-      String filePath = event.getPath();
-      if (myCheckers.stream().anyMatch(it -> it.isVcsDir(filePath))) {
-        scheduleScan();
+      VirtualFile file = event.getFile();
+      if (file != null && file.isDirectory()) {
+        checkFilesRecursivelyWithoutExcluded(file);
       }
     }
+  }
+
+  private void checkFilesRecursivelyWithoutExcluded(@NotNull VirtualFile root) {
+    VfsUtilCore.visitChildrenRecursively(root, new VirtualFileVisitor() {
+      @NotNull
+      @Override
+      public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {
+        ProgressManager.checkCanceled();
+        if (ReadAction.compute(() -> myProject.isDisposed() || myProjectManager.getFileIndex().isExcluded(file))) {
+          return SKIP_CHILDREN;
+        }
+
+        if (isVcsDir(file.getPath())) {
+          scheduleScan();
+          return skipTo(root);
+        }
+
+        return CONTINUE;
+      }
+    });
+  }
+
+  private boolean isVcsDir(@NotNull String filePath) {
+    return myCheckers.stream().anyMatch(it -> it.isVcsDir(filePath));
   }
 
   @Override
