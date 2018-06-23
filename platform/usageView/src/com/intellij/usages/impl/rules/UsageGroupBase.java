@@ -3,6 +3,7 @@ package com.intellij.usages.impl.rules;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.usages.UsageGroup;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,7 +53,7 @@ public abstract class UsageGroupBase implements UsageGroup {
   }
 
   @Override
-  public int compareTo(UsageGroup o) {
+  public int compareTo(@NotNull UsageGroup o) {
     if (!(o instanceof UsageGroupBase)) {
       return -1;
     }

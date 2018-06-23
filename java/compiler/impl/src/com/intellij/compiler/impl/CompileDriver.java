@@ -271,8 +271,7 @@ public class CompileDriver {
           }
         }
         else {
-          final CompilerMessageCategory category = kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.ERROR ? CompilerMessageCategory.ERROR
-            : kind == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.WARNING ? CompilerMessageCategory.WARNING : CompilerMessageCategory.INFORMATION;
+          final CompilerMessageCategory category = convertToCategory(kind, CompilerMessageCategory.INFORMATION);
 
           String sourceFilePath = message.hasSourceFilePath() ? message.getSourceFilePath() : null;
           if (sourceFilePath != null) {
@@ -768,6 +767,18 @@ public class CompileDriver {
     }
     else {
       service.openProjectSettings();
+    }
+  }
+
+  public static CompilerMessageCategory convertToCategory(CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind kind, CompilerMessageCategory defaultCategory) {
+    switch(kind) {
+      case ERROR: case INTERNAL_BUILDER_ERROR:
+        return CompilerMessageCategory.ERROR;
+      case WARNING: return CompilerMessageCategory.WARNING;
+      case INFO: return CompilerMessageCategory.INFORMATION;
+      case JPS_INFO: return CompilerMessageCategory.INFORMATION;
+      case OTHER: return CompilerMessageCategory.INFORMATION;
+      default: return defaultCategory;
     }
   }
 

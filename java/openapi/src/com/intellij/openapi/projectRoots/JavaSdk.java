@@ -33,20 +33,24 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
   public abstract boolean isOfVersionOrHigher(@NotNull Sdk sdk, @NotNull JavaSdkVersion version);
 
   /** @deprecated use {@link JdkUtil#checkForJdk} (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean checkForJdk(@NotNull File file) {
     return JdkUtil.checkForJdk(file);
   }
 
   /** @deprecated use {@link JdkUtil#checkForJre} (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean checkForJre(@NotNull String file) {
     return JdkUtil.checkForJre(file);
   }
 
   /** @deprecated use {@link SdkVersionUtil#getJdkVersionInfo} (to be removed in IDEA 2019) */
+  @Deprecated
   public static String getJdkVersion(@NotNull String sdkHome) {
     return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
 
   /** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */
+  @Deprecated
   public abstract JavaSdkVersion getVersion(@NotNull String versionString);
 }

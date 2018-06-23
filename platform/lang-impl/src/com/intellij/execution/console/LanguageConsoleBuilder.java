@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -96,7 +82,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.psi.PsiCodeFragment}
+   * @see com.intellij.psi.PsiCodeFragment
    */
   public LanguageConsoleBuilder psiFileFactory(@NotNull PairFunction<VirtualFile, Project, PsiFile> value) {
     psiFileFactory = value;
@@ -148,7 +134,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
    */
   @SuppressWarnings("UnusedDeclaration")
   public LanguageConsoleBuilder oneLineInput() {
@@ -157,7 +143,7 @@ public final class LanguageConsoleBuilder {
   }
 
   /**
-   * @see {@link com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)}
+   * @see com.intellij.openapi.editor.ex.EditorEx#setOneLineMode(boolean)
    */
   public LanguageConsoleBuilder oneLineInput(boolean value) {
     oneLineInput = value;
@@ -194,7 +180,7 @@ public final class LanguageConsoleBuilder {
     return consoleView;
   }
 
-  private static class MyHelper extends LanguageConsoleImpl.Helper {
+  public static class MyHelper extends LanguageConsoleImpl.Helper {
     private final PairFunction<VirtualFile, Project, PsiFile> psiFileFactory;
 
     GutteredLanguageConsole console;
@@ -221,7 +207,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  private final static class GutteredLanguageConsole extends LanguageConsoleImpl {
+  public static class GutteredLanguageConsole extends LanguageConsoleImpl {
     private final GutterContentProvider gutterContentProvider;
 
     public GutteredLanguageConsole(@NotNull MyHelper helper, @Nullable GutterContentProvider gutterContentProvider) {
@@ -368,7 +354,7 @@ public final class LanguageConsoleBuilder {
         this.lineEndGutter = lineEndGutter;
 
         // console view can invoke markupModel.removeAllHighlighters(), so, we must be aware of it
-        getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener.Adapter() {
+        getHistoryViewer().getMarkupModel().addMarkupModelListener(GutteredLanguageConsole.this, new MarkupModelListener() {
           @Override
           public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
             if (lineSeparatorPainter == highlighter) {
@@ -467,7 +453,7 @@ public final class LanguageConsoleBuilder {
     }
   }
 
-  private static class MyConsoleRootType extends ConsoleRootType {
+  public static class MyConsoleRootType extends ConsoleRootType {
     public MyConsoleRootType(String historyType) {
       super(historyType, null);
     }

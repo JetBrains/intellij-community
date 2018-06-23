@@ -12,7 +12,7 @@ public class Main {
 
   private static long testFunctionInField(List<String> strings) {
       long count = 0L;
-      for (String string : strings) {
+      for (String string: strings) {
           if (nonEmpty.test(string)) {
               count++;
           }
@@ -23,7 +23,7 @@ public class Main {
   private Set<Identifier> test(Set<Identifier> identifiers) {
       Set<Identifier> set = new HashSet<>();
       Predicate<? super Identifier> predicate = isReady(identifiers);
-      for (Identifier identifier : identifiers) {
+      for (Identifier identifier: identifiers) {
           if (predicate.test(identifier)) {
               set.add(identifier);
           }
@@ -40,9 +40,9 @@ public class Main {
 
   private static long testStreamOfFunctions(List<Predicate<String>> predicates, List<String> strings) {
       long count = 0L;
-      for (Predicate<String> pred : predicates) {
+      for (Predicate<String> pred: predicates) {
           if (pred != null) {
-              for (String string : strings) {
+              for (String string: strings) {
                   if (pred.test(string)) {
                       count++;
                   }

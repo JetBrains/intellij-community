@@ -42,7 +42,7 @@ public class FileReferenceHelperRegistrar {
    */
   @Deprecated
   @NotNull
-  public static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
+  static <T extends PsiFileSystemItem> FileReferenceHelper getNotNullHelper(@NotNull T psiFileSystemItem) {
     FileReferenceHelper helper = getHelper(psiFileSystemItem);
     if (helper != null) {
       return helper;
@@ -55,7 +55,7 @@ public class FileReferenceHelperRegistrar {
    * @deprecated this method is broken, please avoid using it, use getHelpers() instead
    */
   @Deprecated
-  public static <T extends PsiFileSystemItem> FileReferenceHelper getHelper(@NotNull final T psiFileSystemItem) {
+  private static <T extends PsiFileSystemItem> FileReferenceHelper getHelper(@NotNull final T psiFileSystemItem) {
     final VirtualFile file = psiFileSystemItem.getVirtualFile();
     if (file == null) return null;
     final Project project = psiFileSystemItem.getProject();

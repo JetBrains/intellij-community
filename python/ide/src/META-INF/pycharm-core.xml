@@ -102,7 +102,7 @@
       <add-to-group group-id="FileOpenGroup" anchor="first"/>
     </group>
 
-    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As..">
+    <action id="SaveAs" class="com.intellij.ide.actions.SaveAsAction" text="Save As...">
       <add-to-group group-id="FileOpenGroup" anchor="after" relative-to-action="OpenFile"/>
     </action>
 
@@ -112,7 +112,7 @@
     <group id="WelcomeScreen.Platform.NewProject">
       <action id="WelcomeScreen.CreateDirectoryProject" class="com.jetbrains.python.newProject.steps.PyCharmNewProjectStep"
               icon="AllIcons.Welcome.CreateNewProject"/>
-      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.General.OpenProject"/>
+      <action id="WelcomeScreen.OpenDirectoryProject" class="com.intellij.ide.actions.OpenFileAction" icon="AllIcons.Actions.Menu_open"/>
 
       <add-to-group group-id="WelcomeScreen.QuickStart" anchor="first"/>
     </group>

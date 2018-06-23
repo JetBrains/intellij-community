@@ -16,7 +16,7 @@
 package com.intellij.openapi.project;
 
 /**
- * @deprecated Use ProjectManagerListener
+ * @deprecated Use {@link ProjectManagerListener} instead
  */
 @Deprecated
 public abstract class ProjectManagerAdapter implements ProjectManagerListener {

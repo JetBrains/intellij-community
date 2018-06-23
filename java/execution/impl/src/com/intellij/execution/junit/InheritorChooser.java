@@ -32,7 +32,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.PsiClassUtil;
 import com.intellij.ui.ColoredListCellRenderer;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ArrayUtil;
 
 import javax.swing.*;
@@ -126,18 +125,19 @@ public class InheritorChooser {
 
       //suggest to run all inherited tests 
       classes.add(0, null);
-      final JBList list = new JBList(classes);
-      list.setCellRenderer(renderer);
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(classes)
+        .setRenderer(renderer)
         .setTitle("Choose executable classes to run " + (psiMethod != null ? psiMethod.getName() : containingClass.getName()))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(() -> {
-          final Object[] values = list.getSelectedValues();
-          if (values == null) return;
-          chooseAndPerform(values, psiMethod, context, performRunnable, classes);
-        }).createPopup().showInBestPositionFor(context.getDataContext());
+        .setItemsChosenCallback((values) -> {
+          if (values.isEmpty()) return;
+          chooseAndPerform(values.toArray(), psiMethod, context, performRunnable, classes);
+        })
+        .createPopup()
+        .showInBestPositionFor(context.getDataContext());
       return true;
     }
     return false;

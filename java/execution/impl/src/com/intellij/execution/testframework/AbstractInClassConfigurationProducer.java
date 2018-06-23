@@ -153,7 +153,7 @@ public abstract class AbstractInClassConfigurationProducer<T extends JavaTestCon
       PsiFile containingFile = psiClass.getContainingFile();
       LOG.error("No module found", new Attachment("context.txt",
                                                   "generated name:" + configuration.getName() +
-                                                  "valid: " + psiClass.isValid() +
+                                                  "; valid: " + psiClass.isValid() +
                                                   "; physical: " + psiClass.isPhysical() +
                                                   "; className: " + psiClass.getQualifiedName() +
                                                   "; file: " + containingFile +

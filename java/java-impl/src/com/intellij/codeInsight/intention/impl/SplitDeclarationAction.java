@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightUtilCore;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Editor;
@@ -23,11 +24,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.impl.source.tree.Factory;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
-import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -145,15 +148,13 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
       PsiLocalVariable var = (PsiLocalVariable)decl.getDeclaredElements()[0];
       var.normalizeDeclaration();
       PsiExpressionStatement statement = (PsiExpressionStatement)JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory()
-        .createStatementFromText(var.getName() + "=xxx;", null);
+        .createStatementFromText(var.getName() + "=xxx;", decl);
       statement = (PsiExpressionStatement)CodeStyleManager.getInstance(project).reformat(statement);
       PsiAssignmentExpression assignment = (PsiAssignmentExpression)statement.getExpression();
-      CommentTracker commentTracker = new CommentTracker();
       PsiExpression initializer = var.getInitializer();
       PsiExpression rExpression = RefactoringUtil.convertInitializerToNormalExpression(initializer, var.getType());
 
-      commentTracker.replace(assignment.getRExpression(), rExpression);
-      commentTracker.deleteAndRestoreComments(initializer);
+      assignment.getRExpression().replace(rExpression);
 
       PsiElement block = decl.getParent();
       if (block instanceof PsiForStatement) {
@@ -173,7 +174,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         PsiExpressionStatement replaced = (PsiExpressionStatement)decl.replace(statement);
         if (!(parent instanceof PsiCodeBlock)) {
           final PsiBlockStatement blockStatement =
-            (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", null);
+            (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", block);
           final PsiCodeBlock codeBlock = blockStatement.getCodeBlock();
           codeBlock.add(varDeclStatement);
           codeBlock.add(block);
@@ -185,7 +186,17 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         return (PsiAssignmentExpression)replaced.getExpression();
       }
       else {
-        return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, decl)).getExpression();
+        try {
+          PsiElement declaredElement = decl.getDeclaredElements()[0];
+          if (!PsiUtil.isJavaToken(declaredElement.getLastChild(), JavaTokenType.SEMICOLON)) {
+            TreeElement semicolon = Factory.createSingleLeafElement(JavaTokenType.SEMICOLON, ";", 0, 1, null, decl.getManager());
+            CodeInsightUtilCore.forcePsiPostprocessAndRestoreElement(decl.addAfter(semicolon.getPsi(), declaredElement));
+          }
+          return (PsiAssignmentExpression)((PsiExpressionStatement)block.addAfter(statement, decl)).getExpression();
+        }
+        finally {
+          initializer.delete();
+        }
       }
     }
     else {

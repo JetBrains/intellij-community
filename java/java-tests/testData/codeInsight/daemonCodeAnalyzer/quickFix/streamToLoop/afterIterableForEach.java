@@ -6,27 +6,27 @@ import java.util.stream.Stream;
 
 public class Main {
   public void testCast(Object obj, List<Object> list) {
-      for (Number n : ((Iterable<Number>) obj)) {
+      for (Number n: ((Iterable<Number>) obj)) {
           list.add(n);
       }
   }
 
   public static void main(String[] args) {
     List<String> list = Arrays.asList("a", "b");
-      for (String s : list) {
+      for (String s: list) {
           System.out.println(s);
       }
   }
 
   public static <T extends Collection<?>> T test(T collection) {
-      for (Object o : collection) {
+      for (Object o: collection) {
           System.out.println(o);
       }
       return collection;
   }
 
   void testRawTypeSupport(List<List> list) {
-      for (List l : list) {
+      for (List l: list) {
           System.out.println(l.size());
       }
   }
@@ -36,7 +36,7 @@ public class Main {
     Set<? extends SomeInterface> nodes();
 
     default void accept(Visitor visitor) {
-        for (SomeInterface child : new LinkedHashSet<>(this.nodes())) {
+        for (SomeInterface child: new LinkedHashSet<>(this.nodes())) {
             child.accept(visitor);
         }
     }

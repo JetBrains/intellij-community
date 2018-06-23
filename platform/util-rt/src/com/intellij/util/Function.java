@@ -24,9 +24,8 @@ import java.util.Collection;
  *
  * @see Functions for some common implementations
  *
- * Consider to use java.util.function.Function
+ * Consider to use {@link java.util.function.Function} instead
  */
-@SuppressWarnings({"unchecked"})
 public interface Function<Param, Result> {
   Result fun(Param param);
 
@@ -56,18 +55,21 @@ public interface Function<Param, Result> {
 
     @Nullable
     public R fun(P p) {
+      //noinspection unchecked
       return p.getClass().isAssignableFrom(myResultClass) ? (R)p : null;
     }
   }
 
   final class First<P, R extends P> implements Function<P[], R> {
     public R fun(P[] ps) {
+      //noinspection unchecked
       return (R)ps[0];
     }
   }
 
   final class FirstInCollection<P, R extends P> implements Function<Collection<P>, R> {
     public R fun(Collection<P> ps) {
+      //noinspection unchecked
       return (R)ps.iterator().next();
     }
   }

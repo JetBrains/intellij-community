@@ -26,5 +26,6 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="library" scope="TEST" name="assertJ" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
   </component>
 </module>

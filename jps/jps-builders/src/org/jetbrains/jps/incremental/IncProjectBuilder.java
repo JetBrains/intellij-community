@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Predicate;
@@ -836,7 +836,8 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor("IncProjectBuilder executor pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
     private final CompileContext myContext;
     private final AtomicReference<Throwable> myException = new AtomicReference<>();
     private final Object myQueueLock = new Object();
@@ -1295,77 +1296,82 @@ public class IncProjectBuilder {
           }
         }
 
-        BUILDER_CATEGORY_LOOP:
-        for (BuilderCategory category : BuilderCategory.values()) {
-          final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
-          if (category == BuilderCategory.CLASS_POST_PROCESSOR) {
-            // ensure changes from instrumenters are visible to class post-processors
-            saveInstrumentedClasses(outputConsumer);
-          }
-          if (builders.isEmpty()) {
-            continue;
-          }
+        try {
+          BUILDER_CATEGORY_LOOP:
+          for (BuilderCategory category : BuilderCategory.values()) {
+            final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
+            if (category == BuilderCategory.CLASS_POST_PROCESSOR) {
+              // ensure changes from instrumenters are visible to class post-processors
+              saveInstrumentedClasses(outputConsumer);
+            }
+            if (builders.isEmpty()) {
+              continue;
+            }
 
-          try {
-            for (ModuleLevelBuilder builder : builders) {
-              processDeletedPaths(context, chunk.getTargets());
-              long start = System.nanoTime();
-              int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
-              final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-              storeBuilderStatistics(builder, System.nanoTime() - start,
-                                     outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
-  
-              doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
-  
-              if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-                throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
+            try {
+              for (ModuleLevelBuilder builder : builders) {
+                processDeletedPaths(context, chunk.getTargets());
+                long start = System.nanoTime();
+                int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
+                final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
+                storeBuilderStatistics(builder, System.nanoTime() - start,
+                                       outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
+
+                doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+
+                if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
+                  throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
+                }
+                context.checkCanceled();
+                if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+                  nextPassRequired = true;
+                }
+                else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+                  if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+                    notifyChunkRebuildRequested(context, chunk, builder);
+                    // allow rebuild from scratch only once per chunk
+                    rebuildFromScratchRequested = true;
+                    try {
+                      // forcibly mark all files in the chunk dirty
+                      context.getProjectDescriptor().fsState.clearContextRoundData(context);
+                      FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
+                      // reverting to the beginning
+                      myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                      stageCount = myTotalModuleLevelBuilderCount;
+                      buildersPassed = 0;
+                      nextPassRequired = true;
+                      outputConsumer.clear();
+                      break BUILDER_CATEGORY_LOOP;
+                    }
+                    catch (Exception e) {
+                      throw new ProjectBuildException(e);
+                    }
+                  }
+                  else {
+                    LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
+                  }
+                }
+
+                buildersPassed++;
+                updateDoneFraction(context, modulesInChunk / (stageCount));
               }
-              context.checkCanceled();
-              if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+            }
+            finally {
+              final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
+              if (moreToCompile) {
                 nextPassRequired = true;
               }
-              else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-                if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-                  notifyChunkRebuildRequested(context, chunk, builder);
-                  // allow rebuild from scratch only once per chunk
-                  rebuildFromScratchRequested = true;
-                  try {
-                    // forcibly mark all files in the chunk dirty
-                    context.getProjectDescriptor().fsState.clearContextRoundData(context);
-                    FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
-                    // reverting to the beginning
-                    myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                    stageCount = myTotalModuleLevelBuilderCount;
-                    buildersPassed = 0;
-                    nextPassRequired = true;
-                    outputConsumer.clear();
-                    break BUILDER_CATEGORY_LOOP;
-                  }
-                  catch (Exception e) {
-                    throw new ProjectBuildException(e);
-                  }
-                }
-                else {
-                  LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
-                }
+              if (nextPassRequired && !rebuildFromScratchRequested) {
+                // recalculate basis
+                myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                stageCount += myTotalModuleLevelBuilderCount;
+                myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
               }
-  
-              buildersPassed++;
-              updateDoneFraction(context, modulesInChunk / (stageCount));
             }
           }
-          finally {
-            final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
-            if (moreToCompile) {
-              nextPassRequired = true;
-            }
-            if (nextPassRequired && !rebuildFromScratchRequested) {
-              // recalculate basis
-              myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-              stageCount += myTotalModuleLevelBuilderCount;
-              myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
-            }
-          }
+        }
+        finally {
+          JavaBuilderUtil.clearDataOnRoundCompletion(context);
         }
       }
       while (nextPassRequired);
@@ -1400,15 +1406,8 @@ public class IncProjectBuilder {
   }
 
   private void storeBuilderStatistics(Builder builder, long elapsedTime, int processedFiles) {
-    if (!myElapsedTimeNanosByBuilder.containsKey(builder)) {
-      myElapsedTimeNanosByBuilder.putIfAbsent(builder, new AtomicLong());
-    }
-    myElapsedTimeNanosByBuilder.get(builder).addAndGet(elapsedTime);
-
-    if (!myNumberOfSourcesProcessedByBuilder.containsKey(builder)) {
-      myNumberOfSourcesProcessedByBuilder.putIfAbsent(builder, new AtomicInteger());
-    }
-    myNumberOfSourcesProcessedByBuilder.get(builder).addAndGet(processedFiles);
+    myElapsedTimeNanosByBuilder.computeIfAbsent(builder, b -> new AtomicLong()).addAndGet(elapsedTime);
+    myNumberOfSourcesProcessedByBuilder.computeIfAbsent(builder, b -> new AtomicInteger()).addAndGet(processedFiles);
   }
 
   private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {

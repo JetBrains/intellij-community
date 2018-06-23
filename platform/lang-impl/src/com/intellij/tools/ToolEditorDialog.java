@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.tools;
 
@@ -64,11 +64,6 @@ public class ToolEditorDialog extends DialogWrapper {
   private JButton myInsertParametersMacroButton;
   private TextFieldWithBrowseButton myWorkingDirField;
   private JButton myInsertWorkingDirectoryMacroButton;
-
-  private JBCheckBox myShowInMainMenuCheckbox;
-  private JBCheckBox myShowInEditorCheckbox;
-  private JBCheckBox myShowInProjectTreeCheckbox;
-  private JBCheckBox myShowInSearchResultsPopupCheckbox;
 
   private JPanel myAdditionalOptionsPanel;
 
@@ -263,10 +258,6 @@ public class ToolEditorDialog extends DialogWrapper {
     tool.setDescription(convertString(myDescriptionField.getText()));
     Object selectedItem = myGroupCombo.getSelectedItem();
     tool.setGroup(StringUtil.notNullize(selectedItem != null ? convertString(selectedItem.toString()) : ""));
-    tool.setShownInMainMenu(myShowInMainMenuCheckbox.isSelected());
-    tool.setShownInEditor(myShowInEditorCheckbox.isSelected());
-    tool.setShownInProjectViews(myShowInProjectTreeCheckbox.isSelected());
-    tool.setShownInSearchResultsPopup(myShowInSearchResultsPopupCheckbox.isSelected());
     tool.setUseConsole(myUseConsoleCheckbox.isSelected());
     tool.setShowConsoleOnStdOut(myShowConsoleOnStdOutCheckbox.isSelected());
     tool.setShowConsoleOnStdErr(myShowConsoleOnStdErrCheckbox.isSelected());
@@ -308,10 +299,6 @@ public class ToolEditorDialog extends DialogWrapper {
       }
     }
     myGroupCombo.setSelectedItem(tool.getGroup());
-    myShowInMainMenuCheckbox.setSelected(tool.isShownInMainMenu());
-    myShowInEditorCheckbox.setSelected(tool.isShownInEditor());
-    myShowInProjectTreeCheckbox.setSelected(tool.isShownInProjectViews());
-    myShowInSearchResultsPopupCheckbox.setSelected(tool.isShownInSearchResultsPopup());
     myUseConsoleCheckbox.setSelected(tool.isUseConsole());
     myShowConsoleOnStdOutCheckbox.setEnabled(myUseConsoleCheckbox.isSelected());
     myShowConsoleOnStdOutCheckbox.setSelected(tool.isShowConsoleOnStdOut());

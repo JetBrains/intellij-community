@@ -27,10 +27,9 @@ def run_as_django_behave(formatter_name, feature_names, scenario_n_options):
 
         if apps.is_installed("behave_django"):
             base = sys.argv[0]
-            rest = sys.argv[1:]
-            sys.argv = [base] + rest + ["behave", "-f{0}".format(formatter_name)] + feature_names + scenario_n_options
+            sys.argv = [base] + ["behave", "-f{0}".format(formatter_name)] + feature_names + scenario_n_options
             print("manage.py " + " ".join(sys.argv[1:]))
             ManagementUtility().execute()
             return True
     except ImportError:
-        pass
+        return False

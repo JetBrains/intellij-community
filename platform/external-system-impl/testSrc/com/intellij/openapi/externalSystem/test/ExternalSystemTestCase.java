@@ -354,7 +354,7 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
     FileUtil.ensureExists(f.getParentFile());
     FileUtil.ensureCanCreateFile(f);
     final boolean created = f.createNewFile();
-    if(!created) {
+    if(!created && !f.exists()) {
       throw new AssertionError("Unable to create the project sub file: " + f.getAbsolutePath());
     }
     return LocalFileSystem.getInstance().refreshAndFindFileByIoFile(f);
@@ -564,7 +564,9 @@ public abstract class ExternalSystemTestCase extends UsefulTestCase {
   }
 
   public static void deleteBuildSystemDirectory() {
-    Path buildSystemDirectory = BuildManager.getInstance().getBuildSystemDirectory();
+    BuildManager buildManager = BuildManager.getInstance();
+    if(buildManager == null) return;
+    Path buildSystemDirectory = buildManager.getBuildSystemDirectory();
     try {
       PathKt.delete(buildSystemDirectory);
       return;

@@ -29,7 +29,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.*;
-import com.intellij.psi.PsiBinaryFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -51,6 +50,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 import java.util.stream.Collectors;
@@ -108,7 +108,7 @@ class FindInProjectTask {
     TooManyUsagesStatus.createFor(myProgress);
   }
 
-  public void findUsages(@NotNull Processor<UsageInfo> consumer, @NotNull FindUsagesProcessPresentation processPresentation) {
+  public void findUsages(@NotNull FindUsagesProcessPresentation processPresentation, @NotNull Processor<UsageInfo> consumer) {
     try {
       myProgress.setIndeterminate(true);
       myProgress.setText("Scanning indexed files...");
@@ -242,7 +242,7 @@ class FindInProjectTask {
       return true;
     };
     List<VirtualFile> sorted = ContainerUtil.sorted(virtualFiles, SEARCH_RESULT_FILE_COMPARATOR);
-    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, sorted, myProgress, processor);
+    PsiSearchHelperImpl.processFilesConcurrentlyDespiteWriteActions(myProject, sorted, myProgress, new AtomicBoolean(), processor);
   }
 
   // must return non-binary files
@@ -444,7 +444,7 @@ class FindInProjectTask {
 
   private Pair.NonNull<PsiFile, VirtualFile> findFile(@NotNull final VirtualFile virtualFile) {
     PsiFile psiFile = myPsiManager.findFile(virtualFile);
-    if (psiFile != null && !(psiFile instanceof PsiBinaryFile)) {
+    if (psiFile != null) {
       PsiFile sourceFile = (PsiFile)psiFile.getNavigationElement();
       if (sourceFile != null) psiFile = sourceFile;
       if (psiFile.getFileType().isBinary()) {

@@ -344,6 +344,50 @@ public class PyTypingTest extends PyTestCase {
            "        pass\n");
   }
 
+  // PY-21191
+  public void testTypeCommentWithParenthesizedTuple() {
+    doTest("int",
+           "expr, x = undefined()  # type: (int, str) ");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithNestedTuplesInAssignment() {
+    doTest("int",
+           "_, (_, expr) = undefined()  # type: str, (str, int)");
+  }
+
+  // PY-21191
+  public void testTypeCommentStructuralMismatch1() {
+    doTest("Any",
+           "expr = undefined()  # type: str, int");
+  }
+
+  // PY-21191
+  public void testTypeCommentStructuralMismatch2() {
+    doTest("Any",
+           "_, (_, expr) = undefined()  # type: str, (str, str, int)");
+  }
+
+  // PY-21191
+  public void testTypeCommentStructuralMismatch3() {
+    doTest("Any",
+           "_, (_, expr) = undefined()  # type: (str, str), int");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithNestedTuplesInWithStatement() {
+    doTest("int",
+           "with undefined() as (_, (_, expr)):  # type: str, (str, int)\n" +
+           "    pass");
+  }
+
+  // PY-21191
+  public void testTypeCommentWithNestedTuplesInForStatement() {
+    doTest("int",
+           "for (_, (_, expr)) in undefined():  # type: str, (str, int)\n" +
+           "    pass");
+  }
+
   // PY-16585
   public void testCommentAfterComprehensionInAssignment() {
     doTest("int",
@@ -393,6 +437,18 @@ public class PyTypingTest extends PyTestCase {
   public void testVariableTypeCommentInjectionTuple() {
     doTestInjectedText("x, y = undefined()  # type: int,<caret> int", 
                        "int, int");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentComment() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str # comment",
+                       "int, str");
+  }
+
+  // PY-21195
+  public void testVariableTypeCommentWithSubsequentCommentWithoutSpacesInBetween() {
+    doTestInjectedText("x, y = undefined()  # type: int,<caret> str# comment",
+                       "int, str");
   }
 
   // PY-22620

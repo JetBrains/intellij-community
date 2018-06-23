@@ -5,11 +5,10 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.RangeHighlighterEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.EditorImpl;
-import com.intellij.openapi.editor.impl.SettingsImpl;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
@@ -144,8 +143,7 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
 
   protected void prepareEditor(Editor editor) {
     super.prepareEditor(editor);
-    editor.getColorsScheme().setEditorFontSize(
-      Math.min(myComboBox.getFont().getSize(), EditorColorsManager.getInstance().getGlobalScheme().getEditorFontSize()));
+    editor.getColorsScheme().setEditorFontSize(Math.min(myComboBox.getFont().getSize(), EditorUtil.getEditorFont().getSize()));
   }
 
   private class XDebuggerComboBoxEditor implements ComboBoxEditor {
@@ -156,14 +154,13 @@ public class XDebuggerExpressionComboBox extends XDebuggerEditorBase {
       myDelegate = new EditorComboBoxEditor(getProject(), getEditorsProvider().getFileType()) {
         @Override
         protected void onEditorCreate(EditorEx editor) {
-          editor.getSettings().setLineCursorWidth(new SettingsImpl().getLineCursorWidth());
           editor.putUserData(DebuggerCopyPastePreprocessor.REMOVE_NEWLINES_ON_PASTE, true);
           prepareEditor(editor);
           if (showMultiline) {
             setExpandable(editor);
           }
           foldNewLines(editor);
-          editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener.Adapter() {
+          editor.getFilteredDocumentMarkupModel().addMarkupModelListener(((EditorImpl)editor).getDisposable(), new MarkupModelListener() {
             int errors = 0;
             @Override
             public void afterAdded(@NotNull RangeHighlighterEx highlighter) {

@@ -16,16 +16,14 @@
 package com.intellij.codeInspection.visibility;
 
 import com.intellij.ToolExtensionPoints;
+import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMember;
-import com.intellij.psi.PsiMethod;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.siyeh.ig.LightInspectionTestCase;
@@ -362,7 +360,7 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
 
       @Override
       public int getMinVisibilityLevel(PsiMember member) {
-        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PROTECTED : -1;
+        return member instanceof PsiMethod && isEntryPoint(member) ? PsiUtil.ACCESS_LEVEL_PROTECTED : ACCESS_LEVEL_INVALID;
       }
 
       @Override
@@ -381,6 +379,32 @@ public class AccessCanBeTightenedInspectionTest extends LightInspectionTestCase 
       @Override
       public String getId() {
         return getDisplayName();
+      }
+    }, getTestRootDisposable());
+    myFixture.configureByFiles("x/MyTest.java");
+    myFixture.checkHighlighting();
+  }
+
+  public void testSuggestPackagePrivateForImplicitWrittenFields() {
+    addJavaFile("x/MyTest.java", "package x;\n" +
+                               "public class MyTest {\n" +
+                               "    String foo;\n" + 
+                               "  {System.out.println(foo);}" + 
+                               "}");
+    PlatformTestUtil.registerExtension(Extensions.getRootArea(), ImplicitUsageProvider.EP_NAME, new ImplicitUsageProvider() {
+      @Override
+      public boolean isImplicitUsage(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitRead(PsiElement element) {
+        return false;
+      }
+
+      @Override
+      public boolean isImplicitWrite(PsiElement element) {
+        return element instanceof PsiField && "foo".equals(((PsiField)element).getName());
       }
     }, getTestRootDisposable());
     myFixture.configureByFiles("x/MyTest.java");

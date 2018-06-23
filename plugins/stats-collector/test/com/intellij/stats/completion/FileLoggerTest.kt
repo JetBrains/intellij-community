@@ -17,13 +17,18 @@ package com.intellij.stats.completion
 
 import com.intellij.codeInsight.lookup.impl.LookupImpl
 import com.intellij.openapi.editor.Editor
+import com.intellij.stats.storage.FilePathProvider
 import com.intellij.testFramework.PlatformTestCase
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Test
-import org.mockito.Matchers
+import org.mockito.ArgumentMatchers
 import org.mockito.Mockito.`when`
 import org.mockito.Mockito.mock
 import java.io.File
+import java.nio.file.FileSystems
+import java.nio.file.StandardWatchEventKinds
+import java.util.*
+import java.util.concurrent.TimeUnit
 
 
 class FileLoggerTest : PlatformTestCase() {
@@ -58,25 +63,33 @@ class FileLoggerTest : PlatformTestCase() {
     @Test
     fun testLogging() {
         val fileLengthBefore = logFile.length()
-        
-        val loggerProvider = CompletionFileLoggerProvider(pathProvider)
+        val uidProvider = mock(InstallationIdProvider::class.java).apply {
+            `when`(installationId()).thenReturn(UUID.randomUUID().toString())
+        }
+
+        val loggerProvider = CompletionFileLoggerProvider(pathProvider, uidProvider)
         loggerProvider.initComponent()
 
         val logger = loggerProvider.newCompletionLogger()
         
         val lookup = mock(LookupImpl::class.java).apply {
-            `when`(getRelevanceObjects(Matchers.any(), Matchers.anyBoolean())).thenReturn(emptyMap())
+            `when`(getRelevanceObjects(ArgumentMatchers.any(), ArgumentMatchers.anyBoolean())).thenReturn(emptyMap())
             `when`(items).thenReturn(emptyList())
             `when`(psiFile).thenReturn(null)
             `when`(editor).thenReturn(mock(Editor::class.java))
         }
-        
+
+        val watchService = FileSystems.getDefault().newWatchService()
+        val key = dir.toPath().register(watchService, StandardWatchEventKinds.ENTRY_CREATE)
+
         logger.completionStarted(lookup, true, 2)
-        
+
         logger.completionCancelled()
         loggerProvider.disposeComponent()
 
+        watchService.poll(15, TimeUnit.SECONDS)
+        key.cancel()
         assertThat(logFile.length()).isGreaterThan(fileLengthBefore)
+        watchService.close()
     }
-    
 }

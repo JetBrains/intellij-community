@@ -14,12 +14,14 @@
  * limitations under the License.
  */
 package com.intellij.java.codeInsight.completion
+
 import com.intellij.codeInsight.JavaProjectCodeInsightSettings
 import com.intellij.codeInsight.completion.CompletionType
 import com.intellij.codeInsight.completion.StaticallyImportable
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.lang.java.JavaLanguage
+import com.intellij.openapi.util.ClassConditionKey
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 /**
@@ -251,7 +253,8 @@ public class Demo {
 
     def item = assertOneElement(complete())
     if (importStatic) {
-      item.'as'(StaticallyImportable).shouldBeImported = true
+      ClassConditionKey<StaticallyImportable> key = ClassConditionKey.create(StaticallyImportable.class)
+      item.'as'(key).shouldBeImported = true
     }
     myFixture.type('\n')
     myFixture.checkResult output

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("UseExpressionBody")
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports.impl
@@ -13,6 +11,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyFileImports
 import org.jetbrains.plugins.groovy.lang.resolve.imports.GroovyImport
 import org.jetbrains.plugins.groovy.lang.resolve.imports.defaultImports
+import org.jetbrains.plugins.groovy.lang.resolve.imports.importKey
 import org.jetbrains.plugins.groovy.lang.resolve.processors.ClassHint
 import org.jetbrains.plugins.groovy.util.flatten
 
@@ -36,7 +35,8 @@ internal class GroovyFileImportsImpl(
   override val allNamedImports = flatten(getImports(ImportKind.Regular), getImports(ImportKind.Static))
   private val allStarImports = flatten(getImports(ImportKind.Star), getImports(ImportKind.StaticStar))
 
-  private fun addStatement(state: ResolveState, import: GroovyImport): ResolveState {
+  private fun ResolveState.putImport(import: GroovyImport): ResolveState {
+    val state = put(importKey, import)
     val statement = importToStatement[import] ?: return state
     return state.put(ClassHint.RESOLVE_CONTEXT, statement)
   }
@@ -44,7 +44,7 @@ internal class GroovyFileImportsImpl(
   @Suppress("LoopToCallChain")
   private fun Collection<GroovyImport>.doProcess(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     for (import in this) {
-      if (!import.processDeclarations(processor, addStatement(state, import), place, file)) return false
+      if (!import.processDeclarations(processor, state.putImport(import), place, file)) return false
     }
     return true
   }
@@ -55,6 +55,10 @@ internal class GroovyFileImportsImpl(
 
   override fun processAllNamedImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
     return allNamedImports.doProcess(processor, state, place)
+  }
+
+  override fun processStaticStarImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {
+    return staticStarImports.doProcess(processor, state, place)
   }
 
   override fun processAllStarImports(processor: PsiScopeProcessor, state: ResolveState, place: PsiElement): Boolean {

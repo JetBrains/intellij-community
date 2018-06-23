@@ -25,6 +25,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
@@ -144,13 +145,6 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
     });
 
 
-    popup.registerAction("deleteConfiguration", KeyStroke.getKeyStroke("DELETE"), new AbstractAction() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        popup.removeSelected();
-      }
-    });
-
     popup.registerAction("deleteConfiguration_bksp", KeyStroke.getKeyStroke("BACK_SPACE"), new AbstractAction() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -158,9 +152,6 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         if (speedSearch.isHoldingFilter()) {
           speedSearch.backspace();
           speedSearch.update();
-        }
-        else {
-          popup.removeSelected();
         }
       }
     });
@@ -338,6 +329,7 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         public void perform(@NotNull Project project, @NotNull Executor executor, @NotNull DataContext context) {
           RunnerAndConfigurationSettings config = getValue();
           RunManager.getInstance(project).setSelectedConfiguration(config);
+          MacroManager.getInstance().cacheMacrosPreview(context);
           ExecutionUtil.runConfiguration(config, executor);
         }
 
@@ -592,6 +584,12 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
           }
         });
       }
+      result.add(new ActionWrapper("Delete", AllIcons.Actions.Cancel) {
+        @Override
+        public void perform() {
+          deleteConfiguration(project, settings);
+        }
+      });
 
       return result.toArray(new ActionWrapper[0]);
     }
@@ -776,33 +774,6 @@ public class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
       }
       return new RunListElementRenderer(this, hasSideBar);
-    }
-
-    public void removeSelected() {
-      final PropertiesComponent propertiesComponent = PropertiesComponent.getInstance();
-      if (!propertiesComponent.isTrueValue("run.configuration.delete.ad")) {
-        propertiesComponent.setValue("run.configuration.delete.ad", Boolean.toString(true));
-      }
-
-      final int index = getSelectedIndex();
-      if (index == -1) {
-        return;
-      }
-
-      final Object o = getListModel().get(index);
-      if (o instanceof ItemWrapper && ((ItemWrapper)o).canBeDeleted()) {
-        deleteConfiguration(myProject, (RunnerAndConfigurationSettings)((ItemWrapper)o).getValue());
-        getListModel().deleteItem(o);
-        final List<Object> values = getListStep().getValues();
-        values.remove(o);
-
-        if (index < values.size()) {
-          onChildSelectedFor(values.get(index));
-        }
-        else if (index - 1 >= 0) {
-          onChildSelectedFor(values.get(index - 1));
-        }
-      }
     }
 
     @Override

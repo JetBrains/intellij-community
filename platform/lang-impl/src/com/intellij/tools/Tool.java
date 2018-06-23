@@ -42,10 +42,14 @@ public class Tool implements SchemeElement {
   private String myName;
   private String myDescription;
   @NotNull private String myGroup = DEFAULT_GROUP_NAME;
+
+  // These 4 fields and everything related are effectively not used anymore, see IDEA-190856.
+  // Let's keep them for a while for compatibility in case we have to reconsider.
   private boolean myShownInMainMenu;
   private boolean myShownInEditor;
   private boolean myShownInProjectViews;
   private boolean myShownInSearchResultsPopup;
+
   private boolean myEnabled;
 
   private boolean myUseConsole;
@@ -328,7 +332,7 @@ public class Tool implements SchemeElement {
     catch (Macro.ExecutionCancelledException ignored) {
       return null;
     }
-    return commandLine;
+    return ToolsCustomizer.customizeCommandLine(commandLine, dataContext);
   }
 
   @Override

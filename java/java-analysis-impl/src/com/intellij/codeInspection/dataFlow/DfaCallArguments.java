@@ -17,15 +17,32 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 
-/**
- * @author Tagir Valeev
- */
-/* package */ class DfaCallArguments {
+import java.util.Arrays;
+import java.util.Objects;
+
+/* package */ final class DfaCallArguments {
   final DfaValue myQualifier;
   final DfaValue[] myArguments;
+  final boolean myPure;
 
-  public DfaCallArguments(DfaValue qualifier, DfaValue[] arguments) {
+  public DfaCallArguments(DfaValue qualifier, DfaValue[] arguments, boolean pure) {
     myQualifier = qualifier;
     myArguments = arguments;
+    myPure = pure;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof DfaCallArguments)) return false;
+    DfaCallArguments that = (DfaCallArguments)o;
+    return myPure == that.myPure &&
+           Objects.equals(myQualifier, that.myQualifier) &&
+           Arrays.equals(myArguments, that.myArguments);
+  }
+
+  @Override
+  public int hashCode() {
+    return (Objects.hashCode(myQualifier) * 31 + Arrays.hashCode(myArguments))*31+Boolean.hashCode(myPure);
   }
 }

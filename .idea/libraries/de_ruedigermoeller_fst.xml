@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="de.ruedigermoeller:fst" type="repository">
-    <properties include-transitive-deps="false" maven-id="de.ruedigermoeller:fst:2.56" />
+    <properties include-transitive-deps="false" maven-id="de.ruedigermoeller:fst:2.57" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/de/ruedigermoeller/fst/2.56/fst-2.56.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/de/ruedigermoeller/fst/2.57/fst-2.57.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

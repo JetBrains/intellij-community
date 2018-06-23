@@ -20,7 +20,7 @@ import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.ui.CheckboxTree
 import org.fest.swing.core.Robot
 
-class CheckboxTreeFixture(robot: Robot, checkboxTree: CheckboxTree): ExtendedTreeFixture(robot, checkboxTree) {
+class CheckboxTreeFixture(robot: Robot, checkboxTree: CheckboxTree) : ExtendedTreeFixture(robot, checkboxTree) {
 
   init {
     this.replaceDriverWith(CheckboxTreeDriver(robot))
@@ -30,4 +30,27 @@ class CheckboxTreeFixture(robot: Robot, checkboxTree: CheckboxTree): ExtendedTre
     (this.driver() as CheckboxTreeDriver).clickCheckbox(target() as CheckboxTree, pathStrings.toList())
   }
 
+  fun getCheckboxComponent(vararg pathStrings: String) = (this.driver() as CheckboxTreeDriver).getCheckboxComponent(
+    target() as CheckboxTree, pathStrings.toList())
+
+  fun setCheckboxValue(value: Boolean, vararg pathStrings: String) {
+    val checkbox = getCheckboxComponent(*pathStrings)
+    println("setCheckboxValue for ${pathStrings.joinToString()}: state = ${checkbox?.isSelected}")
+    if (checkbox != null && checkbox.isSelected != value) {
+      clickCheckbox(*pathStrings)
+    }
+  }
+
+  /**
+   * Sometimes one click doesn't work - e.g. it can be swallowed by scrolling
+   * Then the second click must help.
+   * */
+  fun ensureCheckboxValue(value: Boolean, vararg pathString: String){
+    setCheckboxValue(value, *pathString)
+    setCheckboxValue(value, *pathString)
+  }
+
+  fun check(vararg pathStrings: String) = ensureCheckboxValue(true, *pathStrings)
+
+  fun uncheck(vararg pathStrings: String) = ensureCheckboxValue(false, *pathStrings)
 }

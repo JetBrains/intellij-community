@@ -80,6 +80,51 @@ public class CommentTracker {
   }
 
   /**
+   * Marks the range of elements as unchanged and returns their text. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
+   *
+   * @param firstElement first element to mark
+   * @param lastElement last element to mark (must be equal to firstElement or its sibling)
+   * @return a text to be inserted into refactored code
+   * @throws IllegalArgumentException if firstElement and lastElements are not siblings or firstElement goes after last element
+   */
+  public String rangeText(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
+    checkState();
+    PsiElement e;
+    StringBuilder result = new StringBuilder();
+    for (e = firstElement; e != null && e != lastElement; e = e.getNextSibling()) {
+      addIgnored(e);
+      result.append(e.getText());
+    }
+    if (e == null) {
+      throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
+    }
+    addIgnored(lastElement);
+    result.append(lastElement.getText());
+    return result.toString();
+  }
+
+  /**
+   * Marks the range of elements as unchanged. The unchanged elements are assumed to be preserved
+   * in the resulting code as is, so the comments from them will not be extracted.
+   *
+   * @param firstElement first element to mark
+   * @param lastElement last element to mark (must be equal to firstElement or its sibling)
+   * @throws IllegalArgumentException if firstElement and lastElements are not siblings or firstElement goes after last element
+   */
+  public void markRangeUnchanged(@NotNull PsiElement firstElement, @NotNull PsiElement lastElement) {
+    checkState();
+    PsiElement e;
+    for (e = firstElement; e != null && e != lastElement; e = e.getNextSibling()) {
+      addIgnored(e);
+    }
+    if (e == null) {
+      throw new IllegalArgumentException("Elements must be siblings: " + firstElement + " and " + lastElement);
+    }
+    addIgnored(lastElement);
+  }
+
+  /**
    * Deletes given PsiElement collecting all the comments inside it.
    *
    * @param element element to delete
@@ -166,6 +211,9 @@ public class CommentTracker {
       anchor = ((PsiLambdaExpression)anchor).getBody();
     }
     if (anchor instanceof PsiVariable && anchor.getParent() instanceof PsiDeclarationStatement) {
+      anchor = anchor.getParent();
+    }
+    if (anchor instanceof PsiStatement && (anchor.getParent() instanceof PsiIfStatement || anchor.getParent() instanceof PsiLoopStatement)) {
       anchor = anchor.getParent();
     }
     if (anchor == null) anchor = result;
@@ -269,6 +317,10 @@ public class CommentTracker {
       element = element.getParent();
     }
     grabComments(element);
+    if (element instanceof PsiAnnotatedJavaCodeReferenceElement) {
+      // PsiJavaCodeReferenceElementImpl tries to keep comment after dot which may result in duplicating comments.
+      PsiTreeUtil.getChildrenOfTypeAsList(element, PsiComment.class).forEach(PsiElement::delete);
+    }
   }
 
   private void grabComments(PsiElement element) {

@@ -41,7 +41,7 @@ class JavaLangInvokeMethodHandleSignatureFixTest : LightCodeInsightFixtureTestCa
     myFixture.enableInspections(JavaLangInvokeHandleSignatureInspection())
   }
 
-  override fun getTestDataPath() = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/methodHandle"
+  override fun getTestDataPath(): String = JavaTestUtil.getJavaTestDataPath() + "/codeInsight/daemonCodeAnalyzer/quickFix/methodHandle"
 
   fun testConstructor() = doTestConstructor(INT)
   fun testConstructor2() = doTestConstructor(INT)

@@ -15,17 +15,9 @@
  */
 package com.intellij.ide.codeStyleSettings;
 
-import com.intellij.openapi.options.SchemeFactory;
 import com.intellij.openapi.options.SchemeImportException;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeImpl;
-import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemeXmlImporter;
 import org.jetbrains.annotations.Nullable;
-
-import java.io.File;
 
 public class CodeStyleXmlImporterTest extends CodeStyleTestCase {
   public void testStandardCodeStyleXml() throws SchemeImportException {
@@ -46,21 +38,6 @@ public class CodeStyleXmlImporterTest extends CodeStyleTestCase {
     CodeStyleSettings settings= importSettings();
     assertEquals(140, settings.getDefaultRightMargin());
     assertEquals(true, settings.FORMATTER_TAGS_ENABLED);
-  }
-  
-  private CodeStyleSettings importSettings() throws SchemeImportException {
-    final CodeStyleScheme targetScheme = new CodeStyleSchemeImpl("Test", false, null);
-    SchemeFactory<CodeStyleScheme> schemeFactory = new SchemeFactory<CodeStyleScheme>() {
-      @Override
-      public CodeStyleScheme createNewScheme(@Nullable String name) {
-        return targetScheme;
-      }
-    };
-    File ioFile = new File(getTestDataPath() + getTestName(true) + ".xml");
-    assertExists(ioFile);
-    VirtualFile vFile = VfsUtil.findFileByIoFile(ioFile, true);
-    CodeStyleSchemeXmlImporter importer = new CodeStyleSchemeXmlImporter();
-    return importer.importScheme(getProject(), vFile, targetScheme, schemeFactory).getCodeStyleSettings();
   }
 
   @Nullable

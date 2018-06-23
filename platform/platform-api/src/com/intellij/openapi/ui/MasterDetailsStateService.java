@@ -28,6 +28,7 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
   /**
    * @deprecated override {@link MasterDetailsComponent#getComponentStateKey()} and {@link MasterDetailsComponent#getStateService()} instead
    */
+  @Deprecated
   public void register(String key, MasterDetailsComponent component) {
   }
 

@@ -31,6 +31,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.io.win32.WindowsElevationUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
@@ -41,6 +42,7 @@ import com.intellij.openapi.wm.impl.status.*;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextAccessor;
@@ -56,6 +58,7 @@ import java.awt.event.WindowEvent;
 import java.awt.image.BufferedImage;
 import java.io.File;
 import java.lang.reflect.Field;
+import java.util.Set;
 
 /**
  * @author Anton Katilin
@@ -183,7 +186,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     if (myProject != null) {
       Component focusOwner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
       ToolWindowManagerEx toolWindowManagerEx = ToolWindowManagerEx.getInstanceEx(myProject);
-      if (focusOwner instanceof EditorComponentImpl) {
+      if (focusOwner instanceof EditorComponentImpl && !Windows.ToolWindowProvider.isInToolWindow(focusOwner)) {
         String toolWindowId = toolWindowManagerEx.getLastActiveToolWindowId();
         ToolWindow toolWindow = toolWindowManagerEx.getToolWindow(toolWindowId);
         if (toolWindow != null) {
@@ -314,6 +317,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     updateTitle(this, myTitle, myFileTitle, myCurrentFile);
   }
 
+  public static String getElevationSuffix() {
+    return WindowsElevationUtil.isUnderElevation() ? " (Administrator)" : "";
+  }
+
   public static void updateTitle(@NotNull JFrame frame, @Nullable String title, @Nullable String fileTitle, @Nullable File currentFile) {
     if (ourUpdatingTitle) return;
 
@@ -324,10 +331,10 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
 
       Builder builder = new Builder().append(title).append(fileTitle);
       if (Boolean.getBoolean("ide.ui.version.in.title")) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion());
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + ' ' + ApplicationInfo.getInstance().getFullVersion() + getElevationSuffix());
       }
       else if (!SystemInfo.isMac || builder.isEmpty()) {
-        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName());
+        builder = builder.append(ApplicationNamesInfo.getInstance().getFullProductName() + getElevationSuffix());
       }
       frame.setTitle(builder.toString());
     }
@@ -438,34 +445,36 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
     }
   }
 
+  private final Set<String> widgetIDs = ContainerUtil.newHashSet();
+  private void addWidget(StatusBar statusBar, StatusBarWidget widget, String anchor) {
+    if (!widgetIDs.add(widget.ID())) {
+      LOG.error("Attempting to add more than one widget with ID: " + widget.ID());
+      return;
+    }
+    statusBar.addWidget(widget, anchor);
+  }
+
   private void installDefaultProjectStatusBarWidgets(@NotNull final Project project) {
     final StatusBar statusBar = getStatusBar();
+    addWidget(statusBar, new PositionPanel(project), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new IdeNotificationArea(), StatusBar.Anchors.before(IdeMessagePanel.FATAL_ERROR));
+    addWidget(statusBar, new EncodingPanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.POSITION_PANEL));
+    addWidget(statusBar, new LineSeparatorPanel(project), StatusBar.Anchors.before(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new InsertOverwritePanel(project), StatusBar.Anchors.after(StatusBar.StandardWidgets.ENCODING_PANEL));
+    addWidget(statusBar, new ToggleReadOnlyAttributePanel(project),
+              StatusBar.Anchors.after(StatusBar.StandardWidgets.INSERT_OVERWRITE_PANEL));
 
-    final PositionPanel positionPanel = new PositionPanel(project);
-    statusBar.addWidget(positionPanel, "before " + IdeMessagePanel.FATAL_ERROR);
-
-    final IdeNotificationArea notificationArea = new IdeNotificationArea();
-    statusBar.addWidget(notificationArea, "before " + IdeMessagePanel.FATAL_ERROR);
-
-    final EncodingPanel encodingPanel = new EncodingPanel(project);
-    statusBar.addWidget(encodingPanel, "after Position");
-
-    final LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
-    statusBar.addWidget(lineSeparatorPanel, "before " + encodingPanel.ID());
-
-    final ToggleReadOnlyAttributePanel readOnlyAttributePanel = new ToggleReadOnlyAttributePanel(project);
-
-    final InsertOverwritePanel insertOverwritePanel = new InsertOverwritePanel(project);
-    statusBar.addWidget(insertOverwritePanel, "after Encoding");
-    statusBar.addWidget(readOnlyAttributePanel, "after InsertOverwrite");
+    for (StatusBarWidgetProvider widgetProvider: StatusBarWidgetProvider.EP_NAME.getExtensions()) {
+      StatusBarWidget widget = widgetProvider.getWidget(project);
+      if (widget == null) continue;
+      addWidget(statusBar, widget, widgetProvider.getAnchor());
+    }
 
     Disposer.register(project, () -> {
-      statusBar.removeWidget(encodingPanel.ID());
-      statusBar.removeWidget(lineSeparatorPanel.ID());
-      statusBar.removeWidget(positionPanel.ID());
-      statusBar.removeWidget(notificationArea.ID());
-      statusBar.removeWidget(readOnlyAttributePanel.ID());
-      statusBar.removeWidget(insertOverwritePanel.ID());
+      for (String widgetID: widgetIDs) {
+        statusBar.removeWidget(widgetID);
+      }
+      widgetIDs.clear();
 
       //noinspection deprecation
       ((StatusBarEx)statusBar).removeCustomIndicationComponents();

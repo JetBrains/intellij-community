@@ -1,10 +1,7 @@
 package com.siyeh.igtest.encapsulation;
 
-import java.util.Calendar;
-import java.util.Collections;
-import java.util.Date;
-import java.util.Set;
-import java.util.List;
+import java.util.*;
+import com.google.common.collect.*;
 
 public class AssignmentOrReturnOfFieldWithMutableType
 {
@@ -146,5 +143,32 @@ class Test {
         I i = () -> {
             return <warning descr="Return of Set field 'field'">field</warning>;
         };
+    }
+}
+
+class ImmutableTest {
+    final List<String> list = Collections.unmodifiableList(Arrays.asList("foo", "bar", "baz"));
+
+    public List<String> getList() {
+        return list;
+    }
+}
+
+class GuavaTest {
+    private final ImmutableList<?> list = ImmutableList.of();
+
+    public ImmutableList<?> getList() {
+        return list;
+    }
+}
+class ReturnImmutableCollection {
+    private final List<String> names;
+
+    public ReturnImmutableCollection(List<String> names) {
+        this.names = ImmutableList.copyOf(names);
+    }
+
+    public List<String> getNames() {
+        return names;
     }
 }

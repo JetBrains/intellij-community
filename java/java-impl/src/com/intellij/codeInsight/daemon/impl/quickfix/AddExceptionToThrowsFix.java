@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -118,7 +119,7 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
     return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 
-  private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<PsiMethod> result) {
+  private static void collectSuperMethods(@NotNull PsiMethod method, @NotNull List<? super PsiMethod> result) {
     PsiMethod[] superMethods = method.findSuperMethods();
     for (PsiMethod superMethod : superMethods) {
       result.add(superMethod);
@@ -169,12 +170,23 @@ public class AddExceptionToThrowsFix extends BaseIntentionAction {
   }
 
   @Nullable
-  private PsiMethod collectExceptions(List<PsiClassType> unhandled) {
+  private PsiMethod collectExceptions(List<? super PsiClassType> unhandled) {
     PsiElement targetElement = null;
     PsiMethod targetMethod = null;
 
-    final PsiElement psiElement = myWrongElement instanceof PsiMethodReferenceExpression ? myWrongElement 
-                                                                                         : PsiTreeUtil.getParentOfType(myWrongElement, PsiFunctionalExpression.class, PsiMethod.class);
+    final PsiElement psiElement;
+    if (myWrongElement instanceof PsiMethodReferenceExpression) {
+      psiElement = myWrongElement;
+    }
+    else {
+      PsiElement parentStatement = RefactoringUtil.getParentStatement(myWrongElement, false);
+      if (parentStatement instanceof PsiDeclarationStatement && 
+          ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass) {
+        return null;
+      }
+
+      psiElement = PsiTreeUtil.getParentOfType(myWrongElement, PsiFunctionalExpression.class, PsiMethod.class);
+    }
     if (psiElement instanceof PsiFunctionalExpression) {
       targetMethod = LambdaUtil.getFunctionalInterfaceMethod(psiElement);
       targetElement = psiElement instanceof PsiLambdaExpression ? ((PsiLambdaExpression)psiElement).getBody() : psiElement;

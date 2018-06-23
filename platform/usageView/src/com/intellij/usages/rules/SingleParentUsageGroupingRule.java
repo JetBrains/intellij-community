@@ -43,6 +43,7 @@ public abstract class SingleParentUsageGroupingRule implements UsageGroupingRule
   /**
    * @deprecated override {@link #getParentGroupFor(Usage, UsageTarget[])} instead
    */
+  @Deprecated
   @Override
   public UsageGroup groupUsage(@NotNull Usage usage) {
     return getParentGroupFor(usage, UsageTarget.EMPTY_ARRAY);

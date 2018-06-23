@@ -21,7 +21,6 @@
     <orderEntry type="module" module-name="intellij.platform.debugger.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.xml" />
     <orderEntry type="library" name="Groovy" level="project" />
-    <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="library" name="http-client" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" scope="TEST" />
     <orderEntry type="library" name="gson" level="project" />
@@ -33,5 +32,12 @@
     <orderEntry type="module" module-name="intellij.platform.configurationStore.impl" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.testExtensions" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
+    <orderEntry type="library" scope="TEST" name="fest-swing" level="project" />
+    <orderEntry type="library" scope="TEST" name="assertj-swing" level="project" />
+    <orderEntry type="library" scope="TEST" name="snakeyaml" level="project" />
+    <orderEntry type="library" name="jna" level="project" />
+    <orderEntry type="library" scope="TEST" name="miglayout-swing" level="project" />
+    <orderEntry type="library" scope="TEST" name="batik" level="project" />
+    <orderEntry type="library" scope="TEST" name="xmlgraphics-commons" level="project" />
   </component>
 </module>

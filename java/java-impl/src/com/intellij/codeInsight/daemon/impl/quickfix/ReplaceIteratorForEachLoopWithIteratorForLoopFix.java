@@ -15,11 +15,15 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -97,7 +101,7 @@ public class ReplaceIteratorForEachLoopWithIteratorForLoopFix implements Intenti
     final PsiTypeElement newItemTypeElement = elementFactory.createTypeElement(iterationParameter.getType());
     newItemVariable.getTypeElement().replace(newItemTypeElement);
     newItemVariable.setName(iterationParameterName);
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+    final CodeStyleSettings codeStyleSettings = CodeStyle.getSettings(file);
     if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
       final PsiModifierList modifierList = newItemVariable.getModifierList();
       if (modifierList != null) modifierList.setModifierProperty(PsiModifier.FINAL, true);

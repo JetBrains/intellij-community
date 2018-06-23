@@ -30,4 +30,6 @@ public interface VcsLogDataPack {
 
   @NotNull
   VcsLogFilterCollection getFilters();
+
+  boolean isEmpty();
 }

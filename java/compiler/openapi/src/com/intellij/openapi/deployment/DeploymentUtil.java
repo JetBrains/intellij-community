@@ -15,30 +15,18 @@
  */
 package com.intellij.openapi.deployment;
 
-import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.descriptors.ConfigFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.io.FileFilter;
-import java.io.IOException;
-import java.util.Set;
 
 public abstract class DeploymentUtil {
   public static DeploymentUtil getInstance() {
     return ServiceManager.getService(DeploymentUtil.class);
   }
-
-  @Deprecated
-  public abstract void copyFile(@NotNull File fromFile,
-                                @NotNull File toFile,
-                                @NotNull CompileContext context,
-                                @Nullable Set<String> writtenPaths,
-                                @Nullable FileFilter fileFilter) throws IOException;
 
   public static String trimForwardSlashes(@NotNull String path) {
     while (path.length() != 0 && (path.charAt(0) == '/' || path.charAt(0) == File.separatorChar)) {
@@ -46,9 +34,6 @@ public abstract class DeploymentUtil {
     }
     return path;
   }
-
-  @Deprecated
-  public abstract void reportDeploymentDescriptorDoesNotExists(ConfigFile descriptor, CompileContext context, Module module);
 
   public static String concatPaths(String... paths) {
     final StringBuilder builder = new StringBuilder();
@@ -86,6 +71,7 @@ public abstract class DeploymentUtil {
   /**
    * @deprecated use {@link com.intellij.openapi.util.io.FileUtil#getRelativePath}
    */
+  @Deprecated
   @Nullable
   public static String getRelativePath(@NotNull String basePath, @NotNull final String filePath) {
     if (basePath.equals(filePath)) return "";
@@ -114,8 +100,4 @@ public abstract class DeploymentUtil {
 
     return relativePath.toString();
   }
-
-  @Deprecated
-  public abstract void checkConfigFile(final ConfigFile descriptor, final CompileContext compileContext, final Module module);
-
 }

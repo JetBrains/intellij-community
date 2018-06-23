@@ -15,16 +15,18 @@
  */
 package com.intellij.codeInspection.dataFlow;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.instructions.*;
-import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
+import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiArrayAccessExpression;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodReferenceExpression;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
@@ -32,6 +34,38 @@ import java.util.ArrayList;
  * @author peter
  */
 public abstract class InstructionVisitor {
+
+  protected void beforeExpressionPush(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @Nullable TextRange range,
+                                      @NotNull DfaMemoryState state) {
+
+  }
+
+  protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
+                                                 @NotNull PsiMethodReferenceExpression methodRef,
+                                                 @NotNull DfaMemoryState state) {
+
+  }
+
+  void pushExpressionResult(@NotNull DfaValue value,
+                            @NotNull ExpressionPushingInstruction instruction,
+                            @NotNull DfaMemoryState state) {
+    PsiExpression anchor = instruction.getExpression();
+    if (anchor != null
+        && !(instruction instanceof MethodCallInstruction &&
+             (((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.BOXING ||
+              ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.UNBOXING))
+        && !(instruction instanceof PushInstruction && ((PushInstruction)instruction).isReferenceWrite())) {
+      if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof PushInstruction)) {
+        beforeMethodReferenceResultPush(value, (PsiMethodReferenceExpression)anchor, state);
+      }
+      else {
+        beforeExpressionPush(value, anchor, instruction.getExpressionRange(), state);
+      }
+    }
+    state.push(value);
+  }
 
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
@@ -52,7 +86,7 @@ public abstract class InstructionVisitor {
       PsiExpression array = arrayAccess.getArrayExpression();
       DfaValue value = factory.createValue(array);
       if (value instanceof DfaVariableValue) {
-        for (DfaVariableValue qualified : factory.getVarFactory().getAllQualifiedBy((DfaVariableValue)value)) {
+        for (DfaVariableValue qualified : ((DfaVariableValue)value).getDependentVariables()) {
           if (qualified.isFlushableByCalls()) {
             memState.flushVariable(qualified);
           }
@@ -68,12 +102,15 @@ public abstract class InstructionVisitor {
   @NotNull
   public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction controlTransferInstruction,
                                                     @NotNull DataFlowRunner runner, @NotNull DfaMemoryState state) {
-    DfaControlTransferValue transferValue = controlTransferInstruction.getTransfer();
-    if (transferValue == null) {
-      transferValue = (DfaControlTransferValue)state.pop();
-    }
-    return new ControlTransferHandler(state, runner, transferValue.getTarget()).iteration(transferValue.getTraps())
-      .toArray(DfaInstructionState.EMPTY_ARRAY);
+    return controlTransferInstruction.getTransfer().dispatch(state, runner).toArray(DfaInstructionState.EMPTY_ARRAY);
+  }
+
+  public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    return nextInstruction(instruction, runner, state);
+  }
+
+  public DfaInstructionState[] visitEscapeInstruction(EscapeInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    return nextInstruction(instruction, runner, state);
   }
 
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -87,8 +124,18 @@ public abstract class InstructionVisitor {
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
     memState.pop();
-    memState.push(DfaUnknownValue.getInstance());
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitObjectOfInstruction(ObjectOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    DfaValue value = state.pop();
+    DfaConstValue constant = value instanceof DfaConstValue ? (DfaConstValue)value :
+                             value instanceof DfaVariableValue ? state.getConstantValue((DfaVariableValue)value) :
+                             null;
+    PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
+    state.push(runner.getFactory().createTypeValue(type, Nullability.NOT_NULL));
+    return nextInstruction(instruction, runner, state);
   }
 
   public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
@@ -150,24 +197,18 @@ public abstract class InstructionVisitor {
     }
   }
 
-
-  public DfaInstructionState[] visitEmptyStack(EmptyStackInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    memState.emptyStack();
-    return nextInstruction(instruction, runner, memState);
-  }
-
   public DfaInstructionState[] visitFieldReference(DereferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop();
     return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    final DfaVariableValue variable = instruction.getVariable();
-    if (variable != null) {
-      memState.flushVariable(variable);
-    } else {
-      memState.flushFields();
-    }
+    memState.flushVariable(instruction.getVariable());
+    return nextInstruction(instruction, runner, memState);
+  }
+
+  public DfaInstructionState[] visitFlushFields(FlushFieldsInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+    memState.flushFields();
     return nextInstruction(instruction, runner, memState);
   }
 
@@ -177,7 +218,7 @@ public abstract class InstructionVisitor {
     }
 
     memState.pop(); //qualifier
-    memState.push(DfaUnknownValue.getInstance());
+    pushExpressionResult(DfaUnknownValue.getInstance(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
@@ -189,19 +230,19 @@ public abstract class InstructionVisitor {
     DfaValue dfaValue = memState.pop();
 
     dfaValue = dfaValue.createNegated();
-    memState.push(dfaValue);
+    pushExpressionResult(dfaValue, instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    memState.push(instruction.getValue());
+    pushExpressionResult(instruction.getValue(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 
   public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     memState.pop(); // index
     memState.pop(); // array reference
-    memState.push(instruction.getValue());
+    pushExpressionResult(instruction.getValue(), instruction, memState);
     return nextInstruction(instruction, runner, memState);
   }
 

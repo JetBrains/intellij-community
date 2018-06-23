@@ -49,15 +49,9 @@ public class WebEditorOptions implements PersistentStateComponent<WebEditorOptio
   /**
    * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
    */
+  @Deprecated
   public boolean isShowCssColorPreviewInGutter() {
     return myShowCssColorPreviewInGutter;
-  }
-
-  /**
-   * @deprecated use LineMarkerSettings.getSettings().isEnabled(new ColorLineMarkerProvider())
-   */
-  public void setShowCssColorPreviewInGutter(final boolean showCssColorPreviewInGutter) {
-    myShowCssColorPreviewInGutter = showCssColorPreviewInGutter;
   }
 
   public boolean isAutomaticallyInsertClosingTag() {

@@ -1,5 +1,5 @@
 class A {
-    void f(Object i) {
+    void f(Object o) {
 
     }
 }

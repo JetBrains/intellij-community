@@ -1,33 +1,24 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi
 
+import com.intellij.openapi.command.WriteCommandAction
+import com.intellij.openapi.vfs.VirtualFileFilter
 import com.intellij.psi.*
+import com.intellij.psi.impl.PsiManagerEx
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.util.InheritanceUtil
+import com.intellij.testFramework.BombedProgressIndicator
 import com.intellij.testFramework.fixtures.impl.JavaCodeInsightTestFixtureImpl
+import com.intellij.util.ref.GCUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.GrAnonymousClassDefinitionImpl
-import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex
-
+import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex 
 /**
  * Created by Max Medvedev on 12/4/13
  */
@@ -323,5 +314,67 @@ class C {
 
     assert methodWithDocs.docComment != null
     assert psiFile.contentsLoaded
+  }
+
+  void 'test type parameters bounds'() {
+    def file = fixture.addFileToProject('classes.groovy', 'class C<T extends Runnable> {}') as GroovyFileImpl
+    ((PsiManagerEx)psiManager).setAssertOnFileLoadingFilter(VirtualFileFilter.ALL, testRootDisposable)
+    def clazz = file.typeDefinitions.first()
+    def typeParameter = clazz.typeParameters.first()
+    assert typeParameter.extendsList.referencedTypes.size() == 1
+  }
+
+  void 'test PCE during retrieving stub index of an AST-based PSI does not break everything later'() {
+    def random = new Random()
+    def file = fixture.addFileToProject('a.groovy', '@Anno int var; ' * 3) as GroovyFileImpl
+    for (i in 1..5) {
+      def cancelAt = random.nextInt(100)
+
+      assert file.node
+      List<GrVariableDeclaration> decls = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration).toList().reverse()
+
+      new BombedProgressIndicator(cancelAt).runBombed {
+        assert PsiAnchor.create(decls[0]) instanceof PsiAnchor.StubIndexReference
+      }
+
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      try {
+        WriteCommandAction.runWriteCommandAction(project) {
+          file.viewProvider.document.insertString(0, ' ')
+          PsiDocumentManager.getInstance(project).commitAllDocuments()
+        }
+
+        for (decl in decls) {
+          assert decl.node
+          assert decl.valid
+        }
+      }
+      catch (Throwable e) {
+        throw new RuntimeException("Failed with cancelAt=$cancelAt", e)
+      }
+    }
+
+  }
+
+  void 'test no SOE when AST spine building queries file stub'() {
+    def file = fixture.addFileToProject('a.groovy', '@Anno int var') as GroovyFileImpl
+
+    assert file.node
+    GrVariableDeclaration decl = SyntaxTraverser.psiTraverser(file).filter(GrVariableDeclaration).first()
+    assert decl
+    
+    for (i in 1..2) {
+      assert PsiAnchor.create(decl) instanceof PsiAnchor.StubIndexReference
+
+      GCUtil.tryGcSoftlyReachableObjects()
+
+      WriteCommandAction.runWriteCommandAction(project) {
+        file.viewProvider.document.insertString(0, ' ')
+        PsiDocumentManager.getInstance(project).commitAllDocuments()
+      }
+      assert decl.node
+      assert decl.valid
+    }
   }
 }

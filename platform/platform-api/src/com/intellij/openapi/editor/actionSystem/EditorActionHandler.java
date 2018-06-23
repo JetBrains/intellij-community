@@ -60,6 +60,7 @@ public abstract class EditorActionHandler {
    * {@link #isEnabled(Editor, Caret, DataContext)}
    * instead.
    */
+  @Deprecated
   public boolean isEnabled(Editor editor, final DataContext dataContext) {
     if (inCheck) {
       return true;
@@ -142,6 +143,7 @@ public abstract class EditorActionHandler {
    * to invoke the handler, call
    * {@link #execute(Editor, Caret, DataContext)}.
    */
+  @Deprecated
   public void execute(@NotNull Editor editor, @Nullable DataContext dataContext) {
     if (inExecution) {
       return;

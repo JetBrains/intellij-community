@@ -12,7 +12,7 @@ public class Main {
   }
 
   public int sum(List<Integer> list) {
-      int sum = list.stream().mapToInt(x -> x).filter(this::check).sum();
+    int sum = list.stream().mapToInt(x -> x).filter(this::check).sum();
       return sum;
   }
 

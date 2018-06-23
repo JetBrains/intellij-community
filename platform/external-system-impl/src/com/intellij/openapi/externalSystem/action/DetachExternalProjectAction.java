@@ -47,7 +47,7 @@ public class DetachExternalProjectAction extends ExternalSystemNodeAction<Projec
     super(ProjectData.class);
     getTemplatePresentation().setText(ExternalSystemBundle.message("action.detach.external.project.text", "external"));
     getTemplatePresentation().setDescription(ExternalSystemBundle.message("action.detach.external.project.description"));
-    getTemplatePresentation().setIcon(SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Remove : AllIcons.ToolbarDecorator.Remove);
+    getTemplatePresentation().setIcon(AllIcons.General.Remove);
   }
 
   @Override

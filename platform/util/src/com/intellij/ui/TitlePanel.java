@@ -48,7 +48,7 @@ public class TitlePanel extends CaptionPanel {
     myLabel.setForeground(JBColor.foreground());
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
-    myLabel.setBorder(JBUI.Borders.empty(1, 2, 2, 2));
+    myLabel.setBorder(JBUI.Borders.empty(1, 10, 2, 10));
 
     add(myLabel, BorderLayout.CENTER);
 
@@ -59,8 +59,7 @@ public class TitlePanel extends CaptionPanel {
   public void setActive(final boolean active) {
     super.setActive(active);
     myLabel.setIcon(active ? myRegular : myInactive);
-    final Color foreground = UIUtil.getLabelForeground();
-    myLabel.setForeground(active ? foreground : Color.gray);
+    myLabel.setForeground(active ? UIUtil.getLabelForeground() : UIUtil.getLabelDisabledForeground());
   }
 
   public void setText(String titleText) {
@@ -81,6 +80,7 @@ public class TitlePanel extends CaptionPanel {
     }
 
     final Dimension preferredSize = super.getPreferredSize();
+    preferredSize.height = JBUI.CurrentTheme.Popup.headerHeight(containsSettingsControls());
     int maxWidth = JBUI.scale(350);
     if (!myHtml && preferredSize.width > maxWidth) { // do not allow caption to extend parent container
       return new Dimension(maxWidth, preferredSize.height);

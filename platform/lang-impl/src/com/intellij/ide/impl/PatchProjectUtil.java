@@ -111,7 +111,7 @@ public class PatchProjectUtil {
                   final Set<Pattern> dirPatterns = excludePatterns.get(module);
                   for (Pattern pattern : dirPatterns) {
                     if (pattern.matcher(relativeName).matches()) {
-                      contentEntry.addExcludeFolder(fileOrDir);
+                      contentEntry.addExcludeFolder(fileOrDir.isDirectory() ? fileOrDir : fileOrDir.getParent());
                       return true;
                     }
                   }
@@ -154,7 +154,7 @@ public class PatchProjectUtil {
           }
         }
         if (toExcludeSibling) {
-          contentEntry.addExcludeFolder(toExclude);
+          contentEntry.addExcludeFolder(toExclude.isDirectory() ? toExclude : toExclude.getParent());
         }
       }
     }

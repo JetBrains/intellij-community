@@ -51,7 +51,7 @@ internal class DefaultProjectStoreTest {
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1", "alpha"))
+  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
 
   private val ruleChain = RuleChain(
     tempDirManager,

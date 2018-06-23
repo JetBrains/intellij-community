@@ -21,7 +21,7 @@ public class DelayCommand extends AbstractCommand {
     }
     catch (NumberFormatException e) {
       dumpError(context, "Invalid delay value: " + s);
-      return Promises.rejectedPromise();
+      return Promises.rejectedPromise(e);
     }
 
     return Promises.resolvedPromise();

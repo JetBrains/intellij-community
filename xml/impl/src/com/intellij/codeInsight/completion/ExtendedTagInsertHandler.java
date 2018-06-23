@@ -17,6 +17,7 @@ package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -25,12 +26,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlExtension;
+import com.intellij.xml.XmlNamespaceHelper;
 import com.intellij.xml.XmlSchemaProvider;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
@@ -84,15 +86,13 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
 
         @Override
         public void run(final String namespacePrefix) {
-
-          PsiDocumentManager.getInstance(project).commitDocument(document);
+          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           final PsiElement element = file.findElementAt(context.getStartOffset());
           if (element != null) {
             qualifyWithPrefix(namespacePrefix, element, document);
             PsiDocumentManager.getInstance(project).commitDocument(document);
           }
           editor.getCaretModel().moveToOffset(caretMarker.getEndOffset());
-          PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
           doDefault(context, item);
         }
       };
@@ -159,12 +159,17 @@ public class ExtendedTagInsertHandler extends XmlTagInsertHandler {
     if (tag instanceof XmlTag) {
       final String prefix = ((XmlTag)tag).getNamespacePrefix();
       if (!prefix.equals(namespacePrefix) && StringUtil.isNotEmpty(namespacePrefix)) {
-        final String name = namespacePrefix + ":" + ((XmlTag)tag).getLocalName();
-        try {
-          ((XmlTag)tag).setName(name);
+        String toInsert = namespacePrefix + ":";
+        Document document = element.getContainingFile().getViewProvider().getDocument();
+        assert document != null;
+
+        ASTNode startTagName = XmlChildRole.START_TAG_NAME_FINDER.findChild(tag.getNode());
+        ASTNode endTagName = XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag.getNode());
+        if (endTagName != null) {
+          document.insertString(endTagName.getStartOffset(), toInsert);
         }
-        catch (IncorrectOperationException e) {
-          LOG.error(e);
+        if (startTagName != null) {
+          document.insertString(startTagName.getStartOffset(), toInsert);
         }
       }
     }

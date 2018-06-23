@@ -34,11 +34,11 @@ class GitRevertOperation(private val project: Project,
 
   fun execute() {
     GitApplyChangesProcess(project, commits, autoCommit, "revert", "reverted",
-                           command = { repository, hash, autoCommit, listeners ->
-                             doRevert(autoCommit, repository, hash, listeners)
+                           command = { repository, commit, autoCommit, listeners ->
+                             doRevert(autoCommit, repository, commit, listeners)
                            },
                            emptyCommitDetector = { result -> result.outputAsJoinedString.contains("nothing to commit") },
-                           defaultCommitMessageGenerator = { commit ->
+                           defaultCommitMessageGenerator = { _, commit ->
                              """
                              Revert "${commit.subject}"
 

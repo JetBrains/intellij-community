@@ -29,9 +29,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class ChainCallInplaceIntroducer extends JavaVariableInplaceIntroducer {
   private PsiParameter myParameter;
   private PsiElement myBlock;

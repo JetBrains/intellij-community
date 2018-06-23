@@ -17,7 +17,7 @@ package com.intellij.ide.util.gotoByName;
 
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.diagnostic.PluginException;
-import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.navigation.ChooseByNameContributor;
 import com.intellij.navigation.ChooseByNameContributorEx;
@@ -117,7 +117,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
         return true;
       }
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, true, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(liveContribs, indicator, processor)) {
       throw new ProcessCanceledException();
     }
     if (indicator != null) {
@@ -170,7 +170,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
                                     @NotNull final FindSymbolParameters parameters,
                                     @NotNull final ProgressIndicator canceled) {
     long elementByNameStarted = System.currentTimeMillis();
-    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<NavigationItem>());
+    final List<NavigationItem> items = Collections.synchronizedList(new ArrayList<>());
 
     Processor<ChooseByNameContributor> processor = contributor -> {
       if (myProject.isDisposed()) {
@@ -197,7 +197,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
           for (NavigationItem item : itemsByName) {
             canceled.checkCanceled();
             if (item == null) {
-              PluginId pluginId = PluginManager.getPluginByClassName(contributor.getClass().getName());
+              PluginId pluginId = PluginManagerCore.getPluginByClassName(contributor.getClass().getName());
               if (pluginId != null) {
                 LOG.error(new PluginException("null item from contributor " + contributor + " for name " + name, pluginId));
               }
@@ -225,7 +225,7 @@ public abstract class ContributorsBasedGotoByModel implements ChooseByNameModelE
       }
       return true;
     };
-    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, true, processor)) {
+    if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(filterDumb(myContributors), canceled, processor)) {
       canceled.cancel();
     }
     canceled.checkCanceled(); // if parallel job execution was canceled because of PCE, rethrow it from here

@@ -110,7 +110,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
     NewVirtualFile root = ManagingFS.getInstance().findRoot(path, fs);
     PlatformTestUtil.startPerformanceTest("finding root", 10_000,
         () -> JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-        Collections.nCopies(500, null), null, false, false,
+        Collections.nCopies(500, null), null, 
         __ -> {
           for (int i = 0; i < 20_000; i++) {
             NewVirtualFile rootJar = ManagingFS.getInstance().findRoot(path, fs);
@@ -156,7 +156,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
           assertEquals(findRoot(vDir), findRoot(leafDir));
         }
       };
-      int time = 1200;
+      int time = 1500;
       PlatformTestUtil.startPerformanceTest("getParent before movement", time, checkPerformance).assertTiming();
       VirtualFile dir1 = vDir.createChildDirectory(this, "dir1");
       VirtualFile dir2 = vDir.createChildDirectory(this, "dir2");
@@ -199,7 +199,7 @@ public class VfsUtilPerformanceTest extends BareTestFixtureTestCase {
   public void testAsyncRefresh() throws Throwable {
     Ref<Throwable> ex = Ref.create();
     boolean success = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(
-      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), false,
+      Arrays.asList(new Object[JobSchedulerImpl.getJobPoolParallelism()]), ProgressManager.getInstance().getProgressIndicator(), 
       o -> {
         try {
           doAsyncRefreshTest();

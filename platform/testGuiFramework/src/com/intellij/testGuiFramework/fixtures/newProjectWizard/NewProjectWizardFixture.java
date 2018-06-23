@@ -35,7 +35,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.LONG_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.finder.WindowFinder.findDialog;
@@ -50,7 +49,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
       protected boolean isMatching(@NotNull JDialog dialog) {
         return IdeBundle.message("title.new.project").equals(dialog.getTitle()) && dialog.isShowing();
       }
-    }).withTimeout(LONG_TIMEOUT.duration()).using(robot);
+    }).withTimeout(GuiTestUtil.INSTANCE.getLONG_TIMEOUT().duration()).using(robot);
 
 
     return new NewProjectWizardFixture(robot, (JDialog)newProjectDialog.target());
@@ -90,13 +89,13 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
       public boolean test() {
         return target().isFocused();
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     return this;
   }
 
   @NotNull
   public NewProjectWizardFixture setProjectName(@NotNull String projectName) {
-    String labelText = GuiTestUtil.adduction(IdeBundle.message("label.project.name"));
+    String labelText = GuiTestUtil.INSTANCE.adduction(IdeBundle.message("label.project.name"));
 
     pause(new Condition("Waiting for the sliding to project name settings") {
       @Override
@@ -110,7 +109,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
         }
         return true;
       }
-    }, GuiTestUtil.SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     final JTextComponentFixture textField = findTextField(labelText);
     robot().click(textField.target());
     textField.setText(projectName);
@@ -119,7 +118,7 @@ public class NewProjectWizardFixture extends AbstractWizardFixture<NewProjectWiz
 
   @NotNull
   public File getLocationInFileSystem() {
-    String labelText = GuiTestUtil.adduction(IdeBundle.message("label.project.files.location"));
+    String labelText = GuiTestUtil.INSTANCE.adduction(IdeBundle.message("label.project.files.location"));
     //noinspection ConstantConditions
     final JTextComponentFixture locationTextField = findTextField(labelText);
     return execute(new GuiQuery<File>() {

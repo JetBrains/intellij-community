@@ -33,6 +33,10 @@ abstract class PropertyCheckerTestCase extends TestCase {
     //noinspection unchecked
     PropertyFailure<T> failure = (PropertyFailure<T>)e.getFailure();
 
+    if (failure.getStoppingReason() != null) {
+      throw new RuntimeException(failure.getStoppingReason());
+    }
+
     /*
     System.out.println(" " + getName());
     System.out.println("Value: " + e.getBreakingValue());

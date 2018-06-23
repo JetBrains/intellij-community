@@ -54,6 +54,11 @@
     <extensionPoint name="codeInsight.unresolvedReferenceQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider"/>
 
+    <extensionPoint name="wordBoundaryFilter"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.openapi.editor.actions.WordBoundaryFilter"/>
+    </extensionPoint>
+
     <extensionPoint name="bidiRegionsSeparator"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.bidi.BidiRegionsSeparator"/>
@@ -92,6 +97,10 @@
 
     <extensionPoint name="daemon.highlightInfoFilter"
                     interface="com.intellij.codeInsight.daemon.impl.HighlightInfoFilter"/>
+    
+    <extensionPoint name="daemon.tooltipActionProvider"
+                    interface="com.intellij.codeInsight.daemon.impl.tooltips.TooltipActionProvider"/>
+    
     <extensionPoint name="daemon.intentionActionFilter"
                     interface="com.intellij.codeInsight.daemon.impl.IntentionActionFilter"/>
 
@@ -272,6 +281,8 @@
     <extensionPoint name="generatedSourcesFilter" interface="com.intellij.openapi.roots.GeneratedSourcesFilter"/>
     <extensionPoint name="outOfSourcesChecker" interface="com.intellij.openapi.projectRoots.OutOfSourcesChecker"/>
 
+    <extensionPoint name="gotoActionAliasMatcher"
+                    interface="com.intellij.ide.util.gotoByName.GotoActionAliasMatcher"/>
     <extensionPoint name="gotoClassContributor"
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="gotoSymbolContributor"
@@ -280,9 +291,20 @@
                     interface="com.intellij.navigation.ChooseByNameContributor"/>
     <extensionPoint name="anonymousElementProvider"
                     interface="com.intellij.navigation.AnonymousElementProvider"/>
-    <extensionPoint name="searchEverywhereContributor" interface="com.intellij.ide.actions.SearchEverywhereContributor"/>
+    <extensionPoint name="searchEverywhereContributor"
+                    interface="com.intellij.ide.actions.searcheverywhere.SearchEverywhereContributorFactory"/>
 
     <extensionPoint name="gotoRelatedProvider" interface="com.intellij.navigation.GotoRelatedProvider"/>
+
+    <extensionPoint name="runAnything.executionProvider"
+                    interface="com.intellij.ide.actions.runAnything.activity.RunAnythingProvider"/>
+
+    <extensionPoint name="runAnything.commandHandler" interface="com.intellij.ide.actions.runAnything.handlers.RunAnythingCommandHandler"/>
+
+    <extensionPoint name="runAnything.helpGroup" interface="com.intellij.ide.actions.runAnything.groups.RunAnythingHelpGroup"/>
+
+    <extensionPoint name="runAnything.commandCustomizer"
+                    interface="com.intellij.ide.actions.runAnything.commands.RunAnythingCommandCustomizer"/>
 
     <extensionPoint name="projectExtension" interface="com.intellij.openapi.roots.ProjectExtension" area="IDEA_PROJECT"/>
     <extensionPoint name="roots.watchedRootsProvider" interface="com.intellij.openapi.roots.WatchedRootsProvider" area="IDEA_PROJECT"/>
@@ -379,6 +401,7 @@
     <extensionPoint name="stubIndex" interface="com.intellij.psi.stubs.StubIndexExtension"/>
     <extensionPoint name="indexedRootsProvider" interface="com.intellij.util.indexing.IndexableSetContributor"/>
     <extensionPoint name="include.provider" interface="com.intellij.psi.impl.include.FileIncludeProvider"/>
+    <extensionPoint name="globalIndexFilter" interface="com.intellij.util.indexing.GlobalIndexFilter"/>
 
     <extensionPoint name="refactoring.copyHandler" interface="com.intellij.refactoring.copy.CopyHandlerDelegate"/>
     <extensionPoint name="refactoring.moveHandler" interface="com.intellij.refactoring.move.MoveHandlerDelegate"/>
@@ -433,6 +456,8 @@
 
     <extensionPoint name="programRunner"
                     interface="com.intellij.execution.runners.ProgramRunner"/>
+
+    <extensionPoint name="projectTaskRunner" interface="com.intellij.task.ProjectTaskRunner"/>
 
     <extensionPoint name="executor"
                     interface="com.intellij.execution.Executor"/>
@@ -534,6 +559,11 @@
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextSelectioner"/>
     </extensionPoint>
 
+    <extensionPoint name="lang.implementationTextProcessor"
+                    beanClass="com.intellij.lang.LanguageExtensionPoint">
+      <with attribute="implementationClass" implements="com.intellij.codeInsight.hint.ImplementationTextProcessor"/>
+    </extensionPoint>
+
     <extensionPoint name="lang.lineWrapStrategy"
                     beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.openapi.editor.LineWrapPositionStrategy"/>
@@ -592,6 +622,7 @@
     <extensionPoint name="codeInsight.parameterInfo" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.lang.parameterInfo.ParameterInfoHandler"/>
     </extensionPoint>
+    <extensionPoint name="codeInsight.parameterInfo.listener" interface="com.intellij.codeInsight.hint.ParameterInfoListener" />
     <extensionPoint name="codeInsight.parameterNameHints" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass" implements="com.intellij.codeInsight.hints.InlayParameterHintsProvider"/>
     </extensionPoint>
@@ -615,6 +646,8 @@
     <extensionPoint name="modelScopeItemPresenter" interface="com.intellij.analysis.dialog.ModelScopeItemPresenter" />
 
     <extensionPoint name="qualifiedNameProvider" interface="com.intellij.ide.actions.QualifiedNameProvider"/>
+    <extensionPoint name="virtualFileQualifiedNameProvider"
+                    interface="com.intellij.ide.actions.CopyReferenceAction$VirtualFileQualifiedNameProvider"/>
 
     <extensionPoint name="completionData"
                     beanClass="com.intellij.codeInsight.completion.CompletionDataEP"/>
@@ -753,6 +786,10 @@
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
+    </extensionPoint>
+
     <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
     <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
@@ -781,7 +818,7 @@
 
     <extensionPoint name="flipCommaIntention.flipper" beanClass="com.intellij.lang.LanguageExtensionPoint">
       <with attribute="implementationClass"
-            implements="com.intellij.openapi.editor.actions.FlipCommaIntention.Flipper"/>
+            implements="com.intellij.openapi.editor.actions.FlipCommaIntention$Flipper"/>
     </extensionPoint>
 
     <extensionPoint name="fileLookupInfoProvider" interface="com.intellij.psi.file.FileLookupInfoProvider"/>
@@ -850,8 +887,6 @@
 
     <extensionPoint name="aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper"/>
 
-    <extensionPoint name="sourceRootFinder" interface="com.intellij.ide.util.newProjectWizard.SourceRootFinder"/>
-
     <extensionPoint name="inspectionsReportConverter"
                     interface="com.intellij.codeInspection.InspectionsReportConverter"/>
 
@@ -883,6 +918,7 @@
                     interface="com.intellij.openapi.roots.ui.configuration.ModuleSourceRootEditHandler"/>
 
     <extensionPoint name="toolsProvider" interface="com.intellij.tools.ToolsProvider"/>
+    <extensionPoint name="toolsCustomizer" interface="com.intellij.tools.ToolsCustomizer"/>
 
     <extensionPoint name="defaultHighlightingSettingProvider"
                     interface="com.intellij.codeInsight.daemon.impl.analysis.DefaultHighlightingSettingProvider"/>
@@ -931,6 +967,8 @@
 
     <extensionPoint name="runningApplicationUpdaterProvider"
                     interface="com.intellij.execution.update.RunningApplicationUpdaterProvider"/>
+ 
+    <extensionPoint name="languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
   </extensionPoints>
 </idea-plugin>
 

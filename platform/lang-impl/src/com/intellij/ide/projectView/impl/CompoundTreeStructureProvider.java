@@ -6,10 +6,9 @@ import com.intellij.ide.projectView.ViewSettings;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.util.Key;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,12 +16,32 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 import java.util.Objects;
 
-public class CompoundTreeStructureProvider implements TreeStructureProvider {
+/**
+ * This class is intended to combine all providers for batch usages.
+ *
+ * @author Sergey Malenkov
+ */
+public final class CompoundTreeStructureProvider implements TreeStructureProvider {
+  private static final TreeStructureProvider EMPTY = new CompoundTreeStructureProvider();
+  private static final Key<TreeStructureProvider> KEY = Key.create("TreeStructureProvider");
   private static final Logger LOG = Logger.getInstance(CompoundTreeStructureProvider.class);
-  private final Project project;
+  private final TreeStructureProvider[] providers;
 
-  public CompoundTreeStructureProvider(@NotNull Project project) {
-    this.project = project;
+  /**
+   * @return a shared instance for the specified project
+   */
+  @NotNull
+  public static TreeStructureProvider get(@Nullable Project project) {
+    if (project == null || project.isDisposed()) return EMPTY;
+    TreeStructureProvider provider = project.getUserData(KEY);
+    if (provider != null) return provider;
+    provider = new CompoundTreeStructureProvider(EP_NAME.getExtensions(project));
+    project.putUserData(KEY, provider);
+    return provider;
+  }
+
+  public CompoundTreeStructureProvider(@NotNull TreeStructureProvider... providers) {
+    this.providers = providers;
   }
 
   @NotNull
@@ -30,55 +49,46 @@ public class CompoundTreeStructureProvider implements TreeStructureProvider {
   public Collection<AbstractTreeNode> modify(@NotNull AbstractTreeNode parent,
                                              @NotNull Collection<AbstractTreeNode> children,
                                              ViewSettings settings) {
-    if (!children.isEmpty()) {
-      TreeStructureProvider[] providers = getProviders();
-      if (providers != null && providers.length != 0) {
-        for (TreeStructureProvider provider : providers) {
-          try {
-            children = provider.modify(parent, children, settings);
-            if (children.stream().anyMatch(Objects::isNull)) {
-              LOG.warn("null child provided by " + provider);
-              children = StreamEx.of(children).filter(Objects::nonNull).toImmutableList();
-            }
-          }
-          catch (IndexNotReadyException exception) {
-            throw new ProcessCanceledException(exception);
-          }
-          catch (ProcessCanceledException exception) {
-            throw exception;
-          }
-          catch (Exception exception) {
-            LOG.warn("unexpected error in " + provider, exception);
-          }
+    for (TreeStructureProvider provider : providers) {
+      try {
+        children = provider.modify(parent, children, settings);
+        if (children.stream().anyMatch(Objects::isNull)) {
+          LOG.warn("null child provided by " + provider);
+          children = StreamEx.of(children).nonNull().toImmutableList();
         }
       }
-      children.forEach(node -> node.setParent(parent));
+      catch (IndexNotReadyException exception) {
+        throw new ProcessCanceledException(exception);
+      }
+      catch (ProcessCanceledException exception) {
+        throw exception;
+      }
+      catch (Exception exception) {
+        LOG.warn("unexpected error in " + provider, exception);
+      }
     }
+    children.forEach(node -> node.setParent(parent));
     return children;
   }
 
   @Nullable
   @Override
-  public Object getData(Collection<AbstractTreeNode> selection, String id) {
-    if (id != null && selection != null && !selection.isEmpty()) {
-      TreeStructureProvider[] providers = getProviders();
-      if (providers != null && providers.length != 0) {
-        for (TreeStructureProvider provider : providers) {
-          if (isDumbMode(provider)) continue;
+  public Object getData(@NotNull Collection<AbstractTreeNode> selection, String id) {
+    if (id != null && !selection.isEmpty()) {
+      for (TreeStructureProvider provider : providers) {
+        try {
           Object data = provider.getData(selection, id);
           if (data != null) return data;
+        }
+        catch (IndexNotReadyException ignore) {
+        }
+        catch (ProcessCanceledException ignore) {
+        }
+        catch (Exception exception) {
+          LOG.warn("unexpected error in " + provider, exception);
         }
       }
     }
     return null;
-  }
-
-  @Nullable
-  private TreeStructureProvider[] getProviders() {
-    return project.isDisposed() ? null : EP_NAME.getExtensions(project);
-  }
-
-  private boolean isDumbMode(TreeStructureProvider provider) {
-    return project.isDisposed() || DumbService.isDumb(project) && !DumbService.isDumbAware(provider);
   }
 }

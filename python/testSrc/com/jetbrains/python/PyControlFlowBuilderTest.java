@@ -254,6 +254,36 @@ public class PyControlFlowBuilderTest extends LightMarkedTestCase {
     doTest();
   }
 
+  // PY-24750
+  public void testIfFalse() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfTrue() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfElifTrue() {
+    doTest();
+  }
+
+  // PY-24750
+  public void testIfElifFalse() {
+    doTest();
+  }
+
+  // PY-28972
+  public void testWhileTrueElse() {
+    doTest();
+  }
+
+  // PY-13919
+  public void testWithRaiseException() {
+    doTest();
+  }
+
   private void doTestFirstStatement() {
     final String testName = getTestName(false).toLowerCase();
     configureByFile(testName + ".py");

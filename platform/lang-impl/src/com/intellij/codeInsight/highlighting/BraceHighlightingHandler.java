@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.highlighting;
 
@@ -349,7 +347,14 @@ public class BraceHighlightingHandler {
 
   @NotNull
   private FileType getFileTypeByIterator(@NotNull HighlighterIterator iterator) {
-    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, iterator.getStart()).getFileType();
+    int start;
+    try {
+      start = iterator.getStart();
+    }
+    catch (IndexOutOfBoundsException e) {
+      throw new RuntimeException("Error getting file type for " + myEditor + ", text length: " + myDocument.getTextLength(), e);
+    }
+    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, start).getFileType();
   }
 
   @NotNull
@@ -532,7 +537,7 @@ public class BraceHighlightingHandler {
           TextRange range = new TextRange(start, lbraceEnd);
           int line1 = myDocument.getLineNumber(range.getStartOffset());
           int line2 = myDocument.getLineNumber(range.getEndOffset());
-          line1 = Math.max(line1, line2 - 5);
+          line1 = Math.max(line1, line2 - EditorFragmentComponent.getAvailableVisualLinesAboveEditor(myEditor) + 1);
           range = new TextRange(myDocument.getLineStartOffset(line1), range.getEndOffset());
           HintManager.getInstance().hideAllHints();
           LightweightHint hint = EditorFragmentComponent.showEditorFragmentHint(myEditor, range, true, true);
@@ -563,7 +568,7 @@ public class BraceHighlightingHandler {
     if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
 
     int startOffset = myDocument.getLineStartOffset(startLine);
-    int endOffset = myDocument.getLineStartOffset(endLine);
+    int endOffset = myDocument.getLineEndOffset(endLine);
 
     LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
     if (renderer == null) return;
@@ -607,11 +612,10 @@ public class BraceHighlightingHandler {
 
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      int height = r.height + editor.getLineHeight();
       g.setColor(myColor);
-      g.fillRect(r.x, r.y, THICKNESS, height);
+      g.fillRect(r.x, r.y, THICKNESS, r.height);
       g.fillRect(r.x + THICKNESS, r.y, DEEPNESS, THICKNESS);
-      g.fillRect(r.x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
+      g.fillRect(r.x + THICKNESS, r.y + r.height - THICKNESS, DEEPNESS, THICKNESS);
     }
   }
 }

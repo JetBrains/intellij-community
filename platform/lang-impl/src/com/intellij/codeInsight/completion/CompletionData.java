@@ -47,6 +47,7 @@ import static com.intellij.patterns.StandardPatterns.not;
 /**
  * @deprecated see {@link CompletionContributor}
  */
+@Deprecated
 @SuppressWarnings("deprecation")
 public class CompletionData {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.completion.CompletionData");
@@ -69,6 +70,7 @@ public class CompletionData {
    * @deprecated 
    * @see CompletionContributor
    */
+  @Deprecated
   protected void registerVariant(CompletionVariant variant){
     myCompletionVariants.add(variant);
   }

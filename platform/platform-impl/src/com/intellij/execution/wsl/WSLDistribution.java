@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.credentialStore.CredentialAttributes;
@@ -10,7 +10,6 @@ import com.intellij.execution.process.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -22,10 +21,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.OutputStream;
 import java.io.PrintWriter;
-import java.nio.file.Files;
-import java.nio.file.LinkOption;
 import java.nio.file.Path;
-import java.nio.file.Paths;
 import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -45,71 +41,50 @@ public class WSLDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
-  @NotNull
-  private final String myId;
-  @NotNull
-  private final String myMsId;
-  @NotNull
-  private final String myExeName;
-  @NotNull
-  private final String myPresentableName;
-  @Nullable
-  private final Path myRootPath;
+  static class Description {
+    @NotNull final String id;
+    @NotNull final String msId;
+    @NotNull final String exeName;
+    @NotNull final String presentableName;
 
-  /**
-   * @return root for WSL executable or null if unavailable
-   */
-  @Nullable
-  protected Path getExecutableRootPath() {
-    String localAppDataPath = System.getenv().get("LOCALAPPDATA");
-    return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
+    public Description(@NotNull String id, @NotNull String msId, @NotNull String exeName, @NotNull String presentableName) {
+      this.id = id;
+      this.msId = msId;
+      this.exeName = exeName;
+      this.presentableName = presentableName;
+    }
   }
 
-  @SuppressWarnings("CopyConstructorMissesField")
-  public WSLDistribution(@NotNull WSLDistribution dist) {
-    this(dist.myId, dist.myMsId, dist.myExeName, dist.myPresentableName);
+  @NotNull private final Description myDescription;
+  @NotNull private final Path myExecutablePath;
+
+  protected WSLDistribution(@NotNull WSLDistribution dist) {
+    this(dist.myDescription, dist.myExecutablePath);
   }
 
-  WSLDistribution(@NotNull String id, @NotNull String msId, @NotNull String exeName, @NotNull String presentableName) {
-    myId = id;
-    myMsId = msId;
-    myExeName = exeName;
-    myPresentableName = presentableName;
-    myRootPath = getExecutableRootPath();
-  }
-
-  public boolean isAvailable() {
-    return getExecutablePath() != null;
-  }
-
-  @NotNull
-  private String getExeName() {
-    return myExeName;
+  WSLDistribution(@NotNull Description description, @NotNull Path executablePath) {
+    myDescription = description;
+    myExecutablePath = executablePath;
   }
 
   /**
-   * @return executable file or null if file is missing
+   * @return executable file
    */
-  @Nullable
+  @NotNull
   public Path getExecutablePath() {
-    if (!SystemInfo.isWin10OrNewer) {
-      return null;
-    }
-
-    if (myRootPath == null || !(Files.exists(myRootPath) && Files.isDirectory(myRootPath))) {
-      return null;
-    }
-    Path fullPath = myRootPath.resolve(getExeName());
-
-    return Files.exists(fullPath, LinkOption.NOFOLLOW_LINKS) ? fullPath : null;
+    return myExecutablePath;
   }
 
+  /**
+   * @return identification data of WSL distribution.
+   */
   @Nullable
   public String readReleaseInfo() {
     try {
       final String key = "PRETTY_NAME";
       final String releaseInfo = "/etc/os-release"; // available for all distributions
-      final ProcessOutput output = executeOnWsl(1000, "cat", releaseInfo);
+      final ProcessOutput output = executeOnWsl(10000, "cat", releaseInfo);
+      if (!output.checkSuccess(LOG)) return null;
       for (String line : output.getStdoutLines(true)) {
         if (line.startsWith(key) && line.length() >= (key.length() + 1)) {
           final String prettyName = line.substring(key.length() + 1);
@@ -215,13 +190,10 @@ public class WSLDistribution {
                                                            @Nullable String remoteWorkingDir,
                                                            boolean askForSudo
   ) {
-    Path executablePath = getExecutablePath();
-    assert executablePath != null;
-
     Map<String, String> additionalEnvs = new THashMap<>(commandLine.getEnvironment());
     commandLine.getEnvironment().clear();
 
-    LOG.info("[" + myId + "] " +
+    LOG.info("[" + getId() + "] " +
              "Patching: " +
              commandLine.getCommandLineString() +
              "; working dir: " +
@@ -231,7 +203,17 @@ public class WSLDistribution {
              (askForSudo ? "; with sudo" : ": without sudo")
     );
 
-    StringBuilder commandLineString = new StringBuilder(commandLine.getCommandLineString());
+    StringBuilder commandLineString = new StringBuilder();
+    ParametersList parametersList = commandLine.getParametersList();
+    List<String> realParamsList = parametersList.getList();
+
+    // avoiding double wrapping into bash -c; may cause problems with escaping
+    if (realParamsList.size() == 2 && "bash".equals(commandLine.getExePath()) && "-c".equals(realParamsList.get(0))) {
+      commandLineString.append(realParamsList.get(1));
+    }
+    else {
+      commandLineString.append(commandLine.getCommandLineString());
+    }
 
     if (askForSudo) { // fixme shouldn't we sudo for every chunk? also, preserve-env, login?
       prependCommandLineString(commandLineString, "sudo", "-S", "-p", "''");
@@ -247,8 +229,9 @@ public class WSLDistribution {
           String password = CredentialPromptDialog.askPassword(
             project,
             "Enter Root Password",
-            "Sudo password for " + myPresentableName + " root:",
-            new CredentialAttributes("WSL", "root", WSLDistribution.class)
+            "Sudo password for " + getPresentableName() + " root:",
+            new CredentialAttributes("WSL", "root", WSLDistribution.class),
+            true
           );
           if (password != null) {
             PrintWriter pw = new PrintWriter(input);
@@ -279,13 +262,12 @@ public class WSLDistribution {
     });
 
 
-    commandLine.setExePath(executablePath.toString());
-    ParametersList parametersList = commandLine.getParametersList();
+    commandLine.setExePath(getExecutablePath().toString());
     parametersList.clearAll();
     parametersList.add(getRunCommandLineParameter());
     parametersList.add(commandLineString.toString());
 
-    LOG.info("[" + myId + "] " + "Patched as: " + commandLine.getCommandLineString());
+    LOG.info("[" + getId() + "] " + "Patched as: " + commandLine.getCommandLineString());
     return commandLine;
   }
 
@@ -346,10 +328,6 @@ public class WSLDistribution {
    */
   @NotNull
   public Map<String, String> getEnvironment() {
-    if (!isAvailable()) {
-      return Collections.emptyMap();
-    }
-
     try {
       ProcessOutput processOutput = executeOnWsl(5000, "env");
       Map<String, String> result = new THashMap<>();
@@ -401,23 +379,23 @@ public class WSLDistribution {
 
   @NotNull
   public String getId() {
-    return myId;
+    return myDescription.id;
   }
 
   @NotNull
   public String getMsId() {
-    return myMsId;
+    return myDescription.msId;
   }
 
   @NotNull
   public String getPresentableName() {
-    return myPresentableName;
+    return myDescription.presentableName;
   }
 
   @Override
   public String toString() {
     return "WSLDistribution{" +
-           "myId='" + myId + '\'' +
+           "myId='" + getId() + '\'' +
            '}';
   }
 

@@ -101,14 +101,17 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
   private fun mainModule(@Language("JAVA") text: String) {
     addFile("module-info.java", text, ModuleDescriptor.MAIN)
 
+    val mainFile = myMainFile
+    if (mainFile != null) {
+      myFixture.configureFromExistingVirtualFile(mainFile)
+      myFixture.checkHighlighting() // Sanity check: make sure the imports work (or don't work) as expected
+    }
+
     val toolWrapper = GlobalInspectionToolWrapper(Java9RedundantRequiresStatementInspection())
     val scope = AnalysisScope(project)
     val globalContext = createGlobalContextForTool(scope, project, listOf(toolWrapper))
     InspectionTestUtil.runTool(toolWrapper, scope, globalContext)
     InspectionTestUtil.compareToolResults(globalContext, toolWrapper, true, testDataPath + getTestName(true))
-
-    myFixture.configureFromExistingVirtualFile(myMainClassFile ?: return)
-    myFixture.checkHighlighting() // make sure the imports work
   }
 
   private fun add(packageName: String, className: String, module: ModuleDescriptor, body: String = "", vararg imports: String) {
@@ -121,18 +124,19 @@ class Java9RedundantRequiresStatementTest : LightJava9ModulesCodeInsightFixtureT
         }""".trimIndent(), module = module)
   }
 
-  private var myMainClassFile: VirtualFile? = null
+  private var myMainFile: VirtualFile? = null
 
   private fun mainClass(vararg imports: String, staticImports: List<String> = emptyList()) {
     val importsText = imports.joinToString("\n") { "import ${it};" }
     val staticImportsText = staticImports.joinToString("\n") { "import static ${it};" }
-    myMainClassFile = addFile("org.example.main/Main.java", """
+    val mainText = """
         package org.example.main;
         ${importsText}
         ${staticImportsText}
         public class Main {
           void main() {}
-        }""".trimIndent(), module = ModuleDescriptor.MAIN)
+        }""".trimIndent()
+    myMainFile = addFile("org.example.main/Main.java", mainText)
   }
 
   override fun getTestDataPath() = PathManagerEx.getTestDataPath() + "/inspection/redundantRequiresStatement/"

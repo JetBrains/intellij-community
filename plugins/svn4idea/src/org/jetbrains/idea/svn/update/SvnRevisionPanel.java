@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
@@ -74,7 +74,7 @@ public class SvnRevisionPanel extends JPanel {
   private void chooseRevision() {
     if (myProject != null && myUrlProvider != null) {
       try {
-        SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.compute().toString());
+        SvnRepositoryLocation location = new SvnRepositoryLocation(myUrlProvider.compute());
         SvnChangeList version = SvnSelectRevisionUtil.chooseCommittedChangeList(myProject, location, myRoot);
         if (version != null) {
           myRevisionField.setText(String.valueOf(version.getNumber()));
@@ -113,6 +113,11 @@ public class SvnRevisionPanel extends JPanel {
     }
 
     return result;
+  }
+
+  @NotNull
+  public JTextField getRevisionTextField() {
+    return myRevisionField.getTextField();
   }
 
   public void setRevisionText(String text) {

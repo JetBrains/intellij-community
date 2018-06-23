@@ -4,10 +4,15 @@ package com.intellij.ide.java;
 import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collections;
+import java.util.List;
 
 public class IntelliJIdeaLanguageCustomization extends IdeLanguageCustomization {
+  @NotNull
   @Override
-  public Language getMainIdeLanguage() {
-    return JavaLanguage.INSTANCE;
+  public List<Language> getPrimaryIdeLanguages() {
+    return Collections.singletonList(JavaLanguage.INSTANCE);
   }
 }

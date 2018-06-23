@@ -20,7 +20,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.*;
 
 public class TestDiscoverySearchHelper {
@@ -62,14 +61,11 @@ public class TestDiscoverySearchHelper {
               if (containingClass != null && containingClass.getParent() == psiFile) {
                 final String classQualifiedName = containingClass.getQualifiedName();
                 final String changedMethodName = changedMethod.getName();
-                try {
-                  if (classQualifiedName != null &&
-                      (position == null && TestFrameworks.detectFramework(containingClass) != null ||
-                       position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkId))) {
-                    patterns.add(classQualifiedName + "," + changedMethodName);
-                  }
+                if (classQualifiedName != null &&
+                    (position == null && TestFrameworks.detectFramework(containingClass) != null ||
+                     position != null && !discoveryIndex.hasTestTrace(classQualifiedName, changedMethodName, frameworkId))) {
+                  patterns.add(classQualifiedName + "," + changedMethodName);
                 }
-                catch (IOException ignore) {}
               }
             }
           }
@@ -87,7 +83,10 @@ public class TestDiscoverySearchHelper {
                                       @NotNull String classFQName,
                                       @NotNull String methodName,
                                       byte frameworkId) {
-    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, (c, m) -> patterns.add(c + "," + m));
+    TestDiscoveryProducer.consumeDiscoveredTests(project, classFQName, methodName, frameworkId, (c, m, p) -> {
+      patterns.add(c + "," + m);
+      return true;
+    });
   }
 
   @NotNull

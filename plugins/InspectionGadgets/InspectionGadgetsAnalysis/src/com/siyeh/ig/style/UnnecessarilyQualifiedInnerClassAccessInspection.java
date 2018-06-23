@@ -22,10 +22,12 @@ import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ImportUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -67,8 +69,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     return new UnnecessarilyQualifiedInnerClassAccessFix();
   }
 
-  private static class UnnecessarilyQualifiedInnerClassAccessFix
-    extends InspectionGadgetsFix {
+  private static class UnnecessarilyQualifiedInnerClassAccessFix extends InspectionGadgetsFix {
 
     @Override
     @NotNull
@@ -84,8 +85,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (!(parent instanceof PsiJavaCodeReferenceElement)) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)parent;
+      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)parent;
       final PsiElement target = referenceElement.resolve();
       if (!(target instanceof PsiClass)) {
         return;
@@ -94,7 +94,7 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       ImportUtils.addImportIfNeeded(aClass, element);
       final String shortName = aClass.getName();
       if (isReferenceToTarget(shortName, aClass, parent)) {
-        element.delete();
+        new CommentTracker().deleteAndRestoreComments(element);
       }
     }
   }
@@ -118,24 +118,20 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
     return result.isAccessible() && target.equals(result.getElement());
   }
 
-  private class UnnecessarilyQualifiedInnerClassAccessVisitor
-    extends BaseInspectionVisitor {
+  private class UnnecessarilyQualifiedInnerClassAccessVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitReferenceElement(
-      PsiJavaCodeReferenceElement reference) {
+    public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
       super.visitReferenceElement(reference);
       final PsiElement qualifier = reference.getQualifier();
       if (!(qualifier instanceof PsiJavaCodeReferenceElement)) {
         return;
       }
-      if (isInImportOrPackage(reference)) {
+      if (PsiTreeUtil.getParentOfType(reference, PsiImportStatementBase.class, PsiPackageStatement.class) != null) {
         return;
       }
-      final PsiJavaCodeReferenceElement referenceElement =
-        (PsiJavaCodeReferenceElement)qualifier;
-      final PsiReferenceParameterList parameterList =
-        referenceElement.getParameterList();
+      final PsiJavaCodeReferenceElement referenceElement = (PsiJavaCodeReferenceElement)qualifier;
+      final PsiReferenceParameterList parameterList = referenceElement.getParameterList();
       if (parameterList != null &&
           parameterList.getTypeParameterElements().length > 0) {
         return;
@@ -144,19 +140,17 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (!(qualifierTarget instanceof PsiClass)) {
         return;
       }
-      final PsiClass referenceClass =
-        PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+      final PsiClass referenceClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
       if (referenceClass == null) {
         return;
       }
-      final PsiElement brace = referenceClass.getLBrace();
-      if (!referenceClass.equals(qualifierTarget) || brace != null && brace.getTextOffset() > reference.getTextOffset()) {
+      ProblemHighlightType highlightType = ProblemHighlightType.LIKE_UNUSED_SYMBOL;
+      if (!referenceClass.equals(qualifierTarget) || !ImportUtils.isInsideClassBody(reference, referenceClass)) {
         if (ignoreReferencesNeedingImport &&
-            (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget,
-                                    true) ||
-             !PsiTreeUtil.isAncestor(qualifierTarget,
-                                     referenceClass, true))) {
-          return;
+            (PsiTreeUtil.isAncestor(referenceClass, qualifierTarget, true) ||
+             !PsiTreeUtil.isAncestor(qualifierTarget, referenceClass, true))) {
+          if (!isOnTheFly()) return;
+          highlightType = ProblemHighlightType.INFORMATION;
         }
       }
       final PsiElement target = reference.resolve();
@@ -164,6 +158,9 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
         return;
       }
       final PsiClass aClass = (PsiClass)target;
+      if (!PsiUtil.isAccessible(aClass, referenceClass, null)) {
+        return;
+      }
       final PsiClass containingClass = aClass.getContainingClass();
       if (containingClass == null) {
         return;
@@ -175,25 +172,12 @@ public class UnnecessarilyQualifiedInnerClassAccessInspection extends BaseInspec
       if (!isReferenceToTarget(shortName, aClass, reference)) {
         return;
       }
-      registerError(qualifier, ProblemHighlightType.LIKE_UNUSED_SYMBOL, aClass);
+      registerError(qualifier, highlightType, aClass);
     }
 
     @Override
-    public void visitReferenceExpression(
-      PsiReferenceExpression expression) {
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
       visitReferenceElement(expression);
-    }
-
-    private boolean isInImportOrPackage(PsiElement element) {
-      while (element instanceof PsiJavaCodeReferenceElement) {
-        element = element.getParent();
-        if (element instanceof PsiImportStatementBase ||
-            element instanceof PsiPackageStatement ||
-            element instanceof PsiImportStaticReferenceElement) {
-          return true;
-        }
-      }
-      return false;
     }
   }
 }

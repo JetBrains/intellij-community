@@ -71,8 +71,8 @@ abstract class ProductProperties {
   boolean reassignAltClickToMultipleCarets = false
 
   /**
-   * If {@code true} a txt file containing information (in Atlassian Confluence format) about third-party libraries used in the product
-   * will be generated.
+   * Now file containing information about third-party libraries is bundled and shown inside IDE.
+   * If {@code true} html file of third-party libraries will be placed alongside with build artifacts.
    */
   boolean generateLibrariesLicensesTable = true
 
@@ -149,6 +149,11 @@ abstract class ProductProperties {
    * If {@code true} YourKit agent will be automatically attached when an EAP build of the product starts. It makes sense only if {@link #yourkitAgentBinariesDirectoryPath} is non-null.
    */
   boolean enableYourkitAgentInEAP = false
+
+  /**
+   * Specifies how Maven artifacts for IDE modules should be generated, by default no artifacts are generated.
+   */
+  MavenArtifactsProperties mavenArtifacts = new MavenArtifactsProperties()
 
   /**
    * Specified additional modules (not included into the product layout) which need to be compiled when product is built.

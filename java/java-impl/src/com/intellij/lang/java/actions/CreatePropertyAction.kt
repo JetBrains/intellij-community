@@ -29,7 +29,7 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
     val counterPart = when (propertyKind) {
       GETTER, BOOLEAN_GETTER -> SETTER
       SETTER -> {
-        val expectedType = request.parameters.single().second.singleOrNull()
+        val expectedType = request.expectedParameters.single().expectedTypes.singleOrNull()
         if (expectedType != null && PsiType.BOOLEAN == JvmPsiConversionHelper.getInstance(project).convertType(expectedType.theType)) {
           BOOLEAN_GETTER
         }
@@ -52,19 +52,19 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
       return getter to setter
     }
 
-    private fun insertPrototypes(): Pair<PsiMethod, PsiMethod> {
+    private fun insertPrototypes(): Pair<PsiMethod, PsiMethod>? {
       val (getterPrototype, setterPrototype) = generatePrototypes()
       return if (propertyKind == SETTER) {
         // Technology isn't there yet. See related: WEB-26575.
         // We can't recalculate template segments which start before the current segment,
         // so we add the setter before the getter.
-        val setter = insertAccessor(setterPrototype)
-        val getter = insertAccessor(getterPrototype)
+        val setter = insertAccessor(setterPrototype) ?: return null
+        val getter = insertAccessor(getterPrototype) ?: return null
         getter to setter
       }
       else {
-        val getter = insertAccessor(getterPrototype)
-        val setter = insertAccessor(setterPrototype)
+        val getter = insertAccessor(getterPrototype) ?: return null
+        val setter = insertAccessor(setterPrototype) ?: return null
         getter to setter
       }
     }
@@ -83,8 +83,8 @@ internal class CreatePropertyAction(target: PsiClass, request: CreateMethodReque
      *
      * 3. Setter parameter name template is added in any case.
      */
-    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression {
-      val (getter, setter) = insertPrototypes()
+    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
+      val (getter, setter) = insertPrototypes() ?: return null
 
       val getterData = getter.extractGetterTemplateData()
       val setterData = setter.extractSetterTemplateData()

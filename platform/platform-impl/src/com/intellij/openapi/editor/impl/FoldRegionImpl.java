@@ -7,11 +7,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingGroup;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.util.Getter;
 import com.intellij.util.DocumentUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
+class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion, Getter<FoldRegionImpl> {
   private boolean myIsExpanded;
   private final EditorImpl myEditor;
   private final String myPlaceholderText;
@@ -63,6 +64,11 @@ class FoldRegionImpl extends RangeMarkerImpl implements FoldRegion {
         }
       }
     }
+  }
+
+  @Override
+  public FoldRegionImpl get() {
+    return this;
   }
 
   private static void doSetExpanded(boolean expanded, FoldingModelImpl foldingModel, FoldRegion region, boolean notify) {

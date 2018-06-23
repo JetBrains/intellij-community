@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.impl
 
+import com.intellij.diff.tools.fragmented.UnifiedDiffTool
 import com.intellij.diff.util.DiffPlaces
 import com.intellij.diff.util.DiffUtil
 import com.intellij.openapi.components.PersistentStateComponent
@@ -61,7 +62,11 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
   }
 
   private fun defaultPlaceSettings(place: String): PlaceSettings {
-    return PlaceSettings()
+    val settings = PlaceSettings()
+    if (place == DiffPlaces.VCS_LOG_VIEW) {
+      settings.DIFF_TOOLS_ORDER = listOf(UnifiedDiffTool::class.java.canonicalName)
+    }
+    return settings
   }
 
 
@@ -69,7 +74,7 @@ class DiffSettingsHolder : PersistentStateComponent<DiffSettingsHolder.State> {
     @OptionTag
     @XMap
     @JvmField var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
-    @JvmField var SHARED_SETTINGS = SharedSettings()
+    @JvmField var SHARED_SETTINGS: SharedSettings = SharedSettings()
   }
 
   private var myState: State = State()

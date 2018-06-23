@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.errorhandling;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -127,15 +128,14 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
         DataFlowRunner runner = new StandardDataFlowRunner(false, block);
         DfaValueFactory factory = runner.getFactory();
-        DfaVariableValue exceptionVar = factory.getVarFactory().createVariableValue(parameter, false);
-        DfaVariableValue stableExceptionVar =
-          factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block), false);
+        DfaVariableValue exceptionVar = factory.getVarFactory().createVariableValue(parameter);
+        DfaVariableValue stableExceptionVar = factory.getVarFactory().createVariableValue(new LightParameter("tmp", exception, block));
 
         StandardInstructionVisitor visitor = new IgnoredExceptionVisitor(parameter, block, exceptionClass, stableExceptionVar);
         Consumer<DfaMemoryState> stateAdjuster = state -> {
           state.applyCondition(factory.createCondition(exceptionVar, RelationType.EQ, stableExceptionVar));
-          state
-            .applyCondition(factory.createCondition(exceptionVar, RelationType.IS, factory.createTypeValue(exception, Nullness.NOT_NULL)));
+          state.applyCondition(
+            factory.createCondition(exceptionVar, RelationType.IS, factory.createTypeValue(exception, Nullability.NOT_NULL)));
           };
         return runner.analyzeCodeBlock(block, visitor, stateAdjuster) == RunnerResult.OK;
       }
@@ -178,7 +178,7 @@ public class CatchMayIgnoreExceptionInspection extends AbstractBaseJavaLocalInsp
 
     protected boolean isModificationAllowed(DfaVariableValue variable) {
       PsiModifierListOwner owner = variable.getPsiVariable();
-      return owner == myParameter || PsiTreeUtil.isAncestor(myBlock, owner, false);
+      return owner == myParameter || owner != null && PsiTreeUtil.isAncestor(myBlock, owner, false);
     }
   }
 

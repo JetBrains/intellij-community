@@ -53,6 +53,7 @@ public final class ScratchRootType extends RootType {
   @Nullable
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
     Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), ScratchFileType.INSTANCE.getIcon());
     return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
   }
@@ -74,7 +75,7 @@ public final class ScratchRootType extends RootType {
                           .withGlobalUndo().shouldRecordActionForActiveDocument(false)
                           .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
           ScratchFileService fileService = ScratchFileService.getInstance();
-          VirtualFile file = fileService.findFile(ScratchRootType.this, fileName, option);
+          VirtualFile file = fileService.findFile(this, fileName, option);
           // save text should go before any other manipulations that load document,
           // otherwise undo will be broken
           VfsUtil.saveText(file, text);

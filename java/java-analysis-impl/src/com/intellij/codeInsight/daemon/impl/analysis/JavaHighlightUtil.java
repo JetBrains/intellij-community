@@ -20,12 +20,18 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class JavaHighlightUtil {
@@ -33,14 +39,13 @@ public class JavaHighlightUtil {
     return isSerializable(aClass, "java.io.Serializable");
   }
 
-  public static boolean isSerializable(@NotNull PsiClass aClass,
-                                       String serializableClassName) {
+  public static boolean isSerializable(@NotNull PsiClass aClass, @NotNull String serializableClassName) {
     Project project = aClass.getManager().getProject();
     PsiClass serializableClass = JavaPsiFacade.getInstance(project).findClass(serializableClassName, aClass.getResolveScope());
     return serializableClass != null && aClass.isInheritor(serializableClass, true);
   }
 
-  public static boolean isSerializationRelatedMethod(PsiMethod method, PsiClass containingClass) {
+  public static boolean isSerializationRelatedMethod(@NotNull PsiMethod method, @Nullable PsiClass containingClass) {
     if (containingClass == null) return false;
     if (method.isConstructor()) {
       if (isSerializable(containingClass, "java.io.Externalizable") && 
@@ -123,7 +128,7 @@ public class JavaHighlightUtil {
                                       PsiFormatUtilBase.SHOW_TYPE);
   }
 
-  public static boolean isSuperOrThisCall(PsiStatement statement, boolean testForSuper, boolean testForThis) {
+  public static boolean isSuperOrThisCall(@NotNull PsiStatement statement, boolean testForSuper, boolean testForThis) {
     if (!(statement instanceof PsiExpressionStatement)) return false;
     PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
     if (!(expression instanceof PsiMethodCallExpression)) return false;
@@ -143,32 +148,19 @@ public class JavaHighlightUtil {
    *  this (...) at the beginning of the constructor body
    * @return referring constructor
    */
-  @Nullable public static List<PsiMethod> getChainedConstructors(PsiMethod constructor) {
+  @NotNull
+  public static List<PsiMethod> getChainedConstructors(@NotNull PsiMethod constructor) {
     final ConstructorVisitorInfo info = new ConstructorVisitorInfo();
     visitConstructorChain(constructor, info);
     if (info.visitedConstructors != null) info.visitedConstructors.remove(constructor);
-    return info.visitedConstructors;
+    return ObjectUtils.notNull(info.visitedConstructors, Collections.emptyList());
   }
 
-  static void visitConstructorChain(PsiMethod constructor, @NotNull ConstructorVisitorInfo info) {
+  static void visitConstructorChain(@NotNull PsiMethod entry, @NotNull ConstructorVisitorInfo info) {
+    PsiMethod constructor = entry;
     while (true) {
-      if (constructor == null) return;
-      final PsiCodeBlock body = constructor.getBody();
-      if (body == null) return;
-      final PsiStatement[] statements = body.getStatements();
-      if (statements.length == 0) return;
-      final PsiStatement statement = statements[0];
-      final PsiElement element = new PsiMatcherImpl(statement)
-          .dot(PsiMatchers.hasClass(PsiExpressionStatement.class))
-          .firstChild(PsiMatchers.hasClass(PsiMethodCallExpression.class))
-          .firstChild(PsiMatchers.hasClass(PsiReferenceExpression.class))
-          .firstChild(PsiMatchers.hasClass(PsiKeyword.class))
-          .dot(PsiMatchers.hasText(PsiKeyword.THIS))
-          .parent(null)
-          .parent(null)
-          .getElement();
-      if (element == null) return;
-      PsiMethodCallExpression methodCall = (PsiMethodCallExpression)element;
+      PsiMethodCallExpression methodCall = JavaPsiConstructorUtil.findThisOrSuperCallInConstructor(constructor);
+      if (!JavaPsiConstructorUtil.isChainedConstructorCall(methodCall)) return;
       PsiMethod method = methodCall.resolveMethod();
       if (method == null) return;
       if (info.visitedConstructors != null && info.visitedConstructors.contains(method)) {
@@ -182,7 +174,7 @@ public class JavaHighlightUtil {
   }
 
   @Nullable
-  public static String checkPsiTypeUseInContext(@Nullable PsiType type, @NotNull PsiElement context) {
+  public static String checkPsiTypeUseInContext(@NotNull PsiType type, @NotNull PsiElement context) {
     if (type instanceof PsiPrimitiveType) return null;
     if (type instanceof PsiArrayType) return checkPsiTypeUseInContext(((PsiArrayType) type).getComponentType(), context);
     if (PsiUtil.resolveClassInType(type) != null) return null;
@@ -190,6 +182,7 @@ public class JavaHighlightUtil {
     return "Invalid Java type";
   }
 
+  @NotNull
   private static String checkClassType(@NotNull PsiClassType type, @NotNull PsiElement context) {
     String className = PsiNameHelper.getQualifiedClassName(type.getCanonicalText(false), true);
     if (classExists(context, className)) {
@@ -198,12 +191,12 @@ public class JavaHighlightUtil {
     return "Invalid Java type";
   }
 
-  private static boolean classExists(@NotNull PsiElement context, String className) {
+  private static boolean classExists(@NotNull PsiElement context, @NotNull String className) {
     return JavaPsiFacade.getInstance(context.getProject()).findClass(className, GlobalSearchScope.allScope(context.getProject())) != null;
   }
 
   @NotNull
-  private static String getClassInaccessibleMessage(@NotNull PsiElement context, String className) {
+  private static String getClassInaccessibleMessage(@NotNull PsiElement context, @NotNull String className) {
     Module module = ModuleUtilCore.findModuleForPsiElement(context);
     return "Class '" + className + "' is not accessible " + (module == null ? "here" : "from module '" + module.getName() + "'");
   }

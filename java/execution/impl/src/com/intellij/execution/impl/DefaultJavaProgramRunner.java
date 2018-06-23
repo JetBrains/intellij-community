@@ -266,6 +266,7 @@ public class DefaultJavaProgramRunner extends JavaPatchableProgramRunner {
 
     @Override
     protected void perform(AnActionEvent e, ProcessProxy proxy) {
+      myProcessHandler.putUserData(ProcessHandler.TERMINATION_REQUESTED, Boolean.TRUE);
       proxy.sendStop();
     }
   }

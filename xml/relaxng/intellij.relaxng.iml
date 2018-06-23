@@ -25,9 +25,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="isorelax" type="repository">
+        <properties maven-id="isorelax:isorelax:20030108" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/isorelax.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/isorelax/isorelax/20030108/isorelax-20030108.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />
@@ -43,9 +44,10 @@
       </library>
     </orderEntry>
     <orderEntry type="module-library">
-      <library>
+      <library name="jing" type="repository">
+        <properties maven-id="thaiopensource:jing:20030619" />
         <CLASSES>
-          <root url="jar://$MODULE_DIR$/lib/jing.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/thaiopensource/jing/20030619/jing-20030619.jar!/" />
         </CLASSES>
         <JAVADOC />
         <SOURCES />

@@ -17,6 +17,7 @@ import com.intellij.codeInspection.ui.actions.InvokeQuickFixAction;
 import com.intellij.diff.util.DiffUtil;
 import com.intellij.ide.*;
 import com.intellij.ide.actions.exclusion.ExclusionHandler;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.Disposable;
@@ -29,7 +30,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.popup.JBPopup;
@@ -46,8 +46,7 @@ import com.intellij.ui.*;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.OpenSourceUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
-import java.util.HashSet;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -59,7 +58,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InputEvent;
@@ -105,7 +103,8 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   private final InspectionViewSuppressActionHolder mySuppressActionHolder = new InspectionViewSuppressActionHolder();
 
   private final Object myTreeStructureUpdateLock = new Object();
-  private final ExecutorService myTreeUpdater = AppExecutorUtil.createBoundedApplicationPoolExecutor("inspection-view-tree-updater", 1);
+  private final ExecutorService myTreeUpdater = SequentialTaskExecutor
+    .createSequentialApplicationPoolExecutor("Inspection-View-Tree-Updater");
 
   public InspectionResultsView(@NotNull GlobalInspectionContextImpl globalInspectionContext,
                                @NotNull InspectionRVContentProvider provider) {
@@ -195,9 +194,11 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   void profileChanged() {
-    myTree.revalidate();
-    myTree.repaint();
-    syncRightPanel();
+    UIUtil.invokeLaterIfNeeded(() -> {
+      myTree.revalidate();
+      myTree.repaint();
+      syncRightPanel();
+    });
   }
 
   private void initTreeListeners() {
@@ -376,14 +377,15 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   }
 
   @Nullable
-  private static OpenFileDescriptor getOpenFileDescriptor(final RefElement refElement) {
+  private static Navigatable getOpenFileDescriptor(final RefElement refElement) {
     PsiElement psiElement = refElement.getElement();
     if (psiElement == null) return null;
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile == null) return null;
     VirtualFile file = containingFile.getVirtualFile();
     if (file == null) return null;
-    return new OpenFileDescriptor(refElement.getRefManager().getProject(), file, psiElement.getTextOffset());
+    return PsiNavigationSupport.getInstance().createNavigatable(refElement.getRefManager().getProject(), file,
+                                                                psiElement.getTextOffset());
   }
 
   public void setApplyingFix(boolean applyingFix) {
@@ -637,12 +639,13 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
   public void update() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     final Application app = ApplicationManager.getApplication();
+    Collection<Tools> tools = new ArrayList<>(myGlobalInspectionContext.getTools().values());
     final Runnable buildAction = () -> {
       try {
         setUpdating(true);
         synchronized (myTreeStructureUpdateLock) {
           myTree.removeAllNodes();
-          addToolsSynchronously(myGlobalInspectionContext.getTools().values());
+          addToolsSynchronously(tools);
         }
       }
       finally {
@@ -831,7 +834,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
           startOffset = textRange.getStartOffset();
         }
       }
-      return new OpenFileDescriptor(getProject(), virtualFile, startOffset);
+      return PsiNavigationSupport.getInstance().createNavigatable(getProject(), virtualFile, startOffset);
     }
     return null;
   }

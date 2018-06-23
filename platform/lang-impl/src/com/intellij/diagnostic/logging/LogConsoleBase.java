@@ -20,6 +20,7 @@ import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.impl.ConsoleBuffer;
 import com.intellij.execution.impl.ConsoleViewImpl;
+import com.intellij.execution.process.AnsiEscapeDecoder;
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
@@ -61,6 +62,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.io.Reader;
 import java.util.List;
+import java.util.function.BiConsumer;
 
 /**
  * @author Eugene.Kudelevsky
@@ -378,13 +380,26 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       }
     } else {
       if (ConsoleBuffer.useCycleBuffer()) {
-        final int toRemove = myOriginalDocument.length() - ConsoleBuffer.getCycleBufferSize();
-        if (toRemove > 0) {
-          myOriginalDocument.delete(0, toRemove);
-        }
+        resizeBuffer(myOriginalDocument, ConsoleBuffer.getCycleBufferSize());
       }
     }
     return myOriginalDocument;
+  }
+
+  static void resizeBuffer(@NotNull StringBuffer buffer, int size) {
+    final int toRemove = buffer.length() - size;
+    if (toRemove > 0) {
+
+      int indexOfNewline = buffer.indexOf("\n", toRemove);
+
+      if (indexOfNewline == -1) {
+        buffer.delete(0, toRemove);
+      }
+      else {
+        buffer.delete(0, indexOfNewline + 1);
+      }
+    }
+    
   }
 
   @Nullable
@@ -433,12 +448,18 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     console.clear();
     myModel.processingStarted();
 
-    final String[] lines = myOriginalDocument != null ? myOriginalDocument.toString().split("\n") : ArrayUtil.EMPTY_STRING_ARRAY;;
+    final String[] lines = myOriginalDocument != null ? myOriginalDocument.toString().split("\n") : ArrayUtil.EMPTY_STRING_ARRAY;
     int offset = 0;
     boolean caretPositioned = false;
+    AnsiEscapeDecoder decoder = new AnsiEscapeDecoder();
 
     for (String line : lines) {
-      final int printed = printMessageToConsole(line);
+      @SuppressWarnings("CodeBlock2Expr")
+      final int printed = printMessageToConsole(line, (text, key) -> {
+        decoder.escapeText(text, key, (chunk, attributes) -> {
+          console.print(chunk, ConsoleViewContentType.getConsoleViewType(attributes));
+        });
+      });
       if (printed > 0) {
         if (!caretPositioned) {
           if (Comparing.strEqual(myLineUnderSelection, line)) {
@@ -461,16 +482,11 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
     }
   }
 
-  private int printMessageToConsole(String line) {
-    final ConsoleView console = getConsoleNotNull();
+  private int printMessageToConsole(@NotNull String line, @NotNull BiConsumer<String, Key> printer) {
     if (myContentPreprocessor != null) {
       List<LogFragment> fragments = myContentPreprocessor.parseLogLine(line + '\n');
       for (LogFragment fragment : fragments) {
-        ConsoleViewContentType consoleViewType = ConsoleViewContentType.getConsoleViewType(fragment.getOutputType());
-        if (consoleViewType != null) {
-          String formattedText = myFormatter.formatMessage(fragment.getText());
-          console.print(formattedText, consoleViewType);
-        }
+        printer.accept(myFormatter.formatMessage(fragment.getText()), fragment.getOutputType());
       }
       return line.length() + 1;
     }
@@ -479,17 +495,12 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
       if (processingResult.isApplicable()) {
         final Key key = processingResult.getKey();
         if (key != null) {
-          ConsoleViewContentType type = ConsoleViewContentType.getConsoleViewType(key);
-          if (type != null) {
-            final String messagePrefix = processingResult.getMessagePrefix();
-            if (messagePrefix != null) {
-              String formattedPrefix = myFormatter.formatPrefix(messagePrefix);
-              console.print(formattedPrefix, type);
-            }
-            String formattedMessage = myFormatter.formatMessage(line);
-            console.print(formattedMessage + "\n", type);
-            return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
+          final String messagePrefix = processingResult.getMessagePrefix();
+          if (messagePrefix != null) {
+            printer.accept(myFormatter.formatPrefix(messagePrefix), key);
           }
+          printer.accept(myFormatter.formatMessage(line) + "\n", key);
+          return (messagePrefix != null ? messagePrefix.length() : 0) + line.length() + 1;
         }
       }
       return 0;
@@ -604,6 +615,14 @@ public abstract class LogConsoleBase extends AdditionalTabComponent implements L
   }
 
   private static class LightProcessHandler extends ProcessHandler {
+
+    private final AnsiEscapeDecoder myDecoder = new AnsiEscapeDecoder();
+
+    @Override
+    public void notifyTextAvailable(@NotNull String text, @NotNull Key outputType) {
+      myDecoder.escapeText(text, outputType, (chunk, attributes) -> super.notifyTextAvailable(chunk, attributes));
+    }
+
     @Override
     protected void destroyProcessImpl() {
       throw new UnsupportedOperationException();

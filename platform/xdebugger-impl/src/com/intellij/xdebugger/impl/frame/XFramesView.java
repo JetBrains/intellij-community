@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.frame;
 
 import com.intellij.ide.CommonActionsManager;
@@ -160,6 +158,10 @@ public class XFramesView extends XDebugView {
     myMainPanel.add(myThreadsPanel, BorderLayout.NORTH);
   }
 
+  public JComponent getDefaultFocusedComponent() {
+    return myFramesList;
+  }
+
   private class ThreadsBuilder implements XSuspendContext.XExecutionStackContainer {
     private volatile boolean myObsolete;
 
@@ -225,7 +227,6 @@ public class XFramesView extends XDebugView {
     final ActionToolbarImpl toolbar =
       (ActionToolbarImpl)ActionManager.getInstance().createActionToolbar(ActionPlaces.DEBUGGER_TOOLBAR, framesGroup, true);
     toolbar.setReservePlaceAutoPopupIcon(false);
-    toolbar.setAddSeparatorFirst(true);
     return toolbar;
   }
 
@@ -293,7 +294,6 @@ public class XFramesView extends XDebugView {
       if (!invisible) {
         myThreadsPanel.add(myThreadComboBox, BorderLayout.CENTER);
       }
-      myToolbar.setAddSeparatorFirst(!invisible);
       updateFrames(activeExecutionStack, session, event == SessionEvent.FRAME_CHANGED ? currentStackFrame : null);
     });
   }

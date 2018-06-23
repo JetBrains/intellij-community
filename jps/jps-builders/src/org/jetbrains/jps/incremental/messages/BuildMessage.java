@@ -20,7 +20,12 @@ package org.jetbrains.jps.incremental.messages;
  */
 public abstract class BuildMessage {
   public enum Kind {
-    ERROR, WARNING, INFO, PROGRESS, JPS_INFO, OTHER
+    ERROR, WARNING, INFO, PROGRESS, JPS_INFO,
+    /**
+     * Represents an internal error in a builder's own code
+     */
+    INTERNAL_BUILDER_ERROR,
+    OTHER
   }
 
   private final String myMessageText;

@@ -7,11 +7,6 @@
       <option name="url" value="https://repo1.maven.org/maven2" />
     </remote-repository>
     <remote-repository>
-      <option name="id" value="jboss.community" />
-      <option name="name" value="JBoss Community repository" />
-      <option name="url" value="https://repository.jboss.org/nexus/content/repositories/public/" />
-    </remote-repository>
-    <remote-repository>
       <option name="id" value="intellij-third-party-dependencies" />
       <option name="name" value="IntelliJ Dependencies on Bintray" />
       <option name="url" value="https://jetbrains.bintray.com/intellij-third-party-dependencies" />
@@ -30,6 +25,11 @@
       <option name="id" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
       <option name="name" value="5ddb844f-da77-4dd2-9c71-ab1484ec2e60" />
       <option name="url" value="https://repo.jenkins-ci.org/releases" />
+    </remote-repository>
+    <remote-repository>
+      <option name="id" value="groovy" />
+      <option name="name" value="Groovy Bintray Repository" />
+      <option name="url" value="https://dl.bintray.com/groovy/maven/" />
     </remote-repository>
   </component>
 </project>

@@ -38,6 +38,7 @@ import java.awt.event.MouseEvent;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.Map.Entry;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class InstalledPackagesPanel extends JPanel {
@@ -56,14 +57,14 @@ public class InstalledPackagesPanel extends JPanel {
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
   private final Set<String> myCurrentlyInstalling = ContainerUtil.newHashSet();
-  private final Set<InstalledPackage> myWaitingToUpgrade = ContainerUtil.newHashSet();
+  private final Map<InstalledPackage, String> myWaitingToUpgrade = ContainerUtil.newHashMap();
 
   public InstalledPackagesPanel(@NotNull Project project, @NotNull PackagesNotificationPanel area) {
     super(new BorderLayout());
     myProject = project;
     myNotificationArea = area;
 
-    myPackagesTableModel = new DefaultTableModel(new String[]{"Package", "Version", "Latest"}, 0) {
+    myPackagesTableModel = new DefaultTableModel(new String[]{"Package", "Version", "Latest version"}, 0) {
       @Override
       public boolean isCellEditable(int i, int i1) {
         return false;
@@ -186,7 +187,7 @@ public class InstalledPackagesPanel extends JPanel {
           final String availableVersion = (String)myPackagesTableModel.getValueAt(row, 2);
 
           if (packagesShouldBePostponed.contains(packageName)) {
-            myWaitingToUpgrade.add((InstalledPackage)packageObj);
+            myWaitingToUpgrade.put(pkg, availableVersion);
           }
           else if (isUpdateAvailable(currentVersion, availableVersion)) {
             upgradePackage(pkg, availableVersion);
@@ -202,10 +203,10 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private void upgradePostponedPackages() {
-    final Iterator<InstalledPackage> iterator = myWaitingToUpgrade.iterator();
-    final InstalledPackage toUpgrade = iterator.next();
+    final Iterator<Entry<InstalledPackage, String>> iterator = myWaitingToUpgrade.entrySet().iterator();
+    final Entry<InstalledPackage, String> toUpgrade = iterator.next();
     iterator.remove();
-    upgradePackage(toUpgrade, toUpgrade.getVersion());
+    upgradePackage(toUpgrade.getKey(), toUpgrade.getValue());
   }
 
   protected Set<String> getPackagesToPostpone() {

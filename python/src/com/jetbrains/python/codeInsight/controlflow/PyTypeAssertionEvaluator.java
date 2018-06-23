@@ -120,8 +120,8 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       }
     }
 
-    final Object leftValue = new PyEvaluator().evaluate(lhs);
-    final Object rightValue = new PyEvaluator().evaluate(rhs);
+    final Object leftValue = PyEvaluator.evaluateNoResolve(lhs, Object.class);
+    final Object rightValue = PyEvaluator.evaluateNoResolve(rhs, Object.class);
 
     if (leftValue instanceof Boolean && rightValue instanceof Boolean) {
       return;
@@ -157,7 +157,9 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
     else if (initial instanceof PyUnionType) {
       return Ref.create(((PyUnionType)initial).exclude(transformedType, context));
     }
-    else if (initial != null && PyTypeChecker.match(transformedType, initial, context)) {
+    else if (!(initial instanceof PyStructuralType) &&
+             !PyTypeChecker.isUnknown(initial, context) &&
+             PyTypeChecker.match(transformedType, initial, context)) {
       return null;
     }
     return Ref.create(initial);

@@ -26,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.util.Collection;
@@ -53,7 +54,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
 
   @Override
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
-    OrderEntryUtil.addLibraryToRoots(from, library, scope, exported);
+    WriteAction.run(() -> OrderEntryUtil.addLibraryToRoots(from, library, scope, exported));
     return Promises.resolvedPromise(null);
   }
 
@@ -69,10 +70,10 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       classesRoots = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName()).showAndGetResult();
     }
     else {
-      String version = descriptor.getMinVersion();
+      String version = descriptor.getPreferredVersion();
       String mavenCoordinates = descriptor.getLibraryGroupId() + ":" +
-                                descriptor.getLibraryArtifactId() +
-                                (version != null ? ":" + version : "");
+                                descriptor.getLibraryArtifactId() + ":" +
+                                (version != null ? version : RepositoryLibraryDescription.ReleaseVersionId);
       RepositoryAttachDialog dialog = new RepositoryAttachDialog(myProject, mavenCoordinates, RepositoryAttachDialog.Mode.DOWNLOAD);
       if (!dialog.showAndGet()) {
         return Promises.rejectedPromise();

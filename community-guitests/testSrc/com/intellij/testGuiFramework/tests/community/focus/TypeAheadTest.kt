@@ -3,8 +3,7 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.RunWithIde
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import org.fest.swing.timing.Pause.pause
@@ -14,8 +13,8 @@ import org.junit.Test
 class TypeAheadTest : GuiTestCase() {
 
   @Test
-  fun testProjectCreate() {
-    CommunityProjectCreator.createCommandLineProject("type-ahead-problem")
+  fun testTypeAhead() {
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     ideFrame {
       waitForBackgroundTasksToFinish()
       configurationList {
@@ -24,7 +23,7 @@ class TypeAheadTest : GuiTestCase() {
       dialog("Run/Debug Configurations") {
         addJUnitConfiguration()
         for (i in 0..20) {
-          combobox("Test kind:").selectItem("Category")
+          combobox("Test kind:").selectItem("Pattern")
           pause(2000)
           combobox("Test kind:").selectItem("Class")
           pause(2000)

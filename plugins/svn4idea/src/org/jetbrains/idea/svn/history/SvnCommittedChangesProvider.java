@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.idea.svn.history;
 
@@ -33,6 +33,7 @@ import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
 import org.jetbrains.idea.svn.branchConfig.ConfigureBranchesAction;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
+import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.StatusType;
 
 import java.io.DataInput;
@@ -86,9 +87,9 @@ public class SvnCommittedChangesProvider implements CachingCommittedChangesProvi
   @Override
   @Nullable
   public RepositoryLocation getLocationFor(@NotNull FilePath root) {
-    String url = SvnUtil.getExactLocation(myVcs, root.getIOFile());
+    Info info = myVcs.getInfo(root.getIOFile());
 
-    return url == null ? null : new SvnRepositoryLocation(url, root);
+    return info != null && info.getURL() != null ? new SvnRepositoryLocation(info.getURL(), info.getRepositoryRootURL(), root) : null;
   }
 
   @Override

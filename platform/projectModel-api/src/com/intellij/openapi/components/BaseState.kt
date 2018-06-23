@@ -105,7 +105,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
   /**
    * Empty string is always normalized to null.
    */
-  fun property(defaultValue: String?) = string(defaultValue)
+  fun property(defaultValue: String?): StoredPropertyBase<String?> = string(defaultValue)
 
   /**
    * Empty string is always normalized to null.
@@ -167,7 +167,7 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return true
   }
 
-  fun isEqualToDefault() = properties.all { it.isEqualToDefault() }
+  fun isEqualToDefault(): Boolean = properties.all { it.isEqualToDefault() }
 
   @Transient
   override fun getModificationCount(): Long {
@@ -178,9 +178,9 @@ abstract class BaseState : SerializationFilter, ModificationTracker {
     return result
   }
 
-  override fun equals(other: Any?) = this === other || (other is BaseState && properties == other.properties)
+  override fun equals(other: Any?): Boolean = this === other || (other is BaseState && properties == other.properties)
 
-  override fun hashCode() = properties.hashCode()
+  override fun hashCode(): Int = properties.hashCode()
 
   override fun toString(): String {
     if (properties.isEmpty()) {

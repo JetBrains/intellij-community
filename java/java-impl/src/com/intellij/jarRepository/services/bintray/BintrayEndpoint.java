@@ -28,6 +28,7 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.*;
+import static java.util.Arrays.asList;
 import static java.util.Collections.emptyList;
 
 /**
@@ -105,12 +106,7 @@ public class BintrayEndpoint {
       return emptyList();
     }
 
-    if (isNotEmpty(groupIdTemplate)) {
-      urlBuilder.append("&g=*").append(groupIdTemplate).append("*");
-    }
-    if (isNotEmpty(artifactIdTemplate)) {
-      urlBuilder.append("&a=*").append(artifactIdTemplate).append("*");
-    }
+    urlBuilder.append("&q=*").append(join(asList(groupIdTemplate, artifactIdTemplate), ":")).append("*");
 
     List<RepositoryArtifactDescription> artifacts = new ArrayList<>();
     executeRequest(urlBuilder.toString(), BintrayModel.Package[].class, packages -> {

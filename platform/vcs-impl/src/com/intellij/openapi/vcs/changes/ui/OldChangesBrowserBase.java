@@ -50,6 +50,7 @@ import static com.intellij.openapi.vcs.changes.ui.ChangesListView.*;
 /**
  * @deprecated Use {@link ChangesBrowserBase}
  */
+@Deprecated
 public abstract class OldChangesBrowserBase<T> extends JPanel implements TypeSafeDataProvider, Disposable {
   private static final Logger LOG = Logger.getInstance(OldChangesBrowserBase.class);
 

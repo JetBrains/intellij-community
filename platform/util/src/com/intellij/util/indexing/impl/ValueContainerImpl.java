@@ -82,7 +82,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     return (Value)myNullValue;
   }
 
-  private void resetFileSetForValue(Value value, Object fileSet) {
+  private void resetFileSetForValue(Value value, @NotNull Object fileSet) {
     if (value == null) value = nullValue();
     THashMap<Value, Object> map = asMapping();
     if (map == null) {
@@ -157,7 +157,10 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
       if (mapping.size() == 1) {
         Value mappingValue = mapping.keySet().iterator().next();
         myInputIdMapping = mappingValue;
-        myInputIdMappingValue = mapping.get(mappingValue);
+        Object inputIdMappingValue = mapping.get(mappingValue);
+        // prevent NPEs on file set due to Value class being mutable or having inconsistent equals wrt disk persistence 
+        // (instance that is serialized and new instance created with deserialization from the same bytes are expected to be equal)
+        myInputIdMappingValue = inputIdMappingValue != null ? inputIdMappingValue : new Integer(0);
       }
     }
   }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.editor.actionSystem;
 
 import com.intellij.openapi.actionSystem.*;
@@ -21,8 +7,10 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -83,6 +71,12 @@ public abstract class EditorAction extends AnAction implements DumbAware {
   public final void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Editor editor = getEditor(dataContext);
+    if (this instanceof LatencyAwareEditorAction && editor != null) {
+      String actionId = ActionManager.getInstance().getId(this);
+      if (actionId != null) {
+        LatencyRecorder.getInstance().recordLatencyAwareAction(editor, actionId, e);
+      }
+    }
     actionPerformed(editor, dataContext);
   }
 
@@ -93,7 +87,11 @@ public abstract class EditorAction extends AnAction implements DumbAware {
 
   public final void actionPerformed(final Editor editor, @NotNull final DataContext dataContext) {
     if (editor == null) return;
-
+    if (editor.isDisposed()) {
+      VirtualFile file = FileDocumentManager.getInstance().getFile(editor.getDocument());
+      LOG.error("Action " + this + " invoked on a disposed editor" + (file == null ? "" : " for file " + file));
+      return;
+    }
     final EditorActionHandler handler = getHandler();
     Runnable command = () -> handler.execute(editor, null, getProjectAwareDataContext(editor, dataContext));
 

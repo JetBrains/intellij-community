@@ -37,5 +37,10 @@ public interface ErrorStripTooltipRendererProvider {
   TooltipRenderer calcTooltipRenderer(@NotNull String text, int width);
 
   @NotNull
+  default TooltipRenderer calcTooltipRenderer(@NotNull String text, @Nullable TooltipAction action, int width) {
+    return calcTooltipRenderer(text, width);
+  }
+  
+  @NotNull
   TrafficTooltipRenderer createTrafficTooltipRenderer(@NotNull Runnable onHide, @NotNull Editor editor);
 }

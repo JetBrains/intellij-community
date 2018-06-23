@@ -1,0 +1,126 @@
+--- FIND MODEL ---
+myStringToFind =
+myStringToReplace =
+isReplaceState =false
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+a
+--
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =
+isReplaceState =false
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+[[<a>]]
+--
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =
+isReplaceState =true
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+[[<a>]]
+--
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [java.awt.Color[r=0,g=0,b=0],java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=113,g=179,b=98]]
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+------------
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =
+isReplaceState =true
+isWholeWordsOnly =false
+searchContext =ANY
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =true
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+searchInProjectFiles =false
+
+--
+
+
+--
+Not Found
+--
+------------

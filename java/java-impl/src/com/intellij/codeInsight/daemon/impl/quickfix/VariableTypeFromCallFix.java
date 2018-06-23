@@ -103,8 +103,8 @@ public class VariableTypeFromCallFix implements IntentionAction {
             final PsiClassType appropriateVarType = JavaPsiFacade.getElementFactory(expression.getProject()).createType(varClass, psiSubstitutor);
             if (!varType.equals(appropriateVarType)) {
               actions.add(new VariableTypeFromCallFix(appropriateVarType, (PsiVariable)resolved));
+              break;
             }
-            break;
           }
         }
       }

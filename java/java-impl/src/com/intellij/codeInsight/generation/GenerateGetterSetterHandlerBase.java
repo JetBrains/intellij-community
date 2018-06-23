@@ -75,7 +75,7 @@ public abstract class GenerateGetterSetterHandlerBase extends GenerateMembersHan
 
   @Override
   protected String getHelpId() {
-    return "Getter and Setter Templates Dialog";
+    return "Getter_and_Setter_Templates_Dialog";
   }
 
   @Override

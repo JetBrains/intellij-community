@@ -16,10 +16,7 @@
 
 package com.intellij.lang;
 
-import com.intellij.lang.folding.CustomFoldingBuilder;
-import com.intellij.lang.folding.FoldingBuilder;
-import com.intellij.lang.folding.FoldingDescriptor;
-import com.intellij.lang.folding.LanguageFolding;
+import com.intellij.lang.folding.*;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.progress.ProgressManager;
@@ -52,8 +49,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
   public void buildLanguageFoldRegions(@NotNull List<FoldingDescriptor> foldings,
                                        @NotNull PsiElement psiElement,
                                        @NotNull Document document,
-                                       boolean quick
-  ) {
+                                       boolean quick) {
     XmlDocument xmlDocument = null;
 
     if (psiElement instanceof XmlFile) {
@@ -70,7 +66,6 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     }
 
     if (rootTag != null) {
-
       doAddForChildren(xmlDocument, foldings, document);
     }
   }
@@ -151,7 +146,8 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       }
 
       return new UnfairTextRange(nameEnd, end);
-    } else if (element instanceof XmlComment) {
+    }
+    if (element instanceof XmlComment) {
       final XmlComment xmlComment = (XmlComment)element;
       final TextRange textRange = element.getTextRange();
       int commentStartOffset = getCommentStartOffset(xmlComment);
@@ -160,11 +156,9 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       if (textRange.getEndOffset() - textRange.getStartOffset() > commentStartOffset + commentEndOffset) {
         return new TextRange(textRange.getStartOffset() + commentStartOffset, textRange.getEndOffset() - commentEndOffset);
       }
-      else {
-        return null;
-      }
+      return null;
     }
-    else if (element instanceof XmlConditionalSection) {
+    if (element instanceof XmlConditionalSection) {
       final XmlConditionalSection conditionalSection = (XmlConditionalSection)element;
       final TextRange textRange = element.getTextRange();
       final PsiElement bodyStart = conditionalSection.getBodyStart();
@@ -174,20 +168,16 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
       if (textRange.getEndOffset() - textRange.getStartOffset() > startOffset + endOffset) {
         return new TextRange(textRange.getStartOffset() + startOffset, textRange.getEndOffset() - endOffset);
       }
-      else {
-        return null;
-      }
+      return null;
     }
-    else if (element instanceof XmlAttribute) {
+    if (element instanceof XmlAttribute) {
       final XmlAttributeValue valueElement = ((XmlAttribute)element).getValueElement();
       return valueElement != null ? valueElement.getValueTextRange() : null;
     }
-    else if (isEntity(element)) {
+    if (isEntity(element)) {
       return element.getTextRange();
     }
-    else {
-      return null;
-    }
+    return null;
   }
 
   protected int getCommentStartOffset(final XmlComment element) {
@@ -198,7 +188,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     return MIN_TEXT_RANGE_LENGTH;
   }
 
-  protected boolean addToFold(List<FoldingDescriptor> foldings, PsiElement elementToFold, Document document) {
+  protected boolean addToFold(List<? super FoldingDescriptor> foldings, PsiElement elementToFold, Document document) {
     PsiUtilCore.ensureValid(elementToFold);
     TextRange range = getRangeToFold(elementToFold);
     if (range == null) return false;
@@ -225,23 +215,30 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
   @Override
   public String getLanguagePlaceholderText(@NotNull ASTNode node, @NotNull TextRange range) {
     final PsiElement psi = node.getPsi();
-    if (psi instanceof XmlAttribute && "src".equalsIgnoreCase(((XmlAttribute)psi).getName())) {
-      return "data:";
+    FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psi.getLanguage());
+    if (foldingBuilder == this || foldingBuilder instanceof CompositeFoldingBuilder) {
+      if (psi instanceof XmlAttribute && "src".equalsIgnoreCase(((XmlAttribute)psi).getName())) {
+        return "data:";
+      }
+      if (psi instanceof XmlTag ||
+          psi instanceof XmlComment ||
+          psi instanceof XmlAttribute ||
+          psi instanceof XmlConditionalSection) {
+        return "...";
+      }
+      if (isEntity(psi)) {
+        final String value = getEntityPlaceholder(psi);
+        if (value != null) return value;
+      }
+      return null;
     }
-    if (psi instanceof XmlTag ||
-        psi instanceof XmlComment ||
-        psi instanceof XmlAttribute ||
-        psi instanceof XmlConditionalSection
-      ) return "...";
-    if (isEntity(psi)) {
-      final String value = getEntityPlaceholder(psi);
-      if (value != null) return value;
-    }
-    return null;
+
+    // can't call CustomFoldingBuilder.getLanguagePlaceholderText() directly but this CustomFoldingBuilder.getPlaceholderText() will do just fine
+    return foldingBuilder instanceof CustomFoldingBuilder ? ((CustomFoldingBuilder)foldingBuilder).getPlaceholderText(node, range) : null;
   }
 
   @Nullable
-  protected String getEntityPlaceholder(PsiElement psi) {
+  private static String getEntityPlaceholder(@NotNull PsiElement psi) {
     String text = psi.getText();
     String fastPath = StringUtil.unescapeXml(text);
     if (!StringUtil.equals(fastPath, text)) return fastPath;
@@ -257,7 +254,7 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
 
   private static String getEntityValue(XmlAttributeValue value) {
     final String result = value.getValue();
-    final int i = result.indexOf('#');
+    final int i = result != null ? result.indexOf('#') : -1;
     if (i > 0) {
       final int charNum = StringUtil.parseInt(StringUtil.trimEnd(result.substring(i + 1), ";"), -1);
       return charNum >= 0 ? String.valueOf((char)charNum) : null;
@@ -268,13 +265,18 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
   @Override
   public boolean isRegionCollapsedByDefault(@NotNull ASTNode node) {
     final PsiElement psi = node.getPsi();
-    final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
-    return (psi instanceof XmlTag && foldingSettings.isCollapseXmlTags())
-           || (psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)))
-           || isEntity(psi) && foldingSettings.isCollapseEntities() && hasEntityPlaceholder(psi);
+    FoldingBuilder foldingBuilder = LanguageFolding.INSTANCE.forLanguage(psi.getLanguage());
+
+    if (foldingBuilder == this || foldingBuilder instanceof CompositeFoldingBuilder) {
+      final XmlCodeFoldingSettings foldingSettings = getFoldingSettings();
+      return psi instanceof XmlTag && foldingSettings.isCollapseXmlTags() ||
+             psi instanceof XmlAttribute && (foldStyle((XmlAttribute)psi, foldingSettings) || foldSrc((XmlAttribute)psi, foldingSettings)) ||
+             isEntity(psi) && foldingSettings.isCollapseEntities() && hasEntityPlaceholder(psi);
+    }
+    return foldingBuilder.isCollapsedByDefault(node);
   }
 
-  private boolean hasEntityPlaceholder(PsiElement psi) {
+  private static boolean hasEntityPlaceholder(PsiElement psi) {
     try {
       return getEntityPlaceholder(psi) != null;
     }
@@ -291,9 +293,9 @@ public abstract class XmlCodeFoldingBuilder extends CustomFoldingBuilder impleme
     return settings.isCollapseHtmlStyleAttribute() && HtmlUtil.STYLE_ATTRIBUTE_NAME.equalsIgnoreCase(psi.getName());
   }
 
-  protected boolean isEntity(PsiElement psi) {
+  private static boolean isEntity(PsiElement psi) {
     return psi instanceof XmlEntityRef ||
-           (psi instanceof XmlTokenImpl && ((XmlTokenImpl)psi).getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF);
+           psi instanceof XmlTokenImpl && ((XmlTokenImpl)psi).getElementType() == XmlTokenType.XML_CHAR_ENTITY_REF;
   }
 
   private static boolean isAttributeShouldBeFolded(XmlAttribute child) {

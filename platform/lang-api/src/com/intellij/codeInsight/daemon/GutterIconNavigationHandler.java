@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 
 import java.awt.event.MouseEvent;
 
+@FunctionalInterface
 public interface GutterIconNavigationHandler<T extends PsiElement> {
   void navigate(MouseEvent e, T elt);
 }

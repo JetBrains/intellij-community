@@ -87,6 +87,7 @@ public abstract class PropertyReferenceBase implements PsiPolyVariantReference, 
     return myElement;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return myTextRange;
   }

@@ -84,7 +84,7 @@ public class ThreadsPanel extends DebuggerTreePanel{
               if (process != null) {
                 process.getManagerThread().invoke(new DebuggerCommandImpl() {
                   @Override
-                  protected void action() throws Exception {
+                  protected void action() {
                     try {
                       updateNodeLabels(root);
                     }

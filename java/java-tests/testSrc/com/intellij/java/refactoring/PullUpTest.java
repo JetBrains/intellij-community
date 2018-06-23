@@ -159,7 +159,11 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testTypeParamsConflictingNames() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class, true));
-  } 
+  }
+
+  public void testConflictOnNewAbstractMethod() {
+    doTest(false, "Concrete 'class <b><code>C</code></b>' would inherit a new abstract method", new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
 
   public void testEscalateVisibility() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
@@ -179,6 +183,10 @@ public class PullUpTest extends LightRefactoringTestCase {
 
   public void testAsDefaultMethodOverAbstract() {
     doTest(false, new RefactoringTestUtil.MemberDescriptor("foo", PsiMethod.class));
+  }
+
+  public void testOrderVarargsParameterLast() {
+    doTest(false, new RefactoringTestUtil.MemberDescriptor("f2", PsiField.class), new RefactoringTestUtil.MemberDescriptor("f1", PsiField.class));
   }
 
   public void testOuterClassRefsNoConflictIfAsAbstract() {

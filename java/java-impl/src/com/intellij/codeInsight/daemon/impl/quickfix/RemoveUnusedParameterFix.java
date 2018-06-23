@@ -8,7 +8,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
@@ -17,9 +16,6 @@ import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.ArrayList;
-import java.util.List;
 
 public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final String myName;
@@ -70,21 +66,8 @@ public class RemoveUnusedParameterFix extends LocalQuickFixAndIntentionActionOnP
                                                                       false, null,
                                                                       method.getName(),
                                                                       method.getReturnType(),
-                                                                      getNewParametersInfo(method, parameter));
+                                                                      ParameterInfoImpl.fromMethodExceptParameter(method, parameter));
     processor.run();
-  }
-
-  @NotNull
-  public static ParameterInfoImpl[] getNewParametersInfo(PsiMethod method, PsiParameter parameterToRemove) {
-    List<ParameterInfoImpl> result = new ArrayList<>();
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    for (int i = 0; i < parameters.length; i++) {
-      PsiParameter parameter = parameters[i];
-      if (!Comparing.equal(parameter, parameterToRemove)) {
-        result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
-      }
-    }
-    return result.toArray(new ParameterInfoImpl[0]);
   }
 
   @Override

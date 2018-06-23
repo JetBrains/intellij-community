@@ -44,11 +44,13 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         for (module in modules) {
           moduleAppears(module)
         }
+        val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
+        oldToNewName.transformValues { newName -> renamedOldToNew[newName] ?: newName }
       }
     })
   }
 
-  override fun getState() = ModuleRenamingHistoryState().apply {
+  override fun getState(): ModuleRenamingHistoryState = ModuleRenamingHistoryState().apply {
     lock.read {
       oldToNewName.putAll(this@ModulePointerManagerImpl.oldToNewName)
     }

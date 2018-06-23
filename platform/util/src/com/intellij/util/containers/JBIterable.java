@@ -100,7 +100,7 @@ public abstract class JBIterable<E> implements Iterable<E> {
     Multi(Iterable<? extends E> iterable) { super(iterable);}
 
     public Iterator<E> iterator() {
-      return ((Iterable<E>)content).iterator();
+      return JBIterator.from(((Iterable<E>)content).iterator());
     }
   }
 
@@ -572,24 +572,6 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns the first element if it is an instance of the specified class, otherwise null.
-   */
-  @Nullable
-  public final <T> T first(@NotNull Class<T> type) {
-    E first = first();
-    return first != null && type.isInstance(first) ? (T)first : null;
-  }
-
-  /**
-   * Returns the first element if it satisfies the condition, otherwise null.
-   */
-  @Nullable
-  public final E first(@NotNull Condition<? super E> condition) {
-    E first = first();
-    return first != null && condition.value(first) ? first : null;
-  }
-
-  /**
    * Returns the first element if it is the only one, otherwise null.
    */
   @Nullable
@@ -639,7 +621,20 @@ public abstract class JBIterable<E> implements Iterable<E> {
   }
 
   /**
-   * Returns the index of the first matching element.
+   * Perform calculation over this iterable.
+   */
+  public final E reduce(@NotNull PairFunction<E, ? super E, E> function) {
+    boolean first = true;
+    E cur = null;
+    for (E e : this) {
+      if (first) { cur = e; first = false; }
+      else cur = function.fun(cur, e);
+    }
+    return cur;
+  }
+
+  /**
+   * Returns the the first matching element.
    */
   public final E find(@NotNull Condition<? super E> condition) {
     return filter(condition).first();
@@ -846,10 +841,16 @@ public abstract class JBIterable<E> implements Iterable<E> {
    * @see JBIterable#collect(Collection)
    */
   @NotNull
-  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+  public final JBIterable<E> sort(@NotNull Comparator<? super E> comparator) {
     ArrayList<E> list = addAllTo(ContainerUtilRt.<E>newArrayList());
     Collections.sort(list, comparator);
     return from(list);
+  }
+
+  @Deprecated
+  @NotNull
+  public final JBIterable<E> sorted(@NotNull Comparator<E> comparator) {
+    return sort(comparator);
   }
 
   /**

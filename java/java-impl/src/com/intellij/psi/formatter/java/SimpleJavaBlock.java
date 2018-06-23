@@ -46,8 +46,9 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
                          AlignmentStrategy alignment,
                          Indent indent,
                          CommonCodeStyleSettings settings,
-                         JavaCodeStyleSettings javaSettings) {
-    super(node, wrap, alignment, indent, settings, javaSettings);
+                         JavaCodeStyleSettings javaSettings,
+                         @NotNull FormattingMode formattingMode) {
+    super(node, wrap, alignment, indent, settings, javaSettings, formattingMode);
   }
 
   @Override
@@ -118,7 +119,8 @@ public class SimpleJavaBlock extends AbstractJavaBlock {
         Block commentBlock = createJavaBlock(
           myCurrentChild,
           mySettings, myJavaSettings,
-          Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy()
+          Indent.getNoneIndent(), null, AlignmentStrategy.getNullStrategy(),
+          getFormattingMode()
         );
         result.add(commentBlock);
         myCurrentIndent = Indent.getNoneIndent();

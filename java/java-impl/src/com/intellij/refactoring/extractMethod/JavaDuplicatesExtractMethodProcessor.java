@@ -5,6 +5,7 @@ package com.intellij.refactoring.extractMethod;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.Pass;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.LocalSearchScope;
@@ -31,6 +32,11 @@ import java.util.*;
 public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor {
   private static final Logger LOG = Logger.getInstance(JavaDuplicatesExtractMethodProcessor.class);
 
+  private static final Pass<ExtractMethodProcessor> USE_SNAPSHOT_TARGET_CLASS = new Pass<ExtractMethodProcessor>() {
+    @Override
+    public void pass(ExtractMethodProcessor processor) {} // it's a dummy but it's required to select the target class
+  };
+
   public JavaDuplicatesExtractMethodProcessor(@NotNull PsiElement[] elements, @NotNull String refactoringName) {
     this(elements, null, refactoringName);
   }
@@ -44,7 +50,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;
     myMethodVisibility = from.myMethodVisibility;
-    myNullness = from.myNullness;
+    myNullability = from.myNullability;
     myReturnType = from.myReturnType;
     myOutputVariables = Arrays.stream(from.myOutputVariables)
       .map(variable -> variablesMapping.getOrDefault(variable, variable))
@@ -53,16 +59,16 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myArtificialOutputVariable = variablesMapping.getOrDefault(from.myArtificialOutputVariable, from.myArtificialOutputVariable);
 
     List<VariableData> variableDatum = new ArrayList<>();
+    List<VariableData> inputVariables = getInputVariables().getInputVariables();
     for (int i = 0; i < from.myVariableDatum.length; i++) {
       VariableData fromData = from.myVariableDatum[i];
       PsiVariable mappedVariable = variablesMapping.get(fromData.variable);
-      if (isReferenced(mappedVariable, fromData.variable)) {
+      if (isReferenced(mappedVariable, fromData.variable) && isUnchanged(mappedVariable, fromData.type, inputVariables)) {
         VariableData newData = fromData.substitute(mappedVariable);
         variableDatum.add(newData);
       }
     }
     Set<PsiVariable> parameterVariables = ContainerUtil.map2Set(variableDatum, data -> data.variable);
-    List<VariableData> inputVariables = getInputVariables().getInputVariables();
     for (VariableData data : inputVariables) {
       if (!parameterVariables.contains(data.variable)) {
         variableDatum.add(data);
@@ -71,13 +77,39 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     myVariableDatum = variableDatum.toArray(new VariableData[0]);
   }
 
-  public void applyFromSnapshot(@NotNull ExtractMethodSnapshot from) {
+  private static boolean isUnchanged(PsiVariable fromVariable, PsiType fromType, @NotNull List<VariableData> inputVariables) {
+    for (VariableData data : inputVariables) {
+      if (data.variable == fromVariable) {
+        return data.type != null && data.type.equalsToText(fromType.getCanonicalText());
+      }
+    }
+    return true;
+  }
+
+  public boolean prepareFromSnapshot(@NotNull ExtractMethodSnapshot from, boolean showErrorHint) {
+    applyFromSnapshot(from);
+    PsiFile psiFile = myElements[0].getContainingFile();
+    ExtractMethodSnapshot.SNAPSHOT_KEY.set(psiFile, from);
+    try {
+      if (!prepare(USE_SNAPSHOT_TARGET_CLASS, showErrorHint)) {
+        return false;
+      }
+    }
+    finally {
+      ExtractMethodSnapshot.SNAPSHOT_KEY.set(psiFile, null);
+    }
+    myStatic = from.myStatic;
+    myInputVariables.setFoldingAvailable(from.myFoldable);
+    return true;
+  }
+
+  private void applyFromSnapshot(@NotNull ExtractMethodSnapshot from) {
     myMethodName = from.myMethodName;
     myStatic = from.myStatic;
     myIsChainedConstructor = from.myIsChainedConstructor;
     myMethodVisibility = from.myMethodVisibility;
-    myNullness = from.myNullness;
-    myReturnType = from.myReturnType.getType();
+    myNullability = from.myNullability;
+    myReturnType = from.myReturnType != null ? from.myReturnType.getType() : null;
     myOutputVariables = StreamEx.of(from.myOutputVariables).map(SmartPsiElementPointer::getElement).toArray(new PsiVariable[0]);
     LOG.assertTrue(!ArrayUtil.contains(null, myOutputVariables));
 
@@ -131,9 +163,13 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
   }
 
   public boolean prepare(boolean showErrorHint) {
+    return prepare(null, showErrorHint);
+  }
+
+  private boolean prepare(@Nullable Pass<ExtractMethodProcessor> pass, boolean showErrorHint) {
     setShowErrorDialogs(false);
     try {
-      if (super.prepare()) {
+      if (super.prepare(pass)) {
         return true;
       }
 
@@ -194,7 +230,7 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
     ReturnValue returnValue = myOutputVariables.length == 1 ? new VariableReturnValue(myOutputVariables[0]) : null;
 
     Set<PsiVariable> effectivelyLocal = getEffectivelyLocalVariables();
-    return new DuplicatesFinder(myElements, myInputVariables, returnValue, Collections.emptyList(), true, effectivelyLocal);
+    return new DuplicatesFinder(myElements, myInputVariables, returnValue, Collections.emptyList(), DuplicatesFinder.MatchType.PARAMETRIZED, effectivelyLocal);
   }
 
   private void relaxMethodVisibility(Match match) {
@@ -221,7 +257,6 @@ public class JavaDuplicatesExtractMethodProcessor extends ExtractMethodProcessor
   private boolean isInSameClass(Match match) {
     PsiClass matchClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
     PsiClass psiClass = PsiTreeUtil.getParentOfType(myExtractedMethod, PsiClass.class);
-    return psiClass != null && matchClass != null &&
-           PsiTreeUtil.isAncestor(psiClass, matchClass, false);
+    return matchClass != null && PsiTreeUtil.isAncestor(psiClass, matchClass, false);
   }
 }

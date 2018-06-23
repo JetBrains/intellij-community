@@ -120,8 +120,8 @@ public class CaretModelImpl implements CaretModel, PrioritizedDocumentListener, 
     for (CaretImpl caret : myCarets) {
       Disposer.dispose(caret);
     }
-    mySelectionMarkerTree.dispose();
-    myPositionMarkerTree.dispose();
+    mySelectionMarkerTree.dispose(myEditor.getDocument());
+    myPositionMarkerTree.dispose(myEditor.getDocument());
   }
 
   public void updateVisualPosition() {

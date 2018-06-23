@@ -29,7 +29,20 @@ public class ObjectUtils {
   private ObjectUtils() {
   }
 
-  public static final Object NULL = new Object();
+  public static final Object NULL = sentinel("ObjectUtils.NULL");
+
+  /**
+   * Creates a new object which could be used as sentinel value (special value to distinguish from any other object). It does not equal
+   * to any other object. Usually should be assigned to the static final field.
+   *
+   * @param name an object name, returned from {@link #toString()} to simplify the debugging or heap dump analysis
+   *             (guaranteed to be stored as sentinel object field). If sentinel is assigned to the static final field,
+   *             it's recommended to supply that field name (possibly qualified with the class name).
+   * @return a new sentinel object
+   */
+  public static Object sentinel(final String name) {
+    return new Sentinel(name);
+  }
 
   @NotNull
   public static <T> T assertNotNull(@Nullable T t) {
@@ -104,6 +117,12 @@ public class ObjectUtils {
     return null;
   }
 
+  @Contract("null, _ -> null")
+  @Nullable
+  public static <T, S> S doIfNotNull(@Nullable T obj, @NotNull Function<? super T, ? extends S> function) {
+    return obj == null ? null : function.fun(obj);
+  }
+
   @SuppressWarnings("unchecked")
   public static <T> void consumeIfCast(@Nullable Object obj, @NotNull Class<T> clazz, final Consumer<T> consumer) {
     if (clazz.isInstance(obj)) consumer.consume((T)obj);
@@ -116,5 +135,29 @@ public class ObjectUtils {
       return null;
     }
     return obj;
+  }
+
+  public static int binarySearch(int fromIndex, int toIndex, @NotNull IntIntFunction test) {
+    int low = fromIndex;
+    int high = toIndex - 1;
+    while (low <= high) {
+      int mid = (low + high) >>> 1;
+      int cmp = test.fun(mid);
+      if (cmp < 0) low = mid + 1;
+      else if (cmp > 0) high = mid - 1;
+      else return mid;
+    }
+    return -(low + 1);
+  }
+
+  private static class Sentinel {
+    private final String myName;
+
+    public Sentinel(String name) {myName = name;}
+
+    @Override
+    public String toString() {
+      return myName;
+    }
   }
 }

@@ -56,7 +56,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_X;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_10;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -97,7 +97,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
     return result;
   }
 
-  private static void loadForbiddenApi(String fileName, Set<String> set) {
+  private static void loadForbiddenApi(String fileName, Set<? super String> set) {
     URL resource = Java15APIUsageInspectionBase.class.getResource(fileName);
     if (resource == null) {
       Logger.getInstance(Java15APIUsageInspectionBase.class).warn("not found: " + fileName);
@@ -277,7 +277,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
       }
     }
 
-    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<PsiClass> visited) {
+    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<? super PsiClass> visited) {
       for (PsiClassType classType : currentClass.getSuperTypes()) {
         if (classType.isRaw()) {
           return true;

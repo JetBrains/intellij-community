@@ -23,7 +23,6 @@ import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.util.QualifiedName
 import com.jetbrains.python.PythonHelpersLocator
-import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider.TYPING
 import com.jetbrains.python.packaging.PyPIPackageUtil
 import com.jetbrains.python.packaging.PyPackageManagers
 import com.jetbrains.python.packaging.PyPackageUtil
@@ -39,23 +38,13 @@ import java.io.File
  * @author vlan
  */
 object PyTypeShed {
-  private val ONLY_SUPPORTED_PY2_MINOR = 7
+  private const val ONLY_SUPPORTED_PY2_MINOR = 7
   private val SUPPORTED_PY3_MINORS = 2..7
-  val WHITE_LIST = setOf(TYPING, "six", "__builtin__", "builtins", "exceptions", "types", "datetime", "functools", "shutil", "re", "time",
-                         "argparse", "uuid", "threading", "signal", "collections", "subprocess")
-  private val BLACK_LIST = setOf<String>()
 
   /**
    * Returns true if we allow to search typeshed for a stub for [name].
    */
   fun maySearchForStubInRoot(name: QualifiedName, root: VirtualFile, sdk : Sdk): Boolean {
-    val topLevelPackage = name.firstComponent ?: return false
-    if (topLevelPackage in BLACK_LIST) {
-      return false
-    }
-    if (topLevelPackage !in WHITE_LIST) {
-      return false
-    }
     if (isInStandardLibrary(root)) {
         return true
     }
@@ -63,6 +52,7 @@ object PyTypeShed {
       if (ApplicationManager.getApplication().isUnitTestMode) {
         return true
       }
+      val topLevelPackage = name.firstComponent ?: return false
       val pyPIPackages = PyPIPackageUtil.PACKAGES_TOPLEVEL[topLevelPackage] ?: emptyList()
       val packages = PyPackageManagers.getInstance().forSdk(sdk).packages ?: return true
       return PyPackageUtil.findPackage(packages, topLevelPackage) != null ||
@@ -129,9 +119,9 @@ object PyTypeShed {
   /**
    * A shallow check for a [file] being located inside the typeshed third-party stubs.
    */
-  fun isInThirdPartyLibraries(file: VirtualFile) = "third_party" in file.path
+  fun isInThirdPartyLibraries(file: VirtualFile): Boolean = "third_party" in file.path
 
-  fun isInStandardLibrary(file: VirtualFile) = "stdlib" in file.path
+  fun isInStandardLibrary(file: VirtualFile): Boolean = "stdlib" in file.path
 
   private val LanguageLevel.major: Int
     get() = this.version / 10

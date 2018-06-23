@@ -17,7 +17,7 @@
 package com.intellij.openapi.actionSystem;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -31,7 +31,8 @@ import java.util.concurrent.ExecutorService;
 public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.actionSystem.AsyncUpdateAction");
 
-  private static final ExecutorService ourUpdaterService = AppExecutorUtil.createBoundedApplicationPoolExecutor("AsyncUpdateAction pool", 1);
+  private static final ExecutorService ourUpdaterService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "AsyncUpdateAction Pool");
 
   // Async update
   @Override

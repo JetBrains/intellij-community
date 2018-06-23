@@ -20,4 +20,9 @@ public class IntelliJCheckBoxUI extends DarculaCheckBoxUI {
   public Icon getDefaultIcon() {
     return DEFAULT_ICON;
   }
+
+  @Override
+  protected int textIconGap() {
+    return JBUI.scale(4);
+  }
 }

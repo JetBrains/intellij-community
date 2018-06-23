@@ -376,13 +376,7 @@ public class Mock {
       return new FileEditor[0];
     }
 
-    @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    }
 
-    @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    }
 
     @Override
     public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {

@@ -109,8 +109,8 @@ public class PyNamedTupleType extends PyTupleType implements PyCallableType {
   @Override
   public PyNamedTupleType toClass() {
     return myDefinitionLevel == DefinitionLevel.INSTANCE
-           ? this
-           : new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression);
+           ? new PyNamedTupleType(myClass, myName, myFields, DefinitionLevel.NEW_TYPE, myTyped, myTargetExpression)
+           : this;
   }
 
   @Override

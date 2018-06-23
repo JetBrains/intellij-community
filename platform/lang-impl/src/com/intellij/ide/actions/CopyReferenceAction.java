@@ -20,31 +20,33 @@ import com.intellij.codeInsight.daemon.impl.IdentifierUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
+import com.intellij.ide.scratch.RootType;
+import com.intellij.ide.scratch.ScratchFileService;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.ide.CopyPasteManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.LogicalRoot;
-import com.intellij.util.LogicalRootsManager;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,7 @@ import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.StringSelection;
 import java.awt.datatransfer.Transferable;
 import java.awt.datatransfer.UnsupportedFlavorException;
+import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
@@ -288,28 +291,53 @@ public class CopyReferenceAction extends DumbAwareAction {
     return virtualFile == null ? file.getName() : getVirtualFileFqn(virtualFile, file.getProject());
   }
 
+  @NotNull
   private static String getVirtualFileFqn(@NotNull VirtualFile virtualFile, @NotNull Project project) {
-    final LogicalRoot logicalRoot = LogicalRootsManager.getLogicalRootsManager(project).findLogicalRoot(virtualFile);
-    VirtualFile logicalRootFile = logicalRoot != null ? logicalRoot.getVirtualFile() : null;
-    if (logicalRootFile != null && !virtualFile.equals(logicalRootFile)) {
-      return ObjectUtils.assertNotNull(VfsUtilCore.getRelativePath(virtualFile, logicalRootFile, '/'));
+    for (VirtualFileQualifiedNameProvider provider : Extensions.getExtensions(VirtualFileQualifiedNameProvider.EP_NAME)) {
+      String qualifiedName = provider.getQualifiedName(project, virtualFile);
+      if (qualifiedName != null) {
+        return qualifiedName;
+      }
     }
 
-    VirtualFile outerMostRoot = null;
-    VirtualFile each = virtualFile;
-    ProjectFileIndex index = ProjectRootManager.getInstance(project).getFileIndex();
-    while (each != null && (each = index.getContentRootForFile(each, false)) != null) {
-      outerMostRoot = each;
-      each = each.getParent();
+    Module module = ProjectFileIndex.getInstance(project).getModuleForFile(virtualFile, false);
+    if (module != null) {
+      for (VirtualFile root : ModuleRootManager.getInstance(module).getContentRoots()) {
+        String relativePath = VfsUtilCore.getRelativePath(virtualFile, root);
+        if (relativePath != null) {
+          return relativePath;
+        }
+      }
     }
 
-    if (outerMostRoot != null && !outerMostRoot.equals(virtualFile)) {
-      String relative = VfsUtilCore.getRelativePath(virtualFile, outerMostRoot, '/');
-      if (relative != null) {
-        return relative;
+    String relativePath = VfsUtilCore.getRelativePath(virtualFile, project.getBaseDir());
+    if (relativePath != null) {
+      return relativePath;
+    }
+
+    RootType rootType = RootType.forFile(virtualFile);
+    if (rootType != null) {
+      VirtualFile scratchRootVirtualFile =
+        VfsUtil.findFileByIoFile(new File(ScratchFileService.getInstance().getRootPath(rootType)), false);
+      if (scratchRootVirtualFile != null) {
+        String scratchRelativePath = VfsUtilCore.getRelativePath(virtualFile, scratchRootVirtualFile);
+        if (scratchRelativePath != null) {
+          return scratchRelativePath;
+        }
       }
     }
 
     return virtualFile.getPath();
+  }
+
+  public interface VirtualFileQualifiedNameProvider {
+    ExtensionPointName<VirtualFileQualifiedNameProvider> EP_NAME =
+      ExtensionPointName.create("com.intellij.virtualFileQualifiedNameProvider");
+
+    /**
+     * @return {@code virtualFile} fqn (relative path for example) or null if not handled by this provider
+     */
+    @Nullable
+    String getQualifiedName(@NotNull Project project, @NotNull VirtualFile virtualFile);
   }
 }

@@ -4,38 +4,44 @@ YAML file
     PsiElement(Eol)('\n')
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('foo:')
+        PsiElement(scalar key)('foo')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML scalar text
           PsiElement(scalar text)('>')
-      PsiElement(Eol)('\n')
+          PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('bar:')
+        PsiElement(scalar key)('bar')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         PsiElement(indent)('  ')
         YAML mapping
           YAML key value
-            PsiElement(scalar key)('abc:')
+            PsiElement(scalar key)('abc')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('def')
           PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('ghi:')
+            PsiElement(scalar key)('ghi')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML scalar text
               PsiElement(scalar text)('>')
-          PsiElement(Eol)('\n')
+              PsiElement(Eol)('\n')
           PsiElement(indent)('  ')
           YAML key value
-            PsiElement(scalar key)('jkl:')
+            PsiElement(scalar key)('jkl')
+            PsiElement(:)(':')
             PsiWhiteSpace(' ')
             YAML plain scalar text
               PsiElement(text)('mno')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('baz:')
+        PsiElement(scalar key)('baz')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('qwe')

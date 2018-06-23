@@ -15,12 +15,10 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
-import com.intellij.psi.impl.source.tree.CompositeElement;
-import com.intellij.psi.impl.source.tree.RecursiveTreeElementWalkingVisitor;
-import com.intellij.psi.impl.source.tree.SharedImplUtil;
-import com.intellij.psi.impl.source.tree.TreeElement;
+import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.Stub;
+import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.*;
@@ -146,7 +144,7 @@ public class DebugUtil {
         if (showRanges) buffer.append(root.getTextRange().toString());
         buffer.append("\n");
         indent += 2;
-        if (root instanceof CompositeElement && root.getFirstChildNode() == null) {
+        if (root instanceof CompositeElement && root.getFirstChildNode() == null && showEmptyChildren()) {
           StringUtil.repeatSymbol(buffer, ' ', indent);
           buffer.append("<empty list>\n");
         }
@@ -156,6 +154,10 @@ public class DebugUtil {
       }
 
       super.visitNode(root);
+    }
+
+    protected boolean showEmptyChildren() {
+      return true;
     }
 
     protected boolean shouldSkipNode(TreeElement node) {
@@ -399,10 +401,17 @@ public class DebugUtil {
   public static String psiToStringIgnoringNonCode(@NotNull PsiElement element) {
     StringBuilder buffer = new StringBuilder();
     ((TreeElement)element.getNode()).acceptTree(
-      new TreeToBuffer(buffer, 0, true, false, false, true, null) {
+      new TreeToBuffer(buffer, 0, true, false, false, false, null) {
         @Override
         protected boolean shouldSkipNode(TreeElement node) {
-          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment;
+          return super.shouldSkipNode(node) || node instanceof PsiErrorElement || node instanceof PsiComment || 
+                 node instanceof LeafPsiElement && StringUtil.isEmptyOrSpaces(node.getText()) || 
+                 node instanceof OuterLanguageElement;
+        }
+
+        @Override
+        protected boolean showEmptyChildren() {
+          return false;
         }
       });
     return buffer.toString();
@@ -502,6 +511,7 @@ public class DebugUtil {
    * @param trace The debug trace that the invalidated elements should be identified by. May be null, then current stack trace is used.
    * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
+  @Deprecated
   public static void startPsiModification(@Nullable String trace) {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;
@@ -521,6 +531,7 @@ public class DebugUtil {
    * @see #startPsiModification(String)
    * @deprecated use {@link #performPsiModification(String, ThrowableRunnable)} instead
    */
+  @Deprecated
   public static void finishPsiModification() {
     if (!PsiInvalidElementAccessException.isTrackingInvalidation()) {
       return;

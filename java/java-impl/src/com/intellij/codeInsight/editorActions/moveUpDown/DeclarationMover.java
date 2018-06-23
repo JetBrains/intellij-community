@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.codeInsight.CodeInsightUtilCore;
@@ -43,6 +29,7 @@ import java.util.List;
 
 class DeclarationMover extends LineMover {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.actions.moveUpDown.DeclarationMover");
+  @SuppressWarnings("StatefulEp")
   private PsiEnumConstant myEnumToInsertSemicolonAfter;
   private boolean moveEnumConstant;
 
@@ -227,17 +214,20 @@ class DeclarationMover extends LineMover {
     return new LineRange(startLine, endLine);
   }
 
-
   private static Couple<LineRange> extractCommentRange(@NotNull PsiElement member) {
     PsiElement firstChild = member.getFirstChild();
-    if (firstChild instanceof PsiComment && !(firstChild instanceof PsiDocComment)) {
-      PsiElement nextElement = firstNonWhiteElement(firstChild.getNextSibling(), true);
-      if (nextElement != null) {
-        return Couple.of(new LineRange(firstChild), new LineRange(nextElement, member));
-      }
+    PsiElement firstCoreChild = firstChild;
+    while (firstCoreChild instanceof PsiComment && !(firstCoreChild instanceof PsiDocComment) || firstCoreChild instanceof PsiWhiteSpace) {
+      firstCoreChild = firstCoreChild.getNextSibling();
     }
-    LineRange wholeRange = new LineRange(member);
-    return Couple.of(new LineRange(wholeRange.startLine, wholeRange.startLine), wholeRange);
+    PsiElement lastAttachedChild = PsiTreeUtil.skipWhitespacesBackward(firstCoreChild);
+    if (lastAttachedChild == null) {
+      LineRange wholeRange = new LineRange(member);
+      return Couple.of(new LineRange(wholeRange.startLine, wholeRange.startLine), wholeRange);
+    }
+    else {
+      return Couple.of(new LineRange(firstChild, lastAttachedChild), new LineRange(firstCoreChild, member));
+    }
   }
 
   private static boolean isInsideDeclaration(@NotNull final PsiElement member,

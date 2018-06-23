@@ -372,10 +372,12 @@ public class UpdateHighlightersUtil {
       markup.changeAttributesInBatch(highlighter, changeAttributes);
     }
 
-    boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
-    assert attributesSet : "Info: " + infoAttributes +
-                           "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
-                           "; highlighter:" + highlighter.getTextAttributes();
+    if (infoAttributes != null) {
+      boolean attributesSet = Comparing.equal(infoAttributes, highlighter.getTextAttributes());
+      assert attributesSet : "Info: " + infoAttributes +
+                             "; colorsScheme: " + (colorsScheme == null ? "[global]" : colorsScheme.getName()) +
+                             "; highlighter:" + highlighter.getTextAttributes();
+    }
   }
 
   private static int getLayer(@NotNull HighlightInfo info, @NotNull SeverityRegistrar severityRegistrar) {

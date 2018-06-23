@@ -2,6 +2,7 @@
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
@@ -111,8 +112,19 @@ public abstract class Invoker implements Disposable {
           // do not care about ReadAction in EDT and in tests without application
           task.run();
         }
-        else if (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
-          throw new ProcessCanceledException();
+        else if (getApplication().isReadAccessAllowed()) {
+          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
+          task.run();
+        }
+        else {
+          // try to execute a task until it stops throwing ProcessCanceledException
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
+            if (!canInvoke(task)) break; // stop execution of obsolete task
+            ProgressIndicatorUtils.yieldToPendingWriteActions();
+            if (!canRestart(task, attempt)) break;
+            LOG.debug("Task is restarted");
+            attempt++;
+          }
         }
       }
     }

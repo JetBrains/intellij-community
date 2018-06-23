@@ -17,6 +17,7 @@ package org.jetbrains.jps.model.serialization.java;
 
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -162,7 +163,9 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   @NotNull
   @Override
   public List<? extends JpsPackagingElementSerializer<?>> getPackagingElementSerializers() {
-    return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(), new JpsTestModuleOutputPackagingElementSerializer());
+    return Arrays.asList(new JpsModuleOutputPackagingElementSerializer(),
+                         new JpsTestModuleOutputPackagingElementSerializer(),
+                         new JpsModuleSourcePackagingElementSerializer());
   }
 
   @NotNull
@@ -280,6 +283,24 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
     }
   }
 
+  private static class JpsModuleSourcePackagingElementSerializer
+    extends JpsPackagingElementSerializer<JpsProductionModuleSourcePackagingElement> {
+    private JpsModuleSourcePackagingElementSerializer() {
+      super("module-source", JpsProductionModuleSourcePackagingElement.class);
+    }
+
+    @Override
+    public JpsProductionModuleSourcePackagingElement load(Element element) {
+      JpsModuleReference reference = JpsElementFactory.getInstance().createModuleReference(element.getAttributeValue("name"));
+      return getService().createProductionModuleSource(reference);
+    }
+
+    @Override
+    public void save(JpsProductionModuleSourcePackagingElement element, Element tag) {
+      tag.setAttribute("name", element.getModuleReference().getModuleName());
+    }
+  }
+
   private static class JpsTestModuleOutputPackagingElementSerializer extends JpsPackagingElementSerializer<JpsTestModuleOutputPackagingElement> {
     private JpsTestModuleOutputPackagingElementSerializer() {
       super("module-test-output", JpsTestModuleOutputPackagingElement.class);
@@ -387,6 +408,8 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
   private static class JpsRepositoryLibraryPropertiesSerializer extends JpsLibraryPropertiesSerializer<JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor>> {
     private static final String MAVEN_ID_ATTRIBUTE = "maven-id";
     private static final String INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE = "include-transitive-deps";
+    private static final String EXCLUDE_TAG = "exclude";
+    private static final String DEPENDENCY_TAG = "dependency";
 
     public JpsRepositoryLibraryPropertiesSerializer() {
       super(JpsRepositoryLibraryType.INSTANCE, JpsRepositoryLibraryType.INSTANCE.getTypeId());
@@ -394,10 +417,19 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
 
     @Override
     public JpsSimpleElement<JpsMavenRepositoryLibraryDescriptor> loadProperties(@Nullable Element elem) {
-      return JpsElementFactory.getInstance().createSimpleElement(new JpsMavenRepositoryLibraryDescriptor(
-        elem != null ? elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null) : null,
-        elem == null || Boolean.parseBoolean(elem.getAttributeValue(INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE, "true"))
-      ));
+      return JpsElementFactory.getInstance().createSimpleElement(loadDescriptor(elem));
+    }
+
+    @NotNull
+    private static JpsMavenRepositoryLibraryDescriptor loadDescriptor(@Nullable Element elem) {
+      if (elem == null) return new JpsMavenRepositoryLibraryDescriptor(null);
+
+      boolean includeTransitiveDependencies = Boolean.parseBoolean(elem.getAttributeValue(INCLUDE_TRANSITIVE_DEPS_ATTRIBUTE, "true"));
+      Element excludeTag = elem.getChild(EXCLUDE_TAG);
+      List<Element> dependencyTags = excludeTag != null ? excludeTag.getChildren(DEPENDENCY_TAG) : Collections.emptyList();
+      List<String> excludedDependencies = ContainerUtil.map(dependencyTags, it -> it.getAttributeValue(MAVEN_ID_ATTRIBUTE));
+      return new JpsMavenRepositoryLibraryDescriptor(elem.getAttributeValue(MAVEN_ID_ATTRIBUTE, (String)null),
+                                                     includeTransitiveDependencies, excludedDependencies);
     }
 
     @Override
@@ -405,6 +437,14 @@ public class JpsJavaModelSerializerExtension extends JpsModelSerializerExtension
       final String mavenId = properties.getData().getMavenId();
       if (mavenId != null) {
         element.setAttribute(MAVEN_ID_ATTRIBUTE, mavenId);
+      }
+      List<String> excludedDependencies = properties.getData().getExcludedDependencies();
+      if (!excludedDependencies.isEmpty()) {
+        Element excludeTag = new Element(EXCLUDE_TAG);
+        element.addContent(excludeTag);
+        for (String dependency : excludedDependencies) {
+          excludeTag.addContent(new Element(DEPENDENCY_TAG).setAttribute(MAVEN_ID_ATTRIBUTE, dependency));
+        }
       }
     }
   }

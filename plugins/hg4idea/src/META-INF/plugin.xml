@@ -74,7 +74,7 @@
       <reference ref="Vcs.Push"/>
       <separator/>
       <action id="hg4idea.run.conflict.resolver" class="org.zmlx.hg4idea.action.HgRunConflictResolverAction"/>
-      <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Vcs.MergeSourcesTree"/>
+      <action id="hg4idea.merge.files" class="org.zmlx.hg4idea.action.HgMerge" icon="AllIcons.Actions.ShowAsTree"/>
       <separator/>
 
       <action id="hg4idea.branches" class="org.zmlx.hg4idea.branch.HgBranchesAction" text="_Branches..."/>
@@ -88,7 +88,7 @@
 
       <separator/>
       <action class="org.zmlx.hg4idea.action.mq.HgShowUnAppliedPatchesAction" id="hg4idea.mq.ShowUnAppliedPatches"
-              text="Show Mq Unapplied Patches..." icon="AllIcons.Debugger.Watches"/>
+              text="Show Mq Unapplied Patches..." icon="AllIcons.Debugger.Watch"/>
       <reference id="ChangesView.Browse"/>
       <separator/>
 
@@ -104,7 +104,7 @@
     <action class="org.zmlx.hg4idea.action.HgMergeWithRevisionFromLog" id="hg4idea.MergeWithRevision" text="Merge With"
             description="Merge with selected revision"/>
     <group id="Hg.Mq" class="com.intellij.ide.actions.NonTrivialActionGroup" text="MQ" popup="true"
-           icon="AllIcons.Modules.Edit">
+           icon="AllIcons.Actions.Edit">
       <action class="org.zmlx.hg4idea.action.mq.HgQImportFromLogAction" id="hg4idea.QImport" text="Import"
               description="Import all revisions starting from selected commit" icon="AllIcons.Duplicates.SendToTheRight"/>
       <action class="org.zmlx.hg4idea.action.mq.HgQGotoFromLogAction" id="hg4idea.QGoto" text="Goto patch"
@@ -158,7 +158,6 @@
     <action id="Hg.Commit.And.Push.Executor" class="org.zmlx.hg4idea.action.HgCommitAndPushExecutorAction" text="Commit and &amp;Push...">
       <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
       <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
-      <keyboard-shortcut first-keystroke="meta alt K" keymap="Xcode" remove="true"/>
     </action>
   </actions>
 

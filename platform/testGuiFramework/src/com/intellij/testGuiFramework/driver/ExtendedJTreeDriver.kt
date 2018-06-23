@@ -53,8 +53,7 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
   private val DEFAULT_FIND_PATH_ATTEMPTS: Int = 3
 
 
-  fun clickPath(tree: JTree, pathStrings: List<String>, mouseClickInfo: MouseClickInfo)
-    = clickPath(tree, pathStrings, mouseClickInfo.button(), mouseClickInfo.times())
+  fun clickPath(tree: JTree, pathStrings: List<String>, mouseClickInfo: MouseClickInfo): Unit = clickPath(tree, pathStrings, mouseClickInfo.button(), mouseClickInfo.times())
 
 
   fun clickPath(tree: JTree,
@@ -179,24 +178,24 @@ open class ExtendedJTreeDriver(robot: Robot) : JTreeDriver(robot) {
 
 
   ///OVERRIDDEN FUNCTIONS/////
-  override fun clickPath(tree: JTree, path: String) = clickPath(tree, listOf(path))
+  override fun clickPath(tree: JTree, path: String): Unit = clickPath(tree, listOf(path))
 
-  override fun clickPath(tree: JTree, path: String, button: MouseButton) = clickPath(tree, listOf(path), button)
-  override fun clickPath(tree: JTree, path: String, mouseClickInfo: MouseClickInfo) = clickPath(tree, listOf(path), mouseClickInfo)
+  override fun clickPath(tree: JTree, path: String, button: MouseButton): Unit = clickPath(tree, listOf(path), button)
+  override fun clickPath(tree: JTree, path: String, mouseClickInfo: MouseClickInfo): Unit = clickPath(tree, listOf(path), mouseClickInfo)
   override fun checkPathExists(tree: JTree, path: String) {
     matchingPathFor(tree, listOf(path))
   }
 
   override fun nodeValue(tree: JTree, path: String): String? = nodeValue(tree, listOf(path))
   override fun nodeValue(tree: JTree, row: Int): String? = nodeText(tree, row, location)
-  override fun doubleClickPath(tree: JTree, path: String) = doubleClickPath(tree, listOf(path))
-  override fun rightClickPath(tree: JTree, path: String) = rightClickPath(tree, listOf(path))
-  override fun expandPath(tree: JTree, path: String) = expandPath(tree, listOf(path))
-  override fun collapsePath(tree: JTree, path: String) = collapsePath(tree, listOf(path))
-  override fun selectPath(tree: JTree, path: String) = selectPath(tree, listOf(path))
-  override fun showPopupMenu(tree: JTree, path: String) = showPopupMenu(tree, listOf(path))
-  override fun drag(tree: JTree, path: String) = drag(tree, listOf(path))
-  override fun drop(tree: JTree, path: String) = drop(tree, listOf(path))
+  override fun doubleClickPath(tree: JTree, path: String): Unit = doubleClickPath(tree, listOf(path))
+  override fun rightClickPath(tree: JTree, path: String): Unit = rightClickPath(tree, listOf(path))
+  override fun expandPath(tree: JTree, path: String): Unit = expandPath(tree, listOf(path))
+  override fun collapsePath(tree: JTree, path: String): Unit = collapsePath(tree, listOf(path))
+  override fun selectPath(tree: JTree, path: String): Unit = selectPath(tree, listOf(path))
+  override fun showPopupMenu(tree: JTree, path: String): JPopupMenu = showPopupMenu(tree, listOf(path))
+  override fun drag(tree: JTree, path: String): Unit = drag(tree, listOf(path))
+  override fun drop(tree: JTree, path: String): Unit = drop(tree, listOf(path))
   ///--------------------/////
 
 

@@ -40,10 +40,12 @@ public class GeneratedCodeFoldingBuilder extends FoldingBuilderEx {
     return visitor.myFoldingData.toArray(FoldingDescriptor.EMPTY);
   }
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     return UIDesignerBundle.message("uidesigner.generated.code.folding.placeholder.text");
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return true;
   }

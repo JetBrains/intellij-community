@@ -5,6 +5,7 @@ import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.streams.lib.impl.StandardLibrarySupport;
 import com.intellij.debugger.streams.psi.impl.JavaChainTransformerImpl;
 import com.intellij.debugger.streams.psi.impl.JavaStreamChainBuilder;
+import com.intellij.debugger.streams.psi.impl.PackageChainDetector;
 import com.intellij.debugger.streams.trace.dsl.impl.DslImpl;
 import com.intellij.debugger.streams.trace.dsl.impl.java.JavaStatementFactory;
 import com.intellij.debugger.streams.trace.impl.JavaTraceExpressionBuilder;
@@ -32,11 +33,14 @@ public class LambdaToAnonymousTransformTest extends LightCodeInsightTestCase {
       final PsiFile file = getFile();
       final int offset = getEditor().getCaretModel().getCurrentCaret().getOffset();
       final PsiElement elementAtCaret = DebuggerUtilsEx.findElementAt(file, offset);
-      final JavaStreamChainBuilder builder = new JavaStreamChainBuilder(new JavaChainTransformerImpl(), "java.util.stream");
+      PackageChainDetector chainDetector = PackageChainDetector.Companion.forJavaStreams("java.util.stream");
+      final JavaStreamChainBuilder builder = new JavaStreamChainBuilder(new JavaChainTransformerImpl(), chainDetector);
       final List<StreamChain> chains = builder.build(elementAtCaret);
       assertEquals(1, chains.size());
-      final JavaTraceExpressionBuilder expressionBuilder = new JavaTraceExpressionBuilder(getProject(), new StandardLibrarySupport()
-        .createHandlerFactory(new DslImpl(new JavaStatementFactory())));
+      DslImpl javaDsl = new DslImpl(new JavaStatementFactory());
+      StandardLibrarySupport librarySupport = new StandardLibrarySupport();
+      final JavaTraceExpressionBuilder expressionBuilder = new JavaTraceExpressionBuilder(getProject(), librarySupport
+        .createHandlerFactory(javaDsl), javaDsl);
       expressionBuilder.createTraceExpression(chains.get(0));
     });
   }

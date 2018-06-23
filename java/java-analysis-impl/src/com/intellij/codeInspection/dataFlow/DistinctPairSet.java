@@ -63,8 +63,9 @@ final class DistinctPairSet extends AbstractSet<DistinctPairSet.DistinctPair> {
     int firstVal = first.get(0);
     int secondVal = second.get(0);
     int firstIndex = myState.getEqClassIndex(myState.getFactory().getValue(firstVal));
+    if (firstIndex == -1) return false;
     int secondIndex = myState.getEqClassIndex(myState.getFactory().getValue(secondVal));
-    if (firstIndex == -1 || secondIndex == -1) return false;
+    if (secondIndex == -1) return false;
     long pair = createPair(firstIndex, secondIndex, dp.isOrdered());
     return myData.contains(pair) && decode(pair).equals(dp);
   }

@@ -42,6 +42,7 @@ public abstract class JUnitPatcher implements PluginAware {
   /**
    * @deprecated override {@link #patchJavaParameters(Module, JavaParameters)} instead
    */
+  @Deprecated
   public void patchJavaParameters(JavaParameters javaParameters) {
   }
 

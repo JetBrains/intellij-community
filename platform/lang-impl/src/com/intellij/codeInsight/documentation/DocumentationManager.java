@@ -1,9 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.documentation.actions.ShowQuickDocInfoAction;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.ParameterInfoController;
@@ -13,8 +14,10 @@ import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.actions.BaseNavigateToSourceAction;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguageDocumentation;
 import com.intellij.lang.documentation.*;
@@ -28,6 +31,9 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.preview.PreviewManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
@@ -37,6 +43,8 @@ import com.intellij.openapi.roots.ui.configuration.ProjectSettingsService;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
@@ -51,6 +59,7 @@ import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.PopupUpdateProcessor;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.text.DateFormatUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +69,11 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.io.File;
 import java.lang.ref.WeakReference;
+import java.nio.file.Files;
+import java.nio.file.Paths;
+import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
 import java.util.List;
 
@@ -139,7 +152,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       IdeFocusManager.getInstance(myProject).requestFocus(myPreviouslyFocused, true);
     }
     super.restorePopupBehavior();
-    updateComponent();
+    updateComponent(true);
   }
 
   @Override
@@ -517,9 +530,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         if (closeCallback != null) {
           closeCallback.run();
         }
-        if (fromQuickSearch()) {
-          ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).unregisterHint();
-        }
+        findQuickSearchComponent(myPreviouslyFocused).ifPresent(QuickSearchComponent::unregisterHint);
 
         Disposer.dispose(component);
         myEditor = null;
@@ -559,14 +570,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
     myDocInfoHintRef = new WeakReference<>(hint);
 
-    if (fromQuickSearch() && myPreviouslyFocused != null) {
-      ((ChooseByNameBase.JPanelProvider)myPreviouslyFocused.getParent()).registerHint(hint);
-    }
+    findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch -> quickSearch.registerHint(hint));
   }
 
   static String getTitle(@NotNull final PsiElement element, final boolean _short) {
     final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return _short ? "for `" + (title != null ? title : element.getText()) + "`": CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+    return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
   public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
@@ -603,9 +612,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    */
   @Nullable
   private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+    if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
+      return assertSameProject(getElementFromLookup(editor, file));
+    }
+
     TargetElementUtil util = TargetElementUtil.getInstance();
-    PsiElement element = assertSameProject(getElementFromLookup(editor, file));
-    if (element == null && file != null) {
+    PsiElement element = null;
+    if (file != null) {
       final DocumentationProvider documentationProvider = getProviderFromElement(file);
       if (documentationProvider instanceof DocumentationProviderEx) {
         element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
@@ -647,8 +660,6 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (activeLookup != null) {
       LookupElement item = activeLookup.getCurrentItem();
       if (item != null) {
-
-
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
         PsiReference ref = TargetElementUtil.findReference(editor, offset);
@@ -659,16 +670,12 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
 
         DocumentationProvider documentationProvider = getProviderFromElement(file);
-
         PsiManager psiManager = PsiManager.getInstance(myProject);
-        return documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        PsiElement fromProvider = documentationProvider.getDocumentationElementForLookupItem(psiManager, item.getObject(), targetElement);
+        return fromProvider != null ? fromProvider : CompletionUtil.getTargetElement(item);
       }
     }
     return null;
-  }
-
-  private boolean fromQuickSearch() {
-    return myPreviouslyFocused != null && myPreviouslyFocused.getParent() instanceof ChooseByNameBase.JPanelProvider;
   }
 
   public String generateDocumentation(@NotNull final PsiElement element, @Nullable final PsiElement originalElement) throws Exception {
@@ -725,6 +732,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       component.setData(element, myPrecalculatedDocumentation, clearHistory,
                         provider.getEffectiveExternalUrl(), provider.getRef());
       callback.setDone();
+      myPrecalculatedDocumentation = null;
       return callback;
     }
     boolean wasEmpty = component.isEmpty();
@@ -1008,9 +1016,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void requestFocus() {
-    if (fromQuickSearch()) {
-      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(myPreviouslyFocused.getParent(), true));
-    }
+    findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch ->
+      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(quickSearch.asComponent(), true))
+    );
   }
 
   public Project getProject(@Nullable final PsiElement element) {
@@ -1045,8 +1053,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
   
   @Override
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) {
+    showJavaDocInfo(editor, psiFile, requestFocus, null);
+  }
+
+  @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile) {
-    showJavaDocInfo(editor, psiFile, false, null);
+    doUpdateComponent(editor, psiFile, false);
   }
 
   @Override
@@ -1147,8 +1160,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       final Ref<String> result = new Ref<>();
       QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
         if (!myElement.isValid()) return;
-        final SmartPsiElementPointer originalElement = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
-        String doc = provider.generateDoc(myElement, originalElement != null ? originalElement.getElement() : null);
+        SmartPsiElementPointer originalPointer = myElement.getUserData(ORIGINAL_ELEMENT_KEY);
+        PsiElement originalPsi = originalPointer != null ? originalPointer.getElement() : null;
+        String doc = provider.generateDoc(myElement, originalPsi);
+        if (myElement instanceof PsiFile) {
+          String fileDoc = generateFileDoc((PsiFile)myElement, doc == null);
+          if (fileDoc != null) {
+            doc = doc == null ? fileDoc : doc + fileDoc;
+          }
+        }
         result.set(doc);
       }, DOC_GENERATION_TIMEOUT_MILLISECONDS, DOC_GENERATION_PAUSE_MILLISECONDS, null);
       return result.get();
@@ -1171,5 +1191,40 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     public String getRef() {
       return myRef;
     }
+
+  }
+
+  @Nullable
+  private static String generateFileDoc(@NotNull PsiFile psiFile, boolean withUrl) {
+    VirtualFile file = PsiUtilCore.getVirtualFile(psiFile);
+    File ioFile = file == null || !file.isInLocalFileSystem() ? null : VfsUtilCore.virtualToIoFile(file);
+    BasicFileAttributes attr = null;
+    try {
+      attr = ioFile == null ? null : Files.readAttributes(Paths.get(ioFile.toURI()), BasicFileAttributes.class);
+    }
+    catch (Exception ignored) { }
+    if (attr == null) return null;
+    FileType type = file.getFileType();
+    String typeName = type == UnknownFileType.INSTANCE ? "Unknown" :
+                      type == PlainTextFileType.INSTANCE ? "Text" :
+                      type == ArchiveFileType.INSTANCE ? "Archive" :
+                      type.getName();
+    String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
+    return (withUrl ? DocumentationMarkup.DEFINITION_START + file.getPresentableUrl() + DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START : "") +
+         "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
+         "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
+         "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
+         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
+         (withUrl ? DocumentationMarkup.CONTENT_END : "");
+  }
+
+  private static Optional<QuickSearchComponent> findQuickSearchComponent(Component c) {
+    while (c != null) {
+      if (c instanceof QuickSearchComponent) {
+        return Optional.of((QuickSearchComponent) c);
+      }
+      c = c.getParent();
+    }
+    return Optional.empty();
   }
 }

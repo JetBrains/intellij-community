@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.actions.searcheverywhere.ActionSearchEverywhereContributor;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.gotoByName.ChooseByNamePopup;
@@ -29,6 +15,7 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.editor.Editor;
@@ -36,7 +23,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.keymap.impl.ActionShortcutRestrictions;
-import com.intellij.openapi.keymap.impl.KeymapManagerImpl;
 import com.intellij.openapi.keymap.impl.ui.KeymapPanel;
 import com.intellij.openapi.progress.util.ProgressWindow;
 import com.intellij.openapi.project.DumbAware;
@@ -51,6 +37,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.HeldDownKeyListener;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -59,6 +46,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Random;
 import java.util.Set;
 
 import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
@@ -66,9 +54,18 @@ import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
 public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @Override
-  public void gotoActionPerformed(@NotNull final AnActionEvent e) {
-    final Project project = e.getData(CommonDataKeys.PROJECT);
-    final Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
+      showInSearchEverywherePopup(ActionSearchEverywhereContributor.class.getSimpleName(), e);
+    } else {
+      super.actionPerformed(e);
+    }
+  }
+
+  @Override
+  public void gotoActionPerformed(@NotNull AnActionEvent e) {
+    Project project = e.getProject();
+    Component component = e.getData(PlatformDataKeys.CONTEXT_COMPONENT);
     Editor editor = e.getData(CommonDataKeys.EDITOR);
 
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.action");
@@ -81,7 +78,8 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
           project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, null);
         }
         String enteredText = popup.getTrimmedText();
-        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component);
+        int modifiers = popup.isClosedByShiftEnter() ? InputEvent.SHIFT_MASK : 0;
+        openOptionOrPerformAction(((GotoActionModel.MatchedValue)element).value, enteredText, project, component, modifiers);
       }
     };
 
@@ -91,17 +89,20 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
 
   @NotNull
   private static ChooseByNamePopup createPopup(@Nullable Project project,
-                                               @NotNull final GotoActionModel model,
+                                               @NotNull GotoActionModel model,
                                                String initialText,
                                                int initialIndex,
-                                               final Component component,
-                                               final AnActionEvent event) {
+                                               Component component,
+                                               AnActionEvent event) {
     ChooseByNamePopup oldPopup = project == null ? null : project.getUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY);
     if (oldPopup != null) {
       oldPopup.close(false);
     }
-    final Disposable disposable = Disposer.newDisposable();
-    final ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
+    Disposable disposable = Disposer.newDisposable();
+    ShortcutSet altEnterShortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
+    KeymapManager km = KeymapManager.getInstance();
+    Keymap activeKeymap = km != null ? km.getActiveKeymap() : null;
+    ChooseByNamePopup popup = new ChooseByNamePopup(project, model, new GotoActionItemProvider(model), oldPopup, initialText, false, initialIndex) {
       private boolean myPaintInternalInfo;
 
       @Override
@@ -136,6 +137,18 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
               if (mv.value instanceof BooleanOptionDescription ||
                   mv.value instanceof GotoActionModel.ActionWrapper && ((GotoActionModel.ActionWrapper)mv.value).getAction() instanceof ToggleAction) {
                 return "Press " + KeymapUtil.getKeystrokeText(KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0)) + " to toggle option";
+              }
+
+              if (altEnterShortcutSet.getShortcuts().length > 0 && mv.value instanceof GotoActionModel.ActionWrapper && activeKeymap != null) {
+                GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)mv.value;
+                if (aw.isAvailable()) {
+                  String actionId = ActionManager.getInstance().getId(aw.getAction());
+                  boolean actionWithoutShortcuts = activeKeymap.getShortcuts(actionId).length == 0;
+                  if (actionWithoutShortcuts && new Random().nextInt(2) > 0) {
+                    String altEnter = KeymapUtil.getFirstKeyboardShortcutText(altEnterShortcutSet);
+                    return "Press " + altEnter + " to assign a shortcut for the selected action";
+                  }
+                }
               }
             }
             return getAdText();
@@ -220,38 +233,32 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     if (project != null) {
       project.putUserData(ChooseByNamePopup.CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY, popup);
     }
+
     popup.addMouseClickListener(new MouseAdapter() {
       @Override
       public void mouseClicked(@NotNull MouseEvent me) {
         Object element = popup.getSelectionByPoint(me.getPoint());
-        if (element instanceof GotoActionModel.MatchedValue) {
-          if (processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, event)) {
-            me.consume();
-          }
+        if (element instanceof GotoActionModel.MatchedValue &&
+            processOptionInplace(((GotoActionModel.MatchedValue)element).value, popup, component, event)) {
+          me.consume();
         }
       }
     });
 
-    ShortcutSet shortcutSet = getActiveKeymapShortcuts(IdeActions.ACTION_SHOW_INTENTION_ACTIONS);
     DumbAwareAction.create(e -> {
       Object o = popup.getChosenElement();
-      if (o instanceof GotoActionModel.MatchedValue) {
+      if (o instanceof GotoActionModel.MatchedValue && activeKeymap != null) {
         Comparable value = ((GotoActionModel.MatchedValue)o).value;
         if (value instanceof GotoActionModel.ActionWrapper) {
           GotoActionModel.ActionWrapper aw = (GotoActionModel.ActionWrapper)value;
-          boolean available = aw.isAvailable();
-          if (available) {
-            AnAction action = aw.getAction();
-            String id = ActionManager.getInstance().getId(action);
-            KeymapManagerImpl km = ((KeymapManagerImpl)KeymapManager.getInstance());
-            Keymap k = km.getActiveKeymap();
-            if (k == null || !k.canModify()) return;
-            KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), k, component);
-            popup.repaintListImmediate();
+          if (aw.isAvailable()) {
+            String id = ActionManager.getInstance().getId(aw.getAction());
+            KeymapPanel.addKeyboardShortcut(id, ActionShortcutRestrictions.getInstance().getForActionId(id), activeKeymap, component);
           }
         }
       }
-    }).registerCustomShortcutSet(shortcutSet, popup.getTextField(), disposable);
+    }).registerCustomShortcutSet(altEnterShortcutSet, popup.getTextField(), disposable);
+
     return popup;
   }
 
@@ -265,7 +272,7 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     else if (value instanceof GotoActionModel.ActionWrapper) {
       AnAction action = ((GotoActionModel.ActionWrapper)value).getAction();
       if (action instanceof ToggleAction) {
-        performAction(action, component, e, () -> repaint(popup));
+        performAction(action, component, e, 0, () -> repaint(popup));
         return true;
       }
     }
@@ -278,43 +285,54 @@ public class GotoActionAction extends GotoActionBase implements DumbAware {
     }
   }
 
-  public static void openOptionOrPerformAction(@NotNull Object element,
-                                               final String enteredText,
-                                               @Nullable final Project project,
-                                               Component component) {
+  public static void openOptionOrPerformAction(@NotNull Object element, String enteredText, @Nullable Project project, Component component) {
+    openOptionOrPerformAction(element, enteredText, project, component, 0);
+  }
+
+  private static void openOptionOrPerformAction(Object element,
+                                                String enteredText,
+                                                @Nullable Project project,
+                                                Component component,
+                                                @JdkConstants.InputEventMask int modifiers) {
     if (element instanceof OptionDescription) {
       OptionDescription optionDescription = (OptionDescription)element;
-      final String configurableId = optionDescription.getConfigurableId();
+      String configurableId = optionDescription.getConfigurableId();
       Disposable disposable = project != null ? project : ApplicationManager.getApplication();
       TransactionGuard guard = TransactionGuard.getInstance();
       if (optionDescription.hasExternalEditor()) {
         guard.submitTransactionLater(disposable, () -> optionDescription.invokeInternalEditor());
-      } else {
+      }
+      else {
         guard.submitTransactionLater(disposable, () -> ShowSettingsUtilImpl.showSettingsDialog(project, configurableId, enteredText));
       }
     }
     else {
-      ApplicationManager.getApplication().invokeLater(() -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
-        () -> performAction(element, component, null)));
+      ApplicationManager.getApplication().invokeLater(
+        () -> IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(
+          () -> performAction(element, component, null, modifiers, null)));
     }
   }
 
-  public static void performAction(Object element, @Nullable final Component component, @Nullable final AnActionEvent e) {
-    performAction(element, component, e, null);
+  public static void performAction(@NotNull Object element, @Nullable Component component, @Nullable AnActionEvent e) {
+    performAction(element, component, e, 0, null);
   }
 
-  public static void performAction(Object element,
-                                   @Nullable final Component component,
-                                   @Nullable final AnActionEvent e,
-                                   @Nullable final Runnable callback) {
+  private static void performAction(Object element,
+                                    @Nullable Component component,
+                                    @Nullable AnActionEvent e,
+                                    @JdkConstants.InputEventMask int modifiers,
+                                    @Nullable Runnable callback) {
     // element could be AnAction (SearchEverywhere)
     if (component == null) return;
-    final AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
+    AnAction action = element instanceof AnAction ? (AnAction)element : ((GotoActionModel.ActionWrapper)element).getAction();
     TransactionGuard.getInstance().submitTransactionLater(ApplicationManager.getApplication(), () -> {
         DataManager instance = DataManager.getInstance();
         DataContext context = instance != null ? instance.getDataContext(component) : DataContext.EMPTY_CONTEXT;
-        InputEvent inputEvent = e == null ? null : e.getInputEvent();
+        InputEvent inputEvent = e != null ? e.getInputEvent() : null;
         AnActionEvent event = AnActionEvent.createFromAnAction(action, inputEvent, ActionPlaces.ACTION_SEARCH, context);
+        if (inputEvent == null && modifiers != 0) {
+          event = new AnActionEvent(null, event.getDataContext(), event.getPlace(), event.getPresentation(), event.getActionManager(), modifiers);
+        }
 
         if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
           if (action instanceof ActionGroup && ((ActionGroup)action).getChildren(event).length > 0) {

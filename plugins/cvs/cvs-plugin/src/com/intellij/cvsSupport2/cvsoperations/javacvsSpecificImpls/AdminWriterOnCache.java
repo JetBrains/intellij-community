@@ -15,6 +15,7 @@
  */
 package com.intellij.cvsSupport2.cvsoperations.javacvsSpecificImpls;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.cvsSupport2.CvsUtil;
 import com.intellij.cvsSupport2.application.CvsEntriesManager;
 import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
@@ -24,14 +25,13 @@ import com.intellij.cvsSupport2.util.CvsVfsUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import org.jetbrains.annotations.NotNull;
 import org.netbeans.lib.cvsclient.CvsRoot;
 import org.netbeans.lib.cvsclient.IClientEnvironment;
 import org.netbeans.lib.cvsclient.admin.AdminWriter;
 import org.netbeans.lib.cvsclient.admin.Entry;
 import org.netbeans.lib.cvsclient.admin.IAdminWriter;
 import org.netbeans.lib.cvsclient.file.*;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.io.IOException;
@@ -55,7 +55,7 @@ public class AdminWriterOnCache implements IAdminWriter {
     myUpdatedFilesManager = updatedFilesManager;
     myProjectContentInfoProvider = projectContentInfoProvider;
     myAdminWriter = new AdminWriter(
-      CodeStyleSettingsManager.getInstance().getCurrentSettings().getLineSeparator(),
+      CodeStyle.getDefaultSettings().getLineSeparator(),
       CvsApplicationLevelConfiguration.getCharset());    
   }
 

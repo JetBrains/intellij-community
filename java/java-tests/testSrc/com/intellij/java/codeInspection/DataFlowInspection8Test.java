@@ -33,7 +33,7 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
-  private static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
+  static final DefaultLightProjectDescriptor PROJECT_DESCRIPTOR = new DefaultLightProjectDescriptor() {
     @Override
     public Sdk getSdk() {
       return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk18());
@@ -213,9 +213,8 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
     doTest();
   }
 
-  public void testMutabilityJdk() {
-    doTest();
-  }
+  public void testMutabilityJdk() { doTest(); }
+  public void testMutabilityInferred() { doTest(); }
 
   public void testPrimitiveGetters() { doTest(); }
   public void testUnknownOnStack() { doTest(); }
@@ -224,4 +223,15 @@ public class DataFlowInspection8Test extends DataFlowInspectionTestCase {
   public void testOptionalTooComplex() { doTest(); }
 
   public void testMethodReferenceBoundToNullable() { doTestWithCustomAnnotations(); }
+  public void testEscapeAnalysis() { doTest(); }
+  public void testThisAsVariable() { doTest(); }
+  public void testQueuePeek() { doTest(); }
+  public void testForeachCollectionElement() { doTest(); }
+  public void testContractReturnValues() { doTest(); }
+  public void testTryFinallySimple() { doTest(); }
+  
+  public void testConflictsInInferredTypes() { 
+    setupAmbiguousAnnotations("foo", myFixture);
+    doTest();
+  }
 }

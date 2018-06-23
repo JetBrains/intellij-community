@@ -15,6 +15,7 @@
  */
 package com.siyeh.ig.initialization;
 
+import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.extensions.Extensions;
@@ -91,6 +92,9 @@ public class InstanceVariableInitializationInspection extends BaseInspection {
         return;
       }
       if (field.getInitializer() != null) {
+        return;
+      }
+      if (NullableNotNullManager.isNullable(field)) {
         return;
       }
       if (m_ignorePrimitives) {

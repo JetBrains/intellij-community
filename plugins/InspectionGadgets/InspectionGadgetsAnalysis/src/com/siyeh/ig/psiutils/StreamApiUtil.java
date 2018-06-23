@@ -12,9 +12,6 @@ import java.util.function.Predicate;
 
 import static com.siyeh.ig.psiutils.ExpressionUtils.getCallForQualifier;
 
-/**
- * @author Tagir Valeev
- */
 public class StreamApiUtil {
   @Contract("null -> null")
   public static PsiType getStreamElementType(PsiType type) {
@@ -72,6 +69,26 @@ public class StreamApiUtil {
       return type.equals(PsiType.INT) || type.equals(PsiType.LONG) || type.equals(PsiType.DOUBLE);
     }
     return true;
+  }
+
+  /**
+   * Returns a Stream API class name (Stream, LongStream, IntStream, DoubleStream) which corresponds to given element type,
+   * or null if there's no corresponding Stream API class.
+   *
+   * @param type stream element type
+   * @return a fully-qualified class name
+   */
+  @Contract("null -> null")
+  @Nullable
+  public static String getStreamClassForType(@Nullable PsiType type) {
+    if(type == null) return null;
+    if(type instanceof PsiPrimitiveType) {
+      if(type.equals(PsiType.INT)) return CommonClassNames.JAVA_UTIL_STREAM_INT_STREAM;
+      if(type.equals(PsiType.LONG)) return CommonClassNames.JAVA_UTIL_STREAM_LONG_STREAM;
+      if(type.equals(PsiType.DOUBLE)) return CommonClassNames.JAVA_UTIL_STREAM_DOUBLE_STREAM;
+      return null;
+    }
+    return CommonClassNames.JAVA_UTIL_STREAM_STREAM;
   }
 
   /**

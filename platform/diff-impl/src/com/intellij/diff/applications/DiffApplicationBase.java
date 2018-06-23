@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationStarterEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.project.ProjectManager;
@@ -30,19 +31,23 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.testFramework.LightVirtualFile;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
 
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"})
 public abstract class DiffApplicationBase extends ApplicationStarterEx {
+  protected static final String NULL_PATH = "/dev/null";
+
   protected static final Logger LOG = Logger.getInstance(DiffApplicationBase.class);
 
   protected abstract boolean checkArguments(@NotNull String[] args);
@@ -119,18 +124,27 @@ public abstract class DiffApplicationBase extends ApplicationStarterEx {
     List<VirtualFile> files = new ArrayList<>();
 
     for (String path : filePaths) {
-      VirtualFile virtualFile = findFile(path, currentDirectory);
-      if (virtualFile == null) throw new Exception("Can't find file " + path);
-      files.add(virtualFile);
+      if (NULL_PATH.equals(path)) {
+        files.add(null);
+      }
+      else {
+        VirtualFile virtualFile = findFile(path, currentDirectory);
+        if (virtualFile == null) throw new Exception("Can't find file: " + path);
+        files.add(virtualFile);
+      }
     }
 
-    VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
-
-    for (int i = 0; i < filePaths.size(); i++) {
-      if (!files.get(i).isValid()) throw new Exception("Can't find file " + filePaths.get(i));
-    }
+    refreshAndEnsureFilesValid(ContainerUtil.skipNulls(files));
 
     return files;
+  }
+
+  private static void refreshAndEnsureFilesValid(@NotNull List<VirtualFile> files) throws Exception {
+    VfsUtil.markDirtyAndRefresh(false, false, false, VfsUtilCore.toVirtualFileArray(files));
+
+    for (VirtualFile file : files) {
+      if (!file.isValid()) throw new Exception("Can't find file: " + file.getPresentableUrl());
+    }
   }
 
   @Nullable
@@ -151,6 +165,14 @@ public abstract class DiffApplicationBase extends ApplicationStarterEx {
     }
     return file;
   }
+
+  @NotNull
+  public List<VirtualFile> replaceNullsWithEmptyFile(@NotNull List<VirtualFile> contents) {
+    return ContainerUtil.map(contents, file -> {
+      return ObjectUtils.notNull(file, () -> new LightVirtualFile(NULL_PATH, PlainTextFileType.INSTANCE, ""));
+    });
+  }
+
 
   @Override
   public boolean canProcessExternalCommandLine() {

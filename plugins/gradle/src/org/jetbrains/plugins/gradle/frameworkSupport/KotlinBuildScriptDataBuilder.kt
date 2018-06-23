@@ -3,8 +3,13 @@ package org.jetbrains.plugins.gradle.frameworkSupport
 
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.util.Function
+import org.gradle.util.GradleVersion
 
-class KotlinBuildScriptDataBuilder(buildScriptFile: VirtualFile) : BuildScriptDataBuilder(buildScriptFile) {
+class KotlinBuildScriptDataBuilder : BuildScriptDataBuilder {
+  constructor(buildScriptFile: VirtualFile) : super(buildScriptFile)
+
+  constructor(buildScriptFile: VirtualFile, gradleVersion: GradleVersion) : super(buildScriptFile, gradleVersion)
+
   override fun addPluginsLines(lines: MutableList<String>, padding: Function<String, String>) {
     if (plugins.isEmpty()) {
       return

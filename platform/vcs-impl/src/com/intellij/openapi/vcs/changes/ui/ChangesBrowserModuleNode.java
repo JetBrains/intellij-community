@@ -16,7 +16,7 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class ChangesBrowserModuleNode extends ChangesBrowserNode<Module> {
-  private final FilePath myModuleRoot;
+  @NotNull private final FilePath myModuleRoot;
 
   protected ChangesBrowserModuleNode(Module userObject) {
     super(userObject);

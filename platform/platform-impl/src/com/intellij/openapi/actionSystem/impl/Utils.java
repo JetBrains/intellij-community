@@ -15,11 +15,9 @@
  */
 package com.intellij.openapi.actionSystem.impl;
 
-import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.DumbService;
@@ -28,7 +26,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -226,7 +223,7 @@ public class Utils{
         else {
           boolean hideDisabledChildren = hideDisabled || actionGroup instanceof CompactActionGroup;
           expandActionGroup(isInModalContext, (ActionGroup)child, list, presentationFactory, context, place, actionManager, false,
-                            hideDisabledChildren);
+                            hideDisabledChildren, isContextMenuAction, isToolbarAction);
         }
       }
       else if (child instanceof Separator) {
@@ -336,19 +333,6 @@ public class Utils{
     doUpdate(false, anAction, event1, presentation);
   }
 
-  @Deprecated
-  // Use #expandActionGroup with isModalContext instead
-  public static void fillMenu(@NotNull final ActionGroup group,
-                              final JComponent component,
-                              final boolean enableMnemonics,
-                              final PresentationFactory presentationFactory,
-                              @NotNull DataContext context,
-                              final String place,
-                              final boolean isWindowMenu,
-                              final boolean mayDataContextBeInvalid) {
-    fillMenu(group, component, enableMnemonics, presentationFactory, context, place, isWindowMenu, mayDataContextBeInvalid, false);
-  }
-
   public static void fillMenu(@NotNull final ActionGroup group,
                               final JComponent component,
                               final boolean enableMnemonics,
@@ -357,7 +341,8 @@ public class Utils{
                               final String place,
                               final boolean isWindowMenu,
                               final boolean mayDataContextBeInvalid,
-                              boolean isInModalContext) {
+                              boolean isInModalContext,
+                              final boolean useDarkIcons) {
     final ActionCallback menuBuilt = new ActionCallback();
     final boolean checked = group instanceof CheckedActionGroup;
 
@@ -423,13 +408,13 @@ public class Utils{
       else if (action instanceof ActionGroup &&
                !(((ActionGroup)action).canBePerformed(context) &&
                  !hasVisibleChildren((ActionGroup)action, presentationFactory, context, place))) {
-        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, false);
+        ActionMenu menu = new ActionMenu(context, place, (ActionGroup)action, presentationFactory, enableMnemonics, false, useDarkIcons);
         component.add(menu);
         children.add(menu);
       }
       else {
         final ActionMenuItem each =
-          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked);
+          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked, useDarkIcons);
         component.add(each);
         children.add(each);
       }
@@ -438,7 +423,7 @@ public class Utils{
     if (list.isEmpty()) {
       final ActionMenuItem each =
         new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics,
-                           !fixMacScreenMenu, checked);
+                           !fixMacScreenMenu, checked, useDarkIcons);
       component.add(each);
       children.add(each);
     }

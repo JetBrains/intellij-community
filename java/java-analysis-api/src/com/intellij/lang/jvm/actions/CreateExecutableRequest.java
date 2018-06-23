@@ -21,6 +21,12 @@ public interface CreateExecutableRequest extends ActionRequest {
   @NotNull
   JvmSubstitutor getTargetSubstitutor();
 
+  @Deprecated
   @NotNull
-  List<Pair<SuggestedNameInfo, List<ExpectedType>>> getParameters();
+  default List<Pair<SuggestedNameInfo, List<ExpectedType>>> getParameters() {
+    return CompatibilityUtil.getParameters(getExpectedParameters());
+  }
+
+  @NotNull
+  List<ExpectedParameter> getExpectedParameters();
 }

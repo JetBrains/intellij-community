@@ -16,6 +16,10 @@
 
 package com.intellij.ide.actions;
 
+import com.intellij.featureStatistics.FeatureUsageTracker;
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ModalityState;
@@ -244,10 +248,9 @@ public abstract class GotoActionBase extends AnAction {
     final ChooseByNameFilter<T> filter = callback.createFilter(popup);
 
     if (historyEnabled() && popup.getAdText() == null) {
-      popup.setAdText("Press " +
-                      KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE) + " or " +
-                      KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE) +
-                      " to navigate through the search history");
+      popup.setAdText(IdeBundle.message("searcheverywhere.history.shortcuts.hint",
+                                        KeymapUtil.getKeystrokeText(SearchTextField.ALT_SHOW_HISTORY_KEYSTROKE),
+                                        KeymapUtil.getKeystrokeText(SearchTextField.SHOW_HISTORY_KEYSTROKE)));
     }
 
     popup.invoke(new ChooseByNamePopupComponent.Callback() {
@@ -332,6 +335,24 @@ public abstract class GotoActionBase extends AnAction {
     }.registerCustomShortcutSet(SearchTextField.SHOW_HISTORY_SHORTCUT, editor);
   }
 
+  protected void showInSearchEverywherePopup(String searchProviderID, AnActionEvent evnt) {
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+    FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+
+    SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(evnt.getProject());
+    if (seManager.isShown()) {
+      if (searchProviderID.equals(seManager.getShownContributorID())) {
+        seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
+      }
+      else {
+        seManager.setShownContributor(searchProviderID);
+      }
+      return;
+    }
+
+    IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+    seManager.show(searchProviderID, getInitialTextForNavigation(evnt.getData(CommonDataKeys.EDITOR)), evnt);
+  }
 
   private static boolean historyEnabled() {
     return !ContainerUtil.isEmpty(ourHistory.get(myInAction));

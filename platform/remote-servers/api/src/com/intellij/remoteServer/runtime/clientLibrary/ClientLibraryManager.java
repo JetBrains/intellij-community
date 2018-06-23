@@ -43,28 +43,33 @@ public abstract class ClientLibraryManager {
   /**
    * @deprecated to be removed with obsolete cloud implementations
    */
+  @Deprecated
   @NotNull
   public abstract List<File> getLibraries(@NotNull ClientLibraryDescription description);
 
   /**
    * @deprecated to be removed with obsolete cloud implementations
    */
+  @Deprecated
   public abstract void addListener(@NotNull CloudClientLibraryManagerListener listener, @NotNull Disposable disposable);
 
   /**
    * @deprecated will be pushed down to implementation when obsolete cloud implementations are removed
    */
+  @Deprecated
   public abstract boolean isDownloaded(@NotNull ClientLibraryDescription description);
 
   /**
    * @deprecated to be removed with obsolete cloud implementations
    */
+  @Deprecated
   public abstract void checkConfiguration(@NotNull ClientLibraryDescription description, @Nullable Project project,
                                           @Nullable JComponent component) throws RuntimeConfigurationError;
 
   /**
    * @deprecated will be pushed down to implementation when obsolete cloud implementations are removed
    */
+  @Deprecated
   public abstract void download(@NotNull ClientLibraryDescription description, @Nullable Project project, @Nullable JComponent component);
 
   public interface CloudClientLibraryManagerListener extends EventListener {

@@ -31,6 +31,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.commons.lang.enum.Enum java.util.Iterator iterator(java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.enum.Enum java.util.Iterator iterator(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -46,6 +51,11 @@
     <item name='org.apache.commons.lang.enum.Enum org.apache.commons.lang.enum.Enum getEnum(java.lang.Class, java.lang.String) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
+    <item name='org.apache.commons.lang.enum.Enum org.apache.commons.lang.enum.Enum.Entry createEntry(java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.commons.lang.enum.Enum org.apache.commons.lang.enum.Enum.Entry createEntry(java.lang.Class) 0'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -55,6 +65,11 @@
     <item name='org.apache.commons.lang.enum.EnumUtils EnumUtils()'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="pure" val="true"/>
+        </annotation>
+    </item>
+    <item name='org.apache.commons.lang.enum.EnumUtils java.util.Iterator iterator(java.lang.Class)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
         </annotation>
     </item>
     <item name='org.apache.commons.lang.enum.EnumUtils java.util.Iterator iterator(java.lang.Class) 0'>

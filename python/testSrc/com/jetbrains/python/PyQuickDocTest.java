@@ -1,23 +1,20 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python;
 
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
-import com.intellij.testFramework.TestDataFile;
+import com.intellij.psi.PsiManager;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.documentation.PythonDocumentationProvider;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.LightMarkedTestCase;
-import com.jetbrains.python.fixtures.PyTestCase;
-import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyDocStringOwner;
-import com.jetbrains.python.psi.PyReferenceExpression;
-import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.*;
+import org.jetbrains.annotations.NotNull;
 
-import java.io.IOException;
 import java.util.Map;
+
+import static com.jetbrains.python.psi.PyUtil.as;
 
 /**
  * @author dcheryasov
@@ -43,30 +40,13 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     super.tearDown();
   }
 
-  private void checkByHTML(String text) {
-    assertNotNull(text);
-    checkByHTML(text, "/quickdoc/" + getTestName(false) + ".html");
-  }
-
-  private void checkByHTML(String text, @TestDataFile String filePath) {
-    final String fullPath = getTestDataPath() + filePath;
-    final VirtualFile virtualFile = PyTestCase.getVirtualFileByName(fullPath);
-    assertNotNull("file " + fullPath + " not found", virtualFile);
-
-    String loadedText;
-    try {
-      loadedText = VfsUtilCore.loadText(virtualFile);
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
-    String fileText = StringUtil.convertLineSeparators(loadedText, "\n");
-    assertEquals(fileText.trim(), text.trim());
+  private void checkByHTML(@NotNull String text) {
+    assertSameLinesWithFile(getTestDataPath() + getTestName(false) + ".html", text);
   }
 
   @Override
   protected Map<String, PsiElement> loadTest() {
-    return configureByFile("/quickdoc/" + getTestName(false) + ".py");
+    return configureByFile(getTestName(false) + ".py");
   }
 
   private void checkRefDocPair() {
@@ -87,11 +67,14 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   private void checkHTMLOnly() {
-    Map<String, PsiElement> marks = loadTest();
+    final Map<String, PsiElement> marks = loadTest();
     final PsiElement originalElement = marks.get("<the_ref>");
-    PsiElement referenceElement = originalElement.getParent(); // ident -> expr
-    final PsiElement docOwner = ((PyReferenceExpression)referenceElement).getReference().resolve();
-    checkByHTML(myProvider.generateDoc(docOwner, originalElement));
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    checkByHTML(myProvider.generateDoc(target, originalElement));
   }
 
   private void checkHover() {
@@ -144,19 +127,27 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   }
 
   public void testInheritedMethod() {
-    Map<String, PsiElement> marks = loadTest();
-    assertEquals(2, marks.size());
-    PsiElement docElement = marks.get("<the_doc>").getParent(); // ident -> expr
-    assertTrue(docElement instanceof PyStringLiteralExpression);
-    String docText = ((PyStringLiteralExpression)docElement).getStringValue();
-    assertNotNull(docText);
+    checkHTMLOnly();
+  }
 
-    PsiElement ref_elt = marks.get("<the_ref>").getParent(); // ident -> expr
-    final PyDocStringOwner docOwner = (PyDocStringOwner)((PyReferenceExpression)ref_elt).getReference().resolve();
-    assertNotNull(docOwner);
-    assertNull(docOwner.getDocStringExpression()); // no direct doc!
+  public void testInheritedMethodOfInnerClass() {
+    checkHTMLOnly();
+  }
 
-    checkByHTML(myProvider.generateDoc(docOwner, null));
+  public void testClassDocstringForConstructor() {
+    checkHTMLOnly();
+  }
+
+  public void testInnerClassDocstringForConstructor() {
+    checkHTMLOnly();
+  }
+
+  public void testAncestorClassDocstringForConstructor() {
+    checkHTMLOnly();
+  }
+
+  public void testAncestorInnerClassDocstringForConstructor() {
+    checkHTMLOnly();
   }
 
   public void testPropNewGetter() {
@@ -203,7 +194,54 @@ public class PyQuickDocTest extends LightMarkedTestCase {
     checkHTMLOnly();
   }
 
+  public void testPropNewDocstringOfGetter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropOldDocParamOfPropertyCall() {
+    checkHTMLOnly();
+  }
+
+  public void testPropOldDocstringOfGetter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropNewUndefinedSetter() {
+    checkHTMLOnly();
+  }
+
+  public void testPropOldUndefinedSetter() {
+    checkHTMLOnly();
+  }
+
   public void testParam() {
+    checkHTMLOnly();
+  }
+
+  public void testParamOfInnerFunction() {
+    checkHTMLOnly();
+  }
+
+  public void testParamOfInnerClassMethod() {
+    checkHTMLOnly();
+  }
+
+  public void testParamOfFunctionInModuleWithIllegalName() {
+    doMultiFileCheckByHTML("illegal name.py");
+  }
+
+  public void doMultiFileCheckByHTML(@NotNull String activeFilePath) {
+    final Map<String, PsiElement> marks = configureByFile(getTestName(false) + "/" + activeFilePath);
+    final PsiElement originalElement = marks.get("<the_ref>");
+    final DocumentationManager manager = DocumentationManager.getInstance(myFixture.getProject());
+    final PsiElement target = manager.findTargetElement(myFixture.getEditor(),
+                                                        originalElement.getTextOffset(),
+                                                        myFixture.getFile(),
+                                                        originalElement);
+    checkByHTML(myProvider.generateDoc(target, originalElement));
+  }
+
+  public void testParamOfLambda() {
     checkHTMLOnly();
   }
 
@@ -243,7 +281,7 @@ public class PyQuickDocTest extends LightMarkedTestCase {
 
   // PY-13422
   public void testNumPyOnesDoc() {
-    myFixture.copyDirectoryToProject("/quickdoc/" + getTestName(false), "");
+    myFixture.copyDirectoryToProject(getTestName(false), "");
     checkHover();
   }
 
@@ -267,7 +305,12 @@ public class PyQuickDocTest extends LightMarkedTestCase {
   public void testTypeVars() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
   }
-  
+
+  // PY-28808
+  public void testEmptyTupleType() {
+    checkHTMLOnly();
+  }
+
   // PY-22730
   public void testOptionalAndUnionTypesContainingTypeVars() {
     runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
@@ -375,5 +418,146 @@ public class PyQuickDocTest extends LightMarkedTestCase {
         checkByHTML(myProvider.generateDoc(originalElement.getParent(), originalElement));
       }
     );
+  }
+
+  public void testPlainTextDocstringsQuotesPlacementDoesntAffectFormatting() {
+    runWithDocStringFormat(DocStringFormat.PLAIN, () -> {
+      final Map<String, PsiElement> map = loadTest();
+      final PsiElement inline = map.get("<ref1>");
+      final String inlineDoc = myProvider.generateDoc(assertInstanceOf(inline.getParent(), PyFunction.class), inline);
+
+      final PsiElement framed = map.get("<ref2>");
+      final String framedDoc = myProvider.generateDoc(assertInstanceOf(framed.getParent(), PyFunction.class), framed);
+
+      assertEquals(inlineDoc, framedDoc);
+      checkByHTML(inlineDoc);
+    });
+  }
+
+  // PY-14785
+  public void testMultilineAssignedValueForTarget() {
+    checkHTMLOnly();
+  }
+
+  // PY-14785
+  public void testUnmatchedAssignedValueForTarget() {
+    checkHTMLOnly();
+  }
+
+  // PY-14785
+  public void testSingleLineAssignedValueForTarget() {
+    checkHTMLOnly();
+  }
+
+  // PY-29339
+  public void testAsyncFunctionTooltip() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHover);
+  }
+
+  // PY-29339
+  public void testAsyncFunctionQuickDoc() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-30103
+  public void testFunctionWrapping() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-30103
+  public void testSingleArgumentMethodNotWrapped() {
+    checkHTMLOnly();
+  }
+
+  // PY-30103
+  public void testReturnTypeWrappedBecauseOfParameters() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  // PY-30103
+  public void testReturnTypeWrappedBecauseOfFunctionName() {
+    runWithLanguageLevel(LanguageLevel.PYTHON35, this::checkHTMLOnly);
+  }
+
+  public void testParamDescriptionOrder() {
+    checkHTMLOnly();
+  }
+
+  public void testParamDescriptionEmptyTags() {
+    checkHTMLOnly();
+  }
+
+  public void testParamDescriptionOnlyTypeTags() {
+    checkHTMLOnly();
+  }
+
+  public void testParamDescriptionInheritedMismatched() {
+    checkHTMLOnly();
+  }
+
+  public void testParamDescriptionEpytext() {
+    checkHTMLOnly();
+  }
+
+  public void testParamAndReturnValueDescriptionNoTagsEpytext() {
+    checkHTMLOnly();
+  }
+
+  public void testExceptionDescriptionRest() {
+    checkHTMLOnly();
+  }
+
+  public void testExceptionDescriptionGoogle() {
+    checkHTMLOnly();
+  }
+
+  public void testKeywordArgsDescriptionRest() {
+    checkHTMLOnly();
+  }
+
+  // PY-11425
+  public void testKeywordArgsDescriptionEpydoc() {
+    checkHTMLOnly();
+  }
+
+  public void testKeywordArgsDescriptionGoogle() {
+    checkHTMLOnly();
+  }
+
+  public void testKeywordArgsDescriptionForMissingParameter() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
+  }
+
+  public void testArgsKwargsTypes() {
+    checkHTMLOnly();
+  }
+
+  public void testExplicitlyAnnotatedSelfParamType() {
+    runWithLanguageLevel(LanguageLevel.PYTHON36, this::checkHTMLOnly);
+  }
+
+  public void testExplicitlyAnnotatedClsParamType() {
+    checkHTMLOnly();
+  }
+
+  public void testDocOnOverloadDefinition() {
+    checkHTMLOnly();
+  }
+
+  public void testPackage() {
+    myFixture.copyDirectoryToProject(getTestName(false), "");
+    final VirtualFile file = myFixture.findFileInTempDir("pkg/__init__.py");
+    final PyFile init = as(PsiManager.getInstance(myFixture.getProject()).findFile(file), PyFile.class);
+    checkByHTML(myProvider.generateDoc(init, init));
+  }
+
+  // PY-30432
+  public void testNoExternalDocumentationSection() {
+    doMultiFileCheckByHTML("numpy.py");
+  }
+
+  @Override
+  protected String getTestDataPath() {
+    return super.getTestDataPath() + "/quickdoc/";
   }
 }

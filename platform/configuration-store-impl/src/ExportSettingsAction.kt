@@ -39,11 +39,19 @@ import java.util.*
 import java.util.zip.ZipEntry
 import java.util.zip.ZipOutputStream
 
-private class ExportSettingsAction : AnAction(), DumbAware {
-  override fun actionPerformed(e: AnActionEvent?) {
+// for Rider purpose
+open class ExportSettingsAction : AnAction(), DumbAware {
+  protected open fun getExportableComponents(): Map<Path, List<ExportableItem>> = getExportableComponentsMap(true, true)
+
+  protected open fun exportSettings(saveFile: Path, markedComponents: Set<ExportableItem>) {
+    val exportFiles = markedComponents.mapTo(THashSet()) { it.file }
+    exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
+  }
+
+  override fun actionPerformed(e: AnActionEvent) {
     ApplicationManager.getApplication().saveSettings()
 
-    val dialog = ChooseComponentsToExportDialog(getExportableComponentsMap(true, true), true,
+    val dialog = ChooseComponentsToExportDialog(getExportableComponents(), true,
                                                 IdeBundle.message("title.select.components.to.export"),
                                                 IdeBundle.message("prompt.please.check.all.components.to.export"))
     if (!dialog.showAndGet()) {
@@ -55,8 +63,6 @@ private class ExportSettingsAction : AnAction(), DumbAware {
       return
     }
 
-    val exportFiles = markedComponents.mapTo(THashSet()) { it.file }
-
     val saveFile = dialog.exportFile
     try {
       if (saveFile.exists() && Messages.showOkCancelDialog(
@@ -65,7 +71,7 @@ private class ExportSettingsAction : AnAction(), DumbAware {
         return
       }
 
-      exportSettings(exportFiles, saveFile.outputStream(), FileUtilRt.toSystemIndependentName(PathManager.getConfigPath()))
+      exportSettings(saveFile, markedComponents)
       ShowFilePathAction.showDialog(getEventProject(e), IdeBundle.message("message.settings.exported.successfully"),
                                     IdeBundle.message("title.export.successful"), saveFile.toFile(), null)
     }
@@ -75,7 +81,6 @@ private class ExportSettingsAction : AnAction(), DumbAware {
   }
 }
 
-// not internal only to test
 fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String) {
   ZipOutputStream(out).use {
     val writtenItemRelativePaths = THashSet<String>()
@@ -95,7 +100,7 @@ fun exportSettings(exportFiles: Set<Path>, out: OutputStream, configPath: String
 
 data class ExportableItem(val file: Path, val presentableName: String, val roamingType: RoamingType = RoamingType.DEFAULT)
 
-private fun exportInstalledPlugins(zipOut: ZipOutputStream) {
+fun exportInstalledPlugins(zipOut: ZipOutputStream) {
   val plugins = PluginManagerCore.getPlugins().filter { !it.isBundled && it.isEnabled }.map { it.pluginId.idString }
   if (!plugins.isEmpty()) {
     zipOut.putNextEntry(ZipEntry(PluginManager.INSTALLED_TXT))
@@ -181,7 +186,7 @@ fun getExportableComponentsMap(onlyExisting: Boolean,
     if (isFileIncluded || additionalExportFile != null) {
       if (computePresentableNames && onlyExisting && additionalExportFile == null && file.fileName.toString().endsWith(".xml")) {
         val content = fileToContent.getOrPut(file) { file.readText() }
-        if (!content.contains("""<component name="${stateAnnotation.name}">""")) {
+        if (!content.contains("""<component name="${stateAnnotation.name}"""")) {
           return@processAllImplementationClasses true
         }
       }
@@ -236,7 +241,7 @@ private fun getComponentPresentableName(state: State, aClass: Class<*>, pluginDe
       if (pluginDescriptor.vendor == "JetBrains") {
         resourceBundleName = OptionsBundle.PATH_TO_BUNDLE
       }
-       else {
+      else {
         return trimDefaultName()
       }
     }

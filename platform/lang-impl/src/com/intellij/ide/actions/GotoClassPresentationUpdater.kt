@@ -14,26 +14,31 @@ class GotoClassPresentationUpdater : PreloadingActivity() {
   override fun preload(indicator: ProgressIndicator) {
     //we need to change the template presentation to show the proper text for the action in Settings | Keymap
     val presentation = ActionManager.getInstance().getAction("GotoClass").templatePresentation
-    presentation.text = StringUtil.capitalize(getMainElementKind()) + "..."
+    presentation.text = getActionTitle() + "..."
     presentation.description = IdeBundle.message("go.to.class.action.description", getElementKinds().joinToString("/"))
   }
 
   companion object {
     @JvmStatic
-    fun getMainElementKind(): String {
-      val mainIdeLanguage = IdeLanguageCustomization.getInstance().mainIdeLanguage
+    fun getActionTitle(): String {
+      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       val mainContributor = ChooseByNameRegistry.getInstance().classModelContributors
                               .filterIsInstance(GotoClassContributor::class.java)
-                              .firstOrNull { mainIdeLanguage != null && mainIdeLanguage.`is`(it.elementLanguage) }
-      return mainContributor?.elementKind ?: IdeBundle.message("go.to.class.kind.text")
+                              .firstOrNull { it.elementLanguage in primaryIdeLanguages }
+      val text = mainContributor?.elementKind ?: IdeBundle.message("go.to.class.kind.text")
+      return StringUtil.capitalizeWords(text, " /", true, true)
     }
 
-    private fun getElementKinds(): LinkedHashSet<String> {
-      val mainIdeLanguage = IdeLanguageCustomization.getInstance().mainIdeLanguage
+    @JvmStatic
+    fun getElementKinds(): Set<String> {
+      val primaryIdeLanguages = IdeLanguageCustomization.getInstance().primaryIdeLanguages
       return ChooseByNameRegistry.getInstance().classModelContributors
         .filterIsInstance(GotoClassContributor::class.java)
-        .sortedBy { if (mainIdeLanguage != null && mainIdeLanguage.`is`(it.elementLanguage)) 0 else 1 }
-        .mapTo(LinkedHashSet()) { it.elementKind }
+        .sortedBy { 
+          val index = primaryIdeLanguages.indexOf(it.elementLanguage)
+          if (index == -1) primaryIdeLanguages.size else index
+        }
+        .flatMapTo(LinkedHashSet()) { it.elementKind.split("/") }
     }
   }
 }

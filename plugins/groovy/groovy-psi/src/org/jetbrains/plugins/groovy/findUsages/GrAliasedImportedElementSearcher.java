@@ -23,7 +23,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
   }
 
   @Override
-  public void processQuery(@NotNull ReferencesSearch.SearchParameters parameters, @NotNull Processor<PsiReference> consumer) {
+  public void processQuery(@NotNull ReferencesSearch.SearchParameters parameters, @NotNull Processor<? super PsiReference> consumer) {
     final PsiElement target = parameters.getElementToSearch();
     if (!(target instanceof PsiMember) || !(target instanceof PsiNamedElement)) return;
 
@@ -64,7 +64,7 @@ public class GrAliasedImportedElementSearcher extends QueryExecutorBase<PsiRefer
     }
 
     @Override
-    public boolean processTextOccurrence(@NotNull final PsiElement element, int offsetInElement, @NotNull Processor<PsiReference> consumer) {
+    public boolean processTextOccurrence(@NotNull final PsiElement element, int offsetInElement, @NotNull Processor<? super PsiReference> consumer) {
       String alias = getAlias(element);
       if (alias == null) return true;
 

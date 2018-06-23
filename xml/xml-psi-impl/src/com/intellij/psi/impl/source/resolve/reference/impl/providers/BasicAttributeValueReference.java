@@ -49,10 +49,12 @@ public abstract class BasicAttributeValueReference implements PsiReference {
     myRange = range;
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return myRange;
   }

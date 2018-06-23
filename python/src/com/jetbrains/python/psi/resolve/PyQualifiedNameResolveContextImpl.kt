@@ -16,9 +16,11 @@
 package com.jetbrains.python.psi.resolve
 
 import com.intellij.openapi.module.Module
+import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.psi.PsiManager
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.console.PydevConsoleRunner
@@ -32,52 +34,52 @@ data class PyQualifiedNameResolveContextImpl(private val psiManager: PsiManager,
                                              private val withMembers : Boolean = false,
                                              private val withPlainDirectories : Boolean = false,
                                              private val withoutStubs: Boolean = false) : PyQualifiedNameResolveContext {
-  override fun getFoothold() = foothold
+  override fun getFoothold(): PsiElement? = foothold
 
-  override fun getRelativeLevel() = relativeLevel
+  override fun getRelativeLevel(): Int = relativeLevel
 
-  override fun getSdk() = sdk
+  override fun getSdk(): Sdk? = sdk
 
-  override fun getModule() = module
+  override fun getModule(): Module? = module
 
-  override fun getProject() = psiManager.project
+  override fun getProject(): Project = psiManager.project
 
-  override fun getWithoutRoots() = withoutRoots
+  override fun getWithoutRoots(): Boolean = withoutRoots
 
-  override fun getWithoutForeign() = withoutForeign
+  override fun getWithoutForeign(): Boolean = withoutForeign
 
-  override fun getPsiManager() = psiManager
+  override fun getPsiManager(): PsiManager = psiManager
 
-  override fun getWithMembers() = withMembers
+  override fun getWithMembers(): Boolean = withMembers
 
-  override fun getWithPlainDirectories() = withPlainDirectories
+  override fun getWithPlainDirectories(): Boolean = withPlainDirectories
 
-  override fun getWithoutStubs() = withoutStubs
+  override fun getWithoutStubs(): Boolean = withoutStubs
 
-  override fun getEffectiveSdk() = if (visitAllModules) PydevConsoleRunner.getConsoleSdk(foothold) else sdk
+  override fun getEffectiveSdk(): Sdk? = if (visitAllModules) PydevConsoleRunner.getConsoleSdk(foothold) else sdk
 
-  override fun isValid() = footholdFile?.isValid ?: true
+  override fun isValid(): Boolean = footholdFile?.isValid ?: true
 
-  override fun copyWithoutForeign() = copy(withoutForeign = true)
+  override fun copyWithoutForeign(): PyQualifiedNameResolveContextImpl = copy(withoutForeign = true)
 
-  override fun copyWithMembers() = copy(withMembers = true)
+  override fun copyWithMembers(): PyQualifiedNameResolveContextImpl = copy(withMembers = true)
 
-  override fun copyWithPlainDirectories() = copy(withPlainDirectories = true)
+  override fun copyWithPlainDirectories(): PyQualifiedNameResolveContextImpl = copy(withPlainDirectories = true)
 
-  override fun copyWithRelative(relativeLevel : Int) = copy(relativeLevel = relativeLevel)
+  override fun copyWithRelative(relativeLevel : Int): PyQualifiedNameResolveContextImpl = copy(relativeLevel = relativeLevel)
 
-  override fun copyWithoutRoots() = copy(withoutRoots = true)
+  override fun copyWithoutRoots(): PyQualifiedNameResolveContextImpl = copy(withoutRoots = true)
 
-  override fun copyWithRoots() = copy(withoutRoots = false)
+  override fun copyWithRoots(): PyQualifiedNameResolveContextImpl = copy(withoutRoots = false)
 
-  override fun copyWithoutStubs() = copy(withoutStubs = true)
+  override fun copyWithoutStubs(): PyQualifiedNameResolveContextImpl = copy(withoutStubs = true)
 
   override fun getContainingDirectory(): PsiDirectory? {
     val file = footholdFile ?: return null
     return if (relativeLevel > 0) ResolveImportUtil.stepBackFrom(file, relativeLevel) else file.containingDirectory
   }
 
-  override fun getFootholdFile() = when (foothold) {
+  override fun getFootholdFile(): PsiFile? = when (foothold) {
     is PsiDirectory -> foothold.findFile(PyNames.INIT_DOT_PY)
     else -> foothold?.containingFile?.originalFile
   }

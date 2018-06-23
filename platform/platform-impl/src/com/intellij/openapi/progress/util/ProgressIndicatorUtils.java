@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.Disposable;
@@ -22,6 +8,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -44,8 +31,7 @@ import java.util.concurrent.Executor;
  * @author gregsh
  */
 public class ProgressIndicatorUtils {
-  private ProgressIndicatorUtils() {
-  }
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.util.ProgressIndicatorUtils");
 
   @NotNull
   public static ProgressIndicator forceWriteActionPriority(@NotNull ProgressIndicator progress, @NotNull Disposable parentDisposable) {
@@ -106,48 +92,52 @@ public class ProgressIndicatorUtils {
   }
 
   public static boolean runWithWriteActionPriority(@NotNull Runnable action, @NotNull ProgressIndicator progressIndicator) {
-    final ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
+    ApplicationEx application = (ApplicationEx)ApplicationManager.getApplication();
     if (application.isDispatchThread()) {
       throw new IllegalStateException("Must not call from EDT");
     }
-    if (application.isWriteActionPending()) {
-      // first catch: check if write action acquisition started: especially important when current thread has read action, because
-      // tryRunReadAction below would just run without really checking if a write action is pending
-      if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+    if (isWriting(application)) {
+      cancelProcess(progressIndicator);
       return false;
     }
 
-    final ApplicationAdapter listener = new ApplicationAdapter() {
+    ApplicationAdapter listener = new ApplicationAdapter() {
       @Override
       public void beforeWriteActionStart(@NotNull Object action) {
-        if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+        cancelProcess(progressIndicator);
       }
     };
 
-    boolean succeededWithAddingListener = application.tryRunReadAction(() -> {
-      // Even if writeLock.lock() acquisition is in progress at this point then runProcess will block wanting read action which is
-      // also ok as last resort.
+    Ref<Boolean> wasCancelled = new Ref<>();
+    ProgressManager.getInstance().runProcess(() -> {
+      // add listener inside runProcess to avoid cancelling indicator before even starting the progress
       application.addApplicationListener(listener);
-    });
-    if (!succeededWithAddingListener) { // second catch: writeLock.lock() acquisition is in progress or already acquired
-      if (!progressIndicator.isCanceled()) progressIndicator.cancel();
-      return false;
-    }
-    final Ref<Boolean> wasCancelled = new Ref<>();
-    try {
-      ProgressManager.getInstance().runProcess(() -> {
-        try {
-          action.run();
-        }
-        catch (ProcessCanceledException ignore) {
+      try {
+        if (isWriting(application)) {
+          // the listener might not be notified if write action was requested concurrently with listener addition
+          cancelProcess(progressIndicator);
           wasCancelled.set(Boolean.TRUE);
+          return;
         }
-      }, progressIndicator);
-    }
-    finally {
-      application.removeApplicationListener(listener);
-    }
+
+        action.run();
+      }
+      catch (ProcessCanceledException ignore) {
+        wasCancelled.set(Boolean.TRUE);
+      }
+      finally {
+        application.removeApplicationListener(listener);
+      }
+    }, progressIndicator);
     return wasCancelled.get() != Boolean.TRUE;
+  }
+
+  private static void cancelProcess(ProgressIndicator progressIndicator) {
+    if (!progressIndicator.isCanceled()) progressIndicator.cancel();
+  }
+
+  private static boolean isWriting(ApplicationEx application) {
+    return application.isWriteActionPending() || application.isWriteActionInProgress();
   }
 
   @NotNull
@@ -247,6 +237,13 @@ public class ProgressIndicatorUtils {
    * by background thread read action (until its first checkCanceled call). Shouldn't be called from under read action.
    */
   public static void yieldToPendingWriteActions() {
-    ApplicationManager.getApplication().invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
+    Application application = ApplicationManager.getApplication();
+    if (application.isReadAccessAllowed()) {
+      throw new IllegalStateException("Mustn't be called from within read action");
+    }
+    if (application.isDispatchThread()) {
+      throw new IllegalStateException("Mustn't be called from EDT");
+    }
+    application.invokeAndWait(EmptyRunnable.INSTANCE, ModalityState.any());
   }
 }

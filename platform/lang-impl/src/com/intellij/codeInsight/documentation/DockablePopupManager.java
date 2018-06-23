@@ -51,6 +51,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   protected abstract T createComponent();
   protected abstract void doUpdateComponent(PsiElement element, PsiElement originalElement, T component);
+  protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) { doUpdateComponent(editor, psiFile); }
   protected abstract void doUpdateComponent(Editor editor, PsiFile psiFile);
   protected abstract void doUpdateComponent(@NotNull PsiElement element);
 
@@ -150,7 +151,7 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
 
   @NotNull
   protected AnAction createRestorePopupAction() {
-    return new AnAction("Open as Popup", getRestorePopupDescription(), AllIcons.General.AutohideOffPressed) {
+    return new AnAction("Open as Popup", getRestorePopupDescription(), AllIcons.General.Pin_tab) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         restorePopupBehavior();
@@ -175,17 +176,21 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
   }
 
   public void updateComponent() {
+    updateComponent(false);
+  }
+
+  public void updateComponent(boolean requestFocus) {
     if (myProject.isDisposed()) return;
 
     DataManager.getInstance()
                .getDataContextFromFocusAsync()
                .onSuccess(dataContext -> {
                  if (!myProject.isOpen()) return;
-                 updateComponentInner(dataContext);
+                 updateComponentInner(dataContext, requestFocus);
                });
   }
 
-  private void updateComponentInner(@NotNull DataContext dataContext) {
+  private void updateComponentInner(@NotNull DataContext dataContext, boolean requestFocus) {
     if (CommonDataKeys.PROJECT.getData(dataContext) != myProject) {
       return;
     }
@@ -206,10 +211,10 @@ public abstract class DockablePopupManager<T extends JComponent & Disposable> {
       Editor injectedEditor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, file);
       PsiFile injectedFile = injectedEditor != null ? PsiUtilBase.getPsiFileInEditor(injectedEditor, myProject) : null;
       if (injectedFile != null) {
-        doUpdateComponent(injectedEditor, injectedFile);
+        doUpdateComponent(injectedEditor, injectedFile, requestFocus);
       }
       else if (file != null) {
-        doUpdateComponent(editor, file);
+        doUpdateComponent(editor, file, requestFocus);
       }
     });
   }

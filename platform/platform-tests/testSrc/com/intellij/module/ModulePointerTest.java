@@ -106,6 +106,15 @@ public class ModulePointerTest extends PlatformTestCase {
     assertSame(module, pointer.getModule());
   }
 
+  public void testUpdateRenamingSchemeOnModuleRename() throws ModuleWithNameAlreadyExists {
+    ((ModulePointerManagerImpl)getPointerManager()).setRenamingScheme(Maps.newHashMap("oldName", "newName"));
+    Module module = addModule("newName");
+    renameModule(module, "updatedNewName");
+    ModulePointer pointer = getPointerManager().create("oldName");
+    assertEquals("updatedNewName", pointer.getModuleName());
+    assertSame(module, pointer.getModule());
+  }
+
   public void testUpdateUnresolvedPointerWhenRenamingSchemeIsApplied() {
     Module module = addModule("oldName");
     ModulePointer pointer = getPointerManager().create(module);

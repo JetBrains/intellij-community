@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.extensions.impl;
 
 import com.intellij.openapi.Disposable;
@@ -137,13 +123,13 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
 
   private void registerExtension(@NotNull T extension, @NotNull ExtensionComponentAdapter adapter, int index, boolean runNotifications) {
     if (getExtensionIndex(extension) != -1) {
-      myOwner.error("Extension was already added: " + extension);
+      LOG.error("Extension was already added: " + extension);
       return;
     }
 
     Class<T> extensionClass = getExtensionClass();
     if (!extensionClass.isInstance(extension)) {
-      myOwner.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
+      LOG.error("Extension " + extension.getClass() + " does not implement " + extensionClass);
       return;
     }
     if (myLoadedAdapters == Collections.<ExtensionComponentAdapter>emptyList()) myLoadedAdapters = new ArrayList<>();
@@ -158,7 +144,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
             ((Extension)extension).extensionAdded(this);
           }
           catch (Throwable e) {
-            myOwner.error(e);
+            LOG.error(e);
           }
         }
 
@@ -174,7 +160,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         listener.extensionAdded(extension, pluginDescriptor);
       }
       catch (Throwable e) {
-        myOwner.error(e);
+        LOG.error(e);
       }
     }
   }
@@ -253,7 +239,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           }
           if (!extensionClass.isInstance(extension)) {
             errorHappened = true;
-            myOwner.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
+            LOG.error("Extension " + (extension == null ? null : extension.getClass()) + " does not implement " + extensionClass + ". It came from " + adapter);
             continue;
           }
           result[i] = extension;
@@ -264,10 +250,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         }
         catch (Exception e) {
           errorHappened = true;
-          if (!"org.jetbrains.uast.kotlin.KotlinUastLanguagePlugin".equals(adapter.getAssignableToClassName()) &&
-              !"org.jetbrains.uast.java.JavaUastLanguagePlugin".equals(adapter.getAssignableToClassName())) {
-            LOG.error(e);
-          }
+          LOG.error(e);
         }
         myExtensionAdapters.remove(adapter);
       }
@@ -323,6 +306,17 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     unregisterExtension(extension, null);
   }
 
+  @Override
+  public void unregisterExtension(@NotNull Class<? extends T> extensionClass) {
+    for (ExtensionComponentAdapter adapter : ContainerUtil.concat(myExtensionAdapters, myLoadedAdapters)) {
+      if (adapter.getAssignableToClassName().equals(extensionClass.getCanonicalName())) {
+        unregisterExtensionAdapter(adapter);
+        return;
+      }
+    }
+    throw new IllegalArgumentException("Extension to be removed not found: " + extensionClass);
+  }
+
   private int getExtensionIndex(@NotNull T extension) {
     for (int i = 0; i < myLoadedAdapters.size(); i++) {
       ExtensionComponentAdapter adapter = myLoadedAdapters.get(i);
@@ -347,7 +341,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         ((Extension)extension).extensionRemoved(this);
       }
       catch (Throwable e) {
-        myOwner.error(e);
+        LOG.error(e);
       }
     }
   }
@@ -358,7 +352,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
         listener.extensionRemoved(extensionObject, pluginDescriptor);
       }
       catch (Throwable e) {
-        myOwner.error(e);
+        LOG.error(e);
       }
     }
   }
@@ -405,7 +399,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           listener.extensionAdded(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
-          myOwner.error(e);
+          LOG.error(e);
         }
       }
     }
@@ -425,7 +419,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
           listener.extensionRemoved(extension, componentAdapter.getPluginDescriptor());
         }
         catch (Throwable e) {
-          myOwner.error(e);
+          LOG.error(e);
         }
       }
     }

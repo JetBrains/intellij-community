@@ -17,6 +17,7 @@ package com.intellij.openapi.actionSystem;
 
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -28,6 +29,7 @@ import java.util.Set;
 public abstract class ActionPlaces {
   public static final String UNKNOWN = "unknown";
   public static final String TOOLBAR = "toolbar";
+  public static final String POPUP = "popup";
 
   /**
    * consider to use {@link #isMainMenuOrActionSearch(String)} instead
@@ -133,6 +135,8 @@ public abstract class ActionPlaces {
 
   public static final String RUN_DASHBOARD_POPUP = "RunDashboardPopup";
 
+  public static final String TOUCHBAR_GENERAL = "TouchBarGeneral";
+
   private static final Set<String> ourToolbarPlaces = ContainerUtil.newHashSet(
     EDITOR_TOOLBAR, PROJECT_VIEW_TOOLBAR, TESTTREE_VIEW_TOOLBAR, MAIN_TOOLBAR, TOOLBAR, RUNNER_TOOLBAR,
     ANT_EXPLORER_TOOLBAR, ANT_MESSAGES_TOOLBAR, COMPILER_MESSAGES_TOOLBAR, TODO_VIEW_TOOLBAR, STRUCTURE_VIEW_TOOLBAR, USAGE_VIEW_TOOLBAR,
@@ -145,6 +149,7 @@ public abstract class ActionPlaces {
   /**
    * @deprecated use {@link AnActionEvent#isFromActionToolbar()}
    */
+  @Deprecated
   public static boolean isToolbarPlace(@NotNull String place) {
     return ourToolbarPlaces.contains(place);
   }
@@ -154,7 +159,7 @@ public abstract class ActionPlaces {
   }
 
   private static final Set<String> ourPopupPlaces = ContainerUtil.newHashSet(
-    EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
+    POPUP, EDITOR_POPUP, EDITOR_TAB_POPUP, COMMANDER_POPUP,
     PROJECT_VIEW_POPUP, FAVORITES_VIEW_POPUP, SCOPE_VIEW_POPUP, TESTTREE_VIEW_POPUP, TESTSTATISTICS_VIEW_POPUP, TYPE_HIERARCHY_VIEW_POPUP,
     METHOD_HIERARCHY_VIEW_POPUP, CALL_HIERARCHY_VIEW_POPUP, J2EE_ATTRIBUTES_VIEW_POPUP, J2EE_VIEW_POPUP, USAGE_VIEW_POPUP,
     STRUCTURE_VIEW_POPUP, TODO_VIEW_POPUP, COMPILER_MESSAGES_POPUP, ANT_MESSAGES_POPUP, ANT_EXPLORER_POPUP, UPDATE_POPUP,
@@ -165,7 +170,14 @@ public abstract class ActionPlaces {
     V8_CPU_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, V8_HEAP_PROFILING_POPUP, RUN_DASHBOARD_POPUP
   );
 
+  private static final String POPUP_PREFIX = "popup@";
+
   public static boolean isPopupPlace(@NotNull String place) {
-    return ourPopupPlaces.contains(place);
+    return ourPopupPlaces.contains(place) || place.startsWith(POPUP_PREFIX);
+  }
+
+  @NotNull
+  public static String getActionGroupPopupPlace(@Nullable String actionId) {
+    return actionId == null ? POPUP : POPUP_PREFIX + actionId;
   }
 }

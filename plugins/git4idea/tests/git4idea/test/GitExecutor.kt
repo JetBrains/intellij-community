@@ -45,7 +45,7 @@ fun git(project: Project, command: String, ignoreNonZeroExitCode: Boolean = fals
 
   val result = Git.getInstance().runCommand(handler)
   if (result.exitCode != 0 && !ignoreNonZeroExitCode) {
-    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}")
+    throw IllegalStateException("Command [$command] failed with exit code ${result.exitCode}\n${result.output}\n${result.errorOutput}")
   }
   return result.errorOutputAsJoinedString + result.outputAsJoinedString
 }
@@ -122,6 +122,10 @@ private fun last(project: Project) = git(project, "log -1 --pretty=%H")
 fun GitRepository.lastMessage() = cd { lastMessage(project) }
 fun GitPlatformTest.lastMessage() = lastMessage(project)
 private fun lastMessage(project: Project) = message(project, "HEAD")
+
+fun GitRepository.lastAuthorTime() = cd { lastAuthorTime(project) }
+fun GitPlatformTest.lastAuthorTime() = lastAuthorTime(project)
+private fun lastAuthorTime(project: Project) = git(project, "log -1 --pretty=%at")
 
 fun GitRepository.message(revision: String) = cd { message(project, revision)}
 private fun message(project: Project, revision: String) =

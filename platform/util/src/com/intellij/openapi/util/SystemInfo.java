@@ -3,13 +3,14 @@ package com.intellij.openapi.util;
 
 import com.intellij.openapi.util.io.PathExecLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.lang.JavaVersion;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Locale;
 
 import static com.intellij.openapi.util.text.StringUtil.containsIgnoreCase;
+import static com.intellij.util.ObjectUtils.notNull;
 
 @SuppressWarnings({"HardCodedStringLiteral", "UtilityClassWithoutPrivateConstructor", "UnusedDeclaration"})
 public class SystemInfo extends SystemInfoRt {
@@ -22,7 +23,7 @@ public class SystemInfo extends SystemInfoRt {
   public static final String ARCH_DATA_MODEL = System.getProperty("sun.arch.data.model");
   public static final String SUN_DESKTOP = System.getProperty("sun.desktop", "");
 
-  private static String getRtVersion(String fallback) {
+  private static String getRtVersion(@SuppressWarnings("SameParameterValue") String fallback) {
     String rtVersion = System.getProperty("java.runtime.version");
     return Character.isDigit(rtVersion.charAt(0)) ? rtVersion : fallback;
   }
@@ -68,7 +69,9 @@ public class SystemInfo extends SystemInfoRt {
   public static final boolean isXWindow = isUnix && !isMac;
   public static final boolean isWayland = isXWindow && !StringUtil.isEmpty(System.getenv("WAYLAND_DISPLAY"));
   /* http://askubuntu.com/questions/72549/how-to-determine-which-window-manager-is-running/227669#227669 */
-  public static final boolean isGNOME = isXWindow && ObjectUtils.notNull(System.getenv("GDMSESSION"), "").startsWith("gnome");
+  public static final boolean isGNOME = isXWindow &&
+                                        (notNull(System.getenv("GDMSESSION"), "").startsWith("gnome") ||
+                                         notNull(System.getenv("XDG_CURRENT_DESKTOP"), "").toLowerCase(Locale.ENGLISH).endsWith("gnome"));
   /* https://userbase.kde.org/KDE_System_Administration/Environment_Variables#KDE_FULL_SESSION */
   public static final boolean isKDE = isXWindow && !StringUtil.isEmpty(System.getenv("KDE_FULL_SESSION"));
 
@@ -180,30 +183,16 @@ public class SystemInfo extends SystemInfoRt {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #isJavaVersionAtLeast(int, int, int)} (to be removed in IDEA 2020) */
+  @Deprecated
   public static boolean isJavaVersionAtLeast(String v) {
     return StringUtil.compareVersionNumbers(JAVA_RUNTIME_VERSION, v) >= 0;
   }
 
   /** @deprecated use {@link #isWinXpOrNewer} (to be removed in IDEA 2018) */
-  public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
+  @Deprecated public static final boolean isWindowsXP = isWindows && (OS_VERSION.equals("5.1") || OS_VERSION.equals("5.2"));
 
   /** @deprecated use {@link #is32Bit} or {@link #is64Bit} (to be removed in IDEA 2018) */
-  public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
+  @Deprecated public static final boolean isAMD64 = "amd64".equals(OS_ARCH);
 
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseName() {
-    return null;
-  }
-
-  /** @deprecated not for generic use (to be removed in IDEA 2018) */
-  public static String getUnixReleaseVersion() {
-    return null;
-  }
-
-  /** @deprecated outdated (to be removed in IDEA 2018) */
-  public static final boolean isOS2 = SystemInfoRt.isOS2;
-
-  /** @deprecated use {@link #isJetBrainsJvm} (to be removed in IDEA 2018)*/
-  public static final boolean isJetbrainsJvm = isJetBrainsJvm;
   //</editor-fold>
 }

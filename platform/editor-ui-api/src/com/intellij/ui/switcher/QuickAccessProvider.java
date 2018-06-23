@@ -21,6 +21,5 @@ import javax.swing.*;
 public interface QuickAccessProvider {
 
   JComponent getComponent();
-  boolean isCycleRoot();
 
 }

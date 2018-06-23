@@ -9,25 +9,26 @@ import com.intellij.ide.util.treeView.NodeDescriptor;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiDirectoryContainer;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.FileColorManager;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.tabs.FileColorManagerImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JTree;
+import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreeModel;
 import javax.swing.tree.TreePath;
-import java.awt.Color;
-import java.awt.Graphics2D;
+import java.awt.*;
+import java.util.ArrayDeque;
 
 /**
  * @author Konstantin Bulenkov
@@ -72,13 +73,10 @@ public class ProjectViewTree extends DnDAwareTree {
     int count = super.getToggleClickCount();
     TreePath path = getSelectionPath();
     if (path != null) {
-      Object object = TreeUtil.getUserObject(path.getLastPathComponent());
-      if (object instanceof NodeDescriptor) {
-        NodeDescriptor descriptor = (NodeDescriptor)object;
-        if (!descriptor.expandOnDoubleClick()) {
-          LOG.info("getToggleClickCount: -1 for " + descriptor.getClass().getName());
-          return -1;
-        }
+      NodeDescriptor descriptor = TreeUtil.getUserObject(NodeDescriptor.class, path.getLastPathComponent());
+      if (descriptor != null && !descriptor.expandOnDoubleClick()) {
+        LOG.info("getToggleClickCount: -1 for " + descriptor.getClass().getName());
+        return -1;
       }
     }
     return count;
@@ -127,11 +125,8 @@ public class ProjectViewTree extends DnDAwareTree {
       if (file != null) {
         Project project = node.getProject();
         if (project != null && !project.isDisposed()) {
-          FileColorManager manager = FileColorManager.getInstance(project);
-          if (manager != null) {
-            Color color = manager.getFileColor(file);
-            if (color != null) return ColorUtil.softer(color);
-          }
+          Color color = VfsPresentationUtil.getFileBackgroundColor(project, file);
+          if (color != null) return ColorUtil.softer(color);
         }
       }
     }
@@ -148,15 +143,15 @@ public class ProjectViewTree extends DnDAwareTree {
       final VirtualFile file = PsiUtilCore.getVirtualFile(psi);
 
       if (file != null) {
-        color = FileColorManager.getInstance(project).getFileColor(file);
+        color = VfsPresentationUtil.getFileBackgroundColor(project, file);
       }
       else if (psi instanceof PsiDirectory) {
-        color = FileColorManager.getInstance(project).getFileColor(((PsiDirectory)psi).getVirtualFile());
+        color = VfsPresentationUtil.getFileBackgroundColor(project, ((PsiDirectory)psi).getVirtualFile());
       }
       else if (psi instanceof PsiDirectoryContainer) {
         final PsiDirectory[] dirs = ((PsiDirectoryContainer)psi).getDirectories();
         for (PsiDirectory dir : dirs) {
-          Color c = FileColorManager.getInstance(project).getFileColor(dir.getVirtualFile());
+          Color c = VfsPresentationUtil.getFileBackgroundColor(project, dir.getVirtualFile());
           if (c != null && color == null) {
             color = c;
           }
@@ -168,5 +163,23 @@ public class ProjectViewTree extends DnDAwareTree {
       }
     }
     return color == null ? null : ColorUtil.softer(color);
+  }
+
+  @Override
+  public void collapsePath(TreePath path) {
+    int row = Registry.is("async.project.view.collapse.tree.path.recursively") ? getRowForPath(path) : -1;
+    if (row < 0) {
+      super.collapsePath(path);
+    }
+    else {
+      ArrayDeque<TreePath> deque = new ArrayDeque<>();
+      deque.addFirst(path);
+      while (++row < getRowCount()) {
+        TreePath next = getPathForRow(row);
+        if (!path.isDescendant(next)) break;
+        if (isExpanded(next)) deque.addFirst(next);
+      }
+      deque.forEach(super::collapsePath);
+    }
   }
 }

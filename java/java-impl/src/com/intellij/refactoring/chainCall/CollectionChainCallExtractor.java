@@ -21,9 +21,6 @@ import com.intellij.psi.util.InheritanceUtil;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class CollectionChainCallExtractor implements ChainCallExtractor {
   @Override
   public boolean canExtractChainCall(@NotNull PsiMethodCallExpression call, PsiExpression expression, PsiType expressionType) {

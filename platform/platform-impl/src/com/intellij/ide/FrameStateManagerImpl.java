@@ -53,6 +53,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
     app.getMessageBus().connect().subscribe(ApplicationActivationListener.TOPIC, new ApplicationActivationListener() {
       @Override
       public void applicationActivated(IdeFrame ideFrame) {
+        System.setProperty("com.jetbrains.suppressWindowRaise", "false");
         myActive.onReady();
         mySyncAlarm.cancelAllRequests();
         if (myShouldSynchronize) {
@@ -63,6 +64,7 @@ public class FrameStateManagerImpl extends FrameStateManager {
 
       @Override
       public void applicationDeactivated(IdeFrame ideFrame) {
+        System.setProperty("com.jetbrains.suppressWindowRaise", "true");
         mySyncAlarm.cancelAllRequests();
         mySyncAlarm.addRequest(() -> {
           if (!app.isActive() && !app.isDisposed()) {

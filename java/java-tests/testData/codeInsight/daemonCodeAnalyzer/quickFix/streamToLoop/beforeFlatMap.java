@@ -73,11 +73,11 @@ public class Main {
   }
 
   public static IntSummaryStatistics testNestedSkip(int... values) {
-    return Arrays.stream(values).skip(1).filter(x -> x > 0).flatMap(v -> IntStream.range(0, 100).skip(v)).summaryStatistics();
+    return Arrays.stream(values).skip(2).filter(x -> x > 0).flatMap(v -> IntStream.range(0, 100).skip(v)).summaryStatistics();
   }
 
   public static IntSummaryStatistics testNestedSkip2(int... values) {
-    return Arrays.stream(values).filter(x -> x > 0).flatMap(v -> IntStream.range(0, 100).skip(v)).skip(1).summaryStatistics();
+    return Arrays.stream(values).filter(x -> x > 0).flatMap(v -> IntStream.range(0, 100).skip(v)).skip(2).summaryStatistics();
   }
 
   public String testSorted(List<List<String>> list) {

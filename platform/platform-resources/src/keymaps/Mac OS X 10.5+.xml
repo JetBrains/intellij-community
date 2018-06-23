@@ -266,6 +266,12 @@
   <action id="CallHierarchy">
     <keyboard-shortcut first-keystroke="control alt H"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="meta shift M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="meta shift M"/>
+  </action>
 
   <action id="CommentByBlockComment">
     <keyboard-shortcut first-keystroke="meta alt SLASH"/>

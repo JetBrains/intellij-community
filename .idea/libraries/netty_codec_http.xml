@@ -1,0 +1,25 @@
+<component name="libraryTable">
+  <library name="netty-codec-http" type="repository">
+    <properties maven-id="io.netty:netty-codec-http:4.1.25.Final" />
+    <ANNOTATIONS>
+      <root url="file://$PROJECT_DIR$/lib/annotations/netty" />
+    </ANNOTATIONS>
+    <CLASSES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.25.Final/netty-codec-http-4.1.25.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.25.Final/netty-codec-4.1.25.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.25.Final/netty-transport-4.1.25.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.25.Final/netty-buffer-4.1.25.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.25.Final/netty-common-4.1.25.Final.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.25.Final/netty-resolver-4.1.25.Final.jar!/" />
+    </CLASSES>
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec-http/4.1.25.Final/netty-codec-http-4.1.25.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-codec/4.1.25.Final/netty-codec-4.1.25.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-transport/4.1.25.Final/netty-transport-4.1.25.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-buffer/4.1.25.Final/netty-buffer-4.1.25.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-common/4.1.25.Final/netty-common-4.1.25.Final-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/io/netty/netty-resolver/4.1.25.Final/netty-resolver-4.1.25.Final-sources.jar!/" />
+    </SOURCES>
+  </library>
+</component>

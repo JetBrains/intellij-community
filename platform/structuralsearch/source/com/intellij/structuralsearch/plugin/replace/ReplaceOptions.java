@@ -10,7 +10,9 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Maxim.Mossienko
@@ -97,12 +99,12 @@ public class ReplaceOptions implements JDOMExternalizable {
 
     Attribute attribute = element.getAttribute(REFORMAT_ATTR_NAME);
     try {
-      myToReformatAccordingToStyle = attribute.getBooleanValue();
+      myToReformatAccordingToStyle = attribute == null || attribute.getBooleanValue();
     } catch(DataConversionException ignored) {}
 
     attribute = element.getAttribute(SHORTEN_FQN_ATTR_NAME);
     try {
-      toShortenFQN = attribute.getBooleanValue();
+      toShortenFQN = attribute == null || attribute.getBooleanValue();
     } catch(DataConversionException ignored) {}
 
     attribute = element.getAttribute(USE_STATIC_IMPORT_ATTR_NAME);
@@ -129,7 +131,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     element.setAttribute(REFORMAT_ATTR_NAME,String.valueOf(myToReformatAccordingToStyle));
     element.setAttribute(SHORTEN_FQN_ATTR_NAME,String.valueOf(toShortenFQN));
     if (myToUseStaticImport) {
-      element.setAttribute(USE_STATIC_IMPORT_ATTR_NAME, String.valueOf(myToUseStaticImport));
+      element.setAttribute(USE_STATIC_IMPORT_ATTR_NAME, String.valueOf(true));
     }
     element.setAttribute(REPLACEMENT_ATTR_NAME,replacement);
 
@@ -174,7 +176,7 @@ public class ReplaceOptions implements JDOMExternalizable {
     variableDefs.put(definition.getName(), definition);
   }
 
-  public Collection<ReplacementVariableDefinition> getReplacementVariableDefinitions() {
+  public Collection<ReplacementVariableDefinition> getVariableDefinitions() {
     return variableDefs.values();
   }
 

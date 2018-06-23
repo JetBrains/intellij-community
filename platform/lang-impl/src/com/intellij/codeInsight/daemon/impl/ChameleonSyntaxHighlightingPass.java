@@ -50,8 +50,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
 
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
-
 class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
 
   public static class Factory extends AbstractProjectComponent implements MainHighlightingPassFactory {
@@ -81,21 +79,21 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     }
   }
 
-  ChameleonSyntaxHighlightingPass(@NotNull Project project,
-                                  @NotNull PsiFile file,
-                                  @NotNull Document document,
-                                  @NotNull ProperTextRange restrictRange,
-                                  @NotNull ProperTextRange priorityRange,
-                                  @Nullable Editor editor,
-                                  @NotNull HighlightInfoProcessor highlightInfoProcessor) {
+  private ChameleonSyntaxHighlightingPass(@NotNull Project project,
+                                          @NotNull PsiFile file,
+                                          @NotNull Document document,
+                                          @NotNull ProperTextRange restrictRange,
+                                          @NotNull ProperTextRange priorityRange,
+                                          @Nullable Editor editor,
+                                          @NotNull HighlightInfoProcessor highlightInfoProcessor) {
     super(project, file, document, restrictRange.getStartOffset(), restrictRange.getEndOffset(), true, priorityRange, editor,
           highlightInfoProcessor);
   }
 
   @Override
   public void collectInformationWithProgress(@NotNull ProgressIndicator progress) {
-    SyntaxTraverser<PsiElement> s = psiTraverser(myFile)
-      .filter(o -> {
+    SyntaxTraverser<PsiElement> s = SyntaxTraverser.psiTraverser(myFile)
+                                                   .filter(o -> {
         IElementType type = PsiUtilCore.getElementType(o);
         return type instanceof ILazyParseableElementType && !(type instanceof IFileElementType);
       });
@@ -131,7 +129,7 @@ class ChameleonSyntaxHighlightingPass extends GeneralHighlightingPass {
     if (language == null) return;
 
     SyntaxHighlighter syntaxHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(language, myProject, myFile.getVirtualFile());
-    for (PsiElement token : psiTraverser(element).traverse(TreeTraversal.LEAVES_DFS)) {
+    for (PsiElement token : SyntaxTraverser.psiTraverser(element).traverse(TreeTraversal.LEAVES_DFS)) {
       TextRange tr = token.getTextRange();
       if (tr.isEmpty()) continue;
       IElementType type = PsiUtilCore.getElementType(token);

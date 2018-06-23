@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions.smartEnter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightUtil;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.featureStatistics.FeatureUsageTracker;
@@ -32,7 +33,6 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -329,7 +329,7 @@ public class JavaSmartEnterProcessor extends SmartEnterProcessor {
     if (CharArrayUtil.regionMatches(chars, caretOffset - "{}".length(), "{}") ||
         CharArrayUtil.regionMatches(chars, caretOffset - "{\n}".length(), "{\n}")) {
       commit(editor);
-      final CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(file.getProject()).getCommonSettings(JavaLanguage.INSTANCE);
+      final CommonCodeStyleSettings settings = CodeStyle.getSettings(file).getCommonSettings(JavaLanguage.INSTANCE);
       final boolean old = settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
       settings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false;
       PsiElement leaf = file.findElementAt(caretOffset - 1);

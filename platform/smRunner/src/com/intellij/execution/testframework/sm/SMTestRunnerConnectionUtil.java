@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm;
 
 import com.intellij.execution.ExecutionException;
@@ -72,8 +72,6 @@ public class SMTestRunnerConnectionUtil {
    * @param processHandler    Process handler
    * @param consoleProperties Console properties for test console actions
    * @return Console view
-   * @throws ExecutionException If IDEA cannot execute process this exception will
-   *                            be caught and shown in error message box
    */
   @NotNull
   public static BaseTestsOutputConsoleView createAndAttachConsole(@NotNull String testFrameworkName,
@@ -245,9 +243,16 @@ public class SMTestRunnerConnectionUtil {
         return Collections.emptyList();
       }
     }
+
+    @NotNull
+    @Override
+    public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+      return myLocator.getLocation(stacktraceLine, project, scope);
+    }
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
+  @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static BaseTestsOutputConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                           @NotNull TestConsoleProperties consoleProperties,
@@ -257,6 +262,7 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #createConsole(String, TestConsoleProperties)} (to be removed in IDEA 17) */
+  @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static SMTRunnerConsoleView createConsoleWithCustomLocator(@NotNull String testFrameworkName,
                                                                     @NotNull TestConsoleProperties consoleProperties,
@@ -271,6 +277,7 @@ public class SMTestRunnerConnectionUtil {
   }
 
   /** @deprecated use {@link #initConsoleView(SMTRunnerConsoleView, String)} (to be removed in IDEA 17) */
+  @Deprecated
   @SuppressWarnings({"unused", "deprecation"})
   public static void initConsoleView(@NotNull final SMTRunnerConsoleView consoleView,
                                      @NotNull final String testFrameworkName,
@@ -318,7 +325,7 @@ public class SMTestRunnerConnectionUtil {
     public List<Location> getLocation(@NotNull String protocol, @NotNull String path, @NotNull Project project, @NotNull GlobalSearchScope scope) {
       boolean isDumbMode = DumbService.isDumb(project);
 
-      if (myPrimaryLocator != null && (!isDumbMode || myPrimaryLocator instanceof DumbAware)) {
+      if (myPrimaryLocator != null && (!isDumbMode || DumbService.isDumbAware(myPrimaryLocator))) {
         List<Location> locations = myPrimaryLocator.getLocation(protocol, path, project);
         if (!locations.isEmpty()) {
           return locations;
@@ -333,7 +340,7 @@ public class SMTestRunnerConnectionUtil {
       }
 
       for (TestLocationProvider provider : myLocators) {
-        if (!isDumbMode || provider instanceof DumbAware) {
+        if (!isDumbMode || DumbService.isDumbAware(provider)) {
           List<Location> locations = provider.getLocation(protocol, path, project);
           if (!locations.isEmpty()) {
             return locations;

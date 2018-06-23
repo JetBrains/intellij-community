@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.openapi.diagnostic.Attachment;
@@ -22,6 +20,8 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -442,7 +442,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     FList<ConditionInstruction> conditionsBefore = myConditions;
-    ConditionInstruction cond = registerCondition(expression);
+    ConditionInstruction cond = registerCondition(expression, false);
     addNodeAndCheckPending(cond);
 
     operand.accept(this);
@@ -500,7 +500,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   @Override
   public void visitInstanceofExpression(@NotNull GrInstanceOfExpression expression) {
     expression.getOperand().accept(this);
-    processInstanceOf(expression);
+    processInstanceOf(expression, expression.getNegationToken() != null);
   }
 
   @Override
@@ -562,7 +562,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
     if (ControlFlowBuilderUtil.isInstanceOfBinary(expression)) {
       expression.getLeftOperand().accept(this);
-      processInstanceOf(expression);
+      processInstanceOf(expression, ((GrInExpression)expression).getNegationToken() != null);
       return;
     }
 
@@ -576,7 +576,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
 
     FList<ConditionInstruction> conditionsBefore = myConditions;
-    ConditionInstruction condition = registerCondition(expression);
+    ConditionInstruction condition = registerCondition(expression, false);
     addNodeAndCheckPending(condition);
 
     left.accept(this);
@@ -619,9 +619,9 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     right.accept(this);
   }
 
-  private void processInstanceOf(GrExpression expression) {
+  private void processInstanceOf(GrExpression expression, boolean negated) {
     FList<ConditionInstruction> conditionsBefore = myConditions;
-    ConditionInstruction cond = registerCondition(expression);
+    ConditionInstruction cond = registerCondition(expression, negated);
     addNodeAndCheckPending(cond);
 
     addNode(new InstanceOfInstruction(expression, cond));
@@ -718,8 +718,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @NotNull
-  private ConditionInstruction registerCondition(@NotNull PsiElement element) {
-    ConditionInstruction condition = new ConditionInstruction(element, myConditions);
+  private ConditionInstruction registerCondition(@NotNull PsiElement element, boolean negated) {
+    ConditionInstruction condition = new ConditionInstruction(element, negated, myConditions);
     myConditions = myConditions.prepend(condition);
     return condition;
   }
@@ -1020,8 +1020,15 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       myPending = new ArrayList<>();
     }
 
+    GrTryResourceList resourceList = tryCatchStatement.getResourceList();
+    if (resourceList != null) {
+      resourceList.accept(this);
+    }
+
     InstructionImpl tryBegin = startNode(tryBlock);
-    tryBlock.accept(this);
+    if (tryBlock != null) {
+      tryBlock.accept(this);
+    }
     InstructionImpl tryEnd = myHead;
     finishNode(tryBegin);
 

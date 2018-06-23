@@ -17,10 +17,10 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 
 /**
  * @author yole
@@ -71,24 +71,13 @@ public class CreateInnerClassFromNewFix extends CreateClassFromNewFix {
   }
 
   private static boolean isInThisOrSuperCall(PsiNewExpression newExpression) {
-    boolean inFirstConstructorLine = false;
     final PsiExpressionStatement expressionStatement = PsiTreeUtil.getParentOfType(newExpression, PsiExpressionStatement.class);
     if (expressionStatement != null) {
       final PsiExpression expression = expressionStatement.getExpression();
-      if (expression instanceof PsiMethodCallExpression) {
-        final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-        final PsiElement resolve = methodExpression.resolve();
-        if (resolve instanceof PsiMethod && ((PsiMethod)resolve).isConstructor()) {
-          final PsiElement referenceNameElement = methodExpression.getReferenceNameElement();
-          if (referenceNameElement != null) {
-            if (Comparing.strEqual(referenceNameElement.getText(), PsiKeyword.THIS) ||
-                Comparing.strEqual(referenceNameElement.getText(), PsiKeyword.SUPER)) {
-              inFirstConstructorLine = true;
-            }
-          }
-        }
+      if (JavaPsiConstructorUtil.isConstructorCall(expression)) {
+        return true;
       }
     }
-    return inFirstConstructorLine;
+    return false;
   }
 }

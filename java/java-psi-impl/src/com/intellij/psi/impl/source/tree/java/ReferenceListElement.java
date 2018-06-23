@@ -17,7 +17,6 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.TokenType;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.tree.ChildRoleBase;
@@ -45,13 +44,6 @@ public class ReferenceListElement extends CompositeElement {
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
-    if (first == last &&
-        first.getElementType() == JavaElementType.JAVA_CODE_REFERENCE &&
-        getLastChildNode() != null &&
-        getLastChildNode().getElementType() == TokenType.ERROR_ELEMENT) {
-      super.deleteChildInternal(getLastChildNode());
-    }
-
     TreeElement firstAdded = super.addInternal(first, last, anchor, before);
     CharTable treeCharTab = SharedImplUtil.findCharTableByTree(this);
 

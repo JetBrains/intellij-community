@@ -40,7 +40,7 @@ abstract class NetService @JvmOverloads protected constructor(protected val proj
         return promise
       }
 
-      promise.rejected {
+      promise.onError {
         processHandler.destroyProcess()
         LOG.errorIfNotMessage(it)
       }

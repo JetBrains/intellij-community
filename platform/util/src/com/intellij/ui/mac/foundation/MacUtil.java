@@ -5,6 +5,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NotNull;
@@ -176,27 +177,37 @@ public class MacUtil {
     return windowTitle;
   }
 
-  public static Object wakeUpNeo(String reason) {
+  public static Object wakeUpNeo(final String reason) {
     // http://lists.apple.com/archives/java-dev/2014/Feb/msg00053.html
     // https://developer.apple.com/library/prerelease/ios/documentation/Cocoa/Reference/Foundation/Classes/NSProcessInfo_Class/index.html#//apple_ref/c/tdef/NSActivityOptions
     if (SystemInfo.isMacOSMavericks && Registry.is("idea.mac.prevent.app.nap")) {
-      ID processInfo = invoke("NSProcessInfo", "processInfo");
-      ID activity = invoke(processInfo, "beginActivityWithOptions:reason:",
-                         (0x00FFFFFFL & ~(1L << 20))  /* NSActivityUserInitiatedAllowingIdleSystemSleep */ |
-                         0xFF00000000L /* NSActivityLatencyCritical */,
-                         nsString(reason));
-      cfRetain(activity);
-      return activity;
+      final Ref<Object> result = Ref.create();
+      executeOnMainThread(false, true, new Runnable() {
+        @Override
+        public void run() {
+          ID processInfo = invoke("NSProcessInfo", "processInfo");
+          ID activity = invoke(processInfo, "beginActivityWithOptions:reason:",
+                               (0x00FFFFFFL & ~(1L << 20))  /* NSActivityUserInitiatedAllowingIdleSystemSleep */ |
+                               0xFF00000000L /* NSActivityLatencyCritical */,
+                               nsString(reason));
+          cfRetain(activity);
+          result.set(activity);
+        }
+      });
+      return result.get();
     }
     return null;
   }
 
-  public static void matrixHasYou(Object activity) {
-    if (activity != null) {
-      ID processInfo = invoke("NSProcessInfo", "processInfo");
-      invoke(processInfo, "endActivity:", activity);
-      cfRelease((ID)activity);
-    }
+  public static void matrixHasYou(@NotNull final Object activity) {
+    executeOnMainThread(false, false, new Runnable() {
+      @Override
+      public void run() {
+        ID processInfo = invoke("NSProcessInfo", "processInfo");
+        invoke(processInfo, "endActivity:", activity);
+        cfRelease((ID)activity);
+      }
+    });
   }
 
   @NotNull

@@ -23,10 +23,7 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiArrayAccessExpression;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
-public class ArrayAccessInstruction extends Instruction {
+public class ArrayAccessInstruction extends Instruction implements ExpressionPushingInstruction {
   private final @NotNull DfaValue myValue;
   private final @NotNull PsiArrayAccessExpression myExpression;
 

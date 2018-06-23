@@ -35,7 +35,7 @@ import java.util.regex.Pattern;
 
 public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNamePopupComponent, Disposable {
   public static final Key<ChooseByNamePopup> CHOOSE_BY_NAME_POPUP_IN_PROJECT_KEY = new Key<>("ChooseByNamePopup");
-  public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<String>("ChooseByNamePattern");
+  public static final Key<String> CURRENT_SEARCH_PATTERN = new Key<>("ChooseByNamePattern");
 
   private Component myOldFocusOwner = null;
   private boolean myShowListForEmptyPattern = false;
@@ -128,10 +128,13 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   protected void showList() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
 
+    ListModel<Object> model = myList.getModel();
+    if (model == null || model.getSize() == 0) return;
+
     final JLayeredPane layeredPane = myTextField.getRootPane().getLayeredPane();
 
-    Rectangle bounds = new Rectangle(layeredPane.getLocationOnScreen(), myTextField.getSize());
-    bounds.y += layeredPane.getHeight();
+    Point location = layeredPane.getLocationOnScreen();
+    location.y += layeredPane.getHeight();
 
     final Dimension preferredScrollPaneSize = myListScrollPane.getPreferredSize();
     preferredScrollPaneSize.width = Math.max(myTextFieldPanel.getWidth(), preferredScrollPaneSize.width);
@@ -143,27 +146,26 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (preferredScrollPaneSize.height < currentSize.height) preferredScrollPaneSize.height = currentSize.height;
     }
 
-    Rectangle preferredBounds = new Rectangle(bounds.x, bounds.y, preferredScrollPaneSize.width, preferredScrollPaneSize.height);
-    Rectangle original = new Rectangle(preferredBounds);
-
-    ScreenUtil.fitToScreen(preferredBounds);
-    JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
-    if (original.width > preferredBounds.width && (!SystemInfo.isMac || hsb.isOpaque())) {
-      int height = hsb.getPreferredSize().height;
-      preferredBounds.y -= height;
-      preferredBounds.height += height;
+    // calculate maximal size for the popup window
+    Rectangle screen = ScreenUtil.getScreenRectangle(location);
+    if (preferredScrollPaneSize.width > screen.width) {
+      preferredScrollPaneSize.width = screen.width;
+      if (model.getSize() <= myList.getVisibleRowCount()) {
+        JScrollBar hsb = myListScrollPane.getHorizontalScrollBar();
+        if (hsb != null && (!SystemInfo.isMac || hsb.isOpaque())) {
+          Dimension size = hsb.getPreferredSize();
+          if (size != null) preferredScrollPaneSize.height += size.height;
+        }
+      }
     }
-    if (original.y > preferredBounds.y) {
-      int height = original.y - preferredBounds.y;
-      preferredBounds.y += height;
-      preferredBounds.height -= height;
-    }
+    if (preferredScrollPaneSize.height > screen.height) preferredScrollPaneSize.height = screen.height;
 
-    myListScrollPane.setVisible(true);
-    myListScrollPane.setBorder(null);
+    location.x = Math.min(location.x, screen.x + screen.width - preferredScrollPaneSize.width);
+    location.y = Math.min(location.y, screen.y + screen.height - preferredScrollPaneSize.height);
+
     String adText = getAdText();
     if (myDropdownPopup == null) {
-      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myListScrollPane);
+      ComponentPopupBuilder builder = JBPopupFactory.getInstance().createComponentPopupBuilder(myListScrollPane, myList);
       builder.setFocusable(false)
         .setLocateWithinScreenBounds(false)
         .setRequestFocus(false)
@@ -175,13 +177,12 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
         .setMayBeParent(true);
       builder.setCancelCallback(() -> Boolean.TRUE);
       myDropdownPopup = builder.createPopup();
-      myDropdownPopup.setLocation(preferredBounds.getLocation());
-      myDropdownPopup.setSize(preferredBounds.getSize());
-      myDropdownPopup.show(layeredPane);
+      myDropdownPopup.setSize(preferredScrollPaneSize);
+      myDropdownPopup.showInScreenCoordinates(layeredPane, location);
     }
     else {
-      myDropdownPopup.setLocation(preferredBounds.getLocation());
-      myDropdownPopup.setSize(preferredBounds.getSize());
+      myDropdownPopup.setLocation(location);
+      myDropdownPopup.setSize(preferredScrollPaneSize);
     }
   }
 
@@ -201,24 +202,18 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     myModel.saveInitialCheckBoxState(myCheckBox.isSelected());
     if (isOk) {
-
       final List<Object> chosenElements = getChosenElements();
-      if (chosenElements != null) {
-        if (myActionListener instanceof MultiElementsCallback) {
-          ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
-        }
-        else {
-          for (Object element : chosenElements) {
-            myActionListener.elementChosen(element);
-            String text = myModel.getFullName(element);
-            if (text != null) {
-              StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
-            }
-          }
-        }
+      if (myActionListener instanceof MultiElementsCallback) {
+        ((MultiElementsCallback)myActionListener).elementsChosen(chosenElements);
       }
       else {
-        return;
+        for (Object element : chosenElements) {
+          myActionListener.elementChosen(element);
+          String text = myModel.getFullName(element);
+          if (text != null) {
+            StatisticsManager.getInstance().incUseCount(new StatisticsInfo(statisticsContext(), text));
+          }
+        }
       }
 
       if (!chosenElements.isEmpty()) {
@@ -237,9 +232,6 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
             }
           }
         }
-      }
-      else {
-        return;
       }
     }
     Disposer.dispose(this);
@@ -325,11 +317,15 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
   private static final Pattern patternToDetectLinesAndColumns = Pattern.compile("(.+?)" + // name, non-greedy matching
                                                                                 "(?::|@|,| |#|#L|\\?l=| on line | at line |:?\\(|:?\\[)" + // separator
-                                                                                "(\\d+)(?:(?:\\D)(\\d+)?)?" + // line + column
+                                                                                "(\\d+)?(?:(?:\\D)(\\d+)?)?" + // line + column
                                                                                 "[)\\]]?" // possible closing paren/brace
   );
   public static final Pattern patternToDetectAnonymousClasses = Pattern.compile("([\\.\\w]+)((\\$[\\d]+)*(\\$)?)");
   private static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
+  private static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
+
+  //space character in the end of pattern forces full matches search
+  private static final String fullMatchSearchSuffix = " ";
 
   @Override
   public String transformPattern(String pattern) {
@@ -338,6 +334,8 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
   }
 
   public static String getTransformedPattern(String pattern, ChooseByNameModel model) {
+    String rawPattern = pattern;
+
     Pattern regex = null;
     if (StringUtil.containsAnyChar(pattern, ":,;@[( #") || pattern.contains(" line ") || pattern.contains("?l=")) { // quick test if reg exp should be used
       regex = patternToDetectLinesAndColumns;
@@ -345,7 +343,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
 
     if (model instanceof GotoClassModel2 || model instanceof GotoSymbolModel2) {
       if (pattern.indexOf('#') != -1) {
-        regex = patternToDetectMembers;
+        regex = model instanceof GotoClassModel2 ? patternToDetectMembers : patternToDetectSignatures;
       }
 
       if (pattern.indexOf('$') != -1) {
@@ -358,6 +356,10 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (matcher.matches()) {
         pattern = matcher.group(1);
       }
+    }
+
+    if (rawPattern.endsWith(fullMatchSearchSuffix)) {
+      pattern += fullMatchSearchSuffix;
     }
 
     return pattern;

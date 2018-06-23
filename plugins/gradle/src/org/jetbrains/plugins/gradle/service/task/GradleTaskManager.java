@@ -21,7 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
-import com.intellij.openapi.externalSystem.service.execution.ExternalSystemRunConfiguration;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -37,6 +37,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -87,8 +88,13 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
     GradleExecutionSettings effectiveSettings =
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
 
-    if (getForkedDebuggerSetup(jvmAgentSetup) != -1) {
-      effectiveSettings.withVmOption(jvmAgentSetup);
+    ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
+    if (forkedDebuggerSetup != null) {
+      String javaHome = effectiveSettings.getJavaHome();
+      JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
+        javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
+      boolean isJdk9orLater = jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
+      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater));
     }
     Function<ProjectConnection, Void> f = connection -> {
       try {
@@ -130,20 +136,6 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
       }
     };
     myHelper.execute(projectPath, effectiveSettings, f);
-  }
-
-  public static int getForkedDebuggerSetup(@Nullable String jvmAgentSetup) {
-    if (jvmAgentSetup != null && jvmAgentSetup.startsWith(ExternalSystemRunConfiguration.DEBUG_SETUP_PREFIX)) {
-      int forkSocketIndex = jvmAgentSetup.indexOf("-forkSocket");
-      if (forkSocketIndex > 0) {
-        try {
-          return Integer.parseInt(jvmAgentSetup.substring(forkSocketIndex + "-forkSocket".length()));
-        }
-        catch (NumberFormatException ignore) {
-        }
-      }
-    }
-    return -1;
   }
 
   public static void appendInitScriptArgument(@NotNull List<String> taskNames,

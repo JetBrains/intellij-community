@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.navigation;
 
@@ -8,21 +6,18 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
-import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.hint.HintManagerImpl;
 import com.intellij.codeInsight.hint.HintUtil;
 import com.intellij.codeInsight.navigation.actions.GotoDeclarationAction;
 import com.intellij.codeInsight.navigation.actions.GotoTypeDeclarationAction;
-import com.intellij.ide.IdeTooltipManager;
 import com.intellij.ide.util.EditSourceUtil;
+import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.documentation.DocumentationProvider;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
-import com.intellij.openapi.actionSystem.impl.ActionButton;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -68,14 +63,12 @@ import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.HintListener;
 import com.intellij.ui.LightweightHint;
 import com.intellij.ui.ScreenUtil;
-import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.usageView.UsageViewShortNameLocation;
 import com.intellij.usageView.UsageViewTypeLocation;
 import com.intellij.usageView.UsageViewUtil;
-import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import gnu.trove.TIntArrayList;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -85,19 +78,18 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
+import java.awt.event.KeyListener;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.EventObject;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
-import java.util.concurrent.atomic.AtomicReference;
 
 public class CtrlMouseHandler extends AbstractProjectComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.navigation.CtrlMouseHandler");
-  private static final long DOC_GENERATION_TIMEOUT_MS = 5000;
-  private static final long DOC_GENERATION_RETRY_DELAY_MS = 100;
-  private static final AbstractDocumentationTooltipAction[] ourTooltipActions = {new ShowQuickDocAtPinnedWindowFromTooltipAction()};
   private final EditorColorsManager myEditorColorsManager;
 
   private HighlightersSet myHighlighter;
@@ -107,7 +99,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   private final DocumentationManager myDocumentationManager;
   @Nullable private Point myPrevMouseLocation;
   private LightweightHint myHint;
-  private final AtomicReference<ProgressIndicator> myCurrentRequestProgress = new AtomicReference<>();
 
   public enum BrowseMode {None, Declaration, TypeDeclaration, Implementation}
 
@@ -142,7 +133,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           }
           myStoredModifiers = modifiers;
           cancelPreviousTooltip();
-          myTooltipProvider = new TooltipProvider(tooltipProvider.myEditor, tooltipProvider.myPosition);
+          myTooltipProvider = new TooltipProvider(tooltipProvider.myHostEditor, tooltipProvider.myHostPosition);
           myTooltipProvider.execute(browseMode);
         }
       }
@@ -199,26 +190,8 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       Editor editor = e.getEditor();
       if (editor.getProject() != null && editor.getProject() != myProject) return;
-      PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
-      PsiFile psiFile = documentManager.getPsiFile(editor.getDocument());
       Point point = new Point(mouseEvent.getPoint());
-      if (documentManager.isCommitted(editor.getDocument())) {
-        // when document is committed, try to check injected stuff - it's fast
-        int offset = editor.logicalPositionToOffset(editor.xyToLogicalPosition(point));
-        editor = InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(editor, psiFile, offset);
-      }
-
-      LogicalPosition pos = editor.xyToLogicalPosition(point);
-      int offset = editor.logicalPositionToOffset(pos);
-      int selStart = editor.getSelectionModel().getSelectionStart();
-      int selEnd = editor.getSelectionModel().getSelectionEnd();
-
-      if (offset >= selStart && offset < selEnd) {
-        disposeHighlighter();
-        return;
-      }
-
-      myTooltipProvider = new TooltipProvider(editor, pos);
+      myTooltipProvider = new TooltipProvider(editor, editor.xyToLogicalPosition(point));
       myTooltipProvider.execute(browseMode);
     }
   };
@@ -229,8 +202,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       myTooltipProvider = null;
     }
   }
-
-  @NotNull private final Alarm myDocAlarm;
 
   public CtrlMouseHandler(final Project project,
                           StartupManager startupManager,
@@ -258,7 +229,6 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     });
     myFileEditorManager = fileEditorManager;
     myDocumentationManager = documentationManager;
-    myDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
   }
 
   @Override
@@ -320,7 +290,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     if (result == null && fallbackToBasicInfo) {
       result = doGenerateInfo(element);
     }
-    return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider, element);
+    return result == null ? DocInfo.EMPTY : new DocInfo(result, documentationProvider);
   }
 
   @Nullable
@@ -474,7 +444,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     @Override
     @NotNull
     public DocInfo getInfo() {
-      return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null, null);
+      return new DocInfo(CodeInsightBundle.message("multiple.implementations.tooltip"), null);
     }
 
     @Override
@@ -593,7 +563,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           @Override
           public DocInfo getInfo() {
             String name = UsageViewUtil.getType(element) + " '"+ UsageViewUtil.getShortName(element)+"'";
-            return new DocInfo("Show usages of "+name, null, element);
+            return new DocInfo("Show usages of "+name, null);
           }
   
           @Override
@@ -638,147 +608,75 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
   }
 
-  private void fulfillDocInfo(@NotNull final String header,
-                              @NotNull final DocumentationProvider provider,
-                              @NotNull final PsiElement originalElement,
-                              @NotNull final PsiElement anchorElement,
-                              @NotNull final Consumer<String> newTextConsumer,
-                              @NotNull final LightweightHint hint)
-  {
-    ProgressIndicatorBase progress = new ProgressIndicatorBase();
-    myCurrentRequestProgress.set(progress);
-    myDocAlarm.addRequest(() -> {
-      final Ref<String> fullTextRef = new Ref<>();
-      final Ref<String> qualifiedNameRef = new Ref<>();
-      QuickDocUtil.runInReadActionWithWriteActionPriorityWithRetries(() -> {
-        if (anchorElement.isValid() && originalElement.isValid()) {
-          try {
-            fullTextRef.set(provider.generateDoc(anchorElement, originalElement));
-          }
-          catch (IndexNotReadyException e) {
-            fullTextRef.set("Documentation is not available while indexing is in progress");
-          }
-          if (anchorElement instanceof PsiQualifiedNamedElement) {
-            qualifiedNameRef.set(((PsiQualifiedNamedElement)anchorElement).getQualifiedName());
-          }
-        }
-      }, DOC_GENERATION_TIMEOUT_MS, DOC_GENERATION_RETRY_DELAY_MS, progress);
-      myCurrentRequestProgress.compareAndSet(progress, null);
-      String fullText = fullTextRef.get();
-      if (fullText == null) {
+  private void updateText(@NotNull String updatedText,
+                          @NotNull Consumer<String> newTextConsumer,
+                          @NotNull LightweightHint hint,
+                          @NotNull Editor editor) {
+    UIUtil.invokeLaterIfNeeded(() -> {
+      // There is a possible case that quick doc control width is changed, e.g. it contained text
+      // like 'public final class String implements java.io.Serializable, java.lang.Comparable<java.lang.String>' and
+      // new text replaces fully-qualified class names by hyperlinks with short name.
+      // That's why we might need to update the control size. We assume that the hint component is located at the
+      // layered pane, so, the algorithm is to find an ancestor layered pane and apply new size for the target component.
+      JComponent component = hint.getComponent();
+      Dimension oldSize = component.getPreferredSize();
+      newTextConsumer.consume(updatedText);
+      
+
+      Dimension newSize = component.getPreferredSize();
+      if (newSize.width == oldSize.width) {
         return;
       }
-      final String updatedText = DocPreviewUtil.buildPreview(header, qualifiedNameRef.get(), fullText);
-      final String newHtml = HintUtil.prepareHintText(updatedText, HintUtil.getInformationHint());
-      UIUtil.invokeLaterIfNeeded(() -> {
+      component.setPreferredSize(new Dimension(newSize.width, newSize.height));
 
-        // There is a possible case that quick doc control width is changed, e.g. it contained text
-        // like 'public final class String implements java.io.Serializable, java.lang.Comparable<java.lang.String>' and
-        // new text replaces fully-qualified class names by hyperlinks with short name.
-        // That's why we might need to update the control size. We assume that the hint component is located at the
-        // layered pane, so, the algorithm is to find an ancestor layered pane and apply new size for the target component.
+      // We're assuming here that there are two possible hint representation modes: popup and layered pane.
+      if (hint.isRealPopup()) {
 
-        JComponent component = hint.getComponent();
-        Dimension oldSize = component.getPreferredSize();
-        newTextConsumer.consume(newHtml);
-
-        final int widthIncrease;
-        if (component instanceof QuickDocInfoPane) {
-          int buttonWidth = ((QuickDocInfoPane)component).getButtonWidth();
-          widthIncrease = calculateWidthIncrease(buttonWidth, updatedText);
+        TooltipProvider tooltipProvider = myTooltipProvider;
+        if (tooltipProvider != null) {
+          // There is a possible case that 'raw' control was rather wide but the 'rich' one is narrower. That's why we try to
+          // re-show the hint here. Benefits: there is a possible case that we'll be able to show nice layered pane-based balloon;
+          // the popup will be re-positioned according to the new width.
+          hint.hide();
+          tooltipProvider.showHint(new LightweightHint(component), editor);
         }
         else {
-          widthIncrease = 0;
+          component.setPreferredSize(new Dimension(newSize.width, oldSize.height));
+          hint.pack();
         }
+        return;
+      }
 
-        if (oldSize == null) {
-          return;
+      Container topLevelLayeredPaneChild = null;
+      boolean adjustBounds = false;
+      for (Container current = component.getParent(); current != null; current = current.getParent()) {
+        if (current instanceof JLayeredPane) {
+          adjustBounds = true;
+          break;
         }
-
-        Dimension newSize = component.getPreferredSize();
-        if (newSize.width + widthIncrease == oldSize.width) {
-          return;
+        else {
+          topLevelLayeredPaneChild = current;
         }
-        component.setPreferredSize(new Dimension(newSize.width + widthIncrease, newSize.height));
+      }
 
-        // We're assuming here that there are two possible hint representation modes: popup and layered pane.
-        if (hint.isRealPopup()) {
-
-          TooltipProvider tooltipProvider = myTooltipProvider;
-          if (tooltipProvider != null) {
-            // There is a possible case that 'raw' control was rather wide but the 'rich' one is narrower. That's why we try to
-            // re-show the hint here. Benefits: there is a possible case that we'll be able to show nice layered pane-based balloon;
-            // the popup will be re-positioned according to the new width.
-            hint.hide();
-            tooltipProvider.showHint(new LightweightHint(component));
-          }
-          else {
-            component.setPreferredSize(new Dimension(newSize.width + widthIncrease, oldSize.height));
-            hint.pack();
-          }
-          return;
-        }
-
-        Container topLevelLayeredPaneChild = null;
-        boolean adjustBounds = false;
-        for (Container current = component.getParent(); current != null; current = current.getParent()) {
-          if (current instanceof JLayeredPane) {
-            adjustBounds = true;
-            break;
-          }
-          else {
-            topLevelLayeredPaneChild = current;
-          }
-        }
-
-        if (adjustBounds && topLevelLayeredPaneChild != null) {
-          Rectangle bounds = topLevelLayeredPaneChild.getBounds();
-          topLevelLayeredPaneChild.setBounds(bounds.x, bounds.y, bounds.width + newSize.width + widthIncrease - oldSize.width, bounds.height);
-        }
-      });
-    }, 0);
+      if (adjustBounds && topLevelLayeredPaneChild != null) {
+        Rectangle bounds = topLevelLayeredPaneChild.getBounds();
+        topLevelLayeredPaneChild.setBounds(bounds.x, bounds.y, bounds.width + newSize.width - oldSize.width, bounds.height);
+      }
+    });
   }
 
-  /**
-   * It's possible that we need to expand quick doc control's width in order to provide better visual representation
-   * (see https://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
-   *
-   * @param buttonWidth  icon button's width
-   * @param updatedText  text which will be should at the quick doc control
-   * @return             width increase to apply to the target quick doc control (zero if no additional width increase is required)
-   */
-  private static int calculateWidthIncrease(int buttonWidth, String updatedText) {
-    int maxLineWidth = 0;
-    TIntArrayList lineWidths = new TIntArrayList();
-    for (String lineText : StringUtil.split(updatedText, "<br/>")) {
-      String html = HintUtil.prepareHintText(lineText, HintUtil.getInformationHint());
-      int width = new JLabel(html).getPreferredSize().width;
-      maxLineWidth = Math.max(maxLineWidth, width);
-      lineWidths.add(width);
-    }
-
-    if (!lineWidths.isEmpty()) {
-      int firstLineAvailableTrailingWidth = maxLineWidth - lineWidths.get(0);
-      if (firstLineAvailableTrailingWidth >= buttonWidth) {
-        return 0;
-      }
-      else {
-        return buttonWidth - firstLineAvailableTrailingWidth;
-      }
-    }
-    return 0;
-  }
 
   private class TooltipProvider {
-    @NotNull private final Editor myEditor;
-    @NotNull private final LogicalPosition myPosition;
+    @NotNull private final Editor myHostEditor;
+    @NotNull private final LogicalPosition myHostPosition;
     private BrowseMode myBrowseMode;
     private boolean myDisposed;
     private final ProgressIndicator myProgress = new ProgressIndicatorBase();
 
-    TooltipProvider(@NotNull Editor editor, @NotNull LogicalPosition pos) {
-      myEditor = editor;
-      myPosition = pos;
+    TooltipProvider(@NotNull Editor hostEditor, @NotNull LogicalPosition hostPos) {
+      myHostEditor = hostEditor;
+      myHostPosition = hostPos;
     }
 
     void dispose() {
@@ -793,26 +691,29 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     void execute(@NotNull BrowseMode browseMode) {
       myBrowseMode = browseMode;
 
-      if (PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument()) == null) return;
+      if (PsiDocumentManager.getInstance(myProject).getPsiFile(myHostEditor.getDocument()) == null) return;
 
-      if (EditorUtil.inVirtualSpace(myEditor, myPosition)) {
+      if (EditorUtil.inVirtualSpace(myHostEditor, myHostPosition)) {
         disposeHighlighter();
         return;
       }
 
-      final int offset = myEditor.logicalPositionToOffset(myPosition);
+      final int offset = myHostEditor.logicalPositionToOffset(myHostPosition);
 
-      int selStart = myEditor.getSelectionModel().getSelectionStart();
-      int selEnd = myEditor.getSelectionModel().getSelectionEnd();
+      int selStart = myHostEditor.getSelectionModel().getSelectionStart();
+      int selEnd = myHostEditor.getSelectionModel().getSelectionEnd();
 
-      if (offset >= selStart && offset < selEnd) return;
+      if (offset >= selStart && offset < selEnd) {
+        disposeHighlighter();
+        return;
+      }
 
       PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(
         () -> ProgressIndicatorUtils.scheduleWithWriteActionPriority(myProgress, new ReadTask() {
           @Nullable
           @Override
           public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-            return doExecute(offset);
+            return doExecute();
           }
 
           @Override
@@ -823,16 +724,19 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
 
     @Nullable
-    private ReadTask.Continuation doExecute(int offset) {
-      if (isTaskOutdated()) return null;
+    private ReadTask.Continuation doExecute() {
+      if (isTaskOutdated(myHostEditor)) return null;
 
-      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
+      Editor editor = getPossiblyInjectedEditor();
+      int offset = editor.logicalPositionToOffset(getPosition(editor));
+
+      PsiFile file = PsiDocumentManager.getInstance(myProject).getPsiFile(editor.getDocument());
       if (file == null) return null;
 
       final Info info;
       final DocInfo docInfo;
       try {
-        info = getInfoAt(myEditor, file, offset, myBrowseMode);
+        info = getInfoAt(editor, file, offset, myBrowseMode);
         if (info == null) return null;
         docInfo = info.getInfo();
       }
@@ -843,18 +747,32 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
       LOG.debug("Obtained info about element under cursor");
       return new ReadTask.Continuation(() -> {
-        if (isTaskOutdated()) return;
-        showHint(info, docInfo);
+        if (isTaskOutdated(editor)) return;
+        showHint(info, docInfo, editor);
       });
     }
 
-    private boolean isTaskOutdated() {
-      return myDisposed || myProject.isDisposed() || myEditor.isDisposed() || !myEditor.getComponent().isShowing();
+    @NotNull
+    private Editor getPossiblyInjectedEditor() {
+      final Document document = myHostEditor.getDocument();
+      if (PsiDocumentManager.getInstance(myProject).isCommitted(document)) {
+        PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(document);
+        return InjectedLanguageUtil.getEditorForInjectedLanguageNoCommit(myHostEditor, psiFile, myHostEditor.logicalPositionToOffset(myHostPosition));
+      }
+      return myHostEditor;
     }
 
-    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo) {
-      if (myDisposed || myEditor.isDisposed()) return;
-      Component internalComponent = myEditor.getContentComponent();
+    private boolean isTaskOutdated(@NotNull Editor editor) {
+      return myDisposed || myProject.isDisposed() || editor.isDisposed() || !editor.getComponent().isShowing();
+    }
+
+    private LogicalPosition getPosition(@NotNull Editor editor) {
+      return editor instanceof EditorWindow ? ((EditorWindow)editor).hostToInjected(myHostPosition) : myHostPosition;
+    }
+
+    private void showHint(@NotNull Info info, @NotNull DocInfo docInfo, @NotNull Editor editor) {
+      if (myDisposed || editor.isDisposed()) return;
+      Component internalComponent = editor.getContentComponent();
       if (myHighlighter != null) {
         if (!info.isSimilarTo(myHighlighter.getStoredInfo())) {
           disposeHighlighter();
@@ -868,11 +786,11 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         }
       }
 
-      if (!info.isValid(myEditor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
+      if (!info.isValid(editor.getDocument()) || !info.isNavigatable() && docInfo.text == null) {
         return;
       }
 
-      myHighlighter = installHighlighterSet(info, myEditor);
+      myHighlighter = installHighlighterSet(info, editor);
 
       if (docInfo.text == null) return;
 
@@ -883,40 +801,14 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
                                    : new QuickDocHyperlinkListener(docInfo.docProvider, info.myElementAtPointer);
-      final Ref<QuickDocInfoPane> quickDocPaneRef = new Ref<>();
-      MouseListener mouseListener = new MouseAdapter() {
-        @Override
-        public void mouseEntered(MouseEvent e) {
-          QuickDocInfoPane pane = quickDocPaneRef.get();
-          if (pane != null) {
-            pane.mouseEntered(e);
-          }
-        }
-
-        @Override
-        public void mouseExited(MouseEvent e) {
-          QuickDocInfoPane pane = quickDocPaneRef.get();
-          if (pane != null) {
-            pane.mouseExited(e);
-          }
-        }
-
-        @Override
-        public void mouseClicked(MouseEvent e) {
-        }
-      };
       Ref<Consumer<String>> newTextConsumerRef = new Ref<>();
-      JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, mouseListener, newTextConsumerRef);
+      JComponent label = HintUtil.createInformationLabel(docInfo.text, hyperlinkListener, null, newTextConsumerRef);
       Consumer<String> newTextConsumer = newTextConsumerRef.get();
-      QuickDocInfoPane quickDocPane = null;
-      if (docInfo.documentationAnchor != null) {
-        quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label);
-        quickDocPaneRef.set(quickDocPane);
-      }
 
-      JComponent hintContent = quickDocPane == null ? label : quickDocPane;
-
-      final LightweightHint hint = new LightweightHint(hintContent);
+      label.setBorder(JBUI.Borders.empty(6, 6, 5, 6));
+      
+      final LightweightHint hint = new LightweightHint(label);
+      
       myHint = hint;
       hint.addHintListener(new HintListener() {
         @Override
@@ -924,23 +816,18 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
           myHint = null;
         }
       });
-      myDocAlarm.cancelAllRequests();
-      ProgressIndicator currentIndicator = myCurrentRequestProgress.getAndSet(null);
-      if (currentIndicator != null) currentIndicator.cancel(); 
-      if (newTextConsumer != null && docInfo.docProvider != null && docInfo.documentationAnchor != null) {
-        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer, docInfo.documentationAnchor, newTextConsumer, hint);
-      }
 
-      showHint(hint);
+      showHint(hint, editor);
       if (newTextConsumer != null) {
-        updateOnPsiChanges(hint, info, newTextConsumer, docInfo.text);
+        updateOnPsiChanges(hint, info, newTextConsumer, docInfo.text, editor);
       }
     }
 
     private void updateOnPsiChanges(@NotNull LightweightHint hint,
                                     @NotNull Info info,
                                     @NotNull Consumer<String> textConsumer,
-                                    @NotNull String oldText) {
+                                    @NotNull String oldText,
+                                    @NotNull Editor editor) {
       if (!hint.isVisible()) return;
       Disposable hintDisposable = Disposer.newDisposable("CtrlMouseHandler.TooltipProvider.updateOnPsiChanges");
       hint.addHintListener(new HintListener() {
@@ -961,14 +848,18 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             Disposer.register(hintDisposable, () -> progress.cancel());
           }
           ProgressIndicatorUtils.scheduleWithWriteActionPriority(progress, new ReadTask() {
-            @NotNull
+            @Nullable
             @Override
             public Continuation performInReadAction(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
+              if (!info.isValid(editor.getDocument())) {
+                updating.set(false);
+                return null;
+              }
               DocInfo newDocInfo = info.getInfo();
               return new Continuation(() -> {
                 updating.set(false);
                 if (newDocInfo.text != null && !oldText.equals(newDocInfo.text)) {
-                  updateText(newDocInfo, textConsumer, info, hint);
+                  updateText(newDocInfo.text, textConsumer, hint, editor);
                 }
               });
             }
@@ -982,30 +873,18 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       });
     }
 
-    private void updateText(@NotNull DocInfo docInfo,
-                            @NotNull Consumer<String> textConsumer,
-                            @NotNull Info info,
-                            @NotNull LightweightHint hint) {
-      if (docInfo.text == null) return;
-      textConsumer.consume(docInfo.text);
-      if (docInfo.docProvider != null && docInfo.documentationAnchor != null) {
-        fulfillDocInfo(docInfo.text, docInfo.docProvider, info.myElementAtPointer,
-                       docInfo.documentationAnchor, textConsumer, hint);
-      }
-    }
-
-    public void showHint(@NotNull LightweightHint hint) {
-      if (myEditor.isDisposed()) return;
+    public void showHint(@NotNull LightweightHint hint, @NotNull Editor editor) {
+      if (editor.isDisposed()) return;
       final HintManagerImpl hintManager = HintManagerImpl.getInstanceImpl();
       short constraint = HintManager.ABOVE;
-      Point p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+      Point p = HintManagerImpl.getHintPosition(hint, editor, getPosition(editor), constraint);
       if (p.y - hint.getComponent().getPreferredSize().height < 0) {
         constraint = HintManager.UNDER;
-        p = HintManagerImpl.getHintPosition(hint, myEditor, myPosition, constraint);
+        p = HintManagerImpl.getHintPosition(hint, editor, getPosition(editor), constraint);
       }
-      hintManager.showEditorHint(hint, myEditor, p,
+      hintManager.showEditorHint(hint, editor, p,
                                  HintManager.HIDE_BY_ANY_KEY | HintManager.HIDE_BY_TEXT_CHANGE | HintManager.HIDE_BY_SCROLLING,
-                                 0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, constraint).setContentActive(false));
+                                 0, false, HintManagerImpl.createHintHint(editor, p, hint, constraint).setContentActive(false));
     }
   }
 
@@ -1072,148 +951,17 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   }
 
   private static class DocInfo {
-    public static final DocInfo EMPTY = new DocInfo(null, null, null);
+    public static final DocInfo EMPTY = new DocInfo(null, null);
 
     @Nullable public final String text;
     @Nullable public final DocumentationProvider docProvider;
-    @Nullable public final PsiElement documentationAnchor;
 
-    DocInfo(@Nullable String text, @Nullable DocumentationProvider provider, @Nullable PsiElement documentationAnchor) {
+    DocInfo(@Nullable String text, @Nullable DocumentationProvider provider) {
       this.text = text;
       docProvider = provider;
-      this.documentationAnchor = documentationAnchor;
     }
   }
-
-  private class QuickDocInfoPane extends JBLayeredPane {
-    private static final int BUTTON_HGAP = 5;
-
-    @NotNull private final List<JComponent> myButtons = new ArrayList<>();
-
-    @NotNull private final JComponent myBaseDocControl;
-
-    private final int myMinWidth;
-    private final int myMinHeight;
-    private final int myButtonWidth;
-
-    QuickDocInfoPane(@NotNull PsiElement documentationAnchor,
-                     @NotNull PsiElement elementUnderMouse,
-                     @NotNull JComponent baseDocControl) {
-      myBaseDocControl = baseDocControl;
-
-      PresentationFactory presentationFactory = new PresentationFactory();
-      for (AbstractDocumentationTooltipAction action : ourTooltipActions) {
-        Icon icon = action.getTemplatePresentation().getIcon();
-        Dimension minSize = new Dimension(icon.getIconWidth(), icon.getIconHeight());
-        ActionButton actionButton =
-          new ActionButton(action, presentationFactory.getPresentation(action), IdeTooltipManager.IDE_TOOLTIP_PLACE, minSize) {
-            @Override
-            protected boolean checkSkipPressForEvent(@NotNull MouseEvent e) {
-              return e.getButton() != MouseEvent.BUTTON1;
-            }
-          };
-        myButtons.add(actionButton);
-        action.setDocInfo(documentationAnchor, elementUnderMouse);
-      }
-      Collections.reverse(myButtons);
-
-      setPreferredSize(baseDocControl.getPreferredSize());
-      setMaximumSize(baseDocControl.getMaximumSize());
-      setMinimumSize(baseDocControl.getMinimumSize());
-      setBackground(baseDocControl.getBackground());
-
-      add(baseDocControl, Integer.valueOf(0));
-      int minWidth = 0;
-      int minHeight = 0;
-      int buttonWidth = 0;
-      for (JComponent button : myButtons) {
-        button.setBorder(null);
-        button.setBackground(baseDocControl.getBackground());
-        add(button, Integer.valueOf(1));
-        button.setVisible(false);
-        Dimension preferredSize = button.getPreferredSize();
-        minWidth += preferredSize.width;
-        minHeight = Math.max(minHeight, preferredSize.height);
-        buttonWidth = Math.max(buttonWidth, preferredSize.width);
-      }
-      myButtonWidth = buttonWidth;
-
-      int margin = 2;
-      myMinWidth = minWidth + margin * 2 + (myButtons.size() - 1) * BUTTON_HGAP;
-      myMinHeight = minHeight + margin * 2;
-    }
-
-    public int getButtonWidth() {
-      return myButtonWidth;
-    }
-
-    @Override
-    public Dimension getPreferredSize() {
-      return expandIfNecessary(myBaseDocControl.getPreferredSize());
-    }
-
-    @Override
-    public void setPreferredSize(Dimension preferredSize) {
-      super.setPreferredSize(preferredSize);
-      myBaseDocControl.setPreferredSize(preferredSize);
-    }
-
-    @Override
-    public Dimension getMinimumSize() {
-      return expandIfNecessary(myBaseDocControl.getMinimumSize());
-    }
-
-    @Override
-    public Dimension getMaximumSize() {
-      return expandIfNecessary(myBaseDocControl.getMaximumSize());
-    }
-
-    @NotNull
-    private Dimension expandIfNecessary(@NotNull Dimension base) {
-      if (base.width >= myMinWidth && base.height >= myMinHeight) {
-        return base;
-      }
-      return new Dimension(Math.max(myMinWidth, base.width), Math.max(myMinHeight, base.height));
-    }
-
-    @Override
-    public void doLayout() {
-      Rectangle bounds = getBounds();
-      myBaseDocControl.setBounds(new Rectangle(0, 0, bounds.width, bounds.height));
-
-      int x = bounds.width;
-      for (JComponent button : myButtons) {
-        Dimension buttonSize = button.getPreferredSize();
-        x -= buttonSize.width;
-        button.setBounds(x, 0, buttonSize.width, buttonSize.height);
-        x -= BUTTON_HGAP;
-      }
-    }
-
-    public void mouseEntered(@NotNull MouseEvent e) {
-      processStateChangeIfNecessary(e.getLocationOnScreen(), true);
-    }
-
-    public void mouseExited(@NotNull MouseEvent e) {
-      processStateChangeIfNecessary(e.getLocationOnScreen(), false);
-    }
-
-    private void processStateChangeIfNecessary(@NotNull Point mouseScreenLocation, boolean mouseEntered) {
-      // Don't show 'view quick doc' buttons if docked quick doc control is already active.
-      if (myDocumentationManager.hasActiveDockedDocWindow()) {
-        return;
-      }
-
-      // Skip event triggered when mouse leaves action button area.
-      if (!mouseEntered && new Rectangle(getLocationOnScreen(), getSize()).contains(mouseScreenLocation)) {
-        return;
-      }
-      for (JComponent button : myButtons) {
-        button.setVisible(mouseEntered);
-      }
-    }
-  }
-
+  
   private class QuickDocHyperlinkListener implements HyperlinkListener {
     @NotNull private final DocumentationProvider myProvider;
     @NotNull private final PsiElement myContext;

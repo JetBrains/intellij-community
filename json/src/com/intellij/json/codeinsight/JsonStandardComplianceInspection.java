@@ -19,6 +19,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonDialectUtil;
 import com.intellij.json.JsonElementTypes;
 import com.intellij.json.psi.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,6 +51,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   private static final Logger LOG = Logger.getInstance(JsonStandardComplianceInspection.class);
 
   public boolean myWarnAboutComments = true;
+  public boolean myWarnAboutNanInfinity = true;
+  public boolean myWarnAboutTrailingCommas = true;
   public boolean myWarnAboutMultipleTopLevelValues = true;
 
   @NotNull
@@ -66,69 +69,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-    return new JsonElementVisitor() {
-      @Override
-      public void visitComment(PsiComment comment) {
-        if (myWarnAboutComments) {
-          if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
-            holder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"), ProblemHighlightType.WEAK_WARNING);
-          }
-        }
-      }
-
-      @Override
-      public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
-        if (JsonPsiUtil.getElementTextWithoutHostEscaping(stringLiteral).startsWith("'")) {
-          holder.registerProblem(stringLiteral, JsonBundle.message("inspection.compliance.msg.single.quoted.strings"),
-                                 new AddDoubleQuotesFix());
-        }
-        // May be illegal property key as well
-        super.visitStringLiteral(stringLiteral);
-      }
-
-      @Override
-      public void visitLiteral(@NotNull JsonLiteral literal) {
-        if (JsonPsiUtil.isPropertyKey(literal) && !JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"")) {
-          holder.registerProblem(literal, JsonBundle.message("inspection.compliance.msg.illegal.property.key"), new AddDoubleQuotesFix());
-        }
-        super.visitLiteral(literal);
-      }
-
-      @Override
-      public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
-        holder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.bad.token"), new AddDoubleQuotesFix());
-        // May be illegal property key as well
-        super.visitReferenceExpression(reference);
-      }
-
-      @Override
-      public void visitArray(@NotNull JsonArray array) {
-        final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
-        if (trailingComma != null) {
-          holder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
-        }
-        super.visitArray(array);
-      }
-
-      @Override
-      public void visitObject(@NotNull JsonObject object) {
-        final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
-        if (trailingComma != null) {
-          holder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
-        }
-        super.visitObject(object);
-      }
-
-      @Override
-      public void visitValue(@NotNull JsonValue value) {
-        if (value.getContainingFile() instanceof JsonFile) {
-          final JsonFile jsonFile = (JsonFile)value.getContainingFile();
-          if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
-            holder.registerProblem(value, JsonBundle.message("inspection.compliance.msg.multiple.top.level.values"));
-          }
-        }
-      }
-    };
+    if (!JsonDialectUtil.isStandardJson(holder.getFile())) return PsiElementVisitor.EMPTY_VISITOR;
+    return new StandardJsonValidatingElementVisitor(holder);
   }
 
   @Nullable
@@ -150,6 +92,8 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
     final MultipleCheckboxOptionsPanel optionsPanel = new MultipleCheckboxOptionsPanel(this);
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.comments"), "myWarnAboutComments");
     optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.multiple.top.level.values"), "myWarnAboutMultipleTopLevelValues");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.trailing.comma"), "myWarnAboutTrailingCommas");
+    optionsPanel.addCheckbox(JsonBundle.message("inspection.compliance.option.nan.infinity"), "myWarnAboutNanInfinity");
     return optionsPanel;
   }
 
@@ -198,6 +142,103 @@ public class JsonStandardComplianceInspection extends LocalInspectionTool {
         result.append('\\');
       }
       return result.toString();
+    }
+  }
+
+  protected class StandardJsonValidatingElementVisitor extends JsonElementVisitor {
+    private final ProblemsHolder myHolder;
+
+    public StandardJsonValidatingElementVisitor(ProblemsHolder holder) {myHolder = holder;}
+
+    protected boolean allowComments() { return false; }
+    protected boolean allowSingleQuotes() { return false; }
+    protected boolean allowIdentifierPropertyNames() { return false; }
+    protected boolean allowTrailingCommas() { return false; }
+
+    protected boolean isValidPropertyName(@NotNull PsiElement literal) {
+      return literal instanceof JsonLiteral && JsonPsiUtil.getElementTextWithoutHostEscaping(literal).startsWith("\"");
+    }
+
+    @Override
+    public void visitComment(PsiComment comment) {
+      if (!allowComments() && myWarnAboutComments) {
+        if (JsonStandardComplianceProvider.shouldWarnAboutComment(comment)) {
+          myHolder.registerProblem(comment, JsonBundle.message("inspection.compliance.msg.comments"), ProblemHighlightType.WEAK_WARNING);
+        }
+      }
+    }
+
+    @Override
+    public void visitStringLiteral(@NotNull JsonStringLiteral stringLiteral) {
+      if (!allowSingleQuotes() && JsonPsiUtil.getElementTextWithoutHostEscaping(stringLiteral).startsWith("'")) {
+        myHolder.registerProblem(stringLiteral, JsonBundle.message("inspection.compliance.msg.single.quoted.strings"),
+                                 new AddDoubleQuotesFix());
+      }
+      // May be illegal property key as well
+      super.visitStringLiteral(stringLiteral);
+    }
+
+    @Override
+    public void visitLiteral(@NotNull JsonLiteral literal) {
+      if (JsonPsiUtil.isPropertyKey(literal) && !isValidPropertyName(literal)) {
+        myHolder.registerProblem(literal, JsonBundle.message("inspection.compliance.msg.illegal.property.key"), new AddDoubleQuotesFix());
+      }
+
+      // for standard JSON, the inspection for NaN, Infinity and -Infinity is now configurable
+      if (!allowNanInfinity() && literal instanceof JsonNumberLiteral && myWarnAboutNanInfinity) {
+        final String text = JsonPsiUtil.getElementTextWithoutHostEscaping(literal);
+        if (StandardJsonLiteralChecker.INF.equals(text) ||
+            StandardJsonLiteralChecker.MINUS_INF.equals(text) ||
+            StandardJsonLiteralChecker.NAN.equals(text)) {
+          myHolder.registerProblem(literal, JsonBundle.message("syntax.error.illegal.floating.point.literal"));
+        }
+      }
+      super.visitLiteral(literal);
+    }
+
+    protected boolean allowNanInfinity() {
+      return false;
+    }
+
+    @Override
+    public void visitReferenceExpression(@NotNull JsonReferenceExpression reference) {
+      if (!allowIdentifierPropertyNames() || !JsonPsiUtil.isPropertyKey(reference) || !isValidPropertyName(reference)) {
+        myHolder.registerProblem(reference, JsonBundle.message("inspection.compliance.msg.bad.token"), new AddDoubleQuotesFix());
+      }
+      // May be illegal property key as well
+      super.visitReferenceExpression(reference);
+    }
+
+    @Override
+    public void visitArray(@NotNull JsonArray array) {
+      if (myWarnAboutTrailingCommas && !allowTrailingCommas()) {
+        final PsiElement trailingComma = findTrailingComma(array, JsonElementTypes.R_BRACKET);
+        if (trailingComma != null) {
+          myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
+        }
+      }
+      super.visitArray(array);
+    }
+
+    @Override
+    public void visitObject(@NotNull JsonObject object) {
+      if (myWarnAboutTrailingCommas && !allowTrailingCommas()) {
+        final PsiElement trailingComma = findTrailingComma(object, JsonElementTypes.R_CURLY);
+        if (trailingComma != null) {
+          myHolder.registerProblem(trailingComma, JsonBundle.message("inspection.compliance.msg.trailing.comma"));
+        }
+      }
+      super.visitObject(object);
+    }
+
+    @Override
+    public void visitValue(@NotNull JsonValue value) {
+      if (value.getContainingFile() instanceof JsonFile) {
+        final JsonFile jsonFile = (JsonFile)value.getContainingFile();
+        if (myWarnAboutMultipleTopLevelValues && value.getParent() == jsonFile && value != jsonFile.getTopLevelValue()) {
+          myHolder.registerProblem(value, JsonBundle.message("inspection.compliance.msg.multiple.top.level.values"));
+        }
+      }
     }
   }
 }

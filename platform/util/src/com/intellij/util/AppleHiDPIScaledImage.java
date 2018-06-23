@@ -7,6 +7,7 @@ import java.awt.*;
 import java.awt.image.BufferedImage;
 
 /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
+@Deprecated
 public class AppleHiDPIScaledImage {
   public static BufferedImage create(int width, int height, int imageType) {
     return new CImage.HiDPIScaledImage(width, height, imageType) {

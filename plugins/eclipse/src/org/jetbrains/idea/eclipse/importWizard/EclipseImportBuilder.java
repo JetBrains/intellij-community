@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.eclipse.importWizard;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
@@ -56,8 +57,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import java.util.HashMap;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import icons.EclipseIcons;
@@ -405,9 +404,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       if (codeStyleData != null) {
         CodeStyleSettings projectSettings = codeStyleData.importCodeStyle();
         if (projectSettings != null) {
-          CodeStyleSettingsManager manager = CodeStyleSettingsManager.getInstance(project);
-          manager.USE_PER_PROJECT_SETTINGS = true;
-          manager.setMainProjectCodeStyle(projectSettings);
+          CodeStyle.setMainProjectSettings(project, projectSettings);
         }
       }
     }

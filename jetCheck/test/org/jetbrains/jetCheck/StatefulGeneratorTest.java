@@ -5,8 +5,10 @@ package org.jetbrains.jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.function.Supplier;
 
@@ -22,7 +24,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     Generator<List<InsertChar>> gen = from(data -> {
       AtomicInteger modelLength = new AtomicInteger(0);
       Generator<List<InsertChar>> cmds = listsOf(from(cmdData -> {
-        int index = cmdData.drawInt(IntDistribution.uniform(0, modelLength.getAndIncrement()));
+        int index = cmdData.generate(integers(0, modelLength.getAndIncrement()));
         char c = cmdData.generate(asciiLetters());
         return new InsertChar(c, index);
       }));
@@ -38,7 +40,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
     Scenario minHistory = checkFalsified(Scenario.scenarios(() -> env -> {
       StringBuilder sb = new StringBuilder();
       env.executeCommands(withRecursion(insertStringCmd(sb), deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 33).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 29).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
@@ -57,7 +59,7 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       };
 
       env.executeCommands(withRecursion(insertStringCmd(sb), replace, deleteStringCmd(sb), checkDoesNotContain(sb, "A")));
-    }), Scenario::ensureSuccessful, 58).getMinimalCounterexample().getExampleValue();
+    }), Scenario::ensureSuccessful, 52).getMinimalCounterexample().getExampleValue();
 
     assertEquals("commands:\n" +
                  "  insert A at 0\n" +
@@ -91,6 +93,33 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       catch (PropertyFalsified fromRecheck) {
         assertEquals(e.getBreakingValue(), fromRecheck.getBreakingValue());
       }
+    }
+  }
+
+  // we shouldn't fail on incomplete data
+  // because the test might have failed in the middle of some command execution,
+  // and after we fixed the reason of test failure, the command might just want to continue working,
+  // but there's no saved data for that
+  public void testRecheckingOnIncompleteData() {
+    AtomicBoolean shouldFail = new AtomicBoolean(true);
+    Supplier<ImperativeCommand> command = () -> env -> {
+      for (int i = 0; i < 100; i++) {
+        env.generateValue(integers(0, 100), null);
+        if (shouldFail.get()) {
+          throw new AssertionError();
+        }
+      }
+    };
+
+    try {
+      PropertyChecker.customized().silent().checkScenarios(command);
+      fail();
+    }
+    catch (PropertyFalsified e) {
+      shouldFail.set(false);
+
+      //noinspection deprecation
+      PropertyChecker.customized().silent().rechecking(e.getFailure().getMinimalCounterexample().getSerializedData()).checkScenarios(command);
     }
   }
 
@@ -131,6 +160,26 @@ public class StatefulGeneratorTest extends PropertyCheckerTestCase {
       sb.delete(start, end);
     };
   }
+
+  private ImperativeCommand heavyCommand() {
+    Object[] heavyObject = new Object[100_000];
+    heavyObject[42] = new Object();
+    return new ImperativeCommand() {
+      @Override
+      public void performCommand(@NotNull Environment env) {}
+
+      @Override
+      public String toString() {
+        return super.toString() + Arrays.toString(heavyObject);
+      }
+    };
+  }
+
+  public void testDontFailByOutOfMemoryDueToLeakingObjectsPassedIntoGenerators() {
+    PropertyChecker.customized().checkScenarios(() -> env -> 
+      env.executeCommands(from(data -> data.generate(sampledFrom(heavyCommand(), heavyCommand(), heavyCommand())))));
+  }
+
 }
 
 class InsertChar {

@@ -11,6 +11,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.roots.impl.ProjectFileIndexImpl;
 import com.intellij.openapi.roots.ui.configuration.SourceRootPresentation;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.registry.Registry;
@@ -18,9 +19,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import javax.swing.*;
 
@@ -33,7 +37,7 @@ public class SourceRootIconProvider {
     }
     else {
       Icon excludedIcon = getIconIfExcluded(project, vFile);
-      return excludedIcon != null ? excludedIcon : PlatformIcons.DIRECTORY_CLOSED_ICON;
+      return excludedIcon != null ? excludedIcon : PlatformIcons.FOLDER_ICON;
     }
   }
   
@@ -49,31 +53,39 @@ public class SourceRootIconProvider {
   }
 
   @Nullable
-  public static Icon getFileLayerIcon(VirtualFile vFile, Project project) {
-    ProjectFileIndex index = ProjectFileIndex.getInstance(project);
+  private static Icon calcFileLayerIcon(VirtualFile vFile, Project project) {
+    ProjectFileIndexImpl index = (ProjectFileIndexImpl)ProjectFileIndex.getInstance(project);
     if (vFile != null) {
+      VirtualFile parent = vFile.getParent();
+      
       if (index.isExcluded(vFile)) {
         //If the parent directory is also excluded it'll have a special icon (see DirectoryIconProvider), so it makes no sense to add
         // additional marks for all files under it.
-        if (!index.isExcluded(vFile.getParent())) {
+        if (parent == null || !index.isExcluded(parent)) {
           return AllIcons.Nodes.ExcludedFromCompile;
         }
       }
       else {
-        SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
-        if (sourceFolder != null) {
-          SourceFolder parentRoot = ProjectRootsUtil.getModuleSourceRoot(vFile.getParent(), project);
+        JpsModuleSourceRootType<?> rootType = index.getSourceRootType(vFile);
+        if (rootType != null) {
+          JpsModuleSourceRootType<?> parentRootType = parent == null ? null : index.getSourceRootType(parent);
+
           // do not mark files under folder of the same root type (e.g. test root file under test root dir)
           // but mark file if they are under different root type (e.g. test root file under source root dir)
-          if (parentRoot == null || !sourceFolder.getRootType().equals(parentRoot.getRootType())) {
-            return SourceRootPresentation.getSourceRootFileLayerIcon(sourceFolder);
+          if (parentRootType == null || !rootType.equals(parentRootType)) {
+            // calculating getModuleSourceRoot is O(M), where M - number of source folder entries in the module,
+            // so it should be only called when absolutely needed.
+            SourceFolder sourceFolder = ProjectRootsUtil.getModuleSourceRoot(vFile, project);
+            if (sourceFolder != null) {
+              return SourceRootPresentation.getSourceRootFileLayerIcon(sourceFolder);
+            }
           }
         }
       }
     }
     return null;
   }
-  
+
   public static class DirectoryProvider extends IconProvider implements DumbAware {
     @Override
     public Icon getIcon(@NotNull final PsiElement element, final int flags) {
@@ -92,7 +104,9 @@ public class SourceRootIconProvider {
       if (element instanceof PsiFile) {
         Project project = ((PsiFile)element).getProject();
         VirtualFile virtualFile = ((PsiFile)element).getVirtualFile();
-        return getFileLayerIcon(virtualFile, project);
+        return CachedValuesManager.getCachedValue((PsiElement)element,
+                                                  () -> CachedValueProvider.Result.create(calcFileLayerIcon(virtualFile, project),
+                                                                                          ProjectRootManager.getInstance(project)));
       }
       return null;
     }

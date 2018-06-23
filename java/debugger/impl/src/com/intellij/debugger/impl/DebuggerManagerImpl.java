@@ -11,6 +11,7 @@ import com.intellij.debugger.ui.breakpoints.StackCapturingLineBreakpoint;
 import com.intellij.debugger.ui.tree.render.BatchEvaluator;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.JavaExecutionUtil;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.execution.configurations.RemoteConnection;
@@ -19,7 +20,6 @@ import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
@@ -57,10 +57,6 @@ import javax.swing.*;
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
 import java.util.*;
 import java.util.jar.Attributes;
 import java.util.stream.Stream;
@@ -359,11 +355,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
     myCustomPositionManagerFactories.add(factory);
   }
 
-  @Override
-  public void unregisterPositionManagerFactory(final Function<DebugProcess, PositionManager> factory) {
-    myCustomPositionManagerFactories.remove(factory);
-  }
-
   /* Remoting */
   private static void checkTargetJPDAInstalled(JavaParameters parameters) throws ExecutionException {
     final Sdk jdk = parameters.getJdk();
@@ -542,7 +533,10 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = handleSpacesInPath(agentFile.getAbsolutePath());
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
+                String name = f.getName();
+                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
+              });
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
               }
@@ -557,51 +551,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
         }
       }
     }
-  }
-
-  @Nullable
-  private static String handleSpacesInPath(String agentPath) {
-    if (agentPath.contains(" ")) {
-      File targetDir = new File(PathManager.getSystemPath(), "captureAgent");
-      String res = copyAgent(agentPath, targetDir);
-      if (res == null) {
-        try {
-          targetDir = FileUtil.createTempDirectory("capture", "jars");
-          res = copyAgent(agentPath, targetDir);
-          if (res == null && targetDir.getAbsolutePath().contains(" ")) {
-            LOG.info("Capture agent was not used since the agent path contained spaces: " + agentPath);
-            return null;
-          }
-        }
-        catch (IOException e) {
-          LOG.info(e);
-          return null;
-        }
-      }
-
-      return res;
-    }
-    return agentPath;
-  }
-
-  @Nullable
-  private static String copyAgent(String agentPath, File targetDir) {
-    if (!targetDir.getAbsolutePath().contains(" ")) {
-      try {
-        //noinspection ResultOfMethodCallIgnored
-        targetDir.mkdirs();
-        Path source = Paths.get(agentPath);
-        Path target = targetDir.toPath().resolve(AGENT_FILE_NAME);
-        Files.copy(source, target, StandardCopyOption.REPLACE_EXISTING);
-        Files.copy(source.getParent().resolve(STORAGE_FILE_NAME), targetDir.toPath().resolve(STORAGE_FILE_NAME),
-                   StandardCopyOption.REPLACE_EXISTING);
-        return target.toString();
-      }
-      catch (IOException e) {
-        LOG.info(e);
-      }
-    }
-    return null;
   }
 
   private static String generateAgentSettings() {
@@ -621,7 +570,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
       File file = FileUtil.createTempFile("capture", ".props");
       try (FileOutputStream out = new FileOutputStream(file)) {
         properties.store(out, null);
-        return file.getAbsolutePath();
+        return file.toURI().toASCIIString();
       }
     }
     catch (IOException e) {

@@ -3,6 +3,7 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,8 +17,6 @@ import java.awt.event.MouseEvent;
  * @author max
  */
 public class CaptionPanel extends JPanel {
-  private static final Color CNT_COLOR = new JBColor(Gray._240, Gray._90);
-  private static final Color BND_COLOR = new JBColor(Gray._240, Gray._90);
 
   public static final Color CNT_ACTIVE_COLOR = new JBColor(Gray._202, Gray._55);
   public static final Color CNT_ACTIVE_BORDER_COLOR = new JBColor(new NotNullProducer<Color>() {
@@ -26,13 +25,17 @@ public class CaptionPanel extends JPanel {
     }
   });
 
-  public static final Color BND_ACTIVE_COLOR = new JBColor(Gray._239, Gray._90);
-
-  private static final JBColor TOP_FLICK_ACTIVE = new JBColor(Gray._255, Gray._110);
-  private static final JBColor TOP_FLICK_PASSIVE = new JBColor(Gray._255, BND_COLOR);
-
-  private static final JBColor BOTTOM_FLICK_ACTIVE = new JBColor(Gray._128, Gray._35);
-  private static final JBColor BOTTOM_FLICK_PASSIVE = new JBColor(Gray._192, Gray._75);
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
+   * to be removed in 2019.1
+   */
+  @Deprecated public static final Color BND_ACTIVE_COLOR = new JBColor(new NotNullProducer<Color>() {
+    @NotNull
+    @Override
+    public Color produce() {
+      return JBUI.CurrentTheme.Popup.borderColor(true);
+    }
+  });
 
   private boolean myActive = false;
   private ActiveComponent myButtonComponent;
@@ -48,14 +51,8 @@ public class CaptionPanel extends JPanel {
 
     Graphics2D g2d = (Graphics2D) g;
 
-    g.setColor(myActive ? TOP_FLICK_ACTIVE : TOP_FLICK_PASSIVE);
-    UIUtil.drawLine(g, 0, 0, getWidth(), 0);
-    g.setColor(myActive ? BOTTOM_FLICK_ACTIVE : BOTTOM_FLICK_PASSIVE);
-    UIUtil.drawLine(g, 0, getHeight() - 1, getWidth(), getHeight() - 1);
-    g2d.setPaint(myActive ? UIUtil.getGradientPaint(0, 0, BND_ACTIVE_COLOR, 0, getHeight(), CNT_ACTIVE_COLOR) :
-                            UIUtil.getGradientPaint(0, 0, BND_COLOR, 0, getHeight(), CNT_COLOR));
-
-    g2d.fillRect(0, 1, getWidth(), getHeight() - 2);
+    g2d.setPaint(JBUI.CurrentTheme.Popup.headerBackground(myActive));
+    g2d.fillRect(0, 0, getWidth(), getHeight() - 1);
   }
 
   public void setActive(final boolean active) {
@@ -95,7 +92,16 @@ public class CaptionPanel extends JPanel {
     return c != null && c != myButtonComponent;
   }
 
+  /**
+   * @deprecated use {@link JBUI.CurrentTheme.Popup#borderColor} instead,
+   * to be removed in 2019.1
+   */
+  @Deprecated
   public static Color getBorderColor(boolean isActive) {
-    return isActive ? JBColor.GRAY : JBColor.LIGHT_GRAY;
+    return JBUI.CurrentTheme.Popup.borderColor(isActive);
+  }
+
+  protected boolean containsSettingsControls() {
+    return mySettingComponent != null;
   }
 }

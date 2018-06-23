@@ -20,7 +20,6 @@ class A {
 
     @Override
     public int hashCode() {
-
         int result = Objects.hash(i, s);
         result = 31 * result + Arrays.hashCode(a1);
         result = 31 * result + Arrays.hashCode(a2);

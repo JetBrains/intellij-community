@@ -47,6 +47,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     }
   }
 
+  @NotNull
   @Override
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new ExtractedDirectoryPresentation(this); 
@@ -67,6 +68,7 @@ public class ExtractedDirectoryPackagingElement extends FileOrDirectoryCopyPacka
     return jarRoot != null ? jarRoot.findFileByRelativePath(myPathInJar) : null;
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
                                                           @NotNull AntCopyInstructionCreator creator,

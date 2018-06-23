@@ -39,7 +39,7 @@ public class PyChooseRequirementsDialog extends DialogWrapper {
     myRequirementsChooser = new ElementsChooser<PyRequirement>(true) {
       @Override
       public String getItemText(@NotNull PyRequirement requirement) {
-        return requirement.toString();
+        return requirement.getPresentableText();
       }
     };
     myRequirementsChooser.setElements(requirements, true);

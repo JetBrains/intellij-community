@@ -102,7 +102,7 @@ public class PyStdlibClassMembersProvider extends PyClassMembersProviderBase {
   private static void addMethodsFromAttr(PyFile socketFile, List<PyCustomMember> result, final String attrName) {
     final PyTargetExpression socketMethods = socketFile.findTopLevelAttribute(attrName);
     if (socketMethods != null) {
-      final List<String> methods = PyUtil.getStringListFromTargetExpression(socketMethods);
+      final List<String> methods = PyUtil.strListValue(socketMethods.findAssignedValue());
       if (methods != null) {
         for (String name : methods) {
           result.add(new PyCustomMember(name).resolvesTo("_socket").toClass("SocketType").toFunction(name));

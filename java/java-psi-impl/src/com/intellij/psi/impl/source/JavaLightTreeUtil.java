@@ -21,6 +21,7 @@ import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.impl.cache.RecordUtil;
 import com.intellij.psi.impl.source.tree.ElementType;
 import com.intellij.psi.impl.source.tree.LightTreeUtil;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,5 +65,28 @@ public class JavaLightTreeUtil {
       node = findExpressionChild(tree, node);
     }
     return node;
+  }
+
+  @Nullable
+  public static LighterASTNode skipParenthesesDown(@NotNull LighterAST tree, @Nullable LighterASTNode expression) {
+    while (expression != null && expression.getTokenType() == PARENTH_EXPRESSION) {
+      expression = findExpressionChild(tree, expression);
+    }
+    return expression;
+  }
+
+  /**
+   * Returns true if given element (which is modifier list owner) has given explicit modifier
+   *
+   * @param tree an AST tree
+   * @param modifierListOwner element to check modifier of
+   * @param modifierKeyword modifier to look for (e.g. {@link JavaTokenType#VOLATILE_KEYWORD}
+   * @return true if given element has given explicit modifier
+   */
+  public static boolean hasExplicitModifier(@NotNull LighterAST tree,
+                                            @Nullable LighterASTNode modifierListOwner,
+                                            @NotNull IElementType modifierKeyword) {
+    LighterASTNode modifierList = LightTreeUtil.firstChildOfType(tree, modifierListOwner, MODIFIER_LIST);
+    return LightTreeUtil.firstChildOfType(tree, modifierList, modifierKeyword) != null;
   }
 }

@@ -58,7 +58,7 @@ public class TwoColorsIcon extends ColorIcon {
 
   @NotNull
   @Override
-  protected TwoColorsIcon copy() {
+  public TwoColorsIcon copy() {
     return new TwoColorsIcon(this);
   }
 

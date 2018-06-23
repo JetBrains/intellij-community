@@ -12,7 +12,6 @@
     <orderEntry type="library" exported="" name="picocontainer" level="project" />
     <orderEntry type="module" module-name="intellij.platform.resources.en" exported="" />
     <orderEntry type="library" name="automaton" level="project" />
-    <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

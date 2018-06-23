@@ -19,6 +19,7 @@ import com.intellij.codeInsight.controlflow.impl.ConditionalInstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.ControlFlowImpl;
 import com.intellij.codeInsight.controlflow.impl.InstructionImpl;
 import com.intellij.codeInsight.controlflow.impl.TransparentInstructionImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -35,6 +36,9 @@ import java.util.List;
  * @author oleg
  */
 public class ControlFlowBuilder {
+  
+  public static final Logger LOG = Logger.getInstance(ControlFlowBuilder.class);
+  
   // Here we store all the instructions
   public List<Instruction> instructions;
 
@@ -80,20 +84,31 @@ public class ControlFlowBuilder {
   @NotNull
   public ControlFlow getCompleteControlFlow() {
     ArrayList<Instruction> result = ContainerUtil.newArrayList();
+    int processedTransparentInstructions = 0;
     for (Instruction instruction : instructions) {
       if (instruction instanceof TransparentInstruction) {
+        processedTransparentInstructions++;
+        
         Collection<Instruction> predecessors = instruction.allPred();
         Collection<Instruction> successors = instruction.allSucc();
+
         for (Instruction predecessor : predecessors) {
-          successors.forEach(successor -> addEdge(predecessor, successor));
+          predecessor.replaceSucc(instruction, successors);
         }
 
-        predecessors.forEach(el -> el.allSucc().remove(instruction));
-        successors.forEach(el -> el.allPred().remove(instruction));
+        for (Instruction successor : successors) {
+          successor.replacePred(instruction, predecessors);
+        }
+
       }
       else {
         result.add(instruction);
       }
+    }
+    
+    if (result.size() != instructionCount || processedTransparentInstructions != transparentInstructionCount) {
+      LOG.error("Control flow graph is inconsistent. Instructions: (" + result.size() + ", " + instructionCount + ")\n" +
+                "Transparent instructions: (" + processedTransparentInstructions + ", " + transparentInstructionCount + ")");
     }
 
     return new ControlFlowImpl(result.toArray(new Instruction[0]));
@@ -109,13 +124,8 @@ public class ControlFlowBuilder {
     if (beginInstruction == null || endInstruction == null) {
       return;
     }
-    if (!beginInstruction.allSucc().contains(endInstruction)) {
-      beginInstruction.allSucc().add(endInstruction);
-    }
-
-    if (!endInstruction.allPred().contains(beginInstruction)) {
-      endInstruction.allPred().add(beginInstruction);
-    }
+    beginInstruction.addSucc(endInstruction);
+    endInstruction.addPred(beginInstruction);
   }
 
   /**

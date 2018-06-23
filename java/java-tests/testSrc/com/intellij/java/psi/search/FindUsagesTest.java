@@ -1,24 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.search;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.find.findUsages.JavaFindUsagesHandler;
 import com.intellij.find.findUsages.JavaFindUsagesHandlerFactory;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -40,7 +25,6 @@ import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.IntArrayList;
-import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -54,7 +38,7 @@ public class FindUsagesTest extends PsiTestCase{
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/findUsages/" + getTestName(true);
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    createTestProjectStructure(root);
   }
 
   public void testOverloadConstructors() {
@@ -187,6 +171,20 @@ public class FindUsagesTest extends PsiTestCase{
     finally {
       tdf.tearDown();
     }
+  }
+
+  public void testImplicitToString() {
+    PsiClass aClass = myJavaFacade.findClass("Foo");
+    assertNotNull(aClass);
+    PsiMethod toString = assertOneElement(aClass.findMethodsByName("toString", false));
+
+    JavaFindUsagesHandlerFactory factory = JavaFindUsagesHandlerFactory.getInstance(myProject);
+    int[] count = {0};
+    factory.createFindUsagesHandler(toString, false).processElementUsages(toString, info -> {
+      count[0]++;
+      return true;
+    }, factory.getFindMethodOptions());
+    assertEquals(1, count[0]);
   }
 
   public static void doTest(PsiElement element, String[] fileNames, int[] starts, int[] ends) {

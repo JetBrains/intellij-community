@@ -20,13 +20,10 @@ import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VirtualFile
 import git4idea.branch.GitRebaseParams
-import git4idea.commands.GitCommandResult
-import git4idea.commands.GitImpl
-import git4idea.commands.GitLineHandler
-import git4idea.commands.GitLineHandlerListener
+import git4idea.commands.*
+import git4idea.push.GitPushParams
 import git4idea.rebase.GitInteractiveRebaseEditorHandler
 import git4idea.rebase.GitRebaseEditorService
-import git4idea.repo.GitRemote
 import git4idea.repo.GitRepository
 import java.io.File
 
@@ -51,16 +48,10 @@ class TestGitImpl : GitImpl() {
                                 val plainTextEditor: ((String) -> String)?)
 
   override fun push(repository: GitRepository,
-                    remote: GitRemote,
-                    spec: String,
-                    force: Boolean,
-                    updateTracking: Boolean,
-                    skipHook: Boolean,
-                    tagMode: String?,
+                    pushParams: GitPushParams,
                     vararg listeners: GitLineHandlerListener): GitCommandResult {
     pushListener?.invoke(repository)
-    return myPushHandler(repository) ?:
-        super.push(repository, remote, spec, force, updateTracking, skipHook, tagMode, *listeners)
+    return myPushHandler(repository) ?: super.push(repository, pushParams, *listeners)
   }
 
   override fun branchDelete(repository: GitRepository,
@@ -70,26 +61,26 @@ class TestGitImpl : GitImpl() {
     return myBranchDeleteHandler(repository) ?: super.branchDelete(repository, branchName, force, *listeners)
   }
 
-  override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitCommandResult {
-    return failOrCall(repository) {
+  override fun rebase(repository: GitRepository, params: GitRebaseParams, vararg listeners: GitLineHandlerListener): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
       super.rebase(repository, params, *listeners)
     }
   }
 
-  override fun rebaseAbort(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitCommandResult {
-    return failOrCall(repository) {
+  override fun rebaseAbort(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
       super.rebaseAbort(repository, *listeners)
     }
   }
 
-  override fun rebaseContinue(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitCommandResult {
-    return failOrCall(repository) {
+  override fun rebaseContinue(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
       super.rebaseContinue(repository, *listeners)
     }
   }
 
-  override fun rebaseSkip(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitCommandResult {
-    return failOrCall(repository) {
+  override fun rebaseSkip(repository: GitRepository, vararg listeners: GitLineHandlerListener?): GitRebaseCommandResult {
+    return failOrCallRebase(repository) {
       super.rebaseSkip(repository, *listeners)
     }
   }
@@ -160,9 +151,9 @@ class TestGitImpl : GitImpl() {
     interactiveRebaseEditor = null
   }
 
-  private fun failOrCall(repository: GitRepository, delegate: () -> GitCommandResult): GitCommandResult {
+  private fun failOrCallRebase(repository: GitRepository, delegate: () -> GitRebaseCommandResult): GitRebaseCommandResult {
     return if (myRebaseShouldFail(repository)) {
-      fatalResult()
+      GitRebaseCommandResult.normal(fatalResult())
     }
     else {
       delegate()

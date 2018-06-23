@@ -28,19 +28,12 @@ public class PsiSearchRequest {
   public final RequestResultProcessor processor;
   public final String containerName;
 
-  public PsiSearchRequest(@NotNull SearchScope searchScope,
-                          @NotNull String word,
-                          short searchContext,
-                          boolean caseSensitive,
-                          @NotNull RequestResultProcessor processor) {
-    this(searchScope, word, searchContext, caseSensitive, null, processor);
-  }
-  public PsiSearchRequest(@NotNull SearchScope searchScope,
-                          @NotNull String word,
-                          short searchContext,
-                          boolean caseSensitive,
-                          String containerName,
-                          @NotNull RequestResultProcessor processor) {
+  PsiSearchRequest(@NotNull SearchScope searchScope,
+                   @NotNull String word,
+                   short searchContext,
+                   boolean caseSensitive,
+                   String containerName,
+                   @NotNull RequestResultProcessor processor) {
     this.containerName = containerName;
     if (word.isEmpty()) {
       throw new IllegalArgumentException("Cannot search for elements with empty text");

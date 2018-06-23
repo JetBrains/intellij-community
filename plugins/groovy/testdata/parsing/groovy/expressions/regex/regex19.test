@@ -3,7 +3,7 @@
 Groovy script
   Compound regular expression
     PsiElement(regex begin)('/')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('$')
     GString injection
       PsiElement($)('$')
@@ -14,12 +14,12 @@ Groovy script
         Literal
           PsiElement(Integer)('5')
         PsiElement(})('}')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('$$$')
     GString injection
       PsiElement($)('$')
       Reference expression
         PsiElement(identifier)('ref')
-    GrStringContentImpl(GString content element)
+    GrStringContentImpl(STRING_CONTENT)
       PsiElement(regex content)('$$$')
     PsiElement(regex end)('/')

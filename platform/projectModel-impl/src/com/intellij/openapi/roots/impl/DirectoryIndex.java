@@ -38,14 +38,6 @@ public abstract class DirectoryIndex {
     return ServiceManager.getService(project, DirectoryIndex.class);
   }
 
-  /**
-   * The same as {@link #getInfoForFile} but works only for directories or file roots and returns {@code null} for directories
-   * which aren't included in project content or libraries
-   * @deprecated use {@link #getInfoForFile(com.intellij.openapi.vfs.VirtualFile)} instead
-   */
-  @Deprecated
-  public abstract DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir);
-
   @NotNull
   public abstract DirectoryInfo getInfoForFile(@NotNull VirtualFile file);
 
@@ -58,14 +50,6 @@ public abstract class DirectoryIndex {
 
   @Nullable
   public abstract String getPackageName(@NotNull VirtualFile dir);
-
-  /**
-   * @return true
-   */
-  @Deprecated
-  public boolean isInitialized() {
-    return true;
-  }
 
   @NotNull
   public abstract List<OrderEntry> getOrderEntries(@NotNull DirectoryInfo info);

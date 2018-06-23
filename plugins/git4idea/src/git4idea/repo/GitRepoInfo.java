@@ -38,6 +38,7 @@ public class GitRepoInfo {
   @NotNull private final Set<GitBranchTrackInfo> myBranchTrackInfos;
   @NotNull private final Collection<GitSubmoduleInfo> mySubmodules;
   @NotNull private final GitHooksInfo myHooksInfo;
+  private final boolean myIsShallow;
 
   public GitRepoInfo(@Nullable GitLocalBranch currentBranch,
                      @Nullable String currentRevision,
@@ -47,7 +48,8 @@ public class GitRepoInfo {
                      @NotNull Map<GitRemoteBranch, Hash> remoteBranches,
                      @NotNull Collection<GitBranchTrackInfo> branchTrackInfos,
                      @NotNull Collection<GitSubmoduleInfo> submodules,
-                     @NotNull GitHooksInfo hooksInfo) {
+                     @NotNull GitHooksInfo hooksInfo,
+                     boolean isShallow) {
     myCurrentBranch = currentBranch;
     myCurrentRevision = currentRevision;
     myState = state;
@@ -57,6 +59,7 @@ public class GitRepoInfo {
     myBranchTrackInfos = new LinkedHashSet<>(branchTrackInfos);
     mySubmodules = submodules;
     myHooksInfo = hooksInfo;
+    myIsShallow = isShallow;
   }
 
   @Nullable
@@ -110,6 +113,10 @@ public class GitRepoInfo {
     return myHooksInfo;
   }
 
+  public boolean isShallow() {
+    return myIsShallow;
+  }
+
   @Override
   public boolean equals(Object o) {
     if (this == o) return true;
@@ -126,6 +133,7 @@ public class GitRepoInfo {
     if (!areEqual(myRemoteBranches, info.myRemoteBranches)) return false;
     if (!mySubmodules.equals(info.mySubmodules)) return false;
     if (!myHooksInfo.equals(info.myHooksInfo)) return false;
+    if (myIsShallow != info.myIsShallow) return false;
 
     return true;
   }
@@ -141,6 +149,7 @@ public class GitRepoInfo {
     result = 31 * result + myBranchTrackInfos.hashCode();
     result = 31 * result + mySubmodules.hashCode();
     result = 31 * result + myHooksInfo.hashCode();
+    result = 31 * result + (myIsShallow ? 1 : 0);
     return result;
   }
 
@@ -178,5 +187,4 @@ public class GitRepoInfo {
       return b1.getKey().getName().equals(b2.getKey().getName()) && b1.getValue().equals(b2.getValue());
     }
   }
-
 }

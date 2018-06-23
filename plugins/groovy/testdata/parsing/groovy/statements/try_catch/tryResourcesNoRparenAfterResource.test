@@ -1,0 +1,20 @@
+try (def a {}
+-----
+Groovy script
+  Try statement
+    PsiElement(try)('try')
+    PsiWhiteSpace(' ')
+    Try resource list
+      PsiElement(()('(')
+      Variable definitions
+        Modifiers
+          PsiElement(def)('def')
+        PsiWhiteSpace(' ')
+        Variable
+          PsiElement(identifier)('a')
+      PsiErrorElement:')', ',', ';' or new line expected, got '{'
+        <empty list>
+    PsiWhiteSpace(' ')
+    Open block
+      PsiElement({)('{')
+      PsiElement(})('}')

@@ -63,6 +63,7 @@ import javax.swing.tree.*;
 import java.awt.*;
 import java.util.*;
 import java.util.List;
+import java.util.function.Predicate;
 
 public class ModuleStructureConfigurable extends BaseStructureConfigurable implements Place.Navigator {
   private static final Comparator<MyNode> NODE_COMPARATOR = (o1, o2) -> {
@@ -291,12 +292,14 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   public boolean updateProjectTree(final Module[] modules) {
     if (myRoot.getChildCount() == 0) return false; //isn't visible
     List<Pair<MyNode, Module>> nodes = new ArrayList<>(modules.length);
+    Set<MyNode> nodeSet = new HashSet<>();
     for (Module module : modules) {
       MyNode node = findModuleNode(module);
       LOG.assertTrue(node != null, "Module " + module.getName() + " is not in project.");
       nodes.add(Pair.create(node, module));
+      nodeSet.add(node);
     }
-    ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper();
+    ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper(nodeSet::contains);
     helper.moveModuleNodesToProperGroup(nodes, myRoot, getTreeModel(), myTree);
     return true;
   }
@@ -306,14 +309,15 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
   }
 
   @NotNull
-  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper() {
+  private ModuleGroupingTreeHelper<Module, MyNode> createGroupingHelper(Predicate<MyNode> nodeToBeMovedFilter) {
     ModuleGrouper grouper = getModuleGrouper();
     ModuleGroupingImplementation<Module> grouping = ModuleGroupingTreeHelper.createDefaultGrouping(grouper);
     return ModuleGroupingTreeHelper.forTree(myRoot, node -> node instanceof ModuleGroupNode ? ((ModuleGroupNode)node).getModuleGroup() : null,
                                             node -> node instanceof ModuleNode ? ((ModuleNode)node).getModule() : null,
                                             !myHideModuleGroups && !myFlattenModules,
                                             grouping, ModuleStructureConfigurable::createModuleGroupNode,
-                                            module -> createModuleNode(module, grouper), getNodeComparator());
+                                            module -> createModuleNode(module, grouper), getNodeComparator(),
+                                            node -> nodeToBeMovedFilter.test(node));
   }
 
   @Override
@@ -630,7 +634,17 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     @NotNull
     @Override
     public String getDisplayName() {
-      return myFlattenModules ? getFullModuleName() : getModuleGrouper().getShortenedName(getModule());
+      if (myFlattenModules) {
+        return getFullModuleName();
+      }
+      String parentGroupName = null;
+      if (parent instanceof ModuleGroupNode) {
+        ModuleGroup group = ((ModuleGroupNode)parent).getModuleGroup();
+        if (group != null) {
+          parentGroupName = group.getQualifiedName();
+        }
+      }
+      return getModuleGrouper().getShortenedName(getModule(), parentGroupName);
     }
 
     @NotNull
@@ -656,7 +670,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
       boolean autoScrollWasEnabled = myAutoScrollEnabled;
       try {
         myAutoScrollEnabled = false;
-        ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper();
+        ModuleGroupingTreeHelper<Module, MyNode> helper = createGroupingHelper(Predicate.isEqual(this));
         MyNode newNode = helper.moveModuleNodeToProperGroup(this, getModule(), myRoot, treeModel, myTree);
         treeModel.reload(newNode);
       }
@@ -677,6 +691,19 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     ModuleGroupNodeImpl(@NotNull NamedConfigurable configurable, @NotNull ModuleGroup moduleGroup) {
       super(configurable, true);
       myModuleGroup = moduleGroup;
+    }
+
+    @NotNull
+    @Override
+    public String getDisplayName() {
+      if (parent instanceof ModuleGroupNode) {
+        ModuleGroup parentGroup = ((ModuleGroupNode)parent).getModuleGroup();
+        List<String> groupPath = myModuleGroup.getGroupPathList();
+        if (parentGroup != null && ContainerUtil.startsWith(groupPath, parentGroup.getGroupPathList())) {
+          return StringUtil.join(groupPath.subList(parentGroup.getGroupPathList().size(), groupPath.size()), ".");
+        }
+      }
+      return super.getDisplayName();
     }
 
     @Override
@@ -810,7 +837,7 @@ public class ModuleStructureConfigurable extends BaseStructureConfigurable imple
     if (selectionPath != null) {
       selection = (DefaultMutableTreeNode)selectionPath.getLastPathComponent();
     }
-    createGroupingHelper().moveAllModuleNodesToProperGroups(myRoot, getTreeModel());
+    createGroupingHelper(node -> true).moveAllModuleNodesToProperGroups(myRoot, getTreeModel());
     if (selection != null) {
       TreeUtil.selectInTree(selection, true, myTree);
     }

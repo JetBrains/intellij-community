@@ -13,7 +13,6 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.compiler.CompileScope;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -36,12 +35,11 @@ import java.util.concurrent.ExecutorService;
  */
 public class ProblemsViewImpl extends ProblemsView{
   private static final String PROBLEMS_TOOLWINDOW_ID = "Problems";
-  private static final EnumSet<ErrorTreeElementKind> ALL_MESSAGE_KINDS = EnumSet.allOf(ErrorTreeElementKind.class);
 
   private final ProblemsViewPanel myPanel;
-  private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView pool");
+  private final ExecutorService myViewUpdater = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("ProblemsView Pool");
   private final Icon myActiveIcon = AllIcons.Toolwindows.Problems;
-  private final Icon myPassiveIcon = IconLoader.getDisabledIcon(myActiveIcon);
+  private final Icon myPassiveIcon = AllIcons.Toolwindows.ProblemsEmpty;
 
   public ProblemsViewImpl(final Project project, final ToolWindowManager wm) {
     super(project);

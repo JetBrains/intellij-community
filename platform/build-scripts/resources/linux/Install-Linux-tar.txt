@@ -20,7 +20,7 @@ INSTALLATION INSTRUCTIONS
      variable so that you may start @@product_full@@ from any directory.
 
   4. [OPTIONAL] To adjust the value of the JVM heap size, create
-      ~/.@@system_selector@@/@@product@@.vmoptions (or @@product@@64.vmoptions
+      ~/.@@system_selector@@/config/@@product@@.vmoptions (or @@product@@64.vmoptions
       if using a 64-bit JDK), and set the -Xms and -Xmx parameters. To see how
       to do this, you can reference the vmoptions file under
       "{installation home}/bin" as a model.
@@ -42,8 +42,6 @@ INSTALLATION INSTRUCTIONS
 
   3. Note that we recommend to store data cache ("system" directory) on a disk
      with at least 1GB of free space.
-
-
 
 
 Enjoy!

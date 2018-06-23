@@ -18,6 +18,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link Pair} (to be removed in IDEA 2018) */
+@Deprecated
 public class KeyValue<Key, Value> extends Pair<Key, Value> {
   public KeyValue(Key key, Value value) {
     super(key, value);

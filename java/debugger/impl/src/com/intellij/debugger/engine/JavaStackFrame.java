@@ -17,6 +17,7 @@ import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
+import com.intellij.debugger.ui.breakpoints.BreakpointIntentionAction;
 import com.intellij.debugger.ui.impl.watch.*;
 import com.intellij.debugger.ui.tree.render.DescriptorLabelListener;
 import com.intellij.lang.java.JavaLanguage;
@@ -142,6 +143,13 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
       }
+
+      @Override
+      protected void commandCancelled() {
+        if (!node.isObsolete()) {
+          node.addChildren(XValueChildrenList.EMPTY, true);
+        }
+      }
     });
   }
 
@@ -181,6 +189,7 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       final ObjectReference thisObjectReference = myDescriptor.getThisObject();
       if (thisObjectReference != null) {
         ValueDescriptorImpl thisDescriptor = myNodeManager.getThisDescriptor(null, thisObjectReference);
+        myDescriptor.putUserData(BreakpointIntentionAction.THIS_TYPE_KEY, thisObjectReference.type().name());
         children.add(JavaValue.create(thisDescriptor, evaluationContext, myNodeManager));
       }
       else if (location != null) {
@@ -198,7 +207,15 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       // add last method return value if any
       final Pair<Method, Value> methodValuePair = debugProcess.getLastExecutedMethod();
       if (methodValuePair != null && myDescriptor.getUiIndex() == 0) {
-        ValueDescriptorImpl returnValueDescriptor = myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), methodValuePair.getSecond());
+        Value returnValue = methodValuePair.getSecond();
+        // try to keep the value as early as possible
+        try {
+          evaluationContext.keep(returnValue);
+        }
+        catch (ObjectCollectedException ignored) {
+        }
+        ValueDescriptorImpl returnValueDescriptor =
+          myNodeManager.getMethodReturnValueDescriptor(myDescriptor, methodValuePair.getFirst(), returnValue);
         children.add(JavaValue.create(returnValueDescriptor, evaluationContext, myNodeManager));
       }
       // add context exceptions

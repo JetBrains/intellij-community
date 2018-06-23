@@ -185,6 +185,10 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
     return QuickFixes.EMPTY_FIX;
   }
 
+  @NotNull public IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element) {
+    return QuickFixes.EMPTY_FIX;
+  }
+
   @NotNull
   @Override
   public IntentionAction createGeneralizeCatchFix(@NotNull PsiElement psiElement, @NotNull PsiClassType psiClassType) {
@@ -568,7 +572,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String s, @NotNull String s2) {
+  public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project, @NotNull String s) {
     return QuickFixes.EMPTY_FIX;
   }
 

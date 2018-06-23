@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConstant;
 
@@ -16,7 +16,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumConstantInitializer;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
@@ -56,7 +55,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitEnumConstant(this);
   }
 
@@ -146,12 +145,6 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
 
   @NotNull
   @Override
-  public GrClosableBlock[] getClosureArguments() {
-    return GrClosableBlock.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  @Override
   public JavaResolveResult resolveMethodGenerics() {
     return JavaResolveResult.EMPTY;
   }
@@ -159,7 +152,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   @Override
   @Nullable
   public GrEnumConstantInitializer getInitializingClass() {
-    return findChildByClass(GrEnumConstantInitializer.class);
+    return getStubOrPsiChild(GroovyElementTypes.ENUM_CONSTANT_INITIALIZER);
   }
 
   @NotNull
@@ -213,14 +206,16 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
       return GrEnumConstantImpl.this.multiResolve(false);
     }
 
+    @NotNull
     @Override
     public PsiElement getElement() {
       return GrEnumConstantImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
-      return getNameIdentifierGroovy().getTextRange().shiftRight(-getTextOffset());
+      return getNameIdentifierGroovy().getTextRange().shiftLeft(getNode().getStartOffset());
     }
 
     @Override

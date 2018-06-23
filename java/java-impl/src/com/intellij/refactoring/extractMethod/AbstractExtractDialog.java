@@ -36,4 +36,6 @@ public interface AbstractExtractDialog {
   boolean isOK();
 
   default boolean isPreviewUsages() {return false;}
+
+  default boolean showInTransaction() {return false;}
 }

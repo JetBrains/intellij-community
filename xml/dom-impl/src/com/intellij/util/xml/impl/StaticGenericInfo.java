@@ -16,7 +16,6 @@
 package com.intellij.util.xml.impl;
 
 import com.intellij.openapi.util.Pair;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xml.*;
@@ -195,22 +194,6 @@ public class StaticGenericInfo extends DomGenericInfoEx {
     }
 
     return new ConstantFunction<>(Integer.MAX_VALUE);
-  }
-
-  @Override
-  @Nullable
-  public XmlElement getNameElement(DomElement element) {
-    buildMethodMaps();
-
-    Object o = getNameObject(element);
-    if (o instanceof GenericAttributeValue) {
-      return ((GenericAttributeValue)o).getXmlAttributeValue();
-    } else if (o instanceof DomElement) {
-      return ((DomElement)o).getXmlTag();
-    }
-    else {
-      return null;
-    }
   }
 
   @Override

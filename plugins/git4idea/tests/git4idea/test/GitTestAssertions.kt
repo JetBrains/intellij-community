@@ -1,29 +1,17 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.test
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.vcs.FilePath
 import com.intellij.openapi.vcs.FileStatus
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangeListManager
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
 import com.intellij.openapi.vcs.changes.LocalChangeList
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestCase.assertOrderedEquals
-import com.intellij.testFramework.vcs.MockChangeListManager
+import com.intellij.util.ui.UIUtil
 import com.intellij.vcs.log.VcsCommitMetadata
 import com.intellij.vcsUtil.VcsUtil.getFilePath
 import git4idea.changes.GitChangeUtils
@@ -61,7 +49,7 @@ fun GitRepository.assertLatestSubjects(vararg expectedMessages: String) {
 }
 
 private fun GitRepository.assertLatestHistory(mapping: (VcsCommitMetadata) -> String, vararg expectedMessages: String) {
-  val actualMessages = GitLogUtil.collectMetadata(project, root).commits
+  val actualMessages = GitLogUtil.collectMetadata(project, root, false).commits
     .map(mapping)
     .subList(0, expectedMessages.size)
   assertOrderedEquals("History is incorrect", actualMessages, expectedMessages.asList())
@@ -80,14 +68,15 @@ fun GitRepository.assertStagedChanges(changes: ChangesBuilder.() -> Unit) {
   PlatformTestCase.assertTrue(actualChanges.isEmpty())
 }
 
-fun GitRepository.assertCommitted(changes: ChangesBuilder.() -> Unit) {
+fun GitRepository.assertCommitted(depth: Int = 1, changes: ChangesBuilder.() -> Unit) {
   val cb = ChangesBuilder()
   cb.changes()
 
-  val actualChanges = GitHistoryUtils.history(project, root, "-1")[0].changes
+  val allChanges = GitHistoryUtils.history(project, root, "-${depth}")[depth - 1].changes
+  val actualChanges = allChanges.toMutableSet()
   for (change in cb.changes) {
     val found = actualChanges.find(change.matcher)
-    PlatformTestCase.assertNotNull("The change [$change] wasn't committed", found)
+    PlatformTestCase.assertNotNull("The change [$change] wasn't committed\n$allChanges", found)
     actualChanges.remove(found)
   }
   PlatformTestCase.assertTrue(actualChanges.isEmpty())
@@ -109,10 +98,20 @@ fun GitPlatformTest.assertLogMessages(vararg messages: String) {
   }
 }
 
+fun ChangeListManager.assertNoChanges() {
+  PlatformTestCase.assertEmpty("No changes is expected: ${allChanges.joinToString()}}", allChanges)
+}
+
 fun ChangeListManager.assertOnlyDefaultChangelist() {
-  val DEFAULT = MockChangeListManager.DEFAULT_CHANGE_LIST_NAME
   PlatformTestCase.assertEquals("Only default changelist is expected among: ${dumpChangeLists()}", 1, changeListsNumber)
-  PlatformTestCase.assertEquals("Default changelist is not active", DEFAULT, defaultChangeList.name)
+  PlatformTestCase.assertEquals("Default changelist is not active", LocalChangeList.DEFAULT_NAME, defaultChangeList.name)
+}
+
+fun ChangeListManager.waitScheduledChangelistDeletions() {
+  (this as ChangeListManagerImpl).waitEverythingDoneInTestMode()
+  ApplicationManager.getApplication().invokeAndWait {
+    UIUtil.dispatchAllInvocationEvents()
+  }
 }
 
 fun ChangeListManager.assertChangeListExists(comment: String): LocalChangeList {
@@ -139,6 +138,12 @@ class ChangesBuilder {
   }
 
   val changes = linkedSetOf<AChange>()
+
+  fun deleted(name: String) {
+    PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.DELETED, name) {
+      it.fileStatus == FileStatus.DELETED && it.beforeRevision!!.file.name == name && it.afterRevision == null
+    }))
+  }
 
   fun added(name: String) {
     PlatformTestCase.assertTrue(changes.add(AChange(FileStatus.ADDED, name) {

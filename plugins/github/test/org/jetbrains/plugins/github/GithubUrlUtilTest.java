@@ -80,50 +80,19 @@ public class GithubUrlUtilTest extends TestCase {
     runTestCase(tests, in -> removeProtocolPrefix(in));
   }
 
-  public void testIsGithubUrl1() {
-    TestCase<Boolean> tests = new TestCase<>();
+  public void testRemovePort() {
+    TestCase<String> tests = new TestCase<>();
 
-    tests.add("http://github.com/user/repo", true);
-    tests.add("https://github.com/user/repo", true);
-    tests.add("git://github.com/user/repo", true);
-    tests.add("git@github.com:user/repo", true);
+    tests.add("github.com/user/repo/", "github.com/user/repo/");
+    tests.add("github.com", "github.com");
+    tests.add("github.com/", "github.com/");
 
-    tests.add("https://github.com/", true);
-    tests.add("github.com", true);
+    tests.add("github.com:80/user/repo/", "github.com/user/repo/");
+    tests.add("github.com:80/user/repo", "github.com/user/repo");
+    tests.add("github.com:80/user", "github.com/user");
+    tests.add("github.com:80", "github.com");
 
-    tests.add("https://user@github.com/user/repo", true);
-    tests.add("https://user:password@github.com/user/repo", true);
-    tests.add("git@github.com:user/repo", true);
-
-    tests.add("https://github.com:2233/", true);
-
-    tests.add("HTTPS://GitHub.com:2233/", true);
-
-    tests.add("google.com", false);
-    tests.add("github.com.site.ua", false);
-    tests.add("sf@hskfh../.#fwenj 32#$", false);
-    tests.add("api.github.com", false);
-    tests.add("site.com//github.com", false);
-
-    runTestCase(tests, in -> isGithubUrl(in, "https://github.com/"));
-    runTestCase(tests, in -> isGithubUrl(in, "http://GitHub.com"));
-  }
-
-  public void testIsGithubUrl2() {
-    TestCase<Boolean> tests = new TestCase<>();
-
-    tests.add("http://git.code.example.co.jp/user/repo", true);
-    tests.add("https://git.code.example.co.jp/user/repo", true);
-    tests.add("git://git.code.example.co.jp/user/repo", true);
-    tests.add("git@git.code.example.co.jp:user/repo", true);
-
-    tests.add("http://git.code.example.co/user/repo", false);
-    tests.add("http://code.example.co.jp/user/repo", false);
-
-    runTestCase(tests, in -> isGithubUrl(in, "git.code.example.co.jp"));
-    runTestCase(tests, in -> isGithubUrl(in, "http://git.code.example.co.jp"));
-    runTestCase(tests, in -> isGithubUrl(in, "https://git.code.example.co.jp/github/server"));
-    runTestCase(tests, in -> isGithubUrl(in, "git.code.example.co.jp/api"));
+    runTestCase(tests, in -> removePort(in));
   }
 
   public void testGetApiUrlWithoutProtocol() {

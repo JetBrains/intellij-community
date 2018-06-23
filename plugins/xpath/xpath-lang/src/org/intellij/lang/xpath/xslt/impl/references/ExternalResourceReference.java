@@ -50,11 +50,12 @@ class ExternalResourceReference implements PsiReference, LocalQuickFixProvider {
   }
 
 
-  @Nullable
+  @NotNull
   public PsiElement getElement() {
     return myAttribute.getValueElement();
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     final XmlAttributeValue value = myAttribute.getValueElement();
     return value != null ? TextRange.from(1, value.getTextLength() - 2) : TextRange.from(0, 0);

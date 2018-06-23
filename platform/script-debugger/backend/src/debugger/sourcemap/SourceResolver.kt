@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.debugger.sourcemap
 
 import com.intellij.openapi.util.SystemInfo
@@ -20,26 +6,12 @@ import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.StandardFileSystems
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.util.ArrayUtil
 import com.intellij.util.Url
-import com.intellij.util.UrlImpl
 import com.intellij.util.Urls
 import com.intellij.util.containers.ObjectIntHashMap
 import com.intellij.util.containers.isNullOrEmpty
 import com.intellij.util.io.URLUtil
 import java.io.File
-
-inline fun SourceResolver(rawSources: List<String>, sourceContents: List<String?>?, urlCanonicalizer: (String) -> Url): SourceResolver {
-  return SourceResolver(rawSources, Array(rawSources.size) { urlCanonicalizer(rawSources[it]) }, sourceContents)
-}
-
-fun SourceResolver(rawSources: List<String>,
-                   trimFileScheme: Boolean,
-                   baseUrl: Url?,
-                   sourceContents: List<String?>?,
-                   baseUrlIsFile: Boolean = true): SourceResolver {
-  return SourceResolver(rawSources, sourceContents) { canonicalizeUrl(it, baseUrl, trimFileScheme, baseUrlIsFile) }
-}
 
 interface SourceFileResolver {
   /**
@@ -49,16 +21,27 @@ interface SourceFileResolver {
   fun resolve(rawSources: List<String>): Int = -1
 }
 
-class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls: Array<Url>, private val sourceContents: List<String?>?) {
+class SourceResolver(private val rawSources: List<String>,
+                     trimFileScheme: Boolean,
+                     baseUrl: Url?,
+                     private val sourceContents: List<String?>?,
+                     baseUrlIsFile: Boolean = true) {
   companion object {
-    fun isAbsolute(path: String) = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
+    fun isAbsolute(path: String): Boolean = path.startsWith('/') || (SystemInfo.isWindows && (path.length > 2 && path[1] == ':'))
   }
 
-  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> = if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size) else ObjectIntHashMap(rawSources.size, Urls.getCaseInsensitiveUrlHashingStrategy())
+  val canonicalizedUrls: Array<Url> by lazy {
+    Array(rawSources.size) { canonicalizeUrl(rawSources[it], baseUrl, trimFileScheme, baseUrlIsFile) }
+  }
 
-  init {
-    for (i in rawSources.indices) {
-      canonicalizedUrlToSourceIndex.put(canonicalizedUrls[i], i)
+  private val canonicalizedUrlToSourceIndex: ObjectIntHashMap<Url> by lazy {
+    (
+      if (SystemInfo.isFileSystemCaseSensitive) ObjectIntHashMap(rawSources.size)
+      else ObjectIntHashMap(rawSources.size, Urls.caseInsensitiveUrlHashingStrategy)
+    ).also {
+      for (i in rawSources.indices) {
+        it.put(canonicalizedUrls[i], i)
+      }
     }
   }
 
@@ -83,7 +66,7 @@ class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls
     return if (sourceIndex < 0 || sourceIndex >= sourceContents!!.size) null else sourceContents[sourceIndex]
   }
 
-  fun getSourceIndex(url: Url) = ArrayUtil.indexOf(canonicalizedUrls, url)
+  fun getSourceIndex(url: Url): Int = canonicalizedUrlToSourceIndex[url]
 
   fun getRawSource(entry: MappingEntry): String? {
     val index = entry.source
@@ -140,7 +123,7 @@ class SourceResolver(private val rawSources: List<String>, val canonicalizedUrls
     return -1
   }
 
-  fun getUrlIfLocalFile(entry: MappingEntry) = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
+  fun getUrlIfLocalFile(entry: MappingEntry): Url? = canonicalizedUrls.getOrNull(entry.source)?.let { if (it.isInLocalFileSystem) it else null }
 }
 
 fun canonicalizePath(url: String, baseUrl: Url, baseUrlIsFile: Boolean): String {
@@ -175,7 +158,7 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
     // consider checking :/ instead of :// because scheme may be followed by path, not by authority
     // https://tools.ietf.org/html/rfc3986#section-1.1.2
     // be careful with windows paths: C:/Users
-    return Urls.parseEncoded(url) ?: UrlImpl(url)
+    return Urls.parseEncoded(url) ?: Urls.newUri(null, url)
   }
   else {
     return doCanonicalize(url, baseUrl, baseUrlIsFile, true)
@@ -184,14 +167,15 @@ fun canonicalizeUrl(url: String, baseUrl: Url?, trimFileScheme: Boolean, baseUrl
 
 fun doCanonicalize(url: String, baseUrl: Url, baseUrlIsFile: Boolean, asLocalFileIfAbsoluteAndExists: Boolean): Url {
   val path = canonicalizePath(url, baseUrl, baseUrlIsFile)
-  if (baseUrl.scheme == null && baseUrl.isInLocalFileSystem) {
+  if ((baseUrl.scheme == null && baseUrl.isInLocalFileSystem) ||
+      asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path) && File(path).exists()) {
+    // file:///home/user/foo.js.map, foo.ts -> /home/user/foo.ts (baseUrl is in local fs)
+    // http://localhost/home/user/foo.js.map, foo.ts -> /home/user/foo.ts (File(path) exists)
     return Urls.newLocalFileUrl(path)
   }
-  else if (asLocalFileIfAbsoluteAndExists && SourceResolver.isAbsolute(path)) {
-    return if (File(path).exists()) Urls.newLocalFileUrl(path) else Urls.parse(url, false) ?: UrlImpl(null, null, url, null)
-  }
   else {
+    // new url from path and baseUrl's scheme and authority
     val split = path.split('?', limit = 2)
-    return UrlImpl(baseUrl.scheme, baseUrl.authority, split[0], if (split.size > 1) '?' + split[1] else null)
+    return Urls.newUrl(baseUrl.scheme!!, baseUrl.authority!!, split[0], if (split.size > 1) '?' + split[1] else null)
   }
 }

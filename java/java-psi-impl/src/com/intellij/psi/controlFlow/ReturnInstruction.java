@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 public class ReturnInstruction extends GoToInstruction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.ReturnInstruction");
 
-  private final ControlFlowStack myStack;
-  private CallInstruction myCallInstruction;
+  @NotNull private final ControlFlowStack myStack;
+  @NotNull private CallInstruction myCallInstruction;
   private boolean myRethrowFromFinally;
 
-  public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, CallInstruction callInstruction) {
+  public ReturnInstruction(int offset, @NotNull ControlFlowStack stack, @NotNull CallInstruction callInstruction) {
     super(offset, Role.END, false);
     myStack = stack;
     myCallInstruction = callInstruction;
@@ -50,7 +50,7 @@ public class ReturnInstruction extends GoToInstruction {
   }
 
   @NotNull
-  public int[] getPossibleReturnOffsets() {
+  int[] getPossibleReturnOffsets() {
     return offset == 0 ?
         new int[]{
           getProcBegin() - 5, // call normal
@@ -64,15 +64,15 @@ public class ReturnInstruction extends GoToInstruction {
 
   }
 
-  public int getProcBegin() {
+  int getProcBegin() {
     return myCallInstruction.procBegin;
   }
 
-  public int getProcEnd() {
+  int getProcEnd() {
     return myCallInstruction.procEnd;
   }
 
-  public void setCallInstruction(CallInstruction callInstruction) {
+  void setCallInstruction(@NotNull CallInstruction callInstruction) {
     myCallInstruction = callInstruction;
   }
 
@@ -101,19 +101,20 @@ public class ReturnInstruction extends GoToInstruction {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitReturnInstruction(this, offset, nextOffset);
   }
 
+  @NotNull
   public ControlFlowStack getStack() {
     return myStack;
   }
 
-  public void setRethrowFromFinally() {
+  void setRethrowFromFinally() {
     myRethrowFromFinally = true;
   }
 
-  public boolean isRethrowFromFinally() {
+  boolean isRethrowFromFinally() {
     return myRethrowFromFinally;
   }
 }

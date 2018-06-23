@@ -31,13 +31,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.ui.EditorNotifications;
 import com.intellij.util.PlatformUtils;
+import com.intellij.util.Url;
+import com.intellij.util.Urls;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.xmlb.XmlSerializer;
 import com.intellij.util.xmlb.annotations.OptionTag;
 import com.intellij.util.xmlb.annotations.Tag;
 import com.intellij.util.xmlb.annotations.XMap;
-import org.apache.http.client.utils.URIBuilder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,7 +46,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.event.HyperlinkEvent;
 import java.io.File;
 import java.io.IOException;
-import java.net.URISyntaxException;
 import java.util.*;
 
 public class PluginsAdvertiser implements StartupActivity {
@@ -143,20 +143,17 @@ public class PluginsAdvertiser implements StartupActivity {
                                              HttpRequests.RequestProcessor<K> requestProcessor,
                                              K errorValue,
                                              Logger log) {
-    URIBuilder uriBuilder;
-
     String baseUrl = ApplicationInfoImpl.getShadowInstance().getPluginManagerUrl() + "/feature/getImplementations?";
-    try {
-      uriBuilder = new URIBuilder(baseUrl);
-    }
-    catch (URISyntaxException e) {
-      log.error(baseUrl, e);
+    Url url = Urls.parseEncoded(baseUrl);
+    if (url == null) {
+      log.error("Cannot parse URL: " + baseUrl);
       return errorValue;
     }
-    params.forEach((key, value) -> uriBuilder.addParameter(key, value));
 
-    boolean forceHttps = IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection();
-    return HttpRequests.request(uriBuilder.toString()).forceHttps(forceHttps).productNameAsUserAgent().connect(requestProcessor, errorValue, LOG);
+    return HttpRequests.request(url.addParameters(params))
+                       .forceHttps(IdeaApplication.isLoaded() && UpdateSettings.getInstance().canUseSecureConnection())
+                       .productNameAsUserAgent()
+                       .connect(requestProcessor, errorValue, LOG);
   }
 
   public static void ensureDeleted() {
@@ -437,9 +434,7 @@ public class PluginsAdvertiser implements StartupActivity {
     }
 
     public PluginSet(Set<Plugin> plugins) {
-      for (Plugin plugin : plugins) {
-        myPlugins.add(plugin);
-      }
+      myPlugins.addAll(plugins);
     }
   }
 

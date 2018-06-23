@@ -13,7 +13,6 @@ import com.intellij.openapi.editor.impl.softwrap.SoftWrapDrawingType;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
@@ -21,11 +20,13 @@ import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.paint.EffectPainter;
+import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TFloatArrayList;
+import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,7 +41,7 @@ import java.util.Map;
 /**
  * Renders editor contents.
  */
-class EditorPainter implements TextDrawingCallback {
+public class EditorPainter implements TextDrawingCallback {
   private static final Color CARET_LIGHT = Gray._255;
   private static final Color CARET_DARK = Gray._0;
   private static final Stroke IME_COMPOSED_TEXT_UNDERLINE_STROKE = new BasicStroke(1, BasicStroke.CAP_ROUND, BasicStroke.JOIN_ROUND, 0,
@@ -83,17 +84,18 @@ class EditorPainter implements TextDrawingCallback {
     int endOffset = myView.visualLineToOffset(endLine + 1);
     ClipDetector clipDetector = new ClipDetector(myEditor, clip);
     IterationState.CaretData caretData = myEditor.isPaintSelection() ? IterationState.createCaretData(myEditor) : null;
+    TIntObjectHashMap<List<LineExtensionData>> extensionData = new TIntObjectHashMap<>(); // key is visual line
 
     int yShift = -clip.y;
     g.translate(0, -yShift);
 
-    float[] marginShifts = paintBackground(g, clip, yShift, startLine, endLine, caretData);
-    paintRightMargin(g, clip, yShift, startLine, endLine, marginShifts);
+    float[] marginWidths = paintBackground(g, clip, yShift, startLine, endLine, caretData, extensionData);
+    paintRightMargin(g, clip, yShift, startLine, endLine, marginWidths);
     paintCustomRenderers(g, yShift, startOffset, endOffset);
     MarkupModelEx docMarkup = myEditor.getFilteredDocumentMarkupModel();
     paintLineMarkersSeparators(g, clip, yShift, docMarkup, startOffset, endOffset);
     paintLineMarkersSeparators(g, clip, yShift, myEditor.getMarkupModel(), startOffset, endOffset);
-    paintTextWithEffects(g, clip, yShift, startLine, endLine, caretData);
+    paintTextWithEffects(g, clip, yShift, startLine, endLine, caretData, extensionData);
     paintHighlightersAfterEndOfLine(g, yShift, docMarkup, startOffset, endOffset);
     paintHighlightersAfterEndOfLine(g, yShift, myEditor.getMarkupModel(), startOffset, endOffset);
     paintBorderEffect(g, clipDetector, yShift, myEditor.getHighlighter(), startOffset, endOffset);
@@ -143,19 +145,24 @@ class EditorPainter implements TextDrawingCallback {
                                 int yShift,
                                 int startVisualLine,
                                 int endVisualLine,
-                                float[] marginShifts) {
+                                float[] marginWidths) {
     if (!isMarginShown()) return;
     g.setColor(myEditor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR));
-    if (marginShifts == null) {
-      int x = myCorrector.marginX();
-      UIUtil.drawLine(g, x, 0, x, clip.height);
+    float baseMarginWidth = getBaseMarginWidth(myView);
+    if (marginWidths == null) {
+      int x = myCorrector.marginX(baseMarginWidth);
+      LinePainter2D.paint((Graphics2D)g, x, 0, x, clip.height);
     }
     else {
       int y = myView.visualLineToY(startVisualLine) + yShift;
       int lineHeight = myView.getLineHeight();
       for(int i = startVisualLine; i <= endVisualLine; i++) {
-        int x = myCorrector.marginX(marginShifts[i - startVisualLine]);
-        int nextX = myCorrector.marginX(marginShifts[i - startVisualLine + 1]);
+        float width = marginWidths[i - startVisualLine];
+        if (width == 0) width = baseMarginWidth;
+        float nextWidth = marginWidths[i - startVisualLine + 1];
+        if (nextWidth == 0) nextWidth = baseMarginWidth;
+        int x = myCorrector.marginX(width);
+        int nextX = myCorrector.marginX(nextWidth);
         g.fillRect(x, y, 1, lineHeight);
         if (nextX != x) g.fillRect(Math.min(x, nextX), y + lineHeight - 1, Math.abs(x - nextX) + 1, 1);
         y += lineHeight;
@@ -165,26 +172,31 @@ class EditorPainter implements TextDrawingCallback {
     if (visualGuidesColor != null) {
       g.setColor(visualGuidesColor);
       for (Integer marginX : myCorrector.softMarginsX()) {
-        UIUtil.drawLine(g, marginX, 0, marginX, clip.height);
+        LinePainter2D.paint((Graphics2D)g, marginX, 0, marginX, clip.height);
       }
     }
+  }
+
+  private static float getBaseMarginWidth(EditorView view) {
+    Editor editor = view.getEditor();
+    return editor.getSettings().getRightMargin(editor.getProject()) * view.getPlainSpaceWidth();
   }
 
   private boolean isMarginShown() {
     return isMarginShown(myEditor);
   }
 
-  private static boolean isMarginShown(@NotNull Editor editor) {
+  public static boolean isMarginShown(@NotNull Editor editor) {
     return editor.getSettings().isRightMarginShown() &&
            editor.getColorsScheme().getColor(EditorColors.RIGHT_MARGIN_COLOR) != null &&
            (Registry.is("editor.show.right.margin.in.read.only.files") || editor.getDocument().isWritable());
   }
 
-  private float[] paintBackground(Graphics2D g, Rectangle clip, int yShift,
-                               int startVisualLine, int endVisualLine, IterationState.CaretData caretData) {
-    Ref<float[]> marginShifts = new Ref<>();
-    boolean calculateMarginShift = Registry.is("editor.adjust.right.margin") && isMarginShown();
-    int maxVisualLine = endVisualLine + (calculateMarginShift ? 1 : 0);
+  private float[] paintBackground(Graphics2D g, Rectangle clip, int yShift, int startVisualLine, int endVisualLine,
+                                  IterationState.CaretData caretData, TIntObjectHashMap<List<LineExtensionData>> extensionData) {
+    boolean calculateMarginWidths = Registry.is("editor.adjust.right.margin") && isMarginShown();
+    float[] marginWidths = calculateMarginWidths ? new float[endVisualLine - startVisualLine + 2] : null;
+    int maxVisualLine = endVisualLine + (calculateMarginWidths ? 1 : 0);
     int lineCount = myEditor.getVisibleLineCount();
     
     final Map<Integer, Couple<Integer>> virtualSelectionMap = createVirtualSelectionMap(startVisualLine, endVisualLine);
@@ -233,6 +245,8 @@ class EditorPainter implements TextDrawingCallback {
           int offset = it.getEndOffset();
           SoftWrap softWrap = myEditor.getSoftWrapModel().getSoftWrap(offset);
           if (softWrap == null) {
+            collectExtensions(visualLine, offset, extensionData);
+            paintLineExtensionsBackground(g, visualLine, x, y, extensionData);
             paintVirtualSelectionIfNecessary(g, visualLine, virtualSelectionMap, columnStart, x, clip.x + clip.width, y);
           }
           else {
@@ -240,13 +254,11 @@ class EditorPainter implements TextDrawingCallback {
                                                          primarySelectionStart, primarySelectionEnd);
           }
         }
-      }, calculateMarginShift ? shift -> {
-        if (marginShifts.isNull()) marginShifts.set(new float[endVisualLine - startVisualLine + 2]);
-        marginShifts.get()[visualLine - startVisualLine] += shift;
-      } : null);
+      }, calculateMarginWidths && !visLinesIterator.endsWithSoftWrap() && !visLinesIterator.startsWithSoftWrap()
+         ? width -> marginWidths[visualLine - startVisualLine] = width : null);
       visLinesIterator.advance();
     }
-    return marginShifts.get();
+    return marginWidths;
   }
 
   private void paintFoldingBackground(Graphics2D g, TextAttributes attributes, float x, int y, float width, FoldRegion foldRegion) {
@@ -394,13 +406,13 @@ class EditorPainter implements TextDrawingCallback {
       lineSeparatorRenderer.drawLine(g, startX, endX, y);
     }
     else {
-      UIUtil.drawLine(g, startX, y, endX, y);
+      LinePainter2D.paint((Graphics2D)g, startX, y, endX, y);
     }
   }
 
 
   private void paintTextWithEffects(Graphics2D g, Rectangle clip, int yShift, int startVisualLine, int endVisualLine,
-                                    IterationState.CaretData caretData) {
+                                    IterationState.CaretData caretData, TIntObjectHashMap<List<LineExtensionData>> extensionData) {
     final CharSequence text = myDocument.getImmutableCharSequence();
     final LineWhitespacePaintingStrategy whitespacePaintingStrategy = new LineWhitespacePaintingStrategy(myEditor.getSettings());
     boolean paintAllSoftWraps = myEditor.getSettings().isAllSoftWrapsShown();
@@ -474,8 +486,7 @@ class EditorPainter implements TextDrawingCallback {
           int offset = iterationState.getEndOffset();
           SoftWrapModelImpl softWrapModel = myEditor.getSoftWrapModel();
           if (softWrapModel.getSoftWrap(offset) == null) {
-            int logicalLine = myDocument.getLineNumber(offset);
-            paintLineExtensions(g, logicalLine, x, y);
+            paintLineExtensions(g, visualLine, offset, x, y, extensionData);
           }
           else if (paintSoftWraps) {
             softWrapModel.doPaint(g, SoftWrapDrawingType.BEFORE_SOFT_WRAP_LINE_FEED, 
@@ -516,7 +527,7 @@ class EditorPainter implements TextDrawingCallback {
       if (bgColor == null && attrs.getBackgroundColor() != null) bgColor = attrs.getBackgroundColor();
       if (effectColor == null && attrs.getEffectColor() != null) {
         EffectType type = attrs.getEffectType();
-        if (type != null && type != EffectType.BOXED && type != EffectType.ROUNDED_BOX) {
+        if (type != null && type != EffectType.BOXED && type != EffectType.ROUNDED_BOX && type != EffectType.STRIKEOUT) {
           effectColor = attrs.getEffectColor();
           effectType = type;
         }
@@ -543,7 +554,7 @@ class EditorPainter implements TextDrawingCallback {
       paintTextEffect(g, x, x + layout.getWidth(), (int)y, effectColor, effectType, false);
     }
     for (LineLayout.VisualFragment fragment : layout.getFragmentsInVisualOrder(x)) {
-      fragment.draw(g, x, y);
+      fragment.draw(g, fragment.getStartX(), y);
       x = fragment.getEndX();
     }
     return x;
@@ -617,8 +628,8 @@ class EditorPainter implements TextDrawingCallback {
             int halfHeight = height / 2;
             int mid = y - halfHeight;
             int top = y - height;
-            UIUtil.drawLine(g, startX, mid, endX, mid);
-            UIUtil.drawLine(g, endX, y, endX, top);
+            LinePainter2D.paint(g, startX, mid, endX, mid);
+            LinePainter2D.paint(g, endX, y, endX, top);
             g.fillPolygon(new int[]{endX - halfHeight, endX - halfHeight, endX}, new int[]{y, y - height, y - halfHeight}, 3);
           }
           else if (c == '\u3000') { // ideographic space
@@ -633,19 +644,40 @@ class EditorPainter implements TextDrawingCallback {
     }
   }
 
-  private void paintLineExtensions(Graphics2D g, int line, float x, int y) {
-    float[] curX = {x};
-    myEditor.processLineExtensions(line, (info) -> {
-      LineLayout layout = LineLayout.create(myView, info.getText(), info.getFontType());
-      g.setColor(info.getColor());
-      curX[0] = paintLineLayoutWithEffect(g, layout, curX[0], y, info.getEffectColor(), info.getEffectType());
-      int currentLineWidth = myCorrector.lineWidth(line, curX[0]);
-      EditorSizeManager sizeManager = myView.getSizeManager();
-      if (currentLineWidth > sizeManager.getMaxLineWithExtensionWidth()) {
-        sizeManager.setMaxLineWithExtensionWidth(line, currentLineWidth);
-      }
+  private void collectExtensions(int visualLine, int offset, TIntObjectHashMap<List<LineExtensionData>> extensionData) {
+    myEditor.processLineExtensions(myDocument.getLineNumber(offset), (info) -> {
+      List<LineExtensionData> list = extensionData.get(visualLine);
+      if (list == null) extensionData.put(visualLine, list = new ArrayList<>());
+      list.add(new LineExtensionData(info, LineLayout.create(myView, info.getText(), info.getFontType())));
       return true;
     });
+  }
+
+  private void paintLineExtensionsBackground(Graphics2D g, int visualLine, float x, int y,
+                                             TIntObjectHashMap<List<LineExtensionData>> extensionData) {
+    List<LineExtensionData> data = extensionData.get(visualLine);
+    if (data == null) return;
+    for (LineExtensionData datum : data) {
+      float width = datum.layout.getWidth();
+      paintBackground(g, datum.info.getBgColor(), x, y, width);
+      x += width;
+    }
+  }
+
+  private void paintLineExtensions(Graphics2D g, int visualLine, int offset, float x, int y,
+                                   TIntObjectHashMap<List<LineExtensionData>> extensionData) {
+    List<LineExtensionData> data = extensionData.get(visualLine);
+    if (data == null) return;
+    for (LineExtensionData datum : data) {
+      g.setColor(datum.info.getColor());
+      x = paintLineLayoutWithEffect(g, datum.layout, x, y, datum.info.getEffectColor(), datum.info.getEffectType());
+    }
+    int currentLineWidth = myCorrector.lineWidth(visualLine, x);
+    EditorSizeManager sizeManager = myView.getSizeManager();
+    if (currentLineWidth > sizeManager.getMaxLineWithExtensionWidth()) {
+      sizeManager.setMaxLineWithExtensionWidth(myDocument.getLineNumber(offset), currentLineWidth);
+      myEditor.getContentComponent().revalidate();
+    }
   }
 
   private void paintHighlightersAfterEndOfLine(final Graphics2D g,
@@ -845,7 +877,7 @@ class EditorPainter implements TextDrawingCallback {
     if (rounded) {
       UIUtil.drawLinePickedOut(g, (int) x1, y1, (int)x2, y2);
     } else {
-      UIUtil.drawLine(g, (int)x1, y1, (int)x2, y2);
+      LinePainter2D.paint(g, (int)x1, y1, (int)x2, y2);
     }
   }
 
@@ -940,7 +972,7 @@ class EditorPainter implements TextDrawingCallback {
      
       g.setStroke(IME_COMPOSED_TEXT_UNDERLINE_STROKE);
       g.setColor(myEditor.getColorsScheme().getDefaultForeground());
-      UIUtil.drawLine(g, (int)p1.getX(), y, (int)p2.getX(), y);
+      LinePainter2D.paint(g, (int)p1.getX(), y, (int)p2.getX(), y);
     }
   }
 
@@ -1013,16 +1045,16 @@ class EditorPainter implements TextDrawingCallback {
       int x = location.myPoint.x;
       int y = location.myPoint.y - topOverhang;
       int width = Math.max(location.myWidth, CARET_DIRECTION_MARK_SIZE);
-      myEditor.getContentComponent().repaintEditorComponent(x - width, y, width * 2, nominalLineHeight);
+      myEditor.getContentComponent().repaintEditorComponentExact(x - width, y, width * 2, nominalLineHeight);
     }
   }
 
-  private interface MarginShiftConsumer {
-    void process(float shift);
+  private interface MarginWidthConsumer {
+    void process(float width);
   }
 
   private void paintLineFragments(Graphics2D g, Rectangle clip, VisualLinesIterator visLineIterator, IterationState.CaretData caretData,
-                                  int y, LineFragmentPainter painter, MarginShiftConsumer marginShiftConsumer) {
+                                  int y, LineFragmentPainter painter, MarginWidthConsumer marginWidthConsumer) {
     int visualLine = visLineIterator.getVisualLine();
     float x = myCorrector.startX(visualLine) + (visualLine == 0 ? myView.getPrefixTextWidthInPixels() : 0);
     int offset = visLineIterator.getVisualLineStartOffset();
@@ -1031,6 +1063,9 @@ class EditorPainter implements TextDrawingCallback {
     int prevEndOffset = -1;
     boolean firstFragment = true;
     int maxColumn = 0;
+    int marginColumns = myEditor.getSettings().getRightMargin(myEditor.getProject());
+    int endLogicalLine = visLineIterator.getEndLogicalLine();
+    boolean marginReached = false;
     for (VisualLineFragmentsIterator.Fragment fragment : VisualLineFragmentsIterator.create(myView, visLineIterator, null, true)) {
       int fragmentStartOffset = fragment.getStartOffset();
       int start = fragmentStartOffset;
@@ -1054,11 +1089,10 @@ class EditorPainter implements TextDrawingCallback {
           }
         }
       }
-      float marginShift = 0;
       FoldRegion foldRegion = fragment.getCurrentFoldRegion();
       if (foldRegion == null) {
         if (start != prevEndOffset) {
-          it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset, 
+          it = new IterationState(myEditor, start, fragment.isRtl() ? offset : visualLineEndOffset,
                                   caretData, false, false, false, fragment.isRtl());
         }
         prevEndOffset = end;
@@ -1072,7 +1106,6 @@ class EditorPainter implements TextDrawingCallback {
           if (xNew >= clip.getMinX()) {
             painter.paint(g, fragment, 0, 0, attributes, x, xNew, y);
           }
-          if (marginShiftConsumer != null) marginShift = xNew - x;
           x = xNew;
         }
         else {
@@ -1093,6 +1126,11 @@ class EditorPainter implements TextDrawingCallback {
             x = xNew;
             start = curEnd;
           }
+          if (marginWidthConsumer != null && fragment.getEndLogicalLine() == endLogicalLine &&
+              fragment.getStartLogicalColumn() <= marginColumns && fragment.getEndLogicalColumn() > marginColumns) {
+            marginWidthConsumer.process(fragment.visualColumnToX(fragment.logicalToVisualColumn(marginColumns)));
+            marginReached = true;
+          }
         }
       }
       else {
@@ -1103,10 +1141,7 @@ class EditorPainter implements TextDrawingCallback {
         x = xNew;
         prevEndOffset = -1;
         it = null;
-        if (marginShiftConsumer != null) marginShift = x - myCorrector.startX(visualLine) 
-                                                       - fragment.getEndLogicalColumn() * myView.getPlainSpaceWidth();
       }
-      if (marginShift != 0) marginShiftConsumer.process(marginShift);
       if (x > clip.getMaxX()) return;
       maxColumn = fragment.getEndVisualColumn();
     }
@@ -1118,8 +1153,8 @@ class EditorPainter implements TextDrawingCallback {
       painter.paintBeforeLineStart(g, it.getBeforeLineStartBackgroundAttributes(), false, maxColumn, x, y);
     }
     if (it == null || it.getEndOffset() != visualLineEndOffset) {
-      it = new IterationState(myEditor, visualLineEndOffset == offset ? visualLineEndOffset
-                                                                      : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
+      it = new IterationState(myEditor, visualLineEndOffset == offset
+                                        ? visualLineEndOffset : DocumentUtil.getPreviousCodePointOffset(myDocument, visualLineEndOffset),
                               visualLineEndOffset, caretData, false, false, false, false);
     }
     if (!it.atEnd()) {
@@ -1127,6 +1162,13 @@ class EditorPainter implements TextDrawingCallback {
     }
     assert it.atEnd();
     painter.paintAfterLineEnd(g, clip, it, maxColumn, x, y);
+    if (marginWidthConsumer != null && !marginReached &&
+        (visualLine == myEditor.getCaretModel().getVisualPosition().line || x > marginColumns * myView.getPlainSpaceWidth())) {
+      int endLogicalColumn = myView.offsetToLogicalPosition(visualLineEndOffset).column;
+      if (endLogicalColumn <= marginColumns) {
+        marginWidthConsumer.process(x + (marginColumns - endLogicalColumn) * myView.getPlainSpaceWidth());
+      }
+    }
   }
 
   private TextAttributes getFoldRegionAttributes(FoldRegion foldRegion) {
@@ -1225,8 +1267,7 @@ class EditorPainter implements TextDrawingCallback {
     int lineSeparatorEnd(int maxX);
     float singleLineBorderStart(float x);
     float singleLineBorderEnd(float x);
-    int marginX();
-    int marginX(float shift);
+    int marginX(float marginWidth);
     List<Integer> softMarginsX();
 
     @NotNull
@@ -1289,18 +1330,12 @@ class EditorPainter implements TextDrawingCallback {
 
       @Override
       public int lineSeparatorEnd(int maxX) {
-        return isMarginShown(myView.getEditor()) ? Math.min(marginX(), maxX) : maxX;
+        return isMarginShown(myView.getEditor()) ? Math.min(marginX(getBaseMarginWidth(myView)), maxX) : maxX;
       }
 
       @Override
-      public int marginX() {
-        EditorImpl editor = myView.getEditor();
-        return (int) (myView.getInsets().left + editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth());
-      }
-
-      @Override
-      public int marginX(float shift) {
-        return marginX() + (int)shift;
+      public int marginX(float marginWidth) {
+        return (int)(myView.getInsets().left + marginWidth);
       }
 
       @Override
@@ -1358,7 +1393,7 @@ class EditorPainter implements TextDrawingCallback {
 
       @Override
       public int lineSeparatorStart(int minX) {
-        return isMarginShown(myView.getEditor()) ? Math.max(marginX(), minX) : minX;
+        return isMarginShown(myView.getEditor()) ? Math.max(marginX(getBaseMarginWidth(myView)), minX) : minX;
       }
 
       @Override
@@ -1367,15 +1402,8 @@ class EditorPainter implements TextDrawingCallback {
       }
 
       @Override
-      public int marginX() {
-        EditorImpl editor = myView.getEditor();
-        return (int) (myView.getRightAlignmentMarginX() - 
-                      editor.getSettings().getRightMargin(editor.getProject()) * myView.getPlainSpaceWidth());
-      }
-
-      @Override
-      public int marginX(float shift) {
-        return marginX() - (int)shift;
+      public int marginX(float marginWidth) {
+        return (int)(myView.getRightAlignmentMarginX() - marginWidth);
       }
 
       @Override
@@ -1387,6 +1415,16 @@ class EditorPainter implements TextDrawingCallback {
         }
         return result;
       }
+    }
+  }
+
+  private static class LineExtensionData {
+    private final LineExtensionInfo info;
+    private final LineLayout layout;
+
+    private LineExtensionData(LineExtensionInfo info, LineLayout layout) {
+      this.info = info;
+      this.layout = layout;
     }
   }
 }

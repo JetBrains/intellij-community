@@ -32,14 +32,17 @@ public abstract class TreeUIHelper {
   /**
    * @deprecated use JBTree class instead, it will automatically configure tool tips 
    */
+  @Deprecated
   public abstract void installToolTipHandler(JTree tree);
   /**
    * @deprecated use JBTable class instead, it will automatically configure tool tips
    */
+  @Deprecated
   public abstract void installToolTipHandler(JTable table);
   /**
    * @deprecated use JBLIst class instead, it will automatically configure tool tips 
    */
+  @Deprecated
   public abstract void installToolTipHandler(JList list);
 
   public abstract void installEditSourceOnDoubleClick(JTree tree);

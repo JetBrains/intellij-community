@@ -108,7 +108,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
   private static boolean isTagStartOrEnd(@Nullable PsiElement element) {
     if (element == null) return false;
     final IElementType type = element.getNode().getElementType();
-    if (type == XmlTokenType.XML_NAME) return isTagStartOrEnd(element.getNextSibling()) || isTagStartOrEnd(element.getPrevSibling());
+    if (type == XmlTokenType.XML_NAME || type == XmlTokenType.XML_TAG_NAME) return isTagStartOrEnd(element.getNextSibling()) || isTagStartOrEnd(element.getPrevSibling());
     return type == XmlTokenType.XML_START_TAG_START || type == XmlTokenType.XML_END_TAG_START || type == XmlTokenType.XML_TAG_END;
   }
 
@@ -126,7 +126,7 @@ public class XmlTagTreeHighlightingPass extends TextEditorHighlightingPass {
     }
 
     ASTNode tagName = startTagStart.getTreeNext();
-    if (tagName == null || tagName.getElementType() != XmlTokenType.XML_NAME) {
+    if (tagName == null || (tagName.getElementType() != XmlTokenType.XML_NAME && tagName.getElementType() != XmlTokenType.XML_TAG_NAME)) {
       return null;
     }
 

@@ -283,7 +283,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
 
     final String newProjectPath = getNewProjectPath();
     final PyAddNewEnvironmentPanel newEnvironmentPanel = new PyAddNewEnvironmentPanel(existingSdks, newProjectPath, preferredEnvironment);
-    final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, existingSdks, newProjectPath, preferredSdk);
+    final PyAddExistingSdkPanel existingSdkPanel = new PyAddExistingSdkPanel(null, null, existingSdks, newProjectPath, preferredSdk);
 
     final PyAddSdkPanel defaultPanel = PySdkSettings.getInstance().getUseNewEnvironmentForNewProject() ?
                                        newEnvironmentPanel : existingSdkPanel;
@@ -357,7 +357,7 @@ public class ProjectSpecificSettingsStep<T> extends ProjectSettingsStepBase<T> i
     final List<Sdk> pythonSdks = PyConfigurableInterpreterList.getInstance(null).getAllPythonSdks();
     Iterables.removeIf(pythonSdks, sdk -> !(sdk.getSdkType() instanceof PythonSdkType) ||
                                           PythonSdkType.isInvalid(sdk) ||
-                                          PySdkExtKt.getAssociatedProjectPath(sdk) != null);
+                                          PySdkExtKt.getAssociatedModulePath(sdk) != null);
     Collections.sort(pythonSdks, new PreferredSdkComparator());
     return pythonSdks;
   }

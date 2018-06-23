@@ -6,15 +6,17 @@ import com.intellij.execution.RunManager;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.junit.*;
+import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.execution.junit.AllInPackageConfigurationProducer;
+import com.intellij.execution.junit.JUnitConfiguration;
+import com.intellij.execution.junit.JUnitUtil;
+import com.intellij.execution.junit.TestInClassConfigurationProducer;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.java.execution.BaseConfigurationTestCase;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataConstants;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.ex.DataConstantsEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.text.StringUtil;
@@ -133,7 +135,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     configuration.getPersistentData().setScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
     configuration.setModule(getModule2());
     MapDataContext dataContext = new MapDataContext();
-    dataContext.put(DataConstantsEx.RUNTIME_CONFIGURATION, configuration);
+    dataContext.put(RunConfiguration.DATA_KEY, configuration);
     configuration = createJUnitConfiguration(psiClass, TestInClassConfigurationProducer.class, dataContext);
     checkClassName(psiClass.getQualifiedName(), configuration);
     assertEquals(Collections.singleton(getModule2()), new HashSet(Arrays.asList(configuration.getModules())));
@@ -144,7 +146,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
     final MapDataContext dataContext = new MapDataContext();
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
-    dataContext.put(DataConstants.MODULE, module);
+    dataContext.put(LangDataKeys.MODULE.getName(), module);
     JUnitConfiguration configuration = createJUnitConfiguration(psiPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage(PACKAGE_NAME, configuration);
@@ -157,7 +159,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
     PsiPackage defaultPackage = psiPackage.getParentPackage();
     final Module module = ModuleUtilCore.findModuleForPsiElement(psiClass);
     final MapDataContext dataContext = new MapDataContext();
-    dataContext.put(DataConstants.MODULE, module);
+    dataContext.put(LangDataKeys.MODULE.getName(), module);
     JUnitConfiguration configuration = createJUnitConfiguration(defaultPackage, AllInPackageConfigurationProducer.class, dataContext);
     checkTestObject(JUnitConfiguration.TEST_PACKAGE, configuration);
     checkPackage("", configuration);
@@ -200,7 +202,7 @@ public class ContextConfigurationTest extends BaseConfigurationTestCase {
   public void testJUnitGeneratedName() {
     PsiClass psiClass = findClass(getModule1(), CLASS_NAME);
     PsiPackage psiPackage = JUnitUtil.getContainingPackage(psiClass);
-    JUnitConfiguration configuration = new JUnitConfiguration(null, myProject, JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration(null, myProject);
     JUnitConfiguration.Data data = configuration.getPersistentData();
     data.PACKAGE_NAME = psiPackage.getQualifiedName();
     data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;

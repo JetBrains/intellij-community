@@ -43,7 +43,7 @@ public interface GotoClassContributor extends ChooseByNameContributor {
   }
 
   /**
-   * If the language returned by this method is {@link IdeLanguageCustomization#getMainIdeLanguage() the main IDE language} the result of
+   * If the language returned by this method is one of {@link IdeLanguageCustomization#getPrimaryIdeLanguages() the primary IDE languages} the result of
    * {@link #getElementKind()} will be used to name `Navigate | Class' action and in 'Go to Class' popup.
    * @return the language to which items returned by this contributor belong
    */

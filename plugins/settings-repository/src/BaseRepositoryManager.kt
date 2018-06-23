@@ -20,6 +20,7 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.diagnostic.debug
 import com.intellij.openapi.diagnostic.runAndLogException
 import com.intellij.openapi.fileTypes.StdFileTypes
+import com.intellij.openapi.project.ProjectManager
 import com.intellij.openapi.vcs.merge.MergeDialogCustomizer
 import com.intellij.openapi.vcs.merge.MergeProvider2
 import com.intellij.openapi.vcs.merge.MultipleFileMergeDialog
@@ -149,7 +150,7 @@ abstract class BaseRepositoryManager(protected val dir: Path) : RepositoryManage
 
   protected abstract fun deleteFromIndex(path: String, isFile: Boolean)
 
-  override fun has(path: String) = lock.read { dir.resolve(path).exists() }
+  override fun has(path: String): Boolean = lock.read { dir.resolve(path).exists() }
 }
 
 var conflictResolver: ((files: List<VirtualFile>, mergeProvider: MergeProvider2) -> Unit)? = null
@@ -167,7 +168,7 @@ fun resolveConflicts(files: List<VirtualFile>, mergeProvider: MergeProvider2): L
 
   var processedFiles: List<VirtualFile>? = null
   invokeAndWaitIfNeed {
-    val fileMergeDialog = MultipleFileMergeDialog(null, files, mergeProvider, object : MergeDialogCustomizer() {
+    val fileMergeDialog = MultipleFileMergeDialog(ProjectManager.getInstance().defaultProject, files, mergeProvider, object : MergeDialogCustomizer() {
       override fun getMultipleFileDialogTitle() = "Settings Repository: Files Merged with Conflicts"
     })
     fileMergeDialog.show()
@@ -180,13 +181,13 @@ class RepositoryVirtualFile(private val path: String) : LightVirtualFile(PathUti
   var byteContent: ByteArray? = null
     private set
 
-  override fun getPath() = path
+  override fun getPath(): String = path
 
   override fun setBinaryContent(content: ByteArray, newModificationStamp: Long, newTimeStamp: Long, requestor: Any?) {
     this.byteContent = content
   }
 
-  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long) = throw IllegalStateException("You must use setBinaryContent")
+  override fun getOutputStream(requestor: Any?, newModificationStamp: Long, newTimeStamp: Long): Nothing = throw IllegalStateException("You must use setBinaryContent")
 
-  override fun setContent(requestor: Any?, content: CharSequence, fireEvent: Boolean) = throw IllegalStateException("You must use setBinaryContent")
+  override fun setContent(requestor: Any?, content: CharSequence, fireEvent: Boolean): Nothing = throw IllegalStateException("You must use setBinaryContent")
 }

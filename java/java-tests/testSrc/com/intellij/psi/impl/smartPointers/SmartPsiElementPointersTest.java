@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.smartPointers;
 
 import com.intellij.JavaTestUtil;
@@ -21,6 +19,7 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.editor.ex.DocumentEx;
+import com.intellij.openapi.editor.impl.FrozenDocument;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -68,7 +67,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     String root = JavaTestUtil.getJavaTestDataPath() + "/codeEditor/smartPsiElementPointers";
     PsiTestUtil.removeAllRoots(myModule, IdeaTestUtil.getMockJdk17());
-    myRoot = PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    myRoot = createTestProjectStructure( root);
   }
 
   public void testChangeInDocument() {
@@ -905,7 +904,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     String text = StringUtil.repeatSymbol(' ', 100000);
     PsiFile file = createFile("a.txt", text);
 
-    PlatformTestUtil.startPerformanceTest(getTestName(false), 500, () -> {
+    PlatformTestUtil.startPerformanceTest(getTestName(false), 650, () -> {
       List<SmartPsiFileRange> pointers = new ArrayList<>();
       for (int i = 0; i < text.length() - 1; i++) {
         pointers.add(getPointerManager().createSmartPsiFileRangePointer(file, new TextRange(i, i + 1)));
@@ -1089,7 +1088,7 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
 
     GCUtil.tryGcSoftlyReachableObjects();
     SmartPointerTracker.processQueue();
-    LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> d.getUserData(key) != null);
+    LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> !(d instanceof FrozenDocument) && d.getUserData(key) != null);
   }
 
 }

@@ -55,6 +55,7 @@ public class WrapReturnValueTest extends MultiFileTestCase {
   public void testInferFieldTypeArg() { doTest(true, null, false); }
   public void testWrongFieldType() { doTest(true, "Existing class does not have appropriate constructor", false); }
   public void testStaticMethodInnerClass() { doTest(false, null, true); }
+  public void testOpenMethodReference() { doTest(false, null, true); }
   public void testRawReturnType() { doTest(true, "Existing class does not have appropriate constructor"); }
   public void testReturnInsideLambda() { doTest(false, null, true); }
   public void testTypeAnnotations() { doTest(false); }

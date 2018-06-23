@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.source.resolve.graphInference;
 
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.PsiUtil;
@@ -13,37 +12,33 @@ import java.util.Arrays;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.function.Function;
-import java.util.function.Supplier;
 
 public class PsiPolyExpressionUtil {
   public static boolean hasStandaloneForm(PsiExpression expression) {
-    if (expression instanceof PsiFunctionalExpression ||
-        expression instanceof PsiParenthesizedExpression ||
-        expression instanceof PsiConditionalExpression ||
-        expression instanceof PsiCallExpression) {
-      return false;
-    }
-    return true;
+    return !(expression instanceof PsiFunctionalExpression) &&
+           !(expression instanceof PsiParenthesizedExpression) &&
+           !(expression instanceof PsiConditionalExpression) &&
+           !(expression instanceof PsiCallExpression);
   }
 
   public static boolean isPolyExpression(final PsiExpression expression) {
     if (expression instanceof PsiFunctionalExpression) {
       return true;
     }
-    else if (expression instanceof PsiParenthesizedExpression) {
+    if (expression instanceof PsiParenthesizedExpression) {
       return isPolyExpression(((PsiParenthesizedExpression)expression).getExpression());
     }
-    else if (expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
+    if (expression instanceof PsiNewExpression && PsiDiamondType.hasDiamond((PsiNewExpression)expression)) {
       return isInAssignmentOrInvocationContext(expression);
     }
-    else if (expression instanceof PsiMethodCallExpression) {
+    if (expression instanceof PsiMethodCallExpression) {
       return isMethodCallPolyExpression(expression, expr -> {
         final MethodCandidateInfo.CurrentCandidateProperties candidateProperties =
           MethodCandidateInfo.getCurrentMethod(((PsiMethodCallExpression)expr).getArgumentList());
         return candidateProperties != null ? candidateProperties.getMethod() : ((PsiMethodCallExpression)expr).resolveMethod();
       });
     }
-    else if (expression instanceof PsiConditionalExpression) {
+    if (expression instanceof PsiConditionalExpression) {
       final ConditionalKind conditionalKind = isBooleanOrNumeric(expression);
       if (conditionalKind == null) {
         return isInAssignmentOrInvocationContext(expression);
@@ -56,7 +51,7 @@ public class PsiPolyExpressionUtil {
     return isMethodCallPolyExpression(expression, e -> method);
   }
 
-  private static boolean isMethodCallPolyExpression(PsiExpression expression, Function<PsiExpression, PsiMethod> methodResolver) {
+  private static boolean isMethodCallPolyExpression(PsiExpression expression, Function<? super PsiExpression, ? extends PsiMethod> methodResolver) {
     if (isInAssignmentOrInvocationContext(expression) && ((PsiCallExpression)expression).getTypeArguments().length == 0) {
       PsiMethod method = methodResolver.apply(expression);
       return method == null || isMethodCallTypeDependsOnInference(expression, method);
@@ -64,7 +59,7 @@ public class PsiPolyExpressionUtil {
     return false;
   }
 
-  public static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
+  private static boolean isMethodCallTypeDependsOnInference(PsiExpression expression, PsiMethod method) {
     final Set<PsiTypeParameter> typeParameters = new HashSet<>(Arrays.asList(method.getTypeParameters()));
     if (!typeParameters.isEmpty()) {
       final PsiType returnType = method.getReturnType();
@@ -137,7 +132,7 @@ public class PsiPolyExpressionUtil {
   }
 
   private static boolean isVarContext(PsiVariable variable) {
-    if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_10)) {
+    if (PsiUtil.isLanguageLevel10OrHigher(variable)) {
       PsiTypeElement typeElement = variable.getTypeElement();
       if (typeElement != null && typeElement.isInferredType()) {
         return true;

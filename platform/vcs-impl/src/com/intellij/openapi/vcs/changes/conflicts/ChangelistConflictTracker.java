@@ -95,7 +95,7 @@ public class ChangelistConflictTracker {
     myDocumentListener = new DocumentListener() {
       @Override
       public void documentChanged(DocumentEvent e) {
-        if (!myOptions.TRACKING_ENABLED) {
+        if (!myOptions.isTrackingEnabled()) {
           return;
         }
         Document document = e.getDocument();
@@ -277,7 +277,7 @@ public class ChangelistConflictTracker {
   }
 
   public boolean hasConflict(@NotNull VirtualFile file) {
-    if (!myOptions.TRACKING_ENABLED) {
+    if (!myOptions.isTrackingEnabled()) {
       return false;
     }
     String path = file.getPath();
@@ -320,11 +320,13 @@ public class ChangelistConflictTracker {
   }
 
   public static class Options {
-    public boolean TRACKING_ENABLED = true;
     public boolean SHOW_DIALOG = false;
     public boolean HIGHLIGHT_CONFLICTS = true;
     public boolean HIGHLIGHT_NON_ACTIVE_CHANGELIST = false;
     public ChangelistConflictResolution LAST_RESOLUTION = ChangelistConflictResolution.IGNORE;
-  }
 
+    public boolean isTrackingEnabled() {
+      return SHOW_DIALOG || HIGHLIGHT_CONFLICTS;
+    }
+  }
 }

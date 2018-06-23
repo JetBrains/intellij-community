@@ -17,7 +17,7 @@ package com.intellij.debugger.memory.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
-import com.intellij.debugger.memory.component.MemoryViewManager;
+import com.intellij.xdebugger.memory.component.MemoryViewManager;
 
 public class ShowTrackedAction extends ToggleAction {
   @Override

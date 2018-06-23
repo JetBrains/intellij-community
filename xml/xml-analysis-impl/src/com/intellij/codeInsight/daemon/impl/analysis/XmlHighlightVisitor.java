@@ -349,7 +349,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
                                                final XmlAttribute attribute,
                                                @NotNull String localizedMessage) {
 
-    final RemoveAttributeIntentionFix removeAttributeIntention = new RemoveAttributeIntentionFix(localName,attribute);
+    final RemoveAttributeIntentionFix removeAttributeIntention = new RemoveAttributeIntentionFix(localName);
 
     if (!(tag instanceof HtmlTag)) {
       final HighlightInfoType tagProblemInfoType = HighlightInfoType.WRONG_REF;
@@ -396,7 +396,7 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
           .descriptionAndTooltip(XmlErrorMessages.message("duplicate.attribute", localName)).create();
         addToResults(highlightInfo);
 
-        IntentionAction intentionAction = new RemoveAttributeIntentionFix(localName, attribute);
+        IntentionAction intentionAction = new RemoveAttributeIntentionFix(localName);
 
         QuickFixAction.registerQuickFixAction(highlightInfo, intentionAction);
       }
@@ -621,10 +621,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
     return new XmlHighlightVisitor();
   }
 
-  @Override
-  public int order() {
-    return 1;
-  }
 
   public static String getUnquotedValue(XmlAttributeValue value, XmlTag tag) {
     String unquotedValue = value.getValue();

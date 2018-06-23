@@ -218,7 +218,7 @@ public class JUnit3IdeaTestRunner extends TestRunner implements IdeaTestRunner {
       }
       final String methodName = getMethodName(test);
       System.out.println("##teamcity[testStarted name=\'" + escapeName(methodName) + 
-                         "\' locationHint=\'java:test://" + escapeName(className + "." + methodName) + "\']");
+                         "\' locationHint=\'java:test://" + escapeName(className + "/" + methodName) + "\']");
     }
 
     protected void finishSuite() {

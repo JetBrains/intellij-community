@@ -38,6 +38,7 @@ public interface GradleTaskManagerExtension {
   /**
    * @deprecated use {@link #executeTasks(ExternalSystemTaskId, List, String, GradleExecutionSettings, String, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   default boolean executeTasks(@NotNull final ExternalSystemTaskId id,
                                @NotNull final List<String> taskNames,
                                @NotNull String projectPath,

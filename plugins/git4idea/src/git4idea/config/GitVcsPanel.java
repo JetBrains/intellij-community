@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.config;
 
 import com.intellij.dvcs.branch.DvcsSyncSettings;
@@ -40,7 +26,6 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import git4idea.GitVcs;
 import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.i18n.GitBundle;
 import git4idea.repo.GitRepositoryManager;
@@ -50,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.NumberFormatter;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.text.NumberFormat;
 import java.util.List;
 import java.util.Objects;
@@ -77,6 +64,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JCheckBox myAutoUpdateIfPushRejected;
   private JBCheckBox mySyncControl;
   private JCheckBox myAutoCommitOnCherryPick;
+  private JCheckBox myAddCherryPickSuffix;
   private JBCheckBox myWarnAboutCrlf;
   private JCheckBox myWarnAboutDetachedHead;
   private JTextField myProtectedBranchesField;
@@ -87,6 +75,9 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
   private JPanel myBranchTimePanel;
   private JBLabel mySupportedBranchUpLabel;
   private JPanel myIncomingOutgoingSettingPanel;
+  private JBCheckBox myPreviewPushOnCommitAndPush;
+  private JBCheckBox myPreviewPushProtectedOnly;
+  private JPanel myPreviewPushProtectedOnlyBorder;
 
   public GitVcsPanel(@NotNull Project project, @NotNull GitExecutableManager executableManager) {
     myProject = project;
@@ -110,6 +101,19 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     mySyncControl.setToolTipText(DvcsBundle.message("sync.setting.description", "Git"));
     myProtectedBranchesLabel.setLabelFor(myProtectedBranchesField);
     myUpdateBranchInfoCheckBox.addItemListener(e -> UIUtil.setEnabled(myBranchTimePanel, myUpdateBranchInfoCheckBox.isSelected(), true));
+    myPreviewPushOnCommitAndPush.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        updateEnabled();
+      }
+    });
+    Insets insets = myPreviewPushProtectedOnly.getBorder().getBorderInsets(myPreviewPushProtectedOnly);
+    myPreviewPushProtectedOnlyBorder.setBorder(JBUI.Borders.emptyLeft(
+      UIUtil.getCheckBoxTextHorizontalOffset(myPreviewPushOnCommitAndPush) - insets.left));
+  }
+
+  private void updateEnabled() {
+    myPreviewPushProtectedOnly.setEnabled(myPreviewPushOnCommitAndPush.isSelected());
   }
 
   private void testExecutable() {
@@ -188,6 +192,7 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myAutoUpdateIfPushRejected.setSelected(projectSettings.autoUpdateIfPushRejected());
     mySyncControl.setSelected(projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC);
     myAutoCommitOnCherryPick.setSelected(projectSettings.isAutoCommitOnCherryPick());
+    myAddCherryPickSuffix.setSelected(projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits());
     myWarnAboutCrlf.setSelected(projectSettings.warnAboutCrlf());
     myWarnAboutDetachedHead.setSelected(projectSettings.warnAboutDetachedHead());
     myUpdateMethodComboBox.setSelectedItem(projectSettings.getUpdateType());
@@ -196,10 +201,13 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     myUpdateBranchInfoCheckBox.setSelected(branchInfoSupported && projectSettings.shouldUpdateBranchInfo());
     myUpdateBranchInfoCheckBox.setEnabled(branchInfoSupported);
     myBranchUpdateTimeField.setValue(projectSettings.getBranchInfoUpdateTime());
+    myPreviewPushOnCommitAndPush.setSelected(projectSettings.shouldPreviewPushOnCommitAndPush());
+    myPreviewPushProtectedOnly.setSelected(projectSettings.isPreviewPushProtectedOnly());
+    updateEnabled();
   }
 
   private boolean isBranchInfoSupported() {
-    return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(GitVcs.getInstance(myProject).getVersion());
+    return GitVersionSpecialty.INCOMING_OUTGOING_BRANCH_INFO.existsIn(myProject);
   }
 
   @Override
@@ -213,8 +221,11 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
            !projectSettings.autoUpdateIfPushRejected() == myAutoUpdateIfPushRejected.isSelected() ||
            ((projectSettings.getSyncSetting() == DvcsSyncSettings.Value.SYNC) != mySyncControl.isSelected() ||
             projectSettings.isAutoCommitOnCherryPick() != myAutoCommitOnCherryPick.isSelected() ||
+            projectSettings.shouldAddSuffixToCherryPicksOfPublishedCommits() != myAddCherryPickSuffix.isSelected() ||
             projectSettings.warnAboutCrlf() != myWarnAboutCrlf.isSelected() ||
             projectSettings.warnAboutDetachedHead() != myWarnAboutDetachedHead.isSelected() ||
+            projectSettings.shouldPreviewPushOnCommitAndPush() != myPreviewPushOnCommitAndPush.isSelected() ||
+            projectSettings.isPreviewPushProtectedOnly() != myPreviewPushProtectedOnly.isSelected() ||
             projectSettings.getUpdateType() != myUpdateMethodComboBox.getModel().getSelectedItem() ||
             isUpdateBranchSettingsModified(projectSettings) ||
             !sorted(sharedSettings.getForcePushProhibitedPatterns()).equals(sorted(getProtectedBranchesPatterns())));
@@ -249,9 +260,12 @@ public class GitVcsPanel implements ConfigurableUi<GitVcsConfigurable.GitVcsSett
     projectSettings.setAutoUpdateIfPushRejected(myAutoUpdateIfPushRejected.isSelected());
     projectSettings.setSyncSetting(mySyncControl.isSelected() ? DvcsSyncSettings.Value.SYNC : DvcsSyncSettings.Value.DONT_SYNC);
     projectSettings.setAutoCommitOnCherryPick(myAutoCommitOnCherryPick.isSelected());
+    projectSettings.setAddSuffixToCherryPicks(myAddCherryPickSuffix.isSelected());
     projectSettings.setWarnAboutCrlf(myWarnAboutCrlf.isSelected());
     projectSettings.setWarnAboutDetachedHead(myWarnAboutDetachedHead.isSelected());
     projectSettings.setUpdateType((UpdateMethod)myUpdateMethodComboBox.getSelectedItem());
+    projectSettings.setPreviewPushOnCommitAndPush(myPreviewPushOnCommitAndPush.isSelected());
+    projectSettings.setPreviewPushProtectedOnly(myPreviewPushProtectedOnly.isSelected());
 
     sharedSettings.setForcePushProhibitedPatters(getProtectedBranchesPatterns());
     applyBranchUpdateInfo(projectSettings);

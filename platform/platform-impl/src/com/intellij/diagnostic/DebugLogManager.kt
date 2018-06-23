@@ -25,7 +25,7 @@ class DebugLogManager(private val properties: PropertiesComponent) : Application
     applyCategories(categories)
   }
 
-  fun getSavedCategories() =
+  fun getSavedCategories(): List<Pair<String, DebugLogLevel>> =
     fromString(properties.getValue(LOG_DEBUG_CATEGORIES), DebugLogLevel.DEBUG) +
     fromString(properties.getValue(LOG_TRACE_CATEGORIES), DebugLogLevel.TRACE)
 

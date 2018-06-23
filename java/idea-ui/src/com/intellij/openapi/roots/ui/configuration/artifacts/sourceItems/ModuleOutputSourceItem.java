@@ -20,6 +20,7 @@ import com.intellij.openapi.module.ModulePointer;
 import com.intellij.openapi.module.ModulePointerManager;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementOutputKind;
+import com.intellij.packaging.impl.elements.ProductionModuleOutputElementType;
 import com.intellij.packaging.impl.elements.ProductionModuleOutputPackagingElement;
 import com.intellij.packaging.impl.ui.ModuleElementPresentation;
 import com.intellij.packaging.ui.*;
@@ -50,10 +51,11 @@ public class ModuleOutputSourceItem extends PackagingSourceItem {
     return myModule.hashCode();
   }
 
+  @NotNull
   @Override
   public SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     final ModulePointer modulePointer = ModulePointerManager.getInstance(context.getProject()).create(myModule);
-    return new DelegatedSourceItemPresentation(new ModuleElementPresentation(modulePointer, context, false)) {
+    return new DelegatedSourceItemPresentation(new ModuleElementPresentation(modulePointer, context, ProductionModuleOutputElementType.ELEMENT_TYPE)) {
       @Override
       public int getWeight() {
         return SourceItemWeights.MODULE_OUTPUT_WEIGHT;

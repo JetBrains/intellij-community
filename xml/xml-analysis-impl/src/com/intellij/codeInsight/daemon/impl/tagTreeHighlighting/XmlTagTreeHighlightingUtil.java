@@ -24,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
+import com.intellij.xml.util.HtmlUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -57,7 +58,7 @@ public class XmlTagTreeHighlightingUtil {
       return false;
     }
 
-    if (!hasXmlViewProvider(file)) {
+    if (!hasXmlViewProvider(file) && !HtmlUtil.supportsXmlTypedHandlers(file)) {
       return false;
     }
 

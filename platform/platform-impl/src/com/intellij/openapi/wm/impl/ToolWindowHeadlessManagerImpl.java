@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.wm.impl;
 
 import com.intellij.openapi.Disposable;
@@ -18,7 +16,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.ui.content.*;
 import com.intellij.ui.content.impl.ContentImpl;
 import com.intellij.util.ArrayUtil;
@@ -195,20 +192,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
 
   @Override
   public void initToolWindow(@NotNull ToolWindowEP bean) {
-
-  }
-
-  @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
-
-  }
-
-  @Override
-  public void addToolWindowManagerListener(@NotNull ToolWindowManagerListener listener, @NotNull Disposable parentDisposable) {
-  }
-
-  @Override
-  public void removeToolWindowManagerListener(@NotNull ToolWindowManagerListener listener) {
   }
 
   @Override
@@ -432,11 +415,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     }
 
     @Override
-    public ActionCallback getActivation() {
-      return ActionCallback.DONE;
-    }
-
-    @Override
     public void removePropertyChangeListener(PropertyChangeListener l) {
     }
 
@@ -502,11 +480,6 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       ContentManagerEvent e = new ContentManagerEvent(this, content, myContents.indexOf(content), ContentManagerEvent.ContentOperation.add);
       myDispatcher.getMulticaster().contentAdded(e);
       if (mySelected == null) setSelectedContent(content);
-    }
-
-    @Override
-    public void addContent(@NotNull final Content content, final Object constraints) {
-      addContent(content);
     }
 
     @Override

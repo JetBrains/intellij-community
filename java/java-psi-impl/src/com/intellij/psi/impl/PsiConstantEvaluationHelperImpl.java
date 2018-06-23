@@ -17,6 +17,8 @@ package com.intellij.psi.impl;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.ConstantExpressionUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Set;
 
@@ -26,12 +28,12 @@ import java.util.Set;
 public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper {
 
   @Override
-  public Object computeConstantExpression(PsiElement expression) {
+  public Object computeConstantExpression(@Nullable PsiElement expression) {
     return computeConstantExpression(expression, false);
   }
 
   @Override
-  public Object computeConstantExpression(PsiElement expression, boolean throwExceptionOnOverflow) {
+  public Object computeConstantExpression(@Nullable PsiElement expression, boolean throwExceptionOnOverflow) {
     if (expression == null) return null;
     ConstantExpressionEvaluator expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(expression.getLanguage());
     assert expressionEvaluator != null;
@@ -40,14 +42,13 @@ public class PsiConstantEvaluationHelperImpl extends PsiConstantEvaluationHelper
   }
 
   @Override
-  public Object computeExpression(final PsiExpression expression, final boolean throwExceptionOnOverflow, final AuxEvaluator auxEvaluator) {
-    if (expression == null) return null;
+  public Object computeExpression(@NotNull final PsiExpression expression, final boolean throwExceptionOnOverflow, @Nullable final AuxEvaluator auxEvaluator) {
     ConstantExpressionEvaluator expressionEvaluator = LanguageConstantExpressionEvaluator.INSTANCE.forLanguage(expression.getLanguage());
     assert expressionEvaluator != null;
     return expressionEvaluator.computeExpression(expression, throwExceptionOnOverflow, auxEvaluator);
   }
 
-  public static Object computeCastTo(PsiExpression expression, PsiType castTo, Set<PsiVariable> visitedVars) {
+  public static Object computeCastTo(@NotNull PsiExpression expression, @NotNull PsiType castTo, @Nullable Set<PsiVariable> visitedVars) {
     Object value = JavaConstantExpressionEvaluator.computeConstantExpression(expression, visitedVars, false);
     if (value == null) return null;
     return ConstantExpressionUtil.computeCastTo(value, castTo);

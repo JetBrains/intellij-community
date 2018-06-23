@@ -162,7 +162,7 @@ public class FileDownloaderImpl implements FileDownloader {
       int maxParallelDownloads = Runtime.getRuntime().availableProcessors();
       LOG.debug("Downloading " + myFileDescriptions.size() + " files using " + maxParallelDownloads + " threads");
       long start = System.currentTimeMillis();
-      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl pool", maxParallelDownloads);
+      ExecutorService executor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileDownloaderImpl Pool", maxParallelDownloads);
       List<Future<Void>> results = new ArrayList<>();
       final AtomicLong totalSize = new AtomicLong();
       for (final DownloadableFileDescription description : myFileDescriptions) {

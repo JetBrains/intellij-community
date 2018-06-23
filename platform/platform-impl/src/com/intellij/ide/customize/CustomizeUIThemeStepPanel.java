@@ -66,7 +66,6 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
     LafManagerImpl.useIntelliJInsteadOfAqua() ? "Light" : "IntelliJ", "IntelliJ", IntelliJLaf.class.getName());
   protected static final ThemeInfo GTK = new ThemeInfo("GTK+", "GTK", "com.sun.java.swing.plaf.gtk.GTKLookAndFeel");
 
-  private boolean myInitial = true;
   private final boolean myColumnMode;
   private final JLabel myPreviewLabel;
   private final Set<ThemeInfo> myThemes = new LinkedHashSet<>();
@@ -94,7 +93,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       Icon icon = theme.getIcon();
       int maxThumbnailSize = 400 / myThemes.size();
       final JLabel label = new JLabel(
-        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, maxThumbnailSize * 2, maxThumbnailSize * 2), .5) : icon);
+        myColumnMode ? IconUtil.scale(IconUtil.cropIcon(icon, maxThumbnailSize * 2, maxThumbnailSize * 2), this, .5f) : icon);
       label.setVerticalAlignment(SwingConstants.TOP);
       label.setHorizontalAlignment(SwingConstants.RIGHT);
       panel.add(label, BorderLayout.CENTER);
@@ -112,8 +111,11 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       wrapperPanel.add(myPreviewLabel);
       add(wrapperPanel, BorderLayout.CENTER);
     }
+    //Static fields initialization. At this point there is no parent window
+    applyLaf(myDefaultTheme, this);
+    //Actual UI initialization
+    //noinspection SSBasedInspection
     SwingUtilities.invokeLater(() -> applyLaf(myDefaultTheme, this));
-    myInitial = false;
   }
 
   protected void initThemes(Collection<ThemeInfo> result) {
@@ -190,9 +192,7 @@ public class CustomizeUIThemeStepPanel extends AbstractCustomizeWizardStep {
       UIManager.setLookAndFeel(info.getClassName());
       LafManagerImpl.updateForDarcula(UIUtil.isUnderDarcula());
       String className = info.getClassName();
-      if (!myInitial) {
-        WelcomeWizardUtil.setWizardLAF(className);
-      }
+      WelcomeWizardUtil.setWizardLAF(className);
       Window window = SwingUtilities.getWindowAncestor(component);
       if (window != null) {
         if (SystemInfo.isMac) {

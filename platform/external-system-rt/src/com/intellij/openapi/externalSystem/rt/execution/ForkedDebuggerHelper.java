@@ -11,13 +11,16 @@ import java.net.Socket;
  */
 public class ForkedDebuggerHelper {
 
+  public static final String DEBUG_SETUP_PREFIX = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=";
+  public static final String DEBUG_FORK_SOCKET_PARAM = "-forkSocket";
+
   public static String setupDebugger(String processName, int debugPort) {
     String setup = "";
     try {
       if (debugPort > -1) {
         int debugAddress = findAvailableSocketPort();
         if (debugAddress > -1) {
-          setup = "-agentlib:jdwp=transport=dt_socket,server=n,suspend=y,address=" + debugAddress;
+          setup = DEBUG_SETUP_PREFIX + debugAddress;
           send(debugAddress, processName, debugPort);
         }
       }

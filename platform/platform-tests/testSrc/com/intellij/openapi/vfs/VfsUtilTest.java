@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.testFramework.UsefulTestCase;
@@ -196,6 +197,17 @@ public class VfsUtilTest extends BareTestFixtureTestCase {
     NewVirtualFile root2 = ManagingFS.getInstance().findRoot(jar.getParent().getPath() + "//" + jar.getName() + "!/", fs);
     assertNotNull(root1);
     assertSame(root1, root2);
+  }
+
+  @Test
+  public void testFindRootWithCrazySlashes() {
+    for (int i = 0; i < 10; i++) {
+      String path = StringUtil.repeat("/", i);
+      VirtualFile root = LocalFileSystem.getInstance().findFileByPathIfCached(path);
+      assertTrue(path, root == null || !root.getPath().contains("//"));
+      VirtualFile root2 = LocalFileSystem.getInstance().findFileByPath(path);
+      assertTrue(path, root2 == null || !root2.getPath().contains("//"));
+    }
   }
 
   @Test

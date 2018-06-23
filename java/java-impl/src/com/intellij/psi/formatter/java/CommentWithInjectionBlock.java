@@ -38,8 +38,9 @@ public class CommentWithInjectionBlock extends AbstractJavaBlock {
                                    Alignment alignment,
                                    Indent indent,
                                    CommonCodeStyleSettings settings,
-                                   JavaCodeStyleSettings javaSettings) {
-    super(node, wrap, alignment, indent, settings, javaSettings);
+                                   JavaCodeStyleSettings javaSettings,
+                                   @NotNull FormattingMode formattingMode) {
+    super(node, wrap, alignment, indent, settings, javaSettings, formattingMode);
     myInjectedBlockBuilder = new JavaCommentInjectedBlockBuilder();
   }
 

@@ -148,7 +148,7 @@ public final class PropertyInspectorTable extends Table implements DataProvider{
       public void mousePressed(final MouseEvent e){
         final int row = rowAtPoint(e.getPoint());
         final int column = columnAtPoint(e.getPoint());
-        if (row == -1){
+        if (row == -1 || column == -1){
           return;
         }
         final Property property = myProperties.get(row);

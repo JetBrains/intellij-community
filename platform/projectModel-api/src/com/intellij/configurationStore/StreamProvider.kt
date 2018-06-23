@@ -15,7 +15,7 @@ interface StreamProvider {
   /**
    * Called only on `write`
    */
-  fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT) = true
+  fun isApplicable(fileSpec: String, roamingType: RoamingType = RoamingType.DEFAULT): Boolean = true
 
   /**
    * @param fileSpec
@@ -24,7 +24,7 @@ interface StreamProvider {
    */
   fun write(fileSpec: String, content: ByteArray, size: Int = content.size, roamingType: RoamingType = RoamingType.DEFAULT)
 
-  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT) = write(path, content.internalBuffer, content.size(), roamingType)
+  fun write(path: String, content: BufferExposingByteArrayOutputStream, roamingType: RoamingType = RoamingType.DEFAULT): Unit = write(path, content.internalBuffer, content.size(), roamingType)
 
   /**
    * `true` if provider is applicable for file.

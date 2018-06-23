@@ -66,14 +66,14 @@ class ResultUtil {
     if (result != null) return result;
     result = checkFinal(r1, r2);
     if (result != null) return result;
-    if (r1 instanceof Final && r2 instanceof Final) {
-      return new Final(lattice.join(((Final) r1).value, ((Final) r2).value));
+    if (r1 instanceof Value && r2 instanceof Value) {
+      return lattice.join((Value) r1, (Value) r2);
     }
-    if (r1 instanceof Final && r2 instanceof Pending) {
-      return addSingle((Pending)r2, ((Final)r1).value);
+    if (r1 instanceof Value && r2 instanceof Pending) {
+      return addSingle((Pending)r2, (Value)r1);
     }
-    if (r1 instanceof Pending && r2 instanceof Final) {
-      return addSingle((Pending)r1, ((Final)r2).value);
+    if (r1 instanceof Pending && r2 instanceof Value) {
+      return addSingle((Pending)r1, (Value)r2);
     }
     assert r1 instanceof Pending && r2 instanceof Pending;
     Pending pending1 = (Pending) r1;
@@ -86,10 +86,8 @@ class ResultUtil {
 
   @Nullable
   private Result checkFinal(Result r1, Result r2) {
-    if (!(r1 instanceof Final)) return null;
-    Final f1 = (Final)r1;
-    if (f1.value == top) return r1;
-    if (f1.value == bottom) return r2;
+    if (r1 == top) return r1;
+    if (r1 == bottom) return r2;
     return null;
   }
 
@@ -100,7 +98,7 @@ class ResultUtil {
       if(component.ids.length == 0) {
         Value join = lattice.join(component.value, value);
         if(join == top) {
-          return new Final(top);
+          return top;
         } else if(join == component.value) {
           return pending;
         } else {
@@ -163,7 +161,7 @@ final class Solver {
   }
 
   Result getUnknownResult() {
-    return new Final(unstableValue);
+    return unstableValue;
   }
 
   void addEquation(Equation equation) {
@@ -183,14 +181,14 @@ final class Solver {
 
   void queueEquation(Equation equation) {
     Result rhs = equation.result;
-    if (rhs instanceof Final) {
-      solved.put(equation.key, ((Final) rhs).value);
+    if (rhs instanceof Value) {
+      solved.put(equation.key, (Value) rhs);
       moving.push(equation.key);
     } else if (rhs instanceof Pending) {
       Pending pendResult = ((Pending)rhs).copy();
       Result norm = normalize(pendResult.delta);
-      if (norm instanceof Final) {
-        solved.put(equation.key, ((Final) norm).value);
+      if (norm instanceof Value) {
+        solved.put(equation.key, (Value) norm);
         moving.push(equation.key);
       }
       else {
@@ -246,9 +244,8 @@ final class Solver {
           Pending pend = pending.remove(dId);
           if (pend != null) {
             Result pend1 = substitute(pend, pId, pVal);
-            if (pend1 instanceof Final) {
-              Final fi = (Final)pend1;
-              solved.put(dId, fi.value);
+            if (pend1 instanceof Value) {
+              solved.put(dId, (Value)pend1);
               moving.push(dId);
             }
             else {
@@ -283,7 +280,7 @@ final class Solver {
         computableNow = false;
       }
     }
-    return (acc == lattice.top || computableNow) ? new Final(acc) : new Pending(sum);
+    return (acc == lattice.top || computableNow) ? acc : new Pending(sum);
   }
 
 }

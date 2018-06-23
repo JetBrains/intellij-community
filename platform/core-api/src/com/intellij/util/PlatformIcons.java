@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util;
 
 import com.intellij.icons.AllIcons;
@@ -33,13 +19,10 @@ public interface PlatformIcons {
   Icon PACKAGE_LOCAL_ICON = AllIcons.Nodes.C_plocal;
   Icon PACKAGE_ICON = AllIcons.Nodes.Package;
 
-  Icon DIRECTORY_CLOSED_ICON = AllIcons.Nodes.TreeClosed;
-  @Deprecated Icon DIRECTORY_OPEN_ICON = DIRECTORY_CLOSED_ICON;
-
   @NonNls String CLASS_ICON_PATH = "/nodes/class.png";
   Icon CLASS_ICON = AllIcons.Nodes.Class;
   Icon EXCEPTION_CLASS_ICON = AllIcons.Nodes.ExceptionClass;
-  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Caller;
+  Icon NEW_EXCEPTION = AllIcons.Hierarchy.Supertypes;
   Icon ANONYMOUS_CLASS_ICON = AllIcons.Nodes.AnonymousClass;
   Icon ABSTRACT_CLASS_ICON = AllIcons.Nodes.AbstractClass;
   Icon ANNOTATION_TYPE_ICON = AllIcons.Nodes.Annotationtype;
@@ -62,7 +45,7 @@ public interface PlatformIcons {
   Icon VARIABLE_RW_ACCESS = AllIcons.Nodes.Rw_access;
   Icon CUSTOM_FILE_ICON = AllIcons.FileTypes.Custom;
   Icon PROPERTY_ICON = AllIcons.Nodes.Property;
-  Icon NEW_PARAMETER = AllIcons.Hierarchy.Caller;
+  Icon NEW_PARAMETER = AllIcons.Hierarchy.Supertypes;
   Icon ASPECT_ICON = AllIcons.Nodes.Aspect;
   Icon ADVICE_ICON = AllIcons.Nodes.Advice;
   Icon ERROR_INTRODUCTION_ICON = AllIcons.Nodes.ErrorIntroduction;
@@ -73,7 +56,7 @@ public interface PlatformIcons {
   Icon UI_FORM_ICON = AllIcons.FileTypes.UiForm;
   Icon JSP_ICON = AllIcons.FileTypes.Jsp;
   Icon SMALL_VCS_CONFIGURABLE = AllIcons.General.SmallConfigurableVcs;
-  Icon GROUP_BY_PACKAGES = AllIcons.Toolbar.Folders;
+  Icon GROUP_BY_PACKAGES = AllIcons.Actions.GroupByPackage;
   Icon ADD_ICON = IconUtil.getAddIcon();
   Icon DELETE_ICON = IconUtil.getRemoveIcon();
   Icon COPY_ICON = AllIcons.Actions.Copy;
@@ -115,4 +98,7 @@ public interface PlatformIcons {
   
   Icon EXPORT_ICON = AllIcons.ToolbarDecorator.Export;
   Icon IMPORT_ICON = AllIcons.ToolbarDecorator.Import;
+
+  @Deprecated Icon DIRECTORY_CLOSED_ICON = FOLDER_ICON;
+  @Deprecated Icon DIRECTORY_OPEN_ICON = FOLDER_ICON;
 }

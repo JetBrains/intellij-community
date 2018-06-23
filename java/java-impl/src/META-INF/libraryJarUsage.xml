@@ -1,6 +1,5 @@
 <idea-plugin>
   <extensions defaultExtensionNs="com.intellij">
-    <statistics.usagesCollector implementation="com.intellij.internal.statistic.libraryJar.LibraryJarUsagesCollector"/>
     <statistics.projectUsagesCollector implementation="com.intellij.internal.statistic.libraryJar.FUSLibraryJarUsagesCollector"/>
     <postStartupActivity implementation="com.intellij.internal.statistic.libraryJar.LibraryJarStatisticsService"/>
   </extensions>

@@ -45,6 +45,8 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
       CommunityRepositoryModules.groovyPlugin([])
     ]
     productLayout.classesLoadingOrderFilePath = "$home/build/order.txt"
+
+    mavenArtifacts.forIdeModules = true
   }
 
   @Override
@@ -65,8 +67,9 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new WindowsDistributionCustomizer() {
       {
         icoPath = "$projectHome/platform/icons/src/idea_CE.ico"
+        icoPathForEAP = "$projectHome/build/conf/ideaCE/win/images/idea_CE_EAP.ico"
         installerImagesPath = "$projectHome/build/conf/ideaCE/win/images"
-        fileAssociations = [".java", ".groovy", ".kt"]
+        fileAssociations = ["java", "groovy", "kt"]
       }
 
       @Override
@@ -90,6 +93,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
     return new LinuxDistributionCustomizer() {
       {
         iconPngPath = "$projectHome/platform/icons/src/icon_CE_128.png"
+        iconPngPathForEAP = "$projectHome/build/conf/ideaCE/linux/images/icon_CE_EAP_128.png"
         snapName = "intellij-idea-community"
         snapDescription =
           "The most intelligent Java IDE. Every aspect of IntelliJ IDEA is specifically designed to maximize developer productivity. " +
@@ -108,6 +112,7 @@ class IdeaCommunityProperties extends BaseIdeaProperties {
         icnsPath = "$projectHome/build/conf/ideaCE/mac/images/idea.icns"
         urlSchemes = ["idea"]
         associateIpr = true
+        fileAssociations = ["java", "groovy", "kt"]
         enableYourkitAgentInEAP = false
         bundleIdentifier = "com.jetbrains.intellij.ce"
         dmgImagePath = "$projectHome/build/conf/ideaCE/mac/images/dmg_background.tiff"

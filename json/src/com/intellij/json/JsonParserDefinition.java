@@ -74,11 +74,11 @@ public class JsonParserDefinition implements ParserDefinition {
 
   @Override
   public PsiFile createFile(FileViewProvider fileViewProvider) {
-    return new JsonFileImpl(fileViewProvider);
+    return new JsonFileImpl(fileViewProvider, JsonLanguage.INSTANCE);
   }
 
   @Override
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(ASTNode astNode, ASTNode astNode2) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(ASTNode astNode, ASTNode astNode2) {
     return SpaceRequirements.MAY;
   }
 }

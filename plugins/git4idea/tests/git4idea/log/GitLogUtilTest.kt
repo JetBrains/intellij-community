@@ -25,7 +25,7 @@ class GitLogUtilTest : GitSingleRepoTest() {
     touch("file.txt", "content")
     repo.addCommit(message)
 
-    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details))
+    GitLogUtil.readFullDetails(myProject, repo.root, CollectConsumer(details), true, true, true)
 
     val lastCommit = ContainerUtil.getFirstItem(details)
     assertNotNull(lastCommit)
@@ -44,15 +44,15 @@ class GitLogUtilTest : GitSingleRepoTest() {
 
     val commitCount = 20
     for (i in 0 until commitCount) {
-      echo("file.txt", "content number " + i)
+      echo("file.txt", "content number $i")
       repo.add()
-      git("commit --allow-empty-message -F " + messageFile)
+      git("commit --allow-empty-message -F $messageFile")
       expected.add(this.last())
     }
     expected.reverse()
 
     val actualHashes = ContainerUtil.map<GitCommit, String>(GitLogUtil.collectFullDetails(myProject, repo.root,
-                                                                                          "--max-count=" + commitCount)
+                                                                                          "--max-count=$commitCount")
     ) { detail -> detail.id.asString() }
 
     assertEquals(expected, actualHashes)

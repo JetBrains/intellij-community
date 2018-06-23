@@ -699,7 +699,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         }
         // the expression references final var outside the context's class (in some of the outer classes)
         // -1 because val$ are located in the same class
-        int iterationCount = calcIterationCount(variableClass, variableClass.getName(), false) - 1;
+        int iterationCount = calcIterationCount(variableClass, "Base class not found for " + psiVar.getName(), false) - 1;
         if (iterationCount > -1) {
           PsiExpression initializer = psiVar.getInitializer();
           if(initializer != null) {
@@ -914,7 +914,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
       Evaluator incrementImpl = createBinaryEvaluator(
         operandEvaluator, operandType,
-        new LiteralEvaluator(Integer.valueOf(1), "int"), PsiType.INT,
+        new LiteralEvaluator(1, "int"), PsiType.INT,
         operation == JavaTokenType.PLUSPLUS ? JavaTokenType.PLUS : JavaTokenType.MINUS,
         unboxedOperandType!= null? unboxedOperandType : operandType
       );
@@ -1080,7 +1080,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
 
     @Override
     public void visitLiteralExpression(PsiLiteralExpression expression) {
-      final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, null, null);
+      final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression, PsiUtil.getLanguageLevel(expression), null);
       if (parsingError != null) {
         throwEvaluateException(parsingError.getDescription());
         return;
@@ -1366,9 +1366,10 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       return aClass == null ? null : PsiTreeUtil.getContextOfType(aClass, PsiClass.class, true);
     }
 
-    private PsiClass getContainingClass(PsiVariable variable) {
-      PsiElement element = PsiTreeUtil.getParentOfType(variable.getParent(), PsiClass.class, false);
-      return element == null ? myContextPsiClass : (PsiClass)element;
+    @Nullable
+    private PsiClass getContainingClass(@NotNull PsiVariable variable) {
+      PsiClass element = PsiTreeUtil.getParentOfType(variable.getParent(), PsiClass.class, false);
+      return element == null ? myContextPsiClass : element;
     }
 
     @Nullable

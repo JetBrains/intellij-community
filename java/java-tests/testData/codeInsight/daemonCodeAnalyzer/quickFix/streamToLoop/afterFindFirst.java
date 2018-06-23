@@ -7,7 +7,7 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static Optional<String> testSimple(List<String> list) {
-      for (String s : list) {
+      for (String s: list) {
           return Optional.of(s);
       }
       return Optional.empty();
@@ -15,7 +15,7 @@ public class Main {
 
   public void testAssign(List<String> list) {
       String res = "";
-      for (String s : list) {
+      for (String s: list) {
           String trim = s.trim();
           if (!trim.isEmpty()) {
               res = trim;
@@ -27,7 +27,7 @@ public class Main {
 
   public void testAssignFinal(List<String> list) {
       String res = "";
-      for (String s : list) {
+      for (String s: list) {
           String trim = s.trim();
           if (!trim.isEmpty()) {
               res = trim;
@@ -38,9 +38,9 @@ public class Main {
   }
 
   public static Optional<String> testFlatMap(List<List<String>> list) {
-      for (List<String> x : list) {
+      for (List<String> x: list) {
           if (x != null) {
-              for (String s : x) {
+              for (String s: x) {
                   return Optional.of(s);
               }
           }
@@ -54,9 +54,9 @@ public class Main {
     for(int i=0; i<10; i++) {
         String found = "";
         OUTER1:
-        for (List<String> x : list) {
+        for (List<String> x: list) {
             if (x != null) {
-                for (String s : x) {
+                for (String s: x) {
                     found = s;
                     break OUTER1;
                 }

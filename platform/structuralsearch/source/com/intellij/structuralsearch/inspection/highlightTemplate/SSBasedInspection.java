@@ -1,34 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
 import com.intellij.codeInspection.*;
 import com.intellij.dupLocator.iterators.CountingNodeIterator;
-import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
-import com.intellij.notification.Notifications;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.structuralsearch.MatchResult;
-import com.intellij.structuralsearch.Matcher;
-import com.intellij.structuralsearch.SSRBundle;
-import com.intellij.structuralsearch.StructuralSearchException;
+import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.filters.LexicalNodesFilter;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
@@ -37,6 +18,7 @@ import com.intellij.structuralsearch.plugin.replace.impl.Replacer;
 import com.intellij.structuralsearch.plugin.replace.ui.ReplaceConfiguration;
 import com.intellij.structuralsearch.plugin.ui.Configuration;
 import com.intellij.structuralsearch.plugin.ui.ConfigurationManager;
+import com.intellij.structuralsearch.plugin.ui.UIUtil;
 import com.intellij.util.PairProcessor;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -51,11 +33,11 @@ import java.util.*;
  * @author cdr
  */
 public class SSBasedInspection extends LocalInspectionTool {
-  private static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
+  static final Object LOCK = new Object(); // hack to avoid race conditions in SSR
 
   static final String SHORT_NAME = "SSBasedInspection";
   private final List<Configuration> myConfigurations = new ArrayList<>();
-  private final Set<String> myProblemsReported = new HashSet<>(1);
+  final Set<String> myProblemsReported = new HashSet<>(1);
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
@@ -114,8 +96,9 @@ public class SSBasedInspection extends LocalInspectionTool {
           if (LexicalNodesFilter.getInstance().accepts(element)) return;
           final SsrFilteringNodeIterator matchedNodes = new SsrFilteringNodeIterator(element);
           for (Map.Entry<Configuration, MatchContext> entry : compiledOptions.entrySet()) {
-            Configuration configuration = entry.getKey();
-            MatchContext context = entry.getValue();
+            final Configuration configuration = entry.getKey();
+            final MatchContext context = entry.getValue();
+            if (context == null) continue;
 
             if (Matcher.checkIfShouldAttemptToMatch(context, matchedNodes)) {
               final int nodeCount = context.getPattern().getNodeCount();
@@ -124,10 +107,13 @@ public class SSBasedInspection extends LocalInspectionTool {
               }
               catch (StructuralSearchException e) {
                 if (myProblemsReported.add(configuration.getName())) { // don't overwhelm the user with messages
-                  Notifications.Bus.notify(new Notification(SSRBundle.message("structural.search.title"),
-                                                            SSRBundle.message("template.problem", configuration.getName()),
-                                                            e.getMessage(),
-                                                            NotificationType.ERROR), element.getProject());
+                  //noinspection InstanceofCatchParameter
+                  UIUtil.SSR_NOTIFICATION_GROUP.createNotification(NotificationType.ERROR)
+                                               .setContent(e instanceof StructuralSearchScriptException
+                                                           ? SSRBundle.message("inspection.script.problem", e.getCause(), configuration.getName())
+                                                           : SSRBundle.message("inspection.template.problem", e.getMessage()))
+                                               .setImportant(true)
+                                               .notify(element.getProject());
                 }
               }
               matchedNodes.reset();
@@ -138,7 +124,7 @@ public class SSBasedInspection extends LocalInspectionTool {
     };
   }
 
-  private static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
+  static LocalQuickFix createQuickFix(final Project project, final MatchResult matchResult, final Configuration configuration) {
     if (!(configuration instanceof ReplaceConfiguration)) return null;
     ReplaceConfiguration replaceConfiguration = (ReplaceConfiguration)configuration;
     final Replacer replacer = new Replacer(project, replaceConfiguration.getReplaceOptions());
@@ -162,6 +148,7 @@ public class SSBasedInspection extends LocalInspectionTool {
       @Override
       @NotNull
       public String getFamilyName() {
+        //noinspection DialogTitleCapitalization
         return SSRBundle.message("SSRInspection.family.name");
       }
     };

@@ -1,0 +1,4 @@
+deprecated: io.png -> /actions/menu-saveall.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall
+deprecated: locked.png -> /debugger/muteBreakpoints.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.MuteBreakpoints
+deprecated: paused.png -> /actions/pause.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Pause
+deprecated: running.png -> /actions/resume.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Resume

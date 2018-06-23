@@ -3,7 +3,6 @@ class Test {
       if (true) {
           newMethod();
 
-
       } else {
 
       }

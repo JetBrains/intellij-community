@@ -17,7 +17,9 @@ package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInspection.defUse.DefUseInspection;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
+import org.jetbrains.annotations.NotNull;
 
 public class DefUseTest extends LightCodeInsightFixtureTestCase {
   @Override
@@ -57,11 +59,21 @@ public class DefUseTest extends LightCodeInsightFixtureTestCase {
   public void testNestedTryFinallyInEndlessLoop() { doTest(); }
   public void testNestedTryFinallyInForLoop() { doTest(); }
   public void testFieldInitializer() { doTest(); }
+  public void testChainedFieldInitializer() { doTest(); }
+  public void testVarDeclaration() { doTest(); }
   public void testFieldIgnoringRedundantInitializer() {
     DefUseInspection inspection = new DefUseInspection();
     inspection.REPORT_REDUNDANT_INITIALIZER = false;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(getTestName(false) + ".java");
+  }
+  public void testFieldInitializerUsedInMethodReference() { doTest(); }
+  public void testFieldInitializerChainedConstructor() { doTest(); }
+
+  @NotNull
+  @Override
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return JAVA_10;
   }
 
   private void doTest() {

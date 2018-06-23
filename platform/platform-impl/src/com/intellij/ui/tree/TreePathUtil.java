@@ -7,7 +7,9 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.lang.reflect.Array;
 import java.util.ArrayDeque;
+import java.util.Objects;
 import java.util.function.Function;
+import java.util.stream.Stream;
 
 import static java.util.Arrays.asList;
 
@@ -185,5 +187,22 @@ public class TreePathUtil {
 
   private static <I, O> O convert(I object, @NotNull Function<I, O> converter) {
     return object == null ? null : converter.apply(object);
+  }
+
+  public static TreeNode toTreeNode(TreePath path) {
+    Object component = path == null ? null : path.getLastPathComponent();
+    return component instanceof TreeNode ? (TreeNode)component : null;
+  }
+
+  public static TreeNode[] toTreeNodes(TreePath... paths) {
+    return paths == null ? null : Stream.of(paths).map(TreePathUtil::toTreeNode).filter(Objects::nonNull).toArray(TreeNode[]::new);
+  }
+
+  public static TreePath toTreePath(TreeNode node) {
+    return node == null ? null : pathToTreeNode(node);
+  }
+
+  public static TreePath[] toTreePaths(TreeNode... nodes) {
+    return nodes == null ? null : Stream.of(nodes).map(TreePathUtil::toTreePath).filter(Objects::nonNull).toArray(TreePath[]::new);
   }
 }

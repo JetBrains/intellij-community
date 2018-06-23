@@ -12,12 +12,12 @@ public class MutabilityBasics {
     return Collections.emptyList();
   }
 
-  @Contract(<error descr="Cannot resolve method 'mutates'">mutates</error> = "arg")
+  @Contract(<error descr="Cannot resolve method 'mutates'">mutates</error> = "param")
   static <T extends Comparable<T>> void sort(List<T> collection) {
     Collections.sort(collection);
   }
 
-  @Contract(<error descr="Cannot resolve method 'mutates'">mutates</error> = "arg1")
+  @Contract(<error descr="Cannot resolve method 'mutates'">mutates</error> = "param1")
   static <T extends Comparable<T>> void addAll(Collection<T> collection, List<T> other) {
     sort(<warning descr="Immutable object is passed where mutable is expected">other</warning>);
     collection.addAll(other);

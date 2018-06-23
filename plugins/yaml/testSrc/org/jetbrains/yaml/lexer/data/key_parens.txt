@@ -1,1 +1,2 @@
-scalar key ('comment(c):')
+scalar key ('comment(c)')
+: (':')

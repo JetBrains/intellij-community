@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.conflict;
 
 import org.jetbrains.annotations.NotNull;
@@ -9,20 +9,23 @@ import org.jetbrains.idea.svn.api.Url;
 
 public class ConflictVersion extends BaseNodeDescription {
 
-  private final Url myRepositoryRoot;
-  private final String myPath;
+  @NotNull private final Url myRepositoryRoot;
+  @NotNull private final String myPath;
   private final long myPegRevision;
-  public ConflictVersion(Url repositoryRoot, String path, long pegRevision, @NotNull NodeKind kind) {
+
+  public ConflictVersion(@NotNull Url repositoryRoot, @NotNull String path, long pegRevision, @NotNull NodeKind kind) {
     super(kind);
     myRepositoryRoot = repositoryRoot;
     myPath = path;
     myPegRevision = pegRevision;
   }
 
+  @NotNull
   public Url getRepositoryRoot() {
     return myRepositoryRoot;
   }
 
+  @NotNull
   public String getPath() {
     return myPath;
   }
@@ -38,13 +41,7 @@ public class ConflictVersion extends BaseNodeDescription {
 
   @NotNull
   public String toPresentableString() {
-    StringBuilder urlBuilder = new StringBuilder();
-
-    urlBuilder.append(myRepositoryRoot != null ? myRepositoryRoot : "");
-    urlBuilder.append("/");
-    urlBuilder.append(myPath != null ? myPath : "...");
-
-    return "(" + getKind() + ") " + urlBuilder + "@" + getPegRevision();
+    return "(" + getKind() + ") " + myRepositoryRoot.toDecodedString() + "/" + myPath + "@" + getPegRevision();
   }
 
   @NotNull

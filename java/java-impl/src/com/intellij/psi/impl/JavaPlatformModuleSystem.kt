@@ -27,27 +27,26 @@ import com.intellij.psi.util.PsiUtil
  * @see <a href="http://openjdk.java.net/jeps/261">JEP 261: Module System</a>
  */
 class JavaPlatformModuleSystem : JavaModuleSystemEx {
-  override fun getName() = "Java Platform Module System"
+  override fun getName(): String = "Java Platform Module System"
 
-  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement) =
-    checkAccess(targetPackageName, targetFile, place, quick = true) == null
+  override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
+    checkAccess(targetPackageName, targetFile?.originalFile, place, quick = true) == null
 
-  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement) =
-    checkAccess(targetPackageName, targetFile, place, quick = false)
+  override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? =
+    checkAccess(targetPackageName, targetFile?.originalFile, place, quick = false)
 
   private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile
     if (useFile != null && PsiUtil.isLanguageLevel9OrHigher(useFile)) {
-      if (targetFile != null && targetFile.isPhysical) {
-        return checkAccess(targetFile, useFile, targetPackageName, quick)
-      }
-      else {
-        val project = useFile.project
-        val target = JavaPsiFacade.getInstance(project).findPackage(targetPackageName)
-        if (target != null) {
-          val useVFile = useFile.virtualFile
-          if (useVFile != null) {
-            val index = ProjectFileIndex.getInstance(useFile.project)
+      val useVFile = useFile.virtualFile
+      val index = ProjectFileIndex.getInstance(useFile.project)
+      if (useVFile == null || !index.isInLibrarySource(useVFile)) {
+        if (targetFile != null && targetFile.isPhysical) {
+          return checkAccess(targetFile, useFile, targetPackageName, quick)
+        }
+        else if (useVFile != null) {
+          val target = JavaPsiFacade.getInstance(useFile.project).findPackage(targetPackageName)
+          if (target != null) {
             val module = index.getModuleForFile(useVFile)
             if (module != null) {
               val test = index.isInTestSourceContent(useVFile)
@@ -74,8 +73,8 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   private val ERR = ErrorWithFixes("-")
 
   private fun checkAccess(target: PsiFileSystemItem, place: PsiFileSystemItem, packageName: String, quick: Boolean): ErrorWithFixes? {
-    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)?.originalElement as PsiJavaModule?
-    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)?.originalElement as PsiJavaModule?
+    val targetModule = JavaModuleGraphUtil.findDescriptorByElement(target)
+    val useModule = JavaModuleGraphUtil.findDescriptorByElement(place)
 
     if (targetModule != null) {
       if (targetModule == useModule) {
@@ -188,7 +187,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   }
 
   private class AddExportsOptionFix(module: Module, targetName: String, packageName: String, private val useName: String) : CompilerOptionFix(module) {
-    private val qualifier = targetName + '/' + packageName
+    private val qualifier = "${targetName}/${packageName}"
 
     override fun getText() = QuickFixBundle.message("add.compiler.option.fix.name", "--add-exports=${qualifier}=${useName}")
 
@@ -211,7 +210,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         candidate == options.size -> options[idx - 1] = "--add-exports=${qualifier}=${useName}"
         else -> {
           val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + useName else value + ',' + useName
+          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + useName else "${value},${useName}"
         }
       }
     }
@@ -233,7 +232,7 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
         options.size -> options[idx - 1] = "--add-modules=${moduleName}"
         else -> {
           val value = options[idx]
-          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else value + ',' + moduleName
+          options[idx] = if (value.endsWith('=') || value.endsWith(',')) value + moduleName else "${value},${moduleName}"
         }
       }
     }

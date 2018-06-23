@@ -1,14 +1,14 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <title>aspectj@2x</title>
   <g>
     <g>
-      <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <polygon points="14 0 14 8 14 10 12 10 4 10 4 16 26 16 26 0 14 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
+      <polygon points="14 2 6 10 14 10 14 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+      <polygon points="16 2 16 10 16 12 14 12 6 12 6 16 26 16 26 2 16 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     </g>
-    <rect x="2" y="18" width="30" height="14" fill="#f26522" opacity="0.6"/>
-    <g opacity="0.6">
-      <path d="M15.66315,28.40826l1.11616-1.18349a2.36953,2.36953,0,0,0,1.94177,1.16972c0.90975,0,1.53009-.62041,1.53009-1.94381V20H22v6.50688a3.627,3.627,0,0,1-.90863,2.61927A3.17879,3.17879,0,0,1,18.74913,30,3.60939,3.60939,0,0,1,15.66315,28.40826Z" fill="#231f20"/>
+    <rect x="2" y="18" width="30" height="14" fill="#f26522" opacity="0.7"/>
+    <g opacity="0.7">
+      <path d="M16,28.40826l1.233-1.18349a2.67429,2.67429,0,0,0,2.145,1.16973c1.005,0,1.69021-.62042,1.69021-1.94381V20H23v6.50688a3.42948,3.42948,0,0,1-1.00372,2.61927A3.72484,3.72484,0,0,1,19.40892,30,4.115,4.115,0,0,1,16,28.40826Z" fill="#231f20"/>
     </g>
-    <path d="M8.21927,20H9.78073L14,30H12.21883l-0.97256-2.39778H6.71247L5.72652,30H4Zm2.41133,6.05683-1.65737-3.972-1.644,3.972H10.6306Z" fill="#231f20" opacity="0.6"/>
+    <path d="M9.21927,20h1.56146L15,30H13.21883l-.97257-2.39778H7.71247L6.72652,30H5Zm2.41133,6.05683L9.97323,22.08478l-1.644,3.97205Z" fill="#231f20" opacity="0.7"/>
   </g>
 </svg>

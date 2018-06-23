@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.application.options.CodeStyle;
@@ -28,6 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.util.containers.IntArrayList;
@@ -43,7 +30,6 @@ import java.awt.geom.Area;
 import java.awt.geom.Point2D;
 import java.awt.geom.Rectangle2D;
 import java.awt.print.PageFormat;
-import java.awt.print.PrinterException;
 import java.text.SimpleDateFormat;
 import java.util.Date;
 import java.util.List;
@@ -105,7 +91,7 @@ class TextPainter extends BasePainter {
                      String fullFileName,
                      String shortFileName,
                      FileType fileType,
-                     List<LineMarkerInfo> separators,
+                     List<LineMarkerInfo<PsiElement>> separators,
                      @NotNull CodeStyleSettings codeStyleSettings) {
     myCodeStyleSettings = codeStyleSettings;
     myDocument = editorDocument;
@@ -178,7 +164,7 @@ class TextPainter extends BasePainter {
   boolean isPrintingPass = true;
 
   @Override
-  public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) throws PrinterException {
+  public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) {
     myPerformActualDrawing = false;
 
     if (myProgress.isCanceled()) {

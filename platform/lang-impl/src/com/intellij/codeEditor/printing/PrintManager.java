@@ -1,28 +1,16 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeEditor.printing;
 
 import com.intellij.CommonBundle;
 import com.intellij.application.options.CodeStyle;
+import com.intellij.execution.configurations.RunProfile;
 import com.intellij.ide.highlighter.HighlighterFactory;
 import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -109,8 +97,13 @@ class PrintManager {
     }
     else {
       if (psiFile == null && editor == null) return;
-      TextPainter textPainter =
-        psiFile != null ? initTextPainter(psiFile) : initTextPainter((DocumentEx)editor.getDocument(), project);
+      TextPainter textPainter;
+      if (psiFile != null) {
+        textPainter = initTextPainter(psiFile);
+      }
+      else {
+        textPainter = initTextPainter((DocumentEx)editor.getDocument(), project, generateFileName(dataContext));
+      }
       if (textPainter == null) return;
 
       if (printSettings.getPrintScope() == PrintSettings.PRINT_SELECTED_TEXT &&
@@ -159,6 +152,15 @@ class PrintManager {
           }
         }
       });
+  }
+
+  private static String generateFileName(DataContext dataContext) {
+    RunProfile runProfile = dataContext.getData(LangDataKeys.RUN_PROFILE);
+    if (runProfile != null) {
+      String name = runProfile.getName();
+      if (name != null) return name;
+    }
+    return "unknown";
   }
 
   private static void addToPsiFileList(PsiDirectory psiDirectory, List<PsiFile> filesList, boolean isRecursive) {
@@ -233,19 +235,20 @@ class PrintManager {
                            psiFile, psiFile.getFileType());
   }
 
-  private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project) {
+  private static TextPainter initTextPainter(@NotNull final DocumentEx doc, final @NotNull Project project,
+                                             final @NotNull String fileName) {
     final TextPainter[] res = new TextPainter[1];
     ApplicationManager.getApplication().runReadAction(
       () -> {
-        res[0] = doInitTextPainter(doc, project);
+        res[0] = doInitTextPainter(doc, project, fileName);
       }
     );
     return res[0];
   }
 
-  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project) {
+  private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, @NotNull Project project, @NotNull String fileName) {
     EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, "unknown");
     highlighter.setText(doc.getCharsSequence());
-    return new TextPainter(doc, highlighter, "unknown", "unknown", FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
+    return new TextPainter(doc, highlighter, fileName, fileName, FileTypes.PLAIN_TEXT, null, CodeStyle.getSettings(project));
   }
 }

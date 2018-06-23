@@ -43,6 +43,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.Grayer;
 import com.intellij.ui.components.Magnificator;
 import com.intellij.ui.paint.PaintUtil;
+import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBSwingUtilities;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.ScreenReader;
@@ -218,29 +219,28 @@ public class EditorComponentImpl extends JTextComponent implements Scrollable, D
 
   @Override
   public void paintComponent(Graphics g) {
-    myApplication.editorPaintStart();
+    myEditor.measureTypingLatency();
 
-    try {
-      Graphics2D gg = (Graphics2D)g;
-      UIUtil.setupComposite(gg);
-      if (myEditor.useEditorAntialiasing()) {
-        EditorUIUtil.setupAntialiasing(gg);
-      }
-      else {
-        UISettings.setupAntialiasing(gg);
-      }
-      gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
-      AffineTransform origTx = PaintUtil.alignToInt(gg, true, false);
-      myEditor.paint(gg);
-      if (origTx != null) gg.setTransform(origTx);
+    Graphics2D gg = (Graphics2D)g;
+    UIUtil.setupComposite(gg);
+    if (myEditor.useEditorAntialiasing()) {
+      EditorUIUtil.setupAntialiasing(gg);
     }
-    finally {
-      myApplication.editorPaintFinish();
+    else {
+      UISettings.setupAntialiasing(gg);
     }
+    gg.setRenderingHint(RenderingHints.KEY_FRACTIONALMETRICS, myEditor.myFractionalMetricsHintValue);
+    AffineTransform origTx = PaintUtil.alignTxToInt(gg, PaintUtil.insets2offset(getInsets()), true, false, RoundingMode.CEIL);
+    myEditor.paint(gg);
+    if (origTx != null) gg.setTransform(origTx);
   }
 
   public void repaintEditorComponent() {
     repaint();
+  }
+
+  public void repaintEditorComponentExact(int x, int y, int width, int height) {
+    repaint(x, y, width, height);
   }
 
   public void repaintEditorComponent(int x, int y, int width, int height) {

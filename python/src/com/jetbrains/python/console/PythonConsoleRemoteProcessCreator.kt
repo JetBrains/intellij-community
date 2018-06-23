@@ -42,7 +42,7 @@ interface PythonConsoleRemoteProcessCreator<T> {
                                  idePort: Int): RemoteConsoleProcessData
 
   companion object {
-    val EP_NAME = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>("Pythonid.remoteConsoleProcessCreator")
+    val EP_NAME: ExtensionPointName<PythonConsoleRemoteProcessCreator<Any>> = ExtensionPointName.create<PythonConsoleRemoteProcessCreator<Any>>("Pythonid.remoteConsoleProcessCreator")
   }
 }
 

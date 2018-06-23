@@ -15,16 +15,17 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
-import com.intellij.util.Processor;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyNamedParameter;
 import com.jetbrains.python.psi.PyParameterList;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.PyTypeProviderBase;
+import com.jetbrains.python.psi.types.PyTypeUtil;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,26 +37,27 @@ import java.util.List;
  * @author yole
  */
 public class PyJavaTypeProvider extends PyTypeProviderBase {
+  @Override
   @Nullable
-  public PyType getReferenceType(@NotNull final PsiElement referenceTarget, TypeEvalContext context, @Nullable PsiElement anchor) {
+  public Ref<PyType> getReferenceType(@NotNull PsiElement referenceTarget, @NotNull TypeEvalContext context, @Nullable PsiElement anchor) {
     if (referenceTarget instanceof PsiClass) {
-      return new PyJavaClassType((PsiClass) referenceTarget, true);
+      return Ref.create(new PyJavaClassType((PsiClass)referenceTarget, true));
     }
     if (referenceTarget instanceof PsiPackage) {
-      return new PyJavaPackageType((PsiPackage) referenceTarget, anchor == null ? null : ModuleUtil.findModuleForPsiElement(anchor));
+      final Module module = anchor == null ? null : ModuleUtilCore.findModuleForPsiElement(anchor);
+      return Ref.create(new PyJavaPackageType((PsiPackage)referenceTarget, module));
     }
     if (referenceTarget instanceof PsiMethod) {
-      PsiMethod method = (PsiMethod) referenceTarget;
-      return new PyJavaMethodType(method);
+      return Ref.create(new PyJavaMethodType((PsiMethod)referenceTarget));
     }
     if (referenceTarget instanceof PsiField) {
-      return asPyType(((PsiField)referenceTarget).getType());
+      return PyTypeUtil.notNullToRef(asPyType(((PsiField)referenceTarget).getType()));
     }
     return null;
   }
 
   @Nullable
-  public static PyType asPyType(PsiType type) {
+  public static PyType asPyType(@Nullable PsiType type) {
     if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
       final PsiClass psiClass = classType.resolve();
@@ -66,6 +68,7 @@ public class PyJavaTypeProvider extends PyTypeProviderBase {
     return null;
   }
 
+  @Override
   public Ref<PyType> getParameterType(@NotNull final PyNamedParameter param,
                                       @NotNull final PyFunction func,
                                       @NotNull TypeEvalContext context) {

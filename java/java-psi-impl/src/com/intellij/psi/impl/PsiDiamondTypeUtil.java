@@ -105,6 +105,9 @@ public class PsiDiamondTypeUtil {
       return parent;
     }
     final PsiJavaCodeReferenceElement javaCodeReferenceElement = (PsiJavaCodeReferenceElement) parent;
+    PsiReferenceParameterList parameterList = javaCodeReferenceElement.getParameterList();
+    if (parameterList == null) return javaCodeReferenceElement;
+
     final StringBuilder text = new StringBuilder();
     text.append(javaCodeReferenceElement.getQualifiedName());
     text.append('<');
@@ -114,7 +117,10 @@ public class PsiDiamondTypeUtil {
     text.append('>');
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(element.getProject());
     final PsiJavaCodeReferenceElement newReference = elementFactory.createReferenceFromText(text.toString(), element);
-    return CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(javaCodeReferenceElement.replace(newReference));
+    PsiReferenceParameterList newReferenceParameterList = newReference.getParameterList();
+    LOG.assertTrue(newReferenceParameterList != null);
+    CodeStyleManager.getInstance(javaCodeReferenceElement.getProject()).reformat(parameterList.replace(newReferenceParameterList));
+    return javaCodeReferenceElement;
   }
 
   public static PsiExpression expandTopLevelDiamondsInside(PsiExpression expr) {
@@ -234,8 +240,15 @@ public class PsiDiamondTypeUtil {
                                                PsiMethodReferenceExpression methodRefCopy) {
     final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodRefCopy.getProject()).getElementFactory();
     PsiTypeElement qualifierType = methodRefCopy.getQualifierType();
-    LOG.assertTrue(qualifierType != null);
-    qualifierType.replace(elementFactory.createTypeElement(((PsiClassType)qualifierType.getType()).rawType()));
+    if (qualifierType != null) {
+      qualifierType.replace(elementFactory.createTypeElement(((PsiClassType)qualifierType.getType()).rawType()));
+    }
+    else {
+      PsiReferenceParameterList parameterList = methodRefCopy.getParameterList();
+      if (parameterList != null) {
+        parameterList.delete();
+      }
+    }
 
     JavaResolveResult result = methodRefCopy.advancedResolve(false);
     if (method != null && result.getElement() != method) return false;
@@ -343,6 +356,7 @@ public class PsiDiamondTypeUtil {
     PsiElementFactory factory = JavaPsiFacade.getInstance(element.getProject()).getElementFactory();
     for(PsiMethodCallExpression call : PsiTreeUtil.collectElementsOfType(element, PsiMethodCallExpression.class)) {
       PsiType[] arguments = call.getTypeArguments();
+      if (arguments.length == 0) continue;
       PsiMethod method = call.resolveMethod();
       if(method != null) {
         PsiTypeParameter[] parameters = method.getTypeParameters();

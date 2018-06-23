@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.util.Condition;
@@ -20,15 +6,19 @@ import com.intellij.util.containers.ContainerUtil;
 
 import java.util.HashSet;
 import java.util.Set;
+import java.util.function.Predicate;
 
-public abstract class TreePrintCondition implements Condition<String> {
-
+public abstract class TreePrintCondition implements Predicate<String>, Condition<String> {
   public abstract static class SetBased extends TreePrintCondition {
-
     protected Set<String> mySet = new HashSet<>();
 
     public SetBased(String... elements) {
       ContainerUtil.addAll(mySet, elements);
+    }
+
+    @Override
+    public final boolean value(String s) {
+      return test(s);
     }
   }
 
@@ -38,7 +28,7 @@ public abstract class TreePrintCondition implements Condition<String> {
     }
 
     @Override
-    public boolean value(String s) {
+    public boolean test(String s) {
       return mySet.contains(s);
     }
   }
@@ -49,9 +39,8 @@ public abstract class TreePrintCondition implements Condition<String> {
     }
 
     @Override
-    public boolean value(String s) {
+    public boolean test(String s) {
       return !mySet.contains(s);
     }
   }
-
 }

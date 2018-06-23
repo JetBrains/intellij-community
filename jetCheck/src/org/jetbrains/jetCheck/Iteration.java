@@ -2,9 +2,7 @@ package org.jetbrains.jetCheck;
 
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 import java.util.function.Predicate;
 
 class Iteration<T> {
@@ -57,10 +55,21 @@ class Iteration<T> {
       catch (CannotSatisfyCondition e) {
         continue;
       }
+      catch (DataSerializer.EOFException e) {
+        session.notifier.eofException();
+        return null;
+      }
+      catch (WrongDataStructure e) {
+        throw e;
+      }
       catch (Throwable e) {
+        //noinspection InstanceofCatchParameter
+        if (e instanceof CannotRestoreValue && session.parameters.serializedData != null) {
+          throw e;
+        }
         throw new GeneratorException(this, e);
       }
-      if (!session.generatedNodes.add(node)) continue;
+      if (!session.addGeneratedNode(node)) continue;
 
       return CounterExampleImpl.checkProperty(this, value, node);
     }
@@ -109,14 +118,23 @@ class CheckSession<T> {
   final Generator<T> generator;
   final Predicate<T> property;
   final PropertyChecker.Parameters parameters;
-  final Set<StructureNode> generatedNodes = new HashSet<>();
   final StatusNotifier notifier;
+  private final Set<StructureNode> generatedNodes = Collections.newSetFromMap(new LinkedHashMap<StructureNode, Boolean>() {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<StructureNode, Boolean> eldest) {
+      return size() > 1_000;
+    }
+  });
 
   CheckSession(Generator<T> generator, Predicate<T> property, PropertyChecker.Parameters parameters) {
     this.generator = generator;
     this.property = property;
     this.parameters = parameters;
     notifier = parameters.silent ? StatusNotifier.SILENT : new StatusNotifier(parameters.iterationCount);
+  }
+
+  boolean addGeneratedNode(StructureNode node) {
+    return generatedNodes.add(node);
   }
 
   Iteration<T> firstIteration() {

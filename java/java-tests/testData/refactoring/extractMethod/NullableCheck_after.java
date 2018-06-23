@@ -4,7 +4,7 @@ class Test {
    Object foo() {
        Object o = newMethod();
        if (o == null) return null;
-      System.out.println(o);
+       System.out.println(o);
       return o;
    }
 

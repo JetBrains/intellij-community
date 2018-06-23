@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.model.serialization;
 
 import com.intellij.openapi.application.PathManager;
@@ -34,18 +20,20 @@ import static com.intellij.openapi.util.io.FileUtilRt.toSystemIndependentName;
  */
 public class PathMacroUtil {
   @NonNls public static final String PROJECT_DIR_MACRO_NAME = "PROJECT_DIR";
+
   @NonNls public static final String MODULE_DIR_MACRO_NAME = "MODULE_DIR";
+  public static final String DEPRECATED_MODULE_DIR = "$" + MODULE_DIR_MACRO_NAME + "$";
+  public static final String MODULE_WORKING_DIR_NAME = "MODULE_WORKING_DIR";
+  public static final String MODULE_WORKING_DIR = "$" + MODULE_WORKING_DIR_NAME + "$";
+
   @NonNls public static final String DIRECTORY_STORE_NAME = ".idea";
   @NonNls public static final String APPLICATION_HOME_DIR = "APPLICATION_HOME_DIR";
   @NonNls public static final String APPLICATION_CONFIG_DIR = "APPLICATION_CONFIG_DIR";
   @NonNls public static final String APPLICATION_PLUGINS_DIR = "APPLICATION_PLUGINS_DIR";
   @NonNls public static final String USER_HOME_NAME = "USER_HOME";
 
-  private static final Map<String, String> ourGlobalMacros = ContainerUtil.<String, String>immutableMapBuilder()
-    .put(APPLICATION_HOME_DIR, toSystemIndependentName(PathManager.getHomePath()))
-    .put(APPLICATION_CONFIG_DIR, toSystemIndependentName(PathManager.getConfigPath()))
-    .put(APPLICATION_PLUGINS_DIR, toSystemIndependentName(PathManager.getPluginsPath()))
-    .put(USER_HOME_NAME, StringUtil.trimEnd(toSystemIndependentName(SystemProperties.getUserHome()), "/")).build();
+  private static volatile Map<String, String> ourGlobalMacrosForIde;
+  private static volatile Map<String, String> ourGlobalMacrosForStandalone;
 
   @Nullable
   public static String getModuleDir(@NotNull String moduleFilePath) {
@@ -75,11 +63,57 @@ public class PathMacroUtil {
 
   @NotNull
   public static Map<String, String> getGlobalSystemMacros() {
-    return ourGlobalMacros;
+    return getGlobalSystemMacros(true);
+  }
+
+  @NotNull
+  public static Map<String, String> getGlobalSystemMacros(boolean insideIde) {
+    if (insideIde) {
+      if (ourGlobalMacrosForIde == null) {
+        ourGlobalMacrosForIde = computeGlobalPathMacrosInsideIde();
+      }
+      return ourGlobalMacrosForIde;
+    }
+    else {
+      if (ourGlobalMacrosForStandalone == null) {
+        ourGlobalMacrosForStandalone = computeGlobalPathMacrosForStandaloneCode();
+      }
+      return ourGlobalMacrosForStandalone;
+    }
+  }
+
+  private static Map<String, String> computeGlobalPathMacrosForStandaloneCode() {
+    ContainerUtil.ImmutableMapBuilder<String, String> builder = ContainerUtil.immutableMapBuilder();
+    String homePath = PathManager.getHomePath(false);
+    if (homePath != null) {
+      builder.put(APPLICATION_HOME_DIR, toSystemIndependentName(homePath))
+             .put(APPLICATION_CONFIG_DIR, toSystemIndependentName(PathManager.getConfigPath()))
+             .put(APPLICATION_PLUGINS_DIR, toSystemIndependentName(PathManager.getPluginsPath()));
+    }
+    builder.put(USER_HOME_NAME, computeUserHomePath());
+    return builder.build();
+  }
+
+  private static Map<String, String> computeGlobalPathMacrosInsideIde() {
+    return ContainerUtil.<String, String>immutableMapBuilder()
+      .put(APPLICATION_HOME_DIR, toSystemIndependentName(PathManager.getHomePath()))
+      .put(APPLICATION_CONFIG_DIR, toSystemIndependentName(PathManager.getConfigPath()))
+      .put(APPLICATION_PLUGINS_DIR, toSystemIndependentName(PathManager.getPluginsPath()))
+      .put(USER_HOME_NAME, computeUserHomePath()).build();
+  }
+
+  @NotNull
+  private static String computeUserHomePath() {
+    return StringUtil.trimEnd(toSystemIndependentName(SystemProperties.getUserHome()), "/");
   }
 
   @Nullable
   public static String getGlobalSystemMacroValue(String name) {
-    return ourGlobalMacros.get(name);
+    return getGlobalSystemMacroValue(name, true);
+  }
+
+  @Nullable
+  public static String getGlobalSystemMacroValue(String name, boolean insideIde) {
+    return getGlobalSystemMacros(insideIde).get(name);
   }
 }

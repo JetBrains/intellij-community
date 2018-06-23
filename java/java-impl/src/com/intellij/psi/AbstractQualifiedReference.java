@@ -44,6 +44,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
     return this;
   }
 
+  @NotNull
   @Override
   public final PsiElement getElement() {
     return this;
@@ -210,6 +211,7 @@ public abstract class AbstractQualifiedReference<T extends AbstractQualifiedRefe
   @Nullable
   protected abstract PsiElement getReferenceNameElement();
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement element = getSeparator();

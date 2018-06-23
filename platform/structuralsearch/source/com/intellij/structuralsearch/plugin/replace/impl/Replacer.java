@@ -5,6 +5,7 @@ import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.FileType;
@@ -74,7 +75,6 @@ public class Replacer {
     replaceOptions.setReplacement(by);
 
     final MatchOptions matchOptions = replaceOptions.getMatchOptions();
-    matchOptions.clearVariableConstraints();
     matchOptions.fillSearchCriteria(what);
 
     Matcher.validate(project, matchOptions);
@@ -254,7 +254,7 @@ public class Replacer {
     }
   }
 
-  public static void checkSupportedReplacementPattern(Project project, ReplaceOptions options) throws UnsupportedPatternException {
+  public static void checkSupportedReplacementPattern(Project project, ReplaceOptions options) {
     try {
       String search = options.getMatchOptions().getSearchPattern();
       String replacement = options.getReplacement();
@@ -284,19 +284,15 @@ public class Replacer {
           }
         }
 
-        if (j==segmentCount2) {
+        if (j == segmentCount2) {
           ReplacementVariableDefinition definition = options.getVariableDefinition(replacementSegmentName);
 
           if (definition == null || definition.getScriptCodeConstraint().length() <= 2 /*empty quotes*/) {
-            throw new UnsupportedPatternException(
-              SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName)
-            );
+            throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.defined.message", replacementSegmentName));
           } else {
-            String message = ScriptSupport.checkValidScript(StringUtil.stripQuotesAroundValue(definition.getScriptCodeConstraint()));
+            String message = ScriptSupport.checkValidScript(StringUtil.unquoteString(definition.getScriptCodeConstraint()));
             if (message != null) {
-              throw new UnsupportedPatternException(
-                SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message)
-              );
+              throw new MalformedPatternException(SSRBundle.message("replacement.variable.is.not.valid", replacementSegmentName, message));
             }
           }
         }
@@ -304,10 +300,9 @@ public class Replacer {
 
       StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
       assert profile != null;
-      profile.checkReplacementPattern(project, options);
-
-    } catch(IncorrectOperationException ex) {
-      throw new UnsupportedPatternException(SSRBundle.message("incorrect.pattern.message"));
+      ReadAction.run(() -> profile.checkReplacementPattern(project, options));
+    } catch (IncorrectOperationException ex) {
+      throw new MalformedPatternException(SSRBundle.message("incorrect.pattern.message"));
     }
   }
 

@@ -1,13 +1,11 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="32" height="32" viewBox="0 0 32 32">
   <title>java@2x</title>
   <g>
+    <polygon points="14 2 6 10 14 10 14 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
+    <polygon points="16 2 16 10 16 12 14 12 6 12 6 16 26 16 26 2 16 2" fill="#9aa7b0" opacity="0.8" style="isolation: isolate"/>
     <g>
-      <polygon points="12 0 4 8 12 8 12 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-      <rect x="2" y="18" width="30" height="14" fill="#40b6e0" opacity="0.6"/>
-      <polygon points="14 0 14 8 14 10 12 10 4 10 4 16 26 16 26 0 14 0" fill="#9aa7b0" opacity="0.7" style="isolation: isolate"/>
-    </g>
-    <g opacity="0.6">
-      <path d="M5.66315,28.40826l1.11616-1.18349A2.36953,2.36953,0,0,0,8.72108,28.3945c0.90975,0,1.53009-.62041,1.53009-1.94381V20H12v6.50688a3.627,3.627,0,0,1-.90863,2.61927A3.17879,3.17879,0,0,1,8.74913,30,3.60939,3.60939,0,0,1,5.66315,28.40826Z" fill="#231f20"/>
+      <rect x="2" y="18" width="30" height="14" fill="#40b6e0" opacity="0.7"/>
+      <path d="M5.66315,28.40826l1.11616-1.18349A2.36955,2.36955,0,0,0,8.72108,28.3945c.90975,0,1.53009-.62042,1.53009-1.94381V20H12v6.50688a3.627,3.627,0,0,1-.90863,2.61927A3.1788,3.1788,0,0,1,8.74913,30,3.60942,3.60942,0,0,1,5.66315,28.40826Z" fill="#231f20" opacity="0.7"/>
     </g>
   </g>
 </svg>

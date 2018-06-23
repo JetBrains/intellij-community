@@ -21,7 +21,6 @@ import com.intellij.ide.diff.DiffType;
 import com.intellij.ide.diff.DirDiffSettings;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
-import java.util.HashMap;
 import com.intellij.util.containers.SortedList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -30,6 +29,7 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Comparator;
+import java.util.HashMap;
 
 import static com.intellij.ide.diff.DiffType.ERROR;
 
@@ -157,22 +157,26 @@ public class DTree {
         tree.setType(DiffType.SOURCE);
       } else {
         assert src != null;
-        boolean equals;
-        switch (settings.compareMode) {
-          case CONTENT:
-            equals = isEqualContents(src, trg);
-            break;
-          case TEXT:
-            equals = isEqualContentsAsText(src, trg);
-            break;
-          case SIZE:
-            equals = isEqualSizes(src, trg);
-            break;
-          case TIMESTAMP:
-            equals = isEqualTimestamps(src, trg, settings);
-            break;
-          default:
-            throw new IllegalStateException(settings.compareMode.name());
+        Boolean equals = null;
+        if (src instanceof ComparableDiffElement) equals = ((ComparableDiffElement)src).isContentEqual(trg);
+        if (equals == null && trg instanceof ComparableDiffElement) equals = ((ComparableDiffElement)trg).isContentEqual(src);
+        if (equals == null) {
+          switch (settings.compareMode) {
+            case CONTENT:
+              equals = isEqualContents(src, trg);
+              break;
+            case TEXT:
+              equals = isEqualContentsAsText(src, trg);
+              break;
+            case SIZE:
+              equals = isEqualSizes(src, trg);
+              break;
+            case TIMESTAMP:
+              equals = isEqualTimestamps(src, trg, settings);
+              break;
+            default:
+              throw new IllegalStateException(settings.compareMode.name());
+          }
         }
         tree.setType(equals ? DiffType.EQUAL : DiffType.CHANGED);
       }

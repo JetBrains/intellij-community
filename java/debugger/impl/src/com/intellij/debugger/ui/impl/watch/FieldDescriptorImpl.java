@@ -178,54 +178,49 @@ public class FieldDescriptorImpl extends ValueDescriptorImpl implements FieldDes
       @Override
       protected void setValueImpl(@NotNull XExpression expression, @NotNull XModificationCallback callback) {
         final DebuggerContextImpl debuggerContext = DebuggerManagerEx.getInstanceEx(getProject()).getContext();
-        FieldDescriptorImpl fieldDescriptor = FieldDescriptorImpl.this;
-        final Field field = fieldDescriptor.getField();
-        if (!field.isStatic()) {
-          final ObjectReference object = fieldDescriptor.getObject();
-          if (object != null) {
-            set(expression, callback, debuggerContext, new SetValueRunnable() {
-              public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
-                throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-                object.setValue(field, preprocessValue(evaluationContext, newValue, field.type()));
-                update(debuggerContext);
-              }
+        Field field = getField();
+        FieldValueSetter setter = null;
 
-              public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
-                                                                                                        InvocationException,
-                                                                                                        ClassNotLoadedException,
-                                                                                                        IncompatibleThreadStateException,
-                                                                                                        InvalidTypeException,
-                                                                                                        EvaluateException {
-                return evaluationContext.getDebugProcess().loadClass(evaluationContext, className, field.declaringType().classLoader());
-              }
-            });
+        if (!field.isStatic()) {
+          ObjectReference object = getObject();
+          if (object != null) {
+            setter = v -> object.setValue(field, v);
           }
         }
         else {
-          // field is static
           ReferenceType refType = field.declaringType();
           if (refType instanceof ClassType) {
-            final ClassType classType = (ClassType)refType;
-            set(expression, callback, debuggerContext, new SetValueRunnable() {
-              public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
-                throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
-                classType.setValue(field, preprocessValue(evaluationContext, newValue, field.type()));
-                update(debuggerContext);
-              }
-
-              public ReferenceType loadClass(EvaluationContextImpl evaluationContext, String className) throws
-                                                                                                        InvocationException,
-                                                                                                        ClassNotLoadedException,
-                                                                                                        IncompatibleThreadStateException,
-                                                                                                        InvalidTypeException,
-                                                                                                        EvaluateException {
-                return evaluationContext.getDebugProcess().loadClass(evaluationContext, className,
-                                                                     field.declaringType().classLoader());
-              }
-            });
+            ClassType classType = (ClassType)refType;
+            setter = v -> classType.setValue(field, v);
           }
+        }
+
+        if (setter != null) {
+          FieldValueSetter finalSetter = setter;
+          set(expression, callback, debuggerContext, new SetValueRunnable() {
+            public void setValue(EvaluationContextImpl evaluationContext, Value newValue)
+              throws ClassNotLoadedException, InvalidTypeException, EvaluateException {
+              finalSetter.setValue(preprocessValue(evaluationContext, newValue, getLType()));
+              update(debuggerContext);
+            }
+
+            @Override
+            public ClassLoaderReference getClassLoader(EvaluationContextImpl evaluationContext) {
+              return field.declaringType().classLoader();
+            }
+
+            @NotNull
+            @Override
+            public Type getLType() throws ClassNotLoadedException {
+              return field.type();
+            }
+          });
         }
       }
     };
+  }
+
+  private interface FieldValueSetter {
+    void setValue(Value value) throws InvalidTypeException, ClassNotLoadedException;
   }
 }

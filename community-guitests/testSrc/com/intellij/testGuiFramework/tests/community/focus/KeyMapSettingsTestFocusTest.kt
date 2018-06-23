@@ -3,7 +3,7 @@ package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.openapi.keymap.impl.ui.ShortcutTextField
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
 import com.intellij.testGuiFramework.util.Key.*
@@ -19,8 +19,8 @@ import java.awt.Container
 class KeyMapSettingsTestFocusTest : GuiTestCase() {
 
   @Test
-  fun testInlineVariableFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+  fun testKeyMapSettingsTestFocus() {
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       waitForBackgroundTasksToFinish()

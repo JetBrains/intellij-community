@@ -63,25 +63,17 @@ public class ChainedComparisonsQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PyBinaryExpression expression = as(descriptor.getPsiElement(), PyBinaryExpression.class);
-    if (expression != null && expression.isWritable()) {
+    if (isLogicalAndExpression(expression) && expression.isWritable()) {
       final PyBinaryExpression rightExpression = as(expression.getRightExpression(), PyBinaryExpression.class);
-      final PyBinaryExpression leftExpression = as(expression.getLeftExpression(), PyBinaryExpression.class);
-
-      if (rightExpression != null && leftExpression != null && isLogicalAndExpression(expression)) {
-        applyFix(goDownIfNeeded(leftExpression), rightExpression, project);
+      PyBinaryExpression leftExpression = as(expression.getLeftExpression(), PyBinaryExpression.class);
+      if (isLogicalAndExpression(leftExpression)) {
+        final PyExpression nested = myUseRightChildOfLeft ? leftExpression.getRightExpression() : leftExpression.getLeftExpression();
+        leftExpression = as(nested, PyBinaryExpression.class);
       }
-    }
-  }
 
-  @NotNull
-  private PyBinaryExpression goDownIfNeeded(@NotNull PyBinaryExpression expression) {
-    final PyExpression rightExpression = expression.getRightExpression();
-
-    if (myUseRightChildOfLeft && rightExpression instanceof PyBinaryExpression && isLogicalAndExpression(expression)) {
-      return (PyBinaryExpression)rightExpression;
-    }
-    else {
-      return expression;
+      if (isComparisonExpression(leftExpression) && isComparisonExpression(rightExpression)) {
+        applyFix(leftExpression, rightExpression, project);
+      }
     }
   }
 

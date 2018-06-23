@@ -71,6 +71,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicIntegerFieldUpdater java.util.concurrent.atomic.AtomicIntegerFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicIntegerFieldUpdater java.util.concurrent.atomic.AtomicIntegerFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String) 0'>
@@ -182,6 +185,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongFieldUpdater java.util.concurrent.atomic.AtomicLongFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongFieldUpdater java.util.concurrent.atomic.AtomicLongFieldUpdater&lt;U&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.String) 0'>
@@ -208,6 +214,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicLongFieldUpdater.LockedUpdater java.lang.RuntimeException accessCheckException(T)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicMarkableReference AtomicMarkableReference(V, boolean)'>
@@ -228,6 +237,7 @@
     </item>
     <item name='java.util.concurrent.atomic.AtomicMarkableReference.Pair java.util.concurrent.atomic.AtomicMarkableReference.Pair&lt;T&gt; of(T, boolean)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
@@ -290,6 +300,9 @@
         </annotation>
     </item>
     <item name='java.util.concurrent.atomic.AtomicReferenceFieldUpdater java.util.concurrent.atomic.AtomicReferenceFieldUpdater&lt;U,W&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.Class&lt;W&gt;, java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_,_,_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.util.concurrent.atomic.AtomicReferenceFieldUpdater java.util.concurrent.atomic.AtomicReferenceFieldUpdater&lt;U,W&gt; newUpdater(java.lang.Class&lt;U&gt;, java.lang.Class&lt;W&gt;, java.lang.String) 0'>
@@ -360,6 +373,7 @@
     </item>
     <item name='java.util.concurrent.atomic.AtomicStampedReference.Pair java.util.concurrent.atomic.AtomicStampedReference.Pair&lt;T&gt; of(T, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
+            <val name="value" val="&quot;_,_-&gt;new&quot;"/>
             <val name="pure" val="true"/>
         </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>

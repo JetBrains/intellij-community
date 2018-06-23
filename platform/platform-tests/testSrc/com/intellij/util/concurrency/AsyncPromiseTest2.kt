@@ -43,7 +43,7 @@ private fun promise(state: AsyncPromiseTest2.State, `when`: When): AsyncPromise<
         }
         AsyncPromiseTest2.State.ERROR -> {
           log("notify promise about error to preserve a cause")
-          promise.rejected { /* add empty error handler to ensure that promise will not call LOG.error */ }
+          promise.onError { /* add empty error handler to ensure that promise will not call LOG.error */ }
           promise.setError(CheckedException())
         }
       }

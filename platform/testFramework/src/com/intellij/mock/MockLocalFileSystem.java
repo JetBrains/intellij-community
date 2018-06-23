@@ -21,7 +21,6 @@ import com.intellij.openapi.vfs.LocalFileOperationsHandler;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -83,11 +82,6 @@ public class MockLocalFileSystem extends LocalFileSystem {
   public void unregisterAuxiliaryFileOperationsHandler(@NotNull final LocalFileOperationsHandler handler) {
   }
 
-
-  @Override
-  public boolean processCachedFilesInSubtree(@NotNull final VirtualFile file, @NotNull final Processor<VirtualFile> processor) {
-    throw new UnsupportedOperationException("'processCachedFilesInSubtree' not implemented in " + getClass().getName());
-  }
 
   @Override
   @NotNull

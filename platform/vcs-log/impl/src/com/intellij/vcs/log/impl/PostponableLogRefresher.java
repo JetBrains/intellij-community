@@ -80,18 +80,16 @@ public class PostponableLogRefresher implements VcsLogRefresher {
       refreshPostponedRoots();
     }
     else {
-      if (firstTime) {
-        refresher.onRefresh();
-      }
-      refresher.setValid(true);
+      refresher.setValid(true, firstTime);
     }
   }
 
   private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
     if (!visible) {
-      refresher.setValid(false);
+      refresher.setValid(false, true);
+    } else {
+      refresher.onRefresh();
     }
-    refresher.onRefresh();
   }
 
   public void refresh(@NotNull final VirtualFile root) {

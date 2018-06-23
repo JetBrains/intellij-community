@@ -210,20 +210,6 @@ public class JavaDocInfoGenerator {
     };
   }
 
-  @Nullable
-  public String generateFileInfo() {
-    StringBuilder buffer = new StringBuilder();
-    if (myElement instanceof PsiFile) {
-      generatePrologue(buffer);
-
-      VirtualFile virtualFile = ((PsiFile)myElement).getVirtualFile();
-      if (virtualFile != null) buffer.append(virtualFile.getPresentableUrl());
-
-    }
-
-    return sanitizeHtml(buffer);
-  }
-
   private String sanitizeHtml(StringBuilder buffer) {
     String text = buffer.toString();
     if (text.isEmpty()) return null;
@@ -1189,7 +1175,7 @@ public class JavaDocInfoGenerator {
   protected void generatePrologue(StringBuilder buffer) {
     URL baseUrl = getBaseUrl();
     if (baseUrl != null) {
-      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>");
+      buffer.append("<html><head><base href=\"").append(baseUrl).append("\"></head><body>"); // used to resolve URLs of local images
     }
   }
 
@@ -1293,14 +1279,24 @@ public class JavaDocInfoGenerator {
 
   private void generateCodeValue(PsiInlineDocTag tag, StringBuilder buffer) {
     buffer.append("<code>");
+    int pos = buffer.length();
     generateLiteralValue(buffer, tag);
     buffer.append("</code>");
+    if (buffer.charAt(pos) == '\n') buffer.insert(pos, ' '); // line break immediately after opening tag is ignored by JEditorPane
   }
 
   private void generateLiteralValue(StringBuilder buffer, PsiDocTag tag) {
     StringBuilder tmpBuffer = new StringBuilder();
-    for (PsiElement element : tag.getDataElements()) {
-      appendPlainText(StringUtil.escapeXml(element.getText()), tmpBuffer);
+    PsiElement[] children = tag.getChildren();
+    for (int i = 2; i < children.length - 1; i++) { // process all children except tag opening/closing elements
+      PsiElement child = children[i];
+      if (child instanceof PsiDocToken && ((PsiDocToken)child).getTokenType() == JavaDocTokenType.DOC_COMMENT_LEADING_ASTERISKS) continue;
+      String elementText = child.getText();
+      if (child instanceof PsiWhiteSpace) {
+        int pos = elementText.lastIndexOf('\n');
+        if (pos >= 0) elementText = elementText.substring(0, pos + 1); // skip whitespace before leading asterisk
+      }
+      appendPlainText(StringUtil.escapeXml(elementText), tmpBuffer);
     }
     if ((mySdkVersion == null || mySdkVersion.isAtLeast(JavaSdkVersion.JDK_1_8)) && isInPre(tag)) {
       buffer.append(tmpBuffer);

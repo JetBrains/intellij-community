@@ -7,7 +7,7 @@ import java.awt.Point
 interface ComponentSelectionCodeGenerator<ComponentType : Component> : ComponentCodeGenerator<ComponentType> {
   fun generateSelection(cmp: ComponentType, firstPoint: Point, lastPoint: Point): String
 
-  fun generateSelectionCode(cmp: Component, firstPoint: Point, lastPoint: Point) = generateSelection(typeSafeCast(cmp), firstPoint,
-                                                                                                     lastPoint)
+  fun generateSelectionCode(cmp: Component, firstPoint: Point, lastPoint: Point): String = generateSelection(typeSafeCast(cmp), firstPoint,
+                                                                                                             lastPoint)
 }
 

@@ -60,8 +60,7 @@ public abstract class ApplicationInfo {
    */
   public abstract String getShortCompanyName();
   public abstract String getCompanyURL();
-  @Nullable
-  public abstract String getThirdPartySoftwareURL();
+
   public abstract String getJetbrainsTvUrl();
   public abstract String getEvalLicenseUrl();
   public abstract String getKeyConversionUrl();
@@ -86,6 +85,7 @@ public abstract class ApplicationInfo {
   }
 
   /** @deprecated use {@link #getBuild()} instead (to remove in IDEA 16) */
+  @Deprecated
   @SuppressWarnings("UnusedDeclaration")
   public String getBuildNumber() {
     return getBuild().asString();

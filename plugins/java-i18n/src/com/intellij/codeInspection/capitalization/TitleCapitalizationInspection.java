@@ -177,7 +177,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
   }
 
   private static class TitleCapitalizationFix implements LocalQuickFix {
-
     private final String myTitleValue;
     private final Nls.Capitalization myCapitalization;
 
@@ -195,9 +194,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
     public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement problemElement = descriptor.getPsiElement();
       if (problemElement == null || !problemElement.isValid()) {
-        return;
-      }
-      if (isQuickFixOnReadOnlyFile(problemElement)) {
         return;
       }
       try {
@@ -258,21 +254,6 @@ public class TitleCapitalizationInspection extends AbstractBaseJavaLocalInspecti
       return myCapitalization == Nls.Capitalization.Title
              ? StringUtil.wordsToBeginFromUpperCase(string)
              : StringUtil.capitalize(StringUtil.wordsToBeginFromLowerCase(string));
-    }
-
-    protected static boolean isQuickFixOnReadOnlyFile(PsiElement problemElement) {
-      final PsiFile containingPsiFile = problemElement.getContainingFile();
-      if (containingPsiFile == null) {
-        return false;
-      }
-      final VirtualFile virtualFile = containingPsiFile.getVirtualFile();
-      if (virtualFile == null) {
-        return false;
-      }
-      final Project project = problemElement.getProject();
-      final ReadonlyStatusHandler handler = ReadonlyStatusHandler.getInstance(project);
-      final ReadonlyStatusHandler.OperationStatus status = handler.ensureFilesWritable(virtualFile);
-      return status.hasReadonlyFiles();
     }
 
     @NotNull

@@ -21,6 +21,7 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.ComponentDragAndDrop;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
@@ -46,7 +47,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
@@ -196,7 +196,7 @@ public class EditorFixture {
     });
   }
 
-  private Editor getEditor() {
+  public Editor getEditor() {
     return myEditor;
   }
 
@@ -394,7 +394,7 @@ public class EditorFixture {
       public boolean test() {
         return editor.getContentComponent().isShowing();
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     if (editor != null) {
       JComponent contentComponent = editor.getContentComponent();
@@ -773,7 +773,7 @@ public class EditorFixture {
   @NotNull
   public EditorFixture invokeIntentionAction(@NotNull String labelPrefix) {
     invokeAction(EditorFixture.EditorAction.SHOW_INTENTION_ACTIONS);
-    JBListPopupFixture.Companion.clickPopupMenuItem(labelPrefix, true, null, robot, SHORT_TIMEOUT);
+    JBListPopupFixture.Companion.clickPopupMenuItem(labelPrefix, true, null, robot, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     return this;
   }
 

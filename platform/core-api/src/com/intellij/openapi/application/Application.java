@@ -138,15 +138,6 @@ public interface Application extends ComponentManager {
 
   /**
    * Saves application settings.
-   * @see #saveSettings() about `isForce` parameter.
-   * @param isForce Whether to force save non-roamable component configuration.
-   */
-  default void saveAll(boolean isForce) {
-    saveAll();
-  }
-
-  /**
-   * Saves application settings.
    */
   void saveSettings();
 
@@ -435,9 +426,4 @@ public interface Application extends ComponentManager {
 
   boolean isEAP();
 
-  /**  Use {@link AppUIExecutor#onUiThread} */
-  @NotNull
-  default AppUIExecutor createUIExecutor(@NotNull ModalityState modalityState) {
-    throw new UnsupportedOperationException("createUIExecutor is not implemented in " + getClass());
-  }
 }

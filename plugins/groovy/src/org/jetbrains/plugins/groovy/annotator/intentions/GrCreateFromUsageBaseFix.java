@@ -17,14 +17,13 @@ package org.jetbrains.plugins.groovy.annotator.intentions;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.PsiClassListCellRenderer;
-import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.IPopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.GroovyBundle;
@@ -95,26 +94,17 @@ public abstract class GrCreateFromUsageBaseFix extends Intention {
 
   private void chooseClass(List<PsiClass> classes, Editor editor) {
     final Project project = classes.get(0).getProject();
-
-    final JList list = new JBList(classes);
-    PsiElementListCellRenderer renderer = new PsiClassListCellRenderer();
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    list.setCellRenderer(renderer);
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
+    PsiClassListCellRenderer renderer = new PsiClassListCellRenderer();
+    final IPopupChooserBuilder<PsiClass> builder = JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(classes)
+      .setRenderer(renderer)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setItemChosenCallback((aClass) -> CommandProcessor.getInstance()
+                                                         .executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(project, aClass)), getText(),
+                        null))
+      .setTitle(QuickFixBundle.message("target.class.chooser.title"));
     renderer.installSpeedSearch(builder);
-
-    Runnable runnable = () -> {
-      int index = list.getSelectedIndex();
-      if (index < 0) return;
-      final PsiClass aClass = (PsiClass)list.getSelectedValue();
-      CommandProcessor.getInstance().executeCommand(project, () -> ApplicationManager.getApplication().runWriteAction(() -> invokeImpl(project, aClass)), getText(), null);
-    };
-
-    builder.
-      setTitle(QuickFixBundle.message("target.class.chooser.title")).
-      setItemChoosenCallback(runnable).
-      createPopup().
-      showInBestPositionFor(editor);
+    builder.createPopup().showInBestPositionFor(editor);
   }
 
   protected abstract void invokeImpl(Project project, @NotNull PsiClass targetClass);

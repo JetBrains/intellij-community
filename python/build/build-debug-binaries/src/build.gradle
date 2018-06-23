@@ -32,6 +32,9 @@ envs {
   python "python36_64", "3.6.3", "64"
   virtualenv "py36_64", "python36_64", ["cython"]
 
+  python "python37_64", "3.7.0b2", "64"
+  virtualenv "py37_64", "python37_64", ["cython"]
+
   if (Os.isFamily(Os.FAMILY_WINDOWS)) {
     python "python26_32", "2.6.6", "32"
     virtualenv "py26_32", "python26_32", ["cython"]
@@ -47,6 +50,9 @@ envs {
 
     python "python36_32", "3.6.3", "32"
     virtualenv "py36_32", "python36_32", ["cython"]
+
+    python "python37_32", "3.7.0b2", "32"
+    virtualenv "py37_32", "python37_32", ["cython"]
   }
 }
 

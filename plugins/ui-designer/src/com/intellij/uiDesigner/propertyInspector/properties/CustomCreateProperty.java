@@ -17,11 +17,11 @@
 package com.intellij.uiDesigner.propertyInspector.properties;
 
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
@@ -169,8 +169,8 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
           assert body != null;
           final PsiComment comment = PsiTreeUtil.getChildOfType(body, PsiComment.class);
           if (comment != null) {
-            new OpenFileDescriptor(comment.getProject(), vFile,
-                                   comment.getTextOffset()).navigate(true);
+            PsiNavigationSupport.getInstance().createNavigatable(comment.getProject(), vFile, comment.getTextOffset())
+                                .navigate(true);
           }
         }
       });

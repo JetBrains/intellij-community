@@ -1,27 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ui;
 
-import com.intellij.openapi.util.ScalableIcon;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
 import java.awt.*;
@@ -74,7 +59,7 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
 
   @NotNull
   @Override
-  protected RowIcon copy() {
+  public RowIcon copy() {
     return new RowIcon(this);
   }
 
@@ -83,26 +68,22 @@ public class RowIcon extends CachingScalableJBIcon<RowIcon> {
     if (myScaledIcons != null) {
       return myScaledIcons;
     }
-    if (getScale() == 1f) {
-      return myScaledIcons = myIcons;
-    }
-    for (Icon icon : myIcons) {
-      if (icon != null && !(icon instanceof ScalableIcon)) {
-        return myScaledIcons = myIcons;
-      }
-    }
-    myScaledIcons = new Icon[myIcons.length];
-    for (int i = 0; i < myIcons.length; i++) {
-      if (myIcons[i] != null) {
-        myScaledIcons[i] = ((ScalableIcon)myIcons[i]).scale(getScale());
-      }
-    }
-    return myScaledIcons;
+    return myScaledIcons = scaleIcons(myIcons, getScale());
   }
 
-  @TestOnly
+  static Icon[] scaleIcons(Icon[] icons, float scale) {
+    if (scale == 1f) return icons;
+    Icon[] scaledIcons = new Icon[icons.length];
+    for (int i = 0; i < icons.length; i++) {
+      if (icons[i] != null) {
+        scaledIcons[i] = IconUtil.scale(icons[i], null, scale);
+      }
+    }
+    return scaledIcons;
+  }
+
   @NotNull
-  Icon[] getAllIcons() {
+  public Icon[] getAllIcons() {
     List<Icon> icons = ContainerUtil.packNullables(myIcons);
     return icons.toArray(new Icon[0]);
   }

@@ -55,6 +55,7 @@ import com.intellij.ui.dualView.TreeTableView;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -76,6 +77,8 @@ import java.awt.datatransfer.StringSelection;
 import java.io.IOException;
 import java.util.*;
 import java.util.List;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 import static java.util.Comparator.comparing;
 import static java.util.Comparator.reverseOrder;
@@ -84,6 +87,7 @@ import static java.util.Comparator.reverseOrder;
  * author: lesya
  */
 public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton implements EditorColorsListener, CopyProvider {
+  private static final ExecutorService ourExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("File History Refresh");
   private static final String COMMIT_MESSAGE_TITLE = VcsBundle.message("label.selected.revision.commit.message");
   private static final String VCS_HISTORY_POPUP_ACTION_GROUP = "VcsHistoryInternalGroup.Popup";
   private static final String VCS_HISTORY_TOOLBAR_ACTION_GROUP = "VcsHistoryInternalGroup.Toolbar";
@@ -194,26 +198,33 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       }
     };
 
+    int delayMillis = 20_000;
     Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, this);
     // todo react to event?
     updateAlarm.addRequest(new Runnable() {
+      Future<?> lastTask;
+
       public void run() {
+        if (lastTask != null) {
+          lastTask.cancel(false);
+        }
         if (myVcs.getProject().isDisposed()) {
           return;
         }
-        boolean refresh = ApplicationManager.getApplication().isActive()
-                          && !myInRefresh
-                          && myHistorySession.shouldBeRefreshed();
 
         updateAlarm.cancelAllRequests();
         if (updateAlarm.isDisposed()) return;
-        updateAlarm.addRequest(this, 20000);
+        updateAlarm.addRequest(this, delayMillis);
 
-        if (refresh) {
-          refreshUiAndScheduleDataRefresh(true);
-        }
+        if (!ApplicationManager.getApplication().isActive()) return;
+
+        lastTask = ourExecutor.submit(() -> {
+          if (!myInRefresh && !updateAlarm.isDisposed() && myHistorySession.shouldBeRefreshed()) {
+            refreshUiAndScheduleDataRefresh(true);
+          }
+        });
       }
-    }, 20000);
+    }, delayMillis);
 
     init();
 
@@ -398,6 +409,8 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
   @NotNull
   private DefaultActionGroup fillActionGroup(boolean popup, DefaultActionGroup result) {
+    result.add(new RefreshFileHistoryAction());
+
     if (popup) {
       result.add(ActionManager.getInstance().getAction(IdeActions.ACTION_EDIT_SOURCE));
     }
@@ -412,7 +425,6 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
         }
       }
     }
-    result.add(new RefreshFileHistoryAction());
     if (!myIsStaticAndEmbedded) {
       result.add(new MyShowDetailsAction());
     }
@@ -1024,7 +1036,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
   private class MyShowDetailsAction extends ToggleAction implements DumbAware {
 
     public MyShowDetailsAction() {
-      super("Show Details", "Display details panel", AllIcons.Actions.Preview);
+      super("Show Details", "Display details panel", AllIcons.Actions.PreviewDetailsVertically);
     }
 
     @Override

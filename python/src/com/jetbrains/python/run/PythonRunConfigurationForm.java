@@ -21,6 +21,7 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.ui.TextBrowseFolderListener;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupStep;
@@ -30,19 +31,22 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.UserActivityProviderComponent;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBComboBoxLabel;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.ui.JBUI;
 import com.jetbrains.PySymbolFieldWithBrowseButton;
+import com.jetbrains.PySymbolFieldWithBrowseButtonKt;
 import com.jetbrains.extensions.python.FileChooserDescriptorExtKt;
 import com.jetbrains.extenstions.ContextAnchor;
 import com.jetbrains.extenstions.ModuleBasedContextAnchor;
 import com.jetbrains.extenstions.ProjectSdkContextAnchor;
 import com.jetbrains.python.debugger.PyDebuggerOptionsProvider;
-import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,6 +56,7 @@ import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -72,6 +77,10 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   private final PySymbolFieldWithBrowseButton myModuleField;
   private JBComboBoxLabel myTargetComboBox;
   private JPanel myModuleFieldPanel;
+  private TextFieldWithBrowseButton myInputFileTextFieldWithBrowseButton;
+  private JPanel myExecutionOptionsPlaceholder;
+  private JPanel myExecutionOptionsPanel;
+  private JBCheckBox myRedirectInputCheckBox;
   private boolean myModuleMode;
 
   public PythonRunConfigurationForm(PythonRunConfiguration configuration) {
@@ -84,7 +93,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myProject = configuration.getProject();
 
     final FileChooserDescriptor chooserDescriptor =
-      FileChooserDescriptorExtKt.withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
+      FileChooserDescriptorExtKt
+        .withPythonFiles(FileChooserDescriptorFactory.createSingleFileDescriptor().withTitle("Select Script"), true);
 
     final PyBrowseActionListener listener = new PyBrowseActionListener(configuration, chooserDescriptor) {
 
@@ -106,10 +116,7 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     //myTargetComboBox.setSelectedIndex(0);
     myEmulateTerminalCheckbox.setSelected(false);
 
-    myEmulateTerminalCheckbox.addChangeListener(
-      (ChangeEvent e) -> updateShowCommandLineEnabled());
-
-    setAnchor(myCommonOptionsForm.getAnchor());
+    setAnchor(myRedirectInputCheckBox.getAnchor());
 
     final Module module = configuration.getModule();
     final Sdk sdk = configuration.getSdk();
@@ -117,7 +124,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     final ContextAnchor contentAnchor =
       (module != null ? new ModuleBasedContextAnchor(module) : new ProjectSdkContextAnchor(myProject, sdk));
     myModuleField = new PySymbolFieldWithBrowseButton(contentAnchor,
-                                                      element -> element instanceof PyFile, () -> {
+                                                      element -> element instanceof PsiFileSystemItem
+                                                                 && PySymbolFieldWithBrowseButtonKt.isPythonModule(element), () -> {
       final String workingDirectory = myCommonOptionsForm.getWorkingDirectory();
       if (StringUtil.isEmpty(workingDirectory)) {
         return null;
@@ -128,6 +136,28 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     myModuleFieldPanel.add(myModuleField, BorderLayout.CENTER);
 
     //myTargetComboBox.addActionListener(e -> updateRunModuleMode());
+
+    myInputFileTextFieldWithBrowseButton.addBrowseFolderListener(new TextBrowseFolderListener(FileChooserDescriptorFactory.createSingleFileDescriptor(), myProject));
+    HideableDecorator executionOptionsDecorator = new HideableDecorator(myExecutionOptionsPlaceholder, "Execution", false);
+    myExecutionOptionsPanel.setBorder(JBUI.Borders.empty(5, 0));
+    executionOptionsDecorator.setOn(true);
+    executionOptionsDecorator.setContentComponent(myExecutionOptionsPanel);
+
+    myRedirectInputCheckBox.addItemListener(e -> myInputFileTextFieldWithBrowseButton.setEnabled(myRedirectInputCheckBox.isSelected()));
+
+    final ButtonGroup group = new ButtonGroup() {
+      @Override
+      public void setSelected(ButtonModel model, boolean isSelected) {
+        if (!isSelected && Objects.equals(getSelection(), model)) {
+          clearSelection();
+          return;
+        }
+        super.setSelected(model, isSelected);
+      }
+    };
+    group.add(myEmulateTerminalCheckbox);
+    group.add(myRedirectInputCheckBox);
+    group.add(myShowCommandLineCheckbox);
   }
 
   private void updateRunModuleMode() {
@@ -145,13 +175,8 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
     }
   }
 
-  private void updateShowCommandLineEnabled() {
-    myShowCommandLineCheckbox.setEnabled(!myEmulateTerminalCheckbox.isVisible() || !myEmulateTerminalCheckbox.isSelected());
-  }
-
   private void emulateTerminalEnabled(boolean flag) {
     myEmulateTerminalCheckbox.setVisible(flag);
-    updateShowCommandLineEnabled();
   }
 
   public JComponent getPanel() {
@@ -230,11 +255,32 @@ public class PythonRunConfigurationForm implements PythonRunConfigurationParams,
   public void setMultiprocessMode(boolean multiprocess) {
   }
 
+  @NotNull
+  public String getInputFile() {
+    return myInputFileTextFieldWithBrowseButton.getText();
+  }
+
+  public void setInputFile(@NotNull String inputFile) {
+    myInputFileTextFieldWithBrowseButton.setText(inputFile);
+  }
+
+  @Override
+  public boolean isRedirectInput() {
+    return myRedirectInputCheckBox.isSelected();
+  }
+
+  @Override
+  public void setRedirectInput(boolean isRedirectInput) {
+    myRedirectInputCheckBox.setSelected(isRedirectInput);
+    myInputFileTextFieldWithBrowseButton.setEnabled(isRedirectInput);
+  }
+
   @Override
   public void setAnchor(JComponent anchor) {
     this.anchor = anchor;
     myScriptParametersLabel.setAnchor(anchor);
     myCommonOptionsForm.setAnchor(anchor);
+    myRedirectInputCheckBox.setAnchor(anchor);
   }
 
   @Override

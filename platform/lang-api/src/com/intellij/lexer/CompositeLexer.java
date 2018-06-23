@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * 
  * @deprecated use {@link com.intellij.psi.templateLanguages.TemplateBlackAndWhiteLexer} or {@link com.intellij.lexer.LayeredLexer} instead
  */
+@Deprecated
 public abstract class CompositeLexer extends LexerBase {
   private final Lexer myLexer1;
   private final Lexer myLexer2;

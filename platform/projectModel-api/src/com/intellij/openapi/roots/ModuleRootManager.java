@@ -22,6 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * Interface for getting information about the contents and dependencies of a module.
  *
  * @author dsl
+ * @see CompilerModuleExtension
  */
 public abstract class ModuleRootManager implements ModuleRootModel, ProjectModelElement {
   /**

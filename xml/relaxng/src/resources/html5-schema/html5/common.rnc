@@ -29,8 +29,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 	## XML features that can't be serialized as HTML
 	nonHTMLizable = empty
 
-## features that are not part of the W3C HTML spec
+## cases that are not allowed by the W3C HTML spec
 	nonW3C = empty
+
+## cases that are only allowed by the W3C HTML spec
+	W3Conly = notAllowed
 
 # #####################################################################
 ##  Wildcards                                                         #
@@ -424,7 +427,7 @@ common.attrs.other =
 
 ## ECMAScript FunctionBody
   common.data.functionbody =
-    w:functionbody
+    string
 
 ## autocomplete
 
@@ -542,7 +545,6 @@ common.attrs.aria.implicit.table |= ( notAllowed )
 common.attrs.aria.implicit.textbox = ( notAllowed )
 common.attrs.aria.implicit.toolbar = ( notAllowed )
 common.attrs.aria.prop.readonly = ( notAllowed )
-common.attrs.aria.landmark.application = ( notAllowed )
 common.attrs.aria.landmark.banner = ( notAllowed )
 common.attrs.aria.landmark.complementary = ( notAllowed )
 common.attrs.aria.landmark.contentinfo = ( notAllowed )

@@ -7,10 +7,10 @@ public class Main {
   private static String test0(List<CharSequence> list) {
       StringBuilder sb = new StringBuilder();
       Set<CharSequence> uniqueValues = new HashSet<>();
-      long toSkip = 1;
-      for (CharSequence charSequence : list) {
-          if (toSkip > 0) {
-              toSkip--;
+      boolean first = true;
+      for (CharSequence charSequence: list) {
+          if (first) {
+              first = false;
               continue;
           }
           if (uniqueValues.add(charSequence)) {
@@ -24,10 +24,10 @@ public class Main {
       StringJoiner joiner = new StringJoiner(delimiter);
       long toSkip = 2;
       Set<CharSequence> uniqueValues = new HashSet<>();
-      long toSkip1 = 1;
-      for (CharSequence charSequence : list) {
-          if (toSkip1 > 0) {
-              toSkip1--;
+      boolean first = true;
+      for (CharSequence charSequence: list) {
+          if (first) {
+              first = false;
               continue;
           }
           if (uniqueValues.add(charSequence)) {
@@ -44,10 +44,10 @@ public class Main {
   private static String test3(List<CharSequence> list, String delimiter) {
       StringJoiner joiner = new StringJoiner(delimiter, "<", ">");
       Set<CharSequence> uniqueValues = new HashSet<>();
-      long toSkip = 1;
-      for (CharSequence charSequence : list) {
-          if (toSkip > 0) {
-              toSkip--;
+      boolean first = true;
+      for (CharSequence charSequence: list) {
+          if (first) {
+              first = false;
               continue;
           }
           if (uniqueValues.add(charSequence)) {

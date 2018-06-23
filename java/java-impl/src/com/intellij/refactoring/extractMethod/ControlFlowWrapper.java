@@ -84,12 +84,12 @@ public class ControlFlowWrapper {
     }
   }
 
-  public PsiStatement getFirstExitStatementCopy() {
+  PsiStatement getFirstExitStatementCopy() {
     return myFirstExitStatementCopy;
   }
 
-  public Collection<PsiStatement> prepareExitStatements(final @NotNull PsiElement[] elements,
-                                                        final @NotNull PsiElement enclosingCodeFragment)
+  public Collection<PsiStatement> prepareExitStatements(@NotNull final PsiElement[] elements,
+                                                        @NotNull final PsiElement enclosingCodeFragment)
     throws ExitStatementsNotSameException {
     myExitPoints = new IntArrayList();
     myExitStatements = ControlFlowUtil
@@ -138,15 +138,15 @@ public class ControlFlowWrapper {
     myFirstExitStatementCopy = (PsiStatement)first.copy();
   }
 
-  public boolean isGenerateConditionalExit() {
+  boolean isGenerateConditionalExit() {
     return myGenerateConditionalExit;
   }
 
-  public Collection<PsiStatement> getExitStatements() {
+  Collection<PsiStatement> getExitStatements() {
     return myExitStatements;
   }
 
-  public boolean needVariableValueAfterEnd(PsiVariable variable) {
+  public boolean needVariableValueAfterEnd(@NotNull PsiVariable variable) {
     return ControlFlowUtil.needVariableValueAt(variable, myControlFlow, myFlowEnd);
   }
 
@@ -159,7 +159,7 @@ public class ControlFlowWrapper {
   }
 
   @NotNull
-  public PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
+  PsiVariable[] getOutputVariables(boolean collectVariablesAtExitPoints) {
     PsiVariable[] myOutputVariables = ControlFlowUtil.getOutputVariables(myControlFlow, myFlowStart, myFlowEnd, myExitPoints.toArray());
     if (collectVariablesAtExitPoints) {
       //variables declared in selected block used in return statements are to be considered output variables when extracting guard methods
@@ -199,7 +199,7 @@ public class ControlFlowWrapper {
     return myOutputVariables;
   }
 
-  public boolean isReturnPresentBetween() {
+  boolean isReturnPresentBetween() {
     return ControlFlowUtil.returnPresentBetween(myControlFlow, myFlowStart, myFlowEnd);
   }
 
@@ -276,8 +276,8 @@ public class ControlFlowWrapper {
     return myInputVariables;
   }
 
-  public PsiStatement getExitStatementCopy(PsiElement returnStatement,
-                                           final PsiElement[] elements) {
+  PsiStatement getExitStatementCopy(PsiElement returnStatement,
+                                    final PsiElement[] elements) {
     PsiStatement exitStatementCopy = null;
     // replace all exit-statements such as break's or continue's with appropriate return
     for (PsiStatement exitStatement : myExitStatements) {
@@ -323,23 +323,23 @@ public class ControlFlowWrapper {
     return exitStatementCopy;
   }
 
-  public List<PsiVariable> getUsedVariables(int start) {
+  private List<PsiVariable> getUsedVariables(int start) {
     return getUsedVariables(start, myControlFlow.getSize());
   }
 
-  public List<PsiVariable> getUsedVariables(int start, int end) {
+  private List<PsiVariable> getUsedVariables(int start, int end) {
     return ControlFlowUtil.getUsedVariables(myControlFlow, start, end);
   }
 
-  public Collection<ControlFlowUtil.VariableInfo> getInitializedTwice(int start) {
+  private Collection<ControlFlowUtil.VariableInfo> getInitializedTwice(int start) {
     return ControlFlowUtil.getInitializedTwice(myControlFlow, start, myControlFlow.getSize());
   }
 
-  public List<PsiVariable> getUsedVariables() {
+  List<PsiVariable> getUsedVariables() {
     return getUsedVariables(myFlowEnd);
   }
 
-  public List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
+  List<PsiVariable> getUsedVariablesInBody(PsiElement codeFragment, PsiVariable[] outputVariables) {
     final List<PsiVariable> variables = getUsedVariables(myFlowStart, myFlowEnd);
     if (skipVariablesFromExitStatements(outputVariables)) {
       removeParametersUsedInExitsOnly(codeFragment, variables);
@@ -353,9 +353,5 @@ public class ControlFlowWrapper {
 
   public Collection<ControlFlowUtil.VariableInfo> getInitializedTwice() {
     return getInitializedTwice(myFlowEnd);
-  }
-
-  public void setGenerateConditionalExit(boolean generateConditionalExit) {
-    myGenerateConditionalExit = generateConditionalExit;
   }
 }

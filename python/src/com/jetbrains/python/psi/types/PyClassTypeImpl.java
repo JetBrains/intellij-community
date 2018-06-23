@@ -12,7 +12,6 @@ import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,12 +23,10 @@ import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyResolveResultRater;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.impl.references.PyReferenceImpl;
-import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
-import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.PyResolveProcessor;
-import com.jetbrains.python.psi.resolve.RatedResolveResult;
+import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.pyi.PyiUtil;
 import com.jetbrains.python.toolbox.Maybe;
+import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,12 +46,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull protected final PyClass myClass;
   protected final boolean myIsDefinition;
 
-  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = new ThreadLocal<Set<Pair<PyClass, String>>>() {
-    @Override
-    protected Set<Pair<PyClass, String>> initialValue() {
-      return new HashSet<>();
-    }
-  };
+  private static final ThreadLocal<Set<Pair<PyClass, String>>> ourResolveMemberStack = ThreadLocal.withInitial(() -> new HashSet<>());
 
   /**
    * Describes a class-based type. Since everything in Python is an instance of some class, this type pretty much completes
@@ -417,6 +409,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       .of(methodNames)
       .map(name -> getParametersOfMethod(name, context))
       .findFirst(Objects::nonNull)
+      // If resolved parameters are empty, consider them as invalid and return null
+      .filter(parameters -> !parameters.isEmpty())
       // Skip "self" for __init__/__call__ and "cls" for __new__
       .map(parameters -> ContainerUtil.subList(parameters, 1))
       .orElse(null);
@@ -522,21 +516,29 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                                  @Nullable PyExpression location,
                                                                  @NotNull TypeEvalContext context) {
     final PyResolveProcessor processor = new PyResolveProcessor(name);
-    final Collection<PsiElement> result;
+    final Map<PsiElement, PyImportedNameDefiner> results;
 
     if (!isDefinition && !cls.processInstanceLevelDeclarations(processor, location)) {
-      result = processor.getElements();
+      results = processor.getResults();
     }
     else {
       cls.processClassLevelDeclarations(processor);
-      result = processor.getElements();
+      results = processor.getResults();
     }
 
-    return ContainerUtil.map(result, element -> new RatedResolveResult(PyReferenceImpl.getRate(element, context), element));
+    return EntryStream
+      .of(results)
+      .mapKeyValue(
+        (element, definer) -> {
+          final int rate = PyReferenceImpl.getRate(element, context);
+          return definer != null ? new ImportedResolveResult(element, rate, definer) : new RatedResolveResult(rate, element);
+        }
+      )
+      .toList();
   }
 
   private static final Key<Set<PyClassType>> CTX_VISITED = Key.create("PyClassType.Visited");
-  public static Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
+  public static final Key<Boolean> CTX_SUPPRESS_PARENTHESES = Key.create("PyFunction.SuppressParentheses");
 
   @Override
   public Object[] getCompletionVariants(String prefix, PsiElement location, ProcessingContext context) {
@@ -678,7 +680,9 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       result.add(expression.getName());
     }
 
-    result.addAll(ObjectUtils.notNull(myClass.getSlots(context), Collections.emptyList()));
+    if (myClass.isNewStyleClass(context)) {
+      result.addAll(ContainerUtil.notNullize(myClass.getOwnSlots()));
+    }
 
     for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
       for (PyCustomMember member : provider.getMembers(this, null, context)) {
@@ -742,11 +746,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     // We are here because of completion (see call stack), so we use code complete here
     final TypeEvalContext context =
       (expressionHook != null ? TypeEvalContext.codeCompletion(myClass.getProject(), myClass.getContainingFile()) : null);
-    List<String> slots = myClass.isNewStyleClass(context) ? myClass.getSlots(
-      context) : null;
-    if (slots != null) {
-      processor.setAllowedNames(slots);
-    }
+
+    processor.setAllowedNames(myClass.getSlots(context));
     myClass.processInstanceLevelDeclarations(processor, expressionHook);
 
     for (LookupElement le : processor.getResultList()) {
@@ -757,8 +758,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       namesAlready.add(name);
       ret.add(le);
     }
-    if (slots != null) {
-      for (String name : slots) {
+    if (myClass.isNewStyleClass(context)) {
+      for (String name : ContainerUtil.notNullize(myClass.getOwnSlots())) {
         if (!namesAlready.contains(name)) {
           ret.add(LookupElementBuilder.create(name));
         }
@@ -859,6 +860,18 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public boolean isValid() {
     return myClass.isValid();
+  }
+
+  @Override
+  public boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    final PyClass cls = getPyClass();
+
+    if (isDefinition() || PyUtil.isObjectClass(cls)) return true;
+
+    final List<String> slots = cls.getSlots(context);
+    return slots == null ||
+           slots.contains(name) && cls.findClassAttribute(name, true, context) == null ||
+           cls.findProperty(name, true, context) != null;
   }
 
   @Nullable

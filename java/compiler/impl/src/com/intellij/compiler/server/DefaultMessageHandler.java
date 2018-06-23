@@ -7,9 +7,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ReadTask;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -36,7 +33,8 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.server.DefaultMessageHandler");
   public static final long CONSTANT_SEARCH_TIME_LIMIT = 60 * 1000L; // one minute
   private final Project myProject;
-  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("DefaultMessageHandler pool");
+  private final ExecutorService myTaskExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "DefaultMessageHandler Pool");
   private volatile long myConstantSearchTime = 0L;
 
   protected DefaultMessageHandler(Project project) {
@@ -64,7 +62,11 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
         handleBuildEvent(sessionId, event);
         break;
       case COMPILE_MESSAGE:
-        handleCompileMessage(sessionId, msg.getCompileMessage());
+        CmdlineRemoteProto.Message.BuilderMessage.CompileMessage compileMessage = msg.getCompileMessage();
+        handleCompileMessage(sessionId, compileMessage);
+        if (compileMessage.getKind() == CmdlineRemoteProto.Message.BuilderMessage.CompileMessage.Kind.INTERNAL_BUILDER_ERROR) {
+          LOG.error("Internal build error:\n" + compileMessage.getText());
+        }
         break;
       case CONSTANT_SEARCH_TASK:
         final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task = msg.getConstantSearchTask();
@@ -78,20 +80,7 @@ public abstract class DefaultMessageHandler implements BuilderMessageHandler {
   protected abstract void handleBuildEvent(UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.BuildEvent event);
 
   private void handleConstantSearchTask(final Channel channel, final UUID sessionId, final CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {
-    ProgressIndicatorUtils.scheduleWithWriteActionPriority(myTaskExecutor, new ReadTask() {
-      @Override
-      public Continuation runBackgroundProcess(@NotNull ProgressIndicator indicator) throws ProcessCanceledException {
-        return DumbService.getInstance(myProject).runReadActionInSmartMode(() -> {
-          doHandleConstantSearchTask(channel, sessionId, task);
-          return null;
-        });
-      }
-
-      @Override
-      public void onCanceled(@NotNull ProgressIndicator indicator) {
-        DumbService.getInstance(myProject).runWhenSmart(() -> handleConstantSearchTask(channel, sessionId, task));
-      }
-    });
+    ReadAction.nonBlocking(() -> doHandleConstantSearchTask(channel, sessionId, task)).inSmartMode(myProject).submit(myTaskExecutor);
   }
 
   private void doHandleConstantSearchTask(Channel channel, UUID sessionId, CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask task) {

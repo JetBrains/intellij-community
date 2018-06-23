@@ -14,6 +14,7 @@ import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.util.Key
 import com.intellij.ui.paint.EffectPainter
 import com.intellij.util.ui.GraphicsUtil
+import com.intellij.util.ui.UIUtil
 import java.awt.*
 import java.awt.font.FontRenderContext
 import javax.swing.UIManager
@@ -91,7 +92,7 @@ open class HintRenderer(var text: String?) : EditorCustomElementRenderer {
       get() = metrics.font
 
     init {
-      val font = Font(familyName, Font.PLAIN, size)
+      val font = UIUtil.getFontWithFallback(familyName, Font.PLAIN, size)
       val context = getCurrentContext(editor)
       metrics = FontInfo.getFontMetrics(font, context)
       // We assume this will be a better approximation to a real line height for a given font

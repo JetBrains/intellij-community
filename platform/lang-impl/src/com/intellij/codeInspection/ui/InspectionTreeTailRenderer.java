@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -29,11 +29,9 @@ public abstract class InspectionTreeTailRenderer {
   private final Map<HighlightSeverity, String> myPluralizedSeverityNames = ContainerUtil.createSoftMap();
   private final Map<HighlightSeverity, String> myUnpluralizedSeverityNames = ContainerUtil.createSoftMap();
 
-  private final SeverityRegistrar myRegistrar;
   private final GlobalInspectionContextImpl myContext;
 
   public InspectionTreeTailRenderer(GlobalInspectionContextImpl context) {
-    myRegistrar = SeverityRegistrar.getSeverityRegistrar(context.getProject());
     myContext = context;
   }
 
@@ -74,7 +72,7 @@ public abstract class InspectionTreeTailRenderer {
       String name = myPluralizedSeverityNames.get(severity);
       if (name == null) {
         final String lowerCaseName = level.getName().toLowerCase(Locale.ENGLISH);
-        name = myRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName;
+        name = SeverityRegistrar.isDefaultSeverity(severity) ? StringUtil.pluralize(lowerCaseName) : lowerCaseName;
         myPluralizedSeverityNames.put(severity, name);
       }
       return name;

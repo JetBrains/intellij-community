@@ -17,6 +17,7 @@ import com.intellij.webcore.packaging.PackageManagementServiceEx;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.packaging.PyPIPackageUtil.PackageDetails;
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -55,15 +56,15 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   
   @NonNls private static final String TEXT_SUFFIX = "</body></html>";
 
-  private final Project myProject;
-  protected final Sdk mySdk;
+  @NotNull private final Project myProject;
+  @NotNull protected final Sdk mySdk;
   protected final ExecutorService myExecutorService;
 
   public PyPackageManagementService(@NotNull Project project, @NotNull Sdk sdk) {
     myProject = project;
     mySdk = sdk;
     // Dumb heuristic for the size of IO-bound tasks pool: safer than unlimited, snappier than a single thread
-    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PyPackageManagementService pool", 4);
+    myExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("PyPackageManagementService Pool", 4);
   }
 
   @NotNull
@@ -71,13 +72,17 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     return mySdk;
   }
 
+  @NotNull
+  public Project getProject() {
+    return myProject;
+  }
+
   @Nullable
   @Override
   public List<String> getAllRepositories() {
-    final PyPackageService packageService = PyPackageService.getInstance();
     final List<String> result = new ArrayList<>();
-    if (!packageService.PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
-    result.addAll(packageService.additionalRepositories);
+    if (!PyPackageService.getInstance().PYPI_REMOVED) result.add(PyPIPackageUtil.PYPI_LIST_URL);
+    result.addAll(getAdditionalRepositories());
     return result;
   }
 
@@ -94,8 +99,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @NotNull
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(false);
+    PyPIPackageUtil.INSTANCE.loadPackages();
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), false);
     return getAllPackagesCached();
   }
 
@@ -103,7 +108,7 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   @Override
   public List<RepoPackage> reloadAllPackages() throws IOException {
     PyPIPackageUtil.INSTANCE.updatePyPICache();
-    PyPIPackageUtil.INSTANCE.loadAndGetAdditionalPackages(true);
+    PyPIPackageUtil.INSTANCE.loadAdditionalPackages(getAdditionalRepositories(), true);
     return getAllPackagesCached();
   }
 
@@ -115,14 +120,19 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     if (!PyPackageService.getInstance().PYPI_REMOVED) {
       result.addAll(getCachedPyPIPackages());
     }
-    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages());
+    result.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackages(getAdditionalRepositories()));
     return result;
+  }
+
+  @NotNull
+  private static List<String> getAdditionalRepositories() {
+    return PyPackageService.getInstance().additionalRepositories;
   }
 
   @NotNull
   private static List<RepoPackage> getCachedPyPIPackages() {
     // Don't show URL next to the package name in "Available Packages" if only PyPI is in use
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    final boolean customRepoConfigured = !getAdditionalRepositories().isEmpty();
     final String url = customRepoConfigured ? PyPIPackageUtil.PYPI_LIST_URL : "";
     return ContainerUtil.map(PyPIPackageCache.getInstance().getPackageNames(), name -> new RepoPackage(name, url, null));
   }
@@ -187,13 +197,9 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
     if (forceUpgrade) {
       extraArgs.add("-U");
     }
-    final PyRequirement req;
-    if (version != null) {
-      req = new PyRequirement(packageName, version);
-    }
-    else {
-      req = new PyRequirement(packageName);
-    }
+    final PyRequirement req = version == null
+                              ? PyRequirementsKt.pyRequirement(packageName)
+                              : PyRequirementsKt.pyRequirement(packageName, PyRequirementRelation.EQ, version);
 
     final PyPackageManagerUI ui = new PyPackageManagerUI(myProject, mySdk, new PyPackageManagerUI.Listener() {
       @Override
@@ -379,8 +385,8 @@ public class PyPackageManagementService extends PackageManagementServiceEx {
   public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
     myExecutorService.submit(() -> {
       try {
-        PyPIPackageUtil.INSTANCE.loadAndGetPackages();
-        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(pkg.getName());
+        PyPIPackageUtil.INSTANCE.loadPackages();
+        final String version = PyPIPackageUtil.INSTANCE.fetchLatestPackageVersion(myProject, pkg.getName());
         consumer.consume(StringUtil.notNullize(version));
       }
       catch (IOException e) {

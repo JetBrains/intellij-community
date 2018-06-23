@@ -15,20 +15,20 @@
  */
 package com.intellij.psi.formatter.java;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
+import org.jetbrains.annotations.NotNull;
 
 public interface BlockFactory {
 
-  Block createBlock(ASTNode node, Indent indent, Alignment alignment, Wrap wrap);
+  Block createBlock(ASTNode node, Indent indent, Alignment alignment, Wrap wrap, @NotNull FormattingMode formattingMode);
 
   CommonCodeStyleSettings getSettings();
 
   JavaCodeStyleSettings getJavaSettings();
+
+  FormattingMode getFormattingMode();
 
 }

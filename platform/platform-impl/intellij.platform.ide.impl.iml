@@ -13,7 +13,7 @@
     <orderEntry type="library" name="Log4J" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
     <orderEntry type="module" module-name="intellij.platform.bootstrap" />
-    <orderEntry type="library" exported="" name="commons-codec" level="project" />
+    <orderEntry type="library" name="commons-codec" level="project" />
     <orderEntry type="library" name="OroMatcher" level="project" />
     <orderEntry type="library" name="CGLIB" level="project" />
     <orderEntry type="module" module-name="intellij.platform.lvcs" exported="" />
@@ -23,12 +23,10 @@
     <orderEntry type="library" name="winp" level="project" />
     <orderEntry type="library" name="swingx" level="project" />
     <orderEntry type="module" module-name="intellij.platform.core.impl" exported="" />
-    <orderEntry type="library" exported="" name="miglayout-swing" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
     <orderEntry type="module" module-name="intellij.platform.projectModel.impl" />
-    <orderEntry type="library" name="Snappy-Java" level="project" />
-    <orderEntry type="library" exported="" name="Netty" level="project" />
     <orderEntry type="library" name="commons-imaging" level="project" />
     <orderEntry type="library" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.jps.model.impl" />
@@ -52,5 +50,9 @@
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="RUNTIME" />
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
+    <orderEntry type="library" name="org.apache.httpcomponents:fluent-hc" level="project" />
+    <orderEntry type="library" name="netty-codec-http" level="project" />
+    <orderEntry type="library" name="netty-handler" level="project" />
+    <orderEntry type="library" scope="RUNTIME" name="error-prone-annotations" level="project" />
   </component>
 </module>

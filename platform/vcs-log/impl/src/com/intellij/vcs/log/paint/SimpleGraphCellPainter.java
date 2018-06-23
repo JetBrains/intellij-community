@@ -117,7 +117,7 @@ public class SimpleGraphCellPainter implements GraphCellPainter {
                              boolean isTerminal) {
     int nodeWidth = PaintParameters.getNodeWidth(getRowHeight());
     if (from == to) {
-      int y2 = getRowHeight() - 1 - (isTerminal ? PaintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
+      int y2 = getRowHeight() - (isTerminal ? PaintParameters.getCircleRadius(getRowHeight()) / 2 + 1 : 0);
       int y1 = getRowHeight() / 2;
       int x = nodeWidth * from + nodeWidth / 2;
       paintLine(g2, color, hasArrow, x, y1, x, y2, x, y2, isUsual, isSelected);

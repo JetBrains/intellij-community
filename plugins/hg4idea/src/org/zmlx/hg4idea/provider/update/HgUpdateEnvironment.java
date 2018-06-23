@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.provider.update;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.FilePath;
@@ -51,29 +52,27 @@ public class HgUpdateEnvironment implements UpdateEnvironment {
     
     List<VcsException> exceptions = new LinkedList<>();
 
-    boolean result = true;
+    boolean[] result = {true};
     for (FilePath contentRoot : contentRoots) {
       if (indicator != null) {
         indicator.checkCanceled();
-        indicator.startNonCancelableSection();
       }
       VirtualFile repository =
         ProjectLevelVcsManager.getInstance(project).getVcsRootFor(contentRoot);
       if (repository == null) {
         continue;
       }
-      try {
-        HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
-        result &= updater.update(updatedFiles, indicator, exceptions);
-      } catch (VcsException e) {
-        //TODO include module name where exception occurred
-        exceptions.add(e);
-      }
-      if (indicator != null) {
-        indicator.finishNonCancelableSection();
-      }
+      ProgressManager.getInstance().executeNonCancelableSection(()->{
+        try {
+          HgUpdater updater = new HgRegularUpdater(project, repository, updateConfiguration);
+          result[0] &= updater.update(updatedFiles, indicator, exceptions);
+        } catch (VcsException e) {
+          //TODO include module name where exception occurred
+          exceptions.add(e);
+        }
+      });
     }
-    return new UpdateSessionAdapter(exceptions, !result);
+    return new UpdateSessionAdapter(exceptions, !result[0]);
   }
 
   public Configurable createConfigurable(Collection<FilePath> contentRoots) {

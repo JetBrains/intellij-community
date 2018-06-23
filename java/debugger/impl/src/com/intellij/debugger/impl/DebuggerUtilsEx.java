@@ -432,10 +432,22 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  /**
+   * @deprecated use {@link EvaluationContext#keep(Value)} directly
+   */
+  @Deprecated
   public static void keep(Value value, EvaluationContext context) {
-    if (value instanceof ObjectReference) {
-      ((SuspendContextImpl)context.getSuspendContext()).keep((ObjectReference)value);
-    }
+    context.keep(value);
+  }
+
+  public static StringReference mirrorOfString(@NotNull String s, VirtualMachineProxyImpl virtualMachineProxy, EvaluationContext context)
+    throws EvaluateException {
+    return context.computeAndKeep(() -> virtualMachineProxy.mirrorOf(s));
+  }
+
+  public static ArrayReference mirrorOfArray(@NotNull ArrayType arrayType, int dimension, EvaluationContext context)
+    throws EvaluateException {
+    return context.computeAndKeep(() -> context.getDebugProcess().newInstance(arrayType, dimension));
   }
 
   public abstract DebuggerTreeNode  getSelectedNode    (DataContext context);
@@ -543,6 +555,10 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     }
   }
 
+  public static String methodKey(Method m) {
+    return m.declaringType().name() + '.' + m.name() + m.signature();
+  }
+
   public static String methodNameWithArguments(Method m) {
     return m.name() + "(" + StringUtil.join(m.argumentTypeNames(), StringUtil::getShortName, ", ") + ")";
   }
@@ -634,62 +650,83 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, double value) {
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
-    return createValue(vm, expectedType, (long)value);
+    if (PsiType.LONG.getName().equals(expectedType)) {
+      return vm.mirrorOf((long)value);
+    }
+    if (PsiType.INT.getName().equals(expectedType)) {
+      return vm.mirrorOf((int)value);
+    }
+    if (PsiType.SHORT.getName().equals(expectedType)) {
+      return vm.mirrorOf((short)value);
+    }
+    if (PsiType.BYTE.getName().equals(expectedType)) {
+      return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.CHAR.getName().equals(expectedType)) {
+      return vm.mirrorOf((char)value);
+    }
+    return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, long value) {
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
     }
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf((char)value);
     }
-    if (PsiType.DOUBLE.getPresentableText().equals(expectedType)) {
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
       return vm.mirrorOf((double)value);
     }
-    if (PsiType.FLOAT.getPresentableText().equals(expectedType)) {
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
       return vm.mirrorOf((float)value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, boolean value) {
-    if (PsiType.BOOLEAN.getPresentableText().equals(expectedType)) {
+    if (PsiType.BOOLEAN.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
     return null;
   }
 
   public static Value createValue(VirtualMachineProxyImpl vm, String expectedType, char value) {
-    if (PsiType.CHAR.getPresentableText().equals(expectedType)) {
+    if (PsiType.CHAR.getName().equals(expectedType)) {
       return vm.mirrorOf(value);
     }
-    if (PsiType.LONG.getPresentableText().equals(expectedType)) {
+    if (PsiType.LONG.getName().equals(expectedType)) {
       return vm.mirrorOf((long)value);
     }
-    if (PsiType.INT.getPresentableText().equals(expectedType)) {
+    if (PsiType.INT.getName().equals(expectedType)) {
       return vm.mirrorOf((int)value);
     }
-    if (PsiType.SHORT.getPresentableText().equals(expectedType)) {
+    if (PsiType.SHORT.getName().equals(expectedType)) {
       return vm.mirrorOf((short)value);
     }
-    if (PsiType.BYTE.getPresentableText().equals(expectedType)) {
+    if (PsiType.BYTE.getName().equals(expectedType)) {
       return vm.mirrorOf((byte)value);
+    }
+    if (PsiType.DOUBLE.getName().equals(expectedType)) {
+      return vm.mirrorOf((double)value);
+    }
+    if (PsiType.FLOAT.getName().equals(expectedType)) {
+      return vm.mirrorOf((float)value);
     }
     return null;
   }
@@ -812,8 +849,19 @@ public abstract class DebuggerUtilsEx extends DebuggerUtils {
     @Nullable
     @Override
     public TextRange getHighlightRange() {
-      return SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition);
+      return intersectWithLine(SourcePositionHighlighter.getHighlightRangeFor(mySourcePosition), mySourcePosition.getFile(), getLine());
     }
+  }
+
+  @Nullable
+  public static TextRange intersectWithLine(@Nullable TextRange range, @Nullable PsiFile file, int line) {
+    if (range != null && file != null) {
+      Document document = PsiDocumentManager.getInstance(file.getProject()).getDocument(file);
+      if (document != null) {
+        range = range.intersection(DocumentUtil.getLineTextRange(document, line));
+      }
+    }
+    return range;
   }
 
   @Nullable

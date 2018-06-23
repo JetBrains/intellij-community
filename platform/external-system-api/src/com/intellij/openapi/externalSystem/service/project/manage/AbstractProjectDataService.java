@@ -72,17 +72,10 @@ public abstract class AbstractProjectDataService<E, I> implements ProjectDataSer
                           @NotNull IdeModifiableModelsProvider modelsProvider) {
   }
 
-  /**
-   * @deprecated use {@link #onSuccessImport(Collection, ProjectData, Project, IdeModelsProvider)}
-   */
-  public void onSuccessImport(@NotNull Project project) {
-  }
-
   public void onSuccessImport(@NotNull Collection<DataNode<E>> imported,
                               @Nullable ProjectData projectData,
                               @NotNull Project project,
                               @NotNull IdeModelsProvider modelsProvider) {
-    onSuccessImport(project);
   }
 
   @ApiStatus.Experimental

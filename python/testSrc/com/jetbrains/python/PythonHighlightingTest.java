@@ -76,7 +76,7 @@ public class PythonHighlightingTest extends PyTestCase {
     doTest();
   }
 
-  public void testContinueInFinallyBlock() {
+  public void testContinueOutsideOfLoop() {
     doTest(false, false);
   }
 
@@ -394,6 +394,21 @@ public class PythonHighlightingTest extends PyTestCase {
   // PY-27913
   public void testDunderClassGetItem() {
     doTest(LanguageLevel.PYTHON37, false, true);
+  }
+
+  // PY-28313
+  public void testVarargs() {
+    doTest();
+  }
+
+  // PY-28313
+  public void testKwargs() {
+    doTest();
+  }
+
+  // PY-20530
+  public void testUnparsedTypeHints() {
+    doTest(LanguageLevel.PYTHON36, false, false);
   }
 
   @NotNull

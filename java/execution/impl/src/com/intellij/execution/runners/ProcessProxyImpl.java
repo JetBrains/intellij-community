@@ -21,6 +21,7 @@ import java.nio.channels.AsynchronousChannelGroup;
 import java.nio.channels.AsynchronousServerSocketChannel;
 import java.nio.channels.AsynchronousSocketChannel;
 import java.nio.channels.CompletionHandler;
+import java.nio.charset.StandardCharsets;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -76,7 +77,7 @@ class ProcessProxyImpl implements ProcessProxy {
 
   private void writeLine(String s) {
     execute(() -> {
-      ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes("US-ASCII"));
+      ByteBuffer out = ByteBuffer.wrap((s + '\n').getBytes(StandardCharsets.US_ASCII));
       synchronized (myLock) {
         myConnection.write(out);
       }

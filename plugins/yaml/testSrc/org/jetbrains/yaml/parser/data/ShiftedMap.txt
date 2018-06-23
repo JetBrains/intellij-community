@@ -1,0 +1,18 @@
+YAML file
+  PsiElement(indent)('    ')
+  YAML document
+    YAML mapping
+      YAML key value
+        PsiElement(scalar key)('key')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('ttt')
+      PsiElement(Eol)('\n')
+      PsiElement(indent)('    ')
+      YAML key value
+        PsiElement(scalar key)('ahahah')
+        PsiElement(:)(':')
+        PsiWhiteSpace(' ')
+        YAML plain scalar text
+          PsiElement(text)('ppp')

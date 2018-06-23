@@ -5,18 +5,16 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElementVisitor;
 import com.intellij.util.ObjectUtils;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.YAMLUtil;
 import org.jetbrains.yaml.lexer.YAMLGrammarCharUtil;
 import org.jetbrains.yaml.psi.YAMLQuotedText;
+import org.jetbrains.yaml.psi.YamlPsiElementVisitor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText {
   private final boolean myIsSingleQuoted;
@@ -276,6 +274,16 @@ public class YAMLQuotedTextImpl extends YAMLScalarImpl implements YAMLQuotedText
         final Integer result = ESC_TO_CODE.getValue().get((int)text.charAt(pos + 1));
         return ObjectUtils.notNull(result, (int)text.charAt(pos + 1));
       }
+    }
+  }
+
+  @Override
+  public void accept(@NotNull PsiElementVisitor visitor) {
+    if (visitor instanceof YamlPsiElementVisitor) {
+      ((YamlPsiElementVisitor)visitor).visitQuotedText(this);
+    }
+    else {
+      super.accept(visitor);
     }
   }
 }

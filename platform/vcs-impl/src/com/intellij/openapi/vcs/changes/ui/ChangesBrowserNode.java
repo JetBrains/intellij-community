@@ -43,6 +43,7 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
   public static final Object SWITCHED_ROOTS_TAG = new Tag("changes.nodetitle.switched.roots");
   public static final Object LOCALLY_DELETED_NODE_TAG = new Tag("changes.nodetitle.locally.deleted.files");
 
+  protected static final int CONFLICTS_SORT_WEIGHT = 0;
   protected static final int DEFAULT_CHANGE_LIST_SORT_WEIGHT = 1;
   protected static final int CHANGE_LIST_SORT_WEIGHT = 2;
   protected static final int REPOSITORY_SORT_WEIGHT = 3;
@@ -298,12 +299,16 @@ public class ChangesBrowserNode<T> extends DefaultMutableTreeNode implements Use
     myAttributes = attributes;
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull FilePath parentPath) {
-    appendParentPath(renderer, parentPath.getPresentableUrl());
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable FilePath parentPath) {
+    if (parentPath != null) {
+      appendParentPath(renderer, parentPath.getPresentableUrl());
+    }
   }
 
-  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull VirtualFile parentPath) {
-    appendParentPath(renderer, parentPath.getPresentableUrl());
+  protected void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @Nullable VirtualFile parentPath) {
+    if (parentPath != null) {
+      appendParentPath(renderer, parentPath.getPresentableUrl());
+    }
   }
 
   private static void appendParentPath(@NotNull ChangesBrowserNodeRenderer renderer, @NotNull String parentPath) {

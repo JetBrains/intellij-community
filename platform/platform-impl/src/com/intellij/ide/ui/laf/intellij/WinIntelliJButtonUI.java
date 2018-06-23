@@ -15,12 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IconCache;
+import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaButtonUI;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
@@ -28,6 +25,8 @@ import javax.swing.plaf.ComponentUI;
 import java.awt.*;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
+
+import static com.intellij.ide.ui.laf.intellij.WinIntelliJTextBorder.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -68,13 +67,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   @Override
   public void paint(Graphics g, JComponent c) {
     if (UIUtil.isHelpButton(c)) {
-      Icon help = IconCache.getIcon("winHelp");
+      Icon help = LafIconLookup.getIcon("winHelp");
       Insets i = c.getInsets();
       help.paintIcon(c, g, i.left, i.top + (c.getHeight() - help.getIconHeight()) / 2);
     } else if (c instanceof AbstractButton) {
       AbstractButton b = (AbstractButton)c;
-      ButtonModel bm = b.getModel();
-
       Graphics2D g2 = (Graphics2D)g.create();
       try {
         Rectangle r = new Rectangle(c.getSize());
@@ -89,15 +86,11 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
         g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
         g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, MacUIUtil.USE_QUARTZ ? RenderingHints.VALUE_STROKE_PURE : RenderingHints.VALUE_STROKE_NORMALIZE);
 
-        Color color = bm.isPressed() ? UIManager.getColor("Button.intellij.native.pressedBackgroundColor") :
-                      c.hasFocus() || bm.isRollover() ? UIManager.getColor("Button.intellij.native.focusedBackgroundColor") :
-                      c.getBackground();
-
         if (!b.isEnabled()) {
           g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
         }
 
-        g2.setColor(color);
+        g2.setColor(getBackgroundColor(b));
         g2.fill(r);
 
         paintContents(g2, b);
@@ -108,32 +101,13 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
   }
 
   @Override protected void modifyViewRect(AbstractButton b, Rectangle rect) {
-    if (!isComboButton(b)) {
-      JBInsets.removeFrom(rect, b.getInsets());
-    }
-
-    if (isComboButton(b)) {
-      int delta = JBUI.scale(6);
-      rect.x += delta;
-      rect.width -= delta;
-    }
-
+    super.modifyViewRect(b, rect);
     rect.y -= JBUI.scale(1); // Move one pixel up
   }
 
   @Override
-  protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    Insets i = c.getInsets();
-    if (isComboButton(c)) {
-      return prefSize;
-    } else if (UIUtil.isHelpButton(c) || isSquare(c)) {
-      Dimension size = JBUI.size(22);
-      JBInsets.addTo(size, i);
-      return size;
-    } else {
-      return new Dimension(Math.max(JBUI.scale(28) + prefSize.width, JBUI.scale(72) + i.left + i.right),
-                           Math.max(prefSize.height, JBUI.scale(22) + i.top + i.bottom));
-    }
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
@@ -149,6 +123,38 @@ public class WinIntelliJButtonUI extends DarculaButtonUI {
                                                 textRect.y + metrics.getAscent() + getTextShiftOffset());
     } finally {
       g2.dispose();
+    }
+  }
+
+  @Override
+  protected Color getButtonTextColor(AbstractButton button) {
+    Color focusedColor = (Color)button.getClientProperty("JButton.focusedTextColor");
+    Color textColor = (Color)button.getClientProperty("JButton.textColor");
+
+    boolean focusedStyle = button.hasFocus() || button.getModel().isRollover();
+
+    if (focusedStyle && focusedColor != null) {
+      return focusedColor;
+    } else if (!focusedStyle && textColor != null) {
+      return textColor;
+    } else {
+      return DarculaUIUtil.getButtonTextColor(button);
+    }
+  }
+
+  private static Color getBackgroundColor(AbstractButton b) {
+    ButtonModel bm = b.getModel();
+
+    Color focusedColor = (Color)b.getClientProperty("JButton.focusedBackgroundColor");
+    if (bm.isPressed()) {
+      return focusedColor != null ?
+             focusedColor : UIManager.getColor("Button.intellij.native.pressedBackgroundColor");
+    } else if (b.hasFocus() || bm.isRollover()) {
+      return focusedColor != null ?
+             focusedColor :UIManager.getColor("Button.intellij.native.focusedBackgroundColor");
+    } else {
+      Color backgroundColor = (Color)b.getClientProperty("JButton.backgroundColor");
+      return backgroundColor != null ? backgroundColor : b.getBackground();
     }
   }
 }

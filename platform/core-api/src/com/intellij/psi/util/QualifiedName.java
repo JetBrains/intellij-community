@@ -18,7 +18,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -158,8 +157,7 @@ public class QualifiedName implements Comparable<QualifiedName> {
     else {
       qName = new QualifiedName(size);
       for (int i = 0; i < size; i++) {
-        final StringRef name = dataStream.readName();
-        qName.myComponents.add(name == null ? null : name.getString());
+        qName.myComponents.add(dataStream.readNameString());
       }
     }
     return qName;

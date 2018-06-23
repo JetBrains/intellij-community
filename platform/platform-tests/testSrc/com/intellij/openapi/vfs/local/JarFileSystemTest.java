@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs.local;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -182,16 +168,16 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
               Random random = new Random();
               for (int j = 0; j < 2 * number; ++j) {
                 BasicJarHandler handler = handlers.get(random.nextInt(handlers.size()));
-
-                int op = random.nextInt(2);
-                if (op == 0) {
+                if (random.nextBoolean()) {
                   assertNotNull(handler.getAttributes(JarFile.MANIFEST_NAME));
                 }
-                else if (op == 1) assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
+                else {
+                  assertNotNull(handler.contentsToByteArray(JarFile.MANIFEST_NAME));
+                }
               }
             }
-            catch (Throwable ignore) {
-              ignore.printStackTrace();
+            catch (Throwable t) {
+              t.printStackTrace();
             }
           }));
         }
@@ -218,7 +204,7 @@ public class JarFileSystemTest extends BareTestFixtureTestCase {
       // for performance reasons we create file copy on windows when we read contents and have the handle open to the copy
       Field resolved = handler.getClass().getDeclaredField("myFileWithMirrorResolved");
       resolved.setAccessible(true);
-      assertTrue(resolved.get(handler) == null);
+      assertNull(resolved.get(handler));
     }
 
     jarFileSystem.setNoCopyJarForPath(jar.getPath() + JarFileSystem.JAR_SEPARATOR);

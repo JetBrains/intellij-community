@@ -45,7 +45,7 @@ public class TemplateXmlBlock extends XmlBlock implements IndentInheritingBlock 
   }
 
   @Override
-  protected XmlBlock createSimpleChild(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
+  protected Block createSimpleChild(ASTNode child, Indent indent, Wrap wrap, Alignment alignment) {
     return myBuilder.createXmlBlock(child, wrap, alignment, myXmlFormattingPolicy,indent, child.getTextRange());
   }
 

@@ -39,6 +39,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
@@ -183,73 +184,74 @@ public class ExternalSystemTaskDebugRunner extends GenericDebuggerRunner {
     }
 
     public static void handleForkedProcessSignal(Socket accept, Project project, ProcessHandler processHandler) throws IOException {
-      try {
-        DataInputStream stream = new DataInputStream(accept.getInputStream());
-        try {
-          int signal = stream.readInt();
-          String processName = stream.readUTF();
-          if (signal > 0) {
-            String debugPort = String.valueOf(signal);
-            attachVM(project, processName, debugPort, new Callback() {
-              @Override
-              public void processStarted(RunContentDescriptor descriptor) {
-                // select tab for the forked process only when it has been suspended
-                descriptor.setSelectContentWhenAdded(false);
+      // the stream can not be closed in the current thread
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      DataInputStream stream = new DataInputStream(accept.getInputStream());
+      processHandler.addProcessListener(new ProcessAdapter() {
+        @Override
+        public void processTerminated(@NotNull ProcessEvent event) {
+          StreamUtil.closeStream(stream);
+          StreamUtil.closeStream(accept);
+        }
+      });
+      int signal = stream.readInt();
+      String processName = stream.readUTF();
+      if (signal > 0) {
+        String debugPort = String.valueOf(signal);
+        attachVM(project, processName, debugPort, new Callback() {
+          @Override
+          public void processStarted(RunContentDescriptor descriptor) {
+            // select tab for the forked process only when it has been suspended
+            descriptor.setSelectContentWhenAdded(false);
 
-                // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
-                ProcessHandler processHandler = descriptor.getProcessHandler();
-                if (processHandler != null) {
-                  processHandler.addProcessListener(new ProcessAdapter() {
-                    @Override
-                    public void processTerminated(@NotNull ProcessEvent event) {
-                      final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-                      ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
-                      Content content = descriptor.getAttachedContent();
-                      if (content != null) {
-                        ApplicationManager.getApplication().invokeLater(() -> contentManager.removeContent(content, true));
-                      }
-                    }
-                  });
-                  try {
-                    accept.getOutputStream().write(0);
-                  }
-                  catch (IOException e) {
-                    LOG.debug(e);
+            // restore selection of the 'main' tab to avoid flickering of the reused content tab when no suspend events occur
+            ProcessHandler processHandler = descriptor.getProcessHandler();
+            if (processHandler != null) {
+              processHandler.addProcessListener(new ProcessAdapter() {
+                @Override
+                public void processTerminated(@NotNull ProcessEvent event) {
+                  final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+                  ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
+                  Content content = descriptor.getAttachedContent();
+                  if (content != null) {
+                    ApplicationManager.getApplication().invokeLater(() -> contentManager.removeContent(content, true));
                   }
                 }
-              }
-            });
-          }
-          else if (signal == 0) {
-            // remove content for terminated forked processes
-            ApplicationManager.getApplication().invokeLater(() -> {
-              final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-              ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
-              Content content = contentManager.findContent(processName);
-              if (content != null) {
-                RunContentDescriptor descriptor = content.getUserData(RunContentDescriptor.DESCRIPTOR_KEY);
-                if (descriptor != null) {
-                  ProcessHandler handler = descriptor.getProcessHandler();
-                  if (handler != null) {
-                    handler.destroyProcess();
-                  }
-                }
-              }
+              });
               try {
                 accept.getOutputStream().write(0);
+                stream.close();
               }
               catch (IOException e) {
                 LOG.debug(e);
               }
-            });
+            }
           }
-        }
-        finally {
-          stream.close();
-        }
+        });
       }
-      finally {
-        accept.close();
+      else if (signal == 0) {
+        // remove content for terminated forked processes
+        ApplicationManager.getApplication().invokeLater(() -> {
+          final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+          ContentManager contentManager = toolWindowManager.getToolWindow(ToolWindowId.DEBUG).getContentManager();
+          Content content = contentManager.findContent(processName);
+          if (content != null) {
+            RunContentDescriptor descriptor = content.getUserData(RunContentDescriptor.DESCRIPTOR_KEY);
+            if (descriptor != null) {
+              ProcessHandler handler = descriptor.getProcessHandler();
+              if (handler != null) {
+                handler.destroyProcess();
+              }
+            }
+          }
+          try {
+            accept.getOutputStream().write(0);
+            stream.close();
+          }
+          catch (IOException e) {
+            LOG.debug(e);
+          }
+        });
       }
     }
 

@@ -25,13 +25,13 @@ interface Breakpoint {
     /**
      * This value is used when the corresponding parameter is absent
      */
-    const val EMPTY_VALUE = -1
+    const val EMPTY_VALUE: Int = -1
 
     /**
      * A breakpoint has this ID if it does not reflect an actual breakpoint in a
      * JavaScript VM debugger.
      */
-    const val INVALID_ID = -1
+    const val INVALID_ID: Int = -1
   }
 
   val target: BreakpointTarget
@@ -61,7 +61,7 @@ interface Breakpoint {
    * Be aware! V8 doesn't provide reliable debugger API, so, sometimes actual locations is empty - in this case this methods return "true".
    * V8 debugger doesn't report about resolved breakpoint if it is happened after initial breakpoint set. So, you cannot trust "actual locations".
    */
-  fun isActualLineCorrect() = true
+  fun isActualLineCorrect(): Boolean = true
 }
 
 /**

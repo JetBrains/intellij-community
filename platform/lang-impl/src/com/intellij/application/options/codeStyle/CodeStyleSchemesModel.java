@@ -40,7 +40,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
   private final CodeStyleScheme myDefault;
   private final Map<CodeStyleScheme, CodeStyleSettings> mySettingsToClone = new HashMap<>();
 
-  private final EventDispatcher<CodeStyleSettingsListener> myDispatcher = EventDispatcher.create(CodeStyleSettingsListener.class);
+  private final EventDispatcher<CodeStyleSchemesModelListener> myDispatcher = EventDispatcher.create(CodeStyleSchemesModelListener.class);
   private final Project myProject;
   private boolean myUiEventsEnabled = true;
 
@@ -87,7 +87,7 @@ public class CodeStyleSchemesModel implements SchemesModel<CodeStyleScheme> {
     return mySelectedScheme;
   }
 
-  public void addListener(CodeStyleSettingsListener listener) {
+  public void addListener(CodeStyleSchemesModelListener listener) {
     myDispatcher.addListener(listener);
   }
 

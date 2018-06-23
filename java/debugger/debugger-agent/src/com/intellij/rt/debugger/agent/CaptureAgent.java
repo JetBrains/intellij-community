@@ -10,6 +10,7 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
 
@@ -67,53 +68,52 @@ public class CaptureAgent {
     System.setProperty(modulesKey, property);
   }
 
-  private static void readSettings(String path) {
-    FileReader reader = null;
+  private static void readSettings(String uri) {
+    Properties properties = new Properties();
+    File file;
     try {
-      reader = new FileReader(path);
-      Properties properties = new Properties();
-      properties.load(reader);
-
-      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-      if (DEBUG) {
-        CaptureStorage.setDebug(true);
+      FileReader reader = null;
+      try {
+        file = new File(new URI(uri));
+        reader = new FileReader(file);
+        properties.load(reader);
       }
-
-      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
-        CaptureStorage.setEnabled(false);
-      }
-
-      boolean deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
-
-      Enumeration<?> propNames = properties.propertyNames();
-      while (propNames.hasMoreElements()) {
-        String propName = (String)propNames.nextElement();
-        if (propName.startsWith("capture")) {
-          addPoint(true, properties.getProperty(propName));
-        }
-        else if (propName.startsWith("insert")) {
-          addPoint(false, properties.getProperty(propName));
-        }
-      }
-
-      // delete settings file only if it was read correctly
-      if (deleteSettings) {
-        new File(path).delete();
-      }
-    }
-    catch (IOException e) {
-      System.out.println("Capture agent: unable to read settings");
-      e.printStackTrace();
-    }
-    finally {
-      if (reader != null) {
-        try {
+      finally {
+        if (reader != null) {
           reader.close();
         }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
       }
+    }
+    catch (Exception e) {
+      System.out.println("Capture agent: unable to read settings");
+      e.printStackTrace();
+      return;
+    }
+
+    DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
+    if (DEBUG) {
+      CaptureStorage.setDebug(true);
+    }
+
+    if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
+      CaptureStorage.setEnabled(false);
+    }
+
+    Enumeration<?> propNames = properties.propertyNames();
+    while (propNames.hasMoreElements()) {
+      String propName = (String)propNames.nextElement();
+      if (propName.startsWith("capture")) {
+        addPoint(true, properties.getProperty(propName));
+      }
+      else if (propName.startsWith("insert")) {
+        addPoint(false, properties.getProperty(propName));
+      }
+    }
+
+    // delete settings file only if it was read correctly
+    if (Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"))) {
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
     }
   }
 
@@ -157,6 +157,7 @@ public class CaptureAgent {
             return bytes;
           }
           catch (Exception e) {
+            System.out.println("Capture agent: failed to instrument " + className);
             e.printStackTrace();
           }
         }
@@ -178,7 +179,7 @@ public class CaptureAgent {
     }
 
     private static String getNewName(String name) {
-      return name + "$$$capture";
+      return name + CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX;
     }
 
     private static String getMethodDisplayName(String className, String methodName, String desc) {
@@ -484,6 +485,11 @@ public class CaptureAgent {
       if (myIdx >= argumentTypes.length) {
         throw new IllegalStateException(
           "Argument with id " + myIdx + " is not available, method " + methodDisplayName + " has only " + argumentTypes.length);
+      }
+      int sort = argumentTypes[myIdx].getSort();
+      if (sort != Type.OBJECT && sort != Type.ARRAY) {
+        throw new IllegalStateException(
+          "Argument with id " + myIdx + " in method " + methodDisplayName + " must be an object");
       }
       for (int i = 0; i < myIdx; i++) {
         index += argumentTypes[i].getSize();

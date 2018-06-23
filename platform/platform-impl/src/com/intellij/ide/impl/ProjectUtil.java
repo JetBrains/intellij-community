@@ -30,10 +30,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.*;
@@ -318,6 +318,10 @@ public class ProjectUtil {
   }
 
   public static String getBaseDir() {
+    String defaultDirectory = GeneralSettings.getInstance().getDefaultProjectDirectory();
+    if (StringUtil.isNotEmpty(defaultDirectory)) {
+      return defaultDirectory.replace('/', File.separatorChar);
+    }
     final String lastProjectLocation = RecentProjectsManager.getInstance().getLastProjectCreationLocation();
     if (lastProjectLocation != null) {
       return lastProjectLocation.replace('/', File.separatorChar);

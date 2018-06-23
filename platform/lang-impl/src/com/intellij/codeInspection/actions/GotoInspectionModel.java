@@ -24,6 +24,7 @@ import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
+import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -68,15 +69,15 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   public Object[] getElementsByName(final String name, final String pattern) {
     final InspectionToolWrapper tool = myToolNames.get(name);
     if (tool == null) {
-      return InspectionToolWrapper.EMPTY_ARRAY;
+      return InspectionElement.EMPTY_ARRAY;
     }
-    return new InspectionToolWrapper[] {tool};
+    return new InspectionElement[] {new InspectionElement(tool, PsiManager.getInstance(getProject()))};
   }
 
   @Override
   public String getElementName(final Object element) {
-    if (element instanceof InspectionToolWrapper) {
-      InspectionToolWrapper entry = (InspectionToolWrapper)element;
+    if (element instanceof InspectionElement) {
+      InspectionToolWrapper entry = ((InspectionElement)element).getToolWrapper();
       return entry.getDisplayName() + " " + StringUtil.join(entry.getGroupPath(), " ");
     }
     return null;

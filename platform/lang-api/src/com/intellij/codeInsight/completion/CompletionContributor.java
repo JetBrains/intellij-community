@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -167,6 +165,7 @@ public abstract class CompletionContributor {
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    * @return text to be shown at the bottom of lookup list
    */
+  @Deprecated
   @Nullable
   public String advertise(@NotNull CompletionParameters parameters) {
     return null;
@@ -236,12 +235,5 @@ public abstract class CompletionContributor {
     return DumbService.getInstance(project).filterByDumbAwareness(forLanguage(language));
   }
 
-  private static final LanguageExtension<CompletionContributor> INSTANCE = new LanguageExtension<CompletionContributor>("com.intellij.completion.contributor") {
-    @NotNull
-    @Override
-    protected List<CompletionContributor> buildExtensions(@NotNull String stringKey, @NotNull Language key) {
-      return buildExtensions(getAllBaseLanguageIdsWithAny(key));
-    }
-  };
-
+  private static final LanguageExtension<CompletionContributor> INSTANCE = new CompletionExtension<>("com.intellij.completion.contributor");
 }

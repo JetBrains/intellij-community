@@ -1,10 +1,10 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>classInitializer</title>
   <g>
-    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
+    <g id="_Group_" data-name=" Group " opacity="0.6">
       <circle cx="8" cy="8" r="7" fill="#f4af3d"/>
     </g>
-    <rect x="5" y="7" width="6" height="1" fill="#231f20" opacity="0.6"/>
-    <rect x="5" y="9" width="6" height="1" fill="#231f20" opacity="0.6"/>
+    <rect x="5" y="7" width="6" height="1" fill="#231f20" opacity="0.7" style="isolation: isolate"/>
+    <rect x="5" y="9" width="6" height="1" fill="#231f20" opacity="0.7" style="isolation: isolate"/>
   </g>
 </svg>

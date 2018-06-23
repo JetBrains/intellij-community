@@ -21,8 +21,10 @@ class StatusNotifier {
     }
 
     @Override
-    void counterExampleFound(Iteration<?> iteration) {
-    }
+    void counterExampleFound(Iteration<?> iteration) {}
+
+    @Override
+    void eofException() {}
   };
   
   private final int iterationCount;
@@ -77,6 +79,10 @@ class StatusNotifier {
         System.err.println();
       }
     }
+  }
+
+  void eofException() {
+    System.out.println("Generator tried to read past the end of serialized data, so it seems the failure isn't reproducible anymore");
   }
 
   private static String shortenStackTrace(Throwable e) {

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.codeInsight.lookup.LookupManager;
@@ -16,6 +16,8 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.*;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManager;
+import com.intellij.ide.actions.searcheverywhere.SearchEverywhereManagerImpl;
 import com.intellij.ide.structureView.StructureView;
 import com.intellij.ide.structureView.StructureViewBuilder;
 import com.intellij.ide.structureView.StructureViewModel;
@@ -31,7 +33,6 @@ import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.gotoByName.*;
 import com.intellij.ide.util.treeView.smartTree.TreeElement;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
 import com.intellij.lang.Language;
 import com.intellij.lang.LanguagePsiElementExternalizer;
 import com.intellij.navigation.ItemPresentation;
@@ -42,8 +43,10 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
+import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Experiments;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -62,6 +65,7 @@ import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.DumbService;
@@ -84,7 +88,6 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.OnOffButton;
@@ -99,7 +102,6 @@ import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.StatusText;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.util.ui.components.BorderLayoutPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,7 +154,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   private final Map<String, String> myConfigurables = new HashMap<>();
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, ApplicationManager.getApplication());
-  private JBList myList;
+  private JBList<Object> myList;
   private JCheckBox myNonProjectCheckBox;
   private AnActionEvent myActionEvent;
   private final Set<AnAction> myDisabledActions = new HashSet<>();
@@ -197,58 +199,28 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   @Override
   public JComponent createCustomComponent(Presentation presentation) {
-    JPanel panel = new BorderLayoutPanel() {
-      @Override
-      public Dimension getPreferredSize() {
-        return JBUI.size(24);
+    return new ActionButton(this, presentation, ActionPlaces.NAVIGATION_BAR_TOOLBAR, ActionToolbar.DEFAULT_MINIMUM_BUTTON_SIZE) {
+      @Override protected void updateToolTipText() {
+        String shortcutText = getShortcut();
+
+        if (Registry.is("ide.helptooltip.enabled")) {
+          HelpTooltip.dispose(this);
+
+          new HelpTooltip()
+            .setTitle(myPresentation.getText())
+            .setShortcut(shortcutText)
+            .setDescription("Searches for:<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings")
+            .setLocation(getTooltipLocation()).installOn(this);
+        } else {
+          setToolTipText("<html><body>Search Everywhere<br/>Press <b>" + shortcutText +
+                         "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
+        }
       }
     };
-    panel.setOpaque(false);
-
-    final JLabel label = new JBLabel(AllIcons.Actions.FindPlain) {
-      {
-        enableEvents(AWTEvent.MOUSE_EVENT_MASK);
-        enableEvents(AWTEvent.MOUSE_MOTION_EVENT_MASK);
-      }
-    };
-    panel.add(label, BorderLayout.CENTER);
-    initTooltip(label);
-    label.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        if (myBalloon != null) {
-          myBalloon.cancel();
-        }
-        myFocusOwner = IdeFocusManager.findInstance().getFocusOwner();
-        label.setToolTipText(null);
-        IdeTooltipManager.getInstance().hideCurrentNow(false);
-        ActionToolbarImpl toolbar = UIUtil.getParentOfType(ActionToolbarImpl.class, panel);
-        if (toolbar != null) {
-          ToolbarClicksCollector.record(SearchEverywhereAction.this, toolbar.getPlace());
-        }
-        actionPerformed(null, e);
-      }
-
-      @Override
-      public void mouseEntered(MouseEvent e) {
-        if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Actions.Find);
-        }
-      }
-
-      @Override
-      public void mouseExited(MouseEvent e) {
-        if (myBalloon == null || myBalloon.isDisposed()) {
-          label.setIcon(AllIcons.Actions.FindPlain);
-        }
-      }
-    });
-
-    return panel;
   }
 
   private void updateComponents() {
-    myList = new JBList(new SearchListModel()) {
+    myList = new JBList<Object>(new SearchListModel()) {
       int lastKnownHeight = JBUI.scale(30);
       @Override
       public Dimension getPreferredSize() {
@@ -315,16 +287,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
         }
       }
     });
-  }
-
-  private static void initTooltip(JLabel label) {
-    final String shortcutText;
-    shortcutText = getShortcut();
-
-    label.setToolTipText("<html><body>Search Everywhere<br/>Press <b>"
-                                 + shortcutText
-                                 + "</b> to access<br/> - Classes<br/> - Files<br/> - Tool Windows<br/> - Actions<br/> - Settings</body></html>");
-
   }
 
   @Nullable
@@ -468,12 +430,19 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (index == model.moreIndex.runConfigurations) wid = WidgetID.RUN_CONFIGURATIONS;
       if (wid != null) {
         final WidgetID widgetID = wid;
-        myCurrentWorker.doWhenProcessed(() -> {
-          myCalcThread = new CalcThread(project, pattern, true);
-          myPopupActualWidth = 0;
-          myCurrentWorker = myCalcThread.insert(index, widgetID);
-        });
-
+        synchronized (myWorkerRestartRequestLock) { // this lock together with RestartRequestId should be enough to prevent two CalcThreads running at the same time
+          final int currentRestartRequest = ++myCalcThreadRestartRequestId;
+          myCurrentWorker.doWhenProcessed(() -> {
+            synchronized (myWorkerRestartRequestLock) {
+              if (currentRestartRequest != myCalcThreadRestartRequestId) {
+                return;
+              }
+              myCalcThread = new CalcThread(project, pattern, true);
+              myPopupActualWidth = 0;
+              myCurrentWorker = myCalcThread.insert(index, widgetID);
+            }
+          });
+        }
         return;
       }
     }
@@ -510,7 +479,6 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       else if (isActionValue(value) || isSetting(value) || isRunConfiguration(value)) {
         focusManager.requestDefaultFocus(true);
         final Component comp = myContextComponent;
-        final AnActionEvent event = myActionEvent;
         IdeFocusManager.getInstance(project).doWhenFocusSettlesDown(() -> {
           Component c = comp;
           if (c == null) {
@@ -596,6 +564,30 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   public void actionPerformed(AnActionEvent e, MouseEvent me) {
+    if (Experiments.isFeatureEnabled("new.search.everywhere") && e.getProject() != null) {
+      //todo[mikhail.sokolov] show new UI
+      String searchProviderID = SearchEverywhereManagerImpl.ALL_CONTRIBUTORS_GROUP_ID;
+
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+      FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE + "." + searchProviderID);
+
+      SearchEverywhereManager seManager = SearchEverywhereManager.getInstance(e.getProject());
+      if (seManager.isShown()) {
+        if (searchProviderID.equals(seManager.getShownContributorID())) {
+          seManager.setShowNonProjectItems(!seManager.isShowNonProjectItems());
+        }
+        else {
+          seManager.setShownContributor(searchProviderID);
+        }
+        return;
+      }
+
+      IdeEventQueue.getInstance().getPopupManager().closeAllPopups(false);
+      String text = GotoActionBase.getInitialTextForNavigation(e.getData(CommonDataKeys.EDITOR));
+      seManager.show(searchProviderID, text, e);
+      return;
+    }
+
     if (myBalloon != null && myBalloon.isVisible()) {
       showAll.set(!showAll.get());
       myNonProjectCheckBox.setSelected(showAll.get());
@@ -708,7 +700,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                             UIManager.getColor("SearchEverywhere.shortcutForeground") : foregroundColor;
 
       StringBuilder cbText = new StringBuilder("<html>");
-      cbText.append(IdeBundle.message("checkbox.include.non.project.items"));
+      cbText.append(IdeBundle.message("checkbox.include.non.project.items", IdeUICustomization.getInstance().getProjectConceptName()));
       cbText.append(" ");
       if (!UIUtil.isUnderWin10LookAndFeel()) cbText.append("<b>");
       cbText.append("<font color=#").append(ColorUtil.toHex(shortcutColor)).append(">").append(getShortcut()).append("</font>");
@@ -733,7 +725,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       .setRequestFocus(true)
       .createPopup();
     myBalloon.getContent().setBorder(JBUI.Borders.empty());
-    final Window window = WindowManager.getInstance().suggestParentWindow(project);
+
 
     project.getMessageBus().connect(myBalloon).subscribe(DumbService.DUMB_MODE, new DumbService.DumbModeListener() {
 
@@ -743,24 +735,35 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       }
     });
 
-    Component parent = UIUtil.findUltimateParent(window);
+
     registerDataProvider(panel, project);
-    final RelativePoint showPoint;
-    if (parent != null) {
-      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
-      if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
-        height -= 20;
-      }
-      showPoint = new RelativePoint(parent, new Point((parent.getSize().width - panel.getPreferredSize().width) / 2, height));
-    } else {
-      showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
-    }
+    final RelativePoint showPoint = calculateShowingPoint(e, panel);
     myList.setFont(UIUtil.getListFont());
     myBalloon.show(showPoint);
     initSearchActions(myBalloon, myPopupField);
     IdeFocusManager focusManager = IdeFocusManager.getInstance(project);
     focusManager.requestFocus(editor, true);
     FeatureUsageTracker.getInstance().triggerFeatureUsed(IdeActions.ACTION_SEARCH_EVERYWHERE);
+  }
+
+  @NotNull
+  private static RelativePoint calculateShowingPoint(AnActionEvent e, JComponent showingContent) {
+    Project project = e.getProject();
+    final Window window = project != null
+                          ? WindowManager.getInstance().suggestParentWindow(project)
+                          : KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow();
+    Component parent = UIUtil.findUltimateParent(window);
+    final RelativePoint showPoint;
+    if (parent != null) {
+      int height = UISettings.getInstance().getShowMainToolbar() ? 135 : 115;
+      if (parent instanceof IdeFrameImpl && ((IdeFrameImpl)parent).isInFullScreen()) {
+        height -= 20;
+      }
+      showPoint = new RelativePoint(parent, new Point((parent.getSize().width - showingContent.getPreferredSize().width) / 2, height));
+    } else {
+      showPoint = JBPopupFactory.getInstance().guessBestPopupLocation(e.getDataContext());
+    }
+    return showPoint;
   }
 
   private void showSettings() {
@@ -1010,7 +1013,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
   }
 
-  private class MyListRenderer extends ColoredListCellRenderer {
+  private class MyListRenderer extends ColoredListCellRenderer<Object> {
     ColoredListCellRenderer myLocation = new ColoredListCellRenderer() {
       @Override
       protected void customizeCellRenderer(@NotNull JList list, Object value, int index, boolean selected, boolean hasFocus) {
@@ -1317,7 +1320,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
   enum WidgetID {CLASSES, FILES, ACTIONS, SETTINGS, SYMBOLS, RUN_CONFIGURATIONS}
 
-  @SuppressWarnings({"SSBasedInspection", "unchecked"})
+  @SuppressWarnings({"SSBasedInspection", "unchecked", "Duplicates"})
   private class CalcThread implements Runnable {
     private final Project project;
     private final String pattern;
@@ -1412,7 +1415,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     private void runReadAction(Runnable action, boolean checkDumb) {
       if (!checkDumb || !DumbService.getInstance(project).isDumb()) {
-        ApplicationManager.getApplication().runReadAction(action);
+        ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, myProgressIndicator);
         updatePopup();
       }
     }
@@ -1789,7 +1792,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
       final MinusculeMatcher matcher = NameUtil.buildMatcher("*" + pattern).build();
       final ArrayList<VirtualFile> files = new ArrayList<>();
       final List<VirtualFile> selected = Arrays.asList(FileEditorManager.getInstance(project).getSelectedFiles());
-      for (VirtualFile file : ArrayUtil.reverseArray(EditorHistoryManager.getInstance(project).getFiles())) {
+      for (VirtualFile file : ContainerUtil.reverse(EditorHistoryManager.getInstance(project).getFileList())) {
         if (StringUtil.isEmptyOrSpaces(pattern) || matcher.matches(file.getName())) {
           if (!files.contains(file) && !selected.contains(file)) {
             files.add(file);
@@ -2078,7 +2081,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
                     if (component != null) {
                       final JLabel label = UIUtil.getParentOfType(JLabel.class, component);
                       if (label != null) {
-                        SwingUtilities.invokeLater(() -> label.setIcon(AllIcons.Actions.FindPlain));
+                        SwingUtilities.invokeLater(() -> label.setIcon(AllIcons.Actions.Find));
                       }
                     }
                   }
@@ -2120,54 +2123,56 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
     }
 
     public ActionCallback insert(final int index, final WidgetID id) {
-       ApplicationManager.getApplication().executeOnPooledThread(() -> runReadAction(() -> {
+       ApplicationManager.getApplication().executeOnPooledThread(() -> {
          try {
-           final SearchResult result
-             = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
-             : id == WidgetID.FILES ? getFiles(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
-             : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
-             : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
-             : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
-             : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
-             : new SearchResult();
+           runReadAction(() -> {
+             final SearchResult result
+               = id == WidgetID.CLASSES ? getClasses(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myClassChooseByName)
+               : id == WidgetID.FILES ? getFiles(pattern, showAll.get(), DEFAULT_MORE_STEP_COUNT, myFileChooseByName)
+               : id == WidgetID.RUN_CONFIGURATIONS ? getConfigurations(pattern, DEFAULT_MORE_STEP_COUNT)
+               : id == WidgetID.SYMBOLS ? getSymbols(pattern, DEFAULT_MORE_STEP_COUNT, showAll.get(), mySymbolsChooseByName)
+               : id == WidgetID.ACTIONS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, true)
+               : id == WidgetID.SETTINGS ? getActionsOrSettings(pattern, DEFAULT_MORE_STEP_COUNT, false)
+               : new SearchResult();
 
-           check();
-           SwingUtilities.invokeLater(() -> {
-             try {
-               int shift = 0;
-               int i = index+1;
-               for (Object o : result) {
-                 //noinspection unchecked
-                 myListModel.insertElementAt(o, i);
-                 shift++;
-                 i++;
-               }
-               MoreIndex moreIndex = myListModel.moreIndex;
-               myListModel.titleIndex.shift(index, shift);
-               moreIndex.shift(index, shift);
-
-               if (!result.needMore) {
-                 switch (id) {
-                   case CLASSES: moreIndex.classes = -1; break;
-                   case FILES: moreIndex.files = -1; break;
-                   case ACTIONS: moreIndex.actions = -1; break;
-                   case SETTINGS: moreIndex.settings = -1; break;
-                   case SYMBOLS: moreIndex.symbols = -1; break;
-                   case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
+             check();
+             SwingUtilities.invokeLater(() -> {
+               try {
+                 int shift = 0;
+                 int i = index+1;
+                 for (Object o : result) {
+                   //noinspection unchecked
+                   myListModel.insertElementAt(o, i);
+                   shift++;
+                   i++;
                  }
+                 MoreIndex moreIndex = myListModel.moreIndex;
+                 myListModel.titleIndex.shift(index, shift);
+                 moreIndex.shift(index, shift);
+
+                 if (!result.needMore) {
+                   switch (id) {
+                     case CLASSES: moreIndex.classes = -1; break;
+                     case FILES: moreIndex.files = -1; break;
+                     case ACTIONS: moreIndex.actions = -1; break;
+                     case SETTINGS: moreIndex.settings = -1; break;
+                     case SYMBOLS: moreIndex.symbols = -1; break;
+                     case RUN_CONFIGURATIONS: moreIndex.runConfigurations = -1; break;
+                   }
+                 }
+                 ScrollingUtil.selectItem(myList, index);
+                 myDone.setDone();
                }
-               ScrollingUtil.selectItem(myList, index);
-               myDone.setDone();
-             }
-             catch (Exception e) {
-               myDone.setRejected();
-             }
-           });
+               catch (Exception e) {
+                 myDone.setRejected();
+               }
+             });
+           }, true);
          }
          catch (Exception e) {
            myDone.setRejected();
          }
-       }, true));
+       });
       return myDone;
     }
 
@@ -2216,8 +2221,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
           myPopup = null;
           myHistoryIndex = 0;
           myPopupActualWidth = 0;
-          myCurrentWorker = ActionCallback.DONE;
           showAll.set(false);
+          myCurrentWorker = myCalcThread.cancel();
           myCalcThread = null;
           myEditor = null;
           myFileEditor = null;
@@ -2378,7 +2383,8 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
 
     TitleIndex() {
       String gotoClass = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoClass"));
-      gotoClassTitle = StringUtil.isEmpty(gotoClass) ? "Classes" : "Classes (" + gotoClass + ")";
+      String classesStr = StringUtil.capitalize(StringUtil.join(GotoClassPresentationUpdater.getElementKinds(), s -> StringUtil.pluralize(s), "/"));
+      gotoClassTitle = StringUtil.isEmpty(gotoClass) ? classesStr : classesStr + " (" + gotoClass + ")";
       String gotoFile = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoFile"));
       gotoFileTitle = StringUtil.isEmpty(gotoFile) ? "Files" : "Files (" + gotoFile + ")";
       String gotoAction = KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction("GotoAction"));
@@ -2441,7 +2447,7 @@ public class SearchEverywhereAction extends AnAction implements CustomComponentA
   }
 
   @SuppressWarnings("unchecked")
-  private static class SearchListModel extends DefaultListModel {
+  private static class SearchListModel extends DefaultListModel<Object> {
     @SuppressWarnings("UseOfObsoleteCollectionType")
     Vector myDelegate;
 

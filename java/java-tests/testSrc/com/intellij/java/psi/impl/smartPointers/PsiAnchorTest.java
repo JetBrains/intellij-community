@@ -47,7 +47,6 @@ public class PsiAnchorTest extends LightCodeInsightFixtureTestCase {
     myFixture.type('\n');
     PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
 
-    assertNull(anchor.retrieve()); // file is changed, so we can't restore. But this call shouldn't throw exceptions.
+    anchor.retrieve(); // file is changed, so we probably can't restore. But this call shouldn't throw exceptions.
   }
-
 }

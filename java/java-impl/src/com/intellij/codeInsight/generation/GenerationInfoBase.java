@@ -43,6 +43,7 @@ public abstract class GenerationInfoBase implements GenerationInfo {
     PsiElement element = leaf;
     while (element.getParent() != aClass) {
       element = element.getParent();
+      if (element == null) return null;
     }
 
     PsiElement lBrace = aClass.getLBrace();
@@ -61,6 +62,8 @@ public abstract class GenerationInfoBase implements GenerationInfo {
 
   @Override
   public void positionCaret(@NotNull Editor editor, boolean toEditMethodBody) {
-    GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
+    if (isMemberValid()) {
+      GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
+    }
   }
 }

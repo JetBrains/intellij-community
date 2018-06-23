@@ -37,8 +37,9 @@ public interface PopupBorder extends Border {
 
     @NotNull
     public static PopupBorder create(boolean active, boolean windowWithShadow) {
-      PopupBorder border = SystemInfo.isMac && windowWithShadow ?
-                           createEmpty() : new BaseBorder(true, CaptionPanel.getBorderColor(true), CaptionPanel.getBorderColor(false));
+      PopupBorder border = SystemInfo.isMac && windowWithShadow
+                           ? createEmpty()
+                           : new BaseBorder(true, JBUI.CurrentTheme.Popup.borderColor(true), JBUI.CurrentTheme.Popup.borderColor(false));
       border.setActive(active);
       return border;
     }

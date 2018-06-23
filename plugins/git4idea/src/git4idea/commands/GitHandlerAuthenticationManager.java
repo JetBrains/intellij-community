@@ -26,7 +26,7 @@ import java.util.UUID;
  * Manager for Git remotes authentication.
  * Provides necessary handlers and watcher for http auth failure.
  */
-class GitHandlerAuthenticationManager implements AutoCloseable {
+public class GitHandlerAuthenticationManager implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(GitHandlerAuthenticationManager.class);
 
   @NotNull private final GitLineHandler myHandler;
@@ -60,7 +60,7 @@ class GitHandlerAuthenticationManager implements AutoCloseable {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator =
-      service.createAuthenticator(myProject, myHandler.getCommand(), myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
+      service.createAuthenticator(myProject, myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -71,7 +71,12 @@ class GitHandlerAuthenticationManager implements AutoCloseable {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
         String lowerCaseLine = line.toLowerCase();
-        if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
+        if (lowerCaseLine.contains("authentication failed") ||
+            lowerCaseLine.contains("403 forbidden") ||
+            lowerCaseLine.contains("error: 400") ||
+            (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found")) ||
+            (lowerCaseLine.contains("fatal: unable to access") && lowerCaseLine.contains("the requested url returned error: 403")) ||
+            lowerCaseLine.contains("[remote rejected] (permission denied)")) {
           LOG.debug("auth listener: auth failure detected: " + line);
           myHttpAuthFailed = true;
         }
@@ -79,8 +84,7 @@ class GitHandlerAuthenticationManager implements AutoCloseable {
 
       @Override
       public void processTerminated(int exitCode) {
-        LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed
-                             + ", cancelled=" + httpAuthenticator.wasCancelled());
+        LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + httpAuthenticator.wasCancelled());
         if (!httpAuthenticator.wasCancelled()) {
           if (myHttpAuthFailed) {
             httpAuthenticator.forgetPassword();

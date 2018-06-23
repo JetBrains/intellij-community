@@ -5,7 +5,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringChangeUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.siyeh.InspectionGadgetsBundle;
@@ -84,7 +84,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
       for (PsiMethod calledMethod : methodsOneLevelDeep) {
         if (!PsiTreeUtil.processElements(calledMethod, e -> collectAssignedFields(e, parameter, null, assignedFields))) {
           return;
-        };
+        }
       }
       for (PsiField assignedField : assignedFields) {
         if (aClass == PsiUtil.resolveClassInClassTypeOnly(assignedField.getType())) {
@@ -107,7 +107,7 @@ public class CopyConstructorMissesFieldInspection extends BaseInspection {
           assignedFields.add((PsiField)variable);
         }
       }
-      else if (RefactoringChangeUtil.isSuperOrThisMethodCall(element)) {
+      else if (JavaPsiConstructorUtil.isConstructorCall(element)) {
         final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
         for (PsiExpression argument : methodCallExpression.getArgumentList().getExpressions()) {
           argument = ParenthesesUtils.stripParentheses(argument);

@@ -22,7 +22,8 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 
 /**
- * @author nik
+ * Represents a node in 'Available Elements' tree on 'Output Layout' tab of an artifact editor
+ * @see PackagingSourceItemsProvider#getSourceItems
  */
 public abstract class PackagingSourceItem {
   private final boolean myProvideElements;
@@ -31,6 +32,10 @@ public abstract class PackagingSourceItem {
     this(true);
   }
 
+  /**
+   * @param provideElements if {@code false} if this item represents a grouping node which doesn't provide packaging elements so its
+   * {@link #createElements(ArtifactEditorContext)} method is guaranteed to return the empty list
+   */
   protected PackagingSourceItem(boolean provideElements) {
     myProvideElements = provideElements;
   }
@@ -41,6 +46,7 @@ public abstract class PackagingSourceItem {
   @Override
   public abstract int hashCode();
 
+  @NotNull
   public abstract SourceItemPresentation createPresentation(@NotNull ArtifactEditorContext context);
 
   @NotNull

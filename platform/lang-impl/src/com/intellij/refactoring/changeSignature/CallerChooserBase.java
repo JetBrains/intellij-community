@@ -68,17 +68,6 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
   private final String myFileName;
 
   protected MemberNodeBase<M> createTreeNodeFor(M method, HashSet<M> called, Runnable cancelCallback) {
-    return createTreeNode(method, called, cancelCallback);
-  }
-
-  /**
-   * @see CallerChooserBase#createTreeNodeFor(PsiElement, HashSet , Runnable)
-   *
-   * @deprecated to be removed in IDEA 2019.1
-   */
-  @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
-  @Deprecated
-  protected MethodNodeBase<M> createTreeNode(M method, HashSet<M> called, Runnable cancelCallback) {
     throw new UnsupportedOperationException();
   }
 

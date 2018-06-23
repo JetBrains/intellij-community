@@ -271,7 +271,7 @@ public abstract class VcsVFSListener implements Disposable {
   }
 
   protected void processMovedFile(VirtualFile file, String newParentPath, String newName) {
-    final FileStatus status = FileStatusManager.getInstance(myProject).getStatus(file);
+    final FileStatus status = ChangeListManager.getInstance(myProject).getStatus(file);
     LOG.debug("Checking moved file ", file, "; status=", status);
     if (status == FileStatus.IGNORED) {
       if (file.getParent() != null) {
@@ -280,15 +280,27 @@ public abstract class VcsVFSListener implements Disposable {
       }
     }
 
-    final String newPath = newParentPath + "/" + newName;
-    MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, (info) -> Comparing.equal(info.myFile, file));
-    if (existingMovedFile != null) {
-      LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
-      existingMovedFile.myNewPath = newPath;
+    String newPath = newParentPath + "/" + newName;
+    if (!(filterOutUnknownFiles() && status == FileStatus.UNKNOWN) && status != FileStatus.IGNORED) {
+      MovedFileInfo existingMovedFile = ContainerUtil.find(myMovedFiles, (info) -> Comparing.equal(info.myFile, file));
+      if (existingMovedFile != null) {
+        LOG.debug("Reusing existing moved file [" + file + "] with new path [" + newPath + "]");
+        existingMovedFile.myNewPath = newPath;
+      }
+      else {
+        LOG.debug("Registered moved file ", file);
+        myMovedFiles.add(new MovedFileInfo(file, newPath));
+      }
     }
     else {
-      LOG.debug("Registered moved file ", file);
-      myMovedFiles.add(new MovedFileInfo(file, newPath));
+      // If a file is moved on top of another file (overwrite), the VFS at first removes the original file,
+      // and then performs the "clean" move.
+      // But we don't need to handle this deletion by the VCS: it is not a real deletion, but just a trick to implement the overwrite.
+      // This situation is already handled in doNotDeleteAddedCopiedOrMovedFiles(), but that method is called at the end of the command,
+      // so it is not suitable for moving unversioned files: if an unversioned file is moved, it won't be recorded,
+      // won't affect doNotDeleteAddedCopiedOrMovedFiles(), and therefore won't save the file from deletion.
+      // Thus here goes a special handle for unversioned files overwrite-move.
+      myDeletedFiles.remove(VcsUtil.getFilePath(newPath));
     }
   }
 
@@ -296,11 +308,7 @@ public abstract class VcsVFSListener implements Disposable {
     final List<MovedFileInfo> movedFiles = new ArrayList<>(myMovedFiles);
     LOG.debug("executeMoveRename " + movedFiles);
     myMovedFiles.clear();
-    performMoveRename(ContainerUtil.filter(movedFiles, info -> {
-      FileStatus status = FileStatusManager.getInstance(myProject).getStatus(info.myFile);
-      LOG.debug("File " + info.myNewPath + " has status " + status);
-      return !(status == FileStatus.UNKNOWN && filterOutUnknownFiles()) && status != FileStatus.IGNORED;
-    }));
+    performMoveRename(movedFiles);
   }
 
   protected VcsDeleteType needConfirmDeletion(final VirtualFile file) {

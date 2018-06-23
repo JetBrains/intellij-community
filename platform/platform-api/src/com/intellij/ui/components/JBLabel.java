@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2011 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.components;
 
 import com.intellij.ide.ui.UISettings;
@@ -21,14 +7,18 @@ import com.intellij.ui.AnchorableComponent;
 import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.ui.JBFont;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.JBComponent;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
 import javax.swing.border.EmptyBorder;
 import javax.swing.text.BadLocationException;
+import javax.swing.text.DefaultCaret;
 import javax.swing.text.EditorKit;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.StyleSheet;
@@ -37,13 +27,14 @@ import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.Collections;
 
-public class JBLabel extends JLabel implements AnchorableComponent {
+public class JBLabel extends JLabel implements AnchorableComponent, JBComponent<JBLabel> {
   private UIUtil.ComponentStyle myComponentStyle = UIUtil.ComponentStyle.REGULAR;
   private UIUtil.FontColor myFontColor = UIUtil.FontColor.NORMAL;
   private JComponent myAnchor;
   private JEditorPane myEditorPane;
   private JLabel myIconLabel;
   private boolean myMultiline;
+  private boolean myAllowAutoWrapping = false;
 
   public JBLabel() {
   }
@@ -173,6 +164,14 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     }
   }
 
+  @Override
+  public void setFocusable(boolean focusable) {
+    super.setFocusable(focusable);
+    if (myEditorPane != null) {
+      myEditorPane.setFocusable(focusable);
+    }
+  }
+
   private void checkMultiline() {
     myMultiline = StringUtil.removeHtmlTags(getText()).contains(SystemProperties.getLineSeparator());
   }
@@ -290,6 +289,9 @@ public class JBLabel extends JLabel implements AnchorableComponent {
         myEditorPane.setEditorKit(UIUtil.getHTMLEditorKit());
         updateStyle(myEditorPane);
 
+        if (myEditorPane.getCaret() instanceof DefaultCaret) {
+          ((DefaultCaret)myEditorPane.getCaret()).setUpdatePolicy(DefaultCaret.NEVER_UPDATE);
+        }
         myEditorPane.setText(getText());
         checkMultiline();
         myEditorPane.setCaretPosition(0);
@@ -315,8 +317,17 @@ public class JBLabel extends JLabel implements AnchorableComponent {
                   "color:#" + ColorUtil.toHex(getForeground()) + ";" +
                   "font-family:" + getFont().getFamily() + ";" +
                   "font-size:" + getFont().getSize() + "pt;" +
-                  "white-space:nowrap;}");
+                  "white-space:" + (myAllowAutoWrapping ? "normal" : "nowrap") + ";}");
     }
+  }
+
+  /**
+   * In 'copyable' mode auto-wrapping is disabled by default.
+   * (In this case you have to markup your HTML with P or BR tags explicitly)
+   */
+  public JBLabel setAllowAutoWrapping(boolean allowAutoWrapping) {
+    myAllowAutoWrapping = allowAutoWrapping;
+    return this;
   }
 
   private void updateTextAlignment() {
@@ -339,5 +350,29 @@ public class JBLabel extends JLabel implements AnchorableComponent {
     //noinspection UseDPIAwareBorders
     myEditorPane.setBorder(new EmptyBorder(position == CENTER ? (availableHeight - preferredHeight + 1) / 2 :
                                            availableHeight - preferredHeight, 0, 0, 0));
+  }
+
+  @Override
+  public JBLabel withBorder(Border border) {
+    setBorder(border);
+    return this;
+  }
+
+  @Override
+  public JBLabel withFont(JBFont font) {
+    setFont(font);
+    return this;
+  }
+
+  @Override
+  public JBLabel andTransparent() {
+    setOpaque(false);
+    return this;
+  }
+
+  @Override
+  public JBLabel andOpaque() {
+    setOpaque(true);
+    return this;
   }
 }

@@ -33,6 +33,7 @@ public class DataFlowInspectionTestSuite {
     suite.addTestSuite(DataFlowInspection10Test.class);
     suite.addTestSuite(DataFlowInspectionHeavyTest.class);
     suite.addTestSuite(DataFlowInspectionAncientTest.class);
+    suite.addTestSuite(DataFlowInspectionCancellingTest.class);
     suite.addTestSuite(ContractCheckTest.class);
     suite.addTestSuite(HardcodedContractsTest.class);
     suite.addTestSuite(DataFlowRangeAnalysisTest.class);
@@ -51,17 +52,21 @@ public class DataFlowInspectionTestSuite {
 
     suite.addTestSuite(NullableStuffInspectionTest.class);
     suite.addTestSuite(NullableStuffInspectionAncientTest.class);
+    
+    suite.addTestSuite(CheckerNullityTest.class);
 
     suite.addTestSuite(AddAssertStatementFixTest.class);
     suite.addTestSuite(SurroundWithIfFixTest.class);
     suite.addTestSuite(ReplaceWithTernaryOperatorTest.class);
     suite.addTestSuite(ReplaceWithObjectsEqualsTest.class);
     suite.addTestSuite(ReplaceWithOfNullableFixTest.class);
+    suite.addTestSuite(ReplaceWithNullCheckFixTest.class);
     suite.addTestSuite(ReplaceFromOfNullableFixTest.class);
     suite.addTestSuite(ReplaceWithTrivialLambdaFixTest.class);
     suite.addTestSuite(UnwrapIfStatementFixTest.class);
     suite.addTestSuite(StreamFilterNotNullFixTest.class);
     suite.addTestSuite(RedundantInstanceofFixTest.class);
+    suite.addTestSuite(ReplaceComputeWithComputeIfPresentFixTest.class);
     return suite;
   }
 }

@@ -3,6 +3,7 @@
 package com.intellij.codeInspection.dataFlow.value;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
@@ -29,8 +30,8 @@ import static com.intellij.patterns.StandardPatterns.or;
 
 public class DfaValueFactory {
   private final List<DfaValue> myValues = ContainerUtil.newArrayList();
-  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
-  private final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
+  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myAssignableCache = ContainerUtil.newHashMap();
+  final Map<Pair<DfaPsiType, DfaPsiType>, Boolean> myConvertibleCache = ContainerUtil.newHashMap();
   private final Map<PsiType, DfaPsiType> myDfaTypes = ContainerUtil.newHashMap();
   private final boolean myUnknownMembersAreNullable;
   private final FieldChecker myFieldChecker;
@@ -60,19 +61,27 @@ public class DfaValueFactory {
 
 
   @NotNull
-  public Nullness suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
-    if (myUnknownMembersAreNullable && MEMBER_OR_METHOD_PARAMETER.accepts(member) && AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
-      return Nullness.NULLABLE;
+  public Nullability suggestNullabilityForNonAnnotatedMember(@NotNull PsiModifierListOwner member) {
+    if (myUnknownMembersAreNullable &&
+        MEMBER_OR_METHOD_PARAMETER.accepts(member) &&
+        AnnotationUtil.getSuperAnnotationOwners(member).isEmpty()) {
+      return Nullability.NULLABLE;
     }
-    
-    return Nullness.UNKNOWN;
+
+    return Nullability.UNKNOWN;
   }
 
   @NotNull
-  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullness nullability) {
+  public DfaValue createTypeValue(@Nullable PsiType type, @NotNull Nullability nullability) {
     if (type == null) return DfaUnknownValue.getInstance();
-    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, TypeConstraint.EMPTY.withInstanceofValue(createDfaType(type)))
-      .with(DfaFactType.CAN_BE_NULL, NullnessUtil.toBoolean(nullability));
+    if (type instanceof PsiPrimitiveType) {
+      LongRangeSet range = LongRangeSet.fromType(type);
+      if (range != null) {
+        return getFactFactory().createValue(DfaFactType.RANGE, range);
+      }
+    }
+    DfaFactMap facts = DfaFactMap.EMPTY.with(DfaFactType.TYPE_CONSTRAINT, createDfaType(type).asConstraint())
+      .with(DfaFactType.CAN_BE_NULL, NullabilityUtil.toBoolean(nullability));
     return getFactFactory().createValue(facts);
   }
 
@@ -89,17 +98,10 @@ public class DfaValueFactory {
 
   @NotNull
   public DfaPsiType createDfaType(@NotNull PsiType psiType) {
-    int dimensions = psiType.getArrayDimensions();
-    psiType = psiType.getDeepComponentType();
-    if (psiType instanceof PsiClassType) {
-      psiType = ((PsiClassType)psiType).rawType();
-    }
-    while (dimensions-- > 0) {
-      psiType = psiType.createArrayType();
-    }
+    psiType = DfaPsiType.normalizeType(psiType);
     DfaPsiType dfaType = myDfaTypes.get(psiType);
     if (dfaType == null) {
-      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, myAssignableCache, myConvertibleCache));
+      myDfaTypes.put(psiType, dfaType = new DfaPsiType(myDfaTypes.size() + 1, psiType, this));
     }
     return dfaType;
   }
@@ -259,6 +261,20 @@ public class DfaValueFactory {
   @NotNull
   public DfaExpressionFactory getExpressionFactory() { return myExpressionFactory;}
 
+  @NotNull
+  public DfaValue createCommonValue(@NotNull PsiExpression[] expressions) {
+    DfaValue loopElement = null;
+    for (PsiExpression expression : expressions) {
+      DfaValue expressionValue = createValue(expression);
+      if (expressionValue == null) {
+        expressionValue = createTypeValue(expression.getType(), NullabilityUtil.getExpressionNullability(expression));
+      }
+      loopElement = loopElement == null ? expressionValue : loopElement.union(expressionValue);
+      if (loopElement == DfaUnknownValue.getInstance()) break;
+    }
+    return loopElement == null ? DfaUnknownValue.getInstance() : loopElement;
+  }
+
   private static class ClassInitializationInfo {
     final boolean myCanInstantiateItself;
     final boolean myCtorsCallMethods;
@@ -270,7 +286,7 @@ public class DfaValueFactory {
                                        .select(PsiMember.class)
                                        .filter(member -> member.hasModifierProperty(PsiModifier.STATIC))
                                        .flatMap(member -> StreamEx.<PsiElement>ofTree(member, e -> StreamEx.of(e.getChildren())))
-                                       .select(PsiNewExpression.class).map(newExpr -> newExpr.getClassReference()).nonNull()
+                                       .select(PsiNewExpression.class).map(PsiNewExpression::getClassReference).nonNull()
                                        .anyMatch(classRef -> classRef.isReferenceTo(psiClass));
       mySuperCtorsCallMethods =
         !InheritanceUtil.processSupers(psiClass, false, superClass -> !canCallMethodsInConstructors(superClass, true));
@@ -306,8 +322,8 @@ public class DfaValueFactory {
 
     FieldChecker(PsiElement context) {
       PsiMethod method = context instanceof PsiClass ? null : PsiTreeUtil.getParentOfType(context, PsiMethod.class);
-      myClass = method == null ? null : method.getContainingClass();
-      if (myClass == null) {
+      myClass = method != null ? method.getContainingClass() : context instanceof PsiClass ? (PsiClass)context : null;
+      if (method == null || myClass == null) {
         myTrustDirectFieldInitializers = myTrustFieldInitializersInConstructors = myCanInstantiateItself = false;
         return;
       }

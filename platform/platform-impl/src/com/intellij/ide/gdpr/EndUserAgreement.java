@@ -9,6 +9,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.PlatformUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
@@ -27,8 +28,7 @@ public final class EndUserAgreement {
 
   private static final String PRIVACY_POLICY_CONTENT_FILE_NAME = "Cached";
 
-  // todo: change to EULA after GDPR is mandatory and corresponding resource is hard-coded into the build
-  private static final String DEFAULT_DOC_NAME = PRIVACY_POLICY_DOCUMENT_NAME;
+  private static final String DEFAULT_DOC_NAME = EULA_DOCUMENT_NAME;
   private static final String DEFAULT_DOC_EAP_NAME = DEFAULT_DOC_NAME + "Eap";
   private static final String ACTIVE_DOC_FILE_NAME = "documentName";
   private static final String ACTIVE_DOC_EAP_FILE_NAME = "documentName.eap";
@@ -133,6 +133,9 @@ public final class EndUserAgreement {
 
   @NotNull
   private static String getDocumentName() {
+    if (!PlatformUtils.isCommercialEdition()) {
+      return PRIVACY_POLICY_DOCUMENT_NAME;
+    }
     try {
       final String docName = new String(FileUtilRt.loadFileText(getDocumentNameFile(), StandardCharsets.UTF_8));
       if (!StringUtil.isEmptyOrSpaces(docName)) {
@@ -162,6 +165,10 @@ public final class EndUserAgreement {
       myName = name;
       myText = text;
       myVersion = parseVersion(text);
+    }
+
+    public boolean isPrivacyPolicy() {
+      return PRIVACY_POLICY_DOCUMENT_NAME.equals(myName);
     }
 
     public boolean isAccepted() {

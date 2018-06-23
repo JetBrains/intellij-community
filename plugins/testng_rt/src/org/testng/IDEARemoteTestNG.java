@@ -70,15 +70,16 @@ public class IDEARemoteTestNG extends TestNG {
 
         attachListeners(new IDEATestNGRemoteListener());
         super.run();
-        System.exit(0);
       }
       else {
         System.out.println("##teamcity[enteredTheMatrix]");
         System.err.println("Nothing found to run");
       }
+      System.exit(0);
     }
     catch(Throwable cause) {
       cause.printStackTrace(System.err);
+      System.exit(-1);
     }
   }
 

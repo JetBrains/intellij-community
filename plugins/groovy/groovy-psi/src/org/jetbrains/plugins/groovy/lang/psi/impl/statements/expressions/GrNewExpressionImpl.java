@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions;
 
@@ -58,7 +58,7 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitNewExpression(this);
   }
 
@@ -221,11 +221,13 @@ public class GrNewExpressionImpl extends GrCallExpressionImpl implements GrNewEx
       return GrNewExpressionImpl.this.multiResolve(incompleteCode);
     }
 
+    @NotNull
     @Override
     public GrNewExpressionImpl getElement() {
       return GrNewExpressionImpl.this;
     }
 
+    @NotNull
     @Override
     public TextRange getRangeInElement() {
       return TextRange.EMPTY_RANGE;

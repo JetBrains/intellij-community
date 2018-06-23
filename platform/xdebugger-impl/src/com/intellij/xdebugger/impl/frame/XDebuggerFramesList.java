@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.plaf.FontUIResource;
 import java.awt.*;
 import java.util.HashMap;
 import java.util.List;
@@ -105,6 +106,13 @@ public class XDebuggerFramesList extends DebuggerFramesList {
         return null;
       }
     });
+
+    // This is a workaround for the performance issue IDEA-187063
+    // default font generates too much garbage in deriveFont
+    Font font = getFont();
+    if (font != null) {
+      setFont(new FontUIResource(font.getName(), font.getStyle(), font.getSize()));
+    }
   }
 
   @Override

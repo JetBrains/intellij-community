@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.diagnostic.MessagePool
@@ -44,6 +30,7 @@ import com.intellij.util.concurrency.AppExecutorUtil
 import org.fest.swing.core.Robot
 import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
+import org.fest.swing.timing.Pause
 import org.jdom.Element
 import org.jdom.input.SAXBuilder
 import org.jdom.xpath.XPath
@@ -66,13 +53,14 @@ import java.util.concurrent.TimeUnit
 
 class GuiTestRule : TestRule {
 
-  var CREATE_NEW_PROJECT_ACTION_NAME = "Create New Project"
+  var CREATE_NEW_PROJECT_ACTION_NAME: String = "Create New Project"
 
   private val myRobotTestRule = RobotTestRule()
   private val myFatalErrorsFlusher = FatalErrorsFlusher()
   private var myProjectPath: File? = null
     set
   private var myTestName: String = "undefined"
+  private var myTestShortName: String = "undefined"
   private var currentTestDateStart: Date = Date()
 
   private val myRuleChain = RuleChain.emptyRuleChain()
@@ -80,11 +68,17 @@ class GuiTestRule : TestRule {
     .around(myFatalErrorsFlusher)
     .around(IdeHandling())
     .around(ScreenshotOnFailure())
-    .around(Timeout(20, TimeUnit.MINUTES))!!
+
+  private val timeoutRule = Timeout(20, TimeUnit.MINUTES)
 
   override fun apply(base: Statement?, description: Description?): Statement {
     myTestName = "${description!!.className}#${description.methodName}"
-    return myRuleChain.apply(base, description)
+    myTestShortName = "${description.testClass.simpleName}#${description.methodName}"
+    //do not apply timeout rule if it is already applied to a test class
+    return if (description.testClass.fields.any { it.type == Timeout::class.java })
+      myRuleChain.apply(base, description)
+    else
+      myRuleChain.around(timeoutRule).apply(base, description)
   }
 
   fun robot(): Robot = myRobotTestRule.getRobot()
@@ -162,14 +156,16 @@ class GuiTestRule : TestRule {
 
       fun isFirstStep(): Boolean {
         return try {
-          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(), welcomeFrameFixture.target(), tenSec)
+          val actionLinkFixture = ActionLinkFixture.findActionLinkByName(CREATE_NEW_PROJECT_ACTION_NAME, robot(),
+                                                                         welcomeFrameFixture.target(), tenSec)
           actionLinkFixture.target().isShowing
-        } catch (componentLookupException: ComponentLookupException) {
+        }
+        catch (componentLookupException: ComponentLookupException) {
           false
         }
       }
       for (i in 0..3) {
-        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(robot(), Key.ESCAPE.name)
+        if (!isFirstStep()) GuiTestUtil.invokeActionViaShortcut(Key.ESCAPE.name)
       }
     }
 
@@ -189,14 +185,26 @@ class GuiTestRule : TestRule {
     private fun checkForModalDialogs(): List<AssertionError> {
       val errors = ArrayList<AssertionError>()
       // We close all modal dialogs left over, because they block the AWT thread and could trigger a deadlock in the next test.
-      var modalDialog: Dialog? = getActiveModalDialog()
-      while (modalDialog != null) {
-        robot().close(modalDialog)
-        errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
-        modalDialog = getActiveModalDialog()
+      val closedModalDialogSet = hashSetOf<Dialog>()
+      try {
+        waitUntil("all modal dialogs will be closed", timeoutInSeconds = 10) {
+          val modalDialog: Dialog = getActiveModalDialog() ?: return@waitUntil true
+          if (closedModalDialogSet.contains(modalDialog)) {
+            //wait a second to let a dialog be closed
+            Pause.pause(1L, TimeUnit.SECONDS)
+          }
+          else {
+            closedModalDialogSet.add(modalDialog)
+            ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogFail")
+            robot().close(modalDialog)
+            errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
+          }
+          return@waitUntil false
+        }
       }
-      if (!errors.isEmpty())
-        ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogsFail")
+      catch (timeoutError: WaitTimedOutError) {
+        errors.add(AssertionError("Modal dialogs closing exceeded timeout: ${timeoutError.message}"))
+      }
       return errors
     }
 
@@ -218,7 +226,7 @@ class GuiTestRule : TestRule {
 
       }
       catch (e: WaitTimedOutError) {
-        throw AssumptionViolatedException("didn't find welcome frame", e) as Throwable
+        throw AssumptionViolatedException("didn't find welcome frame", e)
       }
       GuiTestUtilKt.waitUntil("Splash is gone") { !GuiTestUtilKt.windowsShowing().any { it is Splash } }
       Assume.assumeTrue("Only welcome frame is showing", GuiTestUtilKt.windowsShowing().size == 1)
@@ -226,19 +234,17 @@ class GuiTestRule : TestRule {
   }
 
   inner class FatalErrorsFlusher : ExternalResource() {
-
     override fun after() {
       try {
         val executorService = AppExecutorUtil.getAppExecutorService()
         //wait 10 second for the termination of all
         if (!executorService.awaitTermination(10, TimeUnit.SECONDS)) executorService.shutdownNow()
-        MessagePool.getInstance().clearFatals()
+        MessagePool.getInstance().clearErrors()
       }
       catch (e: Exception) {
         //TODO: log it
       }
     }
-
   }
 
   fun findWelcomeFrame(): WelcomeFrameFixture {
@@ -300,18 +306,24 @@ class GuiTestRule : TestRule {
   }
 
   fun importProjectAndWaitForProjectSyncToFinish(projectDirName: String, gradleVersion: String?): IdeFrameFixture {
-    val projectPath = setUpProject(projectDirName, false)
+    val projectPath = setUpProject(projectDirName)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
-
-//TODO: add wait to open project
-
+    //TODO: add wait to open project
     return findIdeFrame(projectPath)
   }
 
   fun importProject(projectDirName: String): File {
-    val projectPath = setUpProject(projectDirName, false)
+    val projectPath = setUpProject(projectDirName)
+    val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
+    Assert.assertNotNull(toSelect)
+    doImportProject(toSelect!!)
+    return projectPath
+  }
+
+  fun importProject(projectFile: File): File {
+    val projectPath = setUpProject(projectFile)
     val toSelect = VfsUtil.findFileByIoFile(projectPath, false)
     Assert.assertNotNull(toSelect)
     doImportProject(toSelect!!)
@@ -326,9 +338,14 @@ class GuiTestRule : TestRule {
   }
 
 
-  private fun setUpProject(projectDirName: String,
-                           forOpen: Boolean): File {
+  private fun setUpProject(projectDirName: String): File {
     val projectPath = copyProjectBeforeOpening(projectDirName)
+    Assert.assertNotNull(projectPath)
+    return projectPath
+  }
+
+  private fun setUpProject(projectDirFile: File): File {
+    val projectPath = copyProjectBeforeOpening(projectDirFile)
     Assert.assertNotNull(projectPath)
     return projectPath
   }
@@ -347,13 +364,25 @@ class GuiTestRule : TestRule {
     return projectPath
   }
 
+  fun copyProjectBeforeOpening(projectDirFile: File): File {
+
+    val projectPath = getTestProjectDirPath(projectDirFile.name)
+    if (projectPath.isDirectory) {
+      FileUtilRt.delete(projectPath)
+      println(String.format("Deleted project path '%1\$s'", projectPath.path))
+    }
+    FileUtil.copyDir(projectDirFile, projectPath)
+    println("Copied project '${projectDirFile.name}' to path '${projectPath.path}'")
+    return projectPath
+  }
+
 
   fun getMasterProjectDirPath(projectDirName: String): File {
-    return File(GuiTestUtil.getTestProjectsRootDirPath(), projectDirName)
+    return File(GuiTestUtil.testProjectsRootDirPath, projectDirName)
   }
 
   fun getTestProjectDirPath(projectDirName: String): File {
-    return File(GuiTestUtil.getProjectCreationDirPath(), projectDirName)
+    return File(GuiTestUtil.projectCreationDirPath, projectDirName)
   }
 
   fun cleanUpProjectForImport(projectPath: File) {

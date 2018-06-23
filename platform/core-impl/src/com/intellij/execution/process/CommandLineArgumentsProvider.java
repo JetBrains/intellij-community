@@ -26,7 +26,7 @@ import java.util.Map;
 
 /**
  * @author Roman.Chernyatchik, oleg
- * @deprecated Use GeneralCommandLine instead
+ * @deprecated Use {@link com.intellij.execution.configurations.GeneralCommandLine} instead
  * @deprecated Usages only in Ruby. Move to Ruby module?
  */
 @Deprecated
@@ -44,10 +44,7 @@ public class CommandLineArgumentsProvider {
 
 
   public String getCommandLineString() {
-    return toCommandLine(getArguments());
-  }
-
-  public static String toCommandLine(String... commands) {
+    String[] commands = getArguments();
     if (commands.length > 0) {
       commands[0] = FileUtil.toSystemDependentName(commands[0]);
       return StringUtil.join(commands, " ");

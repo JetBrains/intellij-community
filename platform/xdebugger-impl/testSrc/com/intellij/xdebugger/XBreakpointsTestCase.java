@@ -1,11 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger;
 
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.testFramework.TempFiles;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.xdebugger.impl.BreakpointManagerState;
@@ -25,13 +22,11 @@ import static com.intellij.configurationStore.XmlSerializer.serialize;
  */
 public abstract class XBreakpointsTestCase extends XDebuggerTestCase {
   protected XBreakpointManagerImpl myBreakpointManager;
-  protected TempFiles myTempFiles;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
     myBreakpointManager = (XBreakpointManagerImpl)XDebuggerManager.getInstance(myProject).getBreakpointManager();
-    myTempFiles = new TempFiles(myFilesToDelete);
   }
 
   @Override

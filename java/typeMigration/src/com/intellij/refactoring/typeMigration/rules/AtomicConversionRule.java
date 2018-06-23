@@ -29,11 +29,15 @@ import com.intellij.refactoring.typeMigration.TypeEvaluator;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.HardcodedMethodConstants;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.atomic.*;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicIntegerArray;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicLongArray;
 
 public class AtomicConversionRule extends TypeConversionRule {
   private static final Logger LOG = Logger.getInstance(AtomicConversionRule.class);
@@ -186,19 +190,18 @@ public class AtomicConversionRule extends TypeConversionRule {
       return new TypeConversionDescriptor("$qualifier$", "$qualifier$.get()", expression);
     }
     else if (context instanceof PsiAssignmentExpression) {
-      final PsiJavaToken signToken = ((PsiAssignmentExpression)context).getOperationSign();
+      final PsiAssignmentExpression assignment = (PsiAssignmentExpression)context;
+      final PsiJavaToken signToken = assignment.getOperationSign();
       final IElementType operationSign = signToken.getTokenType();
       final String sign = signToken.getText();
-      boolean voidContext = parent instanceof PsiExpressionStatement ||
-                  (parent instanceof PsiLambdaExpression && PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(
-                    (PsiFunctionalExpression)parent)));
+      boolean voidContext = ExpressionUtils.isVoidContext(assignment);
       if (operationSign == JavaTokenType.EQ) {
         if (!voidContext) return null;
-        final PsiExpression lExpression = ((PsiAssignmentExpression)context).getLExpression();
+        final PsiExpression lExpression = assignment.getLExpression();
         if (lExpression instanceof PsiReferenceExpression) {
           final PsiElement element = ((PsiReferenceExpression)lExpression).resolve();
           if (element instanceof PsiVariable && ((PsiVariable)element).hasModifierProperty(PsiModifier.FINAL)) {
-            return wrapWithNewExpression(to, from, ((PsiAssignmentExpression)context).getRExpression(), element, type);
+            return wrapWithNewExpression(to, from, assignment.getRExpression(), element, type);
           }
         }
         return new TypeConversionDescriptor("$qualifier$ = $val$", "$qualifier$.set($val$)");

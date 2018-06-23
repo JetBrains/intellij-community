@@ -7,6 +7,6 @@ import java.util.stream.IntStream;
 
 public class Main {
   public void testForLoop() {
-      List<Integer> result = IntStream.rangeClosed(0, 10).boxed().collect(Collectors.toList());
+    List<Integer> result = IntStream.rangeClosed(0, 10).boxed().collect(Collectors.toList());
   }
 }

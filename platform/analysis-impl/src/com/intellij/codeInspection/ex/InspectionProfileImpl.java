@@ -79,11 +79,11 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     this(profileName, toolSupplier, (BaseInspectionProfileManager)InspectionProfileManager.getInstance(), baseProfile, null);
   }
 
-  public InspectionProfileImpl(@NotNull String profileName,
-                               @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
-                               @NotNull BaseInspectionProfileManager profileManager,
-                               @Nullable InspectionProfileImpl baseProfile,
-                               @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
+  protected InspectionProfileImpl(@NotNull String profileName,
+                                  @NotNull Supplier<List<InspectionToolWrapper>> toolSupplier,
+                                  @NotNull BaseInspectionProfileManager profileManager,
+                                  @Nullable InspectionProfileImpl baseProfile,
+                                  @Nullable SchemeDataHolder<? super InspectionProfileImpl> dataHolder) {
     super(profileName, profileManager);
 
     myToolSupplier = toolSupplier;
@@ -112,8 +112,8 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final InspectionToolWrapper inspectionTool = toolWrapper.createCopy();
     if (toolWrapper.isInitialized()) {
       Element config = new Element("config");
-      toolWrapper.getTool().writeSettings(config);
-      inspectionTool.getTool().readSettings(config);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), config);
+      ScopeToolState.tryReadSettings(inspectionTool.getTool(), config);
     }
     return inspectionTool;
   }
@@ -123,7 +123,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     Project project = element == null ? null : element.getProject();
     final ToolsImpl tools = getToolsOrNull(inspectionToolKey.toString(), project);
     HighlightDisplayLevel level = tools != null ? tools.getLevel(element) : HighlightDisplayLevel.WARNING;
-    if (!getProfileManager().getOwnSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
+    if (!getProfileManager().getSeverityRegistrar().isSeverityValid(level.getSeverity().getName())) {
       level = HighlightDisplayLevel.WARNING;
       setErrorLevel(inspectionToolKey, level, project);
     }
@@ -137,7 +137,7 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     final Element highlightElement = element.getChild(USED_LEVELS);
     if (highlightElement != null) {
       // from old profiles
-      getProfileManager().getOwnSeverityRegistrar().readExternal(highlightElement);
+      getProfileManager().getSeverityRegistrar().readExternal(highlightElement);
     }
 
     String version = element.getAttributeValue(VERSION_TAG);
@@ -341,11 +341,19 @@ public class InspectionProfileImpl extends NewInspectionProfile {
     });
   }
 
+  /**
+   * Warning: Usage of this method is discouraged as if separate tool options are defined for different scopes, it just returns
+   * the options for the first scope which may lead to unexpected results. Consider using {@link #getInspectionTool(String, PsiElement)} instead.
+   *
+   * @param shortName an inspection short name
+   * @param project   a project
+   * @return an InspectionToolWrapper associated with this tool.
+   */
   @Override
   @Nullable
   public InspectionToolWrapper getInspectionTool(@NotNull String shortName, Project project) {
     final ToolsImpl tools = getToolsOrNull(shortName, project);
-    return tools != null? tools.getTool() : null;
+    return tools != null ? tools.getTool() : null;
   }
 
   public InspectionToolWrapper getToolById(@NotNull String id, @NotNull PsiElement element) {

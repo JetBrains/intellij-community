@@ -33,6 +33,15 @@ public class Py3NoneFunctionAssignmentInspectionTest extends PyInspectionTestCas
     doMultiFileTest();
   }
 
+  // PY-28729
+  public void testGenericSubstitutedWithNone() {
+    doTestByText(
+      "test1 = max([])\n" +
+      "test2 = max([], default=None)\n" +
+      "test3 = max([], default=0)"
+    );
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

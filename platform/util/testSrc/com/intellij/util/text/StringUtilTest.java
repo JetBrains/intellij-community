@@ -489,38 +489,58 @@ public class StringUtilTest {
 
   @Test
   public void testFormatFileSize() {
-    assertEquals("0B", StringUtil.formatFileSize(0));
-    assertEquals("1B", StringUtil.formatFileSize(1));
-    assertEquals("2.15G", StringUtil.formatFileSize(Integer.MAX_VALUE));
-    assertEquals("9.22E", StringUtil.formatFileSize(Long.MAX_VALUE));
+    assertEquals("0 B", StringUtil.formatFileSize(0));
+    assertEquals("1 B", StringUtil.formatFileSize(1));
+    assertEquals("2 GB", StringUtil.formatFileSize(Integer.MAX_VALUE));
+    assertEquals("8 EB", StringUtil.formatFileSize(Long.MAX_VALUE));
 
-    assertEquals("60.10K", StringUtil.formatFileSize(60100));
+    assertEquals("58.69 KB", StringUtil.formatFileSize(60100));
 
-    assertEquals("1.23K", StringUtil.formatFileSize(1234));
-    assertEquals("12.35K", StringUtil.formatFileSize(12345));
-    assertEquals("123.46K", StringUtil.formatFileSize(123456));
-    assertEquals("1.23M", StringUtil.formatFileSize(1234567));
-    assertEquals("12.35M", StringUtil.formatFileSize(12345678));
-    assertEquals("123.46M", StringUtil.formatFileSize(123456789));
-    assertEquals("1.23G", StringUtil.formatFileSize(1234567890));
+    assertEquals("1.21 KB", StringUtil.formatFileSize(1234));
+    assertEquals("12.06 KB", StringUtil.formatFileSize(12345));
+    assertEquals("120.56 KB", StringUtil.formatFileSize(123456));
+    assertEquals("1.18 MB", StringUtil.formatFileSize(1234567));
+    assertEquals("11.77 MB", StringUtil.formatFileSize(12345678));
+    assertEquals("117.74 MB", StringUtil.formatFileSize(123456789));
+    assertEquals("1.15 GB", StringUtil.formatFileSize(1234567890));
+  }
+
+  @Test
+  public void testFormatNumber() {
+    assertEquals("0", StringUtil.formatNumber(0));
+    assertEquals("1", StringUtil.formatNumber(1));
+    assertEquals("2.15G", StringUtil.formatNumber(Integer.MAX_VALUE));
+    assertEquals("9.22E", StringUtil.formatNumber(Long.MAX_VALUE));
+
+    assertEquals("60.10K", StringUtil.formatNumber(60100));
+
+    assertEquals("1.23K", StringUtil.formatNumber(1234));
+    assertEquals("12.35K", StringUtil.formatNumber(12345));
+    assertEquals("123.46K", StringUtil.formatNumber(123456));
+    assertEquals("1.23M", StringUtil.formatNumber(1234567));
+    assertEquals("12.35M", StringUtil.formatNumber(12345678));
+    assertEquals("123.46M", StringUtil.formatNumber(123456789));
+    assertEquals("1.23G", StringUtil.formatNumber(1234567890));
   }
 
   @Test
   public void testFormatDuration() {
-    assertEquals("0ms", StringUtil.formatDuration(0));
-    assertEquals("1ms", StringUtil.formatDuration(1));
-    assertEquals("3w 3d 20h 31m 23s 647ms", StringUtil.formatDuration(Integer.MAX_VALUE));
-    assertEquals("31ep 7714ml 2c 59yr 5mo 0w 3d 7h 12m 55s 807ms", StringUtil.formatDuration(Long.MAX_VALUE));
+    assertEquals("0 ms", StringUtil.formatDuration(0));
+    assertEquals("1 ms", StringUtil.formatDuration(1));
+    assertEquals("24 d 20 h 31 m 23 s 647 ms", StringUtil.formatDuration(Integer.MAX_VALUE));
+    assertEquals("29 ep 6533 ml 3 c 8 yr 9 mo 17 d 7 h 12 m 55 s 807 ms", StringUtil.formatDuration(Long.MAX_VALUE));
 
-    assertEquals("1m 0s 100ms", StringUtil.formatDuration(60100));
+    assertEquals("1 m 0 s 100 ms", StringUtil.formatDuration(60100));
 
-    assertEquals("1s 234ms", StringUtil.formatDuration(1234));
-    assertEquals("12s 345ms", StringUtil.formatDuration(12345));
-    assertEquals("2m 3s 456ms", StringUtil.formatDuration(123456));
-    assertEquals("20m 34s 567ms", StringUtil.formatDuration(1234567));
-    assertEquals("3h 25m 45s 678ms", StringUtil.formatDuration(12345678));
-    assertEquals("1d 10h 17m 36s 789ms", StringUtil.formatDuration(123456789));
-    assertEquals("2w 0d 6h 56m 7s 890ms", StringUtil.formatDuration(1234567890));
+    assertEquals("1 s 234 ms", StringUtil.formatDuration(1234));
+    assertEquals("12 s 345 ms", StringUtil.formatDuration(12345));
+    assertEquals("2 m 3 s 456 ms", StringUtil.formatDuration(123456));
+    assertEquals("20 m 34 s 567 ms", StringUtil.formatDuration(1234567));
+    assertEquals("3 h 25 m 45 s 678 ms", StringUtil.formatDuration(12345678));
+    assertEquals("1 d 10 h 17 m 36 s 789 ms", StringUtil.formatDuration(123456789));
+    assertEquals("14 d 6 h 56 m 7 s 890 ms", StringUtil.formatDuration(1234567890));
+
+    assertEquals("1 yr 1 mo 1 d 1 h 1 m 1 s 1 ms", StringUtil.formatDuration(33786061001L));
   }
 
   @Test
@@ -598,6 +618,8 @@ public class StringUtilTest {
     assertEquals(4, StringUtil.countChars("abcddddefghd", 'd', 4, false));
     assertEquals(3, StringUtil.countChars("abcddddefghd", 'd', 4, true));
     assertEquals(2, StringUtil.countChars("abcddddefghd", 'd', 4, 6, false));
+    assertEquals(3, StringUtil.countChars("aaabcddddefghdaaaa", 'a', -20, 20, true));
+    assertEquals(4, StringUtil.countChars("aaabcddddefghdaaaa", 'a', 20, -20, true));
   }
 
   @Test

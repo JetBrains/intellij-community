@@ -19,7 +19,9 @@ package com.intellij.application.options;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -48,6 +50,11 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   private JCheckBox myCbKeepIndentsOnEmptyLines;
 
   public SmartIndentOptionsEditor() {
+    this(null);
+  }
+
+  public SmartIndentOptionsEditor(@Nullable LanguageCodeStyleSettingsProvider provider) {
+    super(provider);
     myContinuationOption = createContinuationOption(
       CONTINUATION_INDENT_LABEL,
       options -> options.CONTINUATION_INDENT_SIZE,  (options, value) -> options.CONTINUATION_INDENT_SIZE = value,
@@ -149,6 +156,7 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   public void setEnabled(final boolean enabled) {
     super.setEnabled(enabled);
 
+    @SuppressWarnings("deprecation")
     boolean smartTabsChecked = enabled && myCbUseTab.isSelected();
     boolean smartTabsValid = smartTabsChecked && isSmartTabValid(getUIIndent(), getUITabSize());
     myCbSmartTabs.setEnabled(smartTabsValid);
@@ -190,5 +198,29 @@ public class SmartIndentOptionsEditor extends IndentOptionsEditor {
   public SmartIndentOptionsEditor withArrayElementIndent() {
     myArrayElementIndentOption.setSupported(true);
     return this;
+  }
+
+  @Override
+  public void showStandardOptions(String... optionNames) {
+    super.showStandardOptions(optionNames);
+    for (String optionName : optionNames) {
+      if (IndentOption.SMART_TABS.toString().equals(optionName)) {
+        myCbSmartTabs.setVisible(true);
+      }
+      else if (IndentOption.CONTINUATION_INDENT_SIZE.toString().equals(optionName)) {
+        myContinuationOption.setVisible(true);
+      }
+      else if (IndentOption.KEEP_INDENTS_ON_EMPTY_LINES.toString().equals(optionName)) {
+        myCbKeepIndentsOnEmptyLines.setVisible(true);
+      }
+    }
+  }
+
+  @Override
+  protected void setVisible(boolean visible) {
+    super.setVisible(visible);
+    myCbSmartTabs.setVisible(visible);
+    myContinuationOption.setVisible(visible);
+    myCbKeepIndentsOnEmptyLines.setVisible(visible);
   }
 }

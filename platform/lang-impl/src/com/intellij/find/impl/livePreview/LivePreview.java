@@ -3,6 +3,7 @@ package com.intellij.find.impl.livePreview;
 
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
@@ -26,8 +27,9 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
@@ -42,8 +44,8 @@ import java.util.Set;
 
 public class LivePreview implements SearchResults.SearchResultsListener, SelectionListener, DocumentListener {
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
-  private static final Object IN_SELECTION1 = new Object();
-  private static final Object IN_SELECTION2 = new Object();
+  private static final Object IN_SELECTION1 = ObjectUtils.sentinel("LivePreview.IN_SELECTION1");
+  private static final Object IN_SELECTION2 = ObjectUtils.sentinel("LivePreview.IN_SELECTION2");
   private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
   private boolean myListeningSelection = false;
@@ -51,7 +53,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
   private boolean myInSmartUpdate = false;
 
   private static final Key<Object> MARKER_USED = Key.create("LivePreview.MARKER_USED");
-  private static final Object YES = new Object();
+  private static final Object YES = ObjectUtils.sentinel("LivePreview.YES");
   private static final Key<Object> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
 
   public static PrintStream ourTestOutput;
@@ -80,7 +82,7 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
 
   public interface Delegate {
     @Nullable
-    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult);
+    String getStringToReplace(@NotNull Editor editor, @Nullable FindResult findResult) throws FindManager.MalformedReplacementStringException;
   }
 
   private static TextAttributes strikeout() {
@@ -357,14 +359,22 @@ public class LivePreview implements SearchResults.SearchResultsListener, Selecti
     if (!mySearchResults.isUpToDate()) return;
     final FindResult cursor = mySearchResults.getCursor();
     final Editor editor = mySearchResults.getEditor();
-    if (myDelegate != null && cursor != null) {
-      String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
-      if (StringUtil.isEmpty(replacementPreviewText)) {
-        replacementPreviewText = EMPTY_STRING_DISPLAY_TEXT;
+    final FindModel findModel = mySearchResults.getFindModel();
+    if (myDelegate != null && cursor != null && findModel.isReplaceState() && findModel.isRegularExpressions()) {
+      String replacementPreviewText;
+      try {
+        replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
       }
-      final FindModel findModel = mySearchResults.getFindModel();
-      if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
-
+      catch (FindManager.MalformedReplacementStringException e) {
+        return;
+      }
+      if (replacementPreviewText == null) {
+        return;//malformed replacement string
+      }
+      if (Registry.is("ide.find.show.replacement.hint.for.simple.regexp")) {
+        showBalloon(editor, replacementPreviewText.isEmpty() ? EMPTY_STRING_DISPLAY_TEXT : replacementPreviewText);
+      }
+      else if (!replacementPreviewText.equals(findModel.getStringToReplace())) {
         showBalloon(editor, replacementPreviewText);
       }
     }

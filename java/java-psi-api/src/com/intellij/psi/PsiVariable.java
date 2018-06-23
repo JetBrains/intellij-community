@@ -31,7 +31,7 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
    * Returns the initializer for the variable.
    *
    * @return the initializer expression, or null if it has no initializer.
-   * @see {@link #hasInitializer()}
+   * @see #hasInitializer()
    */
   @Nullable
   PsiExpression getInitializer();

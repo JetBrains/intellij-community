@@ -2,5 +2,5 @@ import org.jetbrains.intellij.build.BuildTasks
 
 target("default": "Default") {
   BuildTasks.buildProduct("org.jetbrains.intellij.build.pycharm.edu.PyCharmEduProperties",
-                          ["python/build/groovy", "python/educational-python/build/groovy"], "", this)
+                          ["python/build/groovy", "python/educational-python/build/groovy", "edu/dependencies/groovy"], "", this)
 }

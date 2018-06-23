@@ -21,6 +21,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.UserDataHolderBase;
 import org.gradle.initialization.BuildLayoutParameters;
 import org.gradle.tooling.CancellationTokenSource;
+import org.gradle.tooling.GradleConnector;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.build.BuildEnvironment;
 import org.gradle.tooling.model.idea.IdeaModule;
@@ -42,12 +43,13 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
   @Nullable private final GradleExecutionSettings mySettings;
   @NotNull private final ExternalSystemTaskNotificationListener myListener;
   private final boolean myIsPreviewMode;
+  @NotNull private final CancellationTokenSource myCancellationTokenSource;
   private ProjectConnection myConnection;
-  @Nullable private CancellationTokenSource myCancellationTokenSource;
   @NotNull
   private ProjectImportAction.AllModels myModels;
   private File myGradleUserHome;
   @Nullable private String myProjectGradleVersion;
+  @Nullable private String myDefaultGroupId;
 
   public DefaultProjectResolverContext(@NotNull final ExternalSystemTaskId externalSystemTaskId,
                                        @NotNull final String projectPath,
@@ -70,6 +72,7 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myConnection = connection;
     myListener = listener;
     myIsPreviewMode = isPreviewMode;
+    myCancellationTokenSource = GradleConnector.newCancellationTokenSource();
   }
 
   @NotNull
@@ -106,14 +109,10 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
     myConnection = connection;
   }
 
-  @Nullable
+  @NotNull
   @Override
   public CancellationTokenSource getCancellationTokenSource() {
     return myCancellationTokenSource;
-  }
-
-  public void setCancellationTokenSource(@Nullable CancellationTokenSource cancellationTokenSource) {
-    myCancellationTokenSource = cancellationTokenSource;
   }
 
   @NotNull
@@ -195,5 +194,15 @@ public class DefaultProjectResolverContext extends UserDataHolderBase implements
       }
     }
     return myProjectGradleVersion;
+  }
+
+  public void setDefaultGroupId(@Nullable String groupId) {
+    myDefaultGroupId = groupId;
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultGroupId() {
+    return myDefaultGroupId;
   }
 }

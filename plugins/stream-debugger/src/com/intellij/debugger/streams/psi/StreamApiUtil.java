@@ -1,6 +1,7 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.streams.psi;
 
+import com.intellij.lang.jvm.JvmModifier;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.Contract;
@@ -25,7 +26,7 @@ public class StreamApiUtil {
            checkStreamCall(expression, false, true);
   }
 
-  private static boolean isIntermediateStreamCall(@NotNull PsiMethodCallExpression expression) {
+  public static boolean isIntermediateStreamCall(@NotNull PsiMethodCallExpression expression) {
     return checkStreamCall(expression, true, true);
   }
 
@@ -34,13 +35,14 @@ public class StreamApiUtil {
   }
 
   private static boolean checkStreamCall(@NotNull PsiMethodCallExpression expression,
-                                         boolean mustParentBeStream,
+                                         boolean mustReceiverBeStream,
                                          boolean mustResultBeStream) {
     final PsiMethod method = expression.resolveMethod();
     if (method != null && mustResultBeStream == isStreamType(expression.getType())) {
       final PsiElement methodClass = method.getParent();
       if (methodClass instanceof PsiClass) {
-        return mustParentBeStream == isStreamType((PsiClass)methodClass);
+        if (mustReceiverBeStream && method.hasModifier(JvmModifier.STATIC)) return false;
+        return mustReceiverBeStream == isStreamType((PsiClass)methodClass);
       }
     }
 

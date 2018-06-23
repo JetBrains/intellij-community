@@ -250,10 +250,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
+    int limit = JavaMethodCallElement.getCompletionHintsLimit();
     int originalNumberOfParameters = method.getParameterList().getParametersCount();
-    return PsiImplUtil.isVarArgs(method) 
-           ? originalNumberOfParameters > 2 && numberOfParameters < originalNumberOfParameters - 1 
-           : originalNumberOfParameters != numberOfParameters && !(originalNumberOfParameters == 1 && numberOfParameters == 0);
+    return Registry.is("editor.completion.hints.virtual.comma")
+           ? !PsiImplUtil.isVarArgs(method) && numberOfParameters > originalNumberOfParameters
+           : PsiImplUtil.isVarArgs(method)
+             ? originalNumberOfParameters > 2 &&
+               numberOfParameters < Math.min(limit, originalNumberOfParameters) - 1 && !(limit == 1 && numberOfParameters == 0)
+             : (originalNumberOfParameters < numberOfParameters || numberOfParameters < Math.min(limit, originalNumberOfParameters)) &&
+               !(Math.min(limit, originalNumberOfParameters) == 1 && numberOfParameters == 0);
   }
 
   @Override
@@ -355,7 +360,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
 
-    context.setHighlightedParameter(args.length == 0 && chosenInfo != null ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
+    context.setHighlightedParameter((Registry.is("editor.completion.hints.virtual.comma") || args.length == 0) && chosenInfo != null
+                                    ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
@@ -774,8 +780,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.setUIComponentEnabled(false);
         return;
       }
+      PsiElement parameterOwner = context.getParameterOwner();
+      PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(context.getParameterOwner(), info, false), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

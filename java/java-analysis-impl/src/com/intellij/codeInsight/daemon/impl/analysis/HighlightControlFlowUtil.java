@@ -15,14 +15,12 @@ import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.FileTypeUtils;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.BitUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -138,8 +136,7 @@ public class HighlightControlFlowUtil {
         PsiCodeBlock ctrBody = constructor.getBody();
         if (ctrBody == null) return false;
         final List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
-        for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
-          PsiMethod redirectedConstructor = redirectedConstructors.get(j);
+        for (PsiMethod redirectedConstructor : redirectedConstructors) {
           final PsiCodeBlock body = redirectedConstructor.getBody();
           if (body != null && variableDefinitelyAssignedIn(field, body)) continue nextConstructor;
         }
@@ -154,7 +151,7 @@ public class HighlightControlFlowUtil {
 
   private static boolean isFieldInitializedInClassInitializer(@NotNull PsiField field,
                                                               boolean isFieldStatic,
-                                                              Stream<PsiClassInitializer> initializers) {
+                                                              @NotNull Stream<PsiClassInitializer> initializers) {
     return initializers.anyMatch(initializer -> initializer.hasModifierProperty(PsiModifier.STATIC) == isFieldStatic
                                                 && variableDefinitelyAssignedIn(field, initializer.getBody()));
   }
@@ -162,7 +159,7 @@ public class HighlightControlFlowUtil {
   private static boolean isFieldInitializedInOtherFieldInitializer(@NotNull PsiClass aClass,
                                                                    @NotNull PsiField field,
                                                                    final boolean fieldStatic,
-                                                                   final Condition<PsiField> condition) {
+                                                                   @NotNull Condition<PsiField> condition) {
     PsiField[] fields = aClass.getFields();
     for (PsiField psiField : fields) {
       if (psiField != field
@@ -304,8 +301,7 @@ public class HighlightControlFlowUtil {
           if (variable.hasModifierProperty(PsiModifier.STATIC)) return null;
           // as a last chance, field may be initialized in this() call
           final List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
-          for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
-            PsiMethod redirectedConstructor = redirectedConstructors.get(j);
+          for (PsiMethod redirectedConstructor : redirectedConstructors) {
             // variable must be initialized before its usage
             //???
             //if (startOffset < redirectedConstructor.getTextRange().getStartOffset()) continue;
@@ -357,8 +353,7 @@ public class HighlightControlFlowUtil {
             }
             // as a last chance, field may be initialized in this() call
             final List<PsiMethod> redirectedConstructors = JavaHighlightUtil.getChainedConstructors(constructor);
-            for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
-              PsiMethod redirectedConstructor = redirectedConstructors.get(j);
+            for (PsiMethod redirectedConstructor : redirectedConstructors) {
               // variable must be initialized before its usage
               if (offset < redirectedConstructor.getTextRange().getStartOffset()) continue;
               PsiCodeBlock redirectedBody = redirectedConstructor.getBody();
@@ -540,9 +535,8 @@ public class HighlightControlFlowUtil {
         final PsiMethod ctr = codeBlock.getParent() instanceof PsiMethod ?
                               (PsiMethod)codeBlock.getParent() : null;
         // assignment to final field in several constructors threatens us only if these are linked (there is this() call in the beginning)
-        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? JavaHighlightUtil.getChainedConstructors(ctr) : null;
-        for (int j = 0; redirectedConstructors != null && j < redirectedConstructors.size(); j++) {
-          PsiMethod redirectedConstructor = redirectedConstructors.get(j);
+        final List<PsiMethod> redirectedConstructors = ctr != null && ctr.isConstructor() ? JavaHighlightUtil.getChainedConstructors(ctr) : Collections.emptyList();
+        for (PsiMethod redirectedConstructor : redirectedConstructors) {
           PsiCodeBlock body = redirectedConstructor.getBody();
           if (body != null && variableDefinitelyAssignedIn(variable, body)) {
             alreadyAssigned = true;
@@ -655,10 +649,8 @@ public class HighlightControlFlowUtil {
                                      @NotNull PsiField field,
                                      @NotNull PsiReferenceExpression reference,
                                      @NotNull PsiFile containingFile) {
-
     if (!containingFile.getManager().areElementsEquivalent(enclosingCtrOrInitializer.getContainingClass(), field.getContainingClass())) return false;
-    PsiExpression qualifierExpression = reference.getQualifierExpression();
-    return qualifierExpression == null || qualifierExpression instanceof PsiThisExpression;
+    return LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(reference);
   }
 
 

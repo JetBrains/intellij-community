@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.completion;
 
 import com.intellij.codeInsight.CodeInsightSettings;
@@ -34,8 +35,6 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     myFixture.addFileToProject(fileName, stringList.get(0));
     myFixture.configureByFile(fileName);
 
-    boolean old = CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX;
-    CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = false;
     CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = false;
 
 
@@ -64,7 +63,6 @@ public abstract class CompletionTestBase extends JavaCodeInsightFixtureTestCase 
     }
     finally {
       CodeInsightSettings.getInstance().AUTOCOMPLETE_ON_CODE_COMPLETION = true;
-      CodeInsightSettings.getInstance().AUTOCOMPLETE_COMMON_PREFIX = old;
     }
     assertEquals(StringUtil.trimEnd(stringList.get(1), "\n"), result);
   }

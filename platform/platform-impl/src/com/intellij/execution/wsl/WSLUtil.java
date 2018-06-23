@@ -1,20 +1,26 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.wsl;
 
 import com.intellij.execution.process.ProcessAdapter;
 import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.io.OutputStream;
+import java.nio.file.Files;
+import java.nio.file.LinkOption;
+import java.nio.file.Path;
+import java.nio.file.Paths;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
-
-import static com.intellij.execution.wsl.WSLDistributionLegacy.LEGACY_WSL;
 
 /**
  * Class for working with WSL after Fall Creators Update
@@ -42,11 +48,14 @@ public class WSLUtil {
     }
   };
 
-  private static final List<WSLDistribution> DISTRIBUTIONS = Arrays.asList(
-    new WSLDistribution("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
-    new WSLDistribution("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
-    new WSLDistribution("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
-    LEGACY_WSL
+  private static final List<WSLDistribution.Description> DISTRIBUTIONS = Arrays.asList(
+    new WSLDistribution.Description("DEBIAN", "Debian", "debian.exe", "Debian GNU/Linux"),
+    new WSLDistribution.Description("KALI", "kali-linux", "kali.exe", "Kali Linux"),
+    new WSLDistribution.Description("OPENSUSE42", "openSUSE-42", "opensuse-42.exe", "openSUSE Leap 42"),
+    new WSLDistribution.Description("SLES12", "SLES-12", "sles-12.exe", "SUSE Linux Enterprise Server 12"),
+    new WSLDistribution.Description("UBUNTU", "Ubuntu", "ubuntu.exe", "Ubuntu"),
+    new WSLDistribution.Description("UBUNTU1604", "Ubuntu-16.04", "ubuntu1604.exe", "Ubuntu 16.04"),
+    new WSLDistribution.Description("UBUNTU1804", "Ubuntu-18.04", "ubuntu1804.exe", "Ubuntu 18.04")
   );
 
   /**
@@ -62,7 +71,32 @@ public class WSLUtil {
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
-    return ContainerUtil.filter(DISTRIBUTIONS, dist -> dist.isAvailable());
+    if (!isSystemCompatible()) return Collections.emptyList();
+
+    final Path executableRoot = getExecutableRootPath();
+    if (executableRoot == null) return Collections.emptyList();
+
+    final List<WSLDistribution> result = new ArrayList<>(DISTRIBUTIONS.size() + 1 /* LEGACY_WSL */);
+
+    for (WSLDistribution.Description description : DISTRIBUTIONS) {
+      final Path executablePath = executableRoot.resolve(description.exeName);
+      if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
+        result.add(new WSLDistribution(description, executablePath));
+      }
+    }
+    // add legacy WSL if it's available
+    ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
+
+    return Collections.unmodifiableList(result);
+  }
+
+  /**
+   * @return root for WSL executable or null if unavailable
+   */
+  @Nullable
+  private static Path getExecutableRootPath() {
+    String localAppDataPath = System.getenv().get("LOCALAPPDATA");
+    return StringUtil.isEmpty(localAppDataPath) ? null : Paths.get(localAppDataPath, "Microsoft\\WindowsApps");
   }
 
   /**
@@ -90,5 +124,9 @@ public class WSLUtil {
     processHandler.removeProcessListener(INPUT_CLOSE_LISTENER);
     processHandler.addProcessListener(INPUT_CLOSE_LISTENER);
     return processHandler;
+  }
+
+  public static boolean isSystemCompatible() {
+    return SystemInfo.isWin10OrNewer;
   }
 }

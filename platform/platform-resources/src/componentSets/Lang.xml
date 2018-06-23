@@ -39,6 +39,7 @@
 
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -211,13 +212,13 @@
 
     <component>
       <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
       <interface-class>com.intellij.ide.GeneratedSourceFileChangeTracker</interface-class>
       <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
     </component>
-
   </project-components>
 
   <module-components>
@@ -235,4 +236,9 @@
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
   </module-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
+  </extensions>
 </idea-plugin>

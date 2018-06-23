@@ -1,16 +1,19 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.ui.paint;
 
+import com.intellij.ui.RestoreScaleRule;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.ParityMode;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.ui.JBUI.ScaleContext;
-import com.intellij.util.ui.TestScaleHelper;
+import org.junit.ClassRule;
 import org.junit.Test;
+import org.junit.rules.ExternalResource;
 
 import java.awt.*;
 import java.awt.image.BufferedImage;
 
+import static com.intellij.util.ui.TestScaleHelper.overrideJreHiDPIEnabled;
 import static junit.framework.TestCase.assertEquals;
 import static junit.framework.TestCase.assertTrue;
 
@@ -19,7 +22,10 @@ import static junit.framework.TestCase.assertTrue;
  *
  * @author tav
  */
-public class PaintUtilTest extends TestScaleHelper {
+public class PaintUtilTest {
+  @ClassRule
+  public static final ExternalResource manageState = new RestoreScaleRule();
+
   @Test
   public void test() {
     overrideJreHiDPIEnabled(true);

@@ -166,20 +166,6 @@ public class PyCustomMember extends UserDataHolderBase {
   /**
    * Resolves custom member in specified context.
    *
-   * @param context psi element to be used as psi context
-   * @return resolved element
-   * @deprecated Use {@link PyCustomMember#resolve(PsiElement, PyResolveContext)} instead.
-   * This method will be removed in 2018.2.
-   */
-  @Nullable
-  @Deprecated
-  public PsiElement resolve(@NotNull PsiElement context) {
-    return resolve(context, PyResolveContext.noImplicits().withTypeEvalContext(TypeEvalContext.codeInsightFallback(context.getProject())));
-  }
-
-  /**
-   * Resolves custom member in specified context.
-   *
    * @param context        psi element to be used as psi context
    * @param resolveContext context to be used in resolve
    * @return resolved element

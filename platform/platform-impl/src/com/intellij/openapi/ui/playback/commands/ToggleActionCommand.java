@@ -32,7 +32,7 @@ public class ToggleActionCommand extends AbstractCommand {
     String syntaxText = "Syntax error, expected: " + PREFIX + " " + ON + "|" + OFF + " actionName";
     if (args.length != 2) {
       context.error(syntaxText, getLine());
-      return Promises.rejectedPromise();
+      return Promises.rejectedPromise(new RuntimeException(syntaxText));
     }
 
     final boolean on;
@@ -42,19 +42,20 @@ public class ToggleActionCommand extends AbstractCommand {
       on = false;
     } else {
       context.error(syntaxText, getLine());
-      return Promises.rejectedPromise();
+      return Promises.rejectedPromise(new RuntimeException(syntaxText));
     }
 
     String actionId = args[1];
     final AnAction action = ActionManager.getInstance().getAction(actionId);
     if (action == null) {
       context.error("Unknown action id=" + actionId, getLine());
-      return Promises.rejectedPromise();
+      return Promises.rejectedPromise(new RuntimeException("Unknown action id=" + actionId));
     }
 
     if (!(action instanceof ToggleAction)) {
-      context.error("Action is not a toggle action id=" + actionId, getLine());
-      return Promises.rejectedPromise();
+      String text = "Action is not a toggle action id=" + actionId;
+      context.error(text, getLine());
+      return Promises.rejectedPromise(text);
     }
 
     final InputEvent inputEvent = ActionCommand.getInputEvent(actionId);

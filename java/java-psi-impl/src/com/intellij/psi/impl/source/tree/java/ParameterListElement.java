@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.tree.java;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.*;
@@ -38,6 +39,8 @@ public class ParameterListElement extends CompositeElement implements Constants 
 
   @Override
   public TreeElement addInternal(TreeElement first, ASTNode last, ASTNode anchor, Boolean before) {
+    ensureParenthesisAroundParameterList();
+
     if (anchor == null) {
       if (before == null || before.booleanValue()) {
         anchor = findChildByRole(ChildRole.RPARENTH);
@@ -65,6 +68,14 @@ public class ParameterListElement extends CompositeElement implements Constants 
     return firstAdded;
   }
 
+  private void ensureParenthesisAroundParameterList() {
+    //lambda parameter without parenthesis
+    if (findChildByRole(ChildRole.LPARENTH) == null) {
+      addLeaf(JavaTokenType.LPARENTH, "(", getFirstChildNode());
+      addLeaf(JavaTokenType.RPARENTH, ")", null);
+    }
+  }
+
   @Override
   public void deleteChildInternal(@NotNull ASTNode child) {
     final TreeElement oldLastNodeInsideParens = getLastNodeInsideParens();
@@ -72,6 +83,7 @@ public class ParameterListElement extends CompositeElement implements Constants 
 
     if (PARAMETER_SET.contains(child.getElementType())) {
       JavaSourceUtil.deleteSeparatingComma(this, child);
+      ensureParenthesisAroundParameterList();
     }
 
     super.deleteChildInternal(child);

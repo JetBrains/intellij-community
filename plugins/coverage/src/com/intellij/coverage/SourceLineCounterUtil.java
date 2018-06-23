@@ -38,6 +38,10 @@ public class SourceLineCounterUtil {
     if (!counter.isInterface()) {
       packageCoverageInfo.totalClassCount++;
     }
+
+    packageCoverageInfo.totalBranchCount += counter.getTotalBranches();
+    classCoverageInfo.totalBranchCount += counter.getTotalBranches();
+
     return !counter.isInterface();
   }
 

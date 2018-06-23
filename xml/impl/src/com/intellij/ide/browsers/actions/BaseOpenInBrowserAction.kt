@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.browsers.actions
 
 import com.intellij.icons.AllIcons
 import com.intellij.ide.IdeBundle
 import com.intellij.ide.browsers.*
 import com.intellij.ide.browsers.impl.WebBrowserServiceImpl
-import com.intellij.internal.statistic.UsageTrigger
 import com.intellij.openapi.actionSystem.ActionPlaces
 import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.CommonDataKeys
@@ -36,9 +21,9 @@ import com.intellij.psi.PsiDocumentManager
 import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.ui.ColoredListCellRenderer
-import com.intellij.ui.components.JBList
 import com.intellij.util.BitUtil
 import com.intellij.util.Url
+import com.intellij.util.containers.ContainerUtil
 import com.intellij.xml.util.HtmlUtil
 import org.jetbrains.concurrency.AsyncPromise
 import org.jetbrains.concurrency.Promise
@@ -78,7 +63,7 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
         val urls = WebBrowserService.getInstance().getUrlsToOpen(request, preferLocalUrl)
         if (!urls.isEmpty()) {
           chooseUrl(urls)
-              .done { url ->
+              .onSuccess { url ->
                 ApplicationManager.getApplication().saveAll()
                 BrowserLauncher.instance.browse(url.toExternalForm(), browser, request.project)
               }
@@ -125,7 +110,6 @@ abstract class BaseOpenInBrowserAction : DumbAwareAction {
 
   override fun actionPerformed(e: AnActionEvent) {
     getBrowser(e)?.let {
-      UsageTrigger.trigger("OpenInBrowser.${it.name}")
       open(e, it)
     }
   }
@@ -167,28 +151,21 @@ private fun chooseUrl(urls: Collection<Url>): Promise<Url> {
     return resolvedPromise(urls.first())
   }
 
-  val list = JBList<Url>(urls)
-  list.setCellRenderer(object : ColoredListCellRenderer<Url>() {
-    override fun customizeCellRenderer(list: JList<out Url>, value: Url?, index: Int, selected: Boolean, hasFocus: Boolean) {
-      // todo icons looks good, but is it really suitable for all URLs providers?
-      icon = AllIcons.Nodes.Servlet
-      append((value as Url).toDecodedForm())
-    }
-  })
-
   val result = AsyncPromise<Url>()
   JBPopupFactory.getInstance()
-      .createListPopupBuilder(list)
-      .setTitle("Choose Url")
-      .setItemChoosenCallback {
-        val value = list.selectedValue
-        if (value == null) {
-          result.setError("selected value is null")
-        }
-        else {
-          result.setResult(value)
-        }
+    .createPopupChooserBuilder(ContainerUtil.newArrayList(urls))
+    .setRenderer(object : ColoredListCellRenderer<Url>() {
+      override fun customizeCellRenderer(list: JList<out Url>, value: Url?, index: Int, selected: Boolean, hasFocus: Boolean) {
+        // todo icons looks good, but is it really suitable for all URLs providers?
+        icon = AllIcons.Nodes.Servlet
+        append((value as Url).toDecodedForm())
       }
-      .createPopup().showInFocusCenter()
+    })
+    .setTitle("Choose Url")
+    .setItemChosenCallback { value ->
+      result.setResult(value)
+    }
+    .createPopup()
+    .showInFocusCenter()
   return result
 }

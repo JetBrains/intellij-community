@@ -123,7 +123,8 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
   }
 
   public void doInvoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    PsiElement element = PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
+    PyBinaryExpression
+      element = PsiTreeUtil.getTopmostParentOfType(file.findElementAt(editor.getCaretModel().getOffset()), PyBinaryExpression.class);
 
     if (element == null) return;
     final LanguageLevel languageLevel = LanguageLevel.forElement(element);
@@ -139,7 +140,7 @@ public class PyStringConcatenationToFormatIntention extends PyBaseIntentionActio
     boolean isUnicode = false;
     final PyClassTypeImpl unicodeType = PyBuiltinCache.getInstance(element).getObjectType("unicode");
 
-    for (PyExpression expression : getSimpleExpressions((PyBinaryExpression) element)) {
+    for (PyExpression expression : getSimpleExpressions(element)) {
       if (expression instanceof PyStringLiteralExpression) {
         final PyType type = context.getType(expression);
         if (type != null && type.equals(unicodeType)) {

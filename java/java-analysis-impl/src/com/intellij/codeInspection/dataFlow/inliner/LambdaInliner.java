@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -42,13 +42,13 @@ public class LambdaInliner implements CallInliner {
     PsiExpression[] args = call.getArgumentList().getExpressions();
     PsiParameter[] parameters = lambda.getParameterList().getParameters();
     if (args.length != parameters.length) return false;
-    EntryStream.zip(args, parameters).forKeyValue((arg, parameter) ->
-                                                    builder.pushVariable(parameter)
-                                                      .pushExpression(arg)
-                                                      .boxUnbox(arg, parameter.getType())
-                                                      .assign()
-                                                      .pop());
-    builder.inlineLambda(lambda, Nullness.UNKNOWN);
+    EntryStream.zip(args, parameters).forKeyValue(
+      (arg, parameter) -> builder.pushForWrite(builder.getFactory().getVarFactory().createVariableValue(parameter))
+                                 .pushExpression(arg)
+                                 .boxUnbox(arg, parameter.getType())
+                                 .assign()
+                                 .pop());
+    builder.inlineLambda(lambda, Nullability.UNKNOWN);
     return true;
   }
 }

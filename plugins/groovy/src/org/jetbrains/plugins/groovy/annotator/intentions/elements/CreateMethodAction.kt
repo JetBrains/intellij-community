@@ -67,8 +67,9 @@ private class MethodRenderer(
   }
 
   private fun setupTemplate(method: GrMethod) {
-    val typeExpressions = setupParameters(method, request.parameters).toTypedArray()
-    val nameExpressions = setupNameExpressions(request.parameters).toTypedArray()
+    val parameters = request.expectedParameters
+    val typeExpressions = setupParameters(method, parameters).toTypedArray()
+    val nameExpressions = setupNameExpressions(parameters, project).toTypedArray()
     val returnExpression = setupTypeElement(method, createConstraints(project, request.returnType))
     createTemplateForMethod(typeExpressions, nameExpressions, method, targetClass, returnExpression, false, null)
   }

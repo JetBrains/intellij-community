@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaRadioButtonUI;
 import com.intellij.util.ui.EmptyIcon;
+import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -29,6 +16,17 @@ import java.awt.*;
  */
 public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
   private static final Icon DEFAULT_ICON = JBUI.scale(EmptyIcon.create(13)).asUIResource();
+
+  @Override
+  protected Rectangle updateViewRect(AbstractButton b, Rectangle viewRect) {
+    JBInsets.removeFrom(viewRect, b.getInsets());
+    return viewRect;
+  }
+
+  @Override
+  protected Dimension updatePreferredSize(JComponent c, Dimension size) {
+    return size;
+  }
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "UnusedDeclaration"})
   public static ComponentUI createUI(JComponent c) {
@@ -42,11 +40,8 @@ public class WinIntelliJRadioButtonUI extends DarculaRadioButtonUI {
     AbstractButton b = (AbstractButton)c;
     ButtonModel bm = b.getModel();
     boolean focused = c.hasFocus() || bm.isRollover();
-    Icon icon = IconCache.getIcon("radio", false, bm.isSelected(), focused, bm.isEnabled(), bm.isPressed());
-
-    if (icon != null) {
-      icon.paintIcon(c, g, iconRect.x, iconRect.y);
-    }
+    Icon icon = LafIconLookup.getIcon("radio", bm.isSelected(), focused, bm.isEnabled(), false, bm.isPressed());
+    icon.paintIcon(c, g, iconRect.x, iconRect.y);
   }
 
   @Override

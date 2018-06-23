@@ -21,15 +21,13 @@ import com.intellij.concurrency.SensitiveProgressWrapper;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.DefaultLogger;
 import com.intellij.openapi.progress.*;
-import com.intellij.openapi.progress.util.ProgressIndicatorBase;
-import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
-import com.intellij.openapi.progress.util.ProgressWrapper;
-import com.intellij.openapi.progress.util.ReadTask;
+import com.intellij.openapi.progress.util.*;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.wm.ex.ProgressIndicatorEx;
 import com.intellij.testFramework.BombedProgressIndicator;
@@ -39,14 +37,17 @@ import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.TimeoutUtil;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TLongArrayList;
+import org.assertj.core.util.VisibleForTesting;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Random;
@@ -213,11 +214,11 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   private volatile Throwable exception;
   public void testProgressManagerCheckCanceledDoesNotDelegateToProgressIndicatorIfThereAreNoCanceledIndicators() {
     final long warmupEnd = System.currentTimeMillis() + 1000;
-    final long end = warmupEnd + 10000;
     checkCanceledCalled = false;
     final ProgressIndicatorBase myIndicator = new ProgressIndicatorBase();
     taskCanceled = taskSucceeded = false;
     exception = null;
+    final long end = warmupEnd + 10000;
     Future<?> future = ((ProgressManagerImpl)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(
       new Task.Backgroundable(getProject(), "Xxx") {
         @Override
@@ -361,7 +362,7 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
   }
 
   public void testProgressPerformance() {
-    PlatformTestUtil.startPerformanceTest("executeProcessUnderProgress", 100, () -> {
+    PlatformTestUtil.startPerformanceTest("executeProcessUnderProgress", 400, () -> {
       EmptyProgressIndicator indicator = new EmptyProgressIndicator();
       for (int i=0;i<100000;i++) {
         ProgressManager.getInstance().executeProcessUnderProgress(EmptyRunnable.getInstance(), indicator);
@@ -474,11 +475,6 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     @NotNull
     @Override
     public Stack<String> getText2Stack() {
-      throw new RuntimeException();
-    }
-
-    @Override
-    public int getNonCancelableCount() {
       throw new RuntimeException();
     }
 
@@ -721,6 +717,112 @@ public class ProgressIndicatorTest extends LightPlatformTestCase {
     }
     finally {
       LaterInvocator.leaveAllModals();
+    }
+  }
+
+  public void test_runInReadActionWithWriteActionPriority_DoesNotHang() throws Exception {
+    AtomicBoolean finished = new AtomicBoolean();
+    Runnable action = () -> {
+      long start = System.currentTimeMillis();
+      while (!finished.get()) {
+        ProgressManager.checkCanceled();
+        if (System.currentTimeMillis() - start > 10_000) {
+          finished.set(true);
+          throw new AssertionError("Too long without cancellation");
+        }
+      }
+    };
+
+    List<Future<?>> futures = new ArrayList<>();
+    for (int i = 0; i < 3; i++) {
+      futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        while (!finished.get()) {
+          ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action);
+        }
+      }));
+      futures.add(ApplicationManager.getApplication().executeOnPooledThread(() -> {
+        ProgressIndicatorBase reusableProgress = new ProgressIndicatorBase(true);
+        while (!finished.get()) {
+          ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(action, reusableProgress);
+        }
+      }));
+      futures.add(ReadAction.nonBlocking(action).submit(AppExecutorUtil.getAppExecutorService()));
+    }
+      
+    for (int i = 0; i < 10_000 && !finished.get(); i++) {
+      UIUtil.dispatchAllInvocationEvents();
+      WriteAction.run(() -> {});
+    }
+    finished.set(true);
+
+    waitForFutures(futures);
+  }
+
+  private static void waitForFutures(List<Future<?>> futures)
+    throws InterruptedException, ExecutionException, TimeoutException {
+    long start = System.currentTimeMillis();
+    while (System.currentTimeMillis() - start < 10_000 && !futures.stream().allMatch(Future::isDone)) {
+      UIUtil.dispatchAllInvocationEvents();
+      TimeoutUtil.sleep(10);
+    }
+
+    for (Future<?> future : futures) {
+      future.get(1, TimeUnit.SECONDS);
+    }
+  }
+
+  public void testDuringProgressManagerExecuteNonCancelableSectionTheIndicatorIsCancelableShouldReturnFalse() {
+    MyAbstractProgressIndicator progress = new MyAbstractProgressIndicator();
+    ProgressManager.getInstance().executeProcessUnderProgress(() -> {
+      assertTrue(!progress.isCanceled());
+      assertTrue(progress.isCancelable());
+      try {
+        ProgressManager.getInstance().executeNonCancelableSection(()->{
+          assertFalse(progress.isCancelable());
+          progress.cancel();
+          assertTrue(progress.isCanceled());
+          progress.checkCanceled();
+        });
+      }
+      catch (ProcessCanceledException e) {
+        e.printStackTrace();
+        fail("must not throw");
+      }
+
+      try {
+        progress.checkCanceled();
+        fail("PCE must have been thrown");
+      }
+      catch (ProcessCanceledException ignored) {
+
+      }
+    }, progress);
+  }
+
+  private static class MyAbstractProgressIndicator extends AbstractProgressIndicatorBase {
+    @VisibleForTesting
+    @Override
+    public boolean isCancelable() {
+      return super.isCancelable();
+    }
+  }
+
+  public void testIndicatorsStillNotThrowInCheckCanceledIfCalledStartNonCancelableSectionBeforeByOldStaleDeprecatedPluginsNotYetPortedToProgressManagerExecuteInNonCancelableSection() {
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new EmptyProgressIndicator());
+    checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(new AbstractProgressIndicatorBase());
+  }
+
+  private static void checkIndicatorNotThrowInThisOldStaleDisgustingNonCancelableSection(ProgressIndicator indicator) {
+    assertFalse(ProgressManager.getInstance().isInNonCancelableSection());
+    indicator.startNonCancelableSection();
+    indicator.cancel();
+    indicator.checkCanceled();
+    indicator.finishNonCancelableSection();
+    try {
+      indicator.checkCanceled();
+      fail("Must throw");
+    }
+    catch (ProcessCanceledException ignored) {
     }
   }
 }

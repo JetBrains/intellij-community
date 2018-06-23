@@ -22,13 +22,13 @@ import java.util.concurrent.TimeoutException;
  *
  * <ul>
  *   <li>pending: initial state, neither fulfilled nor rejected.</li>
- *   <li>fulfilled: meaning that the operation completed successfully.</li>
+ *   <li>succeeded: meaning that the operation completed successfully.</li>
  *   <li>rejected: meaning that the operation failed.</li>
  * </ul>
  */
 public interface Promise<T> {
   enum State {
-    PENDING, FULFILLED, REJECTED
+    PENDING, SUCCEEDED, REJECTED
   }
 
   /**
@@ -52,7 +52,7 @@ public interface Promise<T> {
    * {@code
    *
    * somePromise
-   *  .then { transformOrProcessValue(it) }
+   *  .then(it -> transformOrProcessValue(it))
    * }
    * </pre>
    */
@@ -66,8 +66,8 @@ public interface Promise<T> {
    * {@code
    *
    * somePromise
-   *  .then { transformOrProcessValue(it) }
-   *  .thenAsync { processValueAsync(it) }
+   *  .then(it -> transformOrProcessValue(it))
+   *  .thenAsync(it -> processValueAsync(it))
    * }
    * </pre>
    */
@@ -84,6 +84,7 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve.
    * @deprecated Use {@link #onSuccess(java.util.function.Consumer)}
    */
+  @Deprecated
   @NotNull
   default Promise<T> done(@NotNull Consumer<? super T> done) {
     return onSuccess(it -> done.consume(it));
@@ -96,8 +97,9 @@ public interface Promise<T> {
   Promise<T> onError(@NotNull java.util.function.Consumer<Throwable> rejected);
 
   /**
-   * Execute passed handler on promise reject.
+   * @deprecated Use {@link #onError(java.util.function.Consumer)}
    */
+  @Deprecated
   @NotNull
   default Promise<T> rejected(@NotNull Consumer<Throwable> rejected) {
     return onError(it -> rejected.consume(it));
@@ -119,6 +121,7 @@ public interface Promise<T> {
    * Execute passed handler on promise resolve (result value will be passed),
    * or on promise reject (null as result value will be passed).
    */
+  @Deprecated
   default Promise<T> processed(@NotNull Consumer<? super T> action) {
     return onProcessed(it -> action.consume(it));
   }
@@ -132,7 +135,12 @@ public interface Promise<T> {
   @Nullable
   T blockingGet(int timeout, @NotNull TimeUnit timeUnit) throws TimeoutException, ExecutionException;
 
+  @Nullable
   default T blockingGet(int timeout) throws TimeoutException, ExecutionException {
     return blockingGet(timeout, TimeUnit.MILLISECONDS);
+  }
+
+  default boolean isSucceeded() {
+    return getState() == State.SUCCEEDED;
   }
 }

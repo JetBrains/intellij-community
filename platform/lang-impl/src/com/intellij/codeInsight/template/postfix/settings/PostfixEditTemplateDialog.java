@@ -62,4 +62,10 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
                       .addComponentFillVertically(myEditor.getComponent(), 0)
                       .getPanel();
   }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return myEditor.getHelpId();
+  }
 }

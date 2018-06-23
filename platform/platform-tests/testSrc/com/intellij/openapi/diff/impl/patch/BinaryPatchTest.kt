@@ -20,10 +20,13 @@ import com.intellij.openapi.vcs.changes.patch.BinaryPatchWriter.writeBinaries
 import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.testFramework.PlatformTestCase
 import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.TestDataFile
+import com.intellij.testFramework.TestDataPath
 import java.io.File
 import java.io.StringWriter
 import java.util.*
 
+@TestDataPath("\$CONTENT_ROOT/testData/diff/binaryPatch/")
 class BinaryPatchTest : PlatformTestCase() {
 
   var dataFileName = "data.bin"
@@ -63,7 +66,7 @@ class BinaryPatchTest : PlatformTestCase() {
   }
 
   private fun doTest(reverse: Boolean = false) {
-    val testDataPath = "${PlatformTestUtil.getPlatformTestDataPath()}diff/binaryPatch/${getTestName(true)}"
+    val testDataPath = getTestDir(getTestName(true))
     val dataFile = File(testDataPath, dataFileName)
     dataFile.setExecutable(false)
     val decodedContentBytes = FileUtil.loadFileBytes(dataFile)
@@ -79,5 +82,9 @@ class BinaryPatchTest : PlatformTestCase() {
     val patches = reader.allPatches
     assertTrue(patches.size == 1)
     assertTrue(Arrays.equals(binaryPatch.afterContent, (patches.first() as BinaryFilePatch).afterContent))
+  }
+
+  private fun getTestDir(@TestDataFile dirName: String): String {
+    return PlatformTestUtil.getPlatformTestDataPath() + "diff/binaryPatch/" + dirName
   }
 }

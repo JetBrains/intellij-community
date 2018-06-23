@@ -21,10 +21,20 @@
   <extensions defaultExtensionNs="com.intellij">
     <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiTaskExecutor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
                     serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
     <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
-    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <statistics.applicationUsagesCollector
+        implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
@@ -42,13 +52,14 @@
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.GithubCreatePullRequestAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
-    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction">
+    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
       <add-to-group group-id="VcsHistoryActionsGroup"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

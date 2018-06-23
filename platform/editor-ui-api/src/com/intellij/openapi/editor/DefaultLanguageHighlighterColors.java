@@ -28,11 +28,19 @@ public class DefaultLanguageHighlighterColors {
   public static final TextAttributesKey LABEL = TextAttributesKey.createTextAttributesKey("DEFAULT_LABEL", IDENTIFIER);
   public static final TextAttributesKey CONSTANT = TextAttributesKey.createTextAttributesKey("DEFAULT_CONSTANT", IDENTIFIER);
   public static final TextAttributesKey LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("DEFAULT_LOCAL_VARIABLE", IDENTIFIER);
+  /**
+   * @since 2018.2
+   */
+  public static final TextAttributesKey REASSIGNED_LOCAL_VARIABLE = TextAttributesKey.createTextAttributesKey("DEFAULT_REASSIGNED_LOCAL_VARIABLE", LOCAL_VARIABLE);
   public static final TextAttributesKey GLOBAL_VARIABLE = TextAttributesKey.createTextAttributesKey("DEFAULT_GLOBAL_VARIABLE", IDENTIFIER);
 
   public static final TextAttributesKey FUNCTION_DECLARATION = TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_DECLARATION", IDENTIFIER);
   public static final TextAttributesKey FUNCTION_CALL = TextAttributesKey.createTextAttributesKey("DEFAULT_FUNCTION_CALL", IDENTIFIER);
   public static final TextAttributesKey PARAMETER = TextAttributesKey.createTextAttributesKey("DEFAULT_PARAMETER");
+  /**
+   * @since 2018.2
+   */
+  public static final TextAttributesKey REASSIGNED_PARAMETER = TextAttributesKey.createTextAttributesKey("DEFAULT_REASSIGNED_PARAMETER", PARAMETER);
   public static final TextAttributesKey CLASS_NAME = TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_NAME", IDENTIFIER);
   public static final TextAttributesKey INTERFACE_NAME = TextAttributesKey.createTextAttributesKey("DEFAULT_INTERFACE_NAME", IDENTIFIER);
   public static final TextAttributesKey CLASS_REFERENCE = TextAttributesKey.createTextAttributesKey("DEFAULT_CLASS_REFERENCE", IDENTIFIER);

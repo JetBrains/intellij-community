@@ -49,14 +49,14 @@ import java.util.List;
 public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<List<? extends DetectedFrameworkDescription>>
   implements ProjectFromSourcesBuilderImpl.ProjectConfigurationUpdater {
   private final Icon myIcon;
-  private List<File> myLastRoots = null;
+  private List<File> myLastRoots;
   private final DetectedFrameworksComponent myDetectedFrameworksComponent;
   private JPanel myMainPanel;
   private JPanel myFrameworksPanel;
   private JLabel myFrameworksDetectedLabel;
   private final FrameworkDetectionContext myContext;
 
-  public FrameworkDetectionStep(final Icon icon, final ProjectFromSourcesBuilder builder) {
+  protected FrameworkDetectionStep(final Icon icon, final ProjectFromSourcesBuilder builder) {
     super(ProjectBundle.message("message.text.stop.searching.for.frameworks", ApplicationNamesInfo.getInstance().getProductName()));
     myIcon = icon;
     myContext = new FrameworkDetectionInWizardContext() {
@@ -73,23 +73,28 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     myDetectedFrameworksComponent = new DetectedFrameworksComponent(myContext);
   }
 
+  @Override
   public void updateDataModel() {
   }
 
+  @Override
   protected boolean shouldRunProgress() {
     return myLastRoots == null || !Comparing.haveEqualElements(myLastRoots, getRoots());
   }
 
+  @Override
   protected String getProgressText() {
     return ProjectBundle.message("progress.text.searching.frameworks");
   }
 
+  @Override
   protected JComponent createResultsPanel() {
     JComponent mainPanel = myDetectedFrameworksComponent.getMainPanel();
     myFrameworksPanel.add(mainPanel, BorderLayout.CENTER);
     return myMainPanel;
   }
 
+  @Override
   protected List<? extends DetectedFrameworkDescription> calculate() {
     myLastRoots = getRoots();
 
@@ -114,6 +119,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     return roots;
   }
 
+  @Override
   protected void onFinished(final List<? extends DetectedFrameworkDescription> result, final boolean canceled) {
     myDetectedFrameworksComponent.getTree().rebuildTree(result);
     if (result.isEmpty()) {
@@ -125,6 +131,7 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     myFrameworksPanel.setVisible(!result.isEmpty());
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
@@ -133,11 +140,13 @@ public abstract class FrameworkDetectionStep extends AbstractStepWithProgress<Li
     return FrameworkDetector.EP_NAME.getExtensions().length > 0;
   }
 
+  @Override
   @NonNls
   public String getHelpId() {
     return "reference.dialogs.new.project.fromCode.facets";
   }
 
+  @Override
   public void updateProject(@NotNull Project project, @NotNull ModifiableModelsProvider modelsProvider, @NotNull ModulesProvider modulesProvider) {
     FrameworkDetectionUtil.setupFrameworks(myDetectedFrameworksComponent.getSelectedFrameworks(), modelsProvider, modulesProvider);
     myDetectedFrameworksComponent.processUncheckedNodes(DetectionExcludesConfiguration.getInstance(project));

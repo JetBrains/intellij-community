@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -27,11 +13,11 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.FontComboBox;
@@ -50,7 +36,7 @@ import java.util.Hashtable;
 /**
  * @author Eugene Belyaev
  */
-public class AppearanceConfigurable extends BaseConfigurable implements SearchableConfigurable {
+public class AppearanceConfigurable implements SearchableConfigurable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.ui.AppearanceConfigurable");
 
   private MyComponent myComponent;
@@ -142,7 +128,18 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myBackgroundImageButton.addActionListener(ActionUtil.createActionListener(
       "Images.SetBackgroundImage", myComponent.myPanel, ActionPlaces.UNKNOWN));
 
+    myComponent.myDarkWindowHeaders.setSelected(Registry.is("ide.mac.allowDarkWindowDecorations"));
+    updateDarkWindowHeaderVisibility();
+    myComponent.myLafComboBox.addItemListener(x -> updateDarkWindowHeaderVisibility());
+    myComponent.myDarkWindowHeaders.addItemListener(x -> {Registry.get("ide.mac.allowDarkWindowDecorations").setValue(myComponent.myDarkWindowHeaders.isSelected()); LafManager.getInstance().updateUI();});
+
     return myComponent.myPanel;
+  }
+
+  private void updateDarkWindowHeaderVisibility() {
+    Object item = myComponent.myLafComboBox.getSelectedItem();
+    boolean isDarkLaf = item instanceof UIManager.LookAndFeelInfo && ((UIManager.LookAndFeelInfo)item).getClassName().endsWith("DarculaLaf");
+    myComponent.myDarkWindowHeaders.setVisible(SystemInfo.isMac && isDarkLaf);
   }
 
   @Override
@@ -501,6 +498,7 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JComboBox myAntialiasingInIDE;
     private JComboBox myAntialiasingInEditor;
     private JButton myBackgroundImageButton;
+    private JBCheckBox myDarkWindowHeaders;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener(__ -> updateCombo());

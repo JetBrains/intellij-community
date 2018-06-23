@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.openapi.project.Project;
@@ -315,31 +301,31 @@ public class GdkMethodUtil {
     return null;
   }
 
-  private static boolean isSingleExpressionArg(GrMethodCall call) {
+  private static boolean isSingleExpressionArg(@NotNull GrMethodCall call) {
     return call.getExpressionArguments().length == 1 &&
            !PsiImplUtil.hasNamedArguments(call.getArgumentList()) &&
-           !PsiImplUtil.hasClosureArguments(call);
+           !call.hasClosureArguments();
   }
 
   @Nullable
   private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression && GrImportUtil.acceptName((GrReferenceExpression)invoked, "mixin")) {
-      PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
+    if (!(invoked instanceof GrReferenceExpression)) return null;
+    GrReferenceExpression referenceExpression = (GrReferenceExpression)invoked;
+    if (GrImportUtil.acceptName(referenceExpression, "mixin")) {
+
+      PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof PsiMethod && isMixinMethod((PsiMethod)resolved)) {
-        GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
+        GrExpression qualifier = referenceExpression.getQualifierExpression();
         Pair<PsiClassType, GrReferenceExpression> type = getPsiClassFromReference(qualifier);
         if (type != null) {
           return type;
-        }
-        if (qualifier == null) {
-          qualifier = PsiImplUtil.getRuntimeQualifier((GrReferenceExpression)invoked);
         }
         if (qualifier != null && isMetaClass(qualifier.getType())) {
           if (qualifier instanceof GrMethodCall) qualifier = ((GrMethodCall)qualifier).getInvokedExpression();
 
           if (qualifier instanceof GrReferenceExpression) {
-            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifier();
+            GrExpression qqualifier = ((GrReferenceExpression)qualifier).getQualifierExpression();
             if (qqualifier != null) {
               Pair<PsiClassType, GrReferenceExpression> type1 = getPsiClassFromMetaClassReference(qqualifier);
               if (type1 != null) {

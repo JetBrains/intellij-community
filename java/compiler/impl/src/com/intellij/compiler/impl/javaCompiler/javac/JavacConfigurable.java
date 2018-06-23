@@ -45,6 +45,7 @@ public class JavacConfigurable implements Configurable{
     myProject = project;
     myJavacSettings = javacSettings;
     myAdditionalOptionsField.setDialogCaption(CompilerBundle.message("java.compiler.option.additional.command.line.parameters"));
+    myAdditionalOptionsField.setDescriptor(null, false);
   }
 
   private void createUIComponents() {

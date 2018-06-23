@@ -35,6 +35,13 @@ public abstract class ConsoleState {
     return false;
   }
 
+  /**
+   * @return whether the given line should be folded as a command line if it's first in the console
+   */
+  public boolean isCommandLine(@NotNull String line) {
+    return false;
+  }
+
   public void sendUserInput(@NotNull String input) throws IOException {}
 
   public abstract static class NotStartedStated extends ConsoleState {

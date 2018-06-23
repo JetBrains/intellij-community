@@ -21,6 +21,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.xml.SchemaPrefixReference;
 import com.intellij.psi.impl.source.xml.TagNameReference;
+import com.intellij.psi.xml.XmlChildRole;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.Consumer;
 import com.intellij.util.ProcessingContext;
@@ -53,7 +54,7 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
       else if (reference instanceof SchemaPrefixReference) {
         TagNameReference tagNameReference = ((SchemaPrefixReference)reference).getTagNameReference();
         if (tagNameReference != null && !tagNameReference.isStartTagFlag()) {
-          set.consume(createClosingTagLookupElement((XmlTag)tagNameReference.getElement(), true, tagNameReference.getNameElement()));
+          set.consume(createClosingTagLookupElements((XmlTag)tagNameReference.getElement(), true, tagNameReference.getNameElement()).get(0));
         }
       }
     });
@@ -64,7 +65,9 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
     PsiElement element = tagNameReference.getElement();
     if (element instanceof XmlTag) {
       if (!tagNameReference.isStartTagFlag()) {
-        consumer.consume(createClosingTagLookupElement((XmlTag)element, false, tagNameReference.getNameElement()));
+        for (LookupElement variant : createClosingTagLookupElements((XmlTag)element, false, tagNameReference.getNameElement())) {
+          consumer.consume(variant);
+        }
       }
       else {
         XmlTag tag = (XmlTag) element;
@@ -75,13 +78,24 @@ public class TagNameReferenceCompletionProvider extends CompletionProvider<Compl
     }
   }
 
-  public static LookupElement createClosingTagLookupElement(XmlTag tag, boolean includePrefix, ASTNode nameElement) {
-    LookupElementBuilder
-      builder = LookupElementBuilder.create(includePrefix || !nameElement.getText().contains(":") ? tag.getName() : tag.getLocalName());
-    return LookupElementDecorator.withInsertHandler(
-      TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
-                                 TailType.createSimpleTailType('>')),
-      XmlClosingTagInsertHandler.INSTANCE);
+  public static List<LookupElement> createClosingTagLookupElements(XmlTag tag, boolean includePrefix, ASTNode nameElement) {
+    List<LookupElement> result = new ArrayList<>();
+    while (tag != null) {
+      LookupElementBuilder
+        builder = LookupElementBuilder.create(includePrefix || !nameElement.getText().contains(":") ? tag.getName() : tag.getLocalName());
+      result.add(LookupElementDecorator.withInsertHandler(
+        TailTypeDecorator.withTail(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE.applyPolicy(builder),
+                                   TailType.createSimpleTailType('>')),
+        XmlClosingTagInsertHandler.INSTANCE));
+      if (includePrefix) break;
+      tag = tag.getParentTag();
+      if (tag != null &&
+          (XmlChildRole.CLOSING_TAG_NAME_FINDER.findChild(tag.getNode()) != null ||
+           XmlChildRole.START_TAG_START_FINDER.findChild(tag.getNode()) == null)) {
+        break;
+      }
+    }
+    return result;
   }
 
 }

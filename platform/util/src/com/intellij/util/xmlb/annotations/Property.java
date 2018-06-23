@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb.annotations;
 
 import com.intellij.util.xmlb.SerializationFilter;
@@ -28,8 +26,18 @@ public @interface Property {
   boolean alwaysWrite() default false;
 
   enum Style {
-    OLD, ATTRIBUTE
+    /**
+     * Wrap properties into elements named {@code option}.
+     */
+    OPTION_TAG,
+    /**
+     * Wrap properties into attributes.
+     */
+    ATTRIBUTE
   }
 
-  Style style() default Style.OLD;
+  /**
+   * Applicable only on class level.
+   */
+  Style style() default Style.OPTION_TAG;
 }

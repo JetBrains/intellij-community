@@ -36,6 +36,7 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
   @Override
   public void setUp() throws Exception {
     super.setUp();
+    myFixture.setTestDataPath(getTestDataPath() + getName());
     installCompiler();
   }
 
@@ -104,7 +105,7 @@ public class CompilerReferenceDataInCompletionTest extends CompilerReferencesTes
                                 @NotNull String phraseToComplete,
                                 @NotNull String[] expectedOrder,
                                 @NotNull Predicate<PsiMember> resultFilter) {
-    myFixture.configureByFiles(ContainerUtil.map2Array(files, String.class, f -> getName() + "/" + f));
+    myFixture.configureByFiles(files);
     myFixture.type(phraseToComplete);
     final int offset = myFixture.getCaretOffset();
     final LookupElement[] completionVariantsBeforeCompilation = myFixture.complete(CompletionType.BASIC);

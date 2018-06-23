@@ -272,6 +272,7 @@ public class PsiFormatUtil extends PsiFormatUtilBase {
   }
 
   /** @deprecated use {@link #formatModifiers(PsiModifierListOwner, int)} (to be removed in IDEA 2019) */
+  @Deprecated
   public static String formatModifiers(PsiElement element, int options) throws IllegalArgumentException {
     if (element instanceof PsiModifierListOwner) {
       return formatModifiers((PsiModifierListOwner)element, options);

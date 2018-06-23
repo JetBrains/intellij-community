@@ -85,8 +85,8 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
   private static boolean isEnumConstantReference(final PsiElement element, final PsiElement referenceOrReferencedElement) {
     return element != null &&
            element.getParent() instanceof PsiEnumConstant &&
-           referenceOrReferencedElement instanceof PsiMethod &&
-           ((PsiMethod)referenceOrReferencedElement).isConstructor();
+           (referenceOrReferencedElement instanceof PsiMethod && ((PsiMethod)referenceOrReferencedElement).isConstructor() || 
+            referenceOrReferencedElement instanceof PsiClass);
   }
 
   @Nullable
@@ -112,8 +112,14 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         final PsiElement element = file.findElementAt(offset);
         if (element != null) {
           final PsiElement parent = element.getParent();
-          if (parent instanceof PsiFunctionalExpression) {
+          if (parent instanceof PsiFunctionalExpression && 
+              (PsiUtil.isJavaToken(element, JavaTokenType.ARROW) || PsiUtil.isJavaToken(element, JavaTokenType.DOUBLE_COLON))) {
             refElement = PsiUtil.resolveClassInType(((PsiFunctionalExpression)parent).getFunctionalInterfaceType());
+          }
+          else if (element instanceof PsiKeyword && 
+                   parent instanceof PsiTypeElement && 
+                   ((PsiTypeElement)parent).isInferredType()) {
+            refElement = PsiUtil.resolveClassInType(((PsiTypeElement)parent).getType());
           }
         } 
       }
@@ -303,7 +309,7 @@ public class JavaTargetElementEvaluator extends TargetElementEvaluatorEx2 implem
         return null;
       }
 
-      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<PsiClass> visited) {
+      private PsiClass[] getInheritors(PsiClass containingClass, PsiClass psiClass, Set<? super PsiClass> visited) {
         if (psiClass instanceof PsiTypeParameter) {
           List<PsiClass> result = new ArrayList<>();
           for (PsiClassType classType : psiClass.getExtendsListTypes()) {

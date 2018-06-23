@@ -26,7 +26,7 @@ public interface CallReferenceProcessor {
    *
    * @param reference reference to process
    * @param data settings to use while processing
-   * @return false if the reference is processed
+   * @return false if the reference is processed or doesn't require further processing
    */
   boolean process(@NotNull PsiReference reference, @NotNull JavaCallHierarchyData data);
 }

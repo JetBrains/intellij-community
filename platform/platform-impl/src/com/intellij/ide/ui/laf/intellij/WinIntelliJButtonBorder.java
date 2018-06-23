@@ -25,45 +25,45 @@ public class WinIntelliJButtonBorder implements Border, UIResource {
 
     Graphics2D g2 = (Graphics2D)g.create();
     AbstractButton b = (AbstractButton)c;
-    ButtonModel bm = b.getModel();
     Rectangle outerRect = new Rectangle(x, y, width, height);
     try {
-      JBInsets.removeFrom(outerRect, getOuterInsets());
+      JBInsets.removeFrom(outerRect, b.getInsets());
 
       g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
-
-      Color color = UIManager.getColor("Button.intellij.native.borderColor");
-      if (!c.isEnabled()) {
-        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
-      } else if (bm.isPressed()) {
-        color = UIManager.getColor("Button.intellij.native.pressedBorderColor");
-      } else if (b.hasFocus() || bm.isRollover()) {
-        color = UIManager.getColor("Button.intellij.native.focusedBorderColor");
-      }  else {
-        if (DarculaButtonUI.isDefaultButton(b)) {
-          color = UIManager.getColor("Button.intellij.native.focusedBorderColor");
-        }
-      }
-      int bw = getBorderWidth(b);
 
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(outerRect, false);
 
       Rectangle innerRect = new Rectangle(outerRect);
-      JBInsets.removeFrom(innerRect, JBUI.insets(bw));
+      JBInsets.removeFrom(innerRect, JBUI.insets(getBorderWidth(b)));
       border.append(innerRect, false);
 
-      g2.setColor(color);
+      g2.setColor(getBorderColor(b));
+      if (!c.isEnabled()) {
+        g2.setComposite(AlphaComposite.getInstance(AlphaComposite.SRC_OVER, DISABLED_ALPHA_LEVEL));
+      }
+
       g2.fill(border);
     } finally {
       g2.dispose();
     }
   }
 
-  @NotNull
-  public JBInsets getOuterInsets() {
-    return JBUI.insets(1);
+  private static Color getBorderColor(AbstractButton b) {
+    ButtonModel bm = b.getModel();
+
+    Color focusedBorderColor = (Color)b.getClientProperty("JButton.focusedBorderColor");
+    if (bm.isPressed()) {
+      return focusedBorderColor != null ?
+             focusedBorderColor : UIManager.getColor("Button.intellij.native.pressedBorderColor");
+    } else if (b.hasFocus() || bm.isRollover() || DarculaButtonUI.isDefaultButton(b)) {
+      return focusedBorderColor != null ?
+             focusedBorderColor : UIManager.getColor("Button.intellij.native.focusedBorderColor");
+    } else {
+      Color borderColor = (Color)b.getClientProperty("JButton.borderColor");
+      return borderColor != null ? borderColor : UIManager.getColor("Button.intellij.native.borderColor");
+    }
   }
 
   protected boolean isWideBorder(@NotNull AbstractButton b) {

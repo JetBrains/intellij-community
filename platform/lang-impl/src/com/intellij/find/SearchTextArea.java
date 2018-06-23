@@ -21,9 +21,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeTooltip;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaTextBorder;
-import com.intellij.ide.ui.laf.darcula.ui.DarculaTextFieldUI;
 import com.intellij.ide.ui.laf.intellij.MacIntelliJTextBorder;
 import com.intellij.ide.ui.laf.intellij.WinIntelliJTextFieldUI;
 import com.intellij.openapi.actionSystem.*;
@@ -34,7 +32,6 @@ import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.project.DumbAwareAction;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -47,10 +44,7 @@ import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.JBDimension;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import net.miginfocom.swing.MigLayout;
 import org.jetbrains.annotations.NotNull;
 
@@ -100,13 +94,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myTextArea = textArea;
     mySearchMode = searchMode;
     myInfoMode = infoMode;
-
-    if (UIUtil.isUnderWindowsLookAndFeel()) {
-      myTextArea.setFont(UIManager.getFont("TextField.font"));
-    } else {
-      Utils.setSmallerFont(myTextArea);
-    }
-
+    updateFont();
+    
     myTextArea.addPropertyChangeListener("background", this);
     myTextArea.addPropertyChangeListener("font", this);
     myTextArea.addFocusListener(this);
@@ -219,6 +208,22 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     myIconsPanel = new NonOpaquePanel();
 
     updateLayout();
+  }
+
+  @Override
+  public void updateUI() {
+    super.updateUI();
+    updateFont();
+  }
+
+  private void updateFont() {
+    if (myTextArea != null) {
+      if (UIUtil.isUnderWindowsLookAndFeel()) {
+        myTextArea.setFont(UIManager.getFont("TextField.font"));
+      } else {
+        Utils.setSmallerFont(myTextArea);
+      }
+    }
   }
 
   protected void updateLayout() {
@@ -429,7 +434,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
   @NotNull
   private LafHelper createHelper() {
     return UIUtil.isUnderWin10LookAndFeel() ? new Win10LafHelper() :
-           SystemInfo.isMac && !UIUtil.isUnderDarcula() ? new MacLafHelper() : new DefaultLafHelper();
+           UIUtil.isUnderDefaultMacTheme() ? new MacLafHelper() :
+           new DefaultLafHelper();
   }
 
   private static abstract class LafHelper {
@@ -477,7 +483,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     @Override
     String getIconsPanelConstraints() {
       int extraGap = getExtraGap();
-      return "gaptop " + extraGap + ",ay top, gapright " + extraGap / 2;
+      return "gaptop " + extraGap + ", ay top, gapright " + extraGap / 2;
     }
 
     @Override
@@ -487,7 +493,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     Icon getShowHistoryIcon() {
-      return IconCache.getIcon("searchFieldWithHistory");
+      return LafIconLookup.getIcon("searchFieldWithHistory");
     }
 
     @Override
@@ -518,7 +524,8 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
     @Override
     String getLayoutConstraints() {
-      return "flowx, ins 2 " + JBUI.scale(4) + " 2 " + (3 + JBUI.scale(1)) + ", gapx " + JBUI.scale(3);
+      Insets i = SystemInfo.isLinux ? JBUI.insets(2) : JBUI.insets(3);
+      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUI.scale(3);
     }
 
     @Override
@@ -540,7 +547,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     Icon getShowHistoryIcon() {
       Icon searchIcon = UIManager.getIcon("TextField.darcula.searchWithHistory.icon");
       if (searchIcon == null) {
-        searchIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/searchWithHistory.png", DarculaTextFieldUI.class, true);
+        searchIcon = LafIconLookup.getIcon("searchWithHistory");
       }
       return searchIcon;
     }
@@ -549,7 +556,7 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
     Icon getClearIcon() {
       Icon clearIcon = UIManager.getIcon("TextField.darcula.clear.icon");
       if (clearIcon == null) {
-        clearIcon = IconLoader.findIcon("/com/intellij/ide/ui/laf/icons/clear.png", DarculaTextFieldUI.class, true);
+        clearIcon = LafIconLookup.getIcon("clear");
       }
       return clearIcon;
     }
@@ -581,6 +588,12 @@ public class SearchTextArea extends NonOpaquePanel implements PropertyChangeList
 
       myTextArea.addMouseListener(ml);
       addMouseListener(ml);
+    }
+
+    @Override
+    String getLayoutConstraints() {
+      Insets i = JBUI.insets(1, 1, 2, 1);
+      return "flowx, ins " + i.top + " " + i.left + " " + i.bottom + " " + i.right + ", gapx " + JBUI.scale(3);
     }
 
     @Override

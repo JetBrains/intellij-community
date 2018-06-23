@@ -5,11 +5,10 @@ import com.intellij.lang.jvm.JvmModifier
 import com.intellij.lang.jvm.types.JvmSubstitutor
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.Pair
 import com.intellij.psi.PsiJvmSubstitutor
 import com.intellij.psi.PsiSubstitutor
 import com.intellij.psi.PsiType
-import com.intellij.psi.codeStyle.SuggestedNameInfo
+import com.intellij.openapi.util.Pair as JBPair
 
 private class SimpleMethodRequest(
   private val methodName: String,
@@ -22,19 +21,19 @@ private class SimpleMethodRequest(
   override fun getModifiers() = modifiers
   override fun getReturnType() = returnType
   override fun getAnnotations() = emptyList<AnnotationRequest>()
-  override fun getParameters() = emptyList<kotlin.Pair<SuggestedNameInfo, ExpectedTypes>>()
+  override fun getExpectedParameters() = emptyList<ExpectedParameter>()
   override fun getTargetSubstitutor() = targetSubstitutor
 }
 
 private class SimpleConstructorRequest(
-  private val parameters: List<kotlin.Pair<SuggestedNameInfo, ExpectedTypes>>,
+  private val expectedParameters: List<ExpectedParameter>,
   private val targetSubstitutor: JvmSubstitutor
 ) : CreateConstructorRequest {
   override fun isValid(): Boolean = true
   override fun getModifiers() = emptyList<JvmModifier>()
   override fun getAnnotations() = emptyList<AnnotationRequest>()
   override fun getTargetSubstitutor() = targetSubstitutor
-  override fun getParameters() = parameters
+  override fun getExpectedParameters() = expectedParameters
 }
 
 fun methodRequest(project: Project, methodName: String, modifier: JvmModifier, returnType: JvmType): CreateMethodRequest {
@@ -46,12 +45,9 @@ fun methodRequest(project: Project, methodName: String, modifier: JvmModifier, r
   )
 }
 
-fun constructorRequest(project: Project, parameters: List<Pair<String, PsiType>>): CreateConstructorRequest {
-  val expectedParameters = parameters.map {
-    nameInfo(it.first) to expectedTypes(it.second)
-  }
+fun constructorRequest(project: Project, parameters: List<JBPair<String, PsiType>>): CreateConstructorRequest {
   return SimpleConstructorRequest(
-    parameters = expectedParameters,
+    expectedParameters = parameters.map { expectedParameter(it.second, it.first) },
     targetSubstitutor = PsiJvmSubstitutor(project, PsiSubstitutor.EMPTY)
   )
 }

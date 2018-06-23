@@ -19,10 +19,9 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.PsiType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,12 +31,22 @@ import org.jetbrains.annotations.Nullable;
  */
 public class InstanceofInstruction extends BinopInstruction {
   @Nullable private final PsiExpression myLeft;
-  @NotNull private final PsiType myCastType;
+  @Nullable private final PsiType myCastType;
 
-  public InstanceofInstruction(PsiElement psiAnchor, @NotNull Project project, @Nullable PsiExpression left, @NotNull PsiType castType) {
-    super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, project);
+  public InstanceofInstruction(PsiExpression psiAnchor, @Nullable PsiExpression left, @NotNull PsiType castType) {
+    super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, PsiType.BOOLEAN);
     myLeft = left;
     myCastType = castType;
+  }
+
+  /**
+   * Construct a class object instanceof check (e.g. from Class.isInstance call); castType is not known
+   * @param psiAnchor anchor call
+   */
+  public InstanceofInstruction(PsiMethodCallExpression psiAnchor) {
+    super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, PsiType.BOOLEAN);
+    myLeft = null;
+    myCastType = null;
   }
 
   @Override
@@ -54,8 +63,16 @@ public class InstanceofInstruction extends BinopInstruction {
     return myLeft;
   }
 
-  @NotNull
+  @Nullable
   public PsiType getCastType() {
     return myCastType;
+  }
+
+  /**
+   * @return true if this instanceof instruction checks against Class object (e.g. Class.isInstance() call). In this case
+   * class object is located on the stack and cast type is not known
+   */
+  public boolean isClassObjectCheck() {
+    return myCastType == null;
   }
 }

@@ -101,6 +101,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
    * sys.argv[1:]</cite>, which are stored in {@link #GROUP_SCRIPT}.
    */
   public static final String GROUP_MODULE = "Module";
+  //TODO: DOC ParametersListUtil
   public static final String GROUP_SCRIPT = "Script";
   public static final String MODULE_PARAMETER = "-m";
   private final AbstractPythonRunConfiguration myConfig;

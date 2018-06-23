@@ -21,7 +21,6 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
@@ -42,14 +41,14 @@ import java.util.*;
  */
 public class DuplicatesFinder {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.util.duplicates.DuplicatesFinder");
-  public static final Key<Pair<PsiVariable, PsiType>> PARAMETER = Key.create("PARAMETER");
+  public static final Key<Parameter> PARAMETER = Key.create("PARAMETER");
   @NotNull private final PsiElement[] myPattern;
   private final InputVariables myParameters;
   private final List<? extends PsiVariable> myOutputParameters;
   private final List<PsiElement> myPatternAsList;
   private boolean myMultipleExitPoints;
   @Nullable private final ReturnValue myReturnValue;
-  private final boolean myWithExtractedParameters;
+  private final MatchType myMatchType;
   private final Set<PsiVariable> myEffectivelyLocal;
   private ComplexityHolder myPatternComplexityHolder;
   private ComplexityHolder myCandidateComplexityHolder;
@@ -58,7 +57,7 @@ public class DuplicatesFinder {
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters,
-                          boolean withExtractedParameters,
+                          @NotNull MatchType matchType,
                           @Nullable Set<PsiVariable> effectivelyLocal) {
     myReturnValue = returnValue;
     LOG.assertTrue(pattern.length > 0);
@@ -66,7 +65,7 @@ public class DuplicatesFinder {
     myPatternAsList = Arrays.asList(myPattern);
     myParameters = parameters;
     myOutputParameters = outputParameters;
-    myWithExtractedParameters = withExtractedParameters;
+    myMatchType = matchType;
     myEffectivelyLocal = effectivelyLocal != null ? effectivelyLocal : Collections.emptySet();
 
     final PsiElement codeFragment = ControlFlowUtil.findCodeFragment(pattern[0]);
@@ -94,7 +93,7 @@ public class DuplicatesFinder {
         myParameters.removeParametersUsedInExitsOnly(codeFragment, exitStatements, controlFlow, startOffset, endOffset);
       }
     }
-    catch (AnalysisCanceledException e) {
+    catch (AnalysisCanceledException ignored) {
     }
   }
 
@@ -102,7 +101,7 @@ public class DuplicatesFinder {
                           InputVariables parameters,
                           @Nullable ReturnValue returnValue,
                           @NotNull List<? extends PsiVariable> outputParameters) {
-    this(pattern, parameters, returnValue, outputParameters, false, null);
+    this(pattern, parameters, returnValue, outputParameters, MatchType.EXACT, null);
   }
 
   public DuplicatesFinder(final PsiElement[] pattern,
@@ -143,36 +142,48 @@ public class DuplicatesFinder {
   }
 
   private void annotatePattern() {
-    for (final PsiElement patternComponent : myPattern) {
-      patternComponent.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          final PsiElement element = reference.resolve();
-          if (element instanceof PsiVariable) {
-            final PsiVariable variable = (PsiVariable)element;
-            PsiType type = variable.getType();
-            myParameters.annotateWithParameter(reference);
-            if (myOutputParameters.contains(element)) {
-              reference.putUserData(PARAMETER, Pair.create(variable, type));
-            }
-          }
-          PsiElement qualifier = reference.getQualifier();
-          if (qualifier != null) {
-            qualifier.accept(this);
+    JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        final PsiElement element = reference.resolve();
+        if (element instanceof PsiVariable) {
+          final PsiVariable variable = (PsiVariable)element;
+          PsiType type = variable.getType();
+          myParameters.annotateWithParameter(reference);
+          if (myOutputParameters.contains(element)) {
+            reference.putUserData(PARAMETER, new Parameter(variable, type));
           }
         }
-      });
+        PsiElement qualifier = reference.getQualifier();
+        if (qualifier != null) {
+          qualifier.accept(this);
+        }
+      }
+    };
+    for (final PsiElement patternComponent : myPattern) {
+      patternComponent.accept(visitor);
     }
   }
 
   private void deannotatePattern() {
-    for (final PsiElement patternComponent : myPattern) {
-      patternComponent.accept(new JavaRecursiveElementWalkingVisitor() {
-        @Override public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
-          if (reference.getUserData(PARAMETER) != null) {
-            reference.putUserData(PARAMETER, null);
-          }
+    JavaRecursiveElementWalkingVisitor visitor = new JavaRecursiveElementWalkingVisitor() {
+      @Override
+      public void visitExpression(PsiExpression expression) {
+        super.visitExpression(expression);
+        if (expression.getUserData(PARAMETER) != null) {
+          expression.putUserData(PARAMETER, null);
         }
-      });
+      }
+
+      @Override
+      public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
+        if (reference.getUserData(PARAMETER) != null) {
+          reference.putUserData(PARAMETER, null);
+        }
+      }
+    };
+    for (final PsiElement patternComponent : myPattern) {
+      patternComponent.accept(visitor);
     }
   }
 
@@ -331,230 +342,370 @@ public class DuplicatesFinder {
     return true;
   }
 
-  private boolean matchPattern(PsiElement pattern,
-                               PsiElement candidate,
-                               List<PsiElement> candidates,
-                               Match match) {
+  private boolean matchPattern(@Nullable PsiElement pattern,
+                               @Nullable PsiElement candidate,
+                               @NotNull List<PsiElement> candidates,
+                               @NotNull Match match) {
     if (pattern == null || candidate == null) return pattern == candidate;
-    if (pattern.getUserData(PARAMETER) != null) {
-      final Pair<PsiVariable, PsiType> parameter = pattern.getUserData(PARAMETER);
-      if(!myWithExtractedParameters || parameter.second.equals(parameter.first.getType())) {
-        return match.putParameter(parameter, candidate);
+    final Boolean parameterMatches = matchParameter(pattern, candidate, match);
+    if (parameterMatches != null) {
+      return parameterMatches;
+    }
+
+    if (!canBeEquivalent(pattern, candidate)) {
+      return false; // Q : is it correct to check implementation classes?
+    }
+
+    if (pattern instanceof PsiExpressionList && candidate instanceof PsiExpressionList) {
+      Boolean matches = matchVarargs((PsiExpressionList)pattern, (PsiExpressionList)candidate, candidates, match);
+      if (matches != null) {
+        return matches;
       }
     }
 
-    if (!canBeEquivalent(pattern, candidate)) return false; // Q : is it correct to check implementation classes?
+    if (isParameterModification(pattern, candidate)) {
+      return false;
+    }
 
-    if (pattern instanceof PsiExpressionList && candidate instanceof PsiExpressionList) { //check varargs
-      final PsiExpression[] expressions = ((PsiExpressionList)pattern).getExpressions();
-      final PsiExpression[] childExpressions = ((PsiExpressionList)candidate).getExpressions();
-      if (expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
-        final PsiElement resolved = ((PsiReferenceExpression)expressions[expressions.length - 1]).resolve();
-        if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getType() instanceof PsiEllipsisType) {
-          for(int i = 0; i < expressions.length - 1; i++) {
-            final Pair<PsiVariable, PsiType> parameter = expressions[i].getUserData(PARAMETER);
-            if (parameter == null) {
-              if (!matchPattern(expressions[i], childExpressions[i], candidates, match)) {
-                return false;
-              }
-            } else if (!match.putParameter(parameter, childExpressions[i])) return false;
-          }
-          final Pair<PsiVariable, PsiType> param = expressions[expressions.length - 1].getUserData(PARAMETER);
-          if (param == null) return false;
-          for(int i = expressions.length - 1; i < childExpressions.length; i++) {
-            if (!match.putParameter(param, childExpressions[i])) return false;
-          }
-          return true;
-        }
+    if (pattern instanceof PsiJavaCodeReferenceElement && candidate instanceof PsiJavaCodeReferenceElement) {
+      Boolean matches =
+        matchReferenceElement((PsiJavaCodeReferenceElement)pattern, (PsiJavaCodeReferenceElement)candidate, candidates, match);
+      if (matches != null) {
+        return matches;
       }
     }
 
-    if (pattern instanceof PsiAssignmentExpression) {
-      final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)pattern).getLExpression());
-      if (lExpression.getType() instanceof PsiPrimitiveType &&
-          lExpression instanceof PsiReferenceExpression &&
-          ((PsiReferenceExpression)lExpression).resolve() instanceof PsiParameter) {
+    if (pattern instanceof PsiTypeCastExpression && candidate instanceof PsiTypeCastExpression) {
+      if (!isEquivalentTypeCast((PsiTypeCastExpression)pattern, (PsiTypeCastExpression)candidate)) {
         return false;
       }
-    } else if (pattern instanceof PsiUnaryExpression) {
-      if (checkParameterModification(((PsiUnaryExpression)pattern).getOperand(), ((PsiUnaryExpression)pattern).getOperationTokenType(),
-                                     ((PsiUnaryExpression)candidate).getOperand())) return false;
     }
-
-    if (pattern instanceof PsiJavaCodeReferenceElement) {
-      final PsiElement resolveResult1 = ((PsiJavaCodeReferenceElement)pattern).resolve();
-      final PsiElement resolveResult2 = ((PsiJavaCodeReferenceElement)candidate).resolve();
-      if (resolveResult1 instanceof PsiClass && resolveResult2 instanceof PsiClass) return true;
-      if (isUnder(resolveResult1, myPatternAsList) && isUnder(resolveResult2, candidates)) {
-        traverseParameter(resolveResult1, resolveResult2, match);
-        return match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
-      }
-      if (resolveResult1 instanceof PsiVariable && myEffectivelyLocal.contains((PsiVariable)resolveResult1)) {
-        return (resolveResult2 instanceof PsiLocalVariable || resolveResult2 instanceof PsiParameter) &&
-               match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
-      }
-      final PsiElement qualifier2 = ((PsiJavaCodeReferenceElement)candidate).getQualifier();
-      if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
-        return matchExtractableVariable(pattern, candidate, match);
-      }
-      PsiElement qualifier1 = ((PsiJavaCodeReferenceElement)pattern).getQualifier();
-      if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression &&
-          !match.areCorrespond(((PsiReferenceExpression)qualifier1).resolve(), ((PsiReferenceExpression)qualifier2).resolve())) {
+    else if (pattern instanceof PsiNewExpression && candidate instanceof PsiNewExpression) {
+      if (!isEquivalentNewExpression((PsiNewExpression)pattern, (PsiNewExpression)candidate)) {
         return false;
       }
-
-      if (qualifier1 == null && qualifier2 == null) {
-        final PsiClass patternClass = RefactoringChangeUtil.getThisClass(pattern);
-        final PsiClass candidateClass = RefactoringChangeUtil.getThisClass(candidate);
-        if (resolveResult1 == resolveResult2 &&
-            resolveResult1 instanceof PsiMember) {
-          final PsiClass containingClass = ((PsiMember)resolveResult1).getContainingClass();
-          if (!InheritanceUtil.isInheritorOrSelf(candidateClass, patternClass, true) &&
-              InheritanceUtil.isInheritorOrSelf(candidateClass, containingClass, true) &&
-              InheritanceUtil.isInheritorOrSelf(patternClass, containingClass, true)) {
-            return false;
-          }
-        }
-      }
-
     }
-
-    if (pattern instanceof PsiTypeCastExpression) {
-      final PsiTypeElement castTypeElement1 = ((PsiTypeCastExpression)pattern).getCastType();
-      final PsiTypeElement castTypeElement2 = ((PsiTypeCastExpression)candidate).getCastType();
-      if (castTypeElement1 != null && castTypeElement2 != null) {
-        final PsiType type1 = TypeConversionUtil.erasure(castTypeElement1.getType());
-        final PsiType type2 = TypeConversionUtil.erasure(castTypeElement2.getType());
-        if (!type1.equals(type2)) return false;
+    else if (pattern instanceof PsiClassObjectAccessExpression && candidate instanceof PsiClassObjectAccessExpression) {
+      return matchObjectAccess((PsiClassObjectAccessExpression)pattern, (PsiClassObjectAccessExpression)candidate);
+    }
+    else if (pattern instanceof PsiInstanceOfExpression && candidate instanceof PsiInstanceOfExpression) {
+      if (!isEquivalentInstanceOf((PsiInstanceOfExpression)pattern, (PsiInstanceOfExpression)candidate)) {
+        return false;
       }
-    } else if (pattern instanceof PsiNewExpression) {
-      final PsiType type1 = ((PsiNewExpression)pattern).getType();
-      final PsiType type2 = ((PsiNewExpression)candidate).getType();
-      if (type1 == null || type2 == null) return false;
-      final PsiMethod constructor1 = ((PsiNewExpression)pattern).resolveConstructor();
-      final PsiMethod constructor2 = ((PsiNewExpression)candidate).resolveConstructor();
-      if (constructor1 != null && constructor2 != null) {
-        if (!pattern.getManager().areElementsEquivalent(constructor1, constructor2)) return false;
-      }
-      else {
-        if (!canTypesBeEquivalent(type1, type2)) return false;
-      }
-    } else if (pattern instanceof PsiClassObjectAccessExpression) {
-      final PsiTypeElement operand1 = ((PsiClassObjectAccessExpression)pattern).getOperand();
-      final PsiTypeElement operand2 = ((PsiClassObjectAccessExpression)candidate).getOperand();
-      return operand1.getType().equals(operand2.getType());
-    } else if (pattern instanceof PsiInstanceOfExpression) {
-      final PsiTypeElement operand1 = ((PsiInstanceOfExpression)pattern).getCheckType();
-      final PsiTypeElement operand2 = ((PsiInstanceOfExpression)candidate).getCheckType();
-      if (operand1 == null || operand2 == null) return false;
-      if (!operand1.getType().equals(operand2.getType())) return false;
     } else if (pattern instanceof PsiReturnStatement) {
-      final PsiReturnStatement patternReturnStatement = (PsiReturnStatement)pattern;
-      return matchReturnStatement(patternReturnStatement, candidate, candidates, match);
+      return matchReturnStatement((PsiReturnStatement)pattern, candidate, candidates, match);
     } else if (pattern instanceof PsiContinueStatement) {
       match.registerReturnValue(new ContinueReturnValue());
     } else if (pattern instanceof PsiBreakStatement) {
       match.registerReturnValue(new BreakReturnValue());
-    }else if (pattern instanceof PsiMethodCallExpression) {
-      final PsiMethod patternMethod = ((PsiMethodCallExpression)pattern).resolveMethod();
-      final PsiMethod candidateMethod = ((PsiMethodCallExpression)candidate).resolveMethod();
-      if (patternMethod != null && candidateMethod != null) {
-        if (!MethodSignatureUtil.areSignaturesEqual(patternMethod, candidateMethod)) return false;
+    }
+    else if (pattern instanceof PsiMethodCallExpression && candidate instanceof PsiMethodCallExpression) {
+      if (!isEquivalentMethodCall((PsiMethodCallExpression)pattern, (PsiMethodCallExpression)candidate)) {
+        return false;
       }
-    } else if (pattern instanceof PsiReferenceExpression) {
-      final PsiReferenceExpression patternRefExpr = (PsiReferenceExpression)pattern;
-      final PsiReferenceExpression candidateRefExpr = (PsiReferenceExpression)candidate;
-      final PsiExpression patternQualifier = patternRefExpr.getQualifierExpression();
-      final PsiExpression candidateQualifier = candidateRefExpr.getQualifierExpression();
-      if (patternQualifier == null) {
-        PsiClass contextClass = PsiTreeUtil.getContextOfType(pattern, PsiClass.class);
-        if (candidateQualifier instanceof PsiReferenceExpression) {
-          final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
-          if (resolved instanceof PsiClass && contextClass != null && InheritanceUtil.isInheritorOrSelf(contextClass, (PsiClass)resolved, true)) {
-            return true;
-          }
-        }
-        return contextClass != null && match.registerInstanceExpression(candidateQualifier, contextClass);
-      } else {
-        if (candidateQualifier == null) {
-          if (patternQualifier instanceof PsiThisExpression) {
-            final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)patternQualifier).getQualifier();
-            if (candidate instanceof PsiReferenceExpression) {
-              PsiElement contextClass = qualifier == null ? PsiTreeUtil.getContextOfType(pattern, PsiClass.class) : qualifier.resolve();
-              return contextClass instanceof PsiClass && match.registerInstanceExpression(((PsiReferenceExpression)candidate).getQualifierExpression(),
-                                                                                          (PsiClass)contextClass);
-            }
-          } else {
-            final PsiType type = patternQualifier.getType();
-            PsiClass contextClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
-            try {
-              final Pair<PsiVariable, PsiType> parameter = patternQualifier.getUserData(PARAMETER);
-
-              if (parameter != null) {
-                final PsiClass thisClass = RefactoringChangeUtil.getThisClass(parameter.first);
-
-                if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
-                  contextClass = thisClass;
-                }
-                final PsiClass thisCandidate = RefactoringChangeUtil.getThisClass(candidate);
-                if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
-                  contextClass = thisCandidate;
-                }
-                return contextClass != null && !(contextClass instanceof PsiAnonymousClass) && match.putParameter(parameter, RefactoringChangeUtil
-                  .createThisExpression(patternQualifier.getManager(), contextClass));
-              } else if (patternQualifier instanceof PsiReferenceExpression) {
-                final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
-                if (resolved instanceof PsiClass) {
-                  final PsiClass classContext = PsiTreeUtil.getContextOfType(candidate, PsiClass.class);
-                  if (classContext != null && InheritanceUtil.isInheritorOrSelf(classContext, (PsiClass)resolved, true)) {
-                    return true;
-                  }
-                }
-              }
-
-              return false;
-            }
-            catch (IncorrectOperationException e) {
-              LOG.error(e);
-            }
-          }
-        } else {
-          if (patternQualifier instanceof PsiThisExpression && candidateQualifier instanceof PsiThisExpression) {
-            final PsiJavaCodeReferenceElement thisPatternQualifier = ((PsiThisExpression)patternQualifier).getQualifier();
-            final PsiElement patternContextClass = thisPatternQualifier == null ? PsiTreeUtil.getContextOfType(patternQualifier, PsiClass.class) : thisPatternQualifier.resolve();
-            final PsiJavaCodeReferenceElement thisCandidateQualifier = ((PsiThisExpression)candidateQualifier).getQualifier();
-            final PsiElement candidateContextClass = thisCandidateQualifier == null ? PsiTreeUtil.getContextOfType(candidateQualifier, PsiClass.class) : thisCandidateQualifier.resolve();
-            return patternContextClass == candidateContextClass;
-          }
-        }
+    }
+    else if (pattern instanceof PsiReferenceExpression && candidate instanceof PsiReferenceExpression) {
+      final Boolean matches = matchReferenceExpression((PsiReferenceExpression)pattern, (PsiReferenceExpression)candidate, match);
+      if (matches != null) {
+        return matches;
       }
     } else if (pattern instanceof PsiThisExpression) {
-      final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)pattern).getQualifier();
-      final PsiElement contextClass = qualifier == null ? PsiTreeUtil.getContextOfType(pattern, PsiClass.class) : qualifier.resolve();
-      if (candidate instanceof PsiReferenceExpression) {
-        final PsiElement parent = candidate.getParent();
-        return parent instanceof PsiReferenceExpression && contextClass instanceof PsiClass && match.registerInstanceExpression(((PsiReferenceExpression)parent).getQualifierExpression(),
-                                                                                    (PsiClass)contextClass);
-      } else if (candidate instanceof PsiThisExpression) {
-        final PsiJavaCodeReferenceElement candidateQualifier = ((PsiThisExpression)candidate).getQualifier();
-        final PsiElement candidateContextClass = candidateQualifier == null ? PsiTreeUtil.getContextOfType(candidate, PsiClass.class) : candidateQualifier.resolve();
-        return contextClass == candidateContextClass;
-      }
-    } else if (pattern instanceof PsiSuperExpression) {
-      final PsiJavaCodeReferenceElement qualifier = ((PsiSuperExpression)pattern).getQualifier();
-      final PsiElement contextClass = qualifier == null ? PsiTreeUtil.getContextOfType(pattern, PsiClass.class) : qualifier.resolve();
-      if (candidate instanceof PsiSuperExpression) {
-        final PsiJavaCodeReferenceElement candidateQualifier = ((PsiSuperExpression)candidate).getQualifier();
-        return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : PsiTreeUtil.getContextOfType(candidate, PsiClass.class));
-      }
-    } else if (pattern instanceof PsiModifierList) {
-      return candidate instanceof PsiModifierList && matchModifierList((PsiModifierList)pattern, (PsiModifierList)candidate);
+      return matchThisExpression((PsiThisExpression)pattern, candidate, match);
+    }
+    else if (pattern instanceof PsiSuperExpression && candidate instanceof PsiSuperExpression) {
+      return matchSuperExpression((PsiSuperExpression)pattern, (PsiSuperExpression)candidate);
+    }
+    else if (pattern instanceof PsiModifierList && candidate instanceof PsiModifierList) {
+      return matchModifierList((PsiModifierList)pattern, (PsiModifierList)candidate);
     }
 
     PsiElement[] children1 = getFilteredChildren(pattern);
     PsiElement[] children2 = getFilteredChildren(candidate);
-    if (children1.length != children2.length) return false;
+    if (!matchChildren(children1, children2, candidates, match)) {
+      return false;
+    }
 
+    if (children1.length == 0) {
+      return matchLeaf(pattern, candidate, match);
+    }
+
+    return true;
+  }
+
+  @Nullable
+  private Boolean matchParameter(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+    final Parameter parameter = pattern.getUserData(PARAMETER);
+    if (parameter == null || myMatchType == MatchType.EXACT && parameter.isFolded()) {
+      return null;
+    }
+    if (!match.putParameter(parameter, candidate)) {
+      return false;
+    }
+    if (parameter.isFolded() && pattern instanceof PsiExpression && candidate instanceof PsiExpression) {
+      match.putFoldedExpressionMapping(parameter, (PsiExpression)pattern, (PsiExpression)candidate);
+    }
+    return true;
+  }
+
+  @Nullable
+  private Boolean matchVarargs(@NotNull PsiExpressionList pattern,
+                               @NotNull PsiExpressionList candidate,
+                               @NotNull List<PsiElement> candidates,
+                               @NotNull Match match) {
+    final PsiExpression[] expressions = pattern.getExpressions();
+    final PsiExpression[] childExpressions = candidate.getExpressions();
+    if (expressions.length > 0 && expressions[expressions.length - 1] instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)expressions[expressions.length - 1]).resolve();
+      if (resolved instanceof PsiParameter && ((PsiParameter)resolved).getType() instanceof PsiEllipsisType) {
+        for (int i = 0; i < expressions.length - 1; i++) {
+          final Parameter parameter = expressions[i].getUserData(PARAMETER);
+          if (parameter == null) {
+            if (!matchPattern(expressions[i], childExpressions[i], candidates, match)) {
+              return false;
+            }
+          }
+          else if (!match.putParameter(parameter, childExpressions[i])) return false;
+        }
+        final Parameter param = expressions[expressions.length - 1].getUserData(PARAMETER);
+        if (param == null) return false;
+        for (int i = expressions.length - 1; i < childExpressions.length; i++) {
+          if (!match.putParameter(param, childExpressions[i])) return false;
+        }
+        return true;
+      }
+    }
+    return null;
+  }
+
+  private static boolean isParameterModification(@NotNull PsiElement pattern, @NotNull PsiElement candidate) {
+    if (pattern instanceof PsiAssignmentExpression) {
+      final PsiExpression lExpression = PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)pattern).getLExpression());
+      if (lExpression instanceof PsiReferenceExpression &&
+          lExpression.getType() instanceof PsiPrimitiveType &&
+          ((PsiReferenceExpression)lExpression).resolve() instanceof PsiParameter) {
+        return true;
+      }
+    }
+    else if (pattern instanceof PsiUnaryExpression && candidate instanceof PsiUnaryExpression) {
+      if (checkParameterModification(((PsiUnaryExpression)pattern).getOperand(), ((PsiUnaryExpression)pattern).getOperationTokenType(),
+                                     ((PsiUnaryExpression)candidate).getOperand())) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @Nullable
+  private Boolean matchReferenceElement(@NotNull PsiJavaCodeReferenceElement pattern,
+                                        @NotNull PsiJavaCodeReferenceElement candidate,
+                                        @NotNull List<PsiElement> candidates,
+                                        @NotNull Match match) {
+    final PsiElement resolveResult1 = pattern.resolve();
+    final PsiElement resolveResult2 = candidate.resolve();
+    if (resolveResult1 instanceof PsiClass && resolveResult2 instanceof PsiClass) return true;
+    if (isUnder(resolveResult1, myPatternAsList) && isUnder(resolveResult2, candidates)) {
+      traverseParameter(resolveResult1, resolveResult2, match);
+      return match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
+    }
+    if (resolveResult1 instanceof PsiVariable && myEffectivelyLocal.contains((PsiVariable)resolveResult1)) {
+      return (resolveResult2 instanceof PsiLocalVariable || resolveResult2 instanceof PsiParameter) &&
+             match.putDeclarationCorrespondence(resolveResult1, resolveResult2);
+    }
+    final PsiElement qualifier2 = candidate.getQualifier();
+    if (!equivalentResolve(resolveResult1, resolveResult2, qualifier2)) {
+      return matchExtractableVariable(pattern, candidate, match);
+    }
+    PsiElement qualifier1 = pattern.getQualifier();
+    if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression &&
+        !match.areCorrespond(((PsiReferenceExpression)qualifier1).resolve(), ((PsiReferenceExpression)qualifier2).resolve())) {
+      return false;
+    }
+
+    if (qualifier1 == null && qualifier2 == null) {
+      final PsiClass patternClass = RefactoringChangeUtil.getThisClass(pattern);
+      final PsiClass candidateClass = RefactoringChangeUtil.getThisClass(candidate);
+      if (resolveResult1 == resolveResult2 &&
+          resolveResult1 instanceof PsiMember) {
+        final PsiClass containingClass = ((PsiMember)resolveResult1).getContainingClass();
+        if (!InheritanceUtil.isInheritorOrSelf(candidateClass, patternClass, true) &&
+            InheritanceUtil.isInheritorOrSelf(candidateClass, containingClass, true) &&
+            InheritanceUtil.isInheritorOrSelf(patternClass, containingClass, true)) {
+          return false;
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean isEquivalentTypeCast(@NotNull PsiTypeCastExpression pattern, @NotNull PsiTypeCastExpression candidate) {
+    final PsiTypeElement castTypeElement1 = pattern.getCastType();
+    final PsiTypeElement castTypeElement2 = candidate.getCastType();
+    if (castTypeElement1 != null && castTypeElement2 != null) {
+      final PsiType type1 = TypeConversionUtil.erasure(castTypeElement1.getType());
+      final PsiType type2 = TypeConversionUtil.erasure(castTypeElement2.getType());
+      if (!type1.equals(type2)) return false;
+    }
+    return true;
+  }
+
+  private static boolean isEquivalentNewExpression(@NotNull PsiNewExpression pattern, @NotNull PsiNewExpression candidate) {
+    final PsiType type1 = pattern.getType();
+    final PsiType type2 = candidate.getType();
+    if (type1 == null || type2 == null) return false;
+    final PsiMethod constructor1 = pattern.resolveConstructor();
+    final PsiMethod constructor2 = candidate.resolveConstructor();
+    if (constructor1 != null && constructor2 != null) {
+      if (!pattern.getManager().areElementsEquivalent(constructor1, constructor2)) return false;
+    }
+    else {
+      if (!canTypesBeEquivalent(type1, type2)) return false;
+    }
+    return true;
+  }
+
+  private static boolean matchObjectAccess(@NotNull PsiClassObjectAccessExpression pattern,
+                                           @NotNull PsiClassObjectAccessExpression candidate) {
+    final PsiTypeElement operand1 = pattern.getOperand();
+    final PsiTypeElement operand2 = candidate.getOperand();
+    return operand1.getType().equals(operand2.getType());
+  }
+
+  private static boolean isEquivalentInstanceOf(@NotNull PsiInstanceOfExpression pattern, @NotNull PsiInstanceOfExpression candidate) {
+    final PsiTypeElement operand1 = pattern.getCheckType();
+    final PsiTypeElement operand2 = candidate.getCheckType();
+    if (operand1 == null || operand2 == null) return false;
+    if (!operand1.getType().equals(operand2.getType())) return false;
+    return true;
+  }
+
+  private static boolean isEquivalentMethodCall(@NotNull PsiMethodCallExpression pattern, @NotNull PsiMethodCallExpression candidate) {
+    final PsiMethod patternMethod = pattern.resolveMethod();
+    final PsiMethod candidateMethod = candidate.resolveMethod();
+    if (patternMethod != null && candidateMethod != null) {
+      if (!MethodSignatureUtil.areSignaturesEqual(patternMethod, candidateMethod)) return false;
+    }
+    return true;
+  }
+
+  @Nullable
+  private static Boolean matchReferenceExpression(@NotNull PsiReferenceExpression pattern,
+                                                  @NotNull PsiReferenceExpression candidate,
+                                                  @NotNull Match match) {
+    final PsiExpression patternQualifier = pattern.getQualifierExpression();
+    final PsiExpression candidateQualifier = candidate.getQualifierExpression();
+    if (patternQualifier == null) {
+      return matchUnqualifiedPatternReference(pattern, candidateQualifier, match);
+    }
+    if (candidateQualifier == null) {
+      return matchUnqualifiedCandidateReference(patternQualifier, candidate, match);
+    }
+    if (patternQualifier instanceof PsiThisExpression && candidateQualifier instanceof PsiThisExpression) {
+      return matchThisQualifierReference((PsiThisExpression)patternQualifier, (PsiThisExpression)candidateQualifier);
+    }
+    return null;
+  }
+
+  private static boolean matchUnqualifiedPatternReference(@NotNull PsiReferenceExpression pattern,
+                                                          @Nullable PsiExpression candidateQualifier,
+                                                          @NotNull Match match) {
+    PsiClass contextClass = RefactoringChangeUtil.getThisClass(pattern);
+    if (candidateQualifier instanceof PsiReferenceExpression) {
+      final PsiElement resolved = ((PsiReferenceExpression)candidateQualifier).resolve();
+      if (resolved instanceof PsiClass &&
+          contextClass != null &&
+          InheritanceUtil.isInheritorOrSelf(contextClass, (PsiClass)resolved, true)) {
+        return true;
+      }
+    }
+    return contextClass != null && match.registerInstanceExpression(candidateQualifier, contextClass);
+  }
+
+  private static boolean matchUnqualifiedCandidateReference(@NotNull PsiExpression patternQualifier,
+                                                            @NotNull PsiReferenceExpression candidate,
+                                                            @NotNull Match match) {
+    if (patternQualifier instanceof PsiThisExpression) {
+      final PsiJavaCodeReferenceElement qualifier = ((PsiThisExpression)patternQualifier).getQualifier();
+      PsiElement contextClass = qualifier == null ? RefactoringChangeUtil.getThisClass(patternQualifier) : qualifier.resolve();
+      return contextClass instanceof PsiClass && match.registerInstanceExpression(null, (PsiClass)contextClass);
+    }
+    final PsiType type = patternQualifier.getType();
+    PsiClass contextClass = type instanceof PsiClassType ? ((PsiClassType)type).resolve() : null;
+    try {
+      final Parameter parameter = patternQualifier.getUserData(PARAMETER);
+
+      if (parameter != null) {
+        final PsiClass thisClass = RefactoringChangeUtil.getThisClass(parameter.getVariable());
+
+        if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
+          contextClass = thisClass;
+        }
+        final PsiClass thisCandidate = RefactoringChangeUtil.getThisClass(candidate);
+        if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
+          contextClass = thisCandidate;
+        }
+        return contextClass != null &&
+               !(contextClass instanceof PsiAnonymousClass) &&
+               match.putParameter(parameter, RefactoringChangeUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+      }
+
+      if (patternQualifier instanceof PsiReferenceExpression) {
+        final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
+        if (resolved instanceof PsiClass) {
+          final PsiClass classContext = RefactoringChangeUtil.getThisClass(candidate);
+          if (classContext != null && InheritanceUtil.isInheritorOrSelf(classContext, (PsiClass)resolved, true)) {
+            return true;
+          }
+        }
+      }
+
+      return false;
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error(e);
+    }
+    return false;
+  }
+
+  private static boolean matchThisQualifierReference(PsiThisExpression patternQualifier, PsiThisExpression candidateQualifier) {
+    final PsiJavaCodeReferenceElement thisPatternQualifier = patternQualifier.getQualifier();
+    final PsiElement patternContextClass = thisPatternQualifier == null
+                                           ? RefactoringChangeUtil.getThisClass(patternQualifier) : thisPatternQualifier.resolve();
+    final PsiJavaCodeReferenceElement thisCandidateQualifier = candidateQualifier.getQualifier();
+    final PsiElement candidateContextClass = thisCandidateQualifier == null
+                                             ? RefactoringChangeUtil.getThisClass(candidateQualifier) : thisCandidateQualifier.resolve();
+    return patternContextClass == candidateContextClass;
+  }
+
+  private static boolean matchThisExpression(@NotNull PsiThisExpression pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+    final PsiJavaCodeReferenceElement qualifier = pattern.getQualifier();
+    final PsiElement contextClass = qualifier == null ? RefactoringChangeUtil.getThisClass(pattern) : qualifier.resolve();
+    if (candidate instanceof PsiReferenceExpression) {
+      final PsiElement parent = candidate.getParent();
+      return parent instanceof PsiReferenceExpression &&
+             contextClass instanceof PsiClass &&
+             match.registerInstanceExpression(((PsiReferenceExpression)parent).getQualifierExpression(), (PsiClass)contextClass);
+    }
+    if (candidate instanceof PsiThisExpression) {
+      final PsiJavaCodeReferenceElement candidateQualifier = ((PsiThisExpression)candidate).getQualifier();
+      final PsiElement candidateContextClass = candidateQualifier == null
+                                               ? RefactoringChangeUtil.getThisClass(candidate) : candidateQualifier.resolve();
+      return contextClass == candidateContextClass;
+    }
+    return false;
+  }
+
+  private static boolean matchSuperExpression(@NotNull PsiSuperExpression pattern, @NotNull PsiSuperExpression candidate) {
+    final PsiJavaCodeReferenceElement qualifier = pattern.getQualifier();
+    final PsiElement contextClass = qualifier == null ? RefactoringChangeUtil.getThisClass(pattern) : qualifier.resolve();
+    final PsiJavaCodeReferenceElement candidateQualifier = candidate.getQualifier();
+    return contextClass == (candidateQualifier != null ? candidateQualifier.resolve() : RefactoringChangeUtil.getThisClass(candidate));
+  }
+
+  private boolean matchChildren(@NotNull PsiElement[] children1,
+                                @NotNull PsiElement[] children2,
+                                @NotNull List<PsiElement> candidates,
+                                @NotNull Match match) {
+    if (children1.length != children2.length) return false;
 
     for (int i = 0; i < children1.length; i++) {
       PsiElement child1 = children1[i];
@@ -564,20 +715,22 @@ public class DuplicatesFinder {
         return false;
       }
     }
-
-    if (children1.length == 0) {
-      if (pattern.getParent() instanceof PsiVariable && ((PsiVariable)pattern.getParent()).getNameIdentifier() == pattern) {
-        return match.putDeclarationCorrespondence(pattern.getParent(), candidate.getParent());
-      }
-      if (!pattern.textMatches(candidate)) return false;
-    }
-
     return true;
   }
 
-  private boolean matchExtractableExpression(PsiElement pattern, PsiElement candidate,
-                                             List<PsiElement> candidates, Match match) {
-    if (!myWithExtractedParameters || !(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
+  public boolean matchLeaf(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+    if (pattern.getParent() instanceof PsiVariable && ((PsiVariable)pattern.getParent()).getNameIdentifier() == pattern) {
+      return match.putDeclarationCorrespondence(pattern.getParent(), candidate.getParent());
+    }
+    return pattern.textMatches(candidate);
+  }
+
+  private boolean matchExtractableExpression(@Nullable PsiElement pattern, @Nullable PsiElement candidate,
+                                             @NotNull List<PsiElement> candidates, @NotNull Match match) {
+    if (myMatchType == MatchType.EXACT || !(pattern instanceof PsiExpression) || !(candidate instanceof PsiExpression)) {
+      return false;
+    }
+    if (myPattern.length == 1 && isSameExpression(myPattern[0], (PsiExpression)pattern)) {
       return false;
     }
 
@@ -606,8 +759,11 @@ public class DuplicatesFinder {
     return false;
   }
 
-  private boolean matchExtractableVariable(PsiElement pattern, PsiElement candidate, Match match) {
-    if (!myWithExtractedParameters || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
+  private boolean matchExtractableVariable(@NotNull PsiElement pattern, @NotNull PsiElement candidate, @NotNull Match match) {
+    if (myMatchType == MatchType.EXACT || !(pattern instanceof PsiReferenceExpression) || !(candidate instanceof PsiReferenceExpression)) {
+      return false;
+    }
+    if (myPattern.length == 1 && myPattern[0] == pattern) {
       return false;
     }
     ExtractableExpressionPart part1 = ExtractableExpressionPart.matchVariable((PsiReferenceExpression)pattern, null);
@@ -621,6 +777,16 @@ public class DuplicatesFinder {
     return match.putExtractedParameter(part1, part2);
   }
 
+  private static boolean isSameExpression(@NotNull PsiElement context, @NotNull PsiExpression expression) {
+    if (context instanceof PsiExpression) {
+      return PsiUtil.skipParenthesizedExprDown((PsiExpression)context) == PsiUtil.skipParenthesizedExprDown(expression);
+    }
+    if (context instanceof PsiDeclarationStatement) {
+      PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+      return parent instanceof PsiLocalVariable && parent.getParent() == context;
+    }
+    return false;
+  }
 
   private static boolean matchModifierList(PsiModifierList modifierList1, PsiModifierList modifierList2) {
     if (!(modifierList1.getParent() instanceof PsiLocalVariable)) {
@@ -656,8 +822,8 @@ public class DuplicatesFinder {
 
   private static void traverseParameter(PsiElement pattern, PsiElement candidate, Match match) {
     if (pattern == null || candidate == null) return;
-    if (pattern.getUserData(PARAMETER) != null) {
-      final Pair<PsiVariable, PsiType> parameter = pattern.getUserData(PARAMETER);
+    final Parameter parameter = pattern.getUserData(PARAMETER);
+    if (parameter != null) {
       match.putParameter(parameter, candidate);
       return;
     }
@@ -752,32 +918,86 @@ public class DuplicatesFinder {
   }
 
   @NotNull
-  public static PsiElement[] getFilteredChildren(PsiElement element1) {
-    PsiElement[] children1 = element1.getChildren();
+  public static PsiElement[] getFilteredChildren(@NotNull PsiElement element) {
+    PsiElement[] children = element.getChildren();
+    return getDeeplyFilteredElements(children);
+  }
+
+  @NotNull
+  public static PsiElement[] getDeeplyFilteredElements(@NotNull PsiElement[] children) {
     ArrayList<PsiElement> array = new ArrayList<>();
-    for (PsiElement child : children1) {
-      if (!(child instanceof PsiWhiteSpace) && !(child instanceof PsiComment) && !(child instanceof PsiEmptyStatement)) {
-        if (child instanceof PsiBlockStatement) {
-          child = ((PsiBlockStatement)child).getCodeBlock();
-        }
-        if (child instanceof PsiCodeBlock) {
-          final PsiStatement[] statements = ((PsiCodeBlock)child).getStatements();
-          for (PsiStatement statement : statements) {
-            if (statement instanceof PsiBlockStatement) {
-              Collections.addAll(array, getFilteredChildren(statement));
-            } else if (!(statement instanceof PsiEmptyStatement)) {
-              array.add(statement);
-            }
-          }
-          continue;
-        } else if (child instanceof PsiParenthesizedExpression) {
-          array.add(PsiUtil.skipParenthesizedExprDown((PsiParenthesizedExpression)child));
-          continue;
-        }
-        array.add(child);
+    for (PsiElement child : children) {
+      if (child instanceof PsiWhiteSpace || child instanceof PsiComment || child instanceof PsiEmptyStatement) {
+        continue;
       }
+      if (child instanceof PsiBlockStatement) {
+        child = ((PsiBlockStatement)child).getCodeBlock();
+      }
+      if (child instanceof PsiCodeBlock) {
+        final PsiStatement[] statements = ((PsiCodeBlock)child).getStatements();
+        for (PsiStatement statement : statements) {
+          if (statement instanceof PsiBlockStatement) {
+            Collections.addAll(array, getFilteredChildren(statement));
+          } else if (!(statement instanceof PsiEmptyStatement)) {
+            array.add(statement);
+          }
+        }
+        continue;
+      } else if (child instanceof PsiParenthesizedExpression) {
+        array.add(PsiUtil.skipParenthesizedExprDown((PsiParenthesizedExpression)child));
+        continue;
+      }
+      array.add(child);
     }
     return PsiUtilCore.toPsiElementArray(array);
   }
 
+  public static class Parameter {
+    private final PsiVariable myVariable;
+    private final PsiType myType;
+    private final boolean myFolded;
+
+    public Parameter(@Nullable PsiVariable variable, @Nullable PsiType type) {
+      this(variable, type, false);
+    }
+
+    public Parameter(@Nullable PsiVariable variable, @Nullable PsiType type, boolean folded) {
+      myVariable = variable;
+      myType = type;
+      myFolded = folded;
+    }
+
+    public PsiVariable getVariable() {
+      return myVariable;
+    }
+
+    public PsiType getType() {
+      return myType;
+    }
+
+    public boolean isFolded() {
+      return myFolded;
+    }
+
+    public String toString() {
+      return myVariable + ", " + myType + (myFolded ? ", folded" : "");
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof Parameter)) return false;
+      Parameter p = (Parameter)o;
+      return Objects.equals(myVariable, p.myVariable) &&
+             Objects.equals(myType, p.myType) &&
+             myFolded == p.myFolded;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(myVariable, myType, myFolded);
+    }
+  }
+
+  public enum MatchType {EXACT, PARAMETRIZED, FOLDED}
 }

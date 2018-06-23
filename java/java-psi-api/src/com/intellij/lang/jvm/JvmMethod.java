@@ -15,6 +15,8 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface JvmMethod extends JvmTypeParametersOwner {
 
+  JvmMethod[] EMPTY_ARRAY = new JvmMethod[0];
+
   /**
    * @return {@code true} if this method is a constructor
    */
@@ -59,4 +61,9 @@ public interface JvmMethod extends JvmTypeParametersOwner {
    */
   @NotNull
   JvmReferenceType[] getThrowsTypes();
+
+  @Override
+  default <T> T accept(@NotNull JvmElementVisitor<T> visitor) {
+    return visitor.visitMethod(this);
+  }
 }

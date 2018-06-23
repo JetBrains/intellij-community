@@ -49,7 +49,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element body { body.inner & body.attrs }
 	body.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria.landmark.application
+		&	(	common.attrs.aria.role.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.role.presentation
 			|	common.attrs.aria.implicit.document
@@ -128,9 +128,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 				)
 			|	base.attrs.target
 			)
-		&	(	common.attrs.aria.role.presentation
-			|	common.attrs.aria.role.menuitem
-			)?
 		)
 	base.attrs.href =
 		attribute href {
@@ -184,18 +181,22 @@ datatypes w = "http://whattf.org/datatype-draft"
 		link.attrs.as =
 			attribute as {
 				string ""
+			|	string "audio"
+			|	string "audioworklet"
 			|	string "document"
 			|	string "embed"
 			|	string "font"
 			|	string "image"
 			|	string "manifest"
-			|	string "media"
 			|	string "object"
+			|	string "paintworklet"
 			|	string "report"
 			|	string "script"
 			|	string "serviceworker"
 			|	string "sharedworker"
 			|	string "style"
+			|	string "track"
+			|	string "video"
 			|	string "worker"
 			|	string "xslt"
 			}
@@ -241,6 +242,8 @@ datatypes w = "http://whattf.org/datatype-draft"
 
 	style.elem =
 		element style { style.inner & style.attrs }
+	style.elem.w3c =
+		element style { style.inner & style.attrs } & W3Conly
 	style.attrs =
 		(	common.attrs
 		&	style.attrs.type?
@@ -267,6 +270,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		( common.inner.anything )
 		
 	common.elem.metadata |= style.elem
+	common.elem.flow |= style.elem.w3c
 
 ## Name-Value Metadata: <meta name>
 
@@ -421,7 +425,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 		meta.charset.attrs.charset =
 			attribute charset {
-				(common.data.charset & HTMLonly)
+				(string & HTMLonly)
 				| (xsd:string {
 					pattern = "[uU][tT][fF]-8"
 				} & XMLonly )

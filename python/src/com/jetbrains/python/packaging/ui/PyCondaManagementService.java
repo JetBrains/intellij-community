@@ -26,6 +26,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyCondaPackageCache;
 import com.jetbrains.python.packaging.PyCondaPackageManagerImpl;
@@ -148,6 +149,18 @@ public class PyCondaManagementService extends PyPackageManagementService {
     }
     else {
       super.fetchPackageVersions(packageName, consumer);
+    }
+  }
+
+  @Override
+  public void fetchLatestVersion(@NotNull InstalledPackage pkg, @NotNull CatchingConsumer<String, Exception> consumer) {
+    final String packageName = pkg.getName();
+    if (useConda()) {
+      final String latestVersion = ContainerUtil.getFirstItem(PyCondaPackageCache.getInstance().getVersions(packageName));
+      consumer.consume(latestVersion);
+    }
+    else {
+      super.fetchLatestVersion(pkg, consumer);
     }
   }
 

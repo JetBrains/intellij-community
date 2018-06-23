@@ -17,6 +17,7 @@ package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
@@ -31,7 +32,6 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.ValidationInfo;
-import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
@@ -41,6 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
@@ -60,6 +61,7 @@ import com.intellij.ui.table.TableView;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.DialogUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -67,6 +69,7 @@ import com.intellij.util.ui.table.EditorTextFieldJBTableRowRenderer;
 import com.intellij.util.ui.table.JBTableRow;
 import com.intellij.util.ui.table.JBTableRowEditor;
 import com.intellij.util.ui.table.JBTableRowRenderer;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -94,28 +97,30 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
   private AnActionButton myPropExceptionsButton;
   private Tree myExceptionPropagationTree;
 
-  public JavaChangeSignatureDialog(Project project, PsiMethod method, boolean allowDelegation, PsiElement context) {
+  public JavaChangeSignatureDialog(@NotNull Project project, @NotNull PsiMethod method, boolean allowDelegation, PsiElement context) {
     this(project, new JavaMethodDescriptor(method), allowDelegation, context);
   }
 
-  protected JavaChangeSignatureDialog(Project project, JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
+  protected JavaChangeSignatureDialog(@NotNull Project project, @NotNull JavaMethodDescriptor descriptor, boolean allowDelegation, PsiElement context) {
     super(project, descriptor, allowDelegation, context);
   }
 
-  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
-                                                              final PsiMethod method,
-                                                              final List<ParameterInfoImpl> parameterInfos,
-                                                              final boolean allowDelegation,
-                                                              final PsiReferenceExpression refExpr) {
+  @NotNull
+  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                @NotNull PsiMethod method,
+                                                                @NotNull List<ParameterInfoImpl> parameterInfos,
+                                                                final boolean allowDelegation,
+                                                                final PsiReferenceExpression refExpr) {
     return createAndPreselectNew(project, method, parameterInfos, allowDelegation, refExpr, null);
   }
 
-  public static JavaChangeSignatureDialog createAndPreselectNew(final Project project,
-                                                                final PsiMethod method,
-                                                                final List<ParameterInfoImpl> parameterInfos,
+  @NotNull
+  public static JavaChangeSignatureDialog createAndPreselectNew(@NotNull Project project,
+                                                                @NotNull PsiMethod method,
+                                                                @NotNull List<ParameterInfoImpl> parameterInfos,
                                                                 final boolean allowDelegation,
                                                                 final PsiReferenceExpression refExpr,
-                                                                final Consumer<List<ParameterInfoImpl>> callback) {
+                                                                @Nullable Consumer<List<ParameterInfoImpl>> callback) {
     return new JavaChangeSignatureDialog(project, method, allowDelegation, refExpr) {
       @Override
       protected int getSelectedIdx() {
@@ -151,6 +156,14 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
         };
       }
     };
+  }
+
+  @Nullable
+  @Override
+  @PsiModifier.ModifierConstant
+  protected String getVisibility() {
+    //noinspection MagicConstant
+    return super.getVisibility();
   }
 
   @Override
@@ -214,7 +227,7 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     table.getSelectionModel().setSelectionInterval(0, 0);
     table.setSurrendersFocusOnKeystroke(true);
 
-    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Caller) {
+    myPropExceptionsButton = new AnActionButton(RefactoringBundle.message("changeSignature.propagate.exceptions.title"), null, AllIcons.Hierarchy.Supertypes) {
       @Override
       public void actionPerformed(AnActionEvent e) {
         final Ref<JavaCallerChooser> chooser = new Ref<>();
@@ -248,8 +261,9 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return StdFileTypes.JAVA;
   }
 
+  @NotNull
   @Override
-  protected JavaParameterTableModel createParametersInfoModel(JavaMethodDescriptor descriptor) {
+  protected JavaParameterTableModel createParametersInfoModel(@NotNull JavaMethodDescriptor descriptor) {
     final PsiParameterList parameterList = descriptor.getMethod().getParameterList();
     return new JavaParameterTableModel(parameterList, myDefaultValueContext, this);
   }
@@ -696,34 +710,55 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     return doCalculateSignature(myMethod.getMethod());
   }
 
+  static String getModifiersText(PsiModifierList list, String newVisibility) {
+    final String oldVisibility = VisibilityUtil.getVisibilityModifier(list);
+    List<String> modifierKeywords = StreamEx.of(PsiTreeUtil.findChildrenOfType(list, PsiKeyword.class))
+                                            .map(PsiElement::getText)
+                                            .toList();
+    if (!oldVisibility.equals(newVisibility)) {
+      if (oldVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
+        modifierKeywords.add(0, PsiModifier.PACKAGE_LOCAL);
+      }
+      if (newVisibility.equals(PsiModifier.PACKAGE_LOCAL)) {
+        modifierKeywords.remove(oldVisibility);
+      } else {
+        modifierKeywords.replaceAll(m -> m.equals(oldVisibility) ? newVisibility : m);
+      }
+    }
+    return String.join(" ", modifierKeywords);
+  }
+
+  private String getAnnotationText(PsiMethod method, PsiModifierList modifierList) {
+    PsiAnnotation annotation = modifierList.findAnnotation(JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT);
+    if (annotation != null) {
+      String[] oldNames = ContainerUtil.map2Array(method.getParameterList().getParameters(), String.class, PsiParameter::getName);
+      JavaParameterInfo[] parameters =
+        ContainerUtil.map2Array(myParametersTableModel.getItems(), JavaParameterInfo.class, item -> item.parameter);
+      try {
+        PsiAnnotation converted = ContractConverter.convertContract(method, oldNames, parameters);
+        if (converted != null && converted != annotation) {
+          String text = converted.getText();
+          return text.replaceFirst("^@"+JavaMethodContractUtil.ORG_JETBRAINS_ANNOTATIONS_CONTRACT, "@Contract");
+        }
+      }
+      catch (ContractConverter.ContractConversionException ignored) {
+      }
+      return annotation.getText();
+    }
+    return "";
+  }
+
   protected String doCalculateSignature(PsiMethod method) {
     final StringBuilder buffer = new StringBuilder();
     final PsiModifierList modifierList = method.getModifierList();
-    String modifiers = modifierList.getText();
-    final String oldModifier = VisibilityUtil.getVisibilityModifier(modifierList);
-    final String newModifier = ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL);
-    String newModifierStr = VisibilityUtil.getVisibilityString(newModifier);
-    if (!Comparing.equal(newModifier, oldModifier)) {
-      int index = modifiers.indexOf(oldModifier);
-      if (index >= 0) {
-        final StringBuilder buf = new StringBuilder(modifiers);
-        buf.replace(index,
-                    index + oldModifier.length() + (StringUtil.isEmpty(newModifierStr) ? 1 : 0),
-                    newModifierStr);
-        modifiers = buf.toString();
-      } else {
-        if (!StringUtil.isEmpty(newModifierStr)) {
-          newModifierStr += " ";
-        }
-        modifiers = newModifierStr + modifiers;
-      }
+    final String annotationText = getAnnotationText(method, modifierList);
+    buffer.append(annotationText);
+    if (!annotationText.isEmpty()) {
+      buffer.append("\n");
     }
-
+    final String modifiers = getModifiersText(modifierList, ObjectUtils.notNull(getVisibility(), PsiModifier.PACKAGE_LOCAL));
     buffer.append(modifiers);
-    if (modifiers.length() > 0 &&
-        !StringUtil.endsWithChar(modifiers, '\n') &&
-        !StringUtil.endsWithChar(modifiers, '\r') &&
-        !StringUtil.endsWithChar(modifiers, ' ')) {
+    if (!modifiers.isEmpty()) {
       buffer.append(" ");
     }
 

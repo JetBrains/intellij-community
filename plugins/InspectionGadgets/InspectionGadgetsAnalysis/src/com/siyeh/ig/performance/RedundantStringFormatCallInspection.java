@@ -100,7 +100,7 @@ public class RedundantStringFormatCallInspection extends BaseInspection {
       }
       final PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)element;
       final PsiExpression[] arguments = methodCallExpression.getArgumentList().getExpressions();
-      methodCallExpression.replace(arguments[arguments.length - 1]);
+      new CommentTracker().replaceAndRestoreComments(methodCallExpression, arguments[arguments.length - 1]);
     }
   }
 

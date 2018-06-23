@@ -2,10 +2,13 @@ package com.intellij.json.psi.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.json.JsonBundle;
+import com.intellij.json.JsonDialectUtil;
+import com.intellij.json.JsonLanguage;
 import com.intellij.json.JsonParserDefinition;
 import com.intellij.json.codeinsight.JsonStandardComplianceInspection;
 import com.intellij.json.psi.*;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.Language;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
@@ -172,6 +175,19 @@ public class JsonPsiImplUtils {
               result.add(Pair.create(new TextRange(pos, i), text.substring(pos, i)));
               pos = i;
               break;
+            case 'x':
+              Language language = JsonDialectUtil.getLanguage(literal);
+              if (language instanceof JsonLanguage && ((JsonLanguage)language).hasPermissiveStrings()) {
+                int i2 = pos + 2;
+                for (; i2 < pos + 4; i2++) {
+                  if (i2 == length || !StringUtil.isHexDigit(text.charAt(i2))) {
+                    break;
+                  }
+                }
+                result.add(Pair.create(new TextRange(pos, i2), text.substring(pos, i2)));
+                pos = i2;
+                break;
+              }
             default:
               result.add(Pair.create(new TextRange(pos, pos + 2), text.substring(pos, pos + 2)));
               pos += 2;

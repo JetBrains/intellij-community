@@ -128,6 +128,7 @@ public class StringLiteralLexer extends LexerBase {
 
     switch (nextChar) {
       case '0':
+        if (shouldAllowSlashZero()) return StringEscapesTokenTypes.VALID_STRING_ESCAPE_TOKEN;
       case '1':
       case '2':
       case '3':
@@ -152,6 +153,10 @@ public class StringLiteralLexer extends LexerBase {
     }
 
     return StringEscapesTokenTypes.INVALID_CHARACTER_ESCAPE_TOKEN;
+  }
+
+  protected boolean shouldAllowSlashZero() {
+    return false;
   }
 
   @NotNull
@@ -195,7 +200,7 @@ public class StringLiteralLexer extends LexerBase {
     if (myState == AFTER_LAST_QUOTE) return start;
     int i = start;
     if (myBuffer.charAt(i) == '\\') {
-      LOG.assertTrue(myState == AFTER_FIRST_QUOTE);
+      LOG.assertTrue(myState == AFTER_FIRST_QUOTE, this);
       i++;
       if (i == myBufferEnd || myBuffer.charAt(i) == '\n' && !myCanEscapeEolOrFramingSpaces) {
         myState = AFTER_LAST_QUOTE;

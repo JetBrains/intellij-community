@@ -5,33 +5,31 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import org.fest.swing.core.Robot;
-import org.fest.swing.edt.GuiActionRunner;
 import org.fest.swing.edt.GuiQuery;
 import org.fest.swing.edt.GuiTask;
 import org.fest.swing.timing.Condition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.THIRTY_SEC_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.reflect.core.Reflection.method;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
 import static org.fest.util.Strings.quote;
 import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-import static org.junit.Assert.assertNull;
 
 public class FileEditorFixture extends EditorFixture {
 
@@ -85,8 +83,13 @@ public class FileEditorFixture extends EditorFixture {
    */
   @Nullable
   public String getCurrentFileName() {
-    VirtualFile currentFile = getCurrentFile();
-    return currentFile != null ? currentFile.getName() : null;
+    return execute(new GuiQuery<String>() {
+      @Override
+      protected String executeInEDT() throws Throwable {
+        VirtualFile currentFile = getCurrentFile();
+        return currentFile != null ? currentFile.getName() : null;
+      }
+    });
   }
 
   /**
@@ -160,7 +163,7 @@ public class FileEditorFixture extends EditorFixture {
           }
         });
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     // TODO: Maybe find a better way to keep Documents in sync with their VirtualFiles.
     invokeActionViaKeystroke("Synchronize");
@@ -241,7 +244,13 @@ public class FileEditorFixture extends EditorFixture {
 
   @NotNull
   public EditorFixture waitUntilErrorAnalysisFinishes() {
-    FileFixture file = getCurrentFileFixture();
+    FileFixture file = execute(new GuiQuery<FileFixture>() {
+      @Override
+      protected FileFixture executeInEDT() {
+        return getCurrentFileFixture();
+      }
+    });
+    assert file != null;
     file.waitUntilErrorAnalysisFinishes();
     return this;
   }
@@ -266,7 +275,7 @@ public class FileEditorFixture extends EditorFixture {
         }));
         return virtualFileReference.get() != null;
       }
-    }, THIRTY_SEC_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getTHIRTY_SEC_TIMEOUT());
     return new FileFixture(myFrame.getProject(), virtualFileReference.get());
   }
 
@@ -337,8 +346,24 @@ public class FileEditorFixture extends EditorFixture {
    * Selects the editor with a given tab name.
    */
   public FileEditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 30).selectTab(tabName);
+    tabs.waitTab(tabName, 5).selectTab(tabName);
     return this;
+  }
+
+  /**
+   * Clicks to the editor's center to get focus to the editor
+   */
+  public void clickCenter() {
+    Editor selectedTextEditor = execute(new GuiQuery<Editor>() {
+                                          @Override
+                                          protected Editor executeInEDT() throws Throwable {
+                                            return myManager.getSelectedTextEditor();
+                                          }
+                                        }
+    );
+    assert selectedTextEditor != null;
+    JComponent contentComponent = selectedTextEditor.getContentComponent();
+    robot.click(contentComponent);
   }
 
   /**
@@ -352,5 +377,4 @@ public class FileEditorFixture extends EditorFixture {
   public Boolean hasTab(@NotNull final String tabName) {
     return tabs.hasTab(tabName);
   }
-
 }

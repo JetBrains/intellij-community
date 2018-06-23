@@ -23,9 +23,14 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- * @author peter
+ * A couple of strings representing an object for purposes of tracking statistics by {@link StatisticsManager}.
+ * Each info consists of "context" and "value", and the manager tracks per each "context", how many times a "value"
+ * has occurred in that context and in which order.
  */
 public class StatisticsInfo {
+  /**
+   * A special value meaning that no statistics should be tracked.
+   */
   public static final StatisticsInfo EMPTY = new StatisticsInfo("empty", "empty");
 
   private static final StatisticsManager ourManager = StatisticsManager.getInstance();

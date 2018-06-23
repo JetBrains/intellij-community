@@ -168,6 +168,8 @@ class CommunityRepositoryModules {
       ])
     },
     plugin("intellij.gradle") {
+      withModule("intellij.gradle.common")
+      withModule("intellij.gradle.java")
       withModule("intellij.gradle.jps")
       withModule("intellij.gradle.toolingExtension")
       withModule("intellij.gradle.toolingExtension.impl")
@@ -228,6 +230,11 @@ class CommunityRepositoryModules {
     // required for android plugin
     plugin("intellij.android.smali") {
       withModule("intellij.android.smali")
+    },
+    plugin("intellij.statsCollector") {
+      withModule("intellij.statsCollector.features", "features.jar")
+      withModule("intellij.statsCollector.logEvents")
+      withResource("features/resources", "lib")
     }
   ]
 
@@ -236,15 +243,19 @@ class CommunityRepositoryModules {
     plugin("intellij.android.plugin") {
       directoryName = "android"
       mainJarName = "android.jar"
-      withModule("intellij.android.common", "android-common.jar", false)
-      withModule("intellij.android.buildCommon", "build-common.jar", false)
-      withModule("intellij.android.rt", "android-rt.jar", false)
+      withModule("intellij.android.common", "android-common.jar", null)
+      withModule("intellij.android.buildCommon", "build-common.jar", null)
+      withModule("intellij.android.rt", "android-rt.jar", null)
 
-      withModule("intellij.android", "android.jar", false)
+      withModule("intellij.android", "android.jar", null)
+      withModule("intellij.android.android-adb", "android.jar")
+      withModule("intellij.android.android-debuggers", "android.jar")
+      withModule("intellij.android.android-lang", "android.jar")
+      withModule("intellij.android.plugin", "android.jar")
       withModule("intellij.android.artwork")
       withModule("intellij.android.observable", "android.jar")
       withModule("intellij.android.observable.ui", "android.jar")
-      withModule("intellij.android.flags", "android.jar")
+      withModule("android.sdktools.flags", "android.jar")
       withModule("intellij.android.designer", "android.jar")
       withModule("intellij.android.sdkUpdates", "android.jar")
       withModule("intellij.android.wizard", "android.jar")
@@ -253,37 +264,35 @@ class CommunityRepositoryModules {
       withModule("intellij.android.perfdHost", "android-profilers.jar")
       withModule("intellij.android.profilers", "android-profilers.jar")
       withModule("intellij.android.profilers.ui", "android-profilers.jar")
+      withModule("intellij.android.apkanalyzer", "android.jar")
+      withModule("intellij.android.project-system", "android.jar")
+      withModule("intellij.android.project-system-gradle", "android.jar")
       withModule("intellij.android.adt.ui", "adt-ui.jar")
       withModule("intellij.android.adt.ui.model", "adt-ui.jar")
-      withModule("android.sdktools.repository")
-      withModule("intellij.android.sherpaUi", "constraint-layout.jar")
       withModule("android.sdktools.sdklib", "sdklib.jar")
-      withModule("android.sdktools.sdk-common", "sdk-common.jar")
       withModule("android.sdktools.layoutlib-api", "layoutlib-api.jar")
       withModule("intellij.android.layoutlib", "layoutlib-loader.jar")
       withModule("android.sdktools.chunkio", "pixelprobe.jar")
       withModule("android.sdktools.pixelprobe", "pixelprobe.jar")
 
       withModule("android.sdktools.binary-resources", "sdk-tools.jar")
-      withModule("intellij.android.analyzer", "sdk-tools.jar")
-      withModule("android.sdktools.ddmlib", "sdk-tools.jar")
+      withModule("android.sdktools.analyzer", "sdk-tools.jar")
       withModule("android.sdktools.dvlib", "sdk-tools.jar")
       withModule("android.sdktools.draw9patch", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-client", "sdk-tools.jar")
       withModule("android.sdktools.instant-run-common", "sdk-tools.jar")
       withModule("android.sdktools.ninepatch", "sdk-tools.jar")
       withModule("android.sdktools.perflib", "sdk-tools.jar")
-      withModule("android.sdktools.builder-model", "sdk-tools.jar")
-      withModule("android.sdktools.builder-test-api", "sdk-tools.jar")
-      withModule("android.sdktools.android-annotations", "sdk-tools.jar")
-      withModule("intellij.android.layoutInspector", "sdk-tools.jar")
+      withModule("android.sdktools.layoutinspector", "sdk-tools.jar")
+      withModule("android.sdktools.java-lib-model", "sdk-tools.jar")
+      withModule("android.sdktools.java-lib-model-builder", "sdk-tools.jar")
+      withModule("android.sdktools.usb-devices", "sdk-tools.jar")
 
-      withModule("intellij.android.jps", "jps/android-jps-plugin.jar")
+      withModule("intellij.android.jps", "jps/android-jps-plugin.jar", null)
 
       withProjectLibrary("freemarker-2.3.20") //todo[nik] move to module libraries
       withProjectLibrary("jgraphx") //todo[nik] move to module libraries
       withProjectLibrary("kxml2") //todo[nik] move to module libraries
-      withProjectLibrary("lombok-ast") //todo[nik] move to module libraries
       withProjectLibrary("layoutlib") //todo[nik] move to module libraries
 
       withResourceFromModule("intellij.android","lib/antlr4-runtime-4.5.3.jar", "lib")
@@ -304,13 +313,15 @@ class CommunityRepositoryModules {
       withResourceFromModule("android.sdktools.layoutlib-resources", ".", "lib/layoutlib") // todo replace this with runtime downloading
       withResourceFromModule("android.sdktools.sdklib", "../templates", "lib/templates")
 
-      // we put it to plugin instead of ide in original Android Studio layout
-      withModule("android.sdktools.common", "android-base-common.jar")
-
       withProjectLibrary("studio-profiler-grpc-1.0-jarjar")
       withProjectLibrary("archive-patcher")
-      withProjectLibrary("com.android.tools.analytics-library:shared:26.0.0")
-      withProjectLibrary("com.android.tools.analytics-library:tracker:26.0.0")
+      withProjectLibrary("com.android.tools.analytics-library:shared:26.1.2")
+      withProjectLibrary("com.android.tools.analytics-library:tracker:26.1.2")
+      withProjectLibrary("com.android.tools:annotations:26.1.2")
+      withProjectLibrary("com.android.tools:sdk-common:26.1.2")
+      withProjectLibrary("com.android.tools:common:26.1.2")
+      withProjectLibrary("com.android.tools.ddms:ddmlib:26.1.2")
+      withProjectLibrary("com.android.tools.build:manifest-merger:26.1.2")
       withProjectLibrary("analytics-protos")
 
       additionalModulesToJars.entrySet().each {

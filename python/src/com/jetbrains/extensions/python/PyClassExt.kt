@@ -24,10 +24,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 /**
  * @author Ilya.Kazakevich
  */
-fun PyClass.inherits(evalContext: TypeEvalContext, parentNames: Set<String>) =
+fun PyClass.inherits(evalContext: TypeEvalContext, parentNames: Set<String>): Boolean =
   this.getAncestorTypes(evalContext).filterNotNull().mapNotNull(PyClassLikeType::getClassQName).any(parentNames::contains)
 
-fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String) = this.inherits(evalContext, parentNames.toHashSet())
+fun PyClass.inherits(evalContext: TypeEvalContext, vararg parentNames: String): Boolean = this.inherits(evalContext, parentNames.toHashSet())
 
-fun PyClass.inherits(evalContext: TypeEvalContext?, parentNames: FQNamesProvider) =
+fun PyClass.inherits(evalContext: TypeEvalContext?, parentNames: FQNamesProvider): Boolean =
   this.getAncestorClasses(evalContext).any(parentNames::isNameMatches)

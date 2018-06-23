@@ -15,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectLocator;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
@@ -69,6 +68,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final AtomicBoolean myShutDown = new AtomicBoolean(false);
   private final AtomicInteger myStructureModificationCount = new AtomicInteger();
   private final BulkFileListener myPublisher;
+  private final VfsData myVfsData = new VfsData();
 
   public PersistentFSImpl(@NotNull MessageBus bus) {
     ShutDownTracker.getInstance().registerShutdownTask(this::performShutdown);
@@ -995,9 +995,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     int rootId = FSRecords.findRootRecord(rootUrl);
 
-    VfsData.Segment segment = VfsData.getSegment(rootId, true);
+    VfsData.Segment segment = myVfsData.getSegment(rootId, true);
     VfsData.DirectoryData directoryData = new VfsData.DirectoryData();
-    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimEnd(rootPath, '/'));
+    VirtualFileSystemEntry newRoot = new FsRoot(rootId, segment, directoryData, fs, rootName, StringUtil.trimTrailing(rootPath, '/'));
 
     boolean mark;
     synchronized (myRoots) {
@@ -1057,38 +1057,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public NewVirtualFile findFileById(final int id) {
-    return findFileById(id, false);
+    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
+    return cached != null ? cached : FSRecords.findFileById(id, myIdToDirCache);
   }
 
   @Override
   public NewVirtualFile findFileByIdIfCached(final int id) {
-    return findFileById(id, true);
-  }
-
-  @Nullable
-  private VirtualFileSystemEntry findFileById(int id, boolean cachedOnly) {
-    VirtualFileSystemEntry cached = myIdToDirCache.get(id);
-    if (cached != null) return cached;
-
-    Pair<TIntArrayList, VirtualFileSystemEntry> pair = FSRecords.getParents(id, myIdToDirCache);
-    TIntArrayList parents = pair.getFirst();
-    VirtualFileSystemEntry cachedDir = pair.getSecond();
-    if (cachedDir == null) return null;
-    VirtualFileSystemEntry result = cachedDir;
-
-    for (int i=parents.size() - 2; i>=0; i--) {
-      if (!(result instanceof VirtualDirectoryImpl)) {
-        return null;
-      }
-      int parentId = parents.get(i);
-      result = ((VirtualDirectoryImpl)result).findChildById(parentId, cachedOnly);
-      if (result instanceof VirtualDirectoryImpl) {
-        VirtualFileSystemEntry old = myIdToDirCache.putIfAbsent(parentId, result);
-        if (old != null) result = old;
-      }
-    }
-
-    return result;
+    return myVfsData.hasLoadedFile(id) ? findFileById(id) : null;
   }
 
   @Override
@@ -1340,6 +1315,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @TestOnly
+  public void cleanPersistedContent(int id) {
+    doCleanPersistedContent(id);
+  }
+
+  @TestOnly
   public void cleanPersistedContents() {
     int[] roots = FSRecords.listRoots();
     for (int root : roots) {
@@ -1354,10 +1334,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       }
     }
     else {
-      setFlag(id, MUST_RELOAD_CONTENT, true);
+      doCleanPersistedContent(id);
     }
   }
 
+  private static void doCleanPersistedContent(int id) {
+    setFlag(id, MUST_RELOAD_CONTENT, true);
+  }
 
   private static class FsRoot extends VirtualDirectoryImpl {
     private final String myName;

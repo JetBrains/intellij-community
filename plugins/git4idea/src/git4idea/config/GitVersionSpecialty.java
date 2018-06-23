@@ -15,7 +15,10 @@
  */
 package git4idea.config;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import git4idea.GitVcs;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -112,6 +115,13 @@ public enum GitVersionSpecialty {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 7, 9, 0));
+    }
+  },
+
+  CLONE_RECURSE_SUBMODULES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 11, 0));
     }
   },
 
@@ -214,8 +224,36 @@ public enum GitVersionSpecialty {
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(2, 1, 0, 0));
     }
+  },
+
+  CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 0, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_FILTERS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 11, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_TEXTCONV {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
 
+  public boolean existsIn(@NotNull Project project) {
+    return existsIn(GitVcs.getInstance(project).getVersion());
+  }
+
+  public boolean existsIn(@NotNull GitRepository repository) {
+    return existsIn(repository.getVcs().getVersion());
+  }
 }

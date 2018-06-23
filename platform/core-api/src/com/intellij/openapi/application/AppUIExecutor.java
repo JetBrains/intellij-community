@@ -6,7 +6,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.CancellablePromise;
 
+import java.util.concurrent.Callable;
 import java.util.concurrent.Executor;
 
 /**
@@ -23,7 +25,7 @@ public interface AppUIExecutor extends Executor {
    */
   @NotNull
   static AppUIExecutor onUiThread(@NotNull ModalityState modality) {
-    return ApplicationManager.getApplication().createUIExecutor(modality);
+    return AsyncExecutionService.getService().createUIExecutor(modality);
   }
 
   /**
@@ -44,7 +46,7 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor later();
 
   /**
-   * @return an executor that invokes runnables only when all documents are committed.
+   * @return an executor that invokes runnables only when all documents are committed. Automatically expires when the project is disposed.
    * @see PsiDocumentManager#hasUncommitedDocuments() 
    */
   @NotNull
@@ -52,7 +54,7 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor withDocumentsCommitted(@NotNull Project project);
 
   /**
-   * @return an executor that invokes runnables only when indices have been built and are available to use
+   * @return an executor that invokes runnables only when indices have been built and are available to use. Automatically expires when the project is disposed.
    * @see com.intellij.openapi.project.DumbService#isDumb(Project) 
    */
   @NotNull
@@ -60,7 +62,7 @@ public interface AppUIExecutor extends Executor {
   AppUIExecutor inSmartMode(@NotNull Project project);
 
   /**
-   * @return an executor that invokes runnables only in transaction
+   * @return an executor that invokes runnables only in transaction. Automatically expires when {@code parentDisposable} is disposed.
    * @see TransactionGuard#submitTransaction(Disposable, Runnable) 
    */
   @NotNull
@@ -73,5 +75,17 @@ public interface AppUIExecutor extends Executor {
   @NotNull
   @Contract(pure=true)
   AppUIExecutor expireWith(@NotNull Disposable parentDisposable);
+
+  /**
+   * Schedule the given task's execution and return a Promise that allows to get the result when the task is complete,
+   * or cancel the task if it's no longer needed.
+   */
+  <T> CancellablePromise<T> submit(Callable<T> task);
+
+  /**
+   * Schedule the given task's execution and return a Promise that allows to check if the task is complete,
+   * or cancel the task if it's no longer needed.
+   */
+  CancellablePromise<?> submit(Runnable task);
   
 }

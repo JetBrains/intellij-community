@@ -19,7 +19,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils
  */
 class PropertyMethodReferenceSearchExecutor : QueryExecutorBase<PsiReference, MethodReferencesSearch.SearchParameters>(true) {
 
-  override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<PsiReference>) {
+  override fun processQuery(queryParameters: MethodReferencesSearch.SearchParameters, consumer: Processor<in PsiReference>) {
     val method = queryParameters.method
 
     val propertyName: String? = if (GdkMethodUtil.isCategoryMethod(method, null, null, PsiSubstitutor.EMPTY)) {

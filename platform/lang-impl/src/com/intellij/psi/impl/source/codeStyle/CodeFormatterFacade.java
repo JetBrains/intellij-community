@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2012 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.impl.source.codeStyle;
 
@@ -80,12 +66,20 @@ public class CodeFormatterFacade {
   private final CodeStyleSettings mySettings;
   private final FormatterTagHandler myTagHandler;
   private final int myRightMargin;
+  private final boolean myCanChangeWhitespaceOnly;
   private boolean myReformatContext;
 
   public CodeFormatterFacade(CodeStyleSettings settings, @Nullable Language language) {
+    this(settings, language, false);
+  }
+
+  public CodeFormatterFacade(CodeStyleSettings settings,
+                             @Nullable Language language,
+                             boolean canChangeWhitespaceOnly) {
     mySettings = settings;
     myTagHandler = new FormatterTagHandler(settings);
     myRightMargin = mySettings.getRightMargin(language);
+    myCanChangeWhitespaceOnly = canChangeWhitespaceOnly;
   }
 
   public void setReformatContext(boolean value) {
@@ -310,7 +304,9 @@ public class CodeFormatterFacade {
             final TextRange initialInjectedRange = TextRange.create(startInjectedOffset, endInjectedOffset);
             TextRange injectedRange = initialInjectedRange;
             for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-              injectedRange = processor.process(injected.getNode(), injectedRange);
+              if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
+                injectedRange = processor.process(injected.getNode(), injectedRange);
+              }
             }
 
             // Allow only range expansion (not reduction) for injected context.
@@ -328,8 +324,10 @@ public class CodeFormatterFacade {
     }
 
     if (!mySettings.FORMATTER_TAGS_ENABLED) {
-      for(PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-        result = processor.process(node, result);
+      for (PreFormatProcessor processor: Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
+        if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
+          result = processor.process(node, result);
+        }
       }
     }
     else {
@@ -346,8 +344,10 @@ public class CodeFormatterFacade {
     for (TextRange enabledRange : enabledRanges) {
       enabledRange = enabledRange.shiftRight(delta);
       for (PreFormatProcessor processor : Extensions.getExtensions(PreFormatProcessor.EP_NAME)) {
-        TextRange processedRange = processor.process(node, enabledRange);
-        delta += processedRange.getLength() - enabledRange.getLength();
+        if (processor.changesWhitespacesOnly() || !myCanChangeWhitespaceOnly) {
+          TextRange processedRange = processor.process(node, enabledRange);
+          delta += processedRange.getLength() - enabledRange.getLength();
+        }
       }
     }
     result = result.grown(delta);

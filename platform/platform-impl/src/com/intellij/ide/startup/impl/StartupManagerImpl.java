@@ -148,7 +148,7 @@ public class StartupManagerImpl extends StartupManagerEx {
     AtomicBoolean uiFreezeWarned = new AtomicBoolean();
     for (StartupActivity extension : Extensions.getExtensions(StartupActivity.POST_STARTUP_ACTIVITY)) {
       Runnable runnable = () -> logActivityDuration(uiFreezeWarned, extension);
-      if (extension instanceof DumbAware) {
+      if (DumbService.isDumbAware(extension)) {
         runActivity(runnable);
       }
       else {

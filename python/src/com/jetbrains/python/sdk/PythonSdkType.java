@@ -65,6 +65,7 @@ import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PyVirtualEnvReader;
 import com.jetbrains.python.sdk.flavors.CPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
+import com.jetbrains.python.sdk.pipenv.PyPipEnvSdkAdditionalData;
 import icons.PythonIcons;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -289,7 +290,7 @@ public final class PythonSdkType extends SdkType {
     if (pointerInfo == null) return;
     final Point point = pointerInfo.getLocation();
     PythonSdkDetailsStep
-      .show(project, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
+      .show(project, null, sdkModel.getSdks(), null, parentComponent, point, null, sdk -> {
         if (sdk != null) {
           sdk.putUserData(SDK_CREATOR_COMPONENT_KEY, new WeakReference<>(parentComponent));
           sdkCreatedCallback.consume(sdk);
@@ -455,11 +456,18 @@ public final class PythonSdkType extends SdkType {
   }
 
   @Override
-  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, final Element additional) {
+  public SdkAdditionalData loadAdditionalData(@NotNull final Sdk currentSdk, @Nullable final Element additional) {
     if (RemoteSdkCredentialsHolder.isRemoteSdk(currentSdk.getHomePath())) {
       PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
       if (manager != null) {
         return manager.loadRemoteSdkData(currentSdk, additional);
+      }
+    }
+    // TODO: Extract loading additional SDK data into a Python SDK provider
+    if (additional != null) {
+      final PyPipEnvSdkAdditionalData pipEnvData = PyPipEnvSdkAdditionalData.load(additional);
+      if (pipEnvData != null) {
+        return pipEnvData;
       }
     }
     return PythonSdkAdditionalData.load(currentSdk, additional);
@@ -767,6 +775,27 @@ public final class PythonSdkType extends SdkType {
       return false;
     }
     return true;
+  }
+
+  /**
+   * Returns the "site-packages" directory that is going to be used for installing new packages with {@code pip}.
+   * <p>
+   * Note that on a virtual env there might be two such directories in {@code sys.path} depending on whether
+   * the option "--system-site-packages" was given during its creation. Then the one inside the actual virtual
+   * env tree will be returned, as it's the one used to install new packages.
+   * Also, on some systems, first of all in system distributions of Python on Linux, there might be no
+   * "site-packages" at all, and this method returns {@code null} accordingly in this case.
+   */
+  @Nullable
+  public static VirtualFile getSitePackagesDirectory(@NotNull Sdk pythonSdk) {
+    final VirtualFile libDir;
+    if (isVirtualEnv(pythonSdk)) {
+      libDir = PyProjectScopeBuilder.findVirtualEnvLibDir(pythonSdk);
+    }
+    else {
+      libDir = PyProjectScopeBuilder.findLibDir(pythonSdk);
+    }
+    return libDir != null ? libDir.findChild(PyNames.SITE_PACKAGES) : null;
   }
 
   @Nullable

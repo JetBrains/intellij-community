@@ -116,7 +116,8 @@ public class JavaCompletionContributor extends CompletionContributor {
 
     if (JavaKeywordCompletion.isDeclarationStart(position) ||
         JavaKeywordCompletion.isInsideParameterList(position) ||
-        isInsideAnnotationName(position)) {
+        isInsideAnnotationName(position) ||
+        psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
       return new OrFilter(ElementClassFilter.CLASS, ElementClassFilter.PACKAGE);
     }
 
@@ -140,10 +141,6 @@ public class JavaCompletionContributor extends CompletionContributor {
     }
 
     if (JavaSmartCompletionContributor.AFTER_NEW.accepts(position)) {
-      return ElementClassFilter.CLASS;
-    }
-
-    if (psiElement().inside(PsiReferenceParameterList.class).accepts(position)) {
       return ElementClassFilter.CLASS;
     }
 
@@ -526,7 +523,7 @@ public class JavaCompletionContributor extends CompletionContributor {
     if (((PsiJavaCodeReferenceElement)parent).getQualifier() != null) return isSecondCompletion;
 
     if (parent instanceof PsiJavaCodeReferenceElementImpl &&
-        ((PsiJavaCodeReferenceElementImpl)parent).getKind(parent.getContainingFile()) == PsiJavaCodeReferenceElementImpl.PACKAGE_NAME_KIND) {
+        ((PsiJavaCodeReferenceElementImpl)parent).getKindEnum(parent.getContainingFile()) == PsiJavaCodeReferenceElementImpl.Kind.PACKAGE_NAME_KIND) {
       return false;
     }
 
@@ -792,14 +789,6 @@ public class JavaCompletionContributor extends CompletionContributor {
 
         PsiJavaCodeReferenceElement ref = PsiTreeUtil.findElementOfClassAtOffset(file, context.getStartOffset(), PsiJavaCodeReferenceElement.class, false);
         if (ref != null && !(ref instanceof PsiReferenceExpression)) {
-          if (JavaSmartCompletionContributor.AFTER_NEW.accepts(ref)) {
-            final PsiReferenceParameterList paramList = ref.getParameterList();
-            if (paramList != null && paramList.getTextLength() > 0) {
-              context.getOffsetMap().addOffset(ConstructorInsertHandler.PARAM_LIST_START, paramList.getTextRange().getStartOffset());
-              context.getOffsetMap().addOffset(ConstructorInsertHandler.PARAM_LIST_END, paramList.getTextRange().getEndOffset());
-            }
-          }
-
           return;
         }
 

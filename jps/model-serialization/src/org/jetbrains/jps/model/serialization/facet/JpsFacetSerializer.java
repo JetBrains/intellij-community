@@ -68,7 +68,8 @@ public class JpsFacetSerializer {
 
   private static <E extends JpsElement> E addExtension(JpsModule module, JpsFacetConfigurationSerializer<E> serializer, FacetState facet,
                                                        JpsElement parentFacet) {
-    return serializer.loadExtension(facet.getConfiguration(), facet.getName(), module, parentFacet);
+    Element facetConfiguration = facet.getConfiguration();
+    return serializer.loadExtension(facetConfiguration != null ? facetConfiguration : new Element(CONFIGURATION_TAG), facet.getName(), module, parentFacet);
   }
 
   @Nullable

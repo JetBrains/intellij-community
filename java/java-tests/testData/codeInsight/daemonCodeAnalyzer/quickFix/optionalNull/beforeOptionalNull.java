@@ -16,7 +16,7 @@ public class Test {
   }
 
   OptionalInt opt() {
-    return null;
+    return (/*comment*/null);
   }
 
   void m(Optional<String> opt) {}

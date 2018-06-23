@@ -1,22 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.packageDependencies;
 
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
-import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.search.scope.packageSet.*;
+import com.intellij.openapi.vcs.changes.ChangeList;
+import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.psi.search.scope.packageSet.CustomScopesProviderEx;
+import com.intellij.psi.search.scope.packageSet.NamedScope;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
-import java.util.stream.Collectors;
 
 /**
  * @author anna
@@ -41,28 +39,28 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
 
     final List<NamedScope> result = new ArrayList<>();
-    result.add(createScope(changeListManager.getAffectedFiles(), IdeBundle.message("scope.modified.files")));
-    for (ChangeList list : changeListManager.getChangeListsCopy()) {
-      result.add(createChangeListScope(list));
+    result.add(new ChangeListScope(changeListManager));
+    List<LocalChangeList> changeLists = changeListManager.getChangeListsCopy();
+    boolean skipSingleDefaultCL = Registry.is("vcs.skip.single.default.changelist") &&
+                                  changeLists.size() == 1 && changeLists.get(0).isBlank();
+    if (!skipSingleDefaultCL) {
+      for (ChangeList list : changeLists) {
+        result.add(new ChangeListScope(changeListManager, list.getName()));
+      }
     }
     return result;
-  }
-
-  private static NamedScope createChangeListScope(@NotNull ChangeList list) {
-    final Collection<Change> changes = list.getChanges();
-    return createScope(ChangesUtil.getAfterRevisionsFiles(changes.stream()).collect(Collectors.toList()), list.getName());
   }
 
   @Override
   public NamedScope getCustomScope(@NotNull String name) {
     if (myProject.isDefault()) return null;
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    if (IdeBundle.message("scope.modified.files").equals(name)) {
-      return createScope(changeListManager.getAffectedFiles(), IdeBundle.message("scope.modified.files"));
+    if (ChangeListScope.NAME.equals(name)) {
+      return new ChangeListScope(changeListManager);
     }
     final LocalChangeList changeList = changeListManager.findChangeList(name);
     if (changeList != null) {
-      return createChangeListScope(changeList);
+      return new ChangeListScope(changeListManager, changeList.getName());
     }
     return null;
   }
@@ -75,43 +73,5 @@ public class ChangeListsScopesProvider extends CustomScopesProviderEx {
       return changeListManager.findChangeList(scope.getName()) != null;
     }
     return false;
-  }
-
-  @NotNull
-  private static NamedScope createScope(@NotNull final List<VirtualFile> files, @NotNull String changeListName) {
-    return new NamedScope(changeListName, new PackageSetBase() {
-      @Override
-      public boolean contains(VirtualFile file, NamedScopesHolder holder) {
-        return files.contains(file);
-      }
-
-      @NotNull
-      @Override
-      public PackageSet createCopy() {
-        return this;
-      }
-
-      @NotNull
-      @Override
-      public String getText() {
-        return "file:*//*";
-      }
-
-      @Override
-      public int getNodePriority() {
-        return 0;
-      }
-    }){
-      @Override
-      public boolean equals(Object obj) {
-        if (!(obj instanceof NamedScope)) return false;
-        return getName().equals(((NamedScope)obj).getName());
-      }
-
-      @Override
-      public int hashCode() {
-        return getName().hashCode();
-      }
-    };
   }
 }

@@ -225,9 +225,9 @@ public interface PydevConsoleRunner {
 
   void open();
 
-  void runSync();
+  void runSync(boolean requestEditorFocus);
 
-  void run();
+  void run(boolean requestEditorFocus);
 
   PydevConsoleCommunication getPydevConsoleCommunication();
 

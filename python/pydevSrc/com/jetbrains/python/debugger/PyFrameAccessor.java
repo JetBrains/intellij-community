@@ -1,6 +1,7 @@
 package com.jetbrains.python.debugger;
 
 import com.intellij.xdebugger.XSourcePosition;
+import com.intellij.xdebugger.frame.XCompositeNode;
 import com.intellij.xdebugger.frame.XValueChildrenList;
 import com.jetbrains.python.debugger.pydev.PyDebugCallback;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +43,13 @@ public interface PyFrameAccessor {
 
   default boolean isCurrentFrameCached() {
     return false;
+  }
+
+  default void setCurrentRootNode(@NotNull XCompositeNode node) {}
+
+  @Nullable
+  default XCompositeNode getCurrentRootNode() {
+    return null;
   }
 
   class PyAsyncValue<T> {

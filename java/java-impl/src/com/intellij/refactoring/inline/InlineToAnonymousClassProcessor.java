@@ -223,7 +223,7 @@ public class InlineToAnonymousClassProcessor extends BaseRefactoringProcessor {
       if (element instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression)element);
       }
-      else if (element.getParent() instanceof PsiNewExpression) {
+      else if (element != null && element.getParent() instanceof PsiNewExpression) {
         newExpressions.add((PsiNewExpression) element.getParent());
       }
       else {

@@ -29,16 +29,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 public class OpenInEditorAction extends EditSourceAction implements DumbAware {
   public static final DataKey<OpenInEditorAction> KEY = DataKey.create("DiffOpenInEditorAction");
 
-  @Nullable private final Runnable myAfterRunnable;
-
-  public OpenInEditorAction(@Nullable Runnable afterRunnable) {
+  public OpenInEditorAction() {
     ActionUtil.copyFrom(this, "EditSource");
-    myAfterRunnable = afterRunnable;
+  }
+
+  protected void onAfterEditorOpened() {
   }
 
   @Override
@@ -95,6 +94,6 @@ public class OpenInEditorAction extends EditSourceAction implements DumbAware {
         success = true;
       }
     }
-    if (success && myAfterRunnable != null) myAfterRunnable.run();
+    if (success) onAfterEditorOpened();
   }
 }

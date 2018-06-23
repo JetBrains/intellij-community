@@ -39,7 +39,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiNamedElement;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtil;
@@ -256,10 +256,8 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
       protected void initUI(ChooseByNamePopupComponent.Callback callback, ModalityState modalityState, boolean allowMultipleSelection) {
         super.initUI(callback, modalityState, allowMultipleSelection);
         dummyPanel.add(myGotoByNamePanel.getPanel(), BorderLayout.CENTER);
-        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-          IdeFocusManager.getGlobalInstance()
-            .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()), true);
-        });
+        IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance()
+                                                                                      .requestFocus(IdeFocusTraversalPolicy.getPreferredFocusedComponent(myGotoByNamePanel.getPanel()), true));
       }
 
       @Override
@@ -383,14 +381,13 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
   }
 
   private T getContext() {
-    return myBaseClass != null ? myBaseClass : myInitialClass != null ? myInitialClass : null;
+    return myBaseClass != null ? myBaseClass : myInitialClass;
   }
-
 
   private void selectElementInTree(@NotNull final PsiElement element) {
     ApplicationManager.getApplication().invokeLater(() -> {
       if (myBuilder == null) return;
-      final VirtualFile vFile = PsiUtilBase.getVirtualFile(element);
+      final VirtualFile vFile = PsiUtilCore.getVirtualFile(element);
       myBuilder.select(element, vFile, false);
     }, getModalityState());
   }
@@ -490,7 +487,7 @@ public abstract class AbstractTreeClassChooserDialog<T extends PsiNamedElement> 
 
     @NotNull
     @Override
-    public Object[] getElementsByName(String name, FindSymbolParameters parameters, @NotNull ProgressIndicator canceled) {
+    public Object[] getElementsByName(@NotNull String name, @NotNull FindSymbolParameters parameters, @NotNull ProgressIndicator canceled) {
       String patternName = parameters.getLocalPatternName();
       List<T> classes = myTreeClassChooserDialog.getClassesByName(
         name, parameters.isSearchInLibraries(), patternName, myTreeClassChooserDialog.getScope()

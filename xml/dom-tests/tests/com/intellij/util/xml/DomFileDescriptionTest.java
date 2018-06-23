@@ -17,7 +17,6 @@ package com.intellij.util.xml;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -205,6 +204,15 @@ public class DomFileDescriptionTest extends DomHardCoreTestCase {
     });
     assertFalse(getDomManager().isDomFile(file));
     assertFalse(boy.isValid());
+  }
+
+  public void testInvalidRootTag() throws Exception {
+    final XmlFile file = (XmlFile)createFile("foo.xml", "<a b>");
+    DomFileDescription<FooElement> description = new DomFileDescription<>(FooElement.class, "a");
+    getDomManager().registerFileDescription(description, myDisposable);
+    DomFileElementImpl<FooElement> fileElement = getDomManager().getFileElement(file, FooElement.class);
+    assertNotNull(fileElement);
+    assertEquals("a", fileElement.getFileDescription().myRootTagName);
   }
 
   public interface AbstractElement extends GenericDomValue<String> {

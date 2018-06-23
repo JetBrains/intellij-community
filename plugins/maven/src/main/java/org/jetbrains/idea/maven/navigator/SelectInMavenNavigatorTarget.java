@@ -25,10 +25,12 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 public class SelectInMavenNavigatorTarget implements SelectInTarget {
+  @Override
   public boolean canSelect(SelectInContext context) {
     return getMavenProject(context) != null;
   }
 
+  @Override
   public void selectIn(final SelectInContext context, boolean requestFocus) {
     Runnable r = () -> MavenProjectsNavigator.getInstance(context.getProject()).selectInTree(getMavenProject(context));
     if (requestFocus) {
@@ -55,6 +57,7 @@ public class SelectInMavenNavigatorTarget implements SelectInTarget {
     return MavenProjectsNavigator.TOOL_WINDOW_ID;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }

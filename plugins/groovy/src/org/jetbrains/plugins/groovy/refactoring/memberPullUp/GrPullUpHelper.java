@@ -8,9 +8,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
@@ -238,7 +237,7 @@ public class GrPullUpHelper implements PullUpHelper<MemberInfo> {
 
       final GrMethod movedElement =
         anchor != null ? (GrMethod)myTargetSuperClass.addBefore(methodCopy, anchor) : (GrMethod)myTargetSuperClass.add(methodCopy);
-      CodeStyleSettings styleSettings = CodeStyleSettingsManager.getSettings(method.getProject());
+      JavaCodeStyleSettings styleSettings = JavaCodeStyleSettings.getInstance(method.getContainingFile());
       if (styleSettings.INSERT_OVERRIDE_ANNOTATION) {
         if (PsiUtil.isLanguageLevel5OrHigher(mySourceClass) && !myTargetSuperClass.isInterface() ||
             PsiUtil.isLanguageLevel6OrHigher(mySourceClass)) {

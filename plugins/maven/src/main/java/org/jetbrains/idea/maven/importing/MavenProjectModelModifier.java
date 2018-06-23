@@ -64,14 +64,14 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
   private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @NotNull final DependencyScope scope) {
-    return addDependency(fromModules, mavenId, null, null, scope);
+    return addDependency(fromModules, mavenId, null, null, null, scope);
   }
 
   private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
-                                      @NotNull final DependencyScope scope) {
+                                      @Nullable String preferredVersion, @NotNull final DependencyScope scope) {
     final List<Trinity<MavenDomProjectModel, MavenId, String>> models = new ArrayList<>(fromModules.size());
     List<XmlFile> files = new ArrayList<>(fromModules.size());
     List<MavenProject> projectToUpdate = new ArrayList<>(fromModules.size());
@@ -97,7 +97,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
         }
 
         if (managedDependency == null || StringUtil.isEmpty(managedDependency.getVersion().getStringValue())) {
-          version = selectVersion(mavenId, minVersion, maxVersion);
+          version = selectVersion(mavenId, minVersion, maxVersion, preferredVersion);
           scopeToSet = mavenScope;
         }
       }
@@ -136,12 +136,18 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     }
 
     MavenId mavenId = new MavenId(descriptor.getLibraryGroupId(), descriptor.getLibraryArtifactId(), null);
-    return addDependency(modules, mavenId, descriptor.getMinVersion(), descriptor.getMaxVersion(), scope);
+    return addDependency(modules, mavenId, descriptor.getMinVersion(), descriptor.getMaxVersion(), descriptor.getPreferredVersion(), scope);
   }
 
   @NotNull
-  private String selectVersion(@NotNull MavenId mavenId, @Nullable String minVersion, @Nullable String maxVersion) {
+  private String selectVersion(@NotNull MavenId mavenId,
+                               @Nullable String minVersion,
+                               @Nullable String maxVersion,
+                               @Nullable String preferredVersion) {
     Set<String> versions = myIndicesManager.getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
+    if (preferredVersion != null && versions.contains(preferredVersion)) {
+      return preferredVersion;
+    }
     List<String> suitableVersions = new ArrayList<>();
     for (String version : versions) {
       if ((minVersion == null || VersionComparatorUtil.compare(minVersion, version) <= 0)
@@ -183,7 +189,6 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       if (document != null) {
         FileDocumentManager.getInstance().saveDocument(document);
       }
-      ;
     });
     return myProjectsManager.forceUpdateProjects(Collections.singleton(mavenProject));
   }
@@ -213,7 +218,6 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     return plugin;
   }
 
-  @Nullable
   private static String getMavenScope(@NotNull DependencyScope scope) {
     switch (scope) {
       case RUNTIME:
@@ -225,7 +229,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       case PROVIDED:
         return MavenConstants.SCOPE_PROVIDED;
       default:
-        return null;
+        throw new IllegalArgumentException(String.valueOf(scope));
     }
   }
 }

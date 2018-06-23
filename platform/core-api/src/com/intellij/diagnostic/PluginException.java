@@ -16,7 +16,8 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.extensions.PluginId;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author stathik
@@ -25,34 +26,29 @@ import org.jetbrains.annotations.NonNls;
 public class PluginException extends RuntimeException {
   private final PluginId myPluginId;
 
-  public PluginException(String message, Throwable cause, PluginId pluginId) {
+  public PluginException(String message, Throwable cause, @Nullable PluginId pluginId) {
     super(message, cause);
     myPluginId = pluginId;
   }
 
-  public PluginException(Throwable e, PluginId pluginId) {
+  public PluginException(Throwable e, @Nullable PluginId pluginId) {
     super (e.getMessage(), e);
     myPluginId = pluginId;
   }
 
-  public PluginException(final String message, final PluginId pluginId) {
+  public PluginException(final String message, @Nullable PluginId pluginId) {
     super(message);
     myPluginId = pluginId;
   }
 
+  @Nullable
   public PluginId getPluginId() {
     return myPluginId;
   }
 
   @Override
   public String getMessage() {
-    @NonNls String message = super.getMessage();
-
-    if (message == null) {
-      message = "";
-    }
-
-    message += " [Plugin: " + myPluginId.toString() + "]";
-    return message;
+    String message = super.getMessage();
+    return myPluginId != null ? StringUtil.notNullize(message) + " [Plugin: " + myPluginId.toString() + "]" : message;
   }
 }

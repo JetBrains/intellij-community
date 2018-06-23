@@ -4,6 +4,7 @@ package org.jetbrains.intellij.build.impl
 import com.intellij.execution.CommandLineWrapperUtil
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtilRt
+import com.intellij.openapi.util.text.StringUtil
 import groovy.transform.CompileDynamic
 import groovy.transform.CompileStatic
 import org.apache.tools.ant.AntClassLoader
@@ -35,6 +36,11 @@ class TestingTasksImpl extends TestingTasks {
 
   @Override
   void runTests(List<String> additionalJvmOptions, String defaultMainModule, Predicate<File> rootExcludeCondition) {
+    if (options.testDiscoveryEnabled && isPerformanceRun()) {
+      context.messages.buildStatus("Skipping performance testing with Test Discovery, {build.status.text}")
+      return
+    }
+
     checkOptions()
 
     def compilationTasks = CompilationTasks.create(context)
@@ -70,6 +76,10 @@ class TestingTasksImpl extends TestingTasks {
       }
       publishTestDiscovery()
     }
+  }
+
+  private static boolean isPerformanceRun() {
+    System.getProperty("idea.performance.tests") == "true"
   }
 
   private void checkOptions() {
@@ -187,12 +197,15 @@ class TestingTasksImpl extends TestingTasks {
             'teamcity-build-type-id'           : System.getProperty('teamcity.buildType.id'),
             'teamcity-build-configuration-name': System.getenv('TEAMCITY_BUILDCONF_NAME'),
             'teamcity-build-project-name'      : System.getenv('TEAMCITY_PROJECT_NAME'),
+            'branch'                           : System.getProperty('intellij.platform.vcs.branch') ?: 'master',
+            'project'                          : 'intellij',
           ])
         }
         catch (Exception e) {
           context.messages.error(e.message, e)
         }
       }
+      context.messages.buildStatus("With Discovery, {build.status.text}")
     }
   }
 
@@ -217,7 +230,7 @@ class TestingTasksImpl extends TestingTasks {
       context.messages.warning("'intellij.build.test.configurations' option is ignored while debugging via TeamCity plugin")
     }
     def mainModule = options.mainModule ?: defaultMainModule
-    def filteredOptions = removeStandardJvmOptions(remoteDebugJvmOptions.split(";").toList())
+    def filteredOptions = removeStandardJvmOptions(StringUtil.splitHonorQuotes(remoteDebugJvmOptions, ' ' as char))
     runTestsProcess(mainModule, null, junitClass, filteredOptions + additionalJvmOptions, [:], [:], true)
   }
 
@@ -283,7 +296,7 @@ class TestingTasksImpl extends TestingTasks {
     }
 
     boolean suspendDebugProcess = options.suspendDebugProcess
-    if (systemProperties["idea.performance.tests"] == "true") {
+    if (isPerformanceRun()) {
       context.messages.info("Debugging disabled for performance tests")
       suspendDebugProcess = false
     }

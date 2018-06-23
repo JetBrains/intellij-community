@@ -506,6 +506,7 @@ public class ConfigurableExtensionPointUtil {
   /**
    * @deprecated create a new instance of configurable instead
    */
+  @Deprecated
   @NotNull
   public static <T extends Configurable> T findProjectConfigurable(@NotNull Project project, @NotNull Class<T> configurableClass) {
     return findConfigurable(project.getExtensions(Configurable.PROJECT_CONFIGURABLE), configurableClass);

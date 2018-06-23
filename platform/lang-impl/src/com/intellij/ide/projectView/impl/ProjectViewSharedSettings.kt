@@ -12,18 +12,19 @@ import com.intellij.util.xmlb.XmlSerializerUtil
  */
 @State(name = "ProjectViewSharedSettings", storages = [(Storage(value = "projectView.xml"))])
 class ProjectViewSharedSettings : PersistentStateComponent<ProjectViewSharedSettings> {
-  var flattenPackages = false
-  var showMembers = false
-  var sortByType = false
-  var showModules = true
-  var flattenModules = false
-  var showLibraryContents = true
-  var hideEmptyPackages = true
-  var abbreviatePackages = false
-  var autoscrollFromSource = false
-  var autoscrollToSource = false
-  var foldersAlwaysOnTop = true
-  var manualOrder = false
+  var flattenPackages: Boolean = false
+  var showMembers: Boolean = false
+  var sortByType: Boolean = false
+  var showModules: Boolean = true
+  var flattenModules: Boolean = false
+  var showLibraryContents: Boolean = true
+  var hideEmptyPackages: Boolean = true
+  var compactDirectories: Boolean = false
+  var abbreviatePackages: Boolean = false
+  var autoscrollFromSource: Boolean = false
+  var autoscrollToSource: Boolean = false
+  var foldersAlwaysOnTop: Boolean = true
+  var manualOrder: Boolean = false
 
   override fun getState(): ProjectViewSharedSettings? {
     return this

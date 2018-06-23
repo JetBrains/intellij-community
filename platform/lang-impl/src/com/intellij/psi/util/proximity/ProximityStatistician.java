@@ -20,7 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.ProximityLocation;
 
 /**
- * @author peter
+ * A {@link Statistician} for PSI element proximity to the given location. Used in Goto Class/File/Symbol popups and completion
  */
 public abstract class ProximityStatistician extends Statistician<PsiElement, ProximityLocation>{
 }

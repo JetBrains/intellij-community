@@ -112,13 +112,15 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
     if (loop instanceof PsiForStatement) {
       CountingLoop countingLoop = CountingLoop.from((PsiForStatement)loop);
       if (countingLoop != null) {
+        boolean descending = countingLoop.isDescending();
+        long multiplier = descending ? -1 : 1;
         Object from = ExpressionUtils.computeConstantExpression(countingLoop.getInitializer());
         if (!(from instanceof Integer) && !(from instanceof Long)) return Collections.emptyList();
         long fromValue = ((Number)from).longValue();
         Object to = ExpressionUtils.computeConstantExpression(countingLoop.getBound());
         if (!(to instanceof Integer) && !(to instanceof Long)) return Collections.emptyList();
         long toValue = ((Number)to).longValue();
-        long diff = toValue - fromValue;
+        long diff = multiplier * (toValue - fromValue);
         String suffix = PsiType.LONG.equals(countingLoop.getCounter().getType()) ? "L" : "";
         if (countingLoop.isIncluding()) {
           diff++; // overflow is ok: diff will become negative and we will exit
@@ -129,7 +131,8 @@ public class UnrollLoopAction extends PsiElementBaseIntentionAction {
         return new AbstractList<PsiExpression>() {
           @Override
           public PsiExpression get(int index) {
-            return factory.createExpressionFromText(String.valueOf(fromValue + index) + suffix, loop);
+            long value = fromValue + multiplier * index;
+            return factory.createExpressionFromText(value + suffix, loop);
           }
 
           @Override

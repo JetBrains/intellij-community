@@ -171,7 +171,7 @@ public abstract class BaseProjectTreeBuilder extends AbstractTreeBuilder {
       result.setResult(null);
     };
 
-    final Condition<AbstractTreeNode> condition = abstractTreeNode -> result.getState() != Promise.State.PENDING && nonStopCondition.value(abstractTreeNode);
+    final Condition<AbstractTreeNode> condition = abstractTreeNode -> result.getState() == Promise.State.PENDING && nonStopCondition.value(abstractTreeNode);
 
     if (alreadySelected == null) {
       expandPathTo(file, (AbstractTreeNode)getTreeStructure().getRootElement(), element, condition, indicator, virtualSelectTarget)

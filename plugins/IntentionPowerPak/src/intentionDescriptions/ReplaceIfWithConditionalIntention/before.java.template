@@ -1,8 +1,0 @@
-public class X {
-  int f(boolean a) {
-    <spot>if</spot> (a) {
-      return 3;
-    }
-    return 4;
-  }
-}

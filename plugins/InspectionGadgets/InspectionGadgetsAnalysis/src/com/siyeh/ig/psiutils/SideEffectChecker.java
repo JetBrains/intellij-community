@@ -15,8 +15,8 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInspection.dataFlow.ControlFlowAnalyzer;
-import com.intellij.codeInspection.dataFlow.MethodContract;
+import com.intellij.codeInspection.dataFlow.ContractValue;
+import com.intellij.codeInspection.dataFlow.JavaMethodContractUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PropertyUtil;
@@ -169,7 +169,7 @@ public class SideEffectChecker {
       if (method == null) return false;
       PsiField field = PropertyUtil.getFieldOfGetter(method);
       if (field != null) return !field.hasModifierProperty(PsiModifier.VOLATILE);
-      return ControlFlowAnalyzer.isPure(method) && !mayHaveExceptionalSideEffect(method);
+      return JavaMethodContractUtil.isPure(method) && !mayHaveExceptionalSideEffect(method);
     }
 
     @Override
@@ -248,9 +248,9 @@ public class SideEffectChecker {
   public static boolean mayHaveExceptionalSideEffect(PsiMethod method) {
     String name = method.getName();
     if (name.startsWith("assert") || name.startsWith("check") || name.startsWith("require")) return true;
-    return ControlFlowAnalyzer.getMethodCallContracts(method, null).stream()
-      .filter(mc -> mc.getConditions().stream().noneMatch(cv -> cv.isBoundCheckingCondition()))
-      .anyMatch(mc -> mc.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION);
+    return JavaMethodContractUtil.getMethodCallContracts(method, null).stream()
+                                 .filter(mc -> mc.getConditions().stream().noneMatch(ContractValue::isBoundCheckingCondition))
+                                 .anyMatch(mc -> mc.getReturnValue().isFail());
   }
 
   private static boolean isSideEffectFreeConstructor(@NotNull PsiNewExpression newExpression) {

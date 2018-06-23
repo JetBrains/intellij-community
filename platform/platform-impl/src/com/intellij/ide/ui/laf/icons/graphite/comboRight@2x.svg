@@ -1,0 +1,85 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="34" height="42" viewBox="0 0 34 42">
+  <defs>
+    <rect id="comboright@2x-a" width="34" height="42"/>
+    <linearGradient id="comboright@2x-c" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#B1B2B8"/>
+      <stop offset="100%" stop-color="#919095"/>
+    </linearGradient>
+    <linearGradient id="comboright@2x-e" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#A6A6AD"/>
+      <stop offset="100%" stop-color="#7B7D81"/>
+    </linearGradient>
+    <rect id="comboright@2x-d" width="130" height="42" x="-96" rx="8"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <mask id="comboright@2x-b" fill="#fff">
+      <use xlink:href="#comboright@2x-a"/>
+    </mask>
+    <g mask="url(#comboright@2x-b)">
+      <use fill="url(#comboright@2x-c)" xlink:href="#comboright@2x-d"/>
+      <rect width="129" height="41" x="-95.5" y=".5" stroke="url(#comboright@2x-e)" rx="8"/>
+    </g>
+    <g transform="translate(9 8)">
+      <g transform="matrix(1 0 0 -1 0 9)">
+        <rect width="1" height="1" fill="#E1E1E2"/>
+        <rect width="1" height="1" x="14" fill="#E1E1E2"/>
+        <rect width="1" height="1" x="2" fill="#CBCBCE"/>
+        <rect width="1" height="1" x="3" y="1" fill="#CBCBCE"/>
+        <rect width="1" height="1" x="4" y="2" fill="#CBCBCE"/>
+        <rect width="1" height="1" x="5" y="3" fill="#C7C7CA"/>
+        <rect width="1" height="1" x="6" y="4" fill="#C7C7CA"/>
+        <rect width="1" height="1" y="2" fill="#D1CFD2"/>
+        <rect width="1" height="1" x="1" y="3" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="2" y="4" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="3" y="5" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="4" y="6" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="5" y="7" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="6" y="8" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="14" y="2" fill="#DEDDDE" transform="matrix(-1 0 0 1 29 0)"/>
+        <rect width="1" height="1" x="13" y="3" fill="#DEDDDE" transform="matrix(-1 0 0 1 27 0)"/>
+        <rect width="1" height="1" x="12" y="4" fill="#DEDDDE" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="5" fill="#DEDDDE" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="6" fill="#DEDDDE" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="7" fill="#DEDDDE" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="8" fill="#DEDDDE" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="12" fill="#CBCBCE" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="1" fill="#CBCBCE" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="2" fill="#CBCBCE" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="3" fill="#C7C7CA" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="4" fill="#C7C7CA" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="7" y="5" fill="#DEDCDF" transform="matrix(-1 0 0 1 15 0)"/>
+      </g>
+      <path fill="#FFF" d="M14,2 L14,3 L13,3 L13,4 L12,4 L12,5 L11,5 L11,6 L10,6 L10,7 L9,7 L9,8 L8,8 L8,9 L7,9 L7,8 L6,8 L6,7 L5,7 L5,6 L4,6 L4,5 L3,5 L3,4 L2,4 L2,3 L1,3 L1,2 L0,2 L0,1 L1,1 L1,0 L2,0 L2,1 L3,1 L3,2 L4,2 L4,3 L5,3 L5,4 L6,4 L6,5 L7,5 L7,6 L8,6 L8,5 L9,5 L9,4 L10,4 L10,3 L11,3 L11,2 L12,2 L12,1 L13,1 L13,0 L14,0 L14,1 L15,1 L15,2 L14,2 Z" transform="matrix(1 0 0 -1 0 9)"/>
+      <g transform="translate(0 15)">
+        <rect width="1" height="1" fill="#E1E1E2"/>
+        <rect width="1" height="1" x="14" fill="#E1E1E2"/>
+        <rect width="1" height="1" x="2" fill="#CBCBCE"/>
+        <rect width="1" height="1" x="3" y="1" fill="#CBCBCE"/>
+        <rect width="1" height="1" x="4" y="2" fill="#CBCBCE"/>
+        <rect width="1" height="1" x="5" y="3" fill="#C7C7CA"/>
+        <rect width="1" height="1" x="6" y="4" fill="#C7C7CA"/>
+        <rect width="1" height="1" y="2" fill="#D1CFD2"/>
+        <rect width="1" height="1" x="1" y="3" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="2" y="4" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="3" y="5" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="4" y="6" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="5" y="7" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="6" y="8" fill="#D8D8DA"/>
+        <rect width="1" height="1" x="14" y="2" fill="#DEDDDE" transform="matrix(-1 0 0 1 29 0)"/>
+        <rect width="1" height="1" x="13" y="3" fill="#DEDDDE" transform="matrix(-1 0 0 1 27 0)"/>
+        <rect width="1" height="1" x="12" y="4" fill="#DEDDDE" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="5" fill="#DEDDDE" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="6" fill="#DEDDDE" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="7" fill="#DEDDDE" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="8" fill="#DEDDDE" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="12" fill="#CBCBCE" transform="matrix(-1 0 0 1 25 0)"/>
+        <rect width="1" height="1" x="11" y="1" fill="#CBCBCE" transform="matrix(-1 0 0 1 23 0)"/>
+        <rect width="1" height="1" x="10" y="2" fill="#CBCBCE" transform="matrix(-1 0 0 1 21 0)"/>
+        <rect width="1" height="1" x="9" y="3" fill="#C7C7CA" transform="matrix(-1 0 0 1 19 0)"/>
+        <rect width="1" height="1" x="8" y="4" fill="#C7C7CA" transform="matrix(-1 0 0 1 17 0)"/>
+        <rect width="1" height="1" x="7" y="5" fill="#DEDCDF" transform="matrix(-1 0 0 1 15 0)"/>
+      </g>
+      <path fill="#FFF" d="M14,17 L14,18 L13,18 L13,19 L12,19 L12,20 L11,20 L11,21 L10,21 L10,22 L9,22 L9,23 L8,23 L8,24 L7,24 L7,23 L6,23 L6,22 L5,22 L5,21 L4,21 L4,20 L3,20 L3,19 L2,19 L2,18 L1,18 L1,17 L0,17 L0,16 L1,16 L1,15 L2,15 L2,16 L3,16 L3,17 L4,17 L4,18 L5,18 L5,19 L6,19 L6,20 L7,20 L7,21 L8,21 L8,20 L9,20 L9,19 L10,19 L10,18 L11,18 L11,17 L12,17 L12,16 L13,16 L13,15 L14,15 L14,16 L15,16 L15,17 L14,17 Z"/>
+    </g>
+  </g>
+</svg>

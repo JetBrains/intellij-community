@@ -12,6 +12,7 @@ import com.intellij.openapi.vcs.ui.RefreshableOnComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.ListCellRendererWrapper;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,7 @@ import java.util.List;
  * @author lene
  */
 public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
-  public static final Object NONE_TOOL = new Object();
+  public static final Object NONE_TOOL = ObjectUtils.sentinel("NONE_TOOL");
 
   @NotNull
   @Override

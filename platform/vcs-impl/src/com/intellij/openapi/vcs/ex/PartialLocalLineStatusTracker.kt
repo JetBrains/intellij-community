@@ -16,11 +16,13 @@
 package com.intellij.openapi.vcs.ex
 
 import com.intellij.diff.util.Side
-import com.intellij.ide.file.BatchFileChangeListener
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
 import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.actionSystem.Separator
 import com.intellij.openapi.application.ModalityState
+import com.intellij.openapi.application.runInEdt
 import com.intellij.openapi.application.runReadAction
 import com.intellij.openapi.command.CommandEvent
 import com.intellij.openapi.command.CommandListener
@@ -31,8 +33,11 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.event.DocumentEvent
 import com.intellij.openapi.editor.event.DocumentListener
+import com.intellij.openapi.keymap.KeymapUtil
+import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.openapi.util.text.StringUtil
 import com.intellij.openapi.vcs.changes.ChangeListManager
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl
@@ -42,19 +47,18 @@ import com.intellij.openapi.vcs.ex.DocumentTracker.Block
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker.LocalRange
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager
 import com.intellij.openapi.vfs.VirtualFile
-import com.intellij.ui.GuiUtils
 import com.intellij.ui.components.labels.ActionGroupLink
 import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.WeakList
 import com.intellij.util.ui.JBUI
+import com.intellij.vcsUtil.VcsUtil
 import org.jetbrains.annotations.CalledInAwt
 import java.awt.BorderLayout
 import java.awt.Graphics
 import java.awt.Point
 import java.lang.ref.WeakReference
 import java.util.*
-import java.util.concurrent.atomic.AtomicInteger
 import javax.swing.JComponent
 import javax.swing.JPanel
 import kotlin.collections.HashSet
@@ -68,14 +72,18 @@ class PartialLocalLineStatusTracker(project: Project,
   private val lstManager = LineStatusTrackerManager.getInstance(project) as LineStatusTrackerManager
   private val undoManager = UndoManager.getInstance(project)
 
-  override val renderer = MyLineStatusMarkerRenderer(this)
+  private val undoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.undo")
+  private val redoStateRecordingEnabled = Registry.`is`("vcs.enable.partial.changelists.redo")
+
+  override val renderer: MyLineStatusMarkerRenderer = MyLineStatusMarkerRenderer(this)
 
   private var defaultMarker: ChangeListMarker
   private var currentMarker: ChangeListMarker? = null
 
+  private var initialChangeListId: String? = null
+  private var lastKnownTrackerChangeListId: String? = null
   private val affectedChangeLists = HashSet<String>()
 
-  private val batchChangeTaskCounter: AtomicInteger = AtomicInteger()
   private var hasUndoInCommand: Boolean = false
 
   private var shouldInitializeWithExcludedFromCommit: Boolean = false
@@ -86,12 +94,11 @@ class PartialLocalLineStatusTracker(project: Project,
     defaultMarker = ChangeListMarker(changeListManager.defaultChangeList)
     affectedChangeLists.add(defaultMarker.changelistId)
 
-    val connection = application.messageBus.connect(disposable)
-    connection.subscribe(BatchFileChangeListener.TOPIC, MyBatchFileChangeListener())
-
-    document.addDocumentListener(MyUndoDocumentListener(), disposable)
-    CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
-    Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    if (undoStateRecordingEnabled) {
+      document.addDocumentListener(MyUndoDocumentListener(), disposable)
+      CommandProcessor.getInstance().addCommandListener(MyUndoCommandListener(), disposable)
+      Disposer.register(disposable, Disposable { dropExistingUndoActions() })
+    }
 
     assert(blocks.isEmpty())
   }
@@ -116,13 +123,15 @@ class PartialLocalLineStatusTracker(project: Project,
       newIds.add(block.marker.changelistId)
     }
 
+    if (!isInitialized) initialChangeListId?.let { newIds.add(it) }
+
     if (newIds.isEmpty()) {
-      if (affectedChangeLists.size == 1) {
-        newIds.add(affectedChangeLists.single())
-      }
-      else {
-        newIds.add(defaultMarker.changelistId)
-      }
+      val listId = lastKnownTrackerChangeListId ?: defaultMarker.changelistId
+      newIds.add(listId)
+    }
+
+    if (newIds.size == 1) {
+      lastKnownTrackerChangeListId = newIds.single()
     }
 
     oldIds.addAll(affectedChangeLists)
@@ -133,7 +142,7 @@ class PartialLocalLineStatusTracker(project: Project,
     if (oldIds != newIds) {
       if (notifyChangeListManager) {
         // It's OK to call this under documentTracker.writeLock, as this method will not grab CLM lock.
-        changeListManager.notifyChangelistsChanged()
+        changeListManager.notifyChangelistsChanged(VcsUtil.getFilePath(virtualFile), oldIds.toList(), newIds.toList())
       }
 
       eventDispatcher.multicaster.onChangeListsChange(this)
@@ -143,7 +152,10 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   @CalledInAwt
-  fun setBaseRevision(vcsContent: CharSequence, changelistId: String?) {
+  override fun setBaseRevision(vcsContent: CharSequence) {
+    val changelistId = if (!isInitialized) initialChangeListId else null
+    initialChangeListId = null
+
     setBaseRevision(vcsContent) {
       if (changelistId != null) {
         changeListManager.executeUnderDataLock {
@@ -156,6 +168,10 @@ class PartialLocalLineStatusTracker(project: Project,
           }
         }
       }
+    }
+
+    documentTracker.writeLock {
+      updateAffectedChangeLists()
     }
 
     dropExistingUndoActions()
@@ -173,12 +189,19 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
 
-  override fun initChangeTracking(defaultId: String, changelistsIds: List<String>) {
+  override fun initChangeTracking(defaultId: String, changelistsIds: List<String>, fileChangelistId: String?) {
     documentTracker.writeLock {
       defaultMarker = ChangeListMarker(defaultId)
 
+      if (!isInitialized) initialChangeListId = fileChangelistId
+
+      lastKnownTrackerChangeListId = fileChangelistId
+
       val idsSet = changelistsIds.toSet()
       moveMarkers({ !idsSet.contains(it.marker.changelistId) }, defaultMarker)
+
+      // no need to notify CLM, as we're inside it's action
+      updateAffectedChangeLists(false)
     }
   }
 
@@ -192,12 +215,13 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(listId)) return@writeLock
 
+      if (!isInitialized && initialChangeListId == listId) initialChangeListId = null
+
+      if (lastKnownTrackerChangeListId == listId) lastKnownTrackerChangeListId = null
+
       moveMarkers({ it.marker.changelistId == listId }, defaultMarker)
 
-      if (affectedChangeLists.size == 1 && affectedChangeLists.contains(listId)) {
-        affectedChangeLists.clear()
-        affectedChangeLists.add(defaultMarker.changelistId)
-      }
+      updateAffectedChangeLists(false)
     }
   }
 
@@ -205,18 +229,29 @@ class PartialLocalLineStatusTracker(project: Project,
     documentTracker.writeLock {
       if (!affectedChangeLists.contains(fromListId)) return@writeLock
 
+      if (!isInitialized && initialChangeListId == fromListId) initialChangeListId = toListId
+
+      if (lastKnownTrackerChangeListId == fromListId) lastKnownTrackerChangeListId = toListId
+
       moveMarkers({ it.marker.changelistId == fromListId }, ChangeListMarker(toListId))
+
+      updateAffectedChangeLists(false)
     }
   }
 
   override fun moveChangesTo(toListId: String) {
     documentTracker.writeLock {
+      if (!isInitialized) initialChangeListId = toListId
+
+      lastKnownTrackerChangeListId = toListId
+
       moveMarkers({ true }, ChangeListMarker(toListId))
+
+      updateAffectedChangeLists(false)
     }
   }
 
-  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker,
-                          notifyChangeListManager: Boolean = false) {
+  private fun moveMarkers(condition: (Block) -> Boolean, toMarker: ChangeListMarker) {
     val affectedBlocks = mutableListOf<Block>()
 
     for (block in blocks) {
@@ -229,14 +264,12 @@ class PartialLocalLineStatusTracker(project: Project,
 
     if (!affectedBlocks.isEmpty()) {
       dropExistingUndoActions()
-      updateAffectedChangeLists(notifyChangeListManager) // no need to notify CLM, as we're inside it's action
 
-      GuiUtils.invokeLaterIfNeeded(
-        {
-          for (block in affectedBlocks) {
-            updateHighlighter(block)
-          }
-        }, ModalityState.any())
+      runInEdt(ModalityState.any()) {
+        for (block in affectedBlocks) {
+          updateHighlighter(block)
+        }
+      }
     }
   }
 
@@ -252,10 +285,41 @@ class PartialLocalLineStatusTracker(project: Project,
   }
 
   private inner class MyUndoCommandListener : CommandListener {
-    override fun beforeCommandFinished(event: CommandEvent?) {
-      if (hasUndoInCommand) {
+    override fun commandStarted(event: CommandEvent?) {
+      if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
         hasUndoInCommand = false
+      }
+    }
 
+    override fun commandFinished(event: CommandEvent?) {
+      if (!CommandProcessor.getInstance().isUndoTransparentActionInProgress) {
+        hasUndoInCommand = false
+      }
+    }
+
+    override fun undoTransparentActionStarted() {
+      if (CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+      }
+    }
+
+    override fun undoTransparentActionFinished() {
+      if (CommandProcessor.getInstance().currentCommand == null) {
+        hasUndoInCommand = false
+      }
+    }
+
+
+    override fun beforeCommandFinished(event: CommandEvent?) {
+      registerRedoAction()
+    }
+
+    override fun beforeUndoTransparentActionFinished() {
+      registerRedoAction()
+    }
+
+    private fun registerRedoAction() {
+      if (hasUndoInCommand && redoStateRecordingEnabled) {
         registerUndoAction(false)
       }
     }
@@ -274,27 +338,6 @@ class PartialLocalLineStatusTracker(project: Project,
     val action = MyUndoableAction(project, document, undoState, undo)
     undoManager.undoableActionPerformed(action)
     undoableActions.add(action)
-  }
-
-  private inner class MyBatchFileChangeListener : BatchFileChangeListener {
-    override fun batchChangeStarted(eventProject: Project, activityName: String?) {
-      if (eventProject != project) return
-      if (batchChangeTaskCounter.getAndIncrement() == 0) {
-        documentTracker.freeze(Side.LEFT)
-        documentTracker.freeze(Side.RIGHT)
-      }
-    }
-
-    override fun batchChangeCompleted(eventProject: Project) {
-      if (eventProject != project) return
-      application.invokeLater(
-        {
-          if (batchChangeTaskCounter.decrementAndGet() == 0) {
-            documentTracker.unfreeze(Side.LEFT)
-            documentTracker.unfreeze(Side.RIGHT)
-          }
-        }, ModalityState.any())
-    }
   }
 
   private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
@@ -478,7 +521,10 @@ class PartialLocalLineStatusTracker(project: Project,
       }
     }
 
-    override fun createAdditionalInfoPanel(editor: Editor, range: Range, mousePosition: Point?): JComponent? {
+    override fun createAdditionalInfoPanel(editor: Editor,
+                                           range: Range,
+                                           mousePosition: Point?,
+                                           disposable: Disposable): JComponent? {
       if (range !is LocalRange) return null
 
       val changeLists = ChangeListManager.getInstance(tracker.project).changeLists
@@ -487,8 +533,7 @@ class PartialLocalLineStatusTracker(project: Project,
       val group = DefaultActionGroup()
       if (changeLists.size > 1) {
         group.add(Separator("Changelists"))
-        val comparator = compareBy<LocalChangeList> { if (it.isDefault) 0 else 1 }.thenBy { it.name }
-        for (changeList in changeLists.sortedWith(comparator)) {
+        for (changeList in changeLists) {
           group.add(MoveToChangeListAction(editor, range, mousePosition, changeList))
         }
         group.add(Separator.getInstance())
@@ -497,6 +542,18 @@ class PartialLocalLineStatusTracker(project: Project,
 
 
       val link = ActionGroupLink(rangeList.name, null, group)
+
+      val moveChangesShortcutSet = ActionManager.getInstance().getAction("Vcs.MoveChangedLinesToChangelist").shortcutSet
+      object : DumbAwareAction() {
+        override fun actionPerformed(e: AnActionEvent?) {
+          link.linkLabel.doClick()
+        }
+      }.registerCustomShortcutSet(moveChangesShortcutSet, editor.component, disposable)
+
+      val shortcuts = moveChangesShortcutSet.shortcuts
+      if (shortcuts.isNotEmpty()) {
+        link.linkLabel.toolTipText = "Move lines to another changelist (${KeymapUtil.getShortcutText(shortcuts.first())})"
+      }
 
       val panel = JPanel(BorderLayout())
       panel.add(link, BorderLayout.CENTER)
@@ -508,7 +565,7 @@ class PartialLocalLineStatusTracker(project: Project,
     private inner class MoveToAnotherChangeListAction(editor: Editor, range: Range, val mousePosition: Point?)
       : RangeMarkerAction(editor, range, null) {
       init {
-        templatePresentation.text = "New..."
+        templatePresentation.text = "New Changelist..."
       }
 
       override fun isEnabled(editor: Editor, range: Range): Boolean = range is LocalRange
@@ -560,7 +617,8 @@ class PartialLocalLineStatusTracker(project: Project,
       val newMarker = ChangeListMarker(changelist)
 
       documentTracker.writeLock {
-        moveMarkers(condition, newMarker, notifyChangeListManager = true)
+        moveMarkers(condition, newMarker)
+        updateAffectedChangeLists()
       }
     }
   }

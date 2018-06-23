@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.tasks;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.Shortcut;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.BaseComponent;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
@@ -56,7 +43,6 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
 
   private final MavenProjectsManager myProjectsManager;
 
-  private MyKeymapListener myKeymapListener;
   private final List<Listener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   @NotNull
@@ -89,14 +75,27 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
     myProjectsManager.addManagerListener(listener);
     myProjectsManager.addProjectsTreeListener(listener);
 
-    myKeymapListener = new MyKeymapListener();
+    ApplicationManager.getApplication().getMessageBus().connect(this).subscribe(KeymapManagerListener.TOPIC, new KeymapManagerListener() {
+      {
+        ApplicationManager.getApplication().getMessageBus().connect(MavenShortcutsManager.this).subscribe(KeymapManagerListener.TOPIC, this);
+      }
+
+      @Override
+      public void activeKeymapChanged(Keymap keymap) {
+        fireShortcutsUpdated();
+      }
+
+      @Override
+      public void shortcutChanged(@NotNull Keymap keymap, @NotNull String actionId) {
+        fireShortcutsUpdated();
+      }
+    });
   }
 
   @Override
   public void disposeComponent() {
     if (!isInitialized.getAndSet(false)) return;
 
-    myKeymapListener.stopListen();
     MavenKeymapExtension.clearActions(myProject);
   }
 
@@ -146,41 +145,6 @@ public class MavenShortcutsManager extends MavenSimpleProjectComponent implement
 
   public interface Listener {
     void shortcutsUpdated();
-  }
-
-  private class MyKeymapListener implements KeymapManagerListener, Keymap.Listener {
-    private Keymap myCurrentKeymap = null;
-
-    public MyKeymapListener() {
-      KeymapManager keymapManager = KeymapManager.getInstance();
-      listenTo(keymapManager.getActiveKeymap());
-      keymapManager.addKeymapManagerListener(this, MavenShortcutsManager.this);
-    }
-
-    @Override
-    public void activeKeymapChanged(Keymap keymap) {
-      listenTo(keymap);
-      fireShortcutsUpdated();
-    }
-
-    private void listenTo(Keymap keymap) {
-      if (myCurrentKeymap != null) {
-        myCurrentKeymap.removeShortcutChangeListener(this);
-      }
-      myCurrentKeymap = keymap;
-      if (myCurrentKeymap != null) {
-        myCurrentKeymap.addShortcutChangeListener(this);
-      }
-    }
-
-    @Override
-    public void onShortcutChanged(String actionId) {
-      fireShortcutsUpdated();
-    }
-
-    public void stopListen() {
-      listenTo(null);
-    }
   }
 
   private class MyProjectsTreeListener implements MavenProjectsManager.Listener, MavenProjectsTree.Listener {

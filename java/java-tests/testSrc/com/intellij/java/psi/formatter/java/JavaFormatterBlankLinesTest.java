@@ -458,4 +458,34 @@ public class JavaFormatterBlankLinesTest extends AbstractJavaFormatterTest {
       "}"
     );
   }
+
+  public void testEnumBlankLines() {
+    getSettings().KEEP_BLANK_LINES_IN_DECLARATIONS = 0;
+    getSettings().KEEP_BLANK_LINES_IN_CODE = 1;
+    getSettings().KEEP_BLANK_LINES_BEFORE_RBRACE = 0;
+    doTextTest(
+      "public enum SomeEnum {\n" +
+      "  SOME;\n" +
+      "\n" +
+      "  public void smth(){}\n" +
+      "\n" +
+      "\n" +
+      "}\n" +
+      "\n" +
+      "public abstract class SomeClass {\n" +
+      "  public void smth(){}\n" +
+      "}",
+      "public enum SomeEnum {\n" +
+      "    SOME;\n" +
+      "\n" +
+      "    public void smth() {\n" +
+      "    }\n" +
+      "}\n" +
+      "\n" +
+      "public abstract class SomeClass {\n" +
+      "    public void smth() {\n" +
+      "    }\n" +
+      "}"
+    );
+  }
 }

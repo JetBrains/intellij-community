@@ -27,6 +27,8 @@ import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.SystemInfo
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.Url
+import com.intellij.util.Urls
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.MultiMap
 import com.intellij.util.io.HttpRequests
@@ -34,39 +36,38 @@ import com.intellij.util.io.URLUtil
 import com.intellij.util.loadElement
 import com.intellij.util.ui.UIUtil
 import com.intellij.xml.util.XmlStringUtil
-import org.apache.http.client.utils.URIBuilder
+import gnu.trove.THashMap
 import org.jdom.JDOMException
 import java.io.File
 import java.io.IOException
 import java.lang.IllegalStateException
 import java.util.*
-import kotlin.collections.component1
-import kotlin.collections.component2
+import kotlin.collections.HashSet
 import kotlin.collections.set
 
 /**
  * See XML file by [ApplicationInfoEx.getUpdateUrls] for reference.
- *
- * @author mike
- * @since Oct 31, 2002
  */
 object UpdateChecker {
   private val LOG = Logger.getInstance("#com.intellij.openapi.updateSettings.impl.UpdateChecker")
 
-  @JvmField val NOTIFICATIONS = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
+  @JvmField val NOTIFICATIONS: NotificationGroup = NotificationGroup(IdeBundle.message("update.notifications.title"), NotificationDisplayType.STICKY_BALLOON, true)
 
   private const val DISABLED_UPDATE = "disabled_update.txt"
 
   private enum class NotificationUniqueType { PLATFORM, PLUGINS, EXTERNAL }
 
   private var ourDisabledToUpdatePlugins: MutableSet<String>? = null
-  private val ourAdditionalRequestOptions = hashMapOf<String, String>()
+  private val ourAdditionalRequestOptions = THashMap<String, String>()
   private val ourUpdatedPlugins = hashMapOf<String, PluginDownloader>()
   private val ourShownNotifications = MultiMap<NotificationUniqueType, Notification>()
 
-  /** A special property for making users suffer by excluding some plugins from a normal update process. Better avoid. */
+  /**
+   * Adding a plugin ID to this collection allows to exclude a plugin from a regular update check.
+   * Has no effect on non-bundled or "essential" (i.e. required for one of open projects) plugins.
+   */
   @Suppress("MemberVisibilityCanBePrivate")
-  val excludedFromUpdateCheckPlugins = hashSetOf<String>()
+  val excludedFromUpdateCheckPlugins: HashSet<String> = hashSetOf()
 
   private val updateUrl: String
     get() = System.getProperty("idea.updates.url") ?: ApplicationInfoEx.getInstanceEx().updateUrls.checkingUrl
@@ -103,7 +104,7 @@ object UpdateChecker {
    * An immediate check for plugin updates for use from a command line (read "Toolbox").
    */
   @JvmStatic
-  fun getPluginUpdates() =
+  fun getPluginUpdates(): Collection<PluginDownloader>? =
     checkPluginsUpdate(UpdateSettings.getInstance(), EmptyProgressIndicator(), null, BuildNumber.currentVersion())
 
   private fun doUpdateAndShowResult(project: Project?,
@@ -155,24 +156,22 @@ object UpdateChecker {
   }
 
   private fun checkPlatformUpdate(settings: UpdateSettings): CheckForUpdateResult {
-    if (!settings.isPlatformUpdateEnabled) {
-      return CheckForUpdateResult(UpdateStrategy.State.NOTHING_LOADED, null)
-    }
-
     val updateInfo: UpdatesInfo?
     try {
-      val uriBuilder = URIBuilder(updateUrl)
-      if (URLUtil.FILE_PROTOCOL != uriBuilder.scheme) {
-        prepareUpdateCheckArgs(uriBuilder)
+      var updateUrl = Urls.newFromEncoded(updateUrl)
+      if (updateUrl.scheme != URLUtil.FILE_PROTOCOL) {
+        updateUrl = prepareUpdateCheckArgs(updateUrl, settings.packageManagerName)
       }
-      val updateUrl = uriBuilder.build().toString()
       LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
 
       updateInfo = HttpRequests.request(updateUrl)
           .forceHttps(settings.canUseSecureConnection())
           .connect {
             try {
-              UpdatesInfo(loadElement(it.reader))
+              if (settings.isPlatformUpdateEnabled)
+                UpdatesInfo(loadElement(it.reader))
+              else
+                null
             }
             catch (e: JDOMException) {
               // corrupted content, don't bother telling user
@@ -192,6 +191,26 @@ object UpdateChecker {
 
     val strategy = UpdateStrategy(ApplicationInfo.getInstance().build, updateInfo, settings)
     return strategy.checkForUpdates()
+  }
+
+  @JvmStatic
+  @Throws(IOException::class)
+  fun getUpdatesInfo(settings: UpdateSettings): UpdatesInfo? {
+    val updateUrl = Urls.newFromEncoded(updateUrl)
+    LogUtil.debug(LOG, "load update xml (UPDATE_URL='%s')", updateUrl)
+
+    return HttpRequests.request(updateUrl)
+      .forceHttps(settings.canUseSecureConnection())
+      .connect {
+        try {
+          UpdatesInfo(loadElement(it.reader))
+        }
+        catch (e: JDOMException) {
+          // corrupted content, don't bother telling user
+          LOG.info(e)
+          null
+        }
+      }
   }
 
   private fun checkPluginsUpdate(updateSettings: UpdateSettings,
@@ -264,11 +283,17 @@ object UpdateChecker {
     if (!excludedFromUpdateCheckPlugins.isEmpty()) {
       val required = ProjectManager.getInstance().openProjects
         .flatMap { ExternalDependenciesManager.getInstance(it).getDependencies(DependencyOnPlugin::class.java) }
-        .map { it.pluginId }
+        .map { PluginId.getId(it.pluginId) }
         .toSet()
-      excludedFromUpdateCheckPlugins
-        .filter { it !in required }
-        .forEach { updateable.remove(PluginId.getId(it)) }
+      excludedFromUpdateCheckPlugins.forEach {
+        val excluded = PluginId.getId(it)
+        if (excluded !in required) {
+          val plugin = updateable[excluded]
+          if (plugin != null && plugin.isBundled) {
+            updateable.remove(excluded)
+          }
+        }
+      }
     }
 
     return updateable
@@ -441,23 +466,23 @@ object UpdateChecker {
     ourAdditionalRequestOptions[name] = value
   }
 
-  private fun prepareUpdateCheckArgs(uriBuilder: URIBuilder) {
+  private fun prepareUpdateCheckArgs(url: Url, packageManagerName: String?): Url {
     addUpdateRequestParameter("build", ApplicationInfo.getInstance().build.asString())
     addUpdateRequestParameter("uid", PermanentInstallationID.get())
     addUpdateRequestParameter("os", SystemInfo.OS_NAME + ' ' + SystemInfo.OS_VERSION)
+    if (packageManagerName != null) {
+      addUpdateRequestParameter("manager", packageManagerName)
+    }
     if (ApplicationInfoEx.getInstanceEx().isEAP) {
       addUpdateRequestParameter("eap", "")
     }
-
-    for ((name, value) in ourAdditionalRequestOptions) {
-      uriBuilder.addParameter(name, if (StringUtil.isEmpty(value)) null else value)
-    }
+    return url.addParameters(ourAdditionalRequestOptions)
   }
 
   @Deprecated("Replaced", ReplaceWith("PermanentInstallationID.get()", "com.intellij.openapi.application.PermanentInstallationID"))
   @JvmStatic
   @Suppress("unused", "UNUSED_PARAMETER")
-  fun getInstallationUID(c: PropertiesComponent) = PermanentInstallationID.get()
+  fun getInstallationUID(c: PropertiesComponent): String = PermanentInstallationID.get()
 
   @JvmStatic
   val disabledToUpdatePlugins: Set<String>

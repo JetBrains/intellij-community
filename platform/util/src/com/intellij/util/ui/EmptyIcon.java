@@ -86,6 +86,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * @deprecated use {@linkplain #create(int)} for caching.
    */
+  @Deprecated
   public EmptyIcon(int size) {
     this(size, size);
   }
@@ -93,6 +94,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
   /**
    * @deprecated use {@linkplain #create(int, int)} for caching.
    */
+  @Deprecated
   public EmptyIcon(int width, int height) {
     this(width, height, false);
   }
@@ -112,7 +114,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
   @NotNull
   @Override
-  protected EmptyIcon copy() {
+  public EmptyIcon copy() {
     return new EmptyIcon(this);
   }
 
@@ -186,7 +188,7 @@ public class EmptyIcon extends JBUI.CachingScalableJBIcon<EmptyIcon> {
 
     @NotNull
     @Override
-    protected EmptyIconUIResource copy() {
+    public EmptyIconUIResource copy() {
       return new EmptyIconUIResource(this);
     }
   }

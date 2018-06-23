@@ -370,8 +370,8 @@ class PassExecutorService implements Disposable {
     private final TextEditorHighlightingPass myPass;
     private final AtomicInteger myThreadsToStartCountdown;
     private final AtomicInteger myRunningPredecessorsCount = new AtomicInteger(0);
-    private final Collection<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
-    private final Collection<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
+    private final List<ScheduledPass> mySuccessorsOnCompletion = new ArrayList<>();
+    private final List<ScheduledPass> mySuccessorsOnSubmit = new ArrayList<>();
     @NotNull private final DaemonProgressIndicator myUpdateProgress;
 
     private ScheduledPass(@NotNull FileEditor fileEditor,
@@ -445,13 +445,14 @@ class PassExecutorService implements Disposable {
       log(myUpdateProgress, myPass, "Finished. ");
 
       if (!myUpdateProgress.isCanceled()) {
-        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown);
-        for (ScheduledPass successor : mySuccessorsOnCompletion) {
-          int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
-          if (predecessorsToRun == 0) {
-            submit(successor);
+        applyInformationToEditorsLater(myFileEditor, myPass, myUpdateProgress, myThreadsToStartCountdown, ()->{
+          for (ScheduledPass successor : mySuccessorsOnCompletion) {
+            int predecessorsToRun = successor.myRunningPredecessorsCount.decrementAndGet();
+            if (predecessorsToRun == 0) {
+              submit(successor);
+            }
           }
-        }
+        });
       }
     }
 
@@ -475,9 +476,10 @@ class PassExecutorService implements Disposable {
   private void applyInformationToEditorsLater(@NotNull final FileEditor fileEditor,
                                               @NotNull final TextEditorHighlightingPass pass,
                                               @NotNull final DaemonProgressIndicator updateProgress,
-                                              @NotNull final AtomicInteger threadsToStartCountdown) {
+                                              @NotNull final AtomicInteger threadsToStartCountdown,
+                                              @NotNull Runnable callbackOnApplied) {
     ApplicationManager.getApplication().invokeLater((DumbAwareRunnable)() -> {
-      if (isDisposed() || myProject.isDisposed()) {
+      if (isDisposed() || myProject.isDisposed() || !fileEditor.isValid()) {
         updateProgress.cancel();
       }
       if (updateProgress.isCanceled()) {
@@ -514,6 +516,7 @@ class PassExecutorService implements Disposable {
       else {
         log(updateProgress, pass, "Finished but there are passes in the queue: " + threadsToStartCountdown.get());
       }
+      callbackOnApplied.run();
     }, updateProgress.getModalityState());
   }
 

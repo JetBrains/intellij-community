@@ -42,7 +42,7 @@ public class JqlFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDescription() {
-    return "JIRA query language";
+    return "JIRA query";
   }
 
   @NotNull

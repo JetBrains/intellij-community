@@ -4,20 +4,16 @@ package com.intellij.testGuiFramework.tests.community.focus
 import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
+import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.tests.community.CommunityProjectCreator
+import com.intellij.testGuiFramework.tests.community.focus.FocusIssuesUtil.checkSearchEnteredText
 import com.intellij.testGuiFramework.util.Key.ESCAPE
 import org.fest.swing.core.SmartWaitRobot
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
-import org.junit.Assert
 import org.junit.Test
-import java.awt.Container
-import java.awt.Window
 import java.lang.Math.tan
 import java.util.*
-import javax.swing.JLabel
 
 class GoToClassFocusTest : GuiTestCase() {
 
@@ -26,12 +22,12 @@ class GoToClassFocusTest : GuiTestCase() {
 
   @Test
   fun testGoToClassFocus() {
-    CommunityProjectCreator.createCommandLineProject()
+    CommunityProjectCreator.importCommandLineAppAndOpenMain()
     Pause.pause(1000)
     ideFrame {
       focusOnEditor()
       for (i in 0..10) {
-        openGoToClassSearchAndType(this@GoToClassFocusTest)
+        openGoToClassSearchAndType()
         focusOnEditor()
       }
     }
@@ -67,36 +63,15 @@ class GoToClassFocusTest : GuiTestCase() {
     }
   }
 
-  private fun openGoToClassSearchAndType(guiTestCase: GuiTestCase) {
+  private fun openGoToClassSearchAndType() {
 
-    val smartRobot = guiTestCase.robot() as SmartWaitRobot
+    val smartRobot = GuiRobotHolder.robot as SmartWaitRobot
     smartRobot.shortcutAndTypeString(actionKeyStroke, typedString, 100)
     Pause.pause(500)
-    checkSearchWindow(guiTestCase)
+    checkSearchEnteredText(typedString)
     shortcut(ESCAPE)
   }
 
-  private fun checkSearchWindow(guiTestCase: GuiTestCase) {
-    val searchWindow = try {
-      findSearchWindow()
-    }
-    catch (cle: ComponentLookupException) {
-      guiTestCase.robot().waitForIdle()
-      findSearchWindow()
-    }
-    with(guiTestCase) {
-      val textfield = textfield("", searchWindow, guiTestCase.defaultTimeout)
-      Assert.assertEquals(textfield.target().text, typedString)
-    }
-  }
 
-  private fun findSearchWindow(): Container {
-    fun checkWindowContainsEnterClassName(it: Window) = GuiTestUtilKt.findAllWithBFS(it,
-                                                                                     JLabel::class.java).firstOrNull { it.text == "Enter class name:" } != null
-    return Window.getWindows()
-             .filterNotNull()
-             .firstOrNull { checkWindowContainsEnterClassName(it) } ?: throw ComponentLookupException(
-      "Unable to find GoToClass search window")
-  }
 
 }

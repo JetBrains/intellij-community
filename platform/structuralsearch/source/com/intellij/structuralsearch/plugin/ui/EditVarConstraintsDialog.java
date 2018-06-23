@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.ui;
 
-import com.intellij.codeInsight.template.impl.Variable;
 import com.intellij.find.impl.RegExHelpPopup;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.highlighter.HighlighterFactory;
@@ -20,7 +19,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.help.HelpManager;
+import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -28,13 +27,13 @@ import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.psi.PsiCodeFragment;
-import com.intellij.psi.PsiDocumentManager;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiFileFactory;
+import com.intellij.psi.*;
 import com.intellij.structuralsearch.*;
+import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
+import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptLog;
 import com.intellij.structuralsearch.impl.matcher.predicates.ScriptSupport;
 import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
@@ -44,13 +43,12 @@ import com.intellij.ui.EditorTextField;
 import com.intellij.ui.TextAccessor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.fields.IntegerField;
 import com.intellij.util.containers.ContainerUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.ChangeEvent;
-import javax.swing.event.ChangeListener;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
@@ -66,28 +64,28 @@ import java.util.regex.PatternSyntaxException;
  */
 class EditVarConstraintsDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("#com.intellij.structuralsearch.plugin.ui.EditVarConstraintsDialog");
+  private final CompiledPattern myCompiledPattern;
+  private final StructuralSearchProfile myProfile;
 
-  private JTextField maxoccurs;
+  private IntegerField maxoccurs;
   private JCheckBox applyWithinTypeHierarchy;
   private JCheckBox notRegexp;
   private EditorTextField regexp;
-  private JTextField minoccurs;
+  private IntegerField minoccurs;
   private JPanel mainForm;
-  private JList<Variable> parameterList;
+  private JList<String> parameterList;
   private JCheckBox partOfSearchResults;
   private JCheckBox notExprType;
   private EditorTextField regexprForExprType;
   private final Configuration myConfiguration;
   private JCheckBox exprTypeWithinHierarchy;
 
-  private final List<Variable> variables;
-  private Variable current;
+  private final List<String> variables;
   private JCheckBox wholeWordsOnly;
   private JCheckBox formalArgTypeWithinHierarchy;
   private JCheckBox invertFormalArgType;
   private EditorTextField formalArgType;
   private ComponentWithBrowseButton<EditorTextField> customScriptCode;
-  private JCheckBox maxoccursUnlimited;
 
   private TextFieldWithAutoCompletionWithBrowseButton withinTextField;
   private JPanel containedInConstraints;
@@ -96,22 +94,22 @@ class EditVarConstraintsDialog extends DialogWrapper {
   private JPanel occurencePanel;
   private JPanel textConstraintsPanel;
   private JLabel myRegExHelpLabel;
-  private JButton myZeroZeroButton;
-  private JButton myOneOneButton;
-  private JButton myZeroInfinityButton;
-  private JButton myOneInfinityButton;
-  private JButton myZeroOneButton;
-  private TextFieldWithAutoCompletionWithBrowseButton refererenceTargetTextField;
+  private TextFieldWithAutoCompletionWithBrowseButton referenceTargetTextField;
   private JPanel referenceTargetConstraints;
   private JBCheckBox invertReferenceTarget;
+  private JPanel expectedTypeConstraints;
+  private JPanel scriptConstraints;
 
   private final Project myProject;
 
-  EditVarConstraintsDialog(final Project project, Configuration configuration, List<Variable> _variables, final FileType fileType) {
+  EditVarConstraintsDialog(final Project project, Configuration configuration, List<String> _variables, final FileType fileType) {
     super(project, true);
     myProject = project;
     variables = _variables;
     myConfiguration = configuration;
+    final MatchOptions matchOptions = myConfiguration.getMatchOptions();
+    myCompiledPattern = PatternCompiler.compilePattern(project, matchOptions, false);
+    myProfile = StructuralSearchUtil.getProfileByFileType(fileType);
 
     setTitle(SSRBundle.message("editvarcontraints.edit.variables"));
 
@@ -122,43 +120,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
         applyWithinTypeHierarchy.setEnabled(e.getDocument().getTextLength() > 0 && fileType == StdFileTypes.JAVA);
       }
     });
-    myZeroZeroButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("0");
-        maxoccurs.setText("0");
-        maxoccursUnlimited.setSelected(false);
-      }
+    minoccurs.setMinValue(0);
+    minoccurs.setDefaultValue(0);
+    minoccurs.setDefaultValueText("0");
+    maxoccurs.setMinValue(0);
+    maxoccurs.setDefaultValue(Integer.MAX_VALUE);
+    maxoccurs.setDefaultValueText(SSRBundle.message("editvarcontraints.unlimited"));
+    minoccurs.getValueEditor().addListener(newValue -> {
+      if (maxoccurs.getValue() < newValue) maxoccurs.setValue(newValue);
     });
-    myZeroOneButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("0");
-        maxoccurs.setText("1");
-        maxoccursUnlimited.setSelected(false);
-      }
-    });
-    myOneOneButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("1");
-        maxoccurs.setText("1");
-        maxoccursUnlimited.setSelected(false);
-      }
-    });
-    myZeroInfinityButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("0");
-        maxoccursUnlimited.setSelected(true);
-      }
-    });
-    myOneInfinityButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        minoccurs.setText("1");
-        maxoccursUnlimited.setSelected(true);
-      }
+    maxoccurs.getValueEditor().addListener(newValue -> {
+      if (minoccurs.getValue() > newValue) minoccurs.setValue(newValue);
     });
     regexprForExprType.getDocument().addDocumentListener(new MyDocumentListener(exprTypeWithinHierarchy, notExprType));
     formalArgType.getDocument().addDocumentListener(new MyDocumentListener(formalArgTypeWithinHierarchy, invertFormalArgType));
@@ -166,46 +138,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
     final List<String> names = ConfigurationManager.getInstance(project).getAllConfigurationNames();
     withinTextField.setAutoCompletionItems(names);
     withinTextField.addActionListener(new SelectTemplateListener(project, withinTextField));
-    refererenceTargetTextField.setAutoCompletionItems(names);
-    refererenceTargetTextField.addActionListener(new SelectTemplateListener(project, refererenceTargetTextField));
+    referenceTargetTextField.setAutoCompletionItems(names);
+    referenceTargetTextField.addActionListener(new SelectTemplateListener(project, referenceTargetTextField));
 
-    boolean hasContextVar = false;
-    for (Variable var : variables) {
-      if (Configuration.CONTEXT_VAR_NAME.equals(var.getName())) {
-        hasContextVar = true; break;
-      }
-    }
-
-    if (!hasContextVar) {
-      variables.add(new Variable(Configuration.CONTEXT_VAR_NAME, "", "", true));
-    }
-
-    if (fileType == StdFileTypes.JAVA) {
-      formalArgTypeWithinHierarchy.setEnabled(true);
-      invertFormalArgType.setEnabled(true);
-      formalArgType.setEnabled(true);
-
-      exprTypeWithinHierarchy.setEnabled(true);
-      notExprType.setEnabled(true);
-      regexprForExprType.setEnabled(true);
-
-      applyWithinTypeHierarchy.setEnabled(true);
-    } else {
-      formalArgTypeWithinHierarchy.setEnabled(false);
-      invertFormalArgType.setEnabled(false);
-      formalArgType.setEnabled(false);
-
-      exprTypeWithinHierarchy.setEnabled(false);
-      notExprType.setEnabled(false);
-      regexprForExprType.setEnabled(false);
-
-      applyWithinTypeHierarchy.setEnabled(false);
+    if (!variables.contains(Configuration.CONTEXT_VAR_NAME)) {
+      variables.add(Configuration.CONTEXT_VAR_NAME);
     }
 
     parameterList.setModel(
-      new AbstractListModel<Variable>() {
+      new AbstractListModel<String>() {
         @Override
-        public Variable getElementAt(int index) {
+        public String getElementAt(int index) {
           return variables.get(index);
         }
 
@@ -215,9 +158,7 @@ class EditVarConstraintsDialog extends DialogWrapper {
         }
       }
     );
-
-    parameterList.setSelectionMode( ListSelectionModel.SINGLE_SELECTION );
-
+    parameterList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     parameterList.getSelectionModel().addListSelectionListener(
       new ListSelectionListener() {
         boolean rollingBackSelection;
@@ -229,24 +170,23 @@ class EditVarConstraintsDialog extends DialogWrapper {
             rollingBackSelection=false;
             return;
           }
-          final Variable var = variables.get(parameterList.getSelectedIndex());
+          final String var = parameterList.getSelectedValue();
           if (validateParameters()) {
-            if (current!=null) copyValuesFromUI(current);
+            copyValuesFromUI(myConfiguration.getCurrentVariableName());
             ApplicationManager.getApplication().runWriteAction(() -> copyValuesToUI(var));
-            current = var;
+            myConfiguration.setCurrentVariableName(var);
           } else {
             rollingBackSelection = true;
-            parameterList.setSelectedIndex(e.getFirstIndex()==parameterList.getSelectedIndex()?e.getLastIndex():e.getFirstIndex());
+            parameterList.setSelectedIndex((e.getFirstIndex() == parameterList.getSelectedIndex()) ? e.getLastIndex() : e.getFirstIndex());
           }
         }
       }
     );
-
     parameterList.setCellRenderer(
       new DefaultListCellRenderer() {
         @Override
         public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          String name = ((Variable)value).getName();
+          String name = (String)value;
           if (Configuration.CONTEXT_VAR_NAME.equals(name)) name = SSRBundle.message("complete.match.variable.name");
           if (isReplacementVariable(name)) {
             name = stripReplacementVarDecoration(name);
@@ -256,12 +196,10 @@ class EditVarConstraintsDialog extends DialogWrapper {
       }
     );
 
-    maxoccursUnlimited.addChangeListener(new MyChangeListener(maxoccurs, true));
-
-    customScriptCode.getButton().addActionListener(new ActionListener() {
+    customScriptCode.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(@NotNull final ActionEvent e) {
-        final List<String> variableNames = ContainerUtil.newArrayList(myConfiguration.getMatchOptions().getVariableConstraintNames());
+        final List<String> variableNames = ContainerUtil.newArrayList(matchOptions.getVariableConstraintNames());
         variableNames.add(ScriptLog.SCRIPT_LOG_VAR_NAME);
         final EditScriptDialog dialog = new EditScriptDialog(project, customScriptCode.getChildComponent().getText(), variableNames);
         dialog.show();
@@ -272,7 +210,17 @@ class EditVarConstraintsDialog extends DialogWrapper {
     });
     init();
 
-    if (variables.size() > 0) parameterList.setSelectedIndex(0);
+    if (!variables.isEmpty()) {
+      final String variableName = configuration.getCurrentVariableName();
+      configuration.setCurrentVariableName(null);
+      final int selectedIndex = variableName != null ? Math.max(0, variables.indexOf(variableName)) : 0;
+      parameterList.setSelectedIndex(selectedIndex);
+    }
+  }
+
+  @Override
+  public JComponent getPreferredFocusedComponent() {
+    return parameterList;
   }
 
   static String stripReplacementVarDecoration(String name) {
@@ -285,8 +233,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   boolean validateParameters() {
-    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateRegExp(regexprForExprType) &&
-           validateRegExp(formalArgType) && validateScript();
+    if (Registry.is("ssr.use.regexp.to.specify.type")) {
+      if (!validateRegExp(regexprForExprType) || !validateRegExp(formalArgType)) {
+        return false;
+      }
+    }
+    return validateRegExp(regexp) && validateWithin() && validateCounts() && validateScript();
   }
 
   @Override
@@ -297,14 +249,13 @@ class EditVarConstraintsDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     if(validateParameters()) {
-      if (current!=null) copyValuesFromUI(current);
+      copyValuesFromUI(myConfiguration.getCurrentVariableName());
       super.doOKAction();
     }
   }
 
-  void copyValuesFromUI(Variable var) {
-    final String varName = var.getName();
-
+  void copyValuesFromUI(@Nullable String varName) {
+    if (varName == null) return;
     if (isReplacementVariable(varName)) {
       saveScriptInfo(getOrAddReplacementVariableDefinition(varName, myConfiguration));
       return;
@@ -315,12 +266,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setRegExp(regexp.getDocument().getText());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
-    final int minCount = Integer.parseInt(minoccurs.getText());
-    varInfo.setMinCount(minCount);
-
-    final int maxCount = maxoccursUnlimited.isSelected() ? Integer.MAX_VALUE : Integer.parseInt(maxoccurs.getText());
-
-    varInfo.setMaxCount(maxCount);
+    varInfo.setMinCount(minoccurs.getValue());
+    varInfo.setMaxCount(maxoccurs.getValue());
     varInfo.setWithinHierarchy(applyWithinTypeHierarchy.isSelected());
     varInfo.setInvertRegExp(notRegexp.isSelected());
 
@@ -349,13 +296,12 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setWithinConstraint(configuration != null || withinConstraint.isEmpty() ? withinConstraint : '"' + withinConstraint + '"');
     varInfo.setInvertWithinConstraint(invertWithin.isSelected());
 
-    final String referenceTargetConstraint = refererenceTargetTextField.getText().trim();
+    final String referenceTargetConstraint = referenceTargetTextField.getText().trim();
     final Configuration configuration2 = ConfigurationManager.getInstance(myProject).findConfigurationByName(referenceTargetConstraint);
     varInfo.setReferenceConstraint((configuration2 != null || referenceTargetConstraint.isEmpty())
                                    ? referenceTargetConstraint
                                    : '"' + referenceTargetConstraint + '"');
     varInfo.setInvertReference(invertReferenceTarget.isSelected());
-
   }
 
   private static ReplacementVariableDefinition getOrAddReplacementVariableDefinition(String varName, Configuration configuration) {
@@ -375,18 +321,51 @@ class EditVarConstraintsDialog extends DialogWrapper {
     varInfo.setScriptCodeConstraint("\"" + customScriptCode.getChildComponent().getText() + "\"");
   }
 
-  void copyValuesToUI(Variable var) {
-    final String varName = var.getName();
-
+  void copyValuesToUI(String varName) {
+    if (varName == null) return;
     if (isReplacementVariable(varName)) {
       final ReplacementVariableDefinition definition =
         ((ReplaceConfiguration)myConfiguration).getReplaceOptions().getVariableDefinition(stripReplacementVarDecoration(varName));
 
       restoreScriptCode(definition);
-      setSearchConstraintsVisible(false);
+      textConstraintsPanel.setVisible(false);
+      occurencePanel.setVisible(false);
+      expressionConstraints.setVisible(false);
+      partOfSearchResults.setVisible(false);
+      containedInConstraints.setVisible(false);
+      referenceTargetConstraints.setVisible(false);
+      scriptConstraints.setVisible(true);
       return;
     } else {
-      setSearchConstraintsVisible(true);
+      final List<PsiElement> nodes = myCompiledPattern.getVariableNodes(varName);
+      final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
+
+      final boolean text = myProfile.isApplicableConstraint(UIUtil.TEXT, nodes, completePattern, false);
+      textConstraintsPanel.setVisible(text);
+      applyWithinTypeHierarchy.setVisible(text && myProfile.isApplicableConstraint(UIUtil.TEXT_HIERARCHY, nodes, completePattern, false));
+      final boolean minZero = myProfile.isApplicableConstraint(UIUtil.MINIMUM_ZERO, nodes, completePattern, false);
+      final boolean maxUnlimited = myProfile.isApplicableConstraint(UIUtil.MAXIMUM_UNLIMITED, nodes, completePattern, false);
+      if (minZero || maxUnlimited) {
+        occurencePanel.setVisible(true);
+        minoccurs.setMinValue(minZero ? 0 : 1);
+        minoccurs.setDefaultValue(minZero ? 0 : 1);
+        minoccurs.setDefaultValueText(minZero ? "0" : "1");
+        maxoccurs.setMaxValue(maxUnlimited ? Integer.MAX_VALUE : 1);
+        maxoccurs.setDefaultValue(maxUnlimited ? Integer.MAX_VALUE : 1);
+        maxoccurs.setDefaultValueText(maxUnlimited ? SSRBundle.message("editvarcontraints.unlimited") : "1");
+      }
+      else {
+        occurencePanel.setVisible(false);
+      }
+      final boolean typeComponent = myProfile.isApplicableConstraint(UIUtil.TYPE, nodes, completePattern, false);
+      expressionConstraints.setVisible(typeComponent);
+      expectedTypeConstraints.setVisible(typeComponent &&
+                                         myProfile.isApplicableConstraint(UIUtil.EXPECTED_TYPE, nodes, completePattern, false));
+      referenceTargetConstraints.setVisible(myProfile.isApplicableConstraint(UIUtil.REFERENCE, nodes, completePattern, false));
+      containedInConstraints.setVisible(completePattern);
+      scriptConstraints.setVisible(true);
+
+      partOfSearchResults.setEnabled(!completePattern);
     }
 
     final MatchOptions matchOptions = myConfiguration.getMatchOptions();
@@ -396,9 +375,8 @@ class EditVarConstraintsDialog extends DialogWrapper {
       regexp.getDocument().setText("");
       notRegexp.setSelected(false);
 
-      minoccurs.setText("1");
-      maxoccurs.setText("1");
-      maxoccursUnlimited.setSelected(false);
+      minoccurs.setValue(1);
+      maxoccurs.setValue(1);
       applyWithinTypeHierarchy.setSelected(false);
       partOfSearchResults.setSelected(UIUtil.isTarget(varName, matchOptions));
 
@@ -414,27 +392,25 @@ class EditVarConstraintsDialog extends DialogWrapper {
 
       withinTextField.setText("");
       invertWithin.setSelected(false);
-      refererenceTargetTextField.setText("");
+      referenceTargetTextField.setText("");
       invertReferenceTarget.setSelected(false);
     } else {
       applyWithinTypeHierarchy.setSelected(varInfo.isWithinHierarchy());
       regexp.getDocument().setText(varInfo.getRegExp());
+      regexp.selectAll();
 
       notRegexp.setSelected(varInfo.isInvertRegExp());
-      minoccurs.setText(Integer.toString(varInfo.getMinCount()));
+      minoccurs.setValue(varInfo.getMinCount());
+      minoccurs.selectAll();
 
-      if(varInfo.getMaxCount() == Integer.MAX_VALUE) {
-        maxoccursUnlimited.setSelected(true);
-        maxoccurs.setText("");
-      } else {
-        maxoccursUnlimited.setSelected(false);
-        maxoccurs.setText(Integer.toString(varInfo.getMaxCount()));
-      }
+      maxoccurs.setValue(varInfo.getMaxCount());
+      maxoccurs.selectAll();
 
       partOfSearchResults.setSelected(UIUtil.isTarget(varName, matchOptions));
 
       exprTypeWithinHierarchy.setSelected(varInfo.isExprTypeWithinHierarchy());
       regexprForExprType.getDocument().setText(varInfo.getNameOfExprType());
+      regexprForExprType.selectAll();
 
       notExprType.setSelected( varInfo.isInvertExprType() );
       wholeWordsOnly.setSelected( varInfo.isWholeWordsOnly() );
@@ -442,29 +418,14 @@ class EditVarConstraintsDialog extends DialogWrapper {
       invertFormalArgType.setSelected( varInfo.isInvertFormalType() );
       formalArgTypeWithinHierarchy.setSelected(varInfo.isFormalArgTypeWithinHierarchy());
       formalArgType.getDocument().setText(varInfo.getNameOfFormalArgType());
+      formalArgType.selectAll();
       restoreScriptCode(varInfo);
 
       withinTextField.setText(StringUtil.unquoteString(varInfo.getWithinConstraint()));
       invertWithin.setSelected(varInfo.isInvertWithinConstraint());
-      refererenceTargetTextField.setText(StringUtil.unquoteString(varInfo.getReferenceConstraint()));
+      referenceTargetTextField.setText(StringUtil.unquoteString(varInfo.getReferenceConstraint()));
       invertReferenceTarget.setSelected(varInfo.isInvertReference());
     }
-
-    final boolean contextVar = Configuration.CONTEXT_VAR_NAME.equals(var.getName());
-    containedInConstraints.setVisible(contextVar);
-    textConstraintsPanel.setVisible(!contextVar);
-    partOfSearchResults.setEnabled(!contextVar);
-    occurencePanel.setVisible(!contextVar);
-    referenceTargetConstraints.setVisible(!contextVar);
-  }
-
-  private void setSearchConstraintsVisible(boolean b) {
-    textConstraintsPanel.setVisible(b);
-    occurencePanel.setVisible(b);
-    expressionConstraints.setVisible(b);
-    partOfSearchResults.setVisible(b);
-    containedInConstraints.setVisible(b);
-    referenceTargetConstraints.setVisible(b);
   }
 
   private void restoreScriptCode(NamedScriptableDefinition varInfo) {
@@ -514,23 +475,19 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   private boolean validateCounts() {
-    final int minValue;
     try {
-      minValue = Integer.parseInt(minoccurs.getText());
-      if (minValue < 0) throw new NumberFormatException();
+      minoccurs.validateContent();
     }
-    catch (NumberFormatException e) {
+    catch (ConfigurationException e) {
       return showError(minoccurs, SSRBundle.message("invalid.occurence.count"));
     }
-    if (!maxoccursUnlimited.isSelected()) {
-      try {
-        if (Integer.parseInt(maxoccurs.getText()) < minValue) throw new NumberFormatException();
-      }
-      catch (NumberFormatException e) {
-        return showError(maxoccurs, SSRBundle.message("invalid.occurence.count"));
-      }
+    try {
+      maxoccurs.validateContent();
     }
-    return true;
+    catch (ConfigurationException e) {
+      return showError(maxoccurs, SSRBundle.message("invalid.occurence.count"));
+    }
+    return maxoccurs.getValue() >= minoccurs.getValue() || showError(maxoccurs, SSRBundle.message("invalid.occurence.count"));
   }
 
   private boolean showError(JComponent component, String message) {
@@ -544,37 +501,42 @@ class EditVarConstraintsDialog extends DialogWrapper {
   }
 
   @Override
-  @NotNull
-  protected Action[] createActions() {
-    return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
-  }
-
-  @Override
-  protected void doHelpAction() {
-    HelpManager.getInstance().invokeHelp("reference.dialogs.search.replace.structural.editvariable");
+  protected String getHelpId() {
+    return "reference.dialogs.search.replace.structural.editvariable";
   }
 
   private void createUIComponents() {
     regexp = createRegexComponent();
-    regexprForExprType = createRegexComponent();
-    formalArgType = createRegexComponent();
+    if (Registry.is("ssr.use.regexp.to.specify.type")) {
+      regexprForExprType = createRegexComponent();
+      formalArgType = createRegexComponent();
+    }
+    else {
+      regexprForExprType = createTextComponent();
+      formalArgType = createTextComponent();
+    }
     customScriptCode = new ComponentWithBrowseButton<>(createScriptComponent(), null);
 
     myRegExHelpLabel = RegExHelpPopup.createRegExLink(SSRBundle.message("regular.expression.help.label"), regexp, LOG);
     myRegExHelpLabel.setBorder(BorderFactory.createEmptyBorder(0, 0, 0, 5));
     withinTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
-    refererenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
+    referenceTargetTextField = new TextFieldWithAutoCompletionWithBrowseButton(myProject);
+  }
+
+  private EditorTextField createTextComponent() {
+    return createEditorComponent("1.txt");
   }
 
   private EditorTextField createRegexComponent() {
-    @NonNls final String fileName = "1.regexp";
-    final FileType fileType = getFileType(fileName);
-    final Document doc = createDocument(fileName, fileType, "");
-    return new EditorTextField(doc, myProject, fileType);
+    return createEditorComponent("1.regexp");
   }
 
   private EditorTextField createScriptComponent() {
-    @NonNls final String fileName = "1.groovy";
+    return createEditorComponent("1.groovy");
+  }
+
+  @NotNull
+  private EditorTextField createEditorComponent(String fileName) {
     final FileType fileType = getFileType(fileName);
     final Document doc = createDocument(fileName, fileType, "");
     return new EditorTextField(doc, myProject, fileType);
@@ -590,22 +552,6 @@ class EditVarConstraintsDialog extends DialogWrapper {
     FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
     if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
     return fileType;
-  }
-
-  private static class MyChangeListener implements ChangeListener {
-    private final JComponent component;
-    private final boolean inverted;
-
-    MyChangeListener(JComponent _component, boolean _inverted) {
-      component = _component;
-      inverted = _inverted;
-    }
-
-    @Override
-    public void stateChanged(@NotNull ChangeEvent e) {
-      final JCheckBox jCheckBox = (JCheckBox)e.getSource();
-      component.setEnabled(inverted ^ jCheckBox.isSelected());
-    }
   }
 
   private static class MyDocumentListener implements DocumentListener {

@@ -20,6 +20,9 @@ import org.jetbrains.annotations.NotNull;
 public interface VcsLogUi {
 
   @NotNull
+  String getId();
+
+  @NotNull
   VcsLogFilterUi getFilterUi();
 
   @NotNull
@@ -28,10 +31,6 @@ public interface VcsLogUi {
   void addLogListener(@NotNull VcsLogListener listener);
 
   void removeLogListener(@NotNull VcsLogListener listener);
-
-  boolean areGraphActionsEnabled();
-
-  boolean isMultipleRoots();
 
   boolean isHighlighterEnabled(@NotNull String id);
 }

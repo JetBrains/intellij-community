@@ -2,7 +2,6 @@
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -62,6 +61,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
   @NotNull private final Wrapper myToolbarWrapper;
+  @Nullable private Runnable myModelUpdateListener;
 
   public VcsLogChangesBrowser(@NotNull Project project,
                               @NotNull MainVcsLogUiProperties uiProperties,
@@ -103,6 +103,10 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myToolbarWrapper.setVerticalSizeReferent(referent);
   }
 
+  public void setModelUpdateListener(@Nullable Runnable runnable) {
+    myModelUpdateListener = runnable;
+  }
+
   @Override
   public void dispose() {
     myUiProperties.removeChangeListener(myListener);
@@ -111,10 +115,19 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> result = new ArrayList<>(super.createToolbarActions());
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_ACTION_GROUP);
-    Collections.addAll(result, group.getChildren(null));
-    return result;
+    return ContainerUtil.append(
+      super.createToolbarActions(),
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
+    );
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    return ContainerUtil.append(
+      super.createPopupMenuActions(),
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)
+    );
   }
 
   public void resetSelectedDetails() {
@@ -123,6 +136,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myRoots.clear();
     myViewer.setEmptyText("");
     myViewer.rebuildTree();
+    if (myModelUpdateListener != null) myModelUpdateListener.run();
   }
 
   public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
@@ -167,6 +181,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     }
 
     myViewer.rebuildTree();
+    if (myModelUpdateListener != null) myModelUpdateListener.run();
   }
 
   @NotNull
@@ -196,8 +211,18 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   }
 
   @NotNull
-  public List<Change> getAllChanges() {
+  public List<Change> getDirectChanges() {
     return myChanges;
+  }
+
+  @NotNull
+  public List<Change> getSelectedChanges() {
+    return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
+  }
+
+  @NotNull
+  public List<Change> getAllChanges() {
+    return VcsTreeModelData.all(myViewer).userObjects(Change.class);
   }
 
   @Nullable
@@ -216,8 +241,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     List<AbstractVcs> allVcs = ContainerUtil.mapNotNull(myRoots, root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root));
     if (allVcs.size() == 1) return notNull(getFirstItem(allVcs));
 
-    List<Change> selectedChanges = VcsTreeModelData.selected(myViewer).userObjects(Change.class);
-    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(selectedChanges, myProject);
+    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
     if (selectedVcs.size() == 1) return notNull(getFirstItem(selectedVcs));
 
     return null;
@@ -225,7 +249,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @Nullable
   @Override
-  protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
+  public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
     if (userObject instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)userObject;
       if (mergedChange.getSourceChanges().size() == 2) {

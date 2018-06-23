@@ -17,6 +17,7 @@ package com.intellij.openapi.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Weighted;
 import com.intellij.openapi.util.registry.Registry;
@@ -24,6 +25,7 @@ import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.UIBundle;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.Activatable;
@@ -35,8 +37,10 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
+import java.lang.reflect.InvocationTargetException;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Objects;
 
 /**
  * @author Vladimir Kondratyev
@@ -72,6 +76,8 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
   private boolean myShowDividerControls;
   private int myDividerZone;
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.ui.ThreeComponentsSplitter");
 
   private class MyFocusTraversalPolicy extends FocusTraversalPolicy {
 
@@ -115,9 +121,21 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
     Component findChildToFocus (Component component) {
       final Window ancestor = SwingUtilities.getWindowAncestor(ThreeComponentsSplitter.this);
       if (ancestor != null) {
-        final Component mostRecentFocusOwner = ancestor.getMostRecentFocusOwner();
-        if (mostRecentFocusOwner != null && mostRecentFocusOwner.isShowing()) {
-          return mostRecentFocusOwner;
+        //KeyboardFocusManager.getMostRecentFocusOwner(this)
+        try {
+          final Component mostRecentFocusOwner;
+
+          mostRecentFocusOwner = (Component)
+            Objects.requireNonNull(ReflectionUtil.getDeclaredMethod(KeyboardFocusManager.class,
+            "getMostRecentFocusOwner", Window.class)).invoke(null, ancestor);
+
+          if (mostRecentFocusOwner != null &&
+              SwingUtilities.isDescendingFrom(mostRecentFocusOwner, component) &&
+              mostRecentFocusOwner.isShowing()) {
+            return mostRecentFocusOwner;
+          }
+        }  catch (InvocationTargetException|IllegalAccessException e) {
+          LOG.debug(e);
         }
       }
       if (component instanceof JPanel) {
@@ -425,7 +443,7 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
 
 
   /**
-   * Sets component which is located as the "secont" splitted area. The method doesn't validate and
+   * Sets component which is located as the "second" split area. The method doesn't validate and
    * repaint the splitter.
    *
    */
@@ -847,9 +865,10 @@ public class ThreeComponentsSplitter extends JPanel implements Disposable {
           break;
       }
     }
-  }
-
-  private Cursor getResizeCursor() {
-    return getOrientation() ? Cursor.getPredefinedCursor(Cursor.S_RESIZE_CURSOR) : Cursor.getPredefinedCursor(Cursor.E_RESIZE_CURSOR);
+    private Cursor getResizeCursor() {
+      return getOrientation()
+             ? Cursor.getPredefinedCursor(myIsFirst ? Cursor.S_RESIZE_CURSOR : Cursor.N_RESIZE_CURSOR)
+             : Cursor.getPredefinedCursor(myIsFirst ? Cursor.W_RESIZE_CURSOR : Cursor.E_RESIZE_CURSOR);
+    }
   }
 }

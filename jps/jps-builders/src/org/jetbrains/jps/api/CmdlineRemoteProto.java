@@ -266,6 +266,19 @@ public final class CmdlineRemoteProto {
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.UUID parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -408,6 +421,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.UUID)
       }
       private byte memoizedIsInitialized = -1;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -498,6 +512,7 @@ public final class CmdlineRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -710,6 +725,19 @@ public final class CmdlineRemoteProto {
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -886,6 +914,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.KeyValuePair)
       }
       private byte memoizedIsInitialized = -1;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -978,6 +1007,7 @@ public final class CmdlineRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -1235,6 +1265,19 @@ public final class CmdlineRemoteProto {
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.Failure parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -1439,6 +1482,7 @@ public final class CmdlineRemoteProto {
 
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.Failure)
       }
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -1520,6 +1564,7 @@ public final class CmdlineRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -1996,6 +2041,19 @@ public final class CmdlineRemoteProto {
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.FSEvent parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -2253,6 +2311,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.FSEvent)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -2351,6 +2410,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -2490,6 +2550,19 @@ public final class CmdlineRemoteProto {
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -2620,6 +2693,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.GlobalSettings)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -2697,6 +2771,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -2771,7 +2846,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;</code>
          */
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope>
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope> 
             getScopeList();
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;</code>
@@ -2804,7 +2879,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
          */
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair>
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePair> 
             getBuilderParameterList();
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
@@ -3214,6 +3289,19 @@ public final class CmdlineRemoteProto {
           }
 
           public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              java.nio.ByteBuffer data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
+              java.nio.ByteBuffer data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope parseFrom(
               com.google.protobuf.ByteString data)
               throws com.google.protobuf.InvalidProtocolBufferException {
             return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -3474,6 +3562,7 @@ public final class CmdlineRemoteProto {
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
           }
           private byte memoizedIsInitialized = -1;
+          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
           protected final Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
               Object arg0, Object arg1) {
@@ -3584,6 +3673,7 @@ public final class CmdlineRemoteProto {
                 } finally {
                 }
               }
+              // fall through
               case GET_DEFAULT_INSTANCE: {
                 return DEFAULT_INSTANCE;
               }
@@ -3767,7 +3857,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope scope = 4;</code>
          */
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder>
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScopeOrBuilder> 
             getScopeOrBuilderList() {
           return scope_;
         }
@@ -3970,7 +4060,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.KeyValuePair builder_parameter = 6;</code>
          */
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePairOrBuilder>
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.KeyValuePairOrBuilder> 
             getBuilderParameterOrBuilderList() {
           return builderParameter_;
         }
@@ -4141,6 +4231,19 @@ public final class CmdlineRemoteProto {
           return size;
         }
 
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
@@ -4612,6 +4715,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -4773,6 +4877,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -5145,6 +5250,19 @@ public final class CmdlineRemoteProto {
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ConstantSearchResult parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -5422,6 +5540,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ConstantSearchResult)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -5539,6 +5658,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -5808,6 +5928,19 @@ public final class CmdlineRemoteProto {
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -6056,6 +6189,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage)
       }
       private byte memoizedIsInitialized = -1;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -6203,6 +6337,7 @@ public final class CmdlineRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -6412,7 +6547,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile generated_files = 4;</code>
          */
-        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile>
+        java.util.List<org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile> 
             getGeneratedFilesList();
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile generated_files = 4;</code>
@@ -6782,6 +6917,19 @@ public final class CmdlineRemoteProto {
           }
 
           public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile parseFrom(
+              java.nio.ByteBuffer data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile parseFrom(
+              java.nio.ByteBuffer data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFile parseFrom(
               com.google.protobuf.ByteString data)
               throws com.google.protobuf.InvalidProtocolBufferException {
             return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -6958,6 +7106,7 @@ public final class CmdlineRemoteProto {
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile)
           }
           private byte memoizedIsInitialized = -1;
+          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
           protected final Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
               Object arg0, Object arg1) {
@@ -7050,6 +7199,7 @@ public final class CmdlineRemoteProto {
                 } finally {
                 }
               }
+              // fall through
               case GET_DEFAULT_INSTANCE: {
                 return DEFAULT_INSTANCE;
               }
@@ -7335,6 +7485,19 @@ public final class CmdlineRemoteProto {
           }
 
           public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              java.nio.ByteBuffer data)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data);
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
+              java.nio.ByteBuffer data,
+              com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+              throws com.google.protobuf.InvalidProtocolBufferException {
+            return com.google.protobuf.GeneratedMessageLite.parseFrom(
+                DEFAULT_INSTANCE, data, extensionRegistry);
+          }
+          public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.CustomBuilderMessage parseFrom(
               com.google.protobuf.ByteString data)
               throws com.google.protobuf.InvalidProtocolBufferException {
             return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -7557,6 +7720,7 @@ public final class CmdlineRemoteProto {
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.CustomBuilderMessage)
           }
           private byte memoizedIsInitialized = -1;
+          @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
           protected final Object dynamicMethod(
               com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
               Object arg0, Object arg1) {
@@ -7664,6 +7828,7 @@ public final class CmdlineRemoteProto {
                 } finally {
                 }
               }
+              // fall through
               case GET_DEFAULT_INSTANCE: {
                 return DEFAULT_INSTANCE;
               }
@@ -7828,7 +7993,7 @@ public final class CmdlineRemoteProto {
         /**
          * <code>repeated .org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent.GeneratedFile generated_files = 4;</code>
          */
-        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFileOrBuilder>
+        public java.util.List<? extends org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent.GeneratedFileOrBuilder> 
             getGeneratedFilesOrBuilderList() {
           return generatedFiles_;
         }
@@ -8039,6 +8204,19 @@ public final class CmdlineRemoteProto {
           return size;
         }
 
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.BuildEvent parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
@@ -8370,6 +8548,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.BuildEvent)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -8514,6 +8693,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -8686,6 +8866,10 @@ public final class CmdlineRemoteProto {
            * <code>OTHER = 6;</code>
            */
           OTHER(6),
+          /**
+           * <code>INTERNAL_BUILDER_ERROR = 7;</code>
+           */
+          INTERNAL_BUILDER_ERROR(7),
           ;
 
           /**
@@ -8712,6 +8896,10 @@ public final class CmdlineRemoteProto {
            * <code>OTHER = 6;</code>
            */
           public static final int OTHER_VALUE = 6;
+          /**
+           * <code>INTERNAL_BUILDER_ERROR = 7;</code>
+           */
+          public static final int INTERNAL_BUILDER_ERROR_VALUE = 7;
 
 
           public final int getNumber() {
@@ -8734,6 +8922,7 @@ public final class CmdlineRemoteProto {
               case 4: return PROGRESS;
               case 5: return JPS_INFO;
               case 6: return OTHER;
+              case 7: return INTERNAL_BUILDER_ERROR;
               default: return null;
             }
           }
@@ -9148,6 +9337,19 @@ public final class CmdlineRemoteProto {
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.CompileMessage parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -9527,6 +9729,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.CompileMessage)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -9674,6 +9877,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -10021,6 +10225,19 @@ public final class CmdlineRemoteProto {
         }
 
         public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            java.nio.ByteBuffer data)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
+            java.nio.ByteBuffer data,
+            com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+            throws com.google.protobuf.InvalidProtocolBufferException {
+          return com.google.protobuf.GeneratedMessageLite.parseFrom(
+              DEFAULT_INSTANCE, data, extensionRegistry);
+        }
+        public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage.ConstantSearchTask parseFrom(
             com.google.protobuf.ByteString data)
             throws com.google.protobuf.InvalidProtocolBufferException {
           return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -10284,6 +10501,7 @@ public final class CmdlineRemoteProto {
           // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage.ConstantSearchTask)
         }
         private byte memoizedIsInitialized = -1;
+        @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
         protected final Object dynamicMethod(
             com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
             Object arg0, Object arg1) {
@@ -10406,6 +10624,7 @@ public final class CmdlineRemoteProto {
               } finally {
               }
             }
+            // fall through
             case GET_DEFAULT_INSTANCE: {
               return DEFAULT_INSTANCE;
             }
@@ -10675,6 +10894,19 @@ public final class CmdlineRemoteProto {
       }
 
       public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage parseFrom(
+          java.nio.ByteBuffer data)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage parseFrom(
+          java.nio.ByteBuffer data,
+          com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+          throws com.google.protobuf.InvalidProtocolBufferException {
+        return com.google.protobuf.GeneratedMessageLite.parseFrom(
+            DEFAULT_INSTANCE, data, extensionRegistry);
+      }
+      public static org.jetbrains.jps.api.CmdlineRemoteProto.Message.BuilderMessage parseFrom(
           com.google.protobuf.ByteString data)
           throws com.google.protobuf.InvalidProtocolBufferException {
         return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -10923,6 +11155,7 @@ public final class CmdlineRemoteProto {
         // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.BuilderMessage)
       }
       private byte memoizedIsInitialized = -1;
+      @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
       protected final Object dynamicMethod(
           com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
           Object arg0, Object arg1) {
@@ -11070,6 +11303,7 @@ public final class CmdlineRemoteProto {
             } finally {
             }
           }
+          // fall through
           case GET_DEFAULT_INSTANCE: {
             return DEFAULT_INSTANCE;
           }
@@ -11398,6 +11632,19 @@ public final class CmdlineRemoteProto {
     }
 
     public static org.jetbrains.jps.api.CmdlineRemoteProto.Message parseFrom(
+        java.nio.ByteBuffer data)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data);
+    }
+    public static org.jetbrains.jps.api.CmdlineRemoteProto.Message parseFrom(
+        java.nio.ByteBuffer data,
+        com.google.protobuf.ExtensionRegistryLite extensionRegistry)
+        throws com.google.protobuf.InvalidProtocolBufferException {
+      return com.google.protobuf.GeneratedMessageLite.parseFrom(
+          DEFAULT_INSTANCE, data, extensionRegistry);
+    }
+    public static org.jetbrains.jps.api.CmdlineRemoteProto.Message parseFrom(
         com.google.protobuf.ByteString data)
         throws com.google.protobuf.InvalidProtocolBufferException {
       return com.google.protobuf.GeneratedMessageLite.parseFrom(
@@ -11691,6 +11938,7 @@ public final class CmdlineRemoteProto {
       // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message)
     }
     private byte memoizedIsInitialized = -1;
+    @java.lang.SuppressWarnings({"unchecked", "fallthrough"})
     protected final Object dynamicMethod(
         com.google.protobuf.GeneratedMessageLite.MethodToInvoke method,
         Object arg0, Object arg1) {
@@ -11856,6 +12104,7 @@ public final class CmdlineRemoteProto {
           } finally {
           }
         }
+        // fall through
         case GET_DEFAULT_INSTANCE: {
           return DEFAULT_INSTANCE;
         }

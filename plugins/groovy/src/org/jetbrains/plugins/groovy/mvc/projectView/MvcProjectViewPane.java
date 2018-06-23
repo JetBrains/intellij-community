@@ -129,13 +129,7 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
     myAutoScrollToSourceHandler.install(getTree());
     myAutoScrollToSourceHandler.onMouseClicked(getTree());
 
-    myCopyPasteDelegator = new CopyPasteDelegator(project, myComponent) {
-      @NotNull
-      @Override
-      protected PsiElement[] getSelectedElements() {
-        return MvcProjectViewPane.this.getSelectedPSIElements();
-      }
-    };
+    myCopyPasteDelegator = new CopyPasteDelegator(project, myComponent);
     myDeletePSIElementProvider = new DeleteHandler.DefaultDeleteProvider();
   }
 
@@ -244,43 +238,43 @@ public class MvcProjectViewPane extends AbstractProjectViewPSIPane implements Id
 
   @Override
   public Object getData(String dataId) {
-    if (DataConstants.PSI_ELEMENT.equals(dataId)) {
+    if (CommonDataKeys.PSI_ELEMENT.getName().equals(dataId)) {
       final PsiElement[] elements = getSelectedPSIElements();
       return elements.length == 1 ? elements[0] : null;
     }
-    if (DataConstants.PSI_ELEMENT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.PSI_ELEMENT_ARRAY.getName().equals(dataId)) {
       return getSelectedPSIElements();
     }
-    if (DataConstants.MODULE_CONTEXT.equals(dataId)) {
+    if (LangDataKeys.MODULE_CONTEXT.getName().equals(dataId)) {
       final Object element = getSelectedElement();
       if (element instanceof Module) {
         return element;
       }
       return null;
     }
-    if (DataConstants.MODULE_CONTEXT_ARRAY.equals(dataId)) {
+    if (LangDataKeys.MODULE_CONTEXT_ARRAY.getName().equals(dataId)) {
       final List<Module> moduleList = ContainerUtil.findAll(getSelectedElements(), Module.class);
       if (!moduleList.isEmpty()) {
         return moduleList.toArray(Module.EMPTY_ARRAY);
       }
       return null;
     }
-    if (dataId.equals(DataConstants.IDE_VIEW)) {
+    if (dataId.equals(LangDataKeys.IDE_VIEW.getName())) {
       return this;
     }
-    if (dataId.equals(DataConstants.HELP_ID)) {
+    if (dataId.equals(PlatformDataKeys.HELP_ID.getName())) {
       return "reference.toolwindows." + myId.toLowerCase();
     }
-    if (DataConstants.CUT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.CUT_PROVIDER.getName().equals(dataId)) {
       return myCopyPasteDelegator.getCutProvider();
     }
-    if (DataConstants.COPY_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.COPY_PROVIDER.getName().equals(dataId)) {
       return myCopyPasteDelegator.getCopyProvider();
     }
-    if (DataConstants.PASTE_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.PASTE_PROVIDER.getName().equals(dataId)) {
       return myCopyPasteDelegator.getPasteProvider();
     }
-    if (DataConstants.DELETE_ELEMENT_PROVIDER.equals(dataId)) {
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.getName().equals(dataId)) {
       for (final Object element : getSelectedElements()) {
         if (element instanceof Module) {
           return myDeleteModuleProvider;

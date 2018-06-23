@@ -1,16 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o.
-//
-// Licensed under the Apache License, Version 2.0 (the "License");
-// you may not use this file except in compliance with the License.
-// You may obtain a copy of the License at
-//
-// http://www.apache.org/licenses/LICENSE-2.0
-//
-// Unless required by applicable law or agreed to in writing, software
-// distributed under the License is distributed on an "AS IS" BASIS,
-// WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
-// See the License for the specific language governing permissions and
-// limitations under the License.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vfs;
 
 import com.intellij.openapi.application.WriteAction;
@@ -193,14 +181,8 @@ public class VfsUtil extends VfsUtilCore {
    */
   @Nullable
   public static VirtualFile findFileByURL(@NotNull URL url) {
-    VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    return findFileByURL(url, virtualFileManager);
-  }
-
-  @Nullable
-  public static VirtualFile findFileByURL(@NotNull URL url, @NotNull VirtualFileManager virtualFileManager) {
-    String vfUrl = convertFromUrl(url);
-    return virtualFileManager.findFileByUrl(vfUrl);
+    String vfsUrl = convertFromUrl(url);
+    return VirtualFileManager.getInstance().findFileByUrl(vfsUrl);
   }
 
   @Nullable
@@ -285,7 +267,10 @@ public class VfsUtil extends VfsUtilCore {
     }
   }
 
-  public static VirtualFile createChildSequent(Object requestor, @NotNull VirtualFile dir, @NotNull String prefix, @NotNull String extension) throws IOException {
+  @NotNull
+  public static String getNextAvailableName(@NotNull VirtualFile dir,
+                                            @NotNull String prefix,
+                                            @NotNull String extension) {
     String dotExt = PathUtil.makeFileName("", extension);
     String fileName = prefix + dotExt;
     int i = 1;
@@ -293,7 +278,12 @@ public class VfsUtil extends VfsUtilCore {
       fileName = prefix + "_" + i + dotExt;
       i++;
     }
-    return dir.createChildData(requestor, fileName);
+    return fileName;
+  }
+
+  @NotNull
+  public static VirtualFile createChildSequent(Object requestor, @NotNull VirtualFile dir, @NotNull String prefix, @NotNull String extension) throws IOException {
+    return dir.createChildData(requestor, getNextAvailableName(dir, prefix, extension));
   }
 
   @NotNull
@@ -330,7 +320,7 @@ public class VfsUtil extends VfsUtilCore {
     for (String each : StringUtil.split(relativePath, "/")) {
       VirtualFile child = parent.findChild(each);
       if (child == null) {
-        child = parent.createChildDirectory(LocalFileSystem.getInstance(), each);
+        child = parent.createChildDirectory(parent.getFileSystem(), each);
       }
       parent = child;
     }
@@ -514,50 +504,16 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated to be removed in IDEA 2018 */
-  public static void copyFromResource(@NotNull VirtualFile file, @NonNls @NotNull String resourceUrl) throws IOException {
-    InputStream out = VfsUtil.class.getResourceAsStream(resourceUrl);
-    if (out == null) {
-      throw new FileNotFoundException(resourceUrl);
-    }
-    try {
-      byte[] bytes = FileUtil.adaptiveLoadBytes(out);
-      file.setBinaryContent(bytes);
-    } finally {
-      out.close();
-    }
-  }
 
   /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
   }
 
   /** @deprecated to be removed in IDEA 2018 */
-  public static <T> T processInputStream(@NotNull final VirtualFile file, @NotNull Function<InputStream, T> function) {
-    InputStream stream = null;
-    try {
-      stream = file.getInputStream();
-      return function.fun(stream);
-    }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    finally {
-      try {
-        if (stream != null) {
-          stream.close();
-        }
-      }
-      catch (IOException e) {
-        LOG.error(e);
-      }
-    }
-    return null;
-  }
-
-  /** @deprecated to be removed in IDEA 2018 */
+  @Deprecated
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;
@@ -578,6 +534,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
+  @Deprecated
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -597,6 +554,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @Deprecated
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {
     String path = file.getPath();

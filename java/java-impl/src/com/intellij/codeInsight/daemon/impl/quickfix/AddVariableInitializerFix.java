@@ -113,6 +113,9 @@ public class AddVariableInitializerFix implements IntentionAction {
     final ExpressionLookupItem defaultExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(defaultValue, variable));
     result.add(defaultExpression);
     if (type instanceof PsiClassType) {
+      if (type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        result.add(new ExpressionLookupItem(elementFactory.createExpressionFromText("\"\"", variable)));
+      }
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
       if (aClass != null && PsiUtil.hasDefaultConstructor(aClass)) {
         final String expressionText = PsiKeyword.NEW + " " + type.getCanonicalText(false) + "()";

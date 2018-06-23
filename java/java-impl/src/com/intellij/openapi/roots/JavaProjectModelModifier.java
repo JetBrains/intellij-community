@@ -93,12 +93,14 @@ public abstract class JavaProjectModelModifier {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated implement {@link #addModuleDependency(Module, Module, DependencyScope, boolean)} (to be removed in IDEA 2019) */
+  @Deprecated
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   public Promise<Void> addModuleDependency(@NotNull Module from, @NotNull Module to, @NotNull DependencyScope scope) {
     throw new UnsupportedOperationException("#addModuleDependency(Module, Module, DependencyScope) called on " + this);
   }
 
   /** @deprecated implement {@link #addLibraryDependency(Module, Library, DependencyScope, boolean)} (to be removed in IDEA 2019) */
+  @Deprecated
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope) {
     throw new UnsupportedOperationException("#addLibraryDependency(Module, Library, DependencyScope) called on " + this);

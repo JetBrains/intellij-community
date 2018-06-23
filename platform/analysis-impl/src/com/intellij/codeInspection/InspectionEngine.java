@@ -94,7 +94,7 @@ public class InspectionEngine {
                                                  @NotNull final PsiFile file,
                                                  @NotNull final InspectionManager iManager,
                                                  @NotNull final ProgressIndicator indicator) {
-    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, false, false, indicator);
+    final Map<String, List<ProblemDescriptor>> problemDescriptors = inspectEx(toolWrappers, file, iManager, false, indicator);
 
     final List<ProblemDescriptor> result = new ArrayList<>();
     for (List<ProblemDescriptor> group : problemDescriptors.values()) {
@@ -110,7 +110,6 @@ public class InspectionEngine {
                                                                @NotNull final PsiFile file,
                                                                @NotNull final InspectionManager iManager,
                                                                final boolean isOnTheFly,
-                                                               boolean failFastOnAcquireReadAction,
                                                                @NotNull final ProgressIndicator indicator) {
     if (toolWrappers.isEmpty()) return Collections.emptyMap();
 
@@ -121,7 +120,7 @@ public class InspectionEngine {
     List<PsiElement> elements = ContainerUtil.concat(
       (List<List<PsiElement>>)ContainerUtil.map(allDivided, d -> ContainerUtil.concat(d.inside, d.outside, d.parents)));
 
-    return inspectElements(toolWrappers, file, iManager, isOnTheFly, failFastOnAcquireReadAction, indicator, elements,
+    return inspectElements(toolWrappers, file, iManager, isOnTheFly, indicator, elements,
                            calcElementDialectIds(elements));
   }
 
@@ -131,7 +130,6 @@ public class InspectionEngine {
                                                               @NotNull final PsiFile file,
                                                               @NotNull final InspectionManager iManager,
                                                               final boolean isOnTheFly,
-                                                              boolean failFastOnAcquireReadAction,
                                                               @NotNull ProgressIndicator indicator,
                                                               @NotNull final List<PsiElement> elements,
                                                               @NotNull final Set<String> elementDialectIds) {
@@ -158,7 +156,7 @@ public class InspectionEngine {
 
       return true;
     };
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, failFastOnAcquireReadAction, processor);
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(entries, indicator, processor);
 
     return resultDescriptors;
   }
@@ -182,7 +180,6 @@ public class InspectionEngine {
           GlobalSimpleInspectionTool simpleTool = (GlobalSimpleInspectionTool)globalTool;
           ProblemsHolder problemsHolder = new ProblemsHolder(inspectionManager, file, false);
           ProblemDescriptionsProcessor collectProcessor = new ProblemDescriptionsProcessor() {
-            @Nullable
             @Override
             public CommonProblemDescriptor[] getDescriptions(@NotNull RefEntity refEntity) {
               return descriptors.toArray(CommonProblemDescriptor.EMPTY_ARRAY);
@@ -242,7 +239,7 @@ public class InspectionEngine {
 
   private static void convertToProblemDescriptors(@NotNull PsiElement element,
                                                   @NotNull CommonProblemDescriptor[] commonProblemDescriptors,
-                                                  @NotNull List<ProblemDescriptor> descriptors) {
+                                                  @NotNull List<? super ProblemDescriptor> descriptors) {
     for (CommonProblemDescriptor common : commonProblemDescriptors) {
       if (common instanceof ProblemDescriptor) {
         descriptors.add((ProblemDescriptor)common);
@@ -325,8 +322,8 @@ public class InspectionEngine {
   }
 
   private static void addDialects(@NotNull List<PsiElement> elements,
-                                  @NotNull Set<Language> outProcessedLanguages,
-                                  @NotNull Set<String> outDialectIds) {
+                                  @NotNull Set<? super Language> outProcessedLanguages,
+                                  @NotNull Set<? super String> outDialectIds) {
     for (PsiElement element : elements) {
       Language language = element.getLanguage();
       outDialectIds.add(language.getID());

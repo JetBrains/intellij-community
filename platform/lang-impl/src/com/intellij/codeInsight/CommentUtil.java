@@ -16,21 +16,20 @@
 
 package com.intellij.codeInsight;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.IndentData;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.Indent;
+import com.intellij.psi.PsiFile;
 import com.intellij.util.codeInsight.CommentUtilCore;
 import com.intellij.util.text.CharArrayUtil;
+import org.jetbrains.annotations.NotNull;
 
 public class CommentUtil extends CommentUtilCore {
   private CommentUtil() { }
 
-  public static Indent getMinLineIndent(Project project, Document document, int line1, int line2, FileType fileType) {
+  public static IndentData getMinLineIndent(Document document, int line1, int line2, @NotNull PsiFile file) {
     CharSequence chars = document.getCharsSequence();
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    Indent minIndent = null;
+    IndentData minIndent = null;
     for (int line = line1; line <= line2; line++) {
       int lineStart = document.getLineStartOffset(line);
       int textStart = CharArrayUtil.shiftForward(chars, lineStart, " \t");
@@ -41,16 +40,12 @@ public class CommentUtil extends CommentUtilCore {
         char c = chars.charAt(textStart);
         if (c == '\n' || c == '\r') continue; // empty line
       }
-      String space = chars.subSequence(lineStart, textStart).toString();
-      Indent indent = codeStyleManager.getIndent(space, fileType);
-      minIndent = minIndent != null ? indent.min(minIndent) : indent;
+      IndentData indent = IndentData.createFrom(chars, lineStart, textStart, CodeStyle.getIndentOptions(file).TAB_SIZE);
+      minIndent = IndentData.min(minIndent, indent);
     }
     if (minIndent == null && line1 == line2 && line1 < document.getLineCount() - 1) {
-      return getMinLineIndent(project, document, line1 + 1, line1 + 1, fileType);
+      return getMinLineIndent(document, line1 + 1, line1 + 1, file);
     }
-    //if (minIndent == Integer.MAX_VALUE){
-    //  minIndent = 0;
-    //}
     return minIndent;
   }
 }

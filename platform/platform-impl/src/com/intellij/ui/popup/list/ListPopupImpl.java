@@ -19,6 +19,7 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.SeparatorWithText;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.popup.ClosableByLeftArrow;
 import com.intellij.ui.popup.HintUpdateSupply;
 import com.intellij.ui.popup.NextStepHandler;
@@ -69,6 +70,8 @@ public class ListPopupImpl extends WizardPopup implements ListPopup, NextStepHan
       myMaxRowCount = maxRowCount;
     }
     replacePasteAction();
+
+    TouchBarsManager.attachPopupBar(this);
   }
 
   public void showUnderneathOfLabel(@NotNull JLabel label) {

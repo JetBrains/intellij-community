@@ -116,14 +116,19 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(file, document, offset);
-
-    return file.findReferenceAt(offset);
+    PsiReference ref = file.findReferenceAt(adjustOffset(file, document, offset));
+    if (ref == null) return null;
+    int elementOffset = ref.getElement().getTextRange().getStartOffset();
+    if (ref.getRangeInElement().shiftRight(elementOffset).containsOffset(offset)) {
+      return ref;
+    }
+    return null;
   }
 
   /**
    * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
    */
+  @Deprecated
   public static int adjustOffset(Document document, final int offset) {
     return adjustOffset(null, document, offset);
   }
@@ -138,8 +143,14 @@ public class TargetElementUtil extends TargetElementUtilBase {
     else if (!isIdentifierPart(file, text, offset)) {
       correctedOffset--;
     }
-    if (correctedOffset < 0 || !isIdentifierPart(file, text, correctedOffset)) return offset;
-    return correctedOffset;
+    if (correctedOffset >= 0) {
+      char charAt = text.charAt(correctedOffset);
+      if (charAt == '\'' || charAt == '"' || charAt == ')' || charAt == ']' ||
+          isIdentifierPart(file, text, correctedOffset)) {
+        return correctedOffset;
+      }
+    }
+    return offset;
   }
 
   private static boolean isIdentifierPart(@Nullable PsiFile file, CharSequence text, int offset) {
@@ -214,9 +225,9 @@ public class TargetElementUtil extends TargetElementUtilBase {
     PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(document);
     if (file == null) return null;
 
-    offset = adjustOffset(file, document, offset);
+    int adjusted = adjustOffset(file, document, offset);
 
-    PsiElement element = file.findElementAt(offset);
+    PsiElement element = file.findElementAt(adjusted);
     if (BitUtil.isSet(flags, REFERENCED_ELEMENT_ACCEPTED)) {
       final PsiElement referenceOrReferencedElement = getReferenceOrReferencedElement(file, editor, flags, offset);
       //if (referenceOrReferencedElement == null) {
@@ -231,7 +242,7 @@ public class TargetElementUtil extends TargetElementUtilBase {
 
     if (BitUtil.isSet(flags, ELEMENT_NAME_ACCEPTED)) {
       if (element instanceof PsiNamedElement) return element;
-      return getNamedElement(element, offset - element.getTextRange().getStartOffset());
+      return getNamedElement(element, adjusted - element.getTextRange().getStartOffset());
     }
     return null;
   }
@@ -264,7 +275,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return true;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
@@ -275,7 +285,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
@@ -433,7 +442,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
-  @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);

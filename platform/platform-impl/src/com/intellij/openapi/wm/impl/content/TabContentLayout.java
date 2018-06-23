@@ -13,9 +13,11 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.TabbedContent;
+import com.intellij.ui.tabs.impl.singleRow.MoreTabsIcon;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.BaseButtonBehavior;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -30,17 +32,10 @@ class TabContentLayout extends ContentLayout {
   ArrayList<ContentTabLabel> myTabs = new ArrayList<>();
   final Map<Content, ContentTabLabel> myContent2Tabs = new HashMap<>();
 
-  private final MoreIcon myMoreIcon = new MoreIcon() {
+  private final MoreTabsIcon myMoreIcon = new MoreTabsIcon() {
+    @Nullable
     protected Rectangle getIconRec() {
       return myLastLayout.moreRect;
-    }
-
-    protected boolean isActive() {
-      return myUi.myWindow.isActive();
-    }
-
-    protected int getIconY(final Rectangle iconRec) {
-      return iconRec.height / TAB_ARC - getIconHeight() / TAB_ARC;
     }
   };
 
@@ -181,21 +176,15 @@ class TabContentLayout extends ContentLayout {
 
     if (data.toDrop.size() > 0) {
       data.moreRect = new Rectangle(data.eachX + MORE_ICON_BORDER, 0, myMoreIcon.getIconWidth(), bounds.height);
-      final int selectedIndex = manager.getIndexOfContent(manager.getSelectedContent());
-      if (selectedIndex == 0) {
-        myMoreIcon.setPaintedIcons(false, true);
-      }
-      else if (selectedIndex == manager.getContentCount() - 1) {
-        myMoreIcon.setPaintedIcons(true, false);
-      }
-      else {
-        myMoreIcon.setPaintedIcons(true, true);
-      }
+      myMoreIcon.updateCounter(data.toDrop.size());
     }
     else {
       data.moreRect = null;
     }
 
+    final Rectangle moreRect = data.moreRect == null ? null : new Rectangle(data.eachX, 0, myMoreIcon.getIconWidth()+MORE_ICON_BORDER, bounds.height);
+
+    myUi.isResizableArea = p -> moreRect == null || !moreRect.contains(p);
     myLastLayout = data;
   }
 

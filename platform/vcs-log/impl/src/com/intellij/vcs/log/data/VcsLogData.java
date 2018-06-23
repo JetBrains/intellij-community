@@ -63,6 +63,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
   };
   public static final int RECENT_COMMITS_COUNT = Registry.intValue("vcs.log.recent.commits.count");
+  public static final VcsLogProgress.ProgressKey DATA_PACK_REFRESH = new VcsLogProgress.ProgressKey("data pack");
 
   @NotNull private final Project myProject;
   @NotNull private final Map<VirtualFile, VcsLogProvider> myLogProviders;
@@ -130,7 +131,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
     }
 
     myTopCommitsDetailsCache = new TopCommitsCache(myStorage);
-    myMiniDetailsGetter = new MiniDetailsGetter(myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
+    myMiniDetailsGetter = new MiniDetailsGetter(myProject, myStorage, logProviders, myTopCommitsDetailsCache, myIndex, this);
     myDetailsGetter = new CommitDetailsGetter(myStorage, logProviders, myIndex, this);
 
     myRefresher = new VcsLogRefresherImpl(myProject, myStorage, myLogProviders, myUserRegistry, myIndex, progress, myTopCommitsDetailsCache,
@@ -198,6 +199,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           @Override
           public void onThrowable(@NotNull Throwable error) {
             synchronized (myLock) {
+              LOG.error(error);
               if (myState.equals(State.INITIALIZED)) {
                 myState = State.CREATED;
                 myInitialization = null;
@@ -215,7 +217,7 @@ public class VcsLogData implements Disposable, VcsLogDataProvider {
           }
         };
         CoreProgressManager manager = (CoreProgressManager)ProgressManager.getInstance();
-        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator();
+        ProgressIndicator indicator = myRefresher.getProgress().createProgressIndicator(DATA_PACK_REFRESH);
         Future<?> future = manager.runProcessWithProgressAsynchronously(backgroundable, indicator, null);
         myInitialization = new SingleTaskController.SingleTaskImpl(future, indicator);
       }

@@ -1,0 +1,30 @@
+deprecated: autohideOff.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
+deprecated: autohideOffInactive.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
+deprecated: autohideOffPressed.png -> /general/pin_tab.svg; to be removed in IDEA 2020 - AllIcons.General.Pin_tab
+deprecated: collapseAll.png -> /actions/collapseall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Collapseall
+deprecated: collapseAllHover.png -> /actions/collapseall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Collapseall
+deprecated: configurableDefault.png; to be removed in IDEA 2020
+deprecated: Configure.png -> /general/settings.svg; to be removed in IDEA 2020 - AllIcons.General.Settings
+deprecated: createNewProject.png -> /welcome/createNewProject.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.CreateNewProject
+deprecated: CreateNewProjectfromExistingFiles.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
+deprecated: debug.png -> /actions/startDebugger.svg; to be removed in IDEA 2020 - use AllIcons.Actions.StartDebugger
+deprecated: defaultKeymap.png; to be removed in IDEA 2020
+deprecated: editColors.png -> /general/settings.svg; to be removed in IDEA 2020 - AllIcons.General.Settings
+deprecated: expandAll.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
+deprecated: expandAllHover.png -> /actions/expandall.svg; to be removed in IDEA 2020 - AllIcons.Actions.Expandall
+deprecated: externalTools.png -> /general/externalToolsSmall.png; to be removed in IDEA 2020 - use AllIcons.General.ExternalToolsSmall
+deprecated: getProjectfromVCS.png -> /welcome/fromVCS.svg; to be removed in IDEA 2020 - use AllIcons.Welcome.FromVCS
+deprecated: ijLogo.png; to be removed in IDEA 2020
+deprecated: importProject.png -> /toolbarDecorator/import.svg; to be removed in IDEA 2020 - use AllIcons.ToolbarDecorator.Import
+deprecated: jdk.png; to be removed in IDEA 2020
+deprecated: keymap.png; to be removed in IDEA 2020
+deprecated: openProject.png -> /actions/menu-open.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Menu_open
+deprecated: packagesTab.png -> /nodes/copyOfFolder.svg; to be removed in IDEA 2020 - use AllIcons.Nodes.CopyOfFolder
+deprecated: progress.png; to be removed in IDEA 2020
+deprecated: projectConfigurableBanner.png -> /general/projectConfigurable.svg; to be removed in IDEA 2020 - use AllIcons.General.ProjectConfigurable
+deprecated: projectConfigurableSelected.png -> /general/projectConfigurable.svg; to be removed in IDEA 2020 - use AllIcons.General.ProjectConfigurable
+deprecated: projectSettings.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
+deprecated: readHelp.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
+deprecated: recursive.png -> /actions/showAsTree.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ShowAsTree
+deprecated: secondaryGroup.png -> /general/gearPlain.svg; to be removed in IDEA 2020 - use AllIcons.General.GearPlain
+deprecated: uninstallPlugin.png; to be removed in IDEA 2020

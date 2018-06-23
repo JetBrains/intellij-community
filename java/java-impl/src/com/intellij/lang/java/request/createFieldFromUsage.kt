@@ -14,6 +14,7 @@ import com.intellij.lang.jvm.actions.EP_NAME
 import com.intellij.lang.jvm.actions.groupActionsByType
 import com.intellij.psi.*
 import com.intellij.psi.util.PsiUtil.resolveClassInClassTypeOnly
+import com.intellij.psi.util.PsiUtilCore
 import com.intellij.psi.util.parentOfType
 
 fun generateActions(ref: PsiReferenceExpression): List<IntentionAction> {
@@ -40,6 +41,13 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
   fun collectRequests(): Map<JvmClass, CreateFieldRequest> {
     doCollectRequests()
     return requests
+  }
+
+  private fun addRequest(target: JvmClass, request: CreateFieldRequest) {
+    if (target is PsiElement) {
+      PsiUtilCore.ensureValid(target)
+    }
+    requests[target] = request
   }
 
   private fun doCollectRequests() {
@@ -114,7 +122,7 @@ private class CreateFieldRequests(val myRef: PsiReferenceExpression) {
       useAnchor = target.toJavaClassOrNull() == ownerClass,
       isConstant = false
     )
-    requests[target] = request
+    addRequest(target, request)
   }
 }
 

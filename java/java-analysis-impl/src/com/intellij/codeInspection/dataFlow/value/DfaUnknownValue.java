@@ -16,10 +16,14 @@
 
 package com.intellij.codeInspection.dataFlow.value;
 
+import org.jetbrains.annotations.NotNull;
+
 public class DfaUnknownValue extends DfaValue {
   private static class DfaUnknownValueHolder {
     private static final DfaUnknownValue myInstance = new DfaUnknownValue();
   }
+
+  @NotNull
   public static DfaUnknownValue getInstance() {
     return DfaUnknownValueHolder.myInstance;
   }

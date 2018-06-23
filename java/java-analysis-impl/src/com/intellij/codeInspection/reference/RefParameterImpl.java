@@ -7,10 +7,11 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.util.PsiFormatUtil;
-import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.function.Supplier;
 
 public class RefParameterImpl extends RefJavaElementImpl implements RefParameter {
   private static final int USED_FOR_READING_MASK = 0x10000;
@@ -86,10 +87,14 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
-  void updateTemplateValue(PsiExpression expression) {
+  void clearTemplateValue() {
+    myActualValueTemplate = VALUE_IS_NOT_CONST;
+  }
+  
+  void updateTemplateValue(PsiExpression expression, @Nullable PsiElement accessPlace) {
     if (myActualValueTemplate == VALUE_IS_NOT_CONST) return;
 
-    Object newTemplate = getExpressionValue(expression);
+    Object newTemplate = getAccessibleExpressionValue(expression, () -> accessPlace == null ? getContainingFile() : accessPlace);
     if (myActualValueTemplate == VALUE_UNDEFINED) {
       myActualValueTemplate = newTemplate;
     }
@@ -123,27 +128,42 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
   }
 
   @Nullable
-  public static Object getExpressionValue(PsiExpression expression) {
+  public static Object getAccessibleExpressionValue(PsiExpression expression, Supplier<? extends PsiElement> accessPlace) {
     if (expression instanceof PsiReferenceExpression) {
       PsiReferenceExpression referenceExpression = (PsiReferenceExpression) expression;
       PsiElement resolved = referenceExpression.resolve();
       if (resolved instanceof PsiField) {
         PsiField psiField = (PsiField) resolved;
-        if (psiField.hasModifierProperty(PsiModifier.STATIC) &&
-            psiField.hasModifierProperty(PsiModifier.FINAL) &&
-            psiField.getContainingClass().getQualifiedName() != null) {
-          return PsiFormatUtil.formatVariable(psiField, PsiFormatUtilBase.SHOW_NAME |
-                                                        PsiFormatUtilBase.SHOW_CONTAINING_CLASS |
-                                                        PsiFormatUtilBase.SHOW_FQ_NAME,
-                                              PsiSubstitutor.EMPTY);
+        PsiElement element = accessPlace.get();
+        if (psiField.hasModifierProperty(PsiModifier.STATIC) && psiField.hasModifierProperty(PsiModifier.FINAL)) {
+          if (element == null || !isAccessible(psiField, element)) {
+            return VALUE_IS_NOT_CONST;
+          }
+          PsiClass containingClass = psiField.getContainingClass();
+          if (containingClass != null && containingClass.getQualifiedName() != null) {
+            return psiField;
+          }
         }
       }
     }
-    if (expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null) {
-      return null;
+    if (expression instanceof PsiLiteralExpression) {
+      if (((PsiLiteralExpression)expression).getValue() == null) {
+        return null;
+      }
+      //don't unescape/escape to insert into the source file
+      return expression.getText();
     }
     Object constValue = JavaConstantExpressionEvaluator.computeConstantExpression(expression, false);
-    return constValue == null ? VALUE_IS_NOT_CONST : constValue;
+    return constValue == null ? VALUE_IS_NOT_CONST : constValue instanceof String ? "\"" + constValue + "\"" : constValue;
+  }
+
+  private static boolean isAccessible(@NotNull PsiField field, @NotNull PsiElement place) {
+    PsiClass fieldContainingClass = field.getContainingClass();
+    if (fieldContainingClass == null) return false;
+    String qName = fieldContainingClass.getQualifiedName();
+    if (qName == null) return false;
+    String fieldQName = qName + "." + field.getName();
+    return PsiResolveHelper.SERVICE.getInstance(field.getProject()).resolveReferencedVariable(fieldQName, place) != null;
   }
 
   @Nullable

@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.diagnostic.Logger
+import com.intellij.openapi.util.registry.Registry
 import com.intellij.util.Function
 import org.jetbrains.concurrency.InternalPromiseUtil.PromiseValue
 import org.jetbrains.concurrency.Promise.State
@@ -21,7 +23,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
   private val valueRef = AtomicReference<PromiseValue<T>?>(null)
 
   override fun onSuccess(handler: Consumer<in T>): Promise<T> {
-    setHandler(doneRef, handler, State.FULFILLED)
+    setHandler(doneRef, handler, State.SUCCEEDED)
     return this
   }
 
@@ -91,11 +93,13 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
   }
 
   private fun addHandlers(done: Consumer<T>, rejected: Consumer<Throwable>) {
-    setHandler(doneRef, done, State.FULFILLED)
+    setHandler(doneRef, done, State.SUCCEEDED)
     setHandler(rejectedRef, rejected, State.REJECTED)
   }
 
   fun setResult(result: T) {
+    assertWriteAction("Result must be not set inside write-action")
+
     if (!valueRef.compareAndSet(null, PromiseValue.createFulfilled(result))) {
       return
     }
@@ -108,13 +112,23 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     }
   }
 
-  fun setError(error: String) = setError(createError(error))
+  private fun assertWriteAction(message: String) {
+    ApplicationManager.getApplication()?.let {
+      if (Registry.`is`("promise.check.write.action", false)) {
+        LOG.assertTrue(!it.isWriteAccessAllowed, message)
+      }
+    }
+  }
+
+  fun setError(error: String): Boolean = setError(createError(error))
 
   override fun cancel() {
     setError(InternalPromiseUtil.OBSOLETE_ERROR)
   }
 
   open fun setError(error: Throwable): Boolean {
+    assertWriteAction("Error must be not set inside write-action")
+
     if (!valueRef.compareAndSet(null, PromiseValue.createRejected(error))) {
       LOG.errorIfNotMessage(error)
       return false
@@ -139,6 +153,8 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
   }
 
   override fun blockingGet(timeout: Int, timeUnit: TimeUnit): T? {
+    assertWriteAction("blockingGet() must be not called inside write-action")
+
     var value = valueRef.get()
     if (value == null) {
       val latch = CountDownLatch(1)
@@ -210,7 +226,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     val currentState = value.state
     if (currentState == targetState) {
       @Suppress("UNCHECKED_CAST")
-      newConsumer.accept(if (currentState == State.FULFILLED) value.result as C_T else value.error as C_T)
+      newConsumer.accept(if (currentState == State.SUCCEEDED) value.result as C_T else value.error as C_T)
     }
   }
 
@@ -224,7 +240,7 @@ open class AsyncPromise<T : Any?> : InternalPromiseUtil.BasePromise<T>(), Cancel
     }
   }
 
-  override fun getValue() = valueRef.get()
+  override fun getValue(): PromiseValue<T>? = valueRef.get()
 }
 
 private class CompoundConsumer<T>(c1: Consumer<in T>, c2: Consumer<in T>) : Consumer<T> {

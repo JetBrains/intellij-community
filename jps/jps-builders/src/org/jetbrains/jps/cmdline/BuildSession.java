@@ -46,10 +46,7 @@ import org.jetbrains.jps.service.SharedThreadPool;
 
 import java.io.*;
 import java.util.*;
-import java.util.concurrent.ExecutionException;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.TimeoutException;
+import java.util.concurrent.*;
 
 import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope;
 
@@ -656,17 +653,21 @@ final class BuildSession implements Runnable, CanceledStatus {
     return BuildType.BUILD;
   }
 
-  private static class EventsProcessor extends SequentialTaskExecutor {
+  private static class EventsProcessor {
     private final Semaphore myProcessingEnabled = new Semaphore();
+    private final Executor myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("BuildSession.EventsProcessor.EventsProcessor Pool", SharedThreadPool.getInstance());
 
     private EventsProcessor() {
-      super("BuildSession.EventsProcessor.EventsProcessor pool", SharedThreadPool.getInstance());
       myProcessingEnabled.down();
       execute(() -> myProcessingEnabled.waitFor());
     }
 
     private void startProcessing() {
       myProcessingEnabled.up();
+    }
+
+    public void execute(@NotNull Runnable task) {
+      myExecutorService.execute(task);
     }
   }
 

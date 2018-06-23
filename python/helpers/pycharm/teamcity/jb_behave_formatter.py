@@ -17,7 +17,7 @@ from teamcity.messages import TeamcityServiceMessages
 
 def _step_name(step):
     assert isinstance(step, Step)
-    return step.step_type.capitalize() + " " + step.name.strip()
+    return step.keyword + " " + step.name.strip()
 
 
 def _suite_name(suite):
@@ -55,6 +55,7 @@ class TeamcityFormatter(Formatter):
         assert isinstance(scenario, Scenario)
         self.__scenario = scenario
         self.__scenario_opened = False
+        self.__steps.clear()
 
     def step(self, step):
         assert isinstance(step, Step)

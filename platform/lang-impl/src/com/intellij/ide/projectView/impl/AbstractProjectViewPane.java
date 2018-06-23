@@ -34,17 +34,20 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.pom.Navigatable;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.move.MoveHandler;
+import com.intellij.ui.tree.TreePathUtil;
 import com.intellij.ui.tree.TreeVisitor;
+import com.intellij.ui.tree.project.ProjectFileNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -99,7 +102,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected AbstractProjectViewPane(@NotNull Project project) {
     myProject = project;
-    WolfTheProblemSolver.ProblemListener problemListener = new WolfTheProblemSolver.ProblemListener() {
+    ProblemListener problemListener = new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         queueUpdateByProblem();
@@ -115,7 +118,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         queueUpdateByProblem();
       }
     };
-    WolfTheProblemSolver.getInstance(project).addProblemListener(problemListener, this);
+    project.getMessageBus().connect(this).subscribe(ProblemListener.TOPIC, problemListener);
     Disposer.register(project, this);
   }
 
@@ -176,6 +179,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   @NotNull public String getPresentableSubIdName(@NotNull final String subId) {
     throw new IllegalStateException("should not call");
   }
+
+  public Icon getPresentableSubIdIcon(@NotNull String subId) {
+    return getIcon();
+  }
+
   public abstract JComponent createComponent();
   public JComponent getComponentToFocus() {
     return myTree;
@@ -291,6 +299,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   @Override
   public Object getData(String dataId) {
+    Object data =
+      myTreeStructure instanceof AbstractTreeStructureBase ?
+      ((AbstractTreeStructureBase)myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId) : null;
+    if (data != null) {
+      return data;
+    }
     if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
       TreePath[] paths = getSelectionPaths();
       if (paths == null) return null;
@@ -312,9 +326,6 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         return navigatables.toArray(new Navigatable[0]);
       }
     }
-    if (myTreeStructure instanceof AbstractTreeStructureBase) {
-      return ((AbstractTreeStructureBase) myTreeStructure).getDataFromProviders(getSelectedNodes(AbstractTreeNode.class), dataId);
-    }
     return null;
   }
 
@@ -333,6 +344,11 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return userObject instanceof NodeDescriptor ? (NodeDescriptor)userObject : null;
   }
 
+  /**
+   * @see TreeUtil#getUserObject(Object)
+   * @deprecated AbstractProjectViewPane#getSelectedPath
+   */
+  @Deprecated
   public final DefaultMutableTreeNode getSelectedNode() {
     TreePath path = getSelectedPath();
     return path == null ? null : ObjectUtils.tryCast(path.getLastPathComponent(), DefaultMutableTreeNode.class);
@@ -572,17 +588,21 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
       }
     }
     else {
-      final DefaultMutableTreeNode selectedNode = getSelectedNode();
-      if (selectedNode != null) {
-        return getSelectedDirectoriesInAmbiguousCase(selectedNode);
+      TreePath path = getSelectedPath();
+      if (path != null) {
+        Object component = path.getLastPathComponent();
+        if (component instanceof DefaultMutableTreeNode) {
+          //noinspection deprecation
+          return getSelectedDirectoriesInAmbiguousCase(((DefaultMutableTreeNode)component).getUserObject());
+        }
+        return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
   }
 
   @NotNull
-  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    final Object userObject = node.getUserObject();
+  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(Object userObject) {
     if (userObject instanceof AbstractModuleNode) {
       final Module module = ((AbstractModuleNode)userObject).getValue();
       if (module != null) {
@@ -643,17 +663,19 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
 
   protected void enableDnD() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
-      myDropTarget = new ProjectViewDropTarget(myTree, new Retriever() {
+      myDropTarget = new ProjectViewDropTarget(myTree, myProject) {
+        @Nullable
         @Override
-        public PsiElement getPsiElement(@Nullable TreeNode node) {
-          return getPSIElementFromNode(node);
+        protected PsiElement getPsiElement(@NotNull TreePath path) {
+          return getPSIElement(getElementFromTreeNode(path.getLastPathComponent()));
         }
 
+        @Nullable
         @Override
-        public Module getModule(TreeNode treeNode) {
-          return getNodeModule(getElementFromTreeNode(treeNode));
+        protected Module getModule(@NotNull PsiElement element) {
+          return getNodeModule(element);
         }
-      }, myProject) {
+
         @Override
         public void cleanUpOnLeave() {
           beforeDnDLeave();
@@ -707,7 +729,7 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     @Override
     public DnDDragStartBean startDragging(DnDAction action, Point dragOrigin) {
       final PsiElement[] psiElements = getSelectedPSIElements();
-      final TreeNode[] nodes = getSelectedTreeNodes();
+      TreePath[] paths = getSelectionPaths();
       return new DnDDragStartBean(new TransferableWrapper(){
 
         @Override
@@ -715,9 +737,15 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
           return PsiCopyPasteManager.asFileList(psiElements);
         }
 
+        @Nullable
+        @Override
+        public TreePath[] getTreePaths() {
+          return paths;
+        }
+
         @Override
         public TreeNode[] getTreeNodes() {
-          return nodes;
+          return TreePathUtil.toTreeNodes(getTreePaths());
         }
 
         @Override
@@ -794,8 +822,21 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
     return null;
   }
 
+  @NotNull
+  static List<TreeVisitor> createVisitors(Object... objects) {
+    return StreamEx.of(objects).map(AbstractProjectViewPane::createVisitor).nonNull().toImmutableList();
+  }
+
   @Nullable
   public static TreeVisitor createVisitor(Object object) {
+    if (object instanceof AbstractTreeNode) {
+      AbstractTreeNode node = (AbstractTreeNode)object;
+      object = node.getValue();
+    }
+    if (object instanceof ProjectFileNode) {
+      ProjectFileNode node = (ProjectFileNode)object;
+      object = node.getVirtualFile();
+    }
     if (object instanceof VirtualFile) return createVisitor((VirtualFile)object);
     if (object instanceof PsiElement) return createVisitor((PsiElement)object);
     if (object != null) LOG.warn("unsupported object: " + object);

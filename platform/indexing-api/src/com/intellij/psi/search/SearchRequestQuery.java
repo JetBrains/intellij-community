@@ -22,12 +22,12 @@ public class SearchRequestQuery extends AbstractQuery<PsiReference> {
 
   @NotNull
   @Override
-  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<PsiReference> consumer) {
+  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<? super PsiReference> consumer) {
     return PsiSearchHelper.getInstance(myProject).processRequestsAsync(myRequests, consumer);
   }
 
   @Override
-  protected boolean processResults(@NotNull Processor<PsiReference> consumer) {
+  protected boolean processResults(@NotNull Processor<? super PsiReference> consumer) {
     return PsiSearchHelper.getInstance(myProject).processRequests(myRequests, consumer);
   }
 

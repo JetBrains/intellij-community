@@ -1,22 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.commands;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
+import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -24,6 +11,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.ProcessEventListener;
+import com.intellij.openapi.vcs.RemoteFilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -56,6 +44,7 @@ public abstract class GitHandler {
   private static final Logger TIME_LOG = Logger.getInstance("#time." + GitHandler.class.getName());
 
   private final Project myProject;
+  @NotNull private final String myPathToExecutable;
   private final GitCommand myCommand;
 
   private boolean myPreValidateExecutable = true;
@@ -94,7 +83,7 @@ public abstract class GitHandler {
          command,
          configParameters);
     myProgressParameterAllowed =
-      GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(GitVcs.getInstance(project).getVersion());
+      GitVersionSpecialty.ABLE_TO_USE_PROGRESS_IN_REMOTE_COMMANDS.existsIn(project);
   }
 
   /**
@@ -127,12 +116,14 @@ public abstract class GitHandler {
                        @NotNull List<String> configParameters) {
     myProject = project;
     myVcs = project != null ? GitVcs.getInstance(project) : null;
+    myPathToExecutable = pathToExecutable;
     myCommand = command;
 
     myCommandLine = new GeneralCommandLine()
       .withWorkDirectory(directory)
-      .withExePath(pathToExecutable)
+      .withExePath(myPathToExecutable)
       .withCharset(CharsetToolkit.UTF8_CHARSET);
+
     for (String parameter : getConfigParameters(project, configParameters)) {
       myCommandLine.addParameters("-c", parameter);
     }
@@ -144,7 +135,7 @@ public abstract class GitHandler {
 
   @NotNull
   static List<String> getConfigParameters(@Nullable Project project, @NotNull List<String> requestedConfigParameters) {
-    if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(GitVcs.getInstance(project).getVersion())) {
+    if (project == null || !GitVersionSpecialty.CAN_OVERRIDE_GIT_CONFIG_FOR_COMMAND.existsIn(project)) {
       return Collections.emptyList();
     }
 
@@ -180,7 +171,7 @@ public abstract class GitHandler {
 
   @NotNull
   String getExecutablePath() {
-    return myCommandLine.getExePath();
+    return myPathToExecutable;
   }
 
   @NotNull
@@ -195,6 +186,17 @@ public abstract class GitHandler {
    */
   protected void addListener(ProcessEventListener listener) {
     myListeners.addListener(listener);
+  }
+
+  /***
+   * Execute process with lower priority
+   *
+   * @param isLowPriority whether to use lower or normal priority
+   */
+  public void setWithLowPriority(boolean isLowPriority) {
+    if (isLowPriority) {
+      ExecUtil.setupLowPriorityExecution(myCommandLine);
+    }
   }
 
   /**
@@ -255,7 +257,12 @@ public abstract class GitHandler {
   public void addRelativePaths(@NotNull final Collection<FilePath> filePaths) {
     checkNotStarted();
     for (FilePath path : filePaths) {
-      myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      if (path instanceof RemoteFilePath) {
+        myCommandLine.addParameter(path.getPath());
+      }
+      else {
+        myCommandLine.addParameter(VcsFileUtil.relativePath(getWorkingDirectory(), path));
+      }
     }
   }
 

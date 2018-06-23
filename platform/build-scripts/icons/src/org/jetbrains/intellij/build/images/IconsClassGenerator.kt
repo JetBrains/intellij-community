@@ -17,7 +17,9 @@ package org.jetbrains.intellij.build.images
 
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.LineSeparator
 import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.diff.Diff
 import org.jetbrains.jps.model.JpsSimpleElement
 import org.jetbrains.jps.model.java.JavaSourceRootProperties
 import org.jetbrains.jps.model.java.JavaSourceRootType
@@ -29,7 +31,7 @@ import java.util.*
 class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeChangesToDisk: Boolean = true) {
   private var processedClasses = 0
   private var processedIcons = 0
-  private var modifiedClasses = ArrayList<Pair<JpsModule, File>>()
+  private var modifiedClasses = ArrayList<Triple<JpsModule, File, String>>()
 
   fun processModule(module: JpsModule) {
     val customLoad: Boolean
@@ -75,18 +77,39 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
       outFile = File(targetRoot, "${className}.java")
     }
 
-    val copyrightComment = getCopyrightComment(outFile)
-    val text = generate(module, className, packageName, customLoad, copyrightComment)
-    if (text != null) {
+    val oldText = if (outFile.exists()) outFile.readText() else null
+    val copyrightComment = getCopyrightComment(oldText)
+    val separator = getSeparators(oldText)
+
+    val newText = generate(module, className, packageName, customLoad, copyrightComment)
+
+    val oldLines = oldText?.lines() ?: emptyList()
+    val newLines = newText?.lines() ?: emptyList()
+
+    if (newLines.isNotEmpty()) {
       processedClasses++
 
-      if (!outFile.exists() || outFile.readText().lines() != text.lines()) {
-        modifiedClasses.add(Pair(module, outFile))
-
+      if (oldLines != newLines) {
         if (writeChangesToDisk) {
           outFile.parentFile.mkdirs()
-          outFile.writeText(text)
+          outFile.writeText(newLines.joinToString(separator = separator.separatorString))
           println("Updated icons class: ${outFile.name}")
+        }
+        else {
+          val sb = StringBuilder()
+          var ch = Diff.buildChanges(oldLines.toTypedArray(), newLines.toTypedArray())
+          while (ch != null) {
+            val deleted = oldLines.subList(ch.line0, ch.line0 + ch.deleted)
+            val inserted = newLines.subList(ch.line1, ch.line1 + ch.inserted)
+
+            if (sb.isNotEmpty()) sb.append("=".repeat(20)).append("\n")
+            deleted.forEach { sb.append("-").append(it).append("\n") }
+            inserted.forEach { sb.append("+").append(it).append("\n") }
+
+            ch = ch.link
+          }
+
+          modifiedClasses.add(Triple(module, outFile, sb.toString()))
         }
       }
     }
@@ -97,7 +120,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     println("Generated classes: $processedClasses. Processed icons: $processedIcons")
   }
 
-  fun getModifiedClasses() = modifiedClasses
+  fun getModifiedClasses(): List<Triple<JpsModule, File, String>> = modifiedClasses
 
   private fun findIconClass(dir: File): String? {
     var className: String? = null
@@ -109,16 +132,24 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
     return className
   }
 
-  private fun getCopyrightComment(file: File): String {
-    if (!file.isFile) return ""
-    val text = file.readText()
+  private fun getCopyrightComment(text: String?): String {
+    if (text == null) return ""
     val i = text.indexOf("package ")
     if (i == -1) return ""
     val comment = text.substring(0, i)
     return if (comment.trim().endsWith("*/") || comment.trim().startsWith("//")) comment else ""
   }
 
+  private fun getSeparators(text: String?): LineSeparator {
+    if (text == null) return LineSeparator.LF
+    return StringUtil.detectSeparators(text) ?: LineSeparator.LF
+  }
+
   private fun generate(module: JpsModule, className: String, packageName: String, customLoad: Boolean, copyrightComment: String): String? {
+    val imageCollector = ImageCollector(projectHome, true)
+    val images = imageCollector.collect(module)
+    imageCollector.printUsedIconRobots()
+
     val answer = StringBuilder()
     answer.append(copyrightComment)
     append(answer, "package $packageName;\n", 0)
@@ -140,11 +171,16 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
       append(answer, "return IconLoader.getIcon(path, ${className}.class);", 2)
       append(answer, "}", 1)
       append(answer, "", 0)
+
+      val customExternalLoad = images.any { it.deprecation?.replacementContextClazz != null }
+      if (customExternalLoad) {
+        append(answer, "private static Icon load(String path, Class<?> clazz) {", 1)
+        append(answer, "return IconLoader.getIcon(path, clazz);", 2)
+        append(answer, "}", 1)
+        append(answer, "", 0)
+      }
     }
 
-    val imageCollector = ImageCollector(projectHome, true)
-    val images = imageCollector.collect(module)
-    imageCollector.printUsedIconRobots()
 
     val inners = StringBuilder()
     processIcons(images, inners, customLoad, 0)
@@ -185,9 +221,11 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
           val name = file.name
           val used = image.used
           val deprecated = image.deprecated
-          val deprecationComment = image.deprecationComment
+          val deprecationComment = image.deprecation?.comment
+          val deprecationReplacement = image.deprecation?.replacement
+          val deprecationReplacementContextClazz = image.deprecation?.replacementContextClazz
 
-          if (isIcon(file)) {
+          if (isIcon(file) || deprecationReplacement != null) {
             processedIcons++
 
             if (used || deprecated) {
@@ -209,12 +247,30 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
               if (!packagePrefix.isEmpty()) root_prefix = "/" + packagePrefix.replace('.', '/')
             }
 
-            val size = imageSize(file) ?: error("Can't get icon size: $file")
-            val method = if (customLoad) "load" else "IconLoader.getIcon"
-            val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, file)!!.replace('\\', '/')
-            append(answer,
-                   "public static final Icon ${iconName(name)} = $method(\"$relativePath\"); // ${size.width}x${size.height}",
-                   level)
+            if (deprecationReplacementContextClazz == null) {
+              val imageFile: File
+              if (deprecationReplacement != null) {
+                imageFile = File(sourceRoot.file, deprecationReplacement)
+                assert(isIcon(imageFile), { "Overriding icon should be valid: $name - ${imageFile.path}" })
+              }
+              else {
+                imageFile = file
+              }
+
+              val size = imageSize(imageFile) ?: error("Can't get icon size: $imageFile")
+              val method = if (customLoad) "load" else "IconLoader.getIcon"
+              val relativePath = root_prefix + "/" + FileUtil.getRelativePath(sourceRoot.file, imageFile)!!.replace('\\', '/')
+              append(answer,
+                     "public static final Icon ${iconName(name)} = $method(\"$relativePath\"); // ${size.width}x${size.height}",
+                     level)
+            }
+            else {
+              val method = if (customLoad) "load" else "IconLoader.getIcon"
+              val relativePath = deprecationReplacement
+              append(answer,
+                     "public static final Icon ${iconName(name)} = $method(\"$relativePath\", ${deprecationReplacementContextClazz}.class);",
+                     level)
+            }
           }
         }
       }
@@ -222,7 +278,7 @@ class IconsClassGenerator(val projectHome: File, val util: JpsModule, val writeC
   }
 
   private fun append(answer: StringBuilder, text: String, level: Int) {
-    answer.append("  ".repeat(level))
+    if (text.isNotBlank()) answer.append("  ".repeat(level))
     answer.append(text).append("\n")
   }
 

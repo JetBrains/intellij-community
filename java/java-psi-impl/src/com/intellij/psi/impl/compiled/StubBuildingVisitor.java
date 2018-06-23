@@ -19,7 +19,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.org.objectweb.asm.*;
@@ -120,7 +119,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiTypeParameterListStub typeParameterList = new PsiTypeParameterListStubImpl(myResult);
     for (Pair<String, String[]> parameter : info.typeParameters) {
-      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(typeParameterList, StringRef.fromString(parameter.first));
+      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(typeParameterList, parameter.first);
       newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
     }
 
@@ -355,7 +354,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     PsiTypeParameterListStub list = new PsiTypeParameterListStubImpl(stub);
     for (Pair<String, String[]> parameter : info.typeParameters) {
-      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(list, StringRef.fromString(parameter.first));
+      PsiTypeParameterStub parameterStub = new PsiTypeParameterStubImpl(list, parameter.first);
       newReferenceList(JavaStubElementTypes.EXTENDS_BOUND_LIST, parameterStub, parameter.second);
     }
 
@@ -826,9 +825,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     if (canonicalText.indexOf('$') >= 0) {
       StringBuilder sb = new StringBuilder(canonicalText);
       boolean updated = false;
-      for (int p = 0; p < sb.length(); p++) {
+      int start = canonicalText.lastIndexOf('/') + 2; // -1 => 1 if no package; skip first char in class name
+      for (int p = start; p < sb.length(); p++) {
         char c = sb.charAt(p);
-        if (c == '$' && p > 0 && sb.charAt(p - 1) != '/' && p < sb.length() - 1 && sb.charAt(p + 1) != '$') {
+        if (c == '$' && p < sb.length() - 1 && sb.charAt(p + 1) != '$') {
           sb.setCharAt(p, '.');
           updated = true;
         }

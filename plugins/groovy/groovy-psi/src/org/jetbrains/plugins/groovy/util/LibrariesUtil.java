@@ -16,7 +16,6 @@
 
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.DumbService;

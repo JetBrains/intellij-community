@@ -22,6 +22,7 @@ import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -42,26 +43,41 @@ public class IdeaActionButtonLook extends ActionButtonLook {
 
   public void paintBackground(Graphics g, JComponent component, int state) {
     if (state != ActionButtonComponent.NORMAL) {
-      Rectangle rect = new Rectangle(component.getSize());
-      JBInsets.removeFrom(rect, component.getInsets());
-      paintBackground(g, rect, state);
+      paintBackground(g, component, getColorForState(state));
     }
   }
 
-  protected static void paintBackground(Graphics g, Rectangle rect, int state) {
+  @Override
+  public void paintBackground(@NotNull Graphics g, @NotNull JComponent component, @NotNull Color color) {
+    Rectangle rect = new Rectangle(component.getSize());
+    JBInsets.removeFrom(rect, component.getInsets());
+    paintBackgroundWithColor(g, rect, color);
+  }
+
+  protected static void paintBackground(@NotNull Graphics g, @NotNull Rectangle rect, int state) {
+    paintBackgroundWithColor(g, rect, getColorForState(state));
+  }
+
+  private static Color getColorForState(int state) {
+    Color color;
+    if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDefaultMacTheme()) {
+      color = state == ActionButtonComponent.PUSHED ? Gray.xD7 : Gray.xE0;
+    } else {
+      color = state == ActionButtonComponent.PUSHED ? PRESSED_BG : POPPED_BG;
+    }
+    return color;
+  }
+
+  protected static void paintBackgroundWithColor(@NotNull Graphics g, @NotNull Rectangle rect, @NotNull Color color) {
     Graphics2D g2 = (Graphics2D)g.create();
     g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
     g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
     g2.translate(rect.x, rect.y);
 
     try {
-      if (UIUtil.isUnderAquaLookAndFeel() || UIUtil.isUnderDefaultMacTheme()) {
-        g2.setColor(state == ActionButtonComponent.PUSHED ? Gray.xD7 : Gray.xE0);
-      } else {
-        g2.setColor(state == ActionButtonComponent.PUSHED ? PRESSED_BG : POPPED_BG);
-      }
+      g2.setColor(color);
 
-      float arc = DarculaUIUtil.buttonArc();
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
       g2.fill(new RoundRectangle2D.Float(0, 0, rect.width, rect.height, arc, arc));
     } finally {
       g2.dispose();
@@ -89,8 +105,8 @@ public class IdeaActionButtonLook extends ActionButtonLook {
         g2.setColor(state == ActionButtonComponent.PUSHED ? PRESSED_BORDER : POPPED_BORDER);
       }
 
-      float arc = DarculaUIUtil.buttonArc();
-      float lw = DarculaUIUtil.lw(g2);
+      float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+      float lw = DarculaUIUtil.LW.getFloat();
       Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
       border.append(new RoundRectangle2D.Float(0, 0, rect.width, rect.height, arc, arc), false);
       border.append(new RoundRectangle2D.Float(lw, lw, rect.width - lw*2, rect.height- lw*2, arc - lw, arc - lw), false);

@@ -21,9 +21,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.regex.Pattern;
 
-/**
- * @author Tagir Valeev
- */
 public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionTool {
   private static final Pattern FOR_EACH_METHOD = Pattern.compile("forEach(Ordered)?");
 
@@ -124,7 +121,12 @@ public class UseBulkOperationInspection extends AbstractBaseJavaLocalInspectionT
   @Nullable
   private static PsiExpression findIterableForIndexedLoop(PsiForStatement loop, PsiExpression getElementExpression) {
     CountingLoop countingLoop = CountingLoop.from(loop);
-    if (countingLoop == null || countingLoop.isIncluding() || !ExpressionUtils.isZero(countingLoop.getInitializer())) return null;
+    if (countingLoop == null ||
+        countingLoop.isIncluding() ||
+        countingLoop.isDescending() ||
+        !ExpressionUtils.isZero(countingLoop.getInitializer())) {
+      return null;
+    }
     IndexedContainer container = IndexedContainer.fromLengthExpression(countingLoop.getBound());
     if (container == null) return null;
     PsiExpression index = container.extractIndexFromGetExpression(getElementExpression);

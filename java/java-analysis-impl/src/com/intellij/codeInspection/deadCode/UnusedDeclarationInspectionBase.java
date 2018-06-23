@@ -485,9 +485,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
                   getEntryPointsManager(globalContext).addEntryPoint(refMethod, false);
                 }
                 else if (!refMethod.isExternalOverride() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier())) {
-                  for (final RefMethod derivedMethod : refMethod.getDerivedMethods()) {
-                    myProcessedSuspicious.add(derivedMethod);
-                  }
+                  myProcessedSuspicious.addAll(refMethod.getDerivedMethods());
 
                   enqueueMethodUsages(globalContext, refMethod);
                   requestAdded[0] = true;
@@ -559,7 +557,8 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     CodeScanner codeScanner = new CodeScanner();
 
     // Cleanup previous reachability information.
-    context.getRefManager().iterate(new RefJavaVisitor() {
+    RefManager refManager = context.getRefManager();
+    refManager.iterate(new RefJavaVisitor() {
       @Override
       public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElementImpl) {
@@ -571,7 +570,7 @@ public class UnusedDeclarationInspectionBase extends GlobalInspectionTool {
     });
 
 
-    for (RefElement entry : getEntryPointsManager(context).getEntryPoints()) {
+    for (RefElement entry : getEntryPointsManager(context).getEntryPoints(refManager)) {
       entry.accept(codeScanner);
     }
 

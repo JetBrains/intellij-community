@@ -6,20 +6,21 @@
     <!-- Add your application components here -->
   </application-components>
 
-  <project-components>
-    <!-- Add your project components here -->
-  </project-components>
-
   <actions>
     <!-- Add your actions here -->
   </actions>
 
   <extensions defaultExtensionNs="com.intellij">
     <fileTypeFactory implementation="com.intellij.json.JsonFileTypeFactory"/>
+    <fileTypeFactory implementation="com.intellij.json.json5.Json5FileTypeFactory"/>
     <iconProvider implementation="com.jetbrains.jsonSchema.JsonSchemaIconProvider"/>
     <lang.parserDefinition language="JSON" implementationClass="com.intellij.json.JsonParserDefinition"/>
+    <lang.parserDefinition language="JSON5" implementationClass="com.intellij.json.json5.Json5ParserDefinition"/>
     <lang.syntaxHighlighterFactory language="JSON" implementationClass="com.intellij.json.highlighting.JsonSyntaxHighlighterFactory"/>
+    <lang.syntaxHighlighterFactory language="JSON5" implementationClass="com.intellij.json.json5.highlighting.Json5SyntaxHighlightingFactory"/>
     <psi.treeChangePreprocessor implementation="com.intellij.json.psi.impl.JsonTreeChangePreprocessor"/>
+    <statusBarWidgetProvider implementation="com.jetbrains.jsonSchema.widget.JsonSchemaStatusWidgetProvider" />
+    <fileBasedIndex implementation="com.jetbrains.jsonSchema.impl.JsonSchemaFileValuesIndex" />
 
     <!-- Code style and formatting -->
     <codeStyleSettingsProvider implementation="com.intellij.json.formatter.JsonCodeStyleSettingsProvider"/>
@@ -30,6 +31,7 @@
     <lang.braceMatcher language="JSON" implementationClass="com.intellij.json.JsonBraceMatcher"/>
     <quoteHandler fileType="JSON" className="com.intellij.json.JsonQuoteHandler"/>
     <enterBetweenBracesDelegate language="JSON"  implementationClass="com.intellij.codeInsight.editorActions.enter.EnterBetweenBracesAndBracketsDelegate"/>
+    <enterHandlerDelegate implementation="com.intellij.json.editor.JsonEnterHandler" id="JsonEnterHandler"/>
 
     <!-- Codeinsight -->
     <breadcrumbsInfoProvider implementation="com.intellij.json.breadcrumbs.JsonBreadcrumbsProvider"/>
@@ -48,6 +50,9 @@
     <extendWordSelectionHandler implementation="com.intellij.json.editor.selection.JsonStringLiteralSelectionHandler"/>
     <basicWordSelectionFilter implementation="com.intellij.json.editor.selection.JsonBasicWordSelectionFilter"/>
 
+    <json.jsonLiteralChecker implementation="com.intellij.json.codeinsight.StandardJsonLiteralChecker"/>
+    <json.jsonLiteralChecker implementation="com.intellij.json.json5.codeinsight.Json5JsonLiteralChecker"/>
+
     <!-- Annotators -->
     <annotator language="JSON" implementationClass="com.intellij.json.codeinsight.JsonLiteralAnnotator"/>
 
@@ -56,25 +61,36 @@
                      bundle="com.intellij.json.JsonBundle" key="inspection.compliance.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.json.codeinsight.JsonStandardComplianceInspection"/>
+    <localInspection language="JSON5" shortName="Json5StandardCompliance"
+                     bundle="com.intellij.json.JsonBundle" key="inspection.compliance5.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="com.intellij.json.json5.codeinsight.Json5StandardComplianceInspection"/>
     <localInspection language="JSON" shortName="JsonDuplicatePropertyKeys"
                      bundle="com.intellij.json.JsonBundle" key="inspection.duplicate.keys.name" groupKey="json.inspection.group"
                      enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.json.codeinsight.JsonDuplicatePropertyKeysInspection"/>
+    <localInspection language="JSON" shortName="JsonSchemaCompliance"
+                     bundle="com.intellij.json.JsonBundle" key="json.schema.inspection.compliance.name" groupKey="json.inspection.group"
+                     enabledByDefault="true" level="WARNING"
+                     implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaComplianceInspection"/>
 
     <lang.elementManipulator forClass="com.intellij.json.psi.JsonStringLiteral"
                              implementationClass="com.intellij.json.psi.JsonStringLiteralManipulator"/>
     <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaMappingsProjectConfiguration"/>
-    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema" displayName="JSON Schema"
-                         instance="com.jetbrains.jsonSchema.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
+    <projectService serviceImplementation="com.jetbrains.jsonSchema.JsonSchemaCatalogProjectConfiguration"/>
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema" displayName="JSON Schema Mappings"
+                         instance="com.jetbrains.jsonSchema.settings.mappings.JsonSchemaMappingsConfigurable" nonDefaultProject="true"/>
+    <projectConfigurable groupId="preferences.externalResources" id="settings.json.schema.catalog" displayName="Remote JSON Schemas"
+                         instance="com.jetbrains.jsonSchema.JsonSchemaCatalogConfigurable" nonDefaultProject="true"/>
     <projectService serviceInterface="com.jetbrains.jsonSchema.ide.JsonSchemaService"
                     serviceImplementation="com.jetbrains.jsonSchema.impl.JsonSchemaServiceImpl"/>
-    <annotator language="JSON" implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaAnnotator"/>
     <completion.contributor order="last, before JsonCompletionContributor" language="JSON"
                             implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaCompletionContributor"/>
     <lang.documentationProvider language="JSON"
                                 implementationClass="com.jetbrains.jsonSchema.impl.JsonSchemaDocumentationProvider"/>
     <refactoring.elementListenerProvider implementation="com.jetbrains.jsonSchema.JsonSchemaRefactoringListenerProvider"/>
     <editorNotificationProvider implementation="com.jetbrains.jsonSchema.impl.JsonSchemaConflictNotificationProvider"/>
+    <statistics.applicationUsagesCollector implementation="com.jetbrains.jsonSchema.impl.JsonSchemaUsageTriggerCollector"/>
 
     <psi.referenceContributor language="JSON" implementation="com.jetbrains.jsonSchema.impl.JsonSchemaReferenceContributor"/>
   </extensions>
@@ -83,11 +99,20 @@
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
   </extensions>
 
+  <extensions defaultExtensionNs="com.intellij.json">
+    <jsonLikePsiWalkerFactory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
+    <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler" />
+  </extensions>
+
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
-    <extensionPoint qualifiedName="Json.Like.Psi.Walker.Factory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor" interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker"/>
+    <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion" interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion"/>
   </extensionPoints>
 
 </idea-plugin>

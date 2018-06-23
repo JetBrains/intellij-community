@@ -25,10 +25,11 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.util.ReflectionUtil;
-import com.intellij.util.WaitFor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.TestOnly;
@@ -100,6 +101,8 @@ public class ThreadTracker {
     wellKnownOffenders.add("VM Periodic Task Thread");
     wellKnownOffenders.add("VM Thread");
     wellKnownOffenders.add("YJPAgent-Telemetry");
+    wellKnownOffenders.add("Batik CleanerThread");
+    wellKnownOffenders.add(FlushingDaemon.NAME);
 
     Application application = ApplicationManager.getApplication();
     // LeakHunter might be accessed first time after Application is already disposed (during test framework shutdown).    
@@ -143,15 +146,13 @@ public class ThreadTracker {
         if (isWellKnownOffender(thread)) continue;
 
         if (!thread.isAlive()) continue;
-        if (thread.getStackTrace().length == 0) {
+        if (thread.getStackTrace().length == 0
+            // give thread a chance to run up to the completion
+            || thread.getState() == Thread.State.RUNNABLE) {
           thread.interrupt();
-          if (new WaitFor(10000){
-            @Override
-            protected boolean condition() {
-              return !thread.isAlive();
-            }
-          }.isConditionRealized()) {
-            continue;
+          long start = System.currentTimeMillis();
+          while (thread.isAlive() && System.currentTimeMillis() < start + 10000) {
+            UIUtil.dispatchAllInvocationEvents(); // give blocked thread opportunity to die if it's stuck doing invokeAndWait()
           }
         }
         StackTraceElement[] stackTrace = thread.getStackTrace();
@@ -159,13 +160,9 @@ public class ThreadTracker {
           continue; // ignore threads with empty stack traces for now. Seems they are zombies unwilling to die.
         }
 
-        if (isIdleApplicationPoolThread(thread, stackTrace)) {
-          continue;
-        }
-
-        if (isIdleCommonPoolThread(thread, stackTrace)) {
-          continue;
-        }
+        if (isWellKnownOffender(thread)) continue; // check once more because the thread name may be set via race
+        if (isIdleApplicationPoolThread(thread, stackTrace)) continue;
+        if (isIdleCommonPoolThread(thread, stackTrace)) continue;
 
         String trace = PerformanceWatcher.printStacktrace("Thread leaked", thread, stackTrace);
         Assert.fail(trace);

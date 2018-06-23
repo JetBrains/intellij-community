@@ -5,9 +5,12 @@
 package com.intellij.internal.statistic.eventLog
 
 import com.intellij.openapi.application.ApplicationAdapter
+import com.intellij.openapi.application.ApplicationInfo
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
+import com.intellij.openapi.util.BuildNumber
 import com.intellij.openapi.util.text.StringUtil
+import com.intellij.util.ConcurrencyUtil
 import org.apache.log4j.Level
 import org.apache.log4j.Logger
 import org.apache.log4j.PatternLayout
@@ -15,21 +18,20 @@ import java.io.File
 import java.io.IOException
 import java.nio.file.Paths
 import java.util.*
-import java.util.concurrent.Executors
 
 class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
-  private val myLogExecutor = Executors.newSingleThreadExecutor()
+  private val myLogExecutor = ConcurrencyUtil.newSingleThreadExecutor(javaClass.simpleName)
 
   private val sessionId = UUID.randomUUID().toString().shortedUUID()
+  private val build = ApplicationInfo.getInstance().build.asBuildNumber()
   private val bucket = "-1"
-  private val recorderVersion = "1"
+  private val recorderVersion = "2"
 
   private var fileAppender: FeatureUsageEventFileAppender? = null
   private val eventLogger: Logger = Logger.getLogger("feature-usage-event-logger")
 
   private var lastEvent: LogEvent? = null
   private var lastEventTime: Long = 0
-  private var count: Int = 1
 
   init {
     eventLogger.level = Level.INFO
@@ -65,15 +67,20 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
     return this
   }
 
-  override fun log(recorderId: String, action: String) {
-    log(recorderId, action, Collections.emptyMap())
+  private fun BuildNumber.asBuildNumber(): String {
+    val str = this.asStringWithoutProductCodeAndSnapshot()
+    return if (str.endsWith(".")) str + "0" else str
   }
 
-  override fun log(recorderId: String, action: String, data: Map<String, Any>) {
+  override fun log(recorderId: String, action: String, isState: Boolean) {
+    log(recorderId, action, Collections.emptyMap(), isState)
+  }
+
+  override fun log(recorderId: String, action: String, data: Map<String, Any>, isState: Boolean) {
     myLogExecutor.execute(Runnable {
-      val event = LogEvent(sessionId, bucket, recorderId, recorderVersion, action)
+      val event = newLogEvent(sessionId, build, bucket, recorderId, recorderVersion, action, isState)
       for (datum in data) {
-        event.action.addData(datum.key, datum.value)
+        event.event.addData(datum.key, datum.value)
       }
       log(eventLogger, event)
     })
@@ -81,15 +88,16 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   private fun dispose(logger: Logger) {
     myLogExecutor.execute(Runnable {
-      log(logger, LogEvent(sessionId, bucket, "feature-usage-stats", recorderVersion, "ideaapp.closed"))
+      log(logger, newLogEvent(sessionId, build, bucket, "lifecycle", recorderVersion, "ideaapp.closed", false))
       logLastEvent(logger)
     })
+    myLogExecutor.shutdown()
   }
 
   private fun log(logger: Logger, event: LogEvent) {
     if (lastEvent != null && event.time - lastEventTime <= 10000 && lastEvent!!.shouldMerge(event)) {
       lastEventTime = event.time
-      count++
+      lastEvent!!.event.increment()
     }
     else {
       logLastEvent(logger)
@@ -100,13 +108,9 @@ class FeatureUsageFileEventLogger : FeatureUsageEventLogger {
 
   private fun logLastEvent(logger: Logger) {
     if (lastEvent != null) {
-      if (count > 1) {
-        lastEvent!!.action.addData("count", count)
-      }
       logger.info(LogEventSerializer.toString(lastEvent!!))
     }
     lastEvent = null
-    count = 1
   }
 
   override fun getLogFiles() : List<File> {

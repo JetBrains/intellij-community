@@ -49,10 +49,12 @@ public class CustomizationUtil {
   public static ActionGroup correctActionGroup(final ActionGroup group,
                                                final CustomActionsSchema schema,
                                                final String defaultGroupName,
-                                               final String rootGroupName) {
-    if (!schema.isCorrectActionGroup(group, defaultGroupName)){
-       return group;
-     }
+                                               final String rootGroupName,
+                                               boolean force) {
+    if (!force && !schema.isCorrectActionGroup(group, defaultGroupName)) {
+      return group;
+    }
+
     String text = group.getTemplatePresentation().getText();
     final int mnemonic = group.getTemplatePresentation().getMnemonic();
     if (text != null) {
@@ -64,7 +66,7 @@ public class CustomizationUtil {
       }
     }
 
-    return new CustomisedActionGroup(text, group.isPopup(), group, schema, defaultGroupName, rootGroupName);
+    return new CustomisedActionGroup(text, group, schema, defaultGroupName, rootGroupName);
   }
 
 
@@ -112,7 +114,7 @@ public class CustomizationUtil {
     for (int i = 0; i < reorderedChildren.size(); i++) {
       if (reorderedChildren.get(i) instanceof ActionGroup) {
         final ActionGroup groupToCorrect = (ActionGroup)reorderedChildren.get(i);
-        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName);
+        final AnAction correctedAction = correctActionGroup(groupToCorrect, schema, "", rootGroupName, false);
         reorderedChildren.set(i, correctedAction);
       }
     }

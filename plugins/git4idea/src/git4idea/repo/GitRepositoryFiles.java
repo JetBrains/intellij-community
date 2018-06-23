@@ -59,6 +59,7 @@ public class GitRepositoryFiles {
   private static final String HOOKS = "hooks";
   private static final String PRE_COMMIT_HOOK = "pre-commit";
   private static final String PRE_PUSH_HOOK = "pre-push";
+  private static final String SHALLOW = "shallow";
 
   private final VirtualFile myMainDir;
   private final VirtualFile myWorktreeDir;
@@ -81,6 +82,7 @@ public class GitRepositoryFiles {
   private final String myInfoDirPath;
   private final String myExcludePath;
   private final String myHooksDirPath;
+  private final String myShallow;
 
   private GitRepositoryFiles(@NotNull VirtualFile mainDir, @NotNull VirtualFile worktreeDir) {
     myMainDir = mainDir;
@@ -96,6 +98,7 @@ public class GitRepositoryFiles {
     myInfoDirPath = mainPath + slash(INFO);
     myExcludePath = mainPath + slash(INFO_EXCLUDE);
     myHooksDirPath = mainPath + slash(HOOKS);
+    myShallow = mainPath + slash(SHALLOW);
 
     String worktreePath = myWorktreeDir.getPath();
     myHeadFilePath = worktreePath + slash(HEAD);
@@ -224,6 +227,11 @@ public class GitRepositoryFiles {
   @NotNull
   public File getPrePushHookFile() {
     return file(myHooksDirPath + slash(PRE_PUSH_HOOK));
+  }
+
+  @NotNull
+  public File getShallowFile() {
+    return file(myShallow);
   }
 
   @NotNull

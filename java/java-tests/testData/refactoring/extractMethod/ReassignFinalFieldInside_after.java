@@ -4,7 +4,7 @@ class X {
   public X() {
 
       i = newMethod();
-    
+
   }
 
     private int newMethod() {

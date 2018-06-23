@@ -83,7 +83,7 @@ public class BinaryEditorHolder extends EditorHolder {
   //
 
   public static class BinaryEditorHolderFactory extends EditorHolderFactory<BinaryEditorHolder> {
-    public static BinaryEditorHolderFactory INSTANCE = new BinaryEditorHolderFactory();
+    public static final BinaryEditorHolderFactory INSTANCE = new BinaryEditorHolderFactory();
 
     @Override
     @NotNull

@@ -140,7 +140,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(() -> {
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(properties, progress, false, property -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(properties, progress, property -> {
         if (original != null) {
           if (original.isCanceled()) return false;
           original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));

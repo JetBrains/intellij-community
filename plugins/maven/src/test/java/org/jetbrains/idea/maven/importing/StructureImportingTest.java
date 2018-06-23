@@ -217,7 +217,8 @@ public class StructureImportingTest extends MavenImportingTestCase {
 
     createModulePom("../parent", "<groupId>test</groupId>" +
                                  "<artifactId>parent</artifactId>" +
-                                 "<version>1</version>");
+                                 "<version>1</version>" +
+                                 "<packaging>pom</packaging>");
 
     importProject();
     assertModules("project");
@@ -261,15 +262,16 @@ public class StructureImportingTest extends MavenImportingTestCase {
   }
 
   public void testRecursiveParent() {
-    importProject("<parent>" +
-                  "  <groupId>org.apache.maven.archetype.test</groupId>" +
-                  "  <artifactId>test-create-2</artifactId>" +
-                  "  <version>1.0-SNAPSHOT</version>" +
-                  "</parent>" +
+    createProjectPom("<parent>" +
+                     "  <groupId>org.apache.maven.archetype.test</groupId>" +
+                     "  <artifactId>test-create-2</artifactId>" +
+                     "  <version>1.0-SNAPSHOT</version>" +
+                     "</parent>" +
 
-                  "<artifactId>test-create-2</artifactId>" +
-                  "<name>Maven archetype Test create-2-subModule</name>" +
-                  "<packaging>pom</packaging>");
+                     "<artifactId>test-create-2</artifactId>" +
+                     "<name>Maven archetype Test create-2-subModule</name>" +
+                     "<packaging>pom</packaging>");
+    importProjectWithErrors(true);
   }
 
   public void testParentWithoutARelativePath() {
@@ -704,7 +706,7 @@ public class StructureImportingTest extends MavenImportingTestCase {
                   "</build>");
 
     assertModules("project");
-    assertEquals(LanguageLevel.JDK_X, getLanguageLevelForModule());
+    assertEquals(LanguageLevel.HIGHEST, getLanguageLevelForModule());
   }
 
   public void testLanguageLevelWhenCompilerPluginIsNotSpecified() {

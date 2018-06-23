@@ -20,7 +20,6 @@ import com.intellij.json.psi.JsonObject;
 import com.intellij.json.psi.JsonProperty;
 import com.intellij.json.psi.JsonValue;
 import com.intellij.psi.PsiElement;
-import com.jetbrains.jsonSchema.extension.adapters.JsonArrayValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonObjectValueAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
 import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
@@ -49,6 +48,12 @@ public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
     return myProperty.getValue() == null ? null : createAdapterByType(myProperty.getValue());
   }
 
+  @Nullable
+  @Override
+  public JsonValueAdapter getNameValueAdapter() {
+    return createAdapterByType(myProperty.getNameElement());
+  }
+
   @NotNull
   @Override
   public PsiElement getDelegate() {
@@ -59,12 +64,6 @@ public class JsonJsonPropertyAdapter implements JsonPropertyAdapter {
   @Override
   public JsonObjectValueAdapter getParentObject() {
     return myProperty.getParent() instanceof JsonObject ? new JsonJsonObjectAdapter((JsonObject)myProperty.getParent()) : null;
-  }
-
-  @Nullable
-  @Override
-  public JsonArrayValueAdapter getParentArray() {
-    return myProperty.getParent() instanceof JsonArray ? new JsonJsonArrayAdapter((JsonArray)myProperty.getParent()) : null;
   }
 
   @NotNull

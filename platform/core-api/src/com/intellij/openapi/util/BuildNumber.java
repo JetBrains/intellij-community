@@ -185,11 +185,6 @@ public class BuildNumber implements Comparable<BuildNumber> {
     return Holder.CURRENT_VERSION;
   }
 
-  @Deprecated
-  public static BuildNumber fallback() {
-    return fromString(FALLBACK_VERSION);
-  }
-
   @Override
   public String toString() {
     return asString();

@@ -35,7 +35,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
-import java.util.Iterator;
 
 public class ClassInitializerInspection extends BaseInspection {
 
@@ -140,12 +139,7 @@ public class ClassInitializerInspection extends BaseInspection {
 
     @NotNull
     private static Collection<PsiMethod> removeChainedConstructors(@NotNull Collection<PsiMethod> constructors) {
-      for (final Iterator<PsiMethod> iterator = constructors.iterator(); iterator.hasNext(); ) {
-        final PsiMethod constructor = iterator.next();
-        if (JavaHighlightUtil.getChainedConstructors(constructor) != null) {
-          iterator.remove();
-        }
-      }
+      constructors.removeIf(constructor -> !JavaHighlightUtil.getChainedConstructors(constructor).isEmpty());
       return constructors;
     }
   }

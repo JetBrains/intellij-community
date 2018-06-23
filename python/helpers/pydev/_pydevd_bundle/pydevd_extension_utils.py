@@ -1,11 +1,9 @@
 import pkgutil
 import sys
-import traceback
 from _pydev_bundle import pydev_log
 try:
     import pydevd_plugins.extensions as extensions
 except:
-    traceback.print_exc()
     extensions = None
 
 

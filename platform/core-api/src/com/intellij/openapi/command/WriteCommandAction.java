@@ -32,7 +32,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
-import java.util.Collection;
 
 public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.command.WriteCommandAction");
@@ -62,6 +61,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     Builder shouldRecordActionForActiveDocument(boolean value);
 
     <E extends Throwable> void run(@NotNull ThrowableRunnable<E> action) throws E;
+
     <R, E extends Throwable> R compute(@NotNull ThrowableComputable<R, E> action) throws E;
   }
 
@@ -117,7 +117,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
     @Override
     public <E extends Throwable> void run(@NotNull final ThrowableRunnable<E> action) {
-      new MyActionWrap(){
+      new MyActionWrap() {
         @Override
         protected void run(@NotNull Result result) throws Throwable {
           action.run();
@@ -132,7 +132,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         protected void run(@NotNull Result<R> result) throws Throwable {
           result.setResult(action.compute());
         }
-
       }.execute().getResultObject();
     }
 
@@ -202,7 +201,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
    * @deprecated Use {@link #writeCommandAction(Project, PsiFile...)}{@code .withName(commandName).withGroupId(groupID).run()} instead
    */
   @Deprecated
-  protected WriteCommandAction(@Nullable Project project, @Nullable String commandName, @Nullable String groupID, @NotNull PsiFile... files) {
+  protected WriteCommandAction(@Nullable Project project,
+                               @Nullable String commandName,
+                               @Nullable String groupID,
+                               @NotNull PsiFile... files) {
     myCommandName = commandName;
     myGroupID = groupID;
     myProject = project;
@@ -244,7 +246,8 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
       try {
         TransactionGuard.getInstance().submitTransactionAndWait(() -> performWriteCommandAction(result));
       }
-      catch (ProcessCanceledException ignored) { }
+      catch (ProcessCanceledException ignored) {
+      }
     }
     return result;
   }
@@ -256,7 +259,6 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
     final RunResult[] results = {result};
 
     doExecuteCommand(() -> {
-      //noinspection deprecation
       ApplicationManager.getApplication().runWriteAction(() -> {
         results[0].run();
         results[0] = null;
@@ -274,6 +276,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   /**
    * See {@link CommandProcessor#executeCommand(Project, Runnable, String, Object, UndoConfirmationPolicy, boolean)} for details.
+   *
    * @deprecated Use {@link #writeCommandAction(Project)}.withUndoConfirmationPolicy() instead
    */
   @Deprecated
@@ -284,6 +287,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   /**
    * See {@link CommandProcessor#executeCommand(Project, Runnable, String, Object, UndoConfirmationPolicy, boolean)} for details.
+   *
    * @deprecated Use {@link #writeCommandAction(Project)}.shouldRecordActionForActiveDocument() instead
    */
   @Deprecated
@@ -321,6 +325,7 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   /**
    * WriteCommandAction without result
+   *
    * @deprecated Use {@link #writeCommandAction(Project)}.run() or .compute() instead
    */
   @Deprecated
@@ -359,19 +364,13 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public static <T> T runWriteCommandAction(Project project, @NotNull final Computable<T> computable) {
-    return writeCommandAction(project).compute(()->computable.compute());
+    return writeCommandAction(project).compute(() -> computable.compute());
   }
 
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
-  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable) throws E {
+  public static <T, E extends Throwable> T runWriteCommandAction(Project project, @NotNull final ThrowableComputable<T, E> computable)
+    throws E {
     return writeCommandAction(project).compute(computable);
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated use {@link FileModificationService#preparePsiElementsForWrite(Collection)} (to be removed in IDEA 2018) */
-  @SuppressWarnings("unused")
-  public static boolean ensureFilesWritable(@NotNull Project project, @NotNull Collection<PsiFile> psiFiles) {
-    return FileModificationService.getInstance().preparePsiElementsForWrite(psiFiles);
-  }
-  //</editor-fold>
 }

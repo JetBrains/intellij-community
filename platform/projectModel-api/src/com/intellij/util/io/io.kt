@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.io
 
 import com.intellij.util.SmartList
@@ -83,17 +69,14 @@ class CharSequenceBackedByChars : CharArrayCharSequence {
   val byteBuffer: ByteBuffer
     get() = Charsets.UTF_8.encode(CharBuffer.wrap(myChars, myStart, length))
 
-  constructor(charBuffer: CharBuffer) : super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position()) {
-  }
+  constructor(charBuffer: CharBuffer) : super(charBuffer.array(), charBuffer.arrayOffset(), charBuffer.position())
 
-  constructor(chars: CharArray, start: Int, end: Int) : super(chars, start, end) {
-  }
+  constructor(chars: CharArray, start: Int, end: Int) : super(chars, start, end)
 
-  constructor(chars: CharArray) : super(*chars) {
-  }
+  constructor(chars: CharArray) : super(*chars)
 
-  override fun subSequence(start: Int, end: Int): CharSequence {
-    return if (start == 0 && end == length) this else String(myChars, myStart + start, end - start)
+  override fun subSequence(startIndex: Int, endIndex: Int): CharSequence {
+    return if (startIndex == 0 && endIndex == length) this else String(myChars, myStart + startIndex, endIndex - startIndex)
   }
 }
 
@@ -111,6 +94,6 @@ fun ByteBuffer.toByteArray(): ByteArray {
   return bytes
 }
 
-fun String.encodeUrlQueryParameter() = URLEncoder.encode(this, Charsets.UTF_8.name())!!
+fun String.encodeUrlQueryParameter(): String = URLEncoder.encode(this, Charsets.UTF_8.name())!!
 
 fun String.decodeBase64(): ByteArray = Base64.getDecoder().decode(this)

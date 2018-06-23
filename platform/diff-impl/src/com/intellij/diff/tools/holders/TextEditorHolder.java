@@ -96,7 +96,7 @@ public class TextEditorHolder extends EditorHolder {
   }
 
   public static class TextEditorHolderFactory extends EditorHolderFactory<TextEditorHolder> {
-    public static TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
+    public static final TextEditorHolderFactory INSTANCE = new TextEditorHolderFactory();
 
     @Override
     @NotNull

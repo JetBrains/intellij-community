@@ -119,6 +119,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
     try {
       ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, ReplaceComputeWithComputeIfPresentFix.makeFix(qualifier));
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }

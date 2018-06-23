@@ -23,12 +23,25 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 /**
- * @author nik
+ * Override this class to provide additional nodes in 'Available Elements' tree on 'Output Layout' tab of an artifact editor. This tree
+ * contains elements which are usually included into an artifact so don't include optional and rarely used items there. All packaging elements
+ * may be added by clicking on '+' icon on the toolbar above 'Output Layout' tree anyway.
+ *
+ * <p/>
+ * The implementation should be registered in plugin.xml file:
+ * <pre>
+ * &lt;extensions defaultExtensionNs="com.intellij"&gt;
+ * &nbsp;&nbsp;&lt;packaging.sourceItemProvider implementation="qualified-class-name"/&gt;
+ * &lt;/extensions&gt;
+ * </pre>
  */
 public abstract class PackagingSourceItemsProvider {
   public static final ExtensionPointName<PackagingSourceItemsProvider> EP_NAME = ExtensionPointName.create("com.intellij.packaging.sourceItemProvider");
 
+  /**
+   * Return items which should be shown be shown under {@code parent} node in 'Available Elements' tree for {@code artifact}.
+   */
   @NotNull
   public abstract Collection<? extends PackagingSourceItem> getSourceItems(@NotNull ArtifactEditorContext editorContext, @NotNull Artifact artifact,
-                                                                                 @Nullable PackagingSourceItem parent);
+                                                                           @Nullable PackagingSourceItem parent);
 }

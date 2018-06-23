@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.actions.RunContextAction;
@@ -16,6 +14,7 @@ import com.intellij.execution.runners.ExecutionUtil;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -28,7 +27,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -38,8 +36,8 @@ import java.util.*;
 public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable, ApplicationComponent {
   private static final Logger LOG = Logger.getInstance(ExecutorRegistryImpl.class);
 
-  @NonNls public static final String RUNNERS_GROUP = "RunnerActions";
-  @NonNls public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
+  public static final String RUNNERS_GROUP = "RunnerActions";
+  public static final String RUN_CONTEXT_GROUP = "RunContextGroupInner";
 
   private List<Executor> myExecutors = new ArrayList<>();
   private ActionManager myActionManager;
@@ -55,7 +53,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     myActionManager = actionManager;
   }
 
-  synchronized void initExecutor(@NotNull final Executor executor) {
+  synchronized void initExecutor(@NotNull Executor executor) {
     if (myId2Executor.get(executor.getId()) != null) {
       LOG.error("Executor with id: \"" + executor.getId() + "\" was already registered!");
     }
@@ -64,15 +62,15 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       LOG.error("Executor with context action id: \"" + executor.getContextActionId() + "\" was already registered!");
     }
 
+    registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
+    registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
+
     myExecutors.add(executor);
     myId2Executor.put(executor.getId(), executor);
     myContextActionIdSet.add(executor.getContextActionId());
-
-    registerAction(executor.getId(), new ExecutorAction(executor), RUNNERS_GROUP, myId2Action);
-    registerAction(executor.getContextActionId(), new RunContextAction(executor), RUN_CONTEXT_GROUP, myContextActionId2Action);
   }
 
-  private void registerAction(@NotNull final String actionId, @NotNull final AnAction anAction, @NotNull final String groupId, @NotNull final Map<String, AnAction> map) {
+  private void registerAction(@NotNull String actionId, @NotNull AnAction anAction, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
     AnAction action = myActionManager.getAction(actionId);
     if (action == null) {
       myActionManager.registerAction(actionId, anAction);
@@ -83,7 +81,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     ((DefaultActionGroup)myActionManager.getAction(groupId)).add(action);
   }
 
-  synchronized void deinitExecutor(@NotNull final Executor executor) {
+  synchronized void deinitExecutor(@NotNull Executor executor) {
     myExecutors.remove(executor);
     myId2Executor.remove(executor.getId());
     myContextActionIdSet.remove(executor.getContextActionId());
@@ -92,7 +90,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     unregisterAction(executor.getContextActionId(), RUN_CONTEXT_GROUP, myContextActionId2Action);
   }
 
-  private void unregisterAction(@NotNull final String actionId, @NotNull final String groupId, @NotNull final Map<String, AnAction> map) {
+  private void unregisterAction(@NotNull String actionId, @NotNull String groupId, @NotNull Map<String, AnAction> map) {
     final DefaultActionGroup group = (DefaultActionGroup)myActionManager.getAction(groupId);
     if (group != null) {
       group.remove(myActionManager.getAction(actionId));
@@ -149,7 +147,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
     });
 
     for (Executor executor : Executor.EXECUTOR_EXTENSION_NAME.getExtensions()) {
-      initExecutor(executor);
+      try {
+        initExecutor(executor);
+      }
+      catch (Throwable t) {
+        LOG.error("executor initialization failed: " + executor.getClass().getName(), t);
+      }
     }
   }
 
@@ -159,7 +162,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
   }
 
   @Override
-  public boolean isStarting(Project project, final String executorId, final String runnerId) {
+  public boolean isStarting(Project project, String executorId, String runnerId) {
     return myInProgress.contains(Trinity.create(project, executorId, runnerId));
   }
 
@@ -221,6 +224,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
 
       final RunnerAndConfigurationSettings selectedConfiguration = getSelectedConfiguration(project);
       boolean enabled = false;
+      boolean hideDisabledExecutorButtons = false;
       String text;
       if (selectedConfiguration != null) {
         if (DumbService.isDumb(project) && !selectedConfiguration.getType().isDumbAware()) {
@@ -234,7 +238,9 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
           enabled = canRun(project, ((CompoundRunConfiguration)configuration).getConfigurationsWithEffectiveRunTargets());
         }
         else {
-          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(selectedConfiguration, ExecutionTargetManager.getActiveTarget(project))));
+          ExecutionTarget target = ExecutionTargetManager.getActiveTarget(project);
+          enabled = canRun(project, Collections.singletonList(new SettingsAndEffectiveTarget(selectedConfiguration, target)));
+          hideDisabledExecutorButtons = configuration.hideDisabledExecutorButtons();
         }
         if (enabled) {
           presentation.setDescription(myExecutor.getDescription());
@@ -245,7 +251,13 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
         text = getTemplatePresentation().getTextWithMnemonic();
       }
 
-      presentation.setEnabled(enabled);
+      if (hideDisabledExecutorButtons) {
+        presentation.setEnabledAndVisible(enabled);
+      }
+      else {
+        presentation.setVisible(myExecutor.isApplicable(project));
+        presentation.setEnabled(enabled);
+      }
       presentation.setText(text);
     }
 
@@ -311,7 +323,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry implements Disposable
       if (project == null || project.isDisposed()) {
         return;
       }
-
+      MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
       run(project, getSelectedConfiguration(project), e.getDataContext());
     }
   }

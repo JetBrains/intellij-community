@@ -118,7 +118,9 @@ public class ShowParameterInfoContext implements CreateParameterInfoContext {
 
     PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(() -> {
       if (editor.isDisposed() || DumbService.isDumb(project) || 
-          (!ApplicationManager.getApplication().isUnitTestMode() && !editor.getComponent().isShowing())) return;
+          (!ApplicationManager.getApplication().isUnitTestMode() &&
+           !ApplicationManager.getApplication().isHeadlessEnvironment() &&
+           !editor.getComponent().isShowing())) return;
 
       final Document document = editor.getDocument();
       if (document.getTextLength() < elementStart) return;

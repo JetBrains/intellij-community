@@ -19,11 +19,12 @@ import com.google.common.annotations.VisibleForTesting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
-import com.intellij.openapi.application.Result;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.VisualPosition;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -36,8 +37,6 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.rename.inplace.InplaceRefactoring;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -87,28 +86,28 @@ public class ReassignVariableUtil {
           return true;
         }
 
-        final DefaultListModel<PsiVariable> model = new DefaultListModel<>();
-        for (PsiVariable var : vars) {
-          model.addElement(var);
-        }
-        final JBList<PsiVariable> list = new JBList<>(model);
-        list.setCellRenderer(new ListCellRendererWrapper<PsiVariable>() {
-          @Override
-          public void customize(JList list, PsiVariable value, int index, boolean selected, boolean hasFocus) {
-            if (value != null) {
-              setText(value.getName());
-              setIcon(value.getIcon(0));
-            }
-          }
-        });
-
-
-        final VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
-        final Point point = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
-        JBPopupFactory.getInstance().createListPopupBuilder(list)
+        JBPopup popup = JBPopupFactory.getInstance()
+          .createPopupChooserBuilder(vars)
           .setTitle("Choose variable to reassign")
           .setRequestFocus(true)
-          .setItemChoosenCallback(() -> replaceWithAssignment(declaration, list.getSelectedValue(), editor)).createPopup().show(new RelativePoint(editor.getContentComponent(), point));
+          .setRenderer(new ListCellRendererWrapper<PsiVariable>() {
+            @Override
+            public void customize(JList list, PsiVariable value, int index, boolean selected, boolean hasFocus) {
+              if (value != null) {
+                setText(value.getName());
+                setIcon(value.getIcon(0));
+              }
+            }
+          })
+          .setItemChosenCallback((selectedValue) -> replaceWithAssignment(declaration, selectedValue, editor))
+          .createPopup();
+        if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+          popup.showInBestPositionFor(editor);
+        } else {
+          final VisualPosition visualPosition = editor.getCaretModel().getVisualPosition();
+          final Point point = editor.visualPositionToXY(new VisualPosition(visualPosition.line + 1, visualPosition.column));
+          popup.show(new RelativePoint(editor.getContentComponent(), point));
+        }
       }
 
       return true;

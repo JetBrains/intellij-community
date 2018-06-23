@@ -1,29 +1,14 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.RecursionManager;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiPolyVariantReference;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.ResolveResult;
+import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
+import com.intellij.psi.impl.source.resolve.ResolveCache.AbstractResolver;
+import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -33,10 +18,14 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Map;
 
 /**
@@ -57,13 +46,10 @@ public interface InferenceContext {
       return manager.getCachedValue(element, key, () -> CachedValueProvider.Result.create(computable.compute(), PsiModificationTracker.MODIFICATION_COUNT), false);
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref,
-                                                                                  boolean incomplete,
-                                                                                  @NotNull ResolveCache.PolyVariantResolver<T> resolver) {
-      ResolveResult[] results = ResolveCache.getInstance(ref.getElement().getProject()).resolveWithCaching(ref, resolver, true, incomplete);
-      return results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
+    public <T extends PsiReference, R> R resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R> resolver, boolean incomplete) {
+      return ResolveCache.getInstance(ref.getElement().getProject()).resolveWithCaching(ref, resolver, true, incomplete);
     }
 
     @Nullable
@@ -78,8 +64,23 @@ public interface InferenceContext {
 
   <T> T getCachedValue(@NotNull GroovyPsiElement element, @NotNull Computable<T> computable);
 
+  @Nullable
+  <T extends PsiReference, R>
+  R resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R> resolver, boolean incomplete);
+
   @NotNull
-  <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, @NotNull ResolveCache.PolyVariantResolver<T> resolver);
+  default <T extends PsiPolyVariantReference>
+  GroovyResolveResult[] multiResolve(@NotNull T ref, boolean incomplete, @NotNull PolyVariantResolver<T> resolver) {
+    ResolveResult[] results = resolveWithCaching(ref, resolver, incomplete);
+    return results == null || results.length == 0 ? GroovyResolveResult.EMPTY_ARRAY : (GroovyResolveResult[])results;
+  }
+
+  @NotNull
+  default <T extends GroovyReference>
+  Collection<? extends GroovyResolveResult> resolve(@NotNull T ref, boolean incomplete, @NotNull GroovyResolver<T> resolver) {
+    Collection<? extends GroovyResolveResult> results = resolveWithCaching(ref, resolver, incomplete);
+    return results == null ? Collections.emptyList() : results;
+  }
 
   @Nullable
   <T extends GroovyPsiElement> PsiType getExpressionType(@NotNull T element, @NotNull Function<T, PsiType> calculator);
@@ -118,16 +119,12 @@ public interface InferenceContext {
       return result;
     }
 
-    @NotNull
+    @Nullable
     @Override
-    public <T extends PsiPolyVariantReference> GroovyResolveResult[] multiResolve(@NotNull final T ref,
-                                                                                  final boolean incomplete,
-                                                                                  @NotNull final ResolveCache.PolyVariantResolver<T> resolver) {
+    public <T extends PsiReference, R> R resolveWithCaching(@NotNull T ref, @NotNull AbstractResolver<T, R> resolver, boolean incomplete) {
       return _getCachedValue(ref.getElement(), () -> {
         final Pair<T, Boolean> key = Pair.create(ref, incomplete);
-        final GroovyResolveResult[] results = RecursionManager.doPreventingRecursion(key, true,
-                                                                                     () -> (GroovyResolveResult[])resolver.resolve(ref, incomplete));
-        return results == null ? GroovyResolveResult.EMPTY_ARRAY : results;
+        return RecursionManager.doPreventingRecursion(key, true, () -> resolver.resolve(ref, incomplete));
       }, Pair.create(incomplete, resolver.getClass()));
     }
 

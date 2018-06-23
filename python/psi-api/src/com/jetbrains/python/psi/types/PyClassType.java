@@ -25,4 +25,14 @@ import org.jetbrains.annotations.NotNull;
 public interface PyClassType extends PyClassLikeType, UserDataHolder {
   @NotNull
   PyClass getPyClass();
+
+  /**
+   * @param name name to check
+   * @param context type evaluation context
+   * @return true if attribute with the specified name could be created or updated.
+   * @see PyClass#getSlots(TypeEvalContext)
+   */
+  default boolean isAttributeWritable(@NotNull String name, @NotNull TypeEvalContext context) {
+    return true;
+  }
 }

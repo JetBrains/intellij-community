@@ -28,7 +28,7 @@ public class LazyInitializer {
       }
     }
 
-    private volatile T value;
+    protected volatile T value;
     private volatile Initializer initializer = new Initializer(); // dropped when initialized
 
     @Nullable
@@ -50,10 +50,10 @@ public class LazyInitializer {
           }
           if (initializer != null) {
             value = initializer.init();
+            initializer = null;
           }
         }
         finally {
-          initializer = null;
           init.lock.unlock();
         }
         onInitialized(value);
@@ -67,20 +67,7 @@ public class LazyInitializer {
      * @return true if the value is initialized to not-null
      */
     public final boolean isNotNull() {
-      Initializer init = initializer;
-      if (init == null) {
-        return get() != null; // already initialized, just get
-      }
-      init.lock.lock();
-      try {
-        if (init.lock.getHoldCount() > 1) {
-          return false;
-        }
-        return get() != null; // initialize and get
-      }
-      finally {
-        init.lock.unlock();
-      }
+      return get() != null;
     }
 
     /**
@@ -98,6 +85,36 @@ public class LazyInitializer {
   }
 
   public static abstract class NotNullValue<T> extends NullableValue<T> {
+    @NotNull
+    @Override
+    public T get() {
+      //noinspection ConstantConditions
+      return super.get();
+    }
+
+    @NotNull
+    @Override
+    public abstract T initialize();
+  }
+
+  public static abstract class MutableNullableValue<T> extends NullableValue<T> {
+    /**
+     * Sets the value. If it hasn't been initialized - forces initialization.
+     *
+     * @param value the value to set
+     */
+    public void set(T value) {
+      get(); // force init in case it has a side effect
+      this.value = value;
+    }
+  }
+
+  public static abstract class MutableNotNullValue<T> extends MutableNullableValue<T> {
+    @Override
+    public void set(@NotNull T value) {
+      super.set(value);
+    }
+
     @NotNull
     @Override
     public T get() {

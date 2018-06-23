@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * @author max
@@ -42,7 +28,7 @@ import java.util.*;
 
 public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClassesSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
+  public boolean execute(@NotNull final AllClassesSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     SearchScope scope = queryParameters.getScope();
 
     if (scope instanceof GlobalSearchScope) {
@@ -58,7 +44,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
 
   private static boolean processAllClassesInGlobalScope(@NotNull final GlobalSearchScope scope,
                                                         @NotNull final AllClassesSearch.SearchParameters parameters,
-                                                        @NotNull Processor<PsiClass> processor) {
+                                                        @NotNull Processor<? super PsiClass> processor) {
     final Set<String> names = new THashSet<>(10000);
     processClassNames(parameters.getProject(), scope, s -> {
       if (parameters.nameMatches(s)) {
@@ -75,7 +61,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
   public static boolean processClassesByNames(Project project,
                                               final GlobalSearchScope scope,
                                               Collection<String> names,
-                                              Processor<PsiClass> processor) {
+                                              Processor<? super PsiClass> processor) {
     final PsiShortNamesCache cache = PsiShortNamesCache.getInstance(project);
     for (final String name : names) {
       ProgressIndicatorProvider.checkCanceled();
@@ -103,7 +89,7 @@ public class AllClassesSearchExecutor implements QueryExecutor<PsiClass, AllClas
     return project;
   }
 
-  private static boolean processScopeRootForAllClasses(@NotNull final PsiElement scopeRoot, @NotNull final Processor<PsiClass> processor) {
+  private static boolean processScopeRootForAllClasses(@NotNull final PsiElement scopeRoot, @NotNull final Processor<? super PsiClass> processor) {
     final boolean[] stopped = {false};
 
     final JavaElementVisitor visitor = scopeRoot instanceof PsiCompiledElement ? new JavaRecursiveElementVisitor() {

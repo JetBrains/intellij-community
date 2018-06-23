@@ -26,6 +26,7 @@ import javax.swing.tree.TreeNode;
  *
  * @deprecated to be removed
  */
+@Deprecated
 public interface WatchNode extends TreeNode, Obsolescent {
   @NotNull
   XExpression getExpression();

@@ -156,6 +156,8 @@ public interface JBPopup extends Disposable, LightweightWindow {
   void setSize(@NotNull Dimension size);
   Dimension getSize();
 
+  void setCaption(String title);
+
   boolean isPersistent();
 
   boolean isModalContext();

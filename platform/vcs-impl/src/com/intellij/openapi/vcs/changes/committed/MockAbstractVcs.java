@@ -58,6 +58,7 @@ public class MockAbstractVcs extends AbstractVcs {
     return myDiffProvider;
   }
 
+  @NotNull
   public String getDisplayName() {
     return getName();
   }

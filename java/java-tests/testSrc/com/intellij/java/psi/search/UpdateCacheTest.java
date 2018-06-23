@@ -58,7 +58,7 @@ public class UpdateCacheTest extends PsiTestCase {
     setUpModule();
 
     final String root = JavaTestUtil.getJavaTestDataPath() + "/psi/search/updateCache";
-    PsiTestUtil.createTestProjectStructure(myProject, myModule, root, myFilesToDelete);
+    createTestProjectStructure( root);
 
     setUpJdk();
 

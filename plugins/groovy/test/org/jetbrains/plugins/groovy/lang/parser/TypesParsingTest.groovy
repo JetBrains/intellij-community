@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.parser
 
 /**
@@ -29,6 +15,8 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testAnn_def2() throws Throwable { doTest() }
 
   void testAnn_def3() throws Throwable { doTest() }
+
+  void testIdentifierAfterAnnotationMethod() { doTest() }
 
   void testDefault1() throws Throwable { doTest() }
 
@@ -64,11 +52,33 @@ class TypesParsingTest extends GroovyParsingTestCase {
 
   void testType9() throws Throwable { doTest() }
 
+  void testType16() { doTest() }
+
+  void testType17() { doTest() }
+
+  void testIdentifierInsteadOfImplements() { doTest() }
+
   void testInnerEnum() throws Throwable { doTest() }
 
   void testNewlineBeforeClassBrace() throws Throwable { doTest() }
 
+  void testNewLineBeforeClassBraceAfterExtends() { doTest() }
+
+  void testNewLineBeforeClassBraceAfterImplements() { doTest() }
+
   void testNewlineBeforeExtends() throws Throwable { doTest() }
+
+  void testNewLineAfterMethodModifiers() { doTest() }
+
+  void testNewLineAfterLAngleInTypeArgumentList() { doTest() }
+
+  void testNewLineBeforeRAngleInTypeArgumentList() { doTest() }
+
+  void testNewLineBetweenTypeArguments() { doTest() }
+
+  void testNewLineBetweenTypeArgumentsError() { doTest() }
+
+  void testNewLineBetweenExtendsImplements() { doTest() }
 
   void testStaticInitializer() throws Throwable { doTest() }
 
@@ -81,4 +91,54 @@ class TypesParsingTest extends GroovyParsingTestCase {
   void testIncorrectParam3() { doTest() }
 
   void testEmptyTypeArgs() { doTest() }
+
+  void testIncompleteConstructor() { doTest() }
+
+  void testmembers$identifierOnly() { doTest() }
+
+  void testmembers$capitalIdentifierOnly() { doTest() }
+
+  void testmembers$constructorIdentifierOnly() { doTest() }
+
+  void testmembers$modifierListOnly() { doTest() }
+
+  void testmembers$modifierListAndIdentifier() { doTest() }
+
+  void testmembers$modifierListAndCapitalIdentifier() { doTest() }
+
+  void testmembers$modifierListAndConstructorIdentifier() { doTest() }
+
+  void testmembers$modifierListAndPrimitive() { doTest() }
+
+  void testmembers$modifierListAndRefQualified() { doTest() }
+
+  void testmembers$modifierListAndRefTypeArgs() { doTest() }
+
+  void testmembers$modifierListAndTypeParameters() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndCapitalIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndConstructorIdentifier() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndPrimitive() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndRefQualified() { doTest() }
+
+  void testmembers$modifierListTypeParametersAndRefTypeArgs() { doTest() }
+
+  void testmembers$modifierListTypeParametersIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$modifierListTypeParametersCapitalIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$modifierListTypeParametersConstructorIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$capitalIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$constructorIdentifierAndLeftParen() { doTest() }
+
+  void testmembers$identifierAndLeftParen() { doTest() }
+
+  void testmembers$constructorAfterInnerClass() { doTest() }
 }

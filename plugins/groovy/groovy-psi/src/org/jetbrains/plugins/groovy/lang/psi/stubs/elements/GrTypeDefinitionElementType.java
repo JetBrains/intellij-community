@@ -56,10 +56,10 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
   @Override
   @NotNull
   public GrTypeDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
-    String qname = StringRef.toString(dataStream.readName());
+    String name = dataStream.readNameString();
+    String qname = dataStream.readNameString();
     byte flags = dataStream.readByte();
-    String baseClassName = StringRef.toString(dataStream.readName());
+    String baseClassName = dataStream.readNameString();
     String[] annos = readStringArray(dataStream);
     return new GrTypeDefinitionStub(parentStub, name, baseClassName, this, qname, annos, flags);
   }

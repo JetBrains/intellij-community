@@ -78,8 +78,8 @@ public class PsiFileStubImpl<T extends PsiFile> extends StubBase<T> implements P
     return TYPE;
   }
 
+  /** Don't call this method, it's public for implementation reasons */
   @NotNull
-  @Override
   public PsiFileStub[] getStubRoots() {
     if (myStubRoots != null) return myStubRoots;
 

@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
@@ -24,6 +25,7 @@ import com.jetbrains.python.inspections.PyOldStyleClassesInspection;
 public class PyConvertToNewStyleQuickFixTest extends PyQuickFixTestCase {
 
   public void testEmptySuperClassList() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doQuickFixTest(PyOldStyleClassesInspection.class, PyBundle.message("QFIX.convert.to.new.style"));
   }
 

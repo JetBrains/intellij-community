@@ -36,6 +36,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
     assertEquals("a", checkGeneratesExample(stringsOf(asciiPrintableChars()),
                                             s -> s.contains("a"),
                                             10));
+
+    String aWithB = checkGeneratesExample(stringsOf(IntDistribution.uniform(2, 100), asciiPrintableChars()),
+                                     s -> s.contains("a") && s.contains("b"),
+                                     27);
+    assertTrue(aWithB, "ab".equals(aWithB) || "ba".equals(aWithB));
   }
 
   public void testLetterStringContains() {
@@ -88,7 +93,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   }
 
   public void testListNotLongerThanMaxDefaultSize() {
-    PropertyChecker.customized().withIterationCount(1_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
+    PropertyChecker.customized().withIterationCount(100_000).forAll(listsOf(integers()), l -> l.size() <= PropertyChecker.DEFAULT_MAX_SIZE_HINT);
   }
 
   public void testNonEmptyList() {
@@ -112,7 +117,7 @@ public class GeneratorTest extends PropertyCheckerTestCase {
                            s -> Character.isJavaIdentifierStart(s.charAt(0)) && s.chars().allMatch(Character::isJavaIdentifierPart));
     checkGeneratesExample(asciiIdentifiers(),
                           s -> s.contains("_"),
-                          10);
+                          9);
   }
 
   public void testBoolean() {
@@ -142,11 +147,11 @@ public class GeneratorTest extends PropertyCheckerTestCase {
   public void testSameFrequency() {
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2))),
                    l -> !l.contains(1) || !l.contains(2),
-                   3);
+                   2);
 
     checkFalsified(listsOf(frequency(1, constant(1), 1, constant(2)).with(1, constant(3))),
                    l -> !l.contains(1) || !l.contains(2) || !l.contains(3),
-                   7);
+                   5);
   }
 
   public void testReplay() {

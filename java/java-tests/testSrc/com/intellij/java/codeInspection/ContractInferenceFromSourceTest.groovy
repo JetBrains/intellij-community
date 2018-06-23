@@ -15,7 +15,8 @@
  */
 package com.intellij.java.codeInspection
 
-import com.intellij.codeInspection.dataFlow.ContractInference
+
+import com.intellij.codeInspection.dataFlow.inference.JavaSourceInference
 import com.intellij.psi.PsiAnonymousClass
 import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.impl.source.PsiMethodImpl
@@ -182,7 +183,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
             return o;
     }
 """)
-    assert c == ['null -> fail']
+    assert c == ['null -> fail', '!null -> param1']
   }
 
   void "test plain delegation"() {
@@ -363,7 +364,7 @@ class ContractInferenceFromSourceTest extends LightCodeInsightFixtureTestCase {
         return new String("abc");
     }
     """)
-    assert c == ['null -> null', '!null -> !null']
+    assert c == ['null -> null', '!null -> new']
   }
 
   void "test go inside do-while"() {
@@ -516,7 +517,7 @@ public static void validate(String p1, String p2, String p3, String p4, String p
             throw new RuntimeException();
     }
         """)
-    assert c.size() <= ContractInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
+    assert c.size() <= JavaSourceInference.MAX_CONTRACT_COUNT // there could be 74 of them in total
   }
 
   void "test no inference for unused anonymous class methods where annotations won't be used anyway"() {
@@ -526,7 +527,7 @@ class Foo {{
     Object foo() { return null;}
   };
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method as PsiMethodImpl).collect { it as String } == []
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == []
   }
 
   void "test inference for used anonymous class methods"() {
@@ -537,7 +538,7 @@ class Foo {{
     Object bar(boolean b) { return foo(b);}
   };
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> !null']
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == ['true -> null', 'false -> this']
   }
 
   void "test anonymous class methods potentially used from outside"() {
@@ -549,7 +550,7 @@ class Foo {{
     }
   };    
 }}"""), PsiAnonymousClass).methods[0]
-    assert ContractInference.inferContracts(method as PsiMethodImpl).collect { it as String } == [' -> fail']
+    assert JavaSourceInference.inferContracts(method as PsiMethodImpl).collect { it as String } == [' -> fail']
   }
 
   void "test vararg delegation"() {
@@ -578,6 +579,99 @@ class Foo {{
     assert c == []
   }
 
+  void "test nullToEmpty"() {
+    def c = inferContracts("""
+  String nullToEmpty(String s) {
+    return s == null ? "" : s;
+  }
+""")
+    assert c == ['null -> !null', '!null -> param1']
+  }
+
+  void "test coalesce"() {
+    def c = inferContracts("""
+  <T> T coalesce(T t1, T t2, T t3) {
+    if(t1 != null) return t1;
+    if(t2 != null) return t2;
+    return t3;
+  }
+""")
+    assert c == ['!null, _, _ -> param1', 'null, !null, _ -> param2', 'null, null, _ -> param3']
+  }
+
+  void "test param check"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    return actual;
+  }
+""")
+    assert c == ['_, _, _ -> param2']
+  }
+
+  void "test param reassigned"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    actual+=1;
+    return actual;
+  }
+""")
+    assert c == []
+  }
+
+  void "test param incremented"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    System.out.println(++actual);
+    return actual;
+  }
+""")
+    assert c == []
+  }
+
+  void "test param unary minus"() {
+    def c = inferContracts("""
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\\\'' + varName + " must be at least " + min + ": " + actual);
+    System.out.println(-actual);
+    return actual;
+  }
+""")
+    assert c == ['_, _, _ -> param2']
+  }
+
+  void "test delegate to coalesce"() {
+    def c = inferContracts("""
+public static Object test(Object o1, Object o2) {
+  return choose(foo(o2, o1), "xyz");
+}
+
+@org.jetbrains.annotations.Contract("_, null -> null") 
+public static native Object foo(Object x, Object y);
+
+@org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
+public static native Object choose(Object o1, Object o2);
+""")
+    assert c == []
+  }
+
+  void "test delegate to coalesce 2"() {
+    def c = inferContracts("""
+public static Object test(Object o1, Object o2) {
+  return choose(o2, foo("xyz", o1));
+}
+
+@org.jetbrains.annotations.Contract("_, null -> null") 
+public static native Object foo(Object x, Object y);
+
+@org.jetbrains.annotations.Contract("!null, _ -> !null; _, !null -> !null; _, _ -> null")
+public static native Object choose(Object o1, Object o2);
+""")
+    assert c == ['_, !null -> !null']
+  }
+
   private String inferContract(String method) {
     return assertOneElement(inferContracts(method))
   }
@@ -585,7 +679,7 @@ class Foo {{
   private List<String> inferContracts(String method) {
     def clazz = myFixture.addClass("final class Foo { $method }")
     assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
-    def contracts = ContractInference.inferContracts(clazz.methods[0] as PsiMethodImpl)
+    def contracts = JavaSourceInference.inferContracts(clazz.methods[0] as PsiMethodImpl)
     assert !((PsiFileImpl) clazz.containingFile).contentsLoaded
     return contracts.collect { it as String }
   }

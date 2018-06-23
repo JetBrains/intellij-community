@@ -1,8 +1,8 @@
-import java.util.stream.IntStream;
+import java.util.stream.LongStream;
 
 public class PrimitiveResultLong {
   public static void main(String[] args) {
     // Breakpoint!
-    long res = IntStream.of(1, 2).count();
+    long res = LongStream.of(1, 2).sum();
   }
 }

@@ -45,17 +45,6 @@ public interface GlobalInspectionContext extends UserDataHolder {
   RefManager getRefManager();
 
   /**
-   * Checks if the inspection with the specified ID is suppressed for the
-   * specified reference graph node. Should not be called manually in normal case.
-   * You need to check suppressions only when you use {@link GlobalInspectionTool#runInspection}
-   * @param entity           the reference graph node to check.
-   * @param inspectionToolId the ID of the inspection to check.
-   * @return true if the inspection is suppressed, false otherwise.
-   * @deprecated use #shouldCheck instead
-   */
-  boolean isSuppressed(@NotNull RefEntity entity, @NotNull String inspectionToolId);
-
-  /**
    * Checks if the inspection is suppressed for the specified reference graph node. Should not be called manually in normal case.
    * You need to check suppressions only when you use {@link GlobalInspectionTool#runInspection}
    * @param entity           the reference graph node to check.

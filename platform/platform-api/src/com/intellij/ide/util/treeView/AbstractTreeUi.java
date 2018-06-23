@@ -1126,7 +1126,7 @@ public class AbstractTreeUi {
     final Object prevElement = getElementFromDescriptor(descriptor);
     if (prevElement == null) return;
     update(descriptor, false)
-      .done(changes -> {
+      .onSuccess(changes -> {
         if (!isValid(descriptor)) {
           if (isInStructure(prevElement)) {
             getUpdater().addSubtreeToUpdateByElement(getTreeStructure().getParentElement(prevElement));

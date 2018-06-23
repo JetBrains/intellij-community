@@ -29,7 +29,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import javax.swing.*;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
@@ -197,8 +196,8 @@ public class RefJavaManagerImpl extends RefJavaManager {
     LOG.assertTrue(myRefManager.isValidPointForReference(), "References may become invalid after process is finished");
     
     return myRefManager.getFromRefTableOrCache(param, () -> {
-      RefParameter ref = new RefParameterImpl(param, index, myRefManager);
-      ((RefParameterImpl)ref).initialize();
+      RefParameterImpl ref = new RefParameterImpl(param, index, myRefManager);
+      ref.initialize();
       return ref;
     });
   }
@@ -389,7 +388,7 @@ public class RefJavaManagerImpl extends RefJavaManager {
     return Arrays
       .stream(((PsiClassOwner)psiFile).getClasses())
       .flatMap(c -> Arrays.stream(c.getSuperTypes()))
-      .map(t -> t.resolve())
+      .map(PsiClassType::resolve)
       .filter(Objects::nonNull);
   }
 
@@ -401,11 +400,6 @@ public class RefJavaManagerImpl extends RefJavaManager {
       myEntryPointsManager = entryPointsManager = new EntryPointsManagerBase(project) {
         @Override
         public void configureAnnotations() {
-        }
-
-        @Override
-        public JButton createConfigureAnnotationsBtn() {
-          return null;
         }
       };
       Disposer.register(project, entryPointsManager);

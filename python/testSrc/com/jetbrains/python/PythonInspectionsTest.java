@@ -90,8 +90,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDefaultArgumentInspection() {
-    LocalInspectionTool inspection = new PyDefaultArgumentInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyDefaultArgumentInspection.class);
   }
 
   public void testPyDocstringInspection() {
@@ -210,7 +209,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDictDuplicateKeysInspection() {
-    doHighlightingTest(PyDictDuplicateKeysInspection.class);
+    doHighlightingTest(PyDictDuplicateKeysInspection.class, LanguageLevel.PYTHON37);
   }
 
   public void testPyListCreationInspection() {         //PY-2823

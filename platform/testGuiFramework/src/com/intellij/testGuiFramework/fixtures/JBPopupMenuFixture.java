@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
 import com.intellij.openapi.actionSystem.impl.ActionMenuItem;
 import com.intellij.openapi.ui.JBPopupMenu;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.util.ArrayUtil;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
@@ -30,8 +31,6 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.awt.*;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.waitUntilFound;
 import static junit.framework.Assert.assertNotNull;
 import static org.fest.swing.timing.Pause.pause;
 
@@ -55,7 +54,7 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
           final JBPopupMenu contextMenu = robot.finder().findByType(JBPopupMenu.class);
           return contextMenu != null;
         }
-      }, SHORT_TIMEOUT);
+      }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     } catch (WaitTimedOutError e) {
       throw new ComponentLookupException("Unable to find context menu for JBPopupFixture");
     }
@@ -118,7 +117,7 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
                   return false;
                 }
               }
-            }, SHORT_TIMEOUT);
+            }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
             final Point locationOnScreen = myContextMenu.getLocationOnScreen();
             final Rectangle bounds = actionMenuItem.getBounds();
             final Point point =
@@ -132,7 +131,7 @@ public class JBPopupMenuFixture extends JComponentFixture<JBPopupMenuFixture, JB
   }
 
   private JBPopupMenu waitUntilFoundMenu(final String actionName) {
-    return waitUntilFound(robot(), new GenericTypeMatcher<JBPopupMenu>(JBPopupMenu.class) {
+    return GuiTestUtil.INSTANCE.waitUntilFound(robot(), new GenericTypeMatcher<JBPopupMenu>(JBPopupMenu.class) {
       @Override
       protected boolean isMatching(@NotNull JBPopupMenu menu) {
         boolean found = false;

@@ -17,6 +17,7 @@ package git4idea.rebase
 
 import com.intellij.notification.NotificationType
 import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.diagnostic.logger
 import com.intellij.openapi.editor.impl.EditorImpl
 import com.intellij.openapi.progress.ProcessCanceledException
@@ -41,7 +42,7 @@ import com.intellij.vcs.log.util.VcsUserUtil.getShortPresentation
 import git4idea.repo.GitRepository
 
 class GitRewordAction : GitCommitEditingAction() {
-  val LOG = logger<GitRewordAction>()
+  val LOG: Logger = logger<GitRewordAction>()
 
   override fun update(e: AnActionEvent) {
     super.update(e)
@@ -104,7 +105,7 @@ class GitRewordAction : GitCommitEditingAction() {
     }.queue()
   }
 
-  override fun getFailureTitle() = "Couldn't Reword Commit"
+  override fun getFailureTitle(): String = "Couldn't Reword Commit"
 
   private class RewordDialog(val project: Project, val commit: VcsCommitMetadata) : DialogWrapper(project, true) {
 

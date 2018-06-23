@@ -18,16 +18,18 @@ package com.intellij.psi.util;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiType;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class ConstantExpressionUtil {
-  public static Object computeCastTo(PsiExpression expression, PsiType castTo) {
+  public static Object computeCastTo(@Nullable PsiExpression expression, @Nullable PsiType castTo) {
     if (expression == null) return null;
     Object value = JavaPsiFacade.getInstance(expression.getProject()).getConstantEvaluationHelper().computeConstantExpression(expression, false);
     if(value == null) return null;
     return computeCastTo(value, castTo);
   }
 
-  public static Object computeCastTo(Object operand, PsiType castType) {
+  public static Object computeCastTo(@NotNull Object operand, @Nullable PsiType castType) {
     return TypeConversionUtil.computeCastTo(operand, castType);
   }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -132,23 +133,28 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
     if (rawText != null && wasUnescaped(text, rawText.rawText)) return rawText.rawText;
     
     if (isStringLiteral(token)) {
-      StringBuilder buffer = new StringBuilder(text.length());
-      @NonNls String breaker = getLineBreaker(token);
-      final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
-      for (int i = 0; i < lines.length; i++) {
-        buffer.append(escapeCharCharacters(lines[i], token));
-        if (i != lines.length - 1) {
-          buffer.append(breaker);
-        }
-        else if (text.endsWith("\n")) {
-          buffer.append("\\n");
-        }
-      }
-      text = buffer.toString();
+      text = escapeAndSplit(text, token);
     }
     else if (isCharLiteral(token)) {
       return escapeCharCharacters(text, token);
     }
+    return text;
+  }
+
+  public String escapeAndSplit(String text, PsiElement token) {
+    StringBuilder buffer = new StringBuilder(text.length());
+    @NonNls String breaker = getLineBreaker(token);
+    final String[] lines = LineTokenizer.tokenize(text.toCharArray(), false, true);
+    for (int i = 0; i < lines.length; i++) {
+      buffer.append(escapeCharCharacters(lines[i], token));
+      if (i != lines.length - 1) {
+        buffer.append(breaker);
+      }
+      else if (text.endsWith("\n")) {
+        buffer.append("\\n");
+      }
+    }
+    text = buffer.toString();
     return text;
   }
 
@@ -163,7 +169,7 @@ public class StringLiteralCopyPasteProcessor implements CopyPastePreProcessor {
   }
 
   protected String getLineBreaker(@NotNull PsiElement token) {
-    CommonCodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(token.getProject()).getCommonSettings(token.getLanguage());
+    CommonCodeStyleSettings codeStyleSettings = CodeStyle.getLanguageSettings(token.getContainingFile());
     return codeStyleSettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE ? "\\n\"\n+ \"" : "\\n\" +\n\"";
   }
 

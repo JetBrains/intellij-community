@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.resolve
 
 import com.intellij.psi.PsiClass
@@ -8,7 +8,7 @@ import groovy.transform.CompileStatic
 import org.jetbrains.plugins.groovy.LightGroovyTestCase
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
-import org.jetbrains.plugins.groovy.lang.psi.api.GroovyPolyVariantReference
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyReference
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
@@ -25,7 +25,7 @@ class GroovyStaticImportsTest extends LightGroovyTestCase {
   protected GroovyResolveResult[] multiResolveByText(String text) {
     def file = configureByText(text)
     def reference = file.findReferenceAt(fixture.editor.caretModel.offset)
-    if (reference instanceof GroovyPolyVariantReference) {
+    if (reference instanceof GroovyReference) {
       reference.multiResolve(false)
     }
     else {
@@ -109,6 +109,16 @@ import static foo.bar.Baz.someProp
 <caret>someProp
 '''
     def element = result.element
+    assert element instanceof PsiClass
+    assert element.name == 'someProp'
+  }
+
+  void 'test resolve rValue reference star import'() {
+    def result = advancedResolveByText '''\
+import static foo.bar.Baz.*
+<caret>someProp
+'''
+    def element = result.element
     assert element instanceof PsiMethod
     assert element.name == 'getSomeProp'
     assert element.parameterList.parametersCount == 0
@@ -117,6 +127,16 @@ import static foo.bar.Baz.someProp
   void 'test resolve lValue reference'() {
     def result = advancedResolveByText '''\
 import static foo.bar.Baz.someProp
+<caret>someProp = 1
+'''
+    def element = result.element
+    assert element instanceof PsiClass
+    assert element.name == 'someProp'
+  }
+
+  void 'test resolve lValue reference star import'() {
+    def result = advancedResolveByText '''\
+import static foo.bar.Baz.*
 <caret>someProp = 1
 '''
     def element = result.element

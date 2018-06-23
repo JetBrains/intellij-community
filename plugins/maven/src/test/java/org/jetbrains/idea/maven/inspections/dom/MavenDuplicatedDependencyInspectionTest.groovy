@@ -166,7 +166,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
   </dependencies>
 """)
 
-    importProject()
+    importProjectWithErrors(true)
 
     checkHighlighting(myProjectPom, true, false, true)
   }

@@ -57,7 +57,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof ParamValueBasedDirection ? ((ParamValueBasedDirection)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
-    internalResult = new Final(Value.Bot);
+    internalResult = Value.Bot;
   }
 
   @NotNull
@@ -123,7 +123,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     } else if (unsureOnly) {
       // We are not sure whether exceptional paths were actually taken or not
       // probably they handle exceptions which can never be thrown before dereference occurs
-      return mkEquation(ClassDataIndexer.FINAL_BOT);
+      return mkEquation(Value.Bot);
     } else {
       return mkEquation(internalResult);
     }
@@ -287,31 +287,31 @@ class InOutAnalysis extends ContractAnalysis {
         BasicValue stackTop = popValue(frame);
         Result subResult;
         if (FalseValue == stackTop) {
-          subResult = new Final(Value.False);
+          subResult = Value.False;
         }
         else if (TrueValue == stackTop) {
-          subResult = new Final(Value.True);
+          subResult = Value.True;
         }
         else if (NullValue == stackTop) {
-          subResult = new Final(Value.Null);
+          subResult = Value.Null;
         }
         else if (stackTop instanceof NotNullValue) {
-          subResult = new Final(Value.NotNull);
+          subResult = Value.NotNull;
         }
         else if (stackTop instanceof ParamValue) {
-          subResult = new Final(inValue);
+          subResult = inValue;
         }
         else if (stackTop instanceof CallResultValue) {
           Set<EKey> keys = ((CallResultValue) stackTop).inters;
           subResult = new Pending(new Component[] {new Component(Value.Top, keys)});
         }
         else {
-          earlyResult = new Final(Value.Top);
+          earlyResult = Value.Top;
           return true;
         }
         internalResult = checkLimit(resultUtil.join(internalResult, subResult));
         unsureOnly &= unsure;
-        if (!unsure && internalResult instanceof Final && ((Final)internalResult).value == Value.Top) {
+        if (!unsure && internalResult == Value.Top) {
           earlyResult = internalResult;
         }
         return true;
@@ -338,7 +338,7 @@ class InThrowAnalysis extends ContractAnalysis {
   boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) {
     Result subResult;
     if (interpreter.deReferenced) {
-      subResult = new Final(Value.Top);
+      subResult = Value.Top;
     } else {
       switch (opcode) {
         case ARETURN:
@@ -353,13 +353,13 @@ class InThrowAnalysis extends ContractAnalysis {
           } else {
             myReturnValue = value;
           }
-          subResult = new Final(Value.Top);
+          subResult = Value.Top;
           break;
         case RETURN:
-          subResult = new Final(Value.Top);
+          subResult = Value.Top;
           break;
         case ATHROW:
-          subResult = new Final(Value.Fail);
+          subResult = Value.Fail;
           break;
         default:
           return false;
@@ -367,7 +367,7 @@ class InThrowAnalysis extends ContractAnalysis {
     }
     internalResult = resultUtil.join(internalResult, subResult);
     unsureOnly &= unsure;
-    if (!unsure && internalResult instanceof Final && ((Final)internalResult).value == Value.Top && myHasNonTrivialReturn) {
+    if (!unsure && internalResult == Value.Top && myHasNonTrivialReturn) {
       earlyResult = internalResult;
     }
     return true;

@@ -30,9 +30,12 @@ public interface DiffPreviewUpdateProcessor {
   /**
    * Get newly requested element for diff and update/create new diff request for it
    * a.e. get selection from some model and check if previously shown diff request need to be replaced or still valid for such selection
+   *
+   * @param fromModelRefresh Whether refresh was triggered without explicit change of selected item by user.
+   *                         In this case, we might want not to close active viewer while it is in focus.
    */
   @CalledInAwt
-  void refresh();
+  void refresh(boolean fromModelRefresh);
 
   @NotNull
   JComponent getComponent();

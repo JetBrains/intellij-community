@@ -62,7 +62,7 @@ abstract class SuspendContextView(protected val debugProcess: MultiVmDebugProces
     }
   }
 
-  override fun getActiveExecutionStack() = stacks[activeVm]
+  override fun getActiveExecutionStack(): ScriptExecutionStack? = stacks[activeVm]
 
   override fun getExecutionStacks(): Array<out XExecutionStack> = stacks.values.toTypedArray()
 

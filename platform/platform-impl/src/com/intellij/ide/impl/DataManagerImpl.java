@@ -168,6 +168,7 @@ public class DataManagerImpl extends DataManager {
 
   @Override
   public DataContext getDataContext(Component component) {
+    //noinspection deprecation
     return new MyDataContext(component);
   }
 
@@ -317,6 +318,11 @@ public class DataManagerImpl extends DataManager {
     PlatformDataKeys.MODALITY_STATE.getName()
   ));
 
+  /**
+   * todo make private in 2020
+   * @deprecated use {@link DataManager#getDataContext(Component)} instead
+   */
+  @Deprecated
   public static class MyDataContext implements DataContext, UserDataHolder {
     private int myEventCount;
     // To prevent memory leak we have to wrap passed component into

@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ConfigImportHelper
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
+import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.button
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.dialog
 import com.intellij.testGuiFramework.impl.FirstStart.Utils.radioButton
@@ -40,7 +41,7 @@ abstract class FirstStart(val ideType: IdeType) {
 
   private val FIRST_START_ROBOT_THREAD = "First Start Robot Thread"
 
-  protected val LOG = Logger.getInstance(this.javaClass.name)
+  private val LOG = Logger.getInstance(this.javaClass.name)
 
   val myRobot: Robot
 
@@ -57,7 +58,10 @@ abstract class FirstStart(val ideType: IdeType) {
           takeScreenshot(e)
           throw exceptionWithHierarchy(e)
         }
-        else -> throw e
+        else -> {
+          takeScreenshot(e)
+          throw e
+        }
       }
     }
   }
@@ -85,20 +89,14 @@ abstract class FirstStart(val ideType: IdeType) {
   }
 
   companion object {
-    var DEFAULT_TIMEOUT: Long = GuiTestCase().defaultTimeout
-
-    fun guessIdeAndStartRobot() {
-      val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
-      val firstStart = Class.forName(firstStartClass).newInstance() as FirstStart
-      firstStart.completeInstallation()
-    }
+    var DEFAULT_TIMEOUT: Long = defaultTimeout
   }
 
   private fun completeFirstStart() {
       completeInstallation()
-      evaluateLicense(ideType.name, myRobot)
       acceptAgreement()
       acceptDataSharing()
+      evaluateLicense(ideType.name, myRobot)
       customizeIde()
       waitWelcomeFrameAndClose()
   }
@@ -132,23 +130,35 @@ abstract class FirstStart(val ideType: IdeType) {
     }, Timeout.timeout(180, TimeUnit.SECONDS))
   }
 
+  private fun findPrivacyPolicyDialogOrLicenseAgreement(): JDialog {
+    return GuiTestUtilKt.withPauseWhenNull(120) {
+      try {
+        myRobot.finder().find {
+          it is JDialog && (it.title.contains("License Agreement") || it.title.contains("Privacy Policy"))
+        } as JDialog
+      } catch (cle: ComponentLookupException) {
+        null
+      }
+    }
+  }
+
   private fun acceptAgreement() {
     if (!needToShowAgreement()) return
     with(myRobot) {
-      val policyAgreementTitle = "License Agreement"
       try {
-        LOG.info("Waiting for '$policyAgreementTitle' dialog")
-        with(JDialogFixture.findByPartOfTitle(myRobot, policyAgreementTitle, Timeout.timeout(2, TimeUnit.MINUTES))) {
+        LOG.info("Waiting for License Agreement/Privacy Policy dialog")
+        findPrivacyPolicyDialogOrLicenseAgreement()
+        with(JDialogFixture(myRobot, findPrivacyPolicyDialogOrLicenseAgreement())) {
           click()
           while(!button("Accept").isEnabled) {
             scroll(10)
           }
-          LOG.info("Accept '$policyAgreementTitle' dialog")
+          LOG.info("Accept License Agreement/Privacy Policy dialog")
           button("Accept").click()
         }
       }
       catch (e: WaitTimedOutError) {
-        LOG.error("'$policyAgreementTitle' dialog hasn't been shown. Check registry...")
+        LOG.warn("'License Agreement/Privacy Policy dialog hasn't been shown. Check registry...")
       }
     }
   }
@@ -169,10 +179,10 @@ abstract class FirstStart(val ideType: IdeType) {
   private fun acceptDataSharing() {
     with(myRobot) {
       LOG.info("Accepting Data Sharing")
-      val title = "Data Sharing Options"
+      val title = "Data Sharing"
       try {
         dialog(title, timeoutSeconds = 5)
-        button("OK").click()
+        button("Send Usage Statistics").click()
         LOG.info("Data sharing accepted")
       } catch (e: WaitTimedOutError) {
         LOG.info("Data sharing dialog hasn't been shown")

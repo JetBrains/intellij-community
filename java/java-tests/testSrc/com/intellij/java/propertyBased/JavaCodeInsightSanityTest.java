@@ -89,4 +89,10 @@ public class JavaCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     PropertyChecker
       .checkScenarios(actionsOnJavaFiles(MadTestingUtil::randomEditsWithReparseChecks));
   }
+
+  public void testIncrementalHighlighterUpdate() {
+    PropertyChecker
+      .checkScenarios(actionsOnJavaFiles(CheckHighlighterConsistency.randomEditsWithHighlighterChecks));
+  }
+
 }

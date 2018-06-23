@@ -17,7 +17,7 @@ package org.jetbrains.idea.maven.utils.library;
 
 import com.intellij.jarRepository.RepositoryLibraryDefinition;
 import com.intellij.openapi.roots.DependencyScope;
-import java.util.HashMap;
+import com.intellij.util.containers.ContainerUtil;
 import icons.OpenapiIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -25,6 +25,7 @@ import org.jetbrains.jps.model.library.JpsMavenRepositoryLibraryDescriptor;
 
 import javax.swing.*;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.Map;
 
 public class RepositoryLibraryDescription {
@@ -112,17 +113,17 @@ public class RepositoryLibraryDescription {
   }
 
   public RepositoryLibraryProperties createDefaultProperties() {
-    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId, true);
+    return new RepositoryLibraryProperties(getGroupId(), getArtifactId(), ReleaseVersionId, true, ContainerUtil.emptyList());
   }
 
   public String getDisplayName(String version) {
-    if (version.equals(LatestVersionId)) {
+    if (LatestVersionId.equals(version)) {
       version = LatestVersionDisplayName;
     }
-    else if (version.equals(ReleaseVersionId)) {
+    else if (ReleaseVersionId.equals(version)) {
       version = ReleaseVersionDisplayName;
     }
-    return getDisplayName() + ":" + version;
+    return getDisplayName() + (version == null ? "" : ":" + version);
   }
 
   public String getMavenCoordinates(String version) {

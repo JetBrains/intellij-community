@@ -22,6 +22,9 @@ package com.intellij.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
 import com.intellij.openapi.util.LowMemoryWatcher;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.vfs.newvfs.BulkFileListener;
+import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
@@ -30,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.LinkedHashMap;
+import java.util.List;
 import java.util.Map;
 
 public class IconDeferrerImpl extends IconDeferrer {
@@ -42,11 +46,16 @@ public class IconDeferrerImpl extends IconDeferrer {
   };
   private long myLastClearTimestamp;
 
-  protected IconDeferrerImpl() {}
-
-  public IconDeferrerImpl(MessageBus bus) {
+  public IconDeferrerImpl(@NotNull MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
     connection.subscribe(PsiModificationTracker.TOPIC, this::clear);
+    // update "locked" icon
+    connection.subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener() {
+      @Override
+      public void after(@NotNull List<? extends VFileEvent> events) {
+        clear();
+      }
+    });
     connection.subscribe(ProjectLifecycleListener.TOPIC, new ProjectLifecycleListener() {
       @Override
       public void afterProjectClosed(@NotNull Project project) {
@@ -94,12 +103,6 @@ public class IconDeferrerImpl extends IconDeferrer {
       }
 
       return result;
-    }
-  }
-
-  protected void cacheIcon(Object key,Icon value) {
-    synchronized (LOCK) {
-      myIconsCache.put(key, value);
     }
   }
 

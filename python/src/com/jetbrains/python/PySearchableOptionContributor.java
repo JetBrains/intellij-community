@@ -75,5 +75,7 @@ public class PySearchableOptionContributor extends SearchableOptionContributor {
                          configurableId, displayName, false);
     processor.addOptions("Attests", displayName, "Default test runner",
                          configurableId, displayName, false);
+    processor.addOptions("Path to Pipenv executable", displayName, "Path to Pipenv executable",
+                         configurableId, displayName, true);
   }
 }

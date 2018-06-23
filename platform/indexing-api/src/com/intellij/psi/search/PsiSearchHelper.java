@@ -27,6 +27,7 @@ public interface PsiSearchHelper {
     /**
      * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
      */
+    @Deprecated
     public static PsiSearchHelper getInstance(@NotNull Project project) {
       return PsiSearchHelper.getInstance(project);
     }
@@ -152,10 +153,10 @@ public interface PsiSearchHelper {
    */
   boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
-  boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
+  boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
   @NotNull
-  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
+  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,

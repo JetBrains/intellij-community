@@ -12,6 +12,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -68,7 +69,7 @@ public final class ConsentOptions {
       private String loadText(InputStream stream) {
         try {
           if (stream != null) {
-            final Reader reader = new InputStreamReader(new BufferedInputStream(stream), StandardCharsets.UTF_8);
+            final Reader reader = new InputStreamReader(CharsetToolkit.inputStreamSkippingBOM(new BufferedInputStream(stream)), StandardCharsets.UTF_8);
             try {
               return new String(FileUtil.adaptiveLoadText(reader));
             }
@@ -151,7 +152,7 @@ public final class ConsentOptions {
     }
   }
 
-  public Pair<Collection<Consent>, Boolean> getConsents() {
+  public Pair<List<Consent>, Boolean> getConsents() {
     final Map<String, Consent> allDefaults = loadDefaultConsents();
     if (allDefaults.isEmpty()) {
       return Pair.create(Collections.emptyList(), Boolean.FALSE);

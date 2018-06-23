@@ -92,8 +92,8 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   }
 
   @Override
-  protected PsiElement findPackage(String qName) {
-    return getFacade().findPackage(qName);
+  protected PsiPackageImpl findPackage(String qName) {
+    return (PsiPackageImpl)getFacade().findPackage(qName);
   }
 
   @Override
@@ -110,11 +110,6 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Override
   public PsiPackageImpl getParentPackage() {
     return (PsiPackageImpl)super.getParentPackage();
-  }
-
-  @Override
-  protected PsiPackageImpl createInstance(PsiManager manager, String qName) {
-    return new PsiPackageImpl(getManager(), qName);
   }
 
   @Override
@@ -372,6 +367,12 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
   @Override
   public void navigate(final boolean requestFocus) {
     PsiPackageImplementationHelper.getInstance().navigate(this, requestFocus);
+  }
+
+  public boolean mayHaveContentInScope(@NotNull GlobalSearchScope scope) {
+    return getDirectories(scope).length > 0 ||
+           getClasses(scope).length > 0 ||
+           ContainerUtil.exists(occursInPackagePrefixes(), scope::contains);
   }
 
   private class PackageAnnotationValueProvider implements CachedValueProvider<PsiModifierList> {

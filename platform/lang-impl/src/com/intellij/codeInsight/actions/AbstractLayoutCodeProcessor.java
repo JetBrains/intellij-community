@@ -387,6 +387,7 @@ public abstract class AbstractLayoutCodeProcessor {
   }
 
   private static boolean canBeFormatted(PsiFile file) {
+    if (!file.isValid()) return false;
     if (LanguageFormatting.INSTANCE.forContext(file) == null) {
       return false;
     }

@@ -84,7 +84,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	video.attrs.height?
 		&	video.attrs.width?
 		&	video.attrs.playsinline?
-		&	common.attrs.aria.landmark.application?
+		&	common.attrs.aria.role.application?
 		)
 		video.attrs.poster =
 			attribute poster {
@@ -125,7 +125,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	audio.attrs =
 		(	common.attrs
 		&	media.attrs
-		&	common.attrs.aria.landmark.application?
+		&	common.attrs.aria.role.application?
 		)
 	audio.inner.flow =
 		(	media.source
@@ -184,7 +184,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Captioned Content: <figure>
 
 	figure.elem =
-		element figure { figure.inner & figure.attrs }
+		element figure { figure.inner & figure.attrs } & nonW3C
 	figure.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.figure
@@ -198,6 +198,14 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 
 	common.elem.flow |= figure.elem
+
+	figure.elem.w3c =
+		element figure { figure.inner.w3c & figure.attrs } & W3Conly
+	figure.inner.w3c =
+		(	( common.inner.flow & figcaption.elem? )
+		)
+
+	common.elem.flow |= figure.elem.w3c
 
 ## Figure caption: <figcaption>
 

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher;
 
 import com.intellij.dupLocator.iterators.ArrayBackedNodeIterator;
@@ -13,26 +13,30 @@ import com.intellij.structuralsearch.impl.matcher.handlers.MatchingHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SimpleHandler;
 import com.intellij.structuralsearch.impl.matcher.handlers.SubstitutionHandler;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.MultiMap;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashMap;
+import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Class to hold compiled pattern information
  */
 public abstract class CompiledPattern {
+  public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
+  private final Map<Object, MatchingHandler> handlers = new THashMap<>();
+  private final MultiMap<String, PsiElement> variableNodes = MultiMap.createSmart();
   private SearchScope scope;
   private NodeIterator nodes;
   private MatchingStrategy strategy;
   private PsiElement targetNode;
-  private int optionsHashStamp;
   private int nodeCount;
-
-  // @todo support this property during matching (how many nodes should be advanced)
-  // when match is not successful (or successful partially)
-  //private int advancement = 1;
+  private PsiElement last;
+  private MatchingHandler lastHandler;
 
   public abstract String[] getTypedVarPrefixes();
   public abstract boolean isTypedVar(String str);
@@ -44,16 +48,6 @@ public abstract class CompiledPattern {
   public PsiElement getTargetNode() {
     return targetNode;
   }
-
-  public int getOptionsHashStamp() {
-    return optionsHashStamp;
-  }
-
-  public void setOptionsHashStamp(final int optionsHashStamp) {
-    this.optionsHashStamp = optionsHashStamp;
-  }
-
-  public static final Key<Object> HANDLER_KEY = Key.create("ss.handler");
 
   public MatchingStrategy getStrategy() {
     return strategy;
@@ -97,16 +91,11 @@ public abstract class CompiledPattern {
     return profile.getTypedVarString(element);
   }
 
-  private final HashMap<Object, MatchingHandler> handlers = new HashMap<>();
-
   public MatchingHandler getHandlerSimple(PsiElement node) {
     return handlers.get(node);
   }
 
-  private PsiElement last;
-  private MatchingHandler lastHandler;
-
-  public MatchingHandler getHandler(PsiElement node) {
+  public MatchingHandler getHandler(@NotNull PsiElement node) {
     if (node == last) {
       return lastHandler;
     }
@@ -132,9 +121,9 @@ public abstract class CompiledPattern {
     handlers.put(node, handler);
   }
 
-  public SubstitutionHandler createSubstitutionHandler(String name, String compiledName, boolean target,int minOccurs, int maxOccurs,
+  public SubstitutionHandler createSubstitutionHandler(String name, String compiledName, boolean target, int minOccurs, int maxOccurs,
                                                        boolean greedy) {
-    SubstitutionHandler handler = (SubstitutionHandler) handlers.get(compiledName);
+    SubstitutionHandler handler = (SubstitutionHandler)handlers.get(compiledName);
     if (handler != null) return handler;
 
     handler = doCreateSubstitutionHandler(name, target, minOccurs, maxOccurs, greedy);
@@ -173,5 +162,15 @@ public abstract class CompiledPattern {
   @Nullable
   public String getAlternativeTextToMatch(PsiElement node, String previousText) {
     return null;
+  }
+
+  @NotNull
+  public List<PsiElement> getVariableNodes(@NotNull String name) {
+    final Collection<PsiElement> elements = variableNodes.get(name);
+    return elements instanceof List ? (List<PsiElement>)elements : new SmartList<>(elements);
+  }
+
+  public void putVariableNode(@NotNull String name, @NotNull PsiElement node) {
+    variableNodes.putValue(name, node);
   }
 }

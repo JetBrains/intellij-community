@@ -281,9 +281,8 @@ public class MinusculeMatcher implements Matcher {
     } while (isWildcard(patternIndex));
 
     if (patternIndex == myPattern.length) {
-      boolean space = isPatternChar(patternIndex - 1, ' ');
       // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-      if (space && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
+      if (isTrailingSpacePattern() && nameIndex != name.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
         int spaceIndex = name.indexOf(' ', nameIndex);
         if (spaceIndex >= 0) {
           return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
@@ -299,6 +298,10 @@ public class MinusculeMatcher implements Matcher {
     }
 
     return matchSkippingWords(name, patternIndex, nameIndex, true, isAsciiName);
+  }
+
+  private boolean isTrailingSpacePattern() {
+    return isPatternChar(myPattern.length - 1, ' ');
   }
 
   private static boolean isUpperCaseOrDigit(char p) {
@@ -328,7 +331,7 @@ public class MinusculeMatcher implements Matcher {
       // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
       // because otherwise it means that we already tried to match remaining pattern letters after it with the remaining name and failed
       // but now we have the same remaining pattern letters and even less remaining name letters, and so will fail as well
-      if (fragmentLength > maxFoundLength) {
+      if (fragmentLength > maxFoundLength || nameIndex + fragmentLength == name.length() && isTrailingSpacePattern()) {
         if (!isMiddleMatch(name, patternIndex, nameIndex)) {
           maxFoundLength = fragmentLength;
         }
@@ -392,9 +395,13 @@ public class MinusculeMatcher implements Matcher {
 
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
-    while (nameIndex + i < name.length() &&
-           patternIndex + i < myPattern.length &&
-           charEquals(myPattern[patternIndex+i], patternIndex+i, name.charAt(nameIndex + i), ignoreCase)) {
+    while (nameIndex + i < name.length() && patternIndex + i < myPattern.length) {
+      if (!charEquals(myPattern[patternIndex + i], patternIndex + i, name.charAt(nameIndex + i), ignoreCase)) {
+        if (Character.isDigit(myPattern[patternIndex + i]) && Character.isDigit(myPattern[patternIndex + i - 1])) {
+          return 0;
+        }
+        break;
+      }
       if (isUppercasePatternVsLowercaseNameChar(name, patternIndex + i, nameIndex + i) &&
           shouldProhibitCaseMismatch(name, patternIndex + i, nameIndex + i)) {
         break;

@@ -1,14 +1,14 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2018" minor="2" eap="true"/>
+  <version major="2018" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/idea_community_logo.png" textcolor="e5e5e5" progressColor="ed566a" progressX="117" progressY="280" progressHeight="3" />
+  <logo url="/idea_community_logo.png" textcolor="ffffff" progressColor="ffffff" progressX="117" progressY="280" progressHeight="3" />
   <about url="/idea_community_about.png" foreground="939598" copyrightForeground="939598" linkColor="095fdc" logoX="540" logoY="300" logoW="100" logoH="100"/>
   <icon size32="/icon_CE.png" size16="/icon_CEsmall.png" size128="/icon_CE_128.png" ico="idea_CE.ico"/>
   <package code="__PACKAGE_CODE__"/>
-  <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea"/>
+  <names product="IDEA" fullname="IntelliJ IDEA" edition="Community Edition" script="idea" motto="Capable and Ergonomic IDE for JVM"/>
 
   <welcome-screen logo-url="/Logo_welcomeScreen.png"/>
   <customize-ide-wizard provider="com.intellij.ide.customize.CustomizeIdeaWizardStepsProvider"/>
@@ -30,5 +30,9 @@
   <third-party url="http://www.jetbrains.org/"/>
   <jetbrains-tv url="https://www.youtube.com/user/intellijideavideo"/>
 
-  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml" service="https://www.jetbrains.com/idea/statistics/index.jsp"/>
+  <statistics settings="https://www.jetbrains.com/idea/statistics/stat-assistant.xml"
+              service="https://www.jetbrains.com/idea/statistics/index.jsp"
+              fus-settings="https://www.jetbrains.com/idea/statistics/fus-assistant.xml"
+              event-log-settings="https://www.jetbrains.com/idea/statistics/fus-lion-assistant.xml"
+  />
 </component>

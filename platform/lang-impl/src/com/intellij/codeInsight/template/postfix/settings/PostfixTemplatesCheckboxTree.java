@@ -42,8 +42,13 @@ import java.awt.event.MouseEvent;
 import java.util.*;
 
 public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Disposable {
-  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () ->
-    new TreeSet<>((o1, o2) -> Comparing.compare(o1.getTemplate().getPresentableName(), o2.getTemplate().getPresentableName()));
+  private static final Factory<Set<PostfixTemplateCheckedTreeNode>> myNodesComparator = () -> new TreeSet<>((o1, o2) -> {
+    PostfixTemplate template1 = o1.getTemplate();
+    PostfixTemplate template2 = o2.getTemplate();
+    int compare = Comparing.compare(template1.getPresentableName(), template2.getPresentableName());
+    return compare != 0 ? compare : Comparing.compare(template1.getId(), template2.getId());
+  });
+
   @NotNull
   private final CheckedTreeNode myRoot;
   @NotNull
@@ -314,6 +319,51 @@ public class PostfixTemplatesCheckboxTree extends CheckboxTree implements Dispos
           lastPathComponent.setTemplate(newTemplate);
         }
         myModel.nodeStructureChanged(lastPathComponent);
+
+        //update before /after panel
+        selectionChanged();
+      }
+    }
+  }
+
+  public boolean canDuplicateSelectedTemplate() {
+    TreePath[] selectionPaths = getSelectionModel().getSelectionPaths();
+    if (!(selectionPaths == null || selectionPaths.length <= 1)) {
+      return false;
+    }
+    PostfixTemplate selectedTemplate = getSelectedTemplate();
+    if (!isEditable(selectedTemplate)) {
+      return false;
+    }
+    PostfixTemplateProvider provider = selectedTemplate.getProvider();
+    return provider != null && provider.createEditor(selectedTemplate) != null;
+  }
+
+  public void duplicateSelectedTemplate() {
+    TreePath path = getSelectionModel().getSelectionPath();
+    Object lastPathComponent = path.getLastPathComponent();
+    if (lastPathComponent instanceof PostfixTemplateCheckedTreeNode) {
+      PostfixTemplate template = ((PostfixTemplateCheckedTreeNode)lastPathComponent).getTemplate();
+      PostfixTemplateProvider provider = ((PostfixTemplateCheckedTreeNode)lastPathComponent).getTemplateProvider();
+      String languageId = myProviderToLanguage.get(provider);
+      if (isEditable(template) && languageId != null) {
+        PostfixTemplate templateToEdit = template instanceof PostfixChangedBuiltinTemplate
+                                         ? ((PostfixChangedBuiltinTemplate)template).getDelegate()
+                                         : template;
+        PostfixTemplateEditor editor = provider.createEditor(templateToEdit);
+        if (editor == null) return;
+
+        String providerName = StringUtil.notNullize(provider.getPresentableName());
+        PostfixEditTemplateDialog dialog = new PostfixEditTemplateDialog(this, editor, providerName, templateToEdit);
+        if (dialog.showAndGet()) {
+          String templateKey = dialog.getTemplateName();
+          PostfixTemplate newTemplate = editor.createTemplate(PostfixTemplatesUtils.generateTemplateId(templateKey, provider), templateKey);
+          PostfixTemplateCheckedTreeNode createdNode = new PostfixTemplateCheckedTreeNode(newTemplate, provider, true);
+          DefaultMutableTreeNode languageNode = findOrCreateLanguageNode(languageId);
+          languageNode.insert(createdNode, languageNode.getIndex((PostfixTemplateCheckedTreeNode)lastPathComponent) + 1);
+          myModel.nodeStructureChanged(languageNode);
+          TreeUtil.selectNode(this, createdNode);
+        }
       }
     }
   }

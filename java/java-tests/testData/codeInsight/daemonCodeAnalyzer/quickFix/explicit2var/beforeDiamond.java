@@ -1,4 +1,4 @@
-// "Replace explicit type with 'var'" "false"
+// "Replace explicit type with 'var'" "true"
 class Main {
   {
     <caret>A<String> i = new A<>();

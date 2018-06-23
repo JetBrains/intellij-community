@@ -202,12 +202,12 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, new In(i, false), stable);
     final Result result;
     if (interpreter.dereferencedParams[i]) {
-      result = new Final(Value.NotNull);
+      result = Value.NotNull;
     }
     else {
       Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
-        result = new Final(Value.Top);
+        result = Value.Top;
       }
       else {
         Set<EKey> keys = new HashSet<>();
@@ -224,12 +224,12 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, new In(i, true), stable);
     final Result result;
     if (interpreter.dereferencedParams[i] || interpreter.notNullableParams[i] || returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
-      result = new Final(Value.Top);
+      result = Value.Top;
     }
     else {
       Set<ParamKey> calls = interpreter.parameterFlow[i];
       if (calls == null || calls.isEmpty()) {
-        result = new Final(Value.Null);
+        result = Value.Null;
       }
       else {
         Set<Component> sum = new HashSet<>();
@@ -248,22 +248,22 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, direction, stable);
     final Result result;
     if (exception || (inValue == Value.Null && interpreter.dereferencedParams[i])) {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     else if (FalseValue == returnValue) {
-      result = new Final(Value.False);
+      result = Value.False;
     }
     else if (TrueValue == returnValue) {
-      result = new Final(Value.True);
+      result = Value.True;
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final(Value.Null);
+      result = Value.Null;
     }
     else if (returnValue instanceof NotNullValue || ThisValue == returnValue) {
-      result = new Final(Value.NotNull);
+      result = Value.NotNull;
     }
     else if (returnValue instanceof NthParamValue && ((NthParamValue)returnValue).n == i) {
-      result = new Final(inValue);
+      result = inValue;
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -288,7 +288,7 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, Throw, stable);
     final Result result;
     if (exception) {
-      result = new Final(Value.Fail);
+      result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
       Set<EKey> keys =
@@ -307,7 +307,7 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, direction, stable);
     final Result result;
     if (exception) {
-      result = new Final(Value.Fail);
+      result = Value.Fail;
     }
     else if (!interpreter.calls.isEmpty()) {
       Set<EKey> keys = new HashSet<>();
@@ -328,19 +328,19 @@ final class CombinedAnalysis {
     final EKey key = new EKey(method, Out, stable);
     final Result result;
     if (exception) {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     else if (FalseValue == returnValue) {
-      result = new Final(Value.False);
+      result = Value.False;
     }
     else if (TrueValue == returnValue) {
-      result = new Final(Value.True);
+      result = Value.True;
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final(Value.Null);
+      result = Value.Null;
     }
     else if (returnValue instanceof NotNullValue || returnValue == ThisValue) {
-      result = new Final(Value.NotNull);
+      result = Value.NotNull;
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -359,7 +359,7 @@ final class CombinedAnalysis {
     final Result result;
     if (exception ||
         returnValue instanceof Trackable && interpreter.dereferencedValues[((Trackable)returnValue).getOriginInsnIndex()]) {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     else if (returnValue instanceof TrackableCallValue) {
       TrackableCallValue call = (TrackableCallValue)returnValue;
@@ -368,10 +368,10 @@ final class CombinedAnalysis {
       result = new Pending(new SingletonSet<>(new Component(Value.Null, keys)));
     }
     else if (returnValue instanceof TrackableNullValue) {
-      result = new Final(Value.Null);
+      result = Value.Null;
     }
     else {
-      result = new Final(Value.Bot);
+      result = Value.Bot;
     }
     return new Equation(key, result);
   }
@@ -747,7 +747,7 @@ final class NegationAnalysis {
       }
     }
     if (keys.isEmpty()) {
-      result = new Final(Value.Top);
+      result = Value.Top;
     } else {
       result = new Pending(new SingletonSet<>(new Component(Value.Top, keys)));
     }

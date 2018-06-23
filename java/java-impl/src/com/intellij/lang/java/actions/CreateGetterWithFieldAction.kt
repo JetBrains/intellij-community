@@ -31,10 +31,10 @@ internal class CreateGetterWithFieldAction(target: PsiClass, request: CreateMeth
 
   override fun createRenderer(project: Project) = object : PropertyRenderer(project, target, request, propertyInfo) {
 
-    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression {
+    override fun fillTemplate(builder: TemplateBuilderImpl): RangeExpression? {
       val prototypeField = generatePrototypeField()
       val prototype = generateSimpleGetterPrototype(prototypeField)
-      val accessor = insertAccessor(prototype)
+      val accessor = insertAccessor(prototype) ?: return null
       val data = accessor.extractGetterTemplateData()
       return builder.setupInput(data)
     }

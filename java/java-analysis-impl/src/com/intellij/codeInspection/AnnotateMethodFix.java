@@ -4,6 +4,7 @@ package com.intellij.codeInspection;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
+import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -83,9 +84,9 @@ public class AnnotateMethodFix implements LocalQuickFix {
       for (PsiMethod psiMethod : methods) {
         ReadAction.run(() -> {
           if (psiMethod.isPhysical() &&
-              psiMethod.getManager().isInProject(psiMethod) &&
               AnnotationUtil.isAnnotatingApplicable(psiMethod, myAnnotation) &&
-              !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE)) {
+              !AnnotationUtil.isAnnotated(psiMethod, myAnnotation, CHECK_EXTERNAL | CHECK_TYPE) &&
+              !NullableStuffInspectionBase.shouldSkipOverriderAsGenerated(psiMethod)) {
             toAnnotate.add(psiMethod);
           }
         });

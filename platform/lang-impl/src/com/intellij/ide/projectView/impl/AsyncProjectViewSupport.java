@@ -21,34 +21,29 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FileStatusListener;
 import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.problems.WolfTheProblemSolver;
+import com.intellij.problems.ProblemListener;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
-import com.intellij.ui.tree.AsyncTreeModel;
-import com.intellij.ui.tree.RestoreSelectionListener;
-import com.intellij.ui.tree.StructureTreeModel;
-import com.intellij.ui.tree.TreeVisitor;
-import com.intellij.util.Consumer;
+import com.intellij.psi.util.PsiUtilCore;
+import com.intellij.ui.tree.*;
 import com.intellij.util.SmartList;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import static com.intellij.ide.util.treeView.TreeState.expand;
-import static java.util.Collections.singletonList;
-import static java.util.stream.Collectors.toList;
-import static org.jetbrains.concurrency.Promises.collectResults;
+import static com.intellij.openapi.vfs.VirtualFileManager.VFS_CHANGES;
 
 class AsyncProjectViewSupport {
   private static final Logger LOG = Logger.getInstance(AsyncProjectViewSupport.class);
+  private final TreeCollector<VirtualFile> myFileRoots = TreeCollector.createFileRootsCollector();
+  private final ProjectFileChangeListener myChangeListener;
   private final StructureTreeModel myStructureTreeModel;
   private final AsyncTreeModel myAsyncTreeModel;
 
@@ -60,11 +55,16 @@ class AsyncProjectViewSupport {
     myStructureTreeModel = new StructureTreeModel(true);
     myStructureTreeModel.setStructure(structure);
     myStructureTreeModel.setComparator(comparator);
-    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true);
+    myAsyncTreeModel = new AsyncTreeModel(myStructureTreeModel, true, parent);
     myAsyncTreeModel.setRootImmediately(myStructureTreeModel.getRootImmediately());
+    myChangeListener = new ProjectFileChangeListener(myStructureTreeModel.getInvoker(), project, (module, file) -> {
+      if (myFileRoots.add(file)) {
+        myFileRoots.processLater(myStructureTreeModel.getInvoker(), roots -> roots.forEach(root -> updateByFile(root, true)));
+      }
+    });
     setModel(tree, myAsyncTreeModel);
-    Disposer.register(parent, myAsyncTreeModel);
     MessageBusConnection connection = project.getMessageBus().connect(parent);
+    connection.subscribe(VFS_CHANGES, myChangeListener);
     connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootListener() {
       @Override
       public void rootsChanged(ModuleRootEvent event) {
@@ -110,7 +110,13 @@ class AsyncProjectViewSupport {
 
       @Override
       protected boolean addSubtreeToUpdateByElement(PsiElement element) {
-        updateByElement(element, true);
+        VirtualFile file = PsiUtilCore.getVirtualFile(element);
+        if (file != null) {
+          myChangeListener.invalidate(file);
+        }
+        else {
+          updateByElement(element, true);
+        }
         return true;
       }
     }, parent);
@@ -126,7 +132,7 @@ class AsyncProjectViewSupport {
       }
     }, parent);
     CopyPasteManager.getInstance().addContentChangedListener(new CopyPasteUtil.DefaultCopyPasteListener(element -> updateByElement(element, true)), parent);
-    WolfTheProblemSolver.getInstance(project).addProblemListener(new WolfTheProblemSolver.ProblemListener() {
+    project.getMessageBus().connect(parent).subscribe(ProblemListener.TOPIC, new ProblemListener() {
       @Override
       public void problemsAppeared(@NotNull VirtualFile file) {
         updatePresentationsFromRootTo(file);
@@ -136,7 +142,7 @@ class AsyncProjectViewSupport {
       public void problemsDisappeared(@NotNull VirtualFile file) {
         updatePresentationsFromRootTo(file);
       }
-    }, parent);
+    });
   }
 
   public void setComparator(Comparator<NodeDescriptor> comparator) {
@@ -153,19 +159,26 @@ class AsyncProjectViewSupport {
     LOG.debug("select object: ", object, " in file: ", file);
     TreeVisitor visitor = AbstractProjectViewPane.createVisitor(element, file);
     if (visitor != null) {
-      expand(tree, promise -> myAsyncTreeModel.accept(visitor).processed(path -> {
-        if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
-          promise.setResult(null);
-        }
-        else {
-          // try to search the specified file instead of element,
-          // because Kotlin files cannot represent containing functions
-          myAsyncTreeModel.accept(AbstractProjectViewPane.createVisitor(file)).processed(path2 -> {
-            selectPath(tree, path2);
-            promise.setResult(null);
+      //noinspection CodeBlock2Expr
+      expand(tree, promise -> {
+        myAsyncTreeModel
+          .accept(visitor)
+          .onProcessed(path -> {
+            if (selectPath(tree, path) || element == null || file == null || Registry.is("async.project.view.support.extra.select.disabled")) {
+              promise.setResult(null);
+            }
+            else {
+              // try to search the specified file instead of element,
+              // because Kotlin files cannot represent containing functions
+              myAsyncTreeModel
+                .accept(AbstractProjectViewPane.createVisitor(file))
+                .onProcessed(path2 -> {
+                  selectPath(tree, path2);
+                  promise.setResult(null);
+                });
+            }
           });
-        }
-      }));
+      });
     }
   }
 
@@ -234,38 +247,6 @@ class AsyncProjectViewSupport {
         return Action.CONTINUE;
       }
     }, list, false);
-  }
-
-  void accept(List<TreeVisitor> visitors, Consumer<List<TreePath>> consumer) {
-    if (visitors != null && !visitors.isEmpty()) {
-      if (1 == visitors.size()) {
-        myAsyncTreeModel.accept(visitors.get(0))
-                        .onSuccess(path -> {
-                          if (path != null) consumer.consume(singletonList(path));
-                        });
-      }
-      else {
-        List<Promise<TreePath>> promises = visitors.stream().map(visitor -> myAsyncTreeModel.accept(visitor)).collect(toList());
-        collectResults(promises, true)
-          .onSuccess(list -> {
-            if (list != null && !list.isEmpty()) consumer.consume(list);
-          });
-      }
-    }
-  }
-
-  static List<TreeVisitor> createVisitors(Iterable<Object> iterable) {
-    if (iterable == null) return Collections.emptyList();
-    List<TreeVisitor> visitors = new SmartList<>();
-    for (Object object : iterable) {
-      if (object instanceof AbstractTreeNode) {
-        AbstractTreeNode node = (AbstractTreeNode)object;
-        object = node.getValue();
-      }
-      TreeVisitor visitor = AbstractProjectViewPane.createVisitor(object);
-      if (visitor != null) visitors.add(visitor);
-    }
-    return visitors;
   }
 
   private static void setModel(@NotNull JTree tree, @NotNull AsyncTreeModel model) {

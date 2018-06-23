@@ -10,11 +10,11 @@ class WW {
     }
 
     {
-        x(<flown111111>"zzz");
+        x(<flown1211><flown111111>"zzz");
     }
 
-    String x(String <flown11111>g) {
-        String d = <flown1>foo(<flown1111>g);
+    String x(String <flown121><flown11111>g) {
+        String d = <flown1>foo(<flown12><flown1111>g);
         return <caret>d;
     }
 

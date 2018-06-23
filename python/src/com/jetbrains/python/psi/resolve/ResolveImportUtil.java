@@ -9,6 +9,7 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -37,12 +38,7 @@ public class ResolveImportUtil {
   private ResolveImportUtil() {
   }
 
-  private static final ThreadLocal<Set<String>> ourBeingImported = new ThreadLocal<Set<String>>() {
-    @Override
-    protected Set<String> initialValue() {
-      return new HashSet<>();
-    }
-  };
+  private static final ThreadLocal<Set<String>> ourBeingImported = ThreadLocal.withInitial(() -> new HashSet<>());
 
   public static boolean isAbsoluteImportEnabledFor(PsiElement foothold) {
     if (foothold != null) {
@@ -335,10 +331,8 @@ public class ResolveImportUtil {
           }
         }
       }
-
-      final PsiFile packageInit = PyUtil.as(PyUtil.turnDirIntoInit(parentDir), PsiFile.class);
-      if (!withoutForeign && packageInit != null) {
-        final PsiElement foreign = resolveForeignImports(packageInit, referencedName);
+      if (!withoutForeign && parent instanceof PsiFile) {
+        final PsiElement foreign = resolveForeignImports((PsiFile)parent, referencedName);
         if (foreign != null) {
           final ResolveResultList results = new ResolveResultList();
           results.addAll(resolved);
@@ -362,9 +356,9 @@ public class ResolveImportUtil {
   private static List<RatedResolveResult> resolveMemberFromReferenceTypeProviders(@NotNull PsiElement parent,
                                                                                   @NotNull String referencedName) {
     final PyResolveContext resolveContext = PyResolveContext.defaultContext();
-    final PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
-    if (refType != null) {
-      final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
+    final Ref<PyType> refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
+    if (refType != null && !refType.isNull()) {
+      final List<? extends RatedResolveResult> result = refType.get().resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
       if (result != null) {
         return Lists.newArrayList(result);
       }

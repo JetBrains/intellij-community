@@ -703,7 +703,11 @@ public class EquivalenceChecker {
       if (qualifier2 == null) {
         return EXACT_MISMATCH;
       }
-      return expressionsMatch(qualifier1, qualifier2);
+      Match match = expressionsMatch(qualifier1, qualifier2);
+      if (match.isExactMismatch()) {
+        return new Match(qualifier1, qualifier2);
+      }
+      return match;
     }
     else {
       if (qualifier2 != null && !(qualifier2 instanceof PsiThisExpression || qualifier2 instanceof PsiSuperExpression)) {

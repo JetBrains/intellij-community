@@ -393,6 +393,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testUpdateContractOnParameterRemoval() throws Exception {
+    doSingleFileTest();
+  }
+
   private void doTest(@NonNls final String qClassName) {
     doTest((rootDir, rootAfter) -> this.performAction(qClassName));
   }

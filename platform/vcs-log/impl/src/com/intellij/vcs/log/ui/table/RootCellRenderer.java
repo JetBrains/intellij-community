@@ -20,22 +20,28 @@ import com.intellij.ui.ScrollingUtil;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import com.intellij.vcs.log.ui.AbstractVcsLogUi;
+import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.VcsLogColorManager;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 
+import static com.intellij.vcs.log.impl.CommonUiProperties.SHOW_ROOT_NAMES;
+
 class RootCellRenderer extends JBLabel implements TableCellRenderer {
-  @NotNull private final AbstractVcsLogUi myUi;
+  @NotNull private final VcsLogUiProperties myProperties;
+  @NotNull private final VcsLogColorManager myColorManager;
   @NotNull private Color myColor = UIUtil.getTableBackground();
   @NotNull private Color myBorderColor = UIUtil.getTableBackground();
   private boolean isNarrow = true;
+  private int myRowHeight;
 
-  RootCellRenderer(@NotNull AbstractVcsLogUi ui) {
+  RootCellRenderer(@NotNull VcsLogUiProperties properties, @NotNull VcsLogColorManager colorManager) {
     super("", CENTER);
-    myUi = ui;
+    myProperties = properties;
+    myColorManager = colorManager;
   }
 
   @Override
@@ -45,13 +51,14 @@ class RootCellRenderer extends JBLabel implements TableCellRenderer {
     int width = getWidth();
 
     if (isNarrow) {
-      g.fillRect(0, 0, width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), myUi.getTable().getRowHeight());
+      g.fillRect(0, 0, width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), myRowHeight);
       g.setColor(myBorderColor);
-      g.fillRect(width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), 0, JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH),
-                 myUi.getTable().getRowHeight());
+      g.fillRect(width - JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH), 0,
+                 JBUI.scale(VcsLogGraphTable.ROOT_INDICATOR_WHITE_WIDTH),
+                 myRowHeight);
     }
     else {
-      g.fillRect(0, 0, width, myUi.getTable().getRowHeight());
+      g.fillRect(0, 0, width, myRowHeight);
     }
 
     super.paintComponent(g);
@@ -64,7 +71,7 @@ class RootCellRenderer extends JBLabel implements TableCellRenderer {
 
     if (value instanceof VirtualFile) {
       VirtualFile root = (VirtualFile)value;
-      int readableRow = ScrollingUtil.getReadableRow(table, Math.round(myUi.getTable().getRowHeight() * 0.5f));
+      int readableRow = ScrollingUtil.getReadableRow(table, Math.round(table.getRowHeight() * 0.5f));
       if (row < readableRow) {
         text = "";
       }
@@ -74,7 +81,7 @@ class RootCellRenderer extends JBLabel implements TableCellRenderer {
       else {
         text = "";
       }
-      color = VcsLogGraphTable.getRootBackgroundColor(root, myUi.getColorManager());
+      color = VcsLogGraphTable.getRootBackgroundColor(root, myColorManager);
     }
     else {
       text = null;
@@ -87,7 +94,7 @@ class RootCellRenderer extends JBLabel implements TableCellRenderer {
     myBorderColor = background;
     setForeground(UIUtil.getTableForeground(false));
 
-    if (myUi.isShowRootNames()) {
+    if (myProperties.exists(SHOW_ROOT_NAMES) && myProperties.get(SHOW_ROOT_NAMES)) {
       setText(text);
       isNarrow = false;
     }
@@ -95,6 +102,8 @@ class RootCellRenderer extends JBLabel implements TableCellRenderer {
       setText("");
       isNarrow = true;
     }
+
+    myRowHeight = table.getRowHeight();
 
     return this;
   }

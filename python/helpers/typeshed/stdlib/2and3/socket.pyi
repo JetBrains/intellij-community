@@ -8,6 +8,7 @@
 import sys
 from typing import Any, Iterable, Tuple, List, Optional, Union, overload, TypeVar
 
+_WriteBuffer = Union[bytearray, memoryview]
 
 # ----- variables and constants -----
 
@@ -550,9 +551,9 @@ class socket:
 
     # return type is an address
     def recvfrom(self, bufsize: int, flags: int = ...) -> Any: ...
-    def recvfrom_into(self, buffer: bytearray, nbytes: int,
+    def recvfrom_into(self, buffer: _WriteBuffer, nbytes: int,
                       flags: int = ...) -> Any: ...
-    def recv_into(self, buffer: bytearray, nbytes: int,
+    def recv_into(self, buffer: _WriteBuffer, nbytes: int,
                   flags: int = ...) -> Any: ...
     def send(self, data: bytes, flags: int = ...) -> int: ...
     def sendall(self, data: bytes, flags: int =...) -> None:
@@ -569,14 +570,14 @@ class socket:
     if sys.version_info >= (3, 3):
         def recvmsg(self, __bufsize: int, __ancbufsize: int = ...,
                     __flags: int = ...) -> Tuple[bytes, List[_CMSG], int, Any]: ...
-        def recvmsg_into(self, __buffers: Iterable[bytearray], __ancbufsize: int = ...,
+        def recvmsg_into(self, __buffers: Iterable[_WriteBuffer], __ancbufsize: int = ...,
                          __flags: int = ...) -> Tuple[int, List[_CMSG], int, Any]: ...
         def sendmsg(self, __buffers: Iterable[bytes], __ancdata: Iterable[_CMSG] = ...,
                     __flags: int = ..., __address: Any = ...) -> int: ...
 
 
 # ----- functions -----
-def create_connection(address: Tuple[str, int],
+def create_connection(address: Tuple[Optional[str], int],
                       timeout: float = ...,
                       source_address: Tuple[str, int] = ...) -> socket: ...
 

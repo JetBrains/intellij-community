@@ -2,17 +2,13 @@
 package com.intellij.ui.popup;
 
 import com.intellij.CommonBundle;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.IdeTooltipManager;
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.impl.ActionMenu;
-import com.intellij.openapi.actionSystem.impl.PresentationFactory;
-import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -26,26 +22,22 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.EmptyRunnable;
-import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
+import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.HintHint;
 import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.SizedIcon;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.ui.popup.mock.MockConfirmation;
 import com.intellij.ui.popup.tree.TreePopupImpl;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.StatusText;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,14 +52,13 @@ import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
+import java.util.function.Supplier;
 import java.util.stream.Collectors;
 
 import static com.intellij.openapi.actionSystem.Presentation.PROP_TEXT;
-import static com.intellij.openapi.actionSystem.Presentation.restoreTextWithMnemonic;
 
 public class PopupFactoryImpl extends JBPopupFactory {
 
@@ -81,6 +72,12 @@ public class PopupFactoryImpl extends JBPopupFactory {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.popup.PopupFactoryImpl");
 
   private final Map<Disposable, List<Balloon>> myStorage = ContainerUtil.createWeakMap();
+
+  @NotNull
+  @Override
+  public <T> IPopupChooserBuilder<T> createPopupChooserBuilder(@NotNull List<T> list) {
+    return new PopupChooserBuilder<>(new JBList<>(new CollectionListModel<>(list)));
+  }
 
   @NotNull
   @Override
@@ -117,6 +114,21 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return null;
   }
 
+  @Override
+  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JList list) {
+    return new PopupListAdapter(builder, list);
+  }
+
+  @Override
+  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTree tree) {
+    return new PopupTreeAdapter(builder, tree);
+  }
+
+  @Override
+  protected PopupChooserBuilder.PopupComponentAdapter createPopupComponentAdapter(PopupChooserBuilder builder, JTable table) {
+    return new PopupTableAdapter(builder, table);
+  }
+
   @NotNull
   @Override
   public ListPopup createConfirmation(String title,
@@ -149,69 +161,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return app == null || !app.isUnitTestMode() ? new ListPopupImpl(step) : new MockConfirmation(step, yesText);
   }
 
-
-  private static ListPopup createActionGroupPopup(final String title,
-                                                  @NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean useAlphaAsNumbers,
-                                                  boolean showDisabledActions,
-                                                  boolean honorActionMnemonics,
-                                                  final Runnable disposeCallback,
-                                          final int maxRowCount) {
-    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-                                  maxRowCount, null, null);
-  }
-
-  public ListPopup createActionGroupPopup(final String title,
-                                          final ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          boolean showNumbers,
-                                          boolean showDisabledActions,
-                                          boolean honorActionMnemonics,
-                                          final Runnable disposeCallback,
-                                          final int maxRowCount) {
-    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, showDisabledActions, honorActionMnemonics, disposeCallback,
-                                  maxRowCount, null);
-  }
-
-  @NotNull
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid aid,
-                                          boolean showDisabledActions,
-                                          Runnable disposeCallback,
-                                          int maxRowCount,
-                                          Condition<AnAction> preselectActionCondition,
-                                          @Nullable String actionPlace) {
-    return new ActionGroupPopup(title,
-                                actionGroup,
-                                dataContext,
-                                aid == ActionSelectionAid.ALPHA_NUMBERING || aid == ActionSelectionAid.NUMBERING,
-                                aid == ActionSelectionAid.ALPHA_NUMBERING,
-                                showDisabledActions,
-                                aid == ActionSelectionAid.MNEMONICS,
-                                disposeCallback,
-                                maxRowCount,
-                                preselectActionCondition,
-                                actionPlace);
-  }
-
-  private static ListPopup createActionGroupPopup(String title,
-                                                  @NotNull ActionGroup actionGroup,
-                                                  @NotNull DataContext dataContext,
-                                                  boolean showNumbers,
-                                                  boolean useAlphaAsNumbers,
-                                                  boolean showDisabledActions,
-                                                  boolean honorActionMnemonics,
-                                                  Runnable disposeCallback,
-                                                  int maxRowCount,
-                                                  Condition<AnAction> preselectActionCondition,
-                                                  @Nullable String actionPlace) {
-    return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics,
-                                disposeCallback, maxRowCount, preselectActionCondition, actionPlace);
-  }
 
   public static class ActionGroupPopup extends ListPopupImpl {
 
@@ -256,7 +205,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                @NotNull DataContext dataContext,
                                @Nullable String actionPlace,
                                int maxRowCount) {
-      super(aParent, step, maxRowCount);
+      super(aParent, step, null, maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
@@ -302,14 +251,15 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             boolean showDisabledActions,
                                             boolean honorActionMnemonics,
                                             Condition<AnAction> preselectActionCondition,
-                                            @Nullable String actionPlace, boolean autoSelection) {
+                                            @Nullable String actionPlace,
+                                            boolean autoSelection) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
       List<ActionItem> items =
         getActionItems(actionGroup, dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics, actionPlace);
 
-      return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
+      return new ActionPopupStep(items, title, getComponentContextSupplier(component), actionPlace, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
                                  preselectActionCondition, autoSelection, showDisabledActions);
     }
 
@@ -348,7 +298,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         KeepingPopupOpenAction dontClosePopupAction = getActionByClass(selectedValue, actionPopupStep, KeepingPopupOpenAction.class);
         if (dontClosePopupAction != null) {
           actionPopupStep.performAction((AnAction)dontClosePopupAction, e != null ? e.getModifiers() : 0, e);
-          for (ActionItem item : actionPopupStep.myItems) {
+          for (ActionItem item : actionPopupStep.getValues()) {
             updateActionItem(item);
           }
           getList().repaint();
@@ -372,7 +322,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
         actionPopupStep.performAction(action, 0);
       }
 
-      for (ActionItem item : actionPopupStep.myItems) {
+      for (ActionItem item : actionPopupStep.getValues()) {
         updateActionItem(item);
       }
 
@@ -389,6 +339,34 @@ public class PopupFactoryImpl extends JBPopupFactory {
   }
 
   @NotNull
+  private static Supplier<DataContext> getComponentContextSupplier(Component component) {
+    return () -> DataManager.getInstance().getDataContext(component);
+  }
+
+  @NotNull
+  public ListPopup createActionGroupPopup(String title,
+                                          @NotNull ActionGroup actionGroup,
+                                          @NotNull DataContext dataContext,
+                                          ActionSelectionAid aid,
+                                          boolean showDisabledActions,
+                                          Runnable disposeCallback,
+                                          int maxRowCount,
+                                          Condition<AnAction> preselectActionCondition,
+                                          @Nullable String actionPlace) {
+    return new ActionGroupPopup(title,
+                                actionGroup,
+                                dataContext,
+                                aid == ActionSelectionAid.ALPHA_NUMBERING || aid == ActionSelectionAid.NUMBERING,
+                                aid == ActionSelectionAid.ALPHA_NUMBERING,
+                                showDisabledActions,
+                                aid == ActionSelectionAid.MNEMONICS,
+                                disposeCallback,
+                                maxRowCount,
+                                preselectActionCondition,
+                                actionPlace);
+  }
+
+  @NotNull
   @Override
   public ListPopup createActionGroupPopup(final String title,
                                           @NotNull final ActionGroup actionGroup,
@@ -399,103 +377,27 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                           final Runnable disposeCallback,
                                           final int maxRowCount,
                                           final Condition<AnAction> preselectActionCondition) {
-    return createActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
+    return new ActionGroupPopup(title, actionGroup, dataContext, showNumbers, true, showDisabledActions, honorActionMnemonics,
                                   disposeCallback, maxRowCount, preselectActionCondition, null);
   }
 
   @NotNull
   @Override
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid selectionAidMethod,
-                                          boolean showDisabledActions) {
-    return createActionGroupPopup(title, actionGroup, dataContext,
-                                  selectionAidMethod == ActionSelectionAid.NUMBERING || selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
-                                  selectionAidMethod == ActionSelectionAid.ALPHA_NUMBERING,
-                                  showDisabledActions,
-                                  selectionAidMethod == ActionSelectionAid.MNEMONICS,
-                                  null, -1);
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid selectionAidMethod,
-                                          boolean showDisabledActions,
-                                          @Nullable String actionPlace) {
-    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod, showDisabledActions, null, -1, null, actionPlace);
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createActionGroupPopup(String title,
-                                          @NotNull ActionGroup actionGroup,
-                                          @NotNull DataContext dataContext,
-                                          ActionSelectionAid selectionAidMethod,
-                                          boolean showDisabledActions,
-                                          Runnable disposeCallback,
-                                          int maxRowCount) {
-    return createActionGroupPopup(title, actionGroup, dataContext, selectionAidMethod, showDisabledActions, disposeCallback, maxRowCount, null, null);
-  }
-
-  @NotNull
-  @Override
-  public ListPopupStep createActionsStep(@NotNull final ActionGroup actionGroup,
+  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup,
                                          @NotNull DataContext dataContext,
-                                         final boolean showNumbers,
-                                         final boolean showDisabledActions,
-                                         final String title,
-                                         final Component component,
-                                         final boolean honorActionMnemonics) {
-    return createActionsStep(actionGroup, dataContext, showNumbers, showDisabledActions, title, component, honorActionMnemonics, 0, false);
-  }
-
-  private static ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext,
-                                                 boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
-                                                 String title, Component component, boolean honorActionMnemonics,
-                                                 final int defaultOptionIndex, final boolean autoSelectionEnabled) {
-    final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
-                                                                  showDisabledActions, honorActionMnemonics);
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items),
-                               action -> defaultOptionIndex >= 0 &&
-                                      defaultOptionIndex < items.size() &&
-                                      items.get(defaultOptionIndex).getAction().equals(action), autoSelectionEnabled, showDisabledActions);
-  }
-
-  @NotNull
-  private static List<ActionItem> makeActionItemsFromActionGroup(@NotNull ActionGroup actionGroup,
-                                                                 @NotNull DataContext dataContext,
-                                                                 boolean showNumbers,
-                                                                 boolean useAlphaAsNumbers,
-                                                                 boolean showDisabledActions,
-                                                                 boolean honorActionMnemonics) {
-    final ActionStepBuilder builder = new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions,
-                                                            honorActionMnemonics);
-    builder.buildGroup(actionGroup);
-    return builder.getItems();
-  }
-
-  @NotNull
-  private static ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext,
-                                                 boolean showNumbers, boolean useAlphaAsNumbers, boolean showDisabledActions,
-                                                 String title, Component component, boolean honorActionMnemonics,
-                                                 Condition<AnAction> preselectActionCondition, boolean autoSelectionEnabled) {
-    final List<ActionItem> items = makeActionItemsFromActionGroup(actionGroup, dataContext, showNumbers, useAlphaAsNumbers,
-                                                                  showDisabledActions, honorActionMnemonics);
-    return new ActionPopupStep(items, title, component, showNumbers || honorActionMnemonics && itemsHaveMnemonics(items), preselectActionCondition,
-                               autoSelectionEnabled, showDisabledActions);
-  }
-
-  @NotNull
-  @Override
-  public ListPopupStep createActionsStep(@NotNull ActionGroup actionGroup, @NotNull DataContext dataContext, boolean showNumbers, boolean showDisabledActions,
-                                         String title, Component component, boolean honorActionMnemonics, int defaultOptionIndex,
-                                         final boolean autoSelectionEnabled) {
-    return createActionsStep(actionGroup, dataContext, showNumbers, true, showDisabledActions, title, component, honorActionMnemonics,
-                             defaultOptionIndex, autoSelectionEnabled);
+                                         @Nullable String actionPlace,
+                                         boolean showNumbers,
+                                         boolean showDisabledActions,
+                                         String title,
+                                         Component component,
+                                         boolean honorActionMnemonics,
+                                         int defaultOptionIndex,
+                                         boolean autoSelectionEnabled) {
+    return ActionPopupStep.createActionsStep(
+      actionGroup, dataContext, showNumbers, true, showDisabledActions,
+      title, honorActionMnemonics, autoSelectionEnabled,
+      getComponentContextSupplier(component),
+      actionPlace, null, defaultOptionIndex);
   }
 
   private static boolean itemsHaveMnemonics(final List<ActionItem> items) {
@@ -691,275 +593,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     return AbstractPopup.getCenterOf(container, content);
   }
 
-  public static class ActionItem implements ShortcutProvider {
-    private final AnAction myAction;
-    private String myText;
-    private final boolean myIsEnabled;
-    private final Icon myIcon;
-    private final Icon mySelectedIcon;
-    private final boolean myPrependWithSeparator;
-    private final String mySeparatorText;
-    private final String myDescription;
-
-    private ActionItem(@NotNull AnAction action,
-                       @NotNull String text,
-                       @Nullable String description,
-                       boolean enabled,
-                       @Nullable Icon icon,
-                       @Nullable Icon selectedIcon,
-                       final boolean prependWithSeparator,
-                       String separatorText) {
-      myAction = action;
-      myText = text;
-      myIsEnabled = enabled;
-      myIcon = icon;
-      mySelectedIcon = selectedIcon;
-      myPrependWithSeparator = prependWithSeparator;
-      mySeparatorText = separatorText;
-      myDescription = description;
-      myAction.getTemplatePresentation().addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          if (evt.getPropertyName() == PROP_TEXT) {
-            myText = myAction.getTemplatePresentation().getText();
-          }
-        }
-      });
-    }
-
-    @NotNull
-    public AnAction getAction() {
-      return myAction;
-    }
-
-    @NotNull
-    public String getText() {
-      return myText;
-    }
-
-    @Nullable
-    public Icon getIcon(boolean selected) {
-      return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
-    }
-
-    public boolean isPrependWithSeparator() {
-      return myPrependWithSeparator;
-    }
-
-    public String getSeparatorText() {
-      return mySeparatorText;
-    }
-
-    public boolean isEnabled() { return myIsEnabled; }
-
-    public String getDescription() {
-      return myDescription;
-    }
-
-    @Nullable
-    @Override
-    public ShortcutSet getShortcut() {
-      return myAction.getShortcutSet();
-    }
-
-    @Override
-    public String toString() {
-      return myText;
-    }
-  }
-
-  public static class ActionPopupStep
-    implements ListPopupStepEx<ActionItem>, MnemonicNavigationFilter<ActionItem>, SpeedSearchFilter<ActionItem> {
-    private final List<ActionItem> myItems;
-    private final String myTitle;
-    private final Component myContext;
-    private final boolean myEnableMnemonics;
-    private final int myDefaultOptionIndex;
-    private final boolean myAutoSelectionEnabled;
-    private final boolean myShowDisabledActions;
-    private Runnable myFinalRunnable;
-    @Nullable private final Condition<AnAction> myPreselectActionCondition;
-
-    public ActionPopupStep(@NotNull final List<ActionItem> items, final String title, Component context, boolean enableMnemonics,
-                            @Nullable Condition<AnAction> preselectActionCondition, final boolean autoSelection, boolean showDisabledActions) {
-      myItems = items;
-      myTitle = title;
-      myContext = context;
-      myEnableMnemonics = enableMnemonics;
-      myDefaultOptionIndex = getDefaultOptionIndexFromSelectCondition(preselectActionCondition, items);
-      myPreselectActionCondition = preselectActionCondition;
-      myAutoSelectionEnabled = autoSelection;
-      myShowDisabledActions = showDisabledActions;
-    }
-
-    private static int getDefaultOptionIndexFromSelectCondition(@Nullable Condition<AnAction> preselectActionCondition,
-                                                                @NotNull List<ActionItem> items) {
-      int defaultOptionIndex = 0;
-      if (preselectActionCondition != null) {
-        for (int i = 0; i < items.size(); i++) {
-          final AnAction action = items.get(i).getAction();
-          if (preselectActionCondition.value(action)) {
-            defaultOptionIndex = i;
-            break;
-          }
-        }
-      }
-      return defaultOptionIndex;
-    }
-
-    @Override
-    @NotNull
-    public List<ActionItem> getValues() {
-      return myItems;
-    }
-
-    @Override
-    public boolean isSelectable(final ActionItem value) {
-      return value.isEnabled();
-    }
-
-    @Override
-    public int getMnemonicPos(final ActionItem value) {
-      final String text = getTextFor(value);
-      int i = text.indexOf(UIUtil.MNEMONIC);
-      if (i < 0) {
-        i = text.indexOf('&');
-      }
-      if (i < 0) {
-        i = text.indexOf('_');
-      }
-      return i;
-    }
-
-    @Override
-    public Icon getIconFor(final ActionItem aValue) {
-      return aValue.getIcon(false);
-    }
-
-    @Override
-    public Icon getSelectedIconFor(ActionItem value) {
-      return value.getIcon(true);
-    }
-
-    @Override
-    @NotNull
-    public String getTextFor(final ActionItem value) {
-      return value.getText();
-    }
-
-    @Nullable
-    @Override
-    public String getTooltipTextFor(ActionItem value) {
-      return value.getDescription();
-    }
-
-    @Override
-    public void setEmptyText(@NotNull StatusText emptyText) {
-    }
-
-    @Override
-    public ListSeparator getSeparatorAbove(final ActionItem value) {
-      return value.isPrependWithSeparator() ? new ListSeparator(value.getSeparatorText()) : null;
-    }
-
-    @Override
-    public int getDefaultOptionIndex() {
-      return myDefaultOptionIndex;
-    }
-
-    @Override
-    public String getTitle() {
-      return myTitle;
-    }
-
-    @Override
-    public PopupStep onChosen(final ActionItem actionChoice, final boolean finalChoice) {
-      return onChosen(actionChoice, finalChoice, 0);
-    }
-
-    @Override
-    public PopupStep onChosen(ActionItem actionChoice, boolean finalChoice, final int eventModifiers) {
-      if (!actionChoice.isEnabled()) return FINAL_CHOICE;
-      final AnAction action = actionChoice.getAction();
-      DataManager mgr = DataManager.getInstance();
-
-      final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
-
-      if (action instanceof ActionGroup && (!finalChoice || !((ActionGroup)action).canBePerformed(dataContext))) {
-          return createActionsStep((ActionGroup)action, dataContext, myEnableMnemonics, true, myShowDisabledActions, null, myContext, false,
-                                   myPreselectActionCondition, false);
-      }
-      else {
-        myFinalRunnable = () -> performAction(action, eventModifiers);
-        return FINAL_CHOICE;
-      }
-    }
-
-    public void performAction(@NotNull AnAction action, int modifiers) {
-      performAction(action, modifiers, null);
-    }
-
-    public void performAction(@NotNull AnAction action, int modifiers, InputEvent inputEvent) {
-      final DataManager mgr = DataManager.getInstance();
-      final DataContext dataContext = myContext != null ? mgr.getDataContext(myContext) : mgr.getDataContext();
-      final AnActionEvent event = new AnActionEvent(inputEvent, dataContext, ActionPlaces.UNKNOWN, action.getTemplatePresentation().clone(),
-                                                    ActionManager.getInstance(), modifiers);
-      event.setInjectedContext(action.isInInjectedContext());
-      if (ActionUtil.lastUpdateAndCheckDumb(action, event, false)) {
-        ActionUtil.performActionDumbAware(action, event);
-      }
-    }
-
-    @Override
-    public Runnable getFinalRunnable() {
-      return myFinalRunnable;
-    }
-
-    @Override
-    public boolean hasSubstep(final ActionItem selectedValue) {
-      return selectedValue != null && selectedValue.isEnabled() && selectedValue.getAction() instanceof ActionGroup;
-    }
-
-    @Override
-    public void canceled() {
-    }
-
-    @Override
-    public boolean isMnemonicsNavigationEnabled() {
-      return myEnableMnemonics;
-    }
-
-    @Override
-    public MnemonicNavigationFilter<ActionItem> getMnemonicNavigationFilter() {
-      return this;
-    }
-
-    @Override
-    public boolean canBeHidden(final ActionItem value) {
-      return true;
-    }
-
-    @Override
-    public String getIndexedString(final ActionItem value) {
-      return getTextFor(value);
-    }
-
-    @Override
-    public boolean isSpeedSearchEnabled() {
-      return true;
-    }
-
-    @Override
-    public boolean isAutoSelectionEnabled() {
-      return myAutoSelectionEnabled;
-    }
-
-    @Override
-    public SpeedSearchFilter<ActionItem> getSpeedSearchFilter() {
-      return this;
-    }
-  }
-
   @Override
   @NotNull
   public List<JBPopup> getChildPopups(@NotNull final Component component) {
@@ -979,169 +612,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
   @Override
   public boolean isPopupActive() {
   return IdeEventQueue.getInstance().isPopupActive();
-  }
-
-  private static class ActionStepBuilder extends PresentationFactory {
-    private final List<ActionItem>                myListModel;
-    private final DataContext                     myDataContext;
-    private final boolean                         myShowNumbers;
-    private final boolean                         myUseAlphaAsNumbers;
-    private final boolean                         myShowDisabled;
-    private       int                             myCurrentNumber;
-    private       boolean                         myPrependWithSeparator;
-    private       String                          mySeparatorText;
-    private final boolean                         myHonorActionMnemonics;
-    private Icon myEmptyIcon;
-    private int myMaxIconWidth  = -1;
-    private int myMaxIconHeight = -1;
-    @NotNull private String myActionPlace;
-
-    private ActionStepBuilder(@NotNull DataContext dataContext, final boolean showNumbers, final boolean useAlphaAsNumbers,
-                              final boolean showDisabled, final boolean honorActionMnemonics)
-    {
-      myUseAlphaAsNumbers = useAlphaAsNumbers;
-      myListModel = new ArrayList<>();
-      myDataContext = dataContext;
-      myShowNumbers = showNumbers;
-      myShowDisabled = showDisabled;
-      myCurrentNumber = 0;
-      myPrependWithSeparator = false;
-      mySeparatorText = null;
-      myHonorActionMnemonics = honorActionMnemonics;
-      myActionPlace = ActionPlaces.UNKNOWN;
-    }
-
-    public void setActionPlace(@NotNull String actionPlace) {
-      myActionPlace = actionPlace;
-    }
-
-    @NotNull
-    public List<ActionItem> getItems() {
-      return myListModel;
-    }
-
-    public void buildGroup(@NotNull ActionGroup actionGroup) {
-      calcMaxIconSize(actionGroup);
-      myEmptyIcon = myMaxIconHeight != -1 && myMaxIconWidth != -1 ? EmptyIcon.create(myMaxIconWidth, myMaxIconHeight) : null;
-
-      appendActionsFromGroup(actionGroup);
-
-      if (myListModel.isEmpty()) {
-        myListModel.add(new ActionItem(Utils.EMPTY_MENU_FILLER, Utils.NOTHING_HERE, null, false, null, null, false, null));
-      }
-    }
-
-    private void calcMaxIconSize(final ActionGroup actionGroup) {
-      AnAction[] actions = actionGroup.getChildren(createActionEvent(actionGroup));
-      for (AnAction action : actions) {
-        if (action == null) continue;
-        if (action instanceof ActionGroup) {
-          final ActionGroup group = (ActionGroup)action;
-          if (!group.isPopup()) {
-            calcMaxIconSize(group);
-            continue;
-          }
-        }
-
-        Icon icon = action.getTemplatePresentation().getIcon();
-        if (icon == null && action instanceof Toggleable) icon = EmptyIcon.ICON_16;
-        if (icon != null) {
-          final int width = icon.getIconWidth();
-          final int height = icon.getIconHeight();
-          if (myMaxIconWidth < width) {
-            myMaxIconWidth = width;
-          }
-          if (myMaxIconHeight < height) {
-            myMaxIconHeight = height;
-          }
-        }
-      }
-    }
-
-    @NotNull
-    private AnActionEvent createActionEvent(@NotNull AnAction actionGroup) {
-      final AnActionEvent actionEvent =
-        new AnActionEvent(null, myDataContext, myActionPlace, getPresentation(actionGroup), ActionManager.getInstance(), 0);
-      actionEvent.setInjectedContext(actionGroup.isInInjectedContext());
-      return actionEvent;
-    }
-
-    private void appendActionsFromGroup(@NotNull ActionGroup actionGroup) {
-      List<AnAction> newVisibleActions = ContainerUtil.newArrayListWithCapacity(100);
-      Utils.expandActionGroup(false, actionGroup, newVisibleActions, this, myDataContext, myActionPlace, ActionManager.getInstance());
-      for (AnAction action : newVisibleActions) {
-        if (action == null) {
-          LOG.error("null action in group " + actionGroup);
-          continue;
-        }
-        if (action instanceof Separator) {
-          myPrependWithSeparator = true;
-          mySeparatorText = ((Separator)action).getText();
-        }
-        else {
-          appendAction(action);
-        }
-      }
-    }
-
-    private void appendAction(@NotNull AnAction action) {
-      Presentation presentation = getPresentation(action);
-      AnActionEvent event = createActionEvent(action);
-
-      ActionUtil.performDumbAwareUpdate(LaterInvocator.isInModalContext(), action, event, true);
-      boolean enabled = presentation.isEnabled();
-      if ((myShowDisabled || enabled) && presentation.isVisible()) {
-        String text = presentation.getText();
-        if (myShowNumbers) {
-          if (myCurrentNumber < 9) {
-            text = "&" + (myCurrentNumber + 1) + ". " + text;
-          }
-          else if (myCurrentNumber == 9) {
-            text = "&" + 0 + ". " + text;
-          }
-          else if (myUseAlphaAsNumbers) {
-            text = "&" + (char)('A' + myCurrentNumber - 10) + ". " + text;
-          }
-          myCurrentNumber++;
-        }
-        else if (myHonorActionMnemonics) {
-          text = restoreTextWithMnemonic(text, action.getTemplatePresentation().getMnemonic());
-        }
-
-        Icon icon = presentation.getIcon();
-        Icon selectedIcon = presentation.getSelectedIcon();
-        Icon disabledIcon = presentation.getDisabledIcon();
-        if (icon == null && selectedIcon == null) {
-          @NonNls final String actionId = ActionManager.getInstance().getId(action);
-          if (actionId != null && actionId.startsWith("QuickList.")) {
-            icon = AllIcons.Actions.QuickList;
-          }
-          else if (action instanceof Toggleable && Boolean.TRUE.equals(presentation.getClientProperty(Toggleable.SELECTED_PROPERTY))) {
-            icon = IconCache.getIcon("checkmark", false, false, true);
-            selectedIcon = IconCache.getIcon("checkmark", true, false, true);
-            disabledIcon = IconCache.getIcon("checkmark", false, false, false);
-          }
-        }
-        if (!enabled) {
-          icon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(icon);
-          selectedIcon = disabledIcon != null ? disabledIcon : IconLoader.getDisabledIcon(selectedIcon);
-        }
-
-        if (myMaxIconWidth != -1 && myMaxIconHeight != -1) {
-          if (icon != null) icon = new SizedIcon(icon, myMaxIconWidth, myMaxIconHeight);
-          if (selectedIcon != null) selectedIcon = new SizedIcon(selectedIcon, myMaxIconWidth, myMaxIconHeight);
-        }
-
-        if (icon == null) icon = selectedIcon != null ? selectedIcon : myEmptyIcon;
-        boolean prependSeparator = (!myListModel.isEmpty() || mySeparatorText != null) && myPrependWithSeparator;
-        assert text != null : action + " has no presentation";
-        myListModel.add(
-          new ActionItem(action, text, (String)presentation.getClientProperty(JComponent.TOOL_TIP_TEXT_KEY),
-                         enabled, icon, selectedIcon, prependSeparator, mySeparatorText));
-        myPrependWithSeparator = false;
-        mySeparatorText = null;
-      }
-    }
   }
 
   @NotNull
@@ -1214,5 +684,83 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                                      @Nullable HyperlinkListener listener)
   {
     return createHtmlTextBalloonBuilder(htmlContent, messageType.getDefaultIcon(), messageType.getPopupBackground(), listener);
+  }
+
+
+  public static class ActionItem implements ShortcutProvider {
+    private final AnAction myAction;
+    private String myText;
+    private final boolean myIsEnabled;
+    private final Icon myIcon;
+    private final Icon mySelectedIcon;
+    private final boolean myPrependWithSeparator;
+    private final String mySeparatorText;
+    private final String myDescription;
+
+    ActionItem(@NotNull AnAction action,
+               @NotNull String text,
+               @Nullable String description,
+               boolean enabled,
+               @Nullable Icon icon,
+               @Nullable Icon selectedIcon,
+               final boolean prependWithSeparator,
+               String separatorText) {
+      myAction = action;
+      myText = text;
+      myIsEnabled = enabled;
+      myIcon = icon;
+      mySelectedIcon = selectedIcon;
+      myPrependWithSeparator = prependWithSeparator;
+      mySeparatorText = separatorText;
+      myDescription = description;
+      myAction.getTemplatePresentation().addPropertyChangeListener(new PropertyChangeListener() {
+        @Override
+        public void propertyChange(PropertyChangeEvent evt) {
+          if (evt.getPropertyName() == PROP_TEXT) {
+            myText = myAction.getTemplatePresentation().getText();
+          }
+        }
+      });
+    }
+
+    @NotNull
+    public AnAction getAction() {
+      return myAction;
+    }
+
+    @NotNull
+    public String getText() {
+      return myText;
+    }
+
+    @Nullable
+    public Icon getIcon(boolean selected) {
+      return selected && mySelectedIcon != null ? mySelectedIcon : myIcon;
+    }
+
+    public boolean isPrependWithSeparator() {
+      return myPrependWithSeparator;
+    }
+
+    public String getSeparatorText() {
+      return mySeparatorText;
+    }
+
+    public boolean isEnabled() { return myIsEnabled; }
+
+    public String getDescription() {
+      return myDescription;
+    }
+
+    @Nullable
+    @Override
+    public ShortcutSet getShortcut() {
+      return myAction.getShortcutSet();
+    }
+
+    @Override
+    public String toString() {
+      return myText;
+    }
   }
 }

@@ -3,12 +3,15 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.util.ObjectUtils;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -16,41 +19,78 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 import java.util.stream.Stream;
 
+import static com.intellij.util.ObjectUtils.tryCast;
+
 final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
-  private static final Object ANY_VALUE = new Object();
+  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.dataFlow.DataFlowInstructionVisitor");
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
-  private final Map<MethodCallInstruction, Boolean> myFailingCalls = new HashMap<>();
+  private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
   private final Map<PsiMethodCallExpression, ThreeState> myBooleanCalls = new HashMap<>();
-  private final Map<MethodCallInstruction, ThreeState> myOfNullableCalls = new HashMap<>();
+  private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
-  private final MultiMap<PushInstruction, Object> myPossibleVariableValues = MultiMap.createSet();
+  private final Map<PsiReferenceExpression, DfaConstValue> myValues = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
   private boolean myAlwaysReturnsNotNull = true;
+  private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
 
   @Override
   public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     PsiExpression left = instruction.getLExpression();
     if (left != null && !Boolean.FALSE.equals(mySameValueAssigned.get(left))) {
-      DfaValue dest = memState.peek();
-      // Reporting of floating zero is skipped, because this produces false-positives on the code like
-      // if(x == -0.0) x = 0.0;
-      if (dest instanceof DfaVariableValue || (dest instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)dest).getValue()))) {
-        DfaMemoryState copy = memState.createCopy();
-        copy.pop();
-        DfaValue src = copy.peek();
-        boolean sameValue = !copy.applyCondition(runner.getFactory().createCondition(dest, DfaRelationValue.RelationType.NE, src));
-        mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
-      }
-      else {
-        mySameValueAssigned.put(left, Boolean.FALSE);
+      if (!left.isPhysical()) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("Non-physical element in assignment instruction: " + left.getParent().getText(), new Throwable());
+        }
+      } else {
+        DfaValue value = memState.peek();
+        // Reporting of floating zero is skipped, because this produces false-positives on the code like
+        // if(x == -0.0) x = 0.0;
+        if (value instanceof DfaVariableValue || (value instanceof DfaConstValue && !isFloatingZero(((DfaConstValue)value).getValue()))) {
+          DfaMemoryState copy = memState.createCopy();
+          copy.pop();
+          DfaValue target = copy.peek();
+          boolean sameValue =
+            !isAssignmentToDefaultValueInConstructor(instruction, runner, target) &&
+            !copy.applyCondition(runner.getFactory().createCondition(value, DfaRelationValue.RelationType.NE, target));
+          mySameValueAssigned.merge(left, sameValue, Boolean::logicalAnd);
+        }
+        else {
+          mySameValueAssigned.put(left, Boolean.FALSE);
+        }
       }
     }
     return super.visitAssign(instruction, runner, memState);
+  }
+
+  private static boolean isAssignmentToDefaultValueInConstructor(AssignInstruction instruction, DataFlowRunner runner, DfaValue target) {
+    if (!(target instanceof DfaVariableValue)) return false;
+    DfaVariableValue var = (DfaVariableValue)target;
+    if (!(var.getPsiVariable() instanceof PsiField) || var.getQualifier() == null ||
+        !(var.getQualifier().getSource() instanceof DfaExpressionFactory.ThisSource)) {
+      return false;
+    }
+
+    // chained assignment like this.a = this.b = 0; is also supported
+    PsiExpression rExpression = instruction.getRExpression();
+    while (rExpression instanceof PsiAssignmentExpression &&
+           ((PsiAssignmentExpression)rExpression).getOperationTokenType().equals(JavaTokenType.EQ)) {
+      rExpression = ((PsiAssignmentExpression)rExpression).getRExpression();
+    }
+    if (rExpression == null) return false;
+    DfaValue dest = runner.getFactory().createValue(rExpression);
+    if (!(dest instanceof DfaConstValue)) return false;
+    Object value = ((DfaConstValue)dest).getValue();
+
+    PsiType type = var.getVariableType();
+    boolean isDefaultValue = Objects.equals(PsiTypesUtil.getDefaultValue(type), value) || Long.valueOf(0L).equals(value) && PsiType.INT.equals(type);
+    if (!isDefaultValue) return false;
+    PsiMethod method = PsiTreeUtil.getParentOfType(rExpression, PsiMethod.class);
+    return method != null && method.isConstructor();
   }
 
   private static boolean isFloatingZero(Object value) {
@@ -83,7 +123,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myArrayStoreProblems;
   }
 
-  Map<MethodCallInstruction, ThreeState> getOfNullableCalls() {
+  Map<PsiElement, ThreeState> getOfNullableCalls() {
     return myOfNullableCalls;
   }
 
@@ -103,13 +143,16 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return receiver ? myReceiverMutabilityViolation : myArgumentMutabilityViolation;
   }
 
+  public List<DfaMemoryState> getEndOfInitializerStates() {
+    return myEndOfInitializerStates;
+  }
+
   Stream<PsiArrayAccessExpression> outOfBoundsArrayAccesses() {
     return StreamEx.ofKeys(myOutOfBoundsArrayAccesses, ThreeState.YES::equals);
   }
 
-  Map<PsiCall, List<MethodContract>> getAlwaysFailingCalls() {
-    return StreamEx.ofKeys(myFailingCalls, v -> v)
-      .mapToEntry(MethodCallInstruction::getCallExpression, MethodCallInstruction::getContracts).toMap();
+  StreamEx<PsiCallExpression> alwaysFailingCalls() {
+    return StreamEx.ofKeys(myFailingCalls, v -> v);
   }
 
   boolean isAlwaysReturnsNotNull(Instruction[] instructions) {
@@ -118,47 +161,34 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
-                                               DataFlowRunner runner,
-                                               DfaMemoryState memState) {
-    if (instruction.matches(DfaOptionalSupport.OPTIONAL_OF_NULLABLE)) {
-      DfaValue arg = memState.peek();
-      ThreeState nullArg = memState.isNull(arg) ? ThreeState.YES : memState.isNotNull(arg) ? ThreeState.NO : ThreeState.UNSURE;
-      myOfNullableCalls.merge(instruction, nullArg, ThreeState::merge);
-    }
-    DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-    if (hasNonTrivialFailingContracts(instruction)) {
-      DfaConstValue fail = runner.getFactory().getConstFactory().getContractFail();
-      boolean allFail = Arrays.stream(states).allMatch(s -> s.getMemoryState().peek() == fail);
-      myFailingCalls.merge(instruction, allFail, Boolean::logicalAnd);
-    }
-    handleBooleanCalls(instruction, states);
-    return states;
+  protected void beforeExpressionPush(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @Nullable TextRange range,
+                                      @NotNull DfaMemoryState memState) {
+    expression.accept(new ExpressionVisitor(value, memState));
   }
 
-  void handleBooleanCalls(MethodCallInstruction instruction, DfaInstructionState[] states) {
-    if (!hasNonTrivialBooleanContracts(instruction)) return;
-    PsiMethod method = instruction.getTargetMethod();
-    if (method == null || !ControlFlowAnalyzer.isPure(method)) return;
-    PsiMethodCallExpression call = ObjectUtils.tryCast(instruction.getCallExpression(), PsiMethodCallExpression.class);
-    if (call == null || myBooleanCalls.get(call) == ThreeState.UNSURE) return;
-    PsiElement parent = call.getParent();
-    if (parent instanceof PsiExpressionStatement) return;
-    if (parent instanceof PsiLambdaExpression &&
-        PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType((PsiLambdaExpression)parent))) {
-      return;
+  @Override
+  protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
+                                                 @NotNull PsiMethodReferenceExpression methodRef,
+                                                 @NotNull DfaMemoryState state) {
+    if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.methodReferenceMatches(methodRef)) {
+      processOfNullableResult(value, state, methodRef.getReferenceNameElement());
     }
-    for (DfaInstructionState s : states) {
-      DfaValue val = s.getMemoryState().peek();
-      ThreeState state = ThreeState.UNSURE;
-      if (val instanceof DfaConstValue) {
-        Object value = ((DfaConstValue)val).getValue();
-        if (value instanceof Boolean) {
-          state = ThreeState.fromBoolean((Boolean)value);
-        }
+    PsiMethod method = tryCast(methodRef.resolve(), PsiMethod.class);
+    if (method != null) {
+      List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
+      if (contracts.isEmpty() || !contracts.get(0).isTrivial()) {
+        // Do not track if method reference may have different results
+        myMethodReferenceResults.merge(methodRef, value, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
       }
-      myBooleanCalls.merge(call, state, ThreeState::merge);
     }
+  }
+
+  private void processOfNullableResult(@NotNull DfaValue value, @NotNull DfaMemoryState memState, PsiElement anchor) {
+    Boolean fact = memState.getValueFact(value, DfaFactType.OPTIONAL_PRESENCE);
+    ThreeState present = fact == null ? ThreeState.UNSURE : ThreeState.fromBoolean(fact);
+    myOfNullableCalls.merge(anchor, present, ThreeState::merge);
   }
 
   @Override
@@ -174,56 +204,30 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   @Override
-  protected void processMethodReferenceResult(PsiMethodReferenceExpression methodRef,
-                                              List<? extends MethodContract> contracts,
-                                              DfaValue res) {
-    if(contracts.isEmpty() || !contracts.get(0).isTrivial()) {
-      // Do not track if method reference may have different results
-      myMethodReferenceResults.merge(methodRef, res, (a, b) -> a == b ? a : DfaUnknownValue.getInstance());
+  public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    if (!instruction.isStatic()) {
+      myEndOfInitializerStates.add(state.createCopy());
     }
+    return super.visitEndOfInitializer(instruction, runner, state);
   }
 
-  @Override
-  public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    PsiExpression place = instruction.getPlace();
-    if (!instruction.isReferenceWrite() && place instanceof PsiReferenceExpression) {
-      DfaValue dfaValue = instruction.getValue();
-      if (dfaValue instanceof DfaVariableValue) {
-        DfaConstValue constValue = memState.getConstantValue((DfaVariableValue)dfaValue);
-        boolean report = constValue != null && shouldReportConstValue(constValue.getValue());
-        myPossibleVariableValues.putValue(instruction, report ? constValue : ANY_VALUE);
-      }
-    }
-    return super.visitPush(instruction, runner, memState);
+  public Map<PsiReferenceExpression, DfaConstValue> getConstantReferenceValues() {
+    return myValues;
   }
 
-  public List<Pair<PsiReferenceExpression, DfaConstValue>> getConstantReferenceValues() {
-    List<Pair<PsiReferenceExpression, DfaConstValue>> result = ContainerUtil.newArrayList();
-    for (PushInstruction instruction : myPossibleVariableValues.keySet()) {
-      Collection<Object> values = myPossibleVariableValues.get(instruction);
-      if (values.size() == 1) {
-        Object singleValue = values.iterator().next();
-        if (singleValue != ANY_VALUE) {
-          result.add(Pair.create((PsiReferenceExpression)instruction.getPlace(), (DfaConstValue)singleValue));
-        }
-      }
-    }
-    return result;
+  private static boolean hasNonTrivialFailingContracts(PsiCallExpression call) {
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
+    return !contracts.isEmpty() &&
+           contracts.stream().anyMatch(contract -> contract.getReturnValue().isFail() && !contract.isTrivial());
   }
 
-  private static boolean hasNonTrivialFailingContracts(MethodCallInstruction instruction) {
-    List<MethodContract> contracts = instruction.getContracts();
-    return !contracts.isEmpty() && contracts.stream().anyMatch(
-      contract -> contract.getReturnValue() == MethodContract.ValueConstraint.THROW_EXCEPTION && !contract.isTrivial());
-  }
-
-  private static boolean hasNonTrivialBooleanContracts(MethodCallInstruction instruction) {
-    if (CustomMethodHandlers.find(instruction) != null) return true;
-    List<MethodContract> contracts = instruction.getContracts();
-    return !contracts.isEmpty() && contracts.stream().anyMatch(
-      contract -> (contract.getReturnValue() == MethodContract.ValueConstraint.FALSE_VALUE ||
-                   contract.getReturnValue() == MethodContract.ValueConstraint.TRUE_VALUE)
-                  && !contract.isTrivial());
+  private static boolean shouldCollectBooleanCallResult(PsiMethodCallExpression call) {
+    if (ExpressionUtils.isVoidContext(call)) return false;
+    PsiMethod method = call.resolveMethod();
+    if (method == null || !PsiType.BOOLEAN.equals(method.getReturnType()) || !JavaMethodContractUtil.isPure(method)) return false;
+    List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
+    return CustomMethodHandlers.find(method) != null ||
+           !contracts.isEmpty() && contracts.stream().anyMatch(contract -> contract.getReturnValue().isBoolean() && !contract.isTrivial());
   }
 
   @Override
@@ -269,5 +273,69 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     boolean ephemeralNpe;
     boolean normalNpe;
     boolean normalOk;
+  }
+
+  private class ExpressionVisitor extends JavaElementVisitor {
+    private final DfaValue myValue;
+    private final DfaMemoryState myMemState;
+
+    public ExpressionVisitor(DfaValue value, DfaMemoryState memState) {
+      myValue = value;
+      myMemState = memState;
+    }
+
+    @Override
+    public void visitMethodCallExpression(PsiMethodCallExpression call) {
+      super.visitMethodCallExpression(call);
+      if (DfaOptionalSupport.OPTIONAL_OF_NULLABLE.test(call)) {
+        processOfNullableResult(myValue, myMemState, call.getArgumentList().getExpressions()[0]);
+      }
+      handleBooleanCalls(call);
+    }
+
+    @Override
+    public void visitCallExpression(PsiCallExpression call) {
+      super.visitCallExpression(call);
+      Boolean isFailing = myFailingCalls.get(call);
+      if (isFailing != null || hasNonTrivialFailingContracts(call)) {
+        myFailingCalls.put(call, DfaConstValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
+      }
+    }
+
+    @Override
+    public void visitReferenceExpression(PsiReferenceExpression expression) {
+      super.visitReferenceExpression(expression);
+      DfaConstValue oldValue = myValues.get(expression);
+      if (DfaConstValue.isSentinel(oldValue)) return;
+      if (myValue instanceof DfaVariableValue) {
+        DfaConstValue constValue = myMemState.getConstantValue((DfaVariableValue)myValue);
+        boolean report = constValue != null && shouldReportConstValue(constValue.getValue());
+        if (!report) {
+          constValue = null;
+        }
+        DfaConstValue newValue = constValue != null && (oldValue == null || oldValue == constValue)
+                                 ? constValue
+                                 : myValue.getFactory().getConstFactory().getSentinel();
+        myValues.put(expression, newValue);
+      }
+    }
+
+    private void handleBooleanCalls(PsiMethodCallExpression call) {
+      ThreeState curState = myBooleanCalls.get(call);
+      if (curState == ThreeState.UNSURE) return;
+      ThreeState nextState = ThreeState.UNSURE;
+      if (myValue instanceof DfaConstValue) {
+        Object val = ((DfaConstValue)myValue).getValue();
+        if (val instanceof Boolean) {
+          nextState = ThreeState.fromBoolean((Boolean)val);
+          if (curState != null && curState != nextState) {
+            nextState = ThreeState.UNSURE;
+          }
+        }
+      }
+      if (curState != null || shouldCollectBooleanCallResult(call)) {
+        myBooleanCalls.put(call, nextState);
+      }
+    }
   }
 }

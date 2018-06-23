@@ -21,6 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /** @deprecated API no longer supported, use {@link com.intellij.psi.compiled.ClassFileDecompilers} instead (to remove in IDEA 14) */
+@Deprecated
 @SuppressWarnings({"UnusedDeclaration"})
 public interface ClsCustomNavigationPolicy {
   ExtensionPointName<ClsCustomNavigationPolicy> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsCustomNavigationPolicy");

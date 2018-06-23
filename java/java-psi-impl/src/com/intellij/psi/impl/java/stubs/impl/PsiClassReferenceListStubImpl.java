@@ -66,7 +66,7 @@ public class PsiClassReferenceListStubImpl extends StubBase<PsiReferenceList> im
       for (int i = 0; i < types.length; i++) {
         try {
           final PsiJavaCodeReferenceElement ref = factory.createReferenceFromText(myNames[i], psi);
-          ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND);
+          ((PsiJavaCodeReferenceElementImpl)ref).setKindWhenDummy(PsiJavaCodeReferenceElementImpl.Kind.CLASS_NAME_KIND);
           types[i] = factory.createType(ref);
         }
         catch (IncorrectOperationException e) {

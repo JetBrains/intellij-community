@@ -47,7 +47,7 @@ public class ApplyBinaryShelvedFilePatch extends ApplyFilePatchBase<ShelvedBinar
     else {
       File fromFile = new File(shelvedBinaryFile.SHELVED_PATH);
       File toFile = VfsUtilCore.virtualToIoFile(fileToPatch);
-      FileUtil.copy(fromFile, toFile);
+      FileUtil.copyContent(fromFile, toFile);
       VfsUtil.markDirty(false, false, fileToPatch);
     }
     return SUCCESS;

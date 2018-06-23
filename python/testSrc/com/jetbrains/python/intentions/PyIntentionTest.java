@@ -4,6 +4,7 @@ package com.jetbrains.python.intentions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.psi.PsiFile;
+import com.intellij.testFramework.PsiTestUtil;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
@@ -69,6 +70,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertSetLiteral() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.convert.set.literal.to"), LanguageLevel.PYTHON26);
   }
 
@@ -250,6 +252,16 @@ public class  PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.variadic.param"));
   }
 
+  // PY-2264
+  public void testConvertVariadicParamKwargsReused() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
+  // PY-2264
+  public void testConvertVariadicParamUnpackedKwargsReused() {
+    doNegativeTest(PyBundle.message("INTN.convert.variadic.param"));
+  }
+
   public void testConvertTripleQuotedString() { //PY-2697
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
@@ -263,6 +275,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertTripleQuotedUnicodeString() { //PY-7152
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.triple.quoted.string"));
   }
 
@@ -286,6 +299,7 @@ public class  PyIntentionTest extends PyTestCase {
   }
 
   public void testConvertTripleQuotedEmptyString() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doTest(PyBundle.message("INTN.triple.quoted.string"), LanguageLevel.PYTHON34);
   }
 

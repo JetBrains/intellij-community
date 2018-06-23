@@ -2,6 +2,8 @@ import pprint
 import sys
 import unittest
 
+from .messages import text_type
+
 _PY2K = sys.version_info < (3,)
 _PRIMITIVES = [int, str, bool]
 if _PY2K:
@@ -52,12 +54,12 @@ class EqualsAssertionError(AssertionError):
         super(AssertionError, self).__init__()
         self.expected = expected
         self.actual = actual
-        self.msg = msg
+        self.msg = text_type(msg)
 
         if not preformated:
             self.expected = _format_and_convert(self.expected)
             self.actual = _format_and_convert(self.actual)
-            self.msg = msg if msg else ""
+            self.msg = text_type(msg) if msg else ""
 
         self.expected = _STR_F(self.expected)
         self.actual = _STR_F(self.actual)

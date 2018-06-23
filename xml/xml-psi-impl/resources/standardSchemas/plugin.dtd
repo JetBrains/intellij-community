@@ -1,5 +1,5 @@
 <?xml version="1.0" encoding="ISO-8859-1"?>
-<!ELEMENT idea-plugin (name | id? | description | version | vendor | change-notes? | idea-version | category | resource-bundle | depends* | extensions* | application-components? | project-components? | module-components? | actions? | helpset)+>
+<!ELEMENT idea-plugin (name | id? | productCode? | releaseDate? | releaseVersion? | description | version | vendor | change-notes? | idea-version | category | resource-bundle | depends* | extensions* | application-components? | project-components? | module-components? | actions? | helpset)+>
 <!ATTLIST idea-plugin
     url CDATA #IMPLIED
     version CDATA #IMPLIED>
@@ -11,6 +11,19 @@
     <id> is a unique Plugin identifier, if not specified, id is considered equal to "name"
 -->
 <!ELEMENT id (#PCDATA)>
+<!--
+    <productCode> is an optional productCode of a commercial plugin requiring license.
+-->
+<!ELEMENT productCode (#PCDATA)>
+<!--
+    <releaseDate> is an optional element release date of a commercial plugin in the form 'yyyyMMdd'
+-->
+<!ELEMENT releaseDate (#PCDATA)>
+<!--
+    <releaseVersion> is an optional integer value specifying the version of a commercial plugin. If not specified, it will be automatically deduced from releaseDate:
+     The integer form of 'yyyyMMdd' format
+-->
+<!ELEMENT releaseVersion (#PCDATA)>
 <!--
     <description> is a short description of plugin and it functionality
 -->

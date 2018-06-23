@@ -56,6 +56,7 @@ public class PackagesPaneSelectInTarget extends ProjectViewSelectInTarget {
     return (projectFileIndex.isInLibraryClasses(vFile) || projectFileIndex.isInLibrarySource(vFile)) && !projectFileIndex.isInSourceContent(vFile);
   }
 
+  @Override
   public String getMinorViewId() {
     return PackageViewPane.ID;
   }

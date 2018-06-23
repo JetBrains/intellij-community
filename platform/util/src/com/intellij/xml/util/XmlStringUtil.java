@@ -18,6 +18,7 @@ package com.intellij.xml.util;
 
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -44,14 +45,17 @@ public class XmlStringUtil {
     return sb.toString();
   }
 
+  @Contract("null->null; !null->!null")
   public static String escapeString(@Nullable String str) {
     return escapeString(str, false);
   }
 
+  @Contract("null,_->null; !null,_->!null")
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace) {
     return escapeString(str, escapeWhiteSpace, true);
   }
 
+  @Contract("null,_,_->null; !null,_,_->!null")
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace, final boolean convertNoBreakSpace) {
     if (str == null) return null;
     StringBuilder buffer = null;

@@ -50,7 +50,4 @@ public abstract class DebuggerManager implements ProjectComponent {
    */
   @Deprecated
   public abstract void registerPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
-
-  @Deprecated
-  public abstract void unregisterPositionManagerFactory(Function<DebugProcess, PositionManager> factory);
 }

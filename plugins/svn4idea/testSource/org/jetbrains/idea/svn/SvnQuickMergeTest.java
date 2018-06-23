@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
@@ -37,6 +37,7 @@ import static com.intellij.openapi.application.ApplicationManager.getApplication
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static java.util.stream.Collectors.toList;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
+import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
@@ -69,8 +70,8 @@ public class SvnQuickMergeTest extends Svn17TestCase {
 
     final SvnBranchConfigurationManager branchConfigurationManager = SvnBranchConfigurationManager.getInstance(myProject);
     final SvnBranchConfigurationNew configuration = new SvnBranchConfigurationNew();
-    configuration.setTrunkUrl(myRepoUrl + "/trunk");
-    configuration.addBranches(myRepoUrl + "/branches",
+    configuration.setTrunk(createUrl(myRepoUrl + "/trunk"));
+    configuration.addBranches(createUrl(myRepoUrl + "/branches"),
                               new InfoStorage<>(new ArrayList<>(), InfoReliability.empty));
     branchConfigurationManager.setConfiguration(myWorkingCopyDir, configuration);
 

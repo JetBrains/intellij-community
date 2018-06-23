@@ -137,11 +137,11 @@ public class FieldMayBeFinal {
         private final int j = i++;
     }
 
-    static class AssigmentInForeach {
+    static class AssignmentInForeach {
         private boolean b, c;
         private int j;
 
-        AssigmentInForeach(int[][] is) {
+        AssignmentInForeach(int[][] is) {
             b = false;
             for (int i : is[j]) {
                 b = c = i == 10;
@@ -850,7 +850,7 @@ class T49 {
   }
 }
 class T50 {
-  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
+  private boolean b; // may not be final
   T50(int i) {
     if (false && (b = true)) {
 
@@ -902,7 +902,7 @@ class T55 {
   }
 }
 class T56 {
-  private boolean <warning descr="Field 'b' may be 'final'">b</warning>; // may be final
+  private boolean b; // may not be final
   {
     if (false && (b = false)) ;
     if (true && (b = false)) ;
@@ -1071,4 +1071,24 @@ class T74 {
     x = 2;
   }
   int y = x = 3;
+}
+// IDEA-187493
+class T75 {
+  void foo() {
+    new Inner().innerField = 1;
+  }
+
+  private static class Inner {
+    private int innerField;
+
+    private Inner() {innerField = 0;}
+  }
+}
+// IDEA-193896
+class T76 {
+  private T76 a;
+  T76(T76 other) {
+    a = other;
+    other.a = null;
+  }
 }

@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFileManager
 import com.intellij.testFramework.UsefulTestCase
 import com.intellij.util.SmartList
 import com.intellij.util.SystemProperties
+import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.library.JpsLibraryCollection
 import org.jetbrains.jps.model.library.JpsOrderRootType
 import org.jetbrains.jps.model.serialization.JpsSerializationManager
@@ -41,8 +42,7 @@ class IntelliJProjectConfiguration {
   private val moduleLibraries: Map<String, Map<String, LibraryRoots>>
 
   init {
-    val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
-    val project = JpsSerializationManager.getInstance().loadProject(projectHome, mapOf("MAVEN_REPOSITORY" to m2Repo))
+    val project = loadIntelliJProject(projectHome)
     fun extractLibrariesRoots(collection: JpsLibraryCollection) = collection.libraries.associateBy({ it.name }, {
       LibraryRoots(SmartList(it.getFiles(JpsOrderRootType.COMPILED)), SmartList(it.getFiles(JpsOrderRootType.SOURCES)))
     })
@@ -87,16 +87,22 @@ class IntelliJProjectConfiguration {
       Assert.assertNotNull(jarRoot)
       return jarRoot!!
     }
+
+    @JvmStatic
+    fun loadIntelliJProject(projectHome: String): JpsProject {
+      val m2Repo = FileUtil.toSystemIndependentName(File(SystemProperties.getUserHome(), ".m2/repository").absolutePath)
+      return JpsSerializationManager.getInstance().loadProject(projectHome, mapOf("MAVEN_REPOSITORY" to m2Repo))
+    }
   }
 
   class LibraryRoots(val classes: List<File>, val sources: List<File>) {
-    val classesPaths
+    val classesPaths: List<String>
       get() = classes.map { FileUtil.toSystemIndependentName(it.absolutePath) }
 
-    val classesUrls
+    val classesUrls: List<String>
       get() = classes.map { JpsPathUtil.getLibraryRootUrl(it) }
 
-    val sourcesUrls
+    val sourcesUrls: List<String>
       get() = sources.map { JpsPathUtil.getLibraryRootUrl(it) }
   }
 }

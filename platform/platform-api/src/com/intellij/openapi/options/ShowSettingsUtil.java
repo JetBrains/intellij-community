@@ -60,12 +60,14 @@ public abstract class ShowSettingsUtil {
    * @deprecated create a new instance of configurable instead
    * to remove in IDEA 15
    */
+  @Deprecated
   public abstract <T extends Configurable> T findProjectConfigurable(Project project, Class<T> confClass);
 
   /**
    * @deprecated create a new instance of configurable instead
    * to remove in IDEA 15
    */
+  @Deprecated
   public abstract <T extends Configurable> T findApplicationConfigurable(Class<T> confClass);
 
   public static String getSettingsMenuName() {

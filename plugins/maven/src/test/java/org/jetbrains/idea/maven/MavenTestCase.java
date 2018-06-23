@@ -45,7 +45,8 @@ import java.util.concurrent.TimeUnit;
 public abstract class MavenTestCase extends UsefulTestCase {
   protected static final MavenConsole NULL_MAVEN_CONSOLE = new NullMavenConsole();
   // should not be static
-  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS = new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL));
+  protected static MavenProgressIndicator EMPTY_MAVEN_PROCESS =
+    new MavenProgressIndicator(new EmptyProgressIndicator(ModalityState.NON_MODAL));
 
   private File ourTempDir;
 
@@ -97,7 +98,6 @@ public abstract class MavenTestCase extends UsefulTestCase {
         }
       });
     });
-
   }
 
   @Override
@@ -147,7 +147,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     File[] files = dir.listFiles();
     if (files == null) return;
 
-    for (File file : files) {
+    for (File file: files) {
       System.out.println(file.getAbsolutePath());
 
       if (file.isDirectory()) {
@@ -157,15 +157,19 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void tearDownFixtures() throws Exception {
-    myTestFixture.tearDown();
-    myTestFixture = null;
+    try {
+      myTestFixture.tearDown();
+    }
+    finally {
+      myTestFixture = null;
+    }
   }
 
   private void resetClassFields(final Class<?> aClass) {
     if (aClass == null) return;
 
     final Field[] fields = aClass.getDeclaredFields();
-    for (Field field : fields) {
+    for (Field field: fields) {
       final int modifiers = field.getModifiers();
       if ((modifiers & Modifier.FINAL) == 0
           && (modifiers & Modifier.STATIC) == 0
@@ -189,7 +193,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
     try {
       if (runInWriteAction()) {
         try {
-          WriteAction.runAndWait(()-> super.runTest());
+          WriteAction.runAndWait(() -> super.runTest());
         }
         catch (Throwable throwable) {
           ExceptionUtil.rethrowAllAsUnchecked(throwable);
@@ -227,7 +231,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected static String getEnvVar() {
-    if (SystemInfo.isWindows) return "TEMP";
+    if (SystemInfo.isWindows) {
+      return "TEMP";
+    }
     else if (SystemInfo.isLinux) return "HOME";
     return "TMPDIR";
   }
@@ -328,15 +334,17 @@ public abstract class MavenTestCase extends UsefulTestCase {
     }
   }
 
-  protected VirtualFile createProjectPom(@NotNull @Language("xml") String xml) {
+  protected VirtualFile createProjectPom(@NotNull @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
     return myProjectPom = createPomFile(myProjectRoot, xml);
   }
 
-  protected VirtualFile createModulePom(String relativePath, String xml) {
+  protected VirtualFile createModulePom(String relativePath,
+                                        @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
     return createPomFile(createProjectSubDir(relativePath), xml);
   }
 
-  protected VirtualFile createPomFile(final VirtualFile dir, String xml) {
+  protected VirtualFile createPomFile(final VirtualFile dir,
+                                      @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
     VirtualFile f = dir.findChild("pom.xml");
     if (f == null) {
       try {
@@ -354,8 +362,9 @@ public abstract class MavenTestCase extends UsefulTestCase {
     return f;
   }
 
-  @NonNls @Language(value="XML")
-  public static String createPomXml(@NonNls @Language(value="XML", prefix="<xml>", suffix="</xml>") String xml) {
+  @NonNls
+  @Language(value = "XML")
+  public static String createPomXml(@NonNls @Language(value = "XML", prefix = "<project>", suffix = "</project>") String xml) {
     return "<?xml version=\"1.0\"?>" +
            "<project xmlns=\"http://maven.apache.org/POM/4.0.0\"" +
            "         xmlns:xsi=\"http://www.w3.org/2001/XMLSchema-instance\"" +
@@ -441,7 +450,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   }
 
   protected void createProjectSubDirs(String... relativePaths) {
-    for (String path : relativePaths) {
+    for (String path: relativePaths) {
       createProjectSubDir(path);
     }
   }
@@ -488,6 +497,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
   protected static <T> void assertUnorderedElementsAreEqual(Collection<T> actual, Collection<T> expected) {
     assertEquals(new HashSet<>(expected), new HashSet<>(actual));
   }
+
   protected static void assertUnorderedPathsAreEqual(Collection<String> actual, Collection<String> expected) {
     assertEquals(new SetWithToString<>(new THashSet<>(expected, FileUtil.PATH_HASHING_STRATEGY)),
                  new SetWithToString<>(new THashSet<>(actual, FileUtil.PATH_HASHING_STRATEGY)));
@@ -598,5 +608,4 @@ public abstract class MavenTestCase extends UsefulTestCase {
       return myDelegate.hashCode();
     }
   }
-
 }

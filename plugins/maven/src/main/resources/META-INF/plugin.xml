@@ -28,6 +28,7 @@
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
+    <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -43,6 +44,7 @@
     <frameworkSupport implementation="org.jetbrains.idea.maven.wizards.MavenFrameworkSupportProvider"/>
     <moduleExtension implementation="org.jetbrains.idea.maven.importing.MavenSourceFoldersModuleExtension"/>
     <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenPomPathModuleService"/>
+    <moduleService serviceImplementation="org.jetbrains.idea.maven.importing.MavenAnnotationProcessorsModuleService"/>
 
     <applicationService serviceImplementation="org.jetbrains.idea.maven.server.MavenServerManager"/>
     <applicationService serviceImplementation="org.jetbrains.idea.maven.indices.MavenIndicesManager"/>
@@ -184,6 +186,8 @@
     <projectModelModifier implementation="org.jetbrains.idea.maven.importing.MavenProjectModelModifier"/>
 
     <compiler.updateResourcesBuildContributor implementation="org.jetbrains.idea.maven.execution.MavenUpdateResourcesBuildContributor"/>
+
+    <projectTaskRunner implementation="org.jetbrains.idea.maven.execution.build.MavenProjectTaskRunner"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.jetbrains.idea.maven">
@@ -306,6 +310,9 @@
 
       <param name="delimiters/delimiter" disableReferences="true"/>
     </pluginDescriptor>
+
+    <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
 
   <application-components>
@@ -449,7 +456,7 @@
     <action id="Maven.ShowSettings"
             class="org.jetbrains.idea.maven.project.actions.EditSettingsAction" text="Maven Settings"
             description="Edit Maven integration settings for the current project"
-            icon="AllIcons.General.ProjectSettings">
+            icon="AllIcons.General.Settings">
     </action>
 
     <action id="Maven.ToggleOffline"

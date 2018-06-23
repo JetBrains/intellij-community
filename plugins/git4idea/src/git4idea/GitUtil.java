@@ -34,7 +34,7 @@ import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerEx;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.update.RefreshVFsSynchronously;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -45,6 +45,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.Convertor;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcsUtil.VcsFileUtil;
@@ -73,7 +74,7 @@ import java.util.stream.Collectors;
 
 import static com.intellij.dvcs.DvcsUtil.getShortRepositoryName;
 import static com.intellij.dvcs.DvcsUtil.joinShortNames;
-import static com.intellij.util.ObjectUtils.assertNotNull;
+import static com.intellij.openapi.vcs.changes.ChangesUtil.CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY;
 import static com.intellij.util.ObjectUtils.chooseNotNull;
 import static java.util.Arrays.stream;
 
@@ -354,6 +355,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   public static VirtualFile getGitRoot(@NotNull FilePath filePath) throws VcsException {
     VirtualFile root = getGitRootOrNull(filePath);
     if (root != null) {
@@ -398,6 +400,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   public static VirtualFile getGitRoot(@NotNull final VirtualFile file) throws VcsException {
     final VirtualFile root = gitRootOrNull(file);
     if (root != null) {
@@ -417,6 +420,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @Nullable
   public static VirtualFile gitRootOrNull(final VirtualFile file) {
     return getGitRootOrNull(VcsUtil.getFilePath(file.getPath()));
@@ -433,6 +437,7 @@ public class GitUtil {
    * @deprecated because uses the java.io.File.
    * @use GitRepositoryManager#getRepositoryForFile().
    */
+  @Deprecated
   @NotNull
   public static List<VirtualFile> getGitRoots(Project project, GitVcs vcs) throws VcsException {
     final VirtualFile[] contentRoots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
@@ -994,21 +999,34 @@ public class GitUtil {
 
   @NotNull
   public static String getLogString(@NotNull String root, @NotNull Collection<Change> changes) {
+    return getLogString(root, changes, ChangesUtil::getBeforePath, ChangesUtil::getAfterPath);
+  }
+
+  @NotNull
+  public static <T> String getLogString(@NotNull String root, @NotNull Collection<T> changes,
+                                        @NotNull Convertor<? super T, ? extends FilePath> beforePathGetter,
+                                        @NotNull Convertor<? super T, ? extends FilePath> afterPathGetter) {
     return StringUtil.join(changes, change -> {
-      ContentRevision after = change.getAfterRevision();
-      ContentRevision before = change.getBeforeRevision();
-      switch (change.getType()) {
-        case NEW: return "A: " + getRelativePath(root, assertNotNull(after));
-        case DELETED: return "D: " + getRelativePath(root, assertNotNull(before));
-        case MOVED: return "M: " + getRelativePath(root, assertNotNull(before)) + " -> " + getRelativePath(root, assertNotNull(after));
-        default: return "M: " + getRelativePath(root, assertNotNull(after));
+      FilePath after = afterPathGetter.convert(change);
+      FilePath before = beforePathGetter.convert(change);
+      if (before == null) {
+        return "A: " + getRelativePath(root, after);
+      }
+      else if (after == null) {
+        return "D: " + getRelativePath(root, before);
+      }
+      else if (CASE_SENSITIVE_FILE_PATH_HASHING_STRATEGY.equals(before, after)) {
+        return "M: " + getRelativePath(root, after);
+      }
+      else {
+        return "R: " + getRelativePath(root, before) + " -> " + getRelativePath(root, after);
       }
     }, ", ");
   }
 
   @Nullable
-  public static String getRelativePath(@NotNull String root, @NotNull ContentRevision after) {
-    return FileUtil.getRelativePath(root, after.getFile().getPath(), File.separatorChar);
+  public static String getRelativePath(@NotNull String root, @NotNull FilePath after) {
+    return FileUtil.getRelativePath(root, after.getPath(), File.separatorChar);
   }
 
   /**

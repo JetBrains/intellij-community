@@ -12,12 +12,14 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.CancellablePromise;
 
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.CompletableFuture;
+import java.util.concurrent.Callable;
 
 /**
  * @author peter
@@ -36,7 +38,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(runnable, modality);
       }
 
@@ -74,7 +76,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         ApplicationManager.getApplication().invokeLater(() -> {
           usedOnce = true;
           runnable.run();
@@ -98,7 +100,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         PsiDocumentManager.getInstance(project).performLaterWhenAllCommitted(runnable, myModality);
       }
 
@@ -119,7 +121,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         DumbService.getInstance(project).smartInvokeLater(runnable, myModality);
       }
 
@@ -141,7 +143,7 @@ class AppUIExecutorImpl implements AppUIExecutor {
       }
 
       @Override
-      public void doExecute(@NotNull Runnable runnable) {
+      public void doReschedule(@NotNull Runnable runnable) {
         TransactionGuard.getInstance().submitTransaction(parentDisposable, id, runnable);
       }
 
@@ -163,31 +165,37 @@ class AppUIExecutorImpl implements AppUIExecutor {
   }
 
   @Override
-  public void execute(@NotNull Runnable runnable) {
-    CompletableFuture<Void> future = new CompletableFuture<>();
+  public CancellablePromise<?> submit(Runnable task) {
+    return submit(() -> { task.run(); return null; });
+  }
+
+  @Override
+  public void execute(@NotNull Runnable command) {
+    submit(command);
+  }
+
+  @Override
+  public <T> CancellablePromise<T> submit(Callable<T> task) {
+    AsyncPromise<T> promise = new AsyncPromise<>();
 
     if (!myDisposables.isEmpty()) {
       List<Disposable> children = new ArrayList<>();
       for (Disposable parent : myDisposables) {
-        Disposable child = new Disposable() {
-          @Override
-          public void dispose() {
-            future.cancel(false);
-          }
-        };
+        Disposable child = promise::cancel;
         children.add(child);
         Disposer.register(parent, child);
       }
-      future.whenComplete((v, t) -> children.forEach(Disposer::dispose));
+      promise.onProcessed(__ -> children.forEach(Disposer::dispose));
     }
 
-    checkConstraints(runnable, future, new ArrayList<>());
+    checkConstraints(task, promise, new ArrayList<>());
+    return promise;
   }
 
-  private void checkConstraints(@NotNull Runnable runnable, CompletableFuture<Void> future, List<ConstrainedExecutor> log) {
+  private <T> void checkConstraints(@NotNull Callable<T> task, AsyncPromise<T> future, List<ConstrainedExecutor> log) {
     Application app = ApplicationManager.getApplication();
     if (!app.isDispatchThread()) {
-      app.invokeLater(() -> checkConstraints(runnable, future, log), myModality);
+      app.invokeLater(() -> checkConstraints(task, future, log), myModality);
       return;
     }
     
@@ -196,30 +204,31 @@ class AppUIExecutorImpl implements AppUIExecutor {
     for (ConstrainedExecutor constraint : myConstraints) {
       if (!constraint.isCorrectContext()) {
         log.add(constraint);
-        if (log.size() > 1000) {
-          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(100, 120));
+        if (log.size() > 3_000) {
+          LOG.error("Too many reschedule requests, probably constraints can't be satisfied all together: " + log.subList(log.size() - 30, log.size()));
+        } else {
+          constraint.rescheduleInCorrectContext(() -> checkConstraints(task, future, log));
         }
-        constraint.execute(() -> checkConstraints(runnable, future, log));
         return;
       }
     }
 
     try {
-      runnable.run();
-      future.complete(null);
+      T result = task.call();
+      future.setResult(result);
     }
     catch (Throwable e) {
-      future.completeExceptionally(e);
+      future.setError(e);
     }
   }
 
   private abstract static class ConstrainedExecutor {
     public abstract boolean isCorrectContext();
-    public abstract void doExecute(Runnable r);
+    public abstract void doReschedule(Runnable r);
     public abstract String toString();
 
-    void execute(Runnable r) {
-      doExecute(() -> {
+    void rescheduleInCorrectContext(Runnable r) {
+      doReschedule(() -> {
         LOG.assertTrue(isCorrectContext(), this);
         r.run();
       });

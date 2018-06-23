@@ -41,11 +41,14 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  public void testSlotsAndUnlistedAttrAssign() {
+  // PY-10397
+  public void testOwnSlots() {
     doTest();
   }
 
-  public void testSlotsSuperclass() {
+  // PY-5939
+  // PY-29229
+  public void testSlotsAndInheritance() {
     doTest();
   }
 
@@ -53,17 +56,8 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-10397
-  public void testSlotsAndListedAttrAccess() {
-    doTest();
-  }
-
   // PY-18422
   public void testSlotsAndClassAttr() {
-    doTest();
-  }
-
-  public void testSlotsSubclass() {  // PY-5939
     doTest();
   }
 
@@ -704,6 +698,59 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
   // PY-23632
   public void testMockPatchObject() {
     doMultiFileTest();
+  }
+
+  // PY-20197
+  public void testClassLevelImportUsedInsideMethod() {
+    doTestByText("class DateParser:\n" +
+                 "    from datetime import datetime\n" +
+                 "    def __init__(self):\n" +
+                 "        self.value = self.datetime(2016, 1, 1)");
+  }
+
+  // PY-19599
+  public void testDefinedInParameterDefaultAndBody() {
+    doTestByText("def f(p=(x for x in [])):\n" +
+                 "    x = 1\n" +
+                 "    return x");
+  }
+
+  // PY-20530
+  public void testSelfInAnnotationAndTypeComment() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON36,
+      () -> doTestByText("class A:\n" +
+                         "    def f1(self) -> <error descr=\"Unresolved reference 'self'\">self</error>.B:\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f2(self):\n" +
+                         "        # type: () -> <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "        pass\n" +
+                         "\n" +
+                         "    def f3(self):\n" +
+                         "        v3: self.B\n" +
+                         "        v4 = None  # type: self.B\n" +
+                         "\n" +
+                         "    v1: <error descr=\"Unresolved reference 'self'\">self</error>.B\n" +
+                         "    v2 = None  # type: <warning descr=\"Unresolved reference 'self'\">self</warning>.B\n" +
+                         "\n" +
+                         "    class B:\n" +
+                         "        pass")
+    );
+  }
+
+  // PY-30383
+  public void testLambdaMember() {
+    doTestByText("class SomeClass:\n" +
+                 "    def __init__(self):\n" +
+                 "        self.one = lambda x: True\n" +
+                 "        \n" +
+                 "    def some_method(self):\n" +
+                 "        self.one.<warning descr=\"Cannot find reference 'abc' in 'function'\">abc</warning>");
+  }
+
+  public void testNamedTupleFunction() {
+    doTest();
   }
 
   @NotNull

@@ -29,11 +29,26 @@ public class ApiStatus {
    * It's safe to use an element marked by this annotation if the usage is located in the same sources codebase as the declaration. However
    * if the declaration belongs to an external library such usages may lead to problems when the library will be updated to another version.
    */
-  @Experimental
   @Documented
   @Retention(RetentionPolicy.CLASS)
   @Target({
     ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
   })
   public @interface Experimental {}
+
+  /**
+   * Indicates that a public API of the annotated element (class, method or field) is is subject to removal in a future version. It's a stronger
+   * variant of {@link Deprecated} annotation.
+   */
+  @Documented
+  @Retention(RetentionPolicy.CLASS)
+  @Target({
+    ElementType.TYPE, ElementType.ANNOTATION_TYPE, ElementType.METHOD, ElementType.CONSTRUCTOR, ElementType.FIELD, ElementType.PACKAGE
+  })
+  public @interface ScheduledForRemoval {
+    /**
+     * Specifies in which version the API will be removed.
+     */
+    String inVersion() default "";
+  }
 }

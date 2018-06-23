@@ -1,8 +1,8 @@
 <component name="libraryTable">
   <library name="javassist" type="repository">
-    <properties include-transitive-deps="false" maven-id="org.javassist:javassist:3.21.0-GA" />
+    <properties include-transitive-deps="false" maven-id="org.javassist:javassist:3.22.0-GA" />
     <CLASSES>
-      <root url="jar://$MAVEN_REPOSITORY$/org/javassist/javassist/3.21.0-GA/javassist-3.21.0-GA.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/javassist/javassist/3.22.0-GA/javassist-3.22.0-GA.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

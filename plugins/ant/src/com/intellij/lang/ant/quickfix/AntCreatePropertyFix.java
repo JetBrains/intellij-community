@@ -18,12 +18,12 @@ package com.intellij.lang.ant.quickfix;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.AntBundle;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -93,7 +93,11 @@ public class AntCreatePropertyFix implements LocalQuickFix {
 
       result = WriteAction.compute(() -> {
         final IProperty generatedProperty = myPropFile.addProperty(myCanonicalText, "");
-        return vFile != null? new OpenFileDescriptor(project, vFile, generatedProperty.getPsiElement().getTextRange().getEndOffset()) : generatedProperty;
+        return vFile != null
+               ? PsiNavigationSupport.getInstance().createNavigatable(project, vFile,
+                                                                      generatedProperty.getPsiElement().getTextRange()
+                                                                                       .getEndOffset())
+               : generatedProperty;
       });
     }
     else {

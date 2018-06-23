@@ -70,7 +70,7 @@ public class JavaRequiresStatementElementType extends JavaStubElementType<PsiReq
   @NotNull
   @Override
   public PsiRequiresStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    return new PsiRequiresStatementStubImpl(parentStub, StringRef.toString(dataStream.readName()));
+    return new PsiRequiresStatementStubImpl(parentStub, dataStream.readNameString());
   }
 
   @Override

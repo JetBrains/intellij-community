@@ -797,6 +797,14 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
     myFixture.assertPreferredCompletionItems(0, "i", "z", "zz", "i, z, zz");
   }
 
+  public void testSameSignatureWithoutClosingParen() {
+    configureByTestName();
+    myFixture.assertPreferredCompletionItems(0, "someString", "someString, number");
+    getLookup().setCurrentItem(getLookup().getItems().get(1));
+    select();
+    checkResultByTestName();
+  }
+
   public void testSuggestTypeParametersInTypeArgumentList() {
     configureByTestName();
     myFixture.assertPreferredCompletionItems(0, "T", "String");
@@ -1274,4 +1282,8 @@ public class SmartTypeCompletionTest extends LightFixtureCompletionTestCase {
   public void testNewMapTypeArguments() { doTest(); }
   public void testNewMapObjectTypeArguments() { doTest(); }
 
+  public void testNoUnrelatedMethodSuggestion() {
+    configureByTestName();
+    assertOrderedEquals(myFixture.getLookupElementStrings(), "this");
+  }
 }

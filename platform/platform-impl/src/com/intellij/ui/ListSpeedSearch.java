@@ -50,6 +50,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
   /**
    * @deprecated use {@link #ListSpeedSearch(JList, Function)}
    */
+  @Deprecated
   @SuppressWarnings("LambdaUnfriendlyMethodOverload")
   public ListSpeedSearch(final JList<T> list, @Nullable Convertor<T, String> convertor) {
     super(list);
@@ -76,6 +77,7 @@ public class ListSpeedSearch<T> extends SpeedSearchBase<JList<T>> {
     return myComponent.getSelectedIndex();
   }
 
+  @NotNull
   @Override
   protected Object[] getAllElements() {
     return getAllListElements(myComponent);

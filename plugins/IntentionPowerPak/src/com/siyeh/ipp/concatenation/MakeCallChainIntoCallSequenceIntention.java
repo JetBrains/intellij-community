@@ -18,8 +18,6 @@ package com.siyeh.ipp.concatenation;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.CommentTracker;
@@ -93,9 +91,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
         else {
           targetText = "x";
           showRenameTemplate = true;
-          final Project project = element.getProject();
-          final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+          if (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + ' ' + targetText + '=' + root.getText() + ';';
           }
           else {
@@ -128,9 +124,7 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
           }
           targetText = "x";
           showRenameTemplate = true;
-          final Project project = element.getProject();
-          final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-          if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+          if (JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS) {
             firstStatement = "final " + rootType.getCanonicalText() + " x=" + root.getText() + ';';
           }
           else {
@@ -157,18 +151,18 @@ public class MakeCallChainIntoCallSequenceIntention extends Intention {
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
     final PsiElement appendStatementParent = appendStatement.getParent();
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(manager.getProject());
-    final PsiCodeBlock codeBlock = factory.createCodeBlockFromText(builder.toString(), appendStatement);
+    PsiBlockStatement codeBlock = (PsiBlockStatement)factory.createStatementFromText(builder.toString(), appendStatement);
     if (appendStatementParent instanceof PsiLoopStatement || appendStatementParent instanceof PsiIfStatement) {
-      final PsiElement insertedCodeBlock = tracker.replaceAndRestoreComments(appendStatement, codeBlock);
-      final PsiCodeBlock reformattedCodeBlock = (PsiCodeBlock)codeStyleManager.reformat(insertedCodeBlock);
+      PsiElement insertedCodeBlock = tracker.replaceAndRestoreComments(appendStatement, codeBlock);
+      PsiBlockStatement reformattedCodeBlock = (PsiBlockStatement)codeStyleManager.reformat(insertedCodeBlock);
       if (showRenameTemplate) {
-        final PsiStatement[] statements = reformattedCodeBlock.getStatements();
-        final PsiVariable variable = (PsiVariable)((PsiDeclarationStatement)statements[0]).getDeclaredElements()[0];
+        PsiStatement[] statements = reformattedCodeBlock.getCodeBlock().getStatements();
+        PsiVariable variable = (PsiVariable)((PsiDeclarationStatement)statements[0]).getDeclaredElements()[0];
         HighlightUtil.showRenameTemplate(appendStatementParent, variable);
       }
     }
     else {
-      final PsiStatement[] statements = codeBlock.getStatements();
+      PsiStatement[] statements = codeBlock.getCodeBlock().getStatements();
       PsiVariable variable = null;
       for (int i = 0, length = statements.length; i < length; i++) {
         final PsiElement insertedStatement = appendStatementParent.addBefore(tracker.markUnchanged(statements[i]), appendStatement);

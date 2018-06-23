@@ -34,11 +34,9 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.editor.ex.FoldingModelEx;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -130,18 +128,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     }
   }
 
-  public void applySoftWrapping() {
-    // apply soft wrapping settings when console initialized
-    myInitialized.doWhenDone(() -> {
-      final boolean useSoftWraps = EditorSettingsExternalizable.getInstance().isUseSoftWraps(SoftWrapAppliancePlaces.CONSOLE);
-      getEditor().getSettings().setUseSoftWraps(useSoftWraps);
-      getConsoleEditor().getSettings().setUseSoftWraps(useSoftWraps);
-    });
-  }
-
+  /**
+   * Add folding to Console view
+   *
+   * @param addOnce If true, folding will be added once when an appropriate area is found.
+   *                Otherwise folding can be expanded by newly added text.
+   */
   @Nullable
-  private PyConsoleStartFolding createConsoleFolding() {
-    PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this);
+  private PyConsoleStartFolding createConsoleFolding(boolean addOnce) {
+    PyConsoleStartFolding startFolding = new PyConsoleStartFolding(this, addOnce);
     myExecuteActionHandler.getConsoleCommunication().addCommunicationListener(startFolding);
     Editor editor = getEditor();
     if (editor == null) {
@@ -152,10 +147,10 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
     return startFolding;
   }
 
-  public void addConsoleFolding(boolean isDebugConsole) {
+  public void addConsoleFolding(boolean isDebugConsole, boolean addOnce) {
     try {
       if (isDebugConsole && myExecuteActionHandler != null && getEditor() != null) {
-        PyConsoleStartFolding folding = createConsoleFolding();
+        PyConsoleStartFolding folding = createConsoleFolding(addOnce);
         if (folding != null) {
           // in debug console we should add folding from the place where the folding was turned on
           folding.setStartLineOffset(getEditor().getDocument().getTextLength());
@@ -163,7 +158,7 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
         }
       }
       else {
-        myInitialized.doWhenDone(this::createConsoleFolding);
+        myInitialized.doWhenDone(() -> createConsoleFolding(addOnce));
       }
     }
     catch (Exception e) {
@@ -206,7 +201,8 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
 
   @Override
   public void requestFocus() {
-    IdeFocusManager.findInstance().requestFocus(getConsoleEditor().getContentComponent(), true);
+    myInitialized.doWhenDone(() ->
+                               IdeFocusManager.getGlobalInstance().requestFocus(getConsoleEditor().getContentComponent(), true));
   }
 
   @Override
@@ -262,15 +258,15 @@ public class PythonConsoleView extends LanguageConsoleImpl implements Observable
                                                                                                       new TextRange(0, psiFile
                                                                                                         .getTextLength())));
         }
-      });
-      int oldOffset = getConsoleEditor().getCaretModel().getOffset();
-      getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
-      myExecuteActionHandler.runExecuteAction(this);
+        int oldOffset = getConsoleEditor().getCaretModel().getOffset();
+        getConsoleEditor().getCaretModel().moveToOffset(document.getTextLength());
+        myExecuteActionHandler.runExecuteAction(this);
 
-      if (!StringUtil.isEmpty(oldText)) {
-        ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
-        getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
-      }
+        if (!StringUtil.isEmpty(oldText)) {
+          ApplicationManager.getApplication().runWriteAction(() -> setInputText(oldText));
+          getConsoleEditor().getCaretModel().moveToOffset(oldOffset);
+        }
+      });
     });
   }
 

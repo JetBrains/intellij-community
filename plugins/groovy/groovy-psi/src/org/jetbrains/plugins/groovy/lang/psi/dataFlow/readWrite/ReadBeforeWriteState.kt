@@ -24,10 +24,10 @@ class ReadBeforeWriteState(
 ) : Cloneable {
 
   companion object {
-    val bottom = ReadBeforeWriteState()
+    val bottom: ReadBeforeWriteState = ReadBeforeWriteState()
   }
 
   public override fun clone(): ReadBeforeWriteState = ReadBeforeWriteState(writes.clone() as BitSet, reads.clone() as BitSet)
 
-  override fun toString() = "(writes=$writes, reads=$reads)"
+  override fun toString(): String = "(writes=$writes, reads=$reads)"
 }

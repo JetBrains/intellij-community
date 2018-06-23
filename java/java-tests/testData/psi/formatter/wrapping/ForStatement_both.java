@@ -8,7 +8,7 @@ public class Foo {
                 int thisShouldBeWrapped = 0;
                 thisShouldBeWrapped < 10;
                 thisShouldBeWrapped++
-                ) {
+        ) {
         }
     }
 }

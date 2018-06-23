@@ -402,13 +402,6 @@ public class NameUtil {
     boolean matches(@NotNull String name);
   }
 
-  @Deprecated
-  @NotNull
-  public static com.intellij.util.text.Matcher buildCompletionMatcher(@NotNull String pattern, int exactPrefixLen, boolean allowToUpper, boolean allowToLower) {
-    MatchingCaseSensitivity options = !allowToLower && !allowToUpper ? MatchingCaseSensitivity.ALL : exactPrefixLen > 0 ? MatchingCaseSensitivity.FIRST_LETTER : MatchingCaseSensitivity.NONE;
-    return buildMatcher(pattern, options);
-  }
-
   @NotNull
   public static com.intellij.util.text.Matcher buildMatcher(@NotNull String pattern, int exactPrefixLen, 
                                                             boolean allowToUpper, boolean allowToLower) {

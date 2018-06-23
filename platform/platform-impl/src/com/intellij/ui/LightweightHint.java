@@ -187,6 +187,11 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
           .setRequestFocus(hintHint.isRequestFocus())
           .setHint(true);
         myComponent.validate();
+        Border border = hintHint.getComponentBorder();
+        if (border != null) {
+          tooltip.setComponentBorder(border);
+        }
+
         myCurrentIdeTooltip = IdeTooltipManager.getInstance().show(tooltip, hintHint.isShowImmediately(), hintHint.isAnimationEnabled());
       }
       else {
@@ -506,6 +511,15 @@ public class LightweightHint extends UserDataHolderBase implements Hint {
 
       myComponent.revalidate();
       myComponent.repaint();
+    } else { // isAwtTooltip() case, we have to update Balloon size
+      Component c = myComponent;
+      while (c != null) {
+        if (c.getParent() instanceof JLayeredPane) {
+          c.setSize(c.getPreferredSize());
+          break;
+        }
+        c = c.getParent();
+      }
     }
   }
 

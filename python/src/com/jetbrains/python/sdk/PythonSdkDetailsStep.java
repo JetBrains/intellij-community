@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -38,7 +39,8 @@ import java.util.List;
 
 public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable private final DialogWrapper myShowAll;
-  private final Project myProject;
+  @Nullable private final Project myProject;
+  @Nullable private final Module myModule;
   private final Sdk[] myExistingSdks;
   private final NullableConsumer<Sdk> mySdkAddedCallback;
 
@@ -47,26 +49,32 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
   @Nullable private String myNewProjectPath;
 
   public static void show(@Nullable final Project project,
+                          @Nullable final Module module,
                           @NotNull final Sdk[] existingSdks,
                           @Nullable final DialogWrapper showAllDialog,
                           @NotNull JComponent ownerComponent,
                           @NotNull final Point popupPoint,
                           @Nullable String newProjectPath,
                           @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
-    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, showAllDialog, ownerComponent, existingSdks,
-                                                                       sdkAddedCallback);
-    sdkHomesStep.myNewProjectPath = newProjectPath;
-    final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
-    popup.showInScreenCoordinates(ownerComponent, popupPoint);
+    final PythonSdkDetailsStep sdkHomesStep = new PythonSdkDetailsStep(project, module, showAllDialog, existingSdks, sdkAddedCallback);
+    if (showAllDialog == null) {
+      sdkHomesStep.createLocalSdk();
+    }
+    else {
+      sdkHomesStep.myNewProjectPath = newProjectPath;
+      final ListPopup popup = JBPopupFactory.getInstance().createListPopup(sdkHomesStep);
+      popup.showInScreenCoordinates(ownerComponent, popupPoint);
+    }
   }
 
   public PythonSdkDetailsStep(@Nullable final Project project,
+                              @Nullable final Module module,
                               @Nullable final DialogWrapper showAllDialog,
-                              @NotNull final Component ownerComponent,
                               @NotNull final Sdk[] existingSdks,
                               @NotNull final NullableConsumer<Sdk> sdkAddedCallback) {
     super(null, getAvailableOptions(showAllDialog != null));
     myProject = project;
+    myModule = module;
     myShowAll = showAllDialog;
     myExistingSdks = existingSdks;
     mySdkAddedCallback = sdkAddedCallback;
@@ -100,7 +108,7 @@ public class PythonSdkDetailsStep extends BaseListPopupStep<String> {
 
   private void createLocalSdk() {
     final Project project = myNewProjectPath != null ? null : myProject;
-    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, Arrays.asList(myExistingSdks), myNewProjectPath);
+    final PyAddSdkDialog dialog = PyAddSdkDialog.create(project, myModule, Arrays.asList(myExistingSdks), myNewProjectPath);
     final Sdk sdk = dialog.showAndGet() ? dialog.getOrCreateSdk() : null;
     mySdkAddedCallback.consume(sdk);
   }

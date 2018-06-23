@@ -15,6 +15,7 @@
  */
 package org.jetbrains.debugger
 
+import com.intellij.openapi.project.Project
 import org.jetbrains.concurrency.Promise
 import org.jetbrains.debugger.values.Value
 
@@ -30,7 +31,7 @@ interface EvaluateContext {
    * Previously loaded [org.jetbrains.debugger.values.ObjectValue]s can be addressed from the expression if listed in
    * additionalContext parameter.
    */
-  fun evaluate(expression: String, additionalContext: Map<String, Any>? = null, enableBreak: Boolean = false): Promise<EvaluateResult>
+  fun evaluate(expression: String, additionalContext: Map<String, Any>? = null, enableBreak: Boolean = false, project: Project? = null): Promise<EvaluateResult>
 
   /**
    * optional to implement, some protocols, WIP for example, require you to release remote objects

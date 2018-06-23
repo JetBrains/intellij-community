@@ -2,7 +2,7 @@
 1(2) element: PyAssignmentStatement
 2(3) WRITE ACCESS: tests
 3(4) element: PyForStatement
-4(5) READ ACCESS: tests
+4(5,17) READ ACCESS: tests
 5(6) element: PyTargetExpression: t
 6(7) WRITE ACCESS: t
 7(8) element: PyTryExceptStatement

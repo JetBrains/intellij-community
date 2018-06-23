@@ -1904,9 +1904,9 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(
       new VirtualFile[] {
         getVirtualFile(BASE_PATH + testName + ".xml"),
-        getVirtualFile(BASE_PATH + testName + "_TypesV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_ActivationRequestV1.00.xsd"),
-        getVirtualFile(BASE_PATH + testName + "_GenericActivationRequestV1.00.xsd")
+        getVirtualFile(BASE_PATH + testName + "_Types.xsd"),
+        getVirtualFile(BASE_PATH + testName + "_Request.xsd"),
+        getVirtualFile(BASE_PATH + testName + "_Generic.xsd")
       },
       true,
       false

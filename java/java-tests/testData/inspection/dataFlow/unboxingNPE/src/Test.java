@@ -2,7 +2,7 @@ class Auto {
     public Auto(int k) {
     }
 
-    int f(int k) {
+    int f(int k, Auto other) {
         {
             Integer i = null;
             if (i>0) {
@@ -36,23 +36,23 @@ class Auto {
         }
         {
             Boolean i = null;
-            boolean i2 = this==this;
+            boolean i2 = this==other;
             i2 &= i;
         }
         {
             Boolean i = null;
-            boolean i2 = this==this;
+            boolean i2 = this==other;
             i2 |= i;
         }
         {
             Boolean i = null;
-            boolean i2 = this==this;
+            boolean i2 = this==other;
             i2 = !i;
         }
 
         {
             Integer i = null;
-            if (this==this) {
+            if (this==other) {
                 return i;
             }
         }

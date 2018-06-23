@@ -97,6 +97,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
             return "Template (" + sb.toString() + ")";
         }
 
+        @Override
         @Nullable
         public FileStatus getFileStatus() {
             return null;
@@ -109,7 +110,7 @@ public class XsltStuffProvider implements UsageGroupingRuleProvider {
         public void update() {
         }
 
-        public int compareTo(UsageGroup usageGroup) {
+        public int compareTo(@NotNull UsageGroup usageGroup) {
             final TemplateUsageGroup myUsageGroup = ((TemplateUsageGroup)usageGroup);
             return myTemplate.getTextOffset() - myUsageGroup.myTemplate.getTextOffset();
         }

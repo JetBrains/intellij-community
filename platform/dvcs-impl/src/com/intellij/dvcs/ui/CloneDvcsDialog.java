@@ -20,21 +20,20 @@ import com.intellij.dvcs.DvcsRememberedInputs;
 import com.intellij.dvcs.DvcsUtil;
 import com.intellij.dvcs.hosting.RepositoryHostingService;
 import com.intellij.dvcs.hosting.RepositoryListLoader;
+import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.keymap.KeymapUtil;
-import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.progress.impl.CoreProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -52,9 +51,10 @@ import com.intellij.ui.components.JBOptionButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.progress.ComponentVisibilityProgressManager;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -93,7 +93,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private ComboBox<String> myRepositoryUrlCombobox;
-  private EditorTextField myRepositoryUrlField;
+  private CollectionComboBoxModel<String> myRepositoryUrlComboboxModel;
+  private TextFieldWithAutoCompletion<String> myRepositoryUrlField;
   private ComponentVisibilityProgressManager mySpinnerProgressManager;
   private JButton myTestButton; // test repository
   private MyTextFieldWithBrowseButton myDirectoryField;
@@ -108,7 +109,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull private final List<String> myLoadedRepositoryHostingServicesNames;
   @Nullable private Alarm myRepositoryUrlAutoCompletionTooltipAlarm;
-  @NotNull private final List<String> myAvailableRepositories;
+  @NotNull private final Set<String> myUniqueAvailableRepositories;
+  @NotNull private List<ValidationInfo> myRepositoryListLoadingErrors = new ArrayList<>();
 
   public CloneDvcsDialog(@NotNull Project project, @NotNull String displayName, @NotNull String vcsDirectoryName) {
     this(project, displayName, vcsDirectoryName, null);
@@ -122,36 +124,58 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myProject = project;
     myVcsDirectoryName = vcsDirectoryName;
     myLoadedRepositoryHostingServicesNames = new ArrayList<>();
-    myAvailableRepositories = new ArrayList<>();
+    myUniqueAvailableRepositories = new HashSet<>();
 
     initComponents(defaultUrl);
-    initUrlAutocomplete();
+    Map<String, RepositoryListLoader> loadersToSchedule = initUrlAutocomplete();
     setTitle(DvcsBundle.getString("clone.title"));
     setOKButtonText(DvcsBundle.getString("clone.button"));
     init();
+    scheduleLater(loadersToSchedule);
   }
 
   @Override
   protected void doOKAction() {
-    myCreateDirectoryValidationInfo = createDestination();
-    super.doOKAction();
+    String path = myDirectoryField.getText();
+    new Task.Modal(myProject, "Creating Destination Directory", true) {
+      private ValidationInfo error = null;
+
+      @Override
+      public void run(@NotNull ProgressIndicator indicator) {
+        error = createDestination(path);
+      }
+
+      @Override
+      public void onSuccess() {
+        if (error == null) {
+          CloneDvcsDialog.super.doOKAction();
+        }
+        else {
+          myCreateDirectoryValidationInfo = error;
+          startTrackingValidation();
+        }
+      }
+    }.queue();
   }
 
   @Nullable
-  private ValidationInfo createDestination() {
-    Path directoryPath = Paths.get(myDirectoryField.getText());
-    if (!Files.exists(directoryPath)) {
-      try {
+  private static ValidationInfo createDestination(@NotNull String path) {
+    try {
+      Path directoryPath = Paths.get(path);
+      if (!Files.exists(directoryPath)) {
         Files.createDirectories(directoryPath);
       }
-      catch (Exception e) {
-        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"));
+      else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
+        return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
       }
+      return null;
     }
-    else if (!Files.isDirectory(directoryPath) || !Files.isWritable(directoryPath)) {
-      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"));
+    catch (InvalidPathException e) {
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.invalid"));
     }
-    return null;
+    catch (Exception e) {
+      return new ValidationInfo(DvcsBundle.getString("clone.destination.directory.error.access"), false);
+    }
   }
 
   @NotNull
@@ -171,11 +195,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
   }
 
   private void initComponents(@Nullable String defaultUrl) {
-    DvcsRememberedInputs rememberedInputs = getRememberedInputs();
-    String parentDirectory = rememberedInputs.getCloneParentDir();
+    String parentDirectory = getRememberedInputs().getCloneParentDir();
 
+    myRepositoryUrlComboboxModel = new CollectionComboBoxModel<>();
     myRepositoryUrlField = TextFieldWithAutoCompletion.create(myProject,
-                                                              myAvailableRepositories,
+                                                              myRepositoryUrlComboboxModel.getItems(),
                                                               false,
                                                               "");
 
@@ -189,13 +213,8 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     myRepositoryUrlCombobox.setEditable(true);
     myRepositoryUrlCombobox.setEditor(ComboBoxCompositeEditor.withComponents(myRepositoryUrlField,
                                                                              repositoryUrlFieldSpinner));
+    myRepositoryUrlCombobox.setModel(myRepositoryUrlComboboxModel);
 
-    myRepositoryUrlField.addDocumentListener(new DocumentListener() {
-      @Override
-      public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
-        startTrackingValidation();
-      }
-    });
     myRepositoryUrlField.addDocumentListener(new DocumentListener() {
       @Override
       public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent event) {
@@ -222,28 +241,20 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
                                              DvcsBundle.getString("clone.destination.directory.browser.description"),
                                              myProject,
                                              fcd);
-    myDirectoryField.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
-      @Override
-      protected void textChanged(DocumentEvent e) {
-        startTrackingValidation();
-      }
-    });
 
-    boolean defaultAlreadyAdded = false;
-    for (String url : rememberedInputs.getVisitedUrls()) {
-      myRepositoryUrlCombobox.addItem(url);
-      if (defaultUrl != null) {
-        defaultAlreadyAdded = defaultUrl.equalsIgnoreCase(url);
-      }
-    }
-    if (defaultUrl != null && !defaultAlreadyAdded) {
-      myRepositoryUrlCombobox.addItem(defaultUrl);
+    if (defaultUrl != null) {
       myRepositoryUrlField.setText(defaultUrl);
+      myRepositoryUrlField.selectAll();
+      myTestButton.setEnabled(true);
     }
-    myTestButton.setEnabled(!getCurrentUrlText().isEmpty());
   }
 
-  private void initUrlAutocomplete() {
+  /**
+   * Initializes component structure for repository list loading
+   *
+   * @return already enabled loaders for pre-scheduling
+   */
+  private Map<String, RepositoryListLoader> initUrlAutocomplete() {
     Collection<RepositoryHostingService> repositoryHostingServices = getRepositoryHostingServices();
     if (repositoryHostingServices.size() > 1) {
       myRepositoryUrlAutoCompletionTooltipAlarm = new Alarm(getDisposable());
@@ -251,12 +262,13 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     }
 
     List<Action> loginActions = new ArrayList<>();
-    for (RepositoryHostingService service : repositoryHostingServices) {
+    Map<String, RepositoryListLoader> enabledLoaders = new HashMap<>();
+    for (RepositoryHostingService service: repositoryHostingServices) {
       String serviceDisplayName = service.getServiceDisplayName();
       RepositoryListLoader loader = service.getRepositoryListLoader(myProject);
+      if (loader == null) continue;
       if (loader.isEnabled()) {
-        ApplicationManager.getApplication().invokeLater(() -> schedule(serviceDisplayName, loader),
-                                                        ModalityState.stateForComponent(getRootPane()));
+        enabledLoaders.put(serviceDisplayName, loader);
       }
       else {
         loginActions.add(new AbstractAction(DvcsBundle.message("clone.repository.url.autocomplete.login.text", serviceDisplayName)) {
@@ -279,6 +291,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     });
 
     myLoginButtonComponent = new LoginButtonComponent(loginActions);
+    return enabledLoaders;
   }
 
   @NotNull
@@ -286,25 +299,48 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     return Collections.emptyList();
   }
 
+  private void scheduleLater(@NotNull Map<String, RepositoryListLoader> loaders) {
+    ApplicationManager.getApplication().invokeLater(() -> loaders.forEach(this::schedule), ModalityState.stateForComponent(getRootPane()));
+  }
+
   private void schedule(@NotNull String serviceDisplayName, @NotNull RepositoryListLoader loader) {
     mySpinnerProgressManager.run(new Task.Backgroundable(myProject, "Not Visible") {
-      private List<String> myLoadedRepositories;
+      private final List<String> myNewRepositories = new ArrayList<>();
+      private final List<RepositoryListLoadingException> myErrors = new ArrayList<>();
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        myLoadedRepositories = loader.getAvailableRepositories(indicator);
+        RepositoryListLoader.Result loadingResult =
+          loader.getAvailableRepositoriesFromMultipleSources(indicator);
+        for (String repository: loadingResult.getUrls()) {
+          if (myUniqueAvailableRepositories.add(repository)) {
+            myNewRepositories.add(repository);
+          }
+        }
+        myErrors.addAll(loadingResult.getErrors());
       }
 
       @Override
       public void onSuccess() {
-        myAvailableRepositories.addAll(myLoadedRepositories);
+        if (mySpinnerProgressManager.getDisposed()) return;
+        if (!myNewRepositories.isEmpty()) {
+          // otherwise editor content will be reset
+          myRepositoryUrlCombobox.setSelectedItem(myRepositoryUrlField.getText());
+          myRepositoryUrlComboboxModel.addAll(myRepositoryUrlComboboxModel.getSize(), myNewRepositories);
+          myRepositoryUrlField.setVariants(myRepositoryUrlComboboxModel.getItems());
+        }
         myLoadedRepositoryHostingServicesNames.add(serviceDisplayName);
         showRepositoryUrlAutoCompletionTooltip();
-      }
-
-      @Override
-      public void onThrowable(@NotNull Throwable error) {
-        //TODO: show warning
+        if (!myErrors.isEmpty()) {
+          for (RepositoryListLoadingException error: myErrors) {
+            StringBuilder errorMessageBuilder = new StringBuilder();
+            errorMessageBuilder.append(error.getMessage());
+            Throwable cause = error.getCause();
+            if (cause != null) errorMessageBuilder.append(": ").append(cause.getMessage());
+            myRepositoryListLoadingErrors.add(new ValidationInfo(errorMessageBuilder.toString(), false));
+          }
+          startTrackingValidation();
+        }
       }
     });
   }
@@ -321,13 +357,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   private void showRepositoryUrlAutoCompletionTooltipNow() {
     if (!hasErrors(myRepositoryUrlCombobox) && !myLoadedRepositoryHostingServicesNames.isEmpty()) {
+      Editor editor = myRepositoryUrlField.getEditor();
+      if (editor == null) return;
       String completionShortcutText =
         KeymapUtil.getFirstKeyboardShortcutText(ActionManager.getInstance().getAction(IdeActions.ACTION_CODE_COMPLETION));
-      HintManager.getInstance().showInformationHint(
-        Objects.requireNonNull(myRepositoryUrlField.getEditor()),
-        DvcsBundle.message("clone.repository.url.autocomplete.hint",
-                           DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
-                           completionShortcutText));
+      HintManager.getInstance().showInformationHint(editor,
+                                                    DvcsBundle.message("clone.repository.url.autocomplete.hint",
+                                                                       DvcsUtil.joinWithAnd(myLoadedRepositoryHostingServicesNames, 0),
+                                                                       completionShortcutText));
     }
   }
 
@@ -351,9 +388,11 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
           public void onSuccess() {
             if (myTestResult.isSuccess()) {
               myRepositoryTestValidationInfo = null;
+              Disposable dialogDisposable = getDisposable();
+              if (Disposer.isDisposed(dialogDisposable)) return;
               JBPopupFactory.getInstance()
                             .createBalloonBuilder(new JLabel(DvcsBundle.getString("clone.repository.url.test.success.message")))
-                            .setDisposable(getDisposable())
+                            .setDisposable(dialogDisposable)
                             .createBalloon()
                             .show(new RelativePoint(myTestButton, new Point(myTestButton.getWidth() / 2,
                                                                             myTestButton.getHeight())),
@@ -363,6 +402,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
               myRepositoryTestValidationInfo =
                 new ValidationInfo(DvcsBundle.message("clone.repository.url.test.failed.message", myTestResult.myErrorMessage),
                                    myRepositoryUrlCombobox);
+              startTrackingValidation();
             }
             myRepositoryTestProgressIndicator = null;
           }
@@ -388,6 +428,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
     ContainerUtil.addIfNotNull(infoList, myCreateDirectoryValidationInfo);
     ContainerUtil.addIfNotNull(infoList, urlValidation);
     ContainerUtil.addIfNotNull(infoList, directoryValidation);
+    infoList.addAll(myRepositoryListLoadingErrors);
     return infoList;
   }
 
@@ -481,7 +522,7 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
    */
   @Deprecated
   public void prependToHistory(@NotNull final String item) {
-    myRepositoryUrlCombobox.addItem(item);
+    myRepositoryUrlComboboxModel.add(item);
   }
 
   public void rememberSettings() {
@@ -547,14 +588,16 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
   @NotNull
   protected JComponent createCenterPanel() {
-    return PanelFactory.grid()
-                       .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
-                                                          .addToCenter(myRepositoryUrlCombobox)
-                                                          .addToRight(myTestButton))
-                                        .withLabel(DvcsBundle.getString("clone.repository.url.label")))
-                       .add(PanelFactory.panel(myDirectoryField)
-                                        .withLabel(DvcsBundle.getString("clone.destination.directory.label")))
-                       .createPanel();
+    JPanel panel = PanelFactory.grid()
+                               .add(PanelFactory.panel(JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, UIUtil.DEFAULT_VGAP)
+                                                                  .addToCenter(myRepositoryUrlCombobox)
+                                                                  .addToRight(myTestButton))
+                                                .withLabel(DvcsBundle.getString("clone.repository.url.label")))
+                               .add(PanelFactory.panel(myDirectoryField)
+                                                .withLabel(DvcsBundle.getString("clone.destination.directory.label")))
+                               .createPanel();
+    panel.setPreferredSize(new JBDimension(500, 50, true));
+    return panel;
   }
 
   protected static class TestResult {
@@ -600,36 +643,6 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
         finally {
           myModifiedByUser = false;
         }
-      }
-    }
-  }
-
-  private static class ComponentVisibilityProgressManager implements Disposable {
-    @NotNull private final JComponent myProgressDisplayComponent;
-    @NotNull private final List<ProgressIndicator> myIndicators;
-
-    public ComponentVisibilityProgressManager(@NotNull JComponent progressDisplayComponent) {
-      myProgressDisplayComponent = progressDisplayComponent;
-      myIndicators = new ArrayList<>();
-    }
-
-    @CalledInAwt
-    public ProgressIndicator run(@NotNull Task.Backgroundable task) {
-      ProgressIndicator indicator = new EmptyProgressIndicator(ModalityState.stateForComponent(myProgressDisplayComponent));
-      myIndicators.add(indicator);
-      myProgressDisplayComponent.setVisible(true);
-      ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(task, indicator, () ->
-        ApplicationManager.getApplication().invokeLater(() -> {
-          myIndicators.remove(indicator);
-          myProgressDisplayComponent.setVisible(!myIndicators.isEmpty());
-        }, indicator.getModalityState()));
-      return indicator;
-    }
-
-    @Override
-    public void dispose() {
-      for (ProgressIndicator indicator : myIndicators) {
-        indicator.cancel();
       }
     }
   }

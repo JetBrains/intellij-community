@@ -8,6 +8,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.yaml.YAMLBundle;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLTokenTypes;
 
@@ -51,7 +52,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     if (myBuilder.getTokenType() == DOCUMENT_MARKER) {
       advanceLexer();
     }
-    parseBlockNode(0, false);
+    parseBlockNode(myIndent, false);
     dropEolMarker();
     marker.done(YAMLElementTypes.DOCUMENT);
   }
@@ -62,8 +63,8 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     final PsiBuilder.Marker marker = mark();
     PsiBuilder.Marker endOfNodeMarker = null;
     IElementType nodeType = null;
-    
-    
+
+
     // It looks like tag for a block node should be located on a separate line 
     if (getTokenType() == YAMLTokenTypes.TAG && myBuilder.lookAhead(1) == YAMLTokenTypes.EOL) {
       advanceLexer();
@@ -98,7 +99,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         endOfNodeMarker.drop();
       }
       endOfNodeMarker = mark();
-      
+
     }
 
     if (endOfNodeMarker != null) {
@@ -147,11 +148,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     if (eof()) {
       return null;
     }
-    
+
     final PsiBuilder.Marker marker = mark();
-    if (getTokenType() == YAMLTokenTypes.TAG) {
-      advanceLexer();
-    }
+    parseNodeProperties();
 
     final IElementType tokenType = getTokenType();
     final IElementType nodeType;
@@ -173,11 +172,22 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
       nodeType = parseScalarValue(indent);
     }
+    else if (tokenType == STAR) {
+      advanceLexer(); // symbol *
+      if (getTokenType() == YAMLTokenTypes.ALIAS) {
+        advanceLexer(); // alias name
+        nodeType = YAMLElementTypes.ALIAS_NODE;
+      }
+      else {
+        // Should be impossible now (because of lexer rules)
+        nodeType = null;
+      }
+    }
     else {
       advanceLexer();
       nodeType = null;
     }
-    
+
     if (nodeType != null) {
       marker.done(nodeType);
     }
@@ -185,6 +195,57 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       marker.drop();
     }
     return nodeType;
+  }
+
+  /**
+   * Each node may have two optional properties, anchor and tag, in addition to its content.
+   * Node properties may be specified in any order before the node’s content.
+   * Either or both may be omitted.
+   *
+   * <pre>
+   * [96] c-ns-properties(n,c) ::= ( c-ns-tag-property ( s-separate(n,c) c-ns-anchor-property )? )
+   *                             | ( c-ns-anchor-property ( s-separate(n,c) c-ns-tag-property )? )
+   *
+   * </pre>
+   * See <a href="http://www.yaml.org/spec/1.2/spec.html#id2783797">6.9. Node Properties</a>
+   */
+  private void parseNodeProperties() {
+    // By standard here could be no more than one TAG or ANCHOR
+    // By better to support sequence of them
+    boolean anchorWasRead = false;
+    boolean tagWasRead = false;
+    while (getTokenType() == YAMLTokenTypes.TAG || getTokenType() == YAMLTokenTypes.AMPERSAND) {
+      if (getTokenType() == YAMLTokenTypes.AMPERSAND) {
+        PsiBuilder.Marker errorMarker = null;
+        if (anchorWasRead) {
+          errorMarker = mark();
+        }
+        anchorWasRead = true;
+        PsiBuilder.Marker anchorMarker = mark();
+        advanceLexer(); // symbol &
+        if (getTokenType() == YAMLTokenTypes.ANCHOR) {
+          advanceLexer(); // anchor name
+          anchorMarker.done(YAMLElementTypes.ANCHOR_NODE);
+        }
+        else {
+          // Should be impossible now (because of lexer rules)
+          anchorMarker.drop();
+        }
+        if (errorMarker != null) {
+          errorMarker.error(YAMLBundle.message("YAMLParser.multiple.anchors"));
+        }
+      } else { // tag case
+        if (tagWasRead) {
+          PsiBuilder.Marker errorMarker = mark();
+          advanceLexer();
+          errorMarker.error(YAMLBundle.message("YAMLParser.multiple.tags"));
+        }
+        else {
+          tagWasRead = true;
+          advanceLexer();
+        }
+      }
+    }
   }
 
   @Nullable
@@ -214,34 +275,47 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
 
   @NotNull
   private IElementType parseMultiLineScalar(final IElementType tokenType) {
-    int indent = -1;
+    assert tokenType == getTokenType();
+    // Accept header token: '|' or '>'
+    advanceLexer();
+
+    // Parse header tail: TEXT is used as placeholder for invalid symbols in this context
+    if (getTokenType() == TEXT) {
+      PsiBuilder.Marker err = myBuilder.mark();
+      advanceLexer();
+      err.error(YAMLBundle.message("YAMLParser.invalid.header.symbols"));
+    }
+
+    if (getTokenType() == EOL) {
+      advanceLexer();
+    }
+    PsiBuilder.Marker endOfValue = myBuilder.mark();
+
     IElementType type = getTokenType();
-    PsiBuilder.Marker endOfValue = null;
-    while (type == tokenType || type == INDENT || type == EOL) {
-      if (indent == -1 && type == INDENT) {
-        indent = getCurrentTokenLength();
+    // Lexer ensures such input token structure: ( ( INDENT tokenType? )? SCALAR_EOL )*
+    // endOfValue marker is needed to exclude INDENT after last SCALAR_EOL
+    while (type == tokenType || type == INDENT || type == SCALAR_EOL) {
+      advanceLexer();
+      if (type == tokenType) {
+        if (endOfValue != null) {
+          // this 'if' should be always true because of input token structure
+          endOfValue.drop();
+        }
+        endOfValue = null;
       }
-      
-      if (type == tokenType || type == INDENT && getCurrentTokenLength() > indent) {
-        advanceLexer();
+      if (type == SCALAR_EOL) {
         if (endOfValue != null) {
           endOfValue.drop();
         }
         endOfValue = myBuilder.mark();
       }
-      else {
-        advanceLexer();
-      }
-      
+
       type = getTokenType();
     }
-    if (endOfValue == null) {
-      rollBackToEol();
-    }
-    else {
-      dropEolMarker();
+    if (endOfValue != null) {
       endOfValue.rollbackTo();
     }
+
     return tokenType == SCALAR_LIST ? YAMLElementTypes.SCALAR_LIST_VALUE : YAMLElementTypes.SCALAR_TEXT_VALUE;
   }
 
@@ -314,8 +388,11 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
     int indentAddition = getShorthandIndentAddition();
     advanceLexer();
 
+    assert getTokenType() == COLON : "Expected colon";
+    advanceLexer();
+
     final PsiBuilder.Marker rollbackMarker = mark();
-    
+
     passJunk();
     if (eolSeen && (eof() || myIndent + getIndentBonus(false) < indent + indentAddition)) {
       dropEolMarker();
@@ -377,7 +454,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         advanceLexer();
         continue;
       }
-      
+
       final PsiBuilder.Marker marker = mark();
       final IElementType parsedElement = parseSingleStatement(0);
       if (parsedElement != null) {
@@ -386,7 +463,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       else {
         marker.error("Sequence item expected");
       }
-      
+
       if (getTokenType() == YAMLTokenTypes.COMMA) {
         advanceLexer();
       }
@@ -431,8 +508,9 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       return;
     }
     final IElementType type = myBuilder.getTokenType();
-    eolSeen = eolSeen || type == EOL;
-    if (type == EOL) {
+    boolean eolElement = YAMLElementTypes.EOL_ELEMENTS.contains(type);
+    eolSeen = eolSeen || eolElement;
+    if (eolElement) {
       // Drop and create new eolMarker
       myAfterLastEolMarker = mark();
       myIndent = 0;

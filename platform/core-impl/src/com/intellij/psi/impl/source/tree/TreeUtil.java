@@ -16,21 +16,14 @@
 
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.extapi.psi.StubBasedPsiElementBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lexer.Lexer;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiComment;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.DebugUtil;
-import com.intellij.psi.stubs.StubBase;
-import com.intellij.psi.stubs.StubElement;
-import com.intellij.psi.stubs.StubTree;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.IStrongWhitespaceHolderElementType;
@@ -38,7 +31,9 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashSet;
+import java.util.LinkedList;
+import java.util.Set;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 public class TreeUtil {
@@ -262,6 +257,11 @@ public class TreeUtil {
     return nextLeaf((TreeElement)node, null);
   }
 
+  @Nullable
+  public static LeafElement nextLeaf(@NotNull final LeafElement node) {
+    return nextLeaf(node, null);
+  }
+
   public static final Key<FileElement> CONTAINING_FILE_KEY_AFTER_REPARSE = Key.create("CONTAINING_FILE_KEY_AFTER_REPARSE");
   public static FileElement getFileElement(TreeElement element) {
     TreeElement parent = element;
@@ -439,45 +439,6 @@ public class TreeUtil {
     public ASTNode nextLeafBranchStart;
     CompositeElement strongWhiteSpaceHolder;
     boolean isStrongElementOnRisingSlope = true;
-  }
-
-  public static class StubBindingException extends RuntimeException {
-    StubBindingException(String message) {
-      super(message);
-    }
-  }
-
-  public static void bindStubsToTree(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
-    List<Pair<StubBase, TreeElement>> bindings = calcStubAstBindings(stubTree, tree);
-
-    for (int i = 0; i < bindings.size(); i++) {
-      Pair<StubBase, TreeElement> pair = bindings.get(i);
-      StubBasedPsiElementBase psi = (StubBasedPsiElementBase)pair.second.getPsi();
-      //noinspection unchecked
-      pair.first.setPsi(psi);
-      psi.setStubIndex(i + 1);
-    }
-  }
-
-  @NotNull
-  public static List<Pair<StubBase, TreeElement>> calcStubAstBindings(@NotNull StubTree stubTree, @NotNull FileElement tree) throws StubBindingException {
-    PsiFile file = (PsiFile)tree.getPsi();
-    List<CompositeElement> nodes = tree.getStubbedSpine().getNodes();
-    List<StubElement<?>> stubs = stubTree.getPlainList();
-    if (stubs.size() != nodes.size()) {
-      throw new StubBindingException("Stub list in " + file.getName() + " length differs from PSI");
-    }
-
-    List<Pair<StubBase, TreeElement>> bindings = new ArrayList<>();
-    for (int i = 1; i < stubs.size(); i++) { // start from 1 to skip file root stub
-      StubBase<?> stub = (StubBase<?>)stubs.get(i);
-      CompositeElement node = nodes.get(i);
-      if (stub.getStubType() != node.getElementType()) {
-        throw new StubBindingException("stub:" + stub + ", AST:" + node.getElementType());
-      }
-      bindings.add(Pair.create(stub, node));
-    }
-    return bindings;
   }
 
   @Nullable

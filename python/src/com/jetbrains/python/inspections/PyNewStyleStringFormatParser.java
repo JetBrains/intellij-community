@@ -275,7 +275,7 @@ public class PyNewStyleStringFormatParser {
       }
       else {
         try {
-          setPosition(Integer.parseInt(name));
+          setManualPosition(Integer.parseInt(name));
         }
         catch (NumberFormatException e) {
           setMappingKey(StringUtil.nullize(name));
@@ -308,12 +308,12 @@ public class PyNewStyleStringFormatParser {
 
     /**
      * The identifier (presumably, valid) or the index in the name part of the field after "{" and before the first "." or "[".
-     * It's always present, but might be empty. Depending on its content either {@link #getMappingKey()}, {@link #getPosition()} or
+     * It's always present, but might be empty. Depending on its content either {@link #getMappingKey()}, {@link #getManualPosition()} or
      * {@link #getAutoPosition()} returns non-null value.
      *
      * @see #getFirstNameRange()
      * @see #getMappingKey()
-     * @see #getPosition()
+     * @see #getManualPosition()
      * @see #getAutoPosition()
      */
     @NotNull

@@ -8,29 +8,199 @@
     </content>
     <orderEntry type="inheritedJdk" />
     <orderEntry type="sourceFolder" forTests="false" />
-    <orderEntry type="module" module-name="intellij.platform.annotations.java5" />
-    <orderEntry type="module-library" exported="">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/aether-1.1.0-all.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
-    <orderEntry type="module-library">
-      <library>
-        <CLASSES>
-          <root url="jar://$MODULE_DIR$/../lib/maven-aether-provider-3.3.9-all.jar!/" />
-        </CLASSES>
-        <JAVADOC />
-        <SOURCES />
-      </library>
-    </orderEntry>
+    <orderEntry type="library" name="jetbrains-annotations-java5" level="project" />
     <orderEntry type="library" exported="" name="http-client" level="project" />
-    <orderEntry type="library" exported="" name="commons-codec" level="project" />
     <orderEntry type="library" exported="" name="commons-logging" level="project" />
     <orderEntry type="library" exported="" name="Slf4j" level="project" />
     <orderEntry type="module" module-name="intellij.platform.testFramework" scope="TEST" />
+    <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module-library" exported="">
+      <library name="org.eclipse.aether:aether-api" type="repository">
+        <properties maven-id="org.eclipse.aether:aether-api:1.1.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.eclipse.aether:aether-impl" type="repository">
+        <properties maven-id="org.eclipse.aether:aether-impl:1.1.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-impl/1.1.0/aether-impl-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-spi/1.1.0/aether-spi-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-util/1.1.0/aether-util-1.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-impl/1.1.0/aether-impl-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-spi/1.1.0/aether-spi-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-util/1.1.0/aether-util-1.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.eclipse.aether:aether-connector-basic" type="repository">
+        <properties maven-id="org.eclipse.aether:aether-connector-basic:1.1.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-connector-basic/1.1.0/aether-connector-basic-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-spi/1.1.0/aether-spi-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-util/1.1.0/aether-util-1.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-connector-basic/1.1.0/aether-connector-basic-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-spi/1.1.0/aether-spi-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-util/1.1.0/aether-util-1.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.eclipse.aether:aether-transport-file" type="repository">
+        <properties maven-id="org.eclipse.aether:aether-transport-file:1.1.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-transport-file/1.1.0/aether-transport-file-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-spi/1.1.0/aether-spi-1.1.0.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-util/1.1.0/aether-util-1.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-transport-file/1.1.0/aether-transport-file-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-api/1.1.0/aether-api-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-spi/1.1.0/aether-spi-1.1.0-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-util/1.1.0/aether-util-1.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.eclipse.aether:aether-transport-http" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.eclipse.aether:aether-transport-http:1.1.0" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-transport-http/1.1.0/aether-transport-http-1.1.0.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/eclipse/aether/aether-transport-http/1.1.0/aether-transport-http-1.1.0-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.apache.maven:maven-aether-provider" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.maven:maven-aether-provider:3.3.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.3.9/maven-aether-provider-3.3.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-aether-provider/3.3.9/maven-aether-provider-3.3.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.apache.maven:maven-model" type="repository">
+        <properties maven-id="org.apache.maven:maven-model:3.3.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.3.9/maven-model-3.3.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model/3.3.9/maven-model-3.3.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.apache.maven:maven-model-builder" type="repository">
+        <properties include-transitive-deps="false" maven-id="org.apache.maven:maven-model-builder:3.3.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.3.9/maven-model-builder-3.3.9.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-model-builder/3.3.9/maven-model-builder-3.3.9-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.apache.maven:maven-artifact" type="repository">
+        <properties maven-id="org.apache.maven:maven-artifact:3.3.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.3.9/maven-artifact-3.3.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-artifact/3.3.9/maven-artifact-3.3.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.apache.maven:maven-repository-metadata" type="repository">
+        <properties maven-id="org.apache.maven:maven-repository-metadata:3.3.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.3.9/maven-repository-metadata-3.3.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-repository-metadata/3.3.9/maven-repository-metadata-3.3.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.apache.maven:maven-builder-support" type="repository">
+        <properties maven-id="org.apache.maven:maven-builder-support:3.3.9" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.3.9/maven-builder-support-3.3.9.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/maven/maven-builder-support/3.3.9/maven-builder-support-3.3.9-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-utils/3.0.22/plexus-utils-3.0.22-sources.jar!/" />
+          <root url="jar://$MAVEN_REPOSITORY$/org/apache/commons/commons-lang3/3.4/commons-lang3-3.4-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.codehaus.plexus:plexus-interpolation" type="repository">
+        <properties maven-id="org.codehaus.plexus:plexus-interpolation:1.21" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.21/plexus-interpolation-1.21.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-interpolation/1.21/plexus-interpolation-1.21-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
+    <orderEntry type="module-library">
+      <library name="org.codehaus.plexus:plexus-component-annotations" type="repository">
+        <properties maven-id="org.codehaus.plexus:plexus-component-annotations:1.6" />
+        <CLASSES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.6/plexus-component-annotations-1.6.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES>
+          <root url="jar://$MAVEN_REPOSITORY$/org/codehaus/plexus/plexus-component-annotations/1.6/plexus-component-annotations-1.6-sources.jar!/" />
+        </SOURCES>
+      </library>
+    </orderEntry>
   </component>
 </module>

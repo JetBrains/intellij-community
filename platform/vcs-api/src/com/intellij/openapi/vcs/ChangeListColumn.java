@@ -100,7 +100,7 @@ public abstract class ChangeListColumn<T extends ChangeList> {
     @Override
     @NotNull
     public Comparator<CommittedChangeList> getComparator() {
-      return comparing(ChangeList::getName);
+      return comparing(list -> list.getName(), String::compareToIgnoreCase);
     }
   };
 

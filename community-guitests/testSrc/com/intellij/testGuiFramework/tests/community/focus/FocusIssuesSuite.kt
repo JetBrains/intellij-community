@@ -2,19 +2,22 @@
 package com.intellij.testGuiFramework.tests.community.focus
 
 import com.intellij.testGuiFramework.framework.FirstStartWith
-import com.intellij.testGuiFramework.framework.GuiTestSuite
+import com.intellij.testGuiFramework.framework.GuiTestSuiteRunner
 import com.intellij.testGuiFramework.framework.RunWithIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.CommunityIdeFirstStart
 import org.junit.runner.RunWith
 import org.junit.runners.Suite
 
-@RunWith(GuiTestSuite::class)
+@RunWith(GuiTestSuiteRunner::class)
 @RunWithIde(CommunityIde::class)
 @FirstStartWith(CommunityIdeFirstStart::class)
-@Suite.SuiteClasses(TypeAheadTest::class,
+@Suite.SuiteClasses(CompletionFocusTest::class,
+//                    TypeAheadTest::class,
                     GoToClassFocusTest::class,
                     GoToClassTwiceFocusTest::class,
                     InlineVariableFocusTest::class,
-                    KeyMapSettingsTestFocusTest::class)
+                    KeyMapSettingsTestFocusTest::class,
+                    SearchEverywhereFocusTest::class,
+                    ReplaceInPathFocusTest::class)
 class FocusIssuesSuite

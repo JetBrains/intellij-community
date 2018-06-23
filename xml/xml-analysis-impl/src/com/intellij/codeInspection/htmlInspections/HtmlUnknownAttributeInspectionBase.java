@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
+import com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -102,7 +103,7 @@ public class HtmlUnknownAttributeInspectionBase extends HtmlUnknownElementInspec
           ArrayList<LocalQuickFix> quickfixes = new ArrayList<>(6);
           quickfixes
             .add(new AddCustomHtmlElementIntentionAction(ATTRIBUTE_KEY, name, XmlBundle.message("add.custom.html.attribute", name)));
-          quickfixes.add(new RemoveAttributeIntentionAction(name));
+          quickfixes.add(new RemoveAttributeIntentionFix(name));
           if (maySwitchToHtml5) {
             quickfixes.add(new SwitchToHtml5WithHighPriorityAction());
           }

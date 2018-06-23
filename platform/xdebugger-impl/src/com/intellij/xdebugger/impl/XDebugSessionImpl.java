@@ -15,6 +15,7 @@ import com.intellij.execution.ui.ConsoleView;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.execution.ui.RunnerLayoutUi;
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
@@ -395,6 +396,9 @@ public class XDebugSessionImpl implements XDebugSession {
       if (active) {
         synchronized (myRegisteredBreakpoints) {
           myRegisteredBreakpoints.put(b, new CustomizedBreakpointPresentation());
+          if (b instanceof XLineBreakpoint) {
+            updateBreakpointPresentation((XLineBreakpoint)b, b.getType().getPendingIcon(), null);
+          }
         }
         handler.registerBreakpoint(b);
       }
@@ -570,6 +574,7 @@ public class XDebugSessionImpl implements XDebugSession {
     // allowed only for the active session
     if (myDebuggerManager.getCurrentSession() == this) {
       boolean isTopFrame = isTopFrameSelected();
+
       myDebuggerManager.updateExecutionPoint(getCurrentPosition(), !isTopFrame, getPositionIconRenderer(isTopFrame));
     }
   }
@@ -601,11 +606,12 @@ public class XDebugSessionImpl implements XDebugSession {
     myCurrentExecutionStack = executionStack;
     myCurrentStackFrame = frame;
     myIsTopFrame = isTopFrame;
-    activateSession();
 
     if (frameChanged) {
       myDispatcher.getMulticaster().stackFrameChanged();
     }
+
+    activateSession();
   }
 
   void activateSession() {
@@ -656,6 +662,16 @@ public class XDebugSessionImpl implements XDebugSession {
       presentation.setIcon(icon);
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
+  }
+
+  @Override
+  public void setBreakpointVerified(@NotNull XLineBreakpoint<?> breakpoint) {
+    updateBreakpointPresentation(breakpoint, XDebuggerUtilImpl.getVerifiedIcon(breakpoint), null);
+  }
+
+  @Override
+  public void setBreakpointInvalid(@NotNull XLineBreakpoint<?> breakpoint, @Nullable String errorMessage) {
+    updateBreakpointPresentation(breakpoint, AllIcons.Debugger.Db_invalid_breakpoint, errorMessage);
   }
 
   @Override
@@ -831,9 +847,7 @@ public class XDebugSessionImpl implements XDebugSession {
   private void enableBreakpoints() {
     if (myBreakpointsDisabled) {
       myBreakpointsDisabled = false;
-      ReadAction.run(() -> {
-        processAllBreakpoints(true, false);
-      });
+      ReadAction.run(() -> processAllBreakpoints(true, false));
     }
   }
 
@@ -860,7 +874,7 @@ public class XDebugSessionImpl implements XDebugSession {
     }
     finally {
       //noinspection unchecked
-      myDebugProcess.stopAsync().done(aVoid -> {
+      myDebugProcess.stopAsync().onSuccess(aVoid -> {
         if (!myProject.isDisposed()) {
           myProject.getMessageBus().syncPublisher(XDebuggerManager.TOPIC).processStopped(myDebugProcess);
         }
@@ -938,7 +952,7 @@ public class XDebugSessionImpl implements XDebugSession {
     XDebuggerManagerImpl.NOTIFICATION_GROUP.createNotification("", message, type.toNotificationType(), notificationListener).notify(myProject);
   }
 
-  private class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
+  private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     @Override
     public void breakpointAdded(@NotNull final XBreakpoint<?> breakpoint) {
       if (!myBreakpointsDisabled) {
@@ -951,12 +965,16 @@ public class XDebugSessionImpl implements XDebugSession {
       if (getActiveNonLineBreakpoint() == breakpoint) {
         myActiveNonLineBreakpoint = null;
       }
+      processRemove(breakpoint);
+    }
+
+    void processRemove(@NotNull final XBreakpoint<?> breakpoint) {
       processAllHandlers(breakpoint, false);
     }
 
     @Override
     public void breakpointChanged(@NotNull final XBreakpoint<?> breakpoint) {
-      breakpointRemoved(breakpoint);
+      processRemove(breakpoint);
       breakpointAdded(breakpoint);
     }
   }

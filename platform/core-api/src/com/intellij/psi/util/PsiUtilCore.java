@@ -251,7 +251,7 @@ public class PsiUtilCore {
       throw createException();
     }
 
-    protected PsiInvalidElementAccessException createException() {
+    PsiInvalidElementAccessException createException() {
       return new PsiInvalidElementAccessException(this, toString(), null);
     }
 
@@ -412,7 +412,6 @@ public class PsiUtilCore {
     return elt;
   }
 
-  @Nullable
   public static PsiFile getTemplateLanguageFile(@Nullable PsiElement element) {
     if (element == null) return null;
     final PsiFile containingFile = element.getContainingFile();
@@ -440,7 +439,6 @@ public class PsiUtilCore {
   /**
    * @return name for element using element structure info
    */
-  @Nullable
   public static String getName(PsiElement element) {
     String name = null;
     if (element instanceof PsiMetaOwner) {
@@ -465,13 +463,13 @@ public class PsiUtilCore {
     return narrowLanguage(element.getLanguage(), element.getContainingFile().getLanguage());
   }
 
-  protected static Language narrowLanguage(final Language language, final Language candidate) {
+  static Language narrowLanguage(final Language language, @NotNull Language candidate) {
     if (candidate.isKindOf(language)) return candidate;
     return language;
   }
 
   /**
-   * Checks if the element is valid. If not, throws {@link com.intellij.psi.PsiInvalidElementAccessException} with
+   * Checks if the element is valid. If not, throws {@link PsiInvalidElementAccessException} with
    * a meaningful message that points to the reasons why the element is not valid and may contain the stack trace
    * when it was invalidated.
    */
@@ -533,6 +531,7 @@ public class PsiUtilCore {
   /**
    * @deprecated use CompletionUtil#getOriginalElement where appropriate instead
    */
+  @Deprecated
   @Nullable
   public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();

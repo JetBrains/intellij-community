@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.java.decompiler.main.extern;
 
 import org.jetbrains.java.decompiler.util.InterpreterUtil;
@@ -33,6 +31,7 @@ public interface IFernflowerPreferences {
   String IDEA_NOT_NULL_ANNOTATION = "inn";
   String LAMBDA_TO_ANONYMOUS_CLASS = "lac";
   String BYTECODE_SOURCE_MAPPING = "bsm";
+  String IGNORE_INVALID_BYTECODE = "iib";
 
   String LOG_LEVEL = "log";
   String MAX_PROCESSING_METHOD = "mpm";
@@ -76,6 +75,7 @@ public interface IFernflowerPreferences {
     defaults.put(IDEA_NOT_NULL_ANNOTATION, "1");
     defaults.put(LAMBDA_TO_ANONYMOUS_CLASS, "0");
     defaults.put(BYTECODE_SOURCE_MAPPING, "0");
+    defaults.put(IGNORE_INVALID_BYTECODE, "0");
 
     defaults.put(LOG_LEVEL, IFernflowerLogger.Severity.INFO.name());
     defaults.put(MAX_PROCESSING_METHOD, "0");

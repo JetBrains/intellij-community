@@ -18,16 +18,22 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 
 public class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOptions {
   private long myTimeStamp;
   private int myOriginalIndentOptionsHash;
+  private boolean myDetected;
 
   protected TimeStampedIndentOptions(CommonCodeStyleSettings.IndentOptions toCopyFrom, long timeStamp) {
     copyFrom(toCopyFrom);
     myTimeStamp = timeStamp;
     myOriginalIndentOptionsHash = toCopyFrom.hashCode();
+  }
+
+  public void setDetected(boolean isDetected) {
+    myDetected = isDetected;
   }
 
   void setTimeStamp(long timeStamp) {
@@ -41,5 +47,11 @@ public class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOpti
   public boolean isOutdated(@NotNull Document document, @NotNull CommonCodeStyleSettings.IndentOptions defaultForFile) {
     return document.getModificationStamp() != myTimeStamp
            || defaultForFile.hashCode() != myOriginalIndentOptionsHash;
+  }
+
+  @Nullable
+  @Override
+  public String getHint() {
+    return myDetected ? "detected" : null;
   }
 }

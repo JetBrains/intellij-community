@@ -111,7 +111,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     Component c = me.getComponent();
     if (me.getID() == MouseEvent.MOUSE_ENTERED) {
       boolean canShow = true;
-      if (c != myCurrentComponent) {
+      if (componentContextHasChanged(c)) {
         canShow = hideCurrent(me, null, null);
       }
       if (canShow) {
@@ -159,6 +159,20 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
       hideCurrent(me, null, null);
     }
+  }
+
+  private boolean componentContextHasChanged(Component eventComponent) {
+    if (eventComponent == myCurrentComponent) return false;
+
+    if (myQueuedTooltip != null) {
+      // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
+      // we dont want to hide the tooltip in that case (IDEA-194208)
+      Point tooltipPoint = myQueuedTooltip.getPoint();
+      Component realQueuedComponent = SwingUtilities.getDeepestComponentAt(myQueuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
+      return eventComponent != realQueuedComponent;
+    }
+
+    return true;
   }
 
   private void maybeShowFor(Component c, MouseEvent me) {
@@ -321,11 +335,11 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
 
     Color bg = tooltip.getTextBackground() != null ? tooltip.getTextBackground() : getTextBackground(true);
     Color fg = tooltip.getTextForeground() != null ? tooltip.getTextForeground() : getTextForeground(true);
-    Color border = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
+    Color borderColor = tooltip.getBorderColor() != null ? tooltip.getBorderColor() : getBorderColor(true);
 
     BalloonBuilder builder = myPopupFactory.createBalloonBuilder(tooltip.getTipComponent())
       .setFillColor(bg)
-      .setBorderColor(border)
+      .setBorderColor(borderColor)
       .setBorderInsets(tooltip.getBorderInsets())
       .setAnimationCycle(animationEnabled ? Registry.intValue("ide.tooltip.animationCycle") : 0)
       .setShowCallout(true)
@@ -337,7 +351,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
       .setRequestFocus(tooltip.isRequestFocus())
       .setLayer(tooltip.getLayer());
     tooltip.getTipComponent().setForeground(fg);
-    tooltip.getTipComponent().setBorder(JBUI.Borders.empty(1, 3, 2, 3));
+    tooltip.getTipComponent().setBorder(tooltip.getComponentBorder());
     tooltip.getTipComponent().setFont(tooltip.getFont() != null ? tooltip.getFont() : getTextFont(true));
 
 

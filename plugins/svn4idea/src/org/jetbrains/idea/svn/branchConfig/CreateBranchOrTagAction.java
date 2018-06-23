@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn.branchConfig;
@@ -33,7 +33,7 @@ import java.io.File;
 
 import static com.intellij.openapi.application.ApplicationManager.getApplication;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static com.intellij.util.ObjectUtils.notNull;
 import static org.jetbrains.idea.svn.SvnUtil.removePathTail;
 
 public class CreateBranchOrTagAction extends BasicAction {
@@ -50,17 +50,14 @@ public class CreateBranchOrTagAction extends BasicAction {
 
   @Override
   protected void perform(@NotNull SvnVcs vcs, @NotNull VirtualFile file, @NotNull DataContext context) throws VcsException {
-    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs.getProject(), true, virtualToIoFile(file));
+    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(vcs, virtualToIoFile(file));
     if (dialog.showAndGet()) {
-      String dstURL = dialog.getToURL();
+      Target source = notNull(dialog.getSource());
+      File sourceFile = dialog.getSourceFile();
+      Url destination = notNull(dialog.getDestination());
       Revision revision = dialog.getRevision();
       String comment = dialog.getComment();
-      Ref<Exception> exception = new Ref<>();
-      boolean isSrcFile = dialog.isCopyFromWorkingCopy();
-      File srcFile = new File(dialog.getCopyFromPath());
-      Url srcUrl = createUrl(dialog.getCopyFromUrl());
-      Url dstSvnUrl = createUrl(dstURL);
-      Url parentUrl = removePathTail(dstSvnUrl);
+      Url parentUrl = removePathTail(destination);
 
       if (!dirExists(vcs, parentUrl)) {
         int rc =
@@ -71,18 +68,18 @@ public class CreateBranchOrTagAction extends BasicAction {
         }
       }
 
+      Ref<Exception> exception = new Ref<>();
       Runnable copyCommand = () -> {
         try {
           ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
           CommitEventHandler handler = null;
           if (progress != null) {
-            progress.setText(SvnBundle.message("progress.text.copy.to", dstURL));
+            progress.setText(SvnBundle.message("progress.text.copy.to", destination.toDecodedString()));
             handler = new IdeaCommitHandler(progress);
           }
 
-          Target source = isSrcFile ? Target.on(srcFile, revision) : Target.on(srcUrl, revision);
-          long newRevision = vcs.getFactory(source).createCopyMoveClient()
-            .copy(source, Target.on(dstSvnUrl), revision, true, false, comment, handler);
+          long newRevision =
+            vcs.getFactory(source).createCopyMoveClient().copy(source, Target.on(destination), revision, true, false, comment, handler);
 
           updateStatusBar(newRevision, vcs.getProject());
         }
@@ -98,7 +95,7 @@ public class CreateBranchOrTagAction extends BasicAction {
 
       if (dialog.isCopyFromWorkingCopy() && dialog.isSwitchOnCreate()) {
         SingleRootSwitcher switcher =
-          new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(srcFile, srcFile.isDirectory()), dstSvnUrl);
+          new SingleRootSwitcher(vcs.getProject(), VcsUtil.getFilePath(sourceFile, sourceFile.isDirectory()), destination);
         AutoSvnUpdater.run(switcher, SvnBundle.message("action.name.switch"));
       }
     }

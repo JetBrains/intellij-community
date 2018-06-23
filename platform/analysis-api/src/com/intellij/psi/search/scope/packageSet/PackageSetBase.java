@@ -38,15 +38,6 @@ public abstract class PackageSetBase implements PackageSet {
     return contains(file.getVirtualFile(), file.getProject(), holder);
   }
 
-  /**
-   * @see PackageSetBase#getPsiFile(com.intellij.openapi.vfs.VirtualFile, com.intellij.psi.search.scope.packageSet.NamedScopesHolder)
-   */
-  @Deprecated
-  @Nullable
-  public static PsiFile getPsiFile(VirtualFile file, NamedScopesHolder holder) {
-    return PsiManager.getInstance(holder.getProject()).findFile(file);
-  }
-
   @Nullable
   public static PsiFile getPsiFile(@NotNull VirtualFile file, @NotNull Project project) {
     return PsiManager.getInstance(project).findFile(file);

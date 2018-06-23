@@ -33,7 +33,10 @@ public class FrequencyGenerator<T> extends Generator<T> {
   private static <T> Function<DataStructure, T> frequencyFunction(List<WeightedGenerator<T>> alternatives) {
     List<Integer> weights = alternatives.stream().map(w -> w.weight).collect(Collectors.toList());
     IntDistribution distribution = IntDistribution.frequencyDistribution(weights);
-    return data -> data.generate(alternatives.get(data.drawInt(distribution)).generator);
+    return data -> {
+      ((AbstractDataStructure) data).changeKind(StructureKind.CHOICE);
+      return data.generate(alternatives.get(((AbstractDataStructure)data).drawInt(distribution)).generator);
+    };
   }
 
   @NotNull

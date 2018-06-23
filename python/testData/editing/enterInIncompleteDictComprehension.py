@@ -1,0 +1,1 @@
+mapping = {foo: bar for<caret>

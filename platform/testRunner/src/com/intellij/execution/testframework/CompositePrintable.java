@@ -16,15 +16,17 @@
 package com.intellij.execution.testframework;
 
 import com.intellij.execution.filters.HyperlinkInfo;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.stacktrace.DiffHyperlink;
 import com.intellij.execution.testframework.ui.TestsOutputConsolePrinter;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.util.concurrency.AppExecutorUtil;
+import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.IOUtil;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +47,8 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
   private int myCurrentSize = 0;
   private String myOutputFile = null;
   private String myFrameworkOutputFile;
-  private static final ExecutorService ourTestExecutorService = AppExecutorUtil.createBoundedApplicationPoolExecutor("tests", 1);
+  private static final ExecutorService ourTestExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
+    "Tests Executor");
 
   public void flush() {
     synchronized (myNestedPrintables) {
@@ -320,6 +323,12 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
 
       @Override
       public void mark() {}
+
+      @Override
+      public void printWithAnsiColoring(@NotNull String text, @NotNull Key processOutputType) {
+        // Write text to a file as a single chunk. ANSI coloring will be applied when reading the file.
+        print(text, ConsoleViewContentType.getConsoleViewType(processOutputType));
+      }
     }
 
     private void readFileContentAndPrint(Printer printer, @Nullable File file, List<Printable> nestedPrintables) {
@@ -342,7 +351,9 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
               else {
                 ConsoleViewContentType contentType = contentTypeByNameMap.getOrDefault(firstToken, ConsoleViewContentType.NORMAL_OUTPUT);
                 String text = IOUtil.readString(reader);
-                printText(printer, text, contentType);
+                if (text != null) {
+                  printText(printer, text, contentType);
+                }
               }
               lineNum++;
             }
@@ -364,9 +375,12 @@ public class CompositePrintable extends UserDataHolderBase implements Printable,
       }
     }
 
-    private void printText(Printer printer, String text, ConsoleViewContentType contentType) {
+    private void printText(@NotNull Printer printer, @NotNull String text, @NotNull ConsoleViewContentType contentType) {
       if (ConsoleViewContentType.NORMAL_OUTPUT.equals(contentType)) {
-        printer.printWithAnsiColoring(text, contentType);
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDOUT);
+      }
+      else if (ConsoleViewContentType.ERROR_OUTPUT.equals(contentType)) {
+        printer.printWithAnsiColoring(text, ProcessOutputTypes.STDERR);
       }
       else {
         printer.print(text, contentType);

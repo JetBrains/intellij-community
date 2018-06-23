@@ -1014,6 +1014,8 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testArrayTypeUpperBound() { doTest(); }
+
   public void testNonGenericInnerOfGenericOuter() { doTest(); }
 
   public void testTypeParameterBoundsWithSubstitutionWhenMethodHierarchyIsChecked() {
@@ -1029,6 +1031,10 @@ public class GenericsHighlighting8Test extends LightDaemonAnalyzerTestCase {
   }
 
   public void testConditionalExpressionInIncompleteCall() {
+    doTest();
+  }
+  
+  public void testIDEA194093 () {
     doTest();
   }
 

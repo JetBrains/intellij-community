@@ -30,7 +30,6 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
@@ -70,8 +69,7 @@ public class JavaModuleElementType extends JavaStubElementType<PsiJavaModuleStub
   @NotNull
   @Override
   public PsiJavaModuleStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
-    String name = StringRef.toString(dataStream.readName());
-    return new PsiJavaModuleStubImpl(parentStub, name);
+    return new PsiJavaModuleStubImpl(parentStub, dataStream.readNameString());
   }
 
   @Override

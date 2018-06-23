@@ -32,11 +32,13 @@ public class SPIPackageOrClassReferenceElement extends ASTWrapperPsiElement impl
     super(node);
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement last = PsiTreeUtil.getDeepestLast(this);

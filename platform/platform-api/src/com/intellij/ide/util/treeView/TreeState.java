@@ -445,7 +445,7 @@ public class TreeState implements JDOMExternalizable {
     Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
     LOG.debug("EXPANDING: ", expanding);
     if (expanding == null) expanding = Promises.resolvedPromise();
-    expanding.processed(value -> {
+    expanding.onProcessed(value -> {
       AsyncPromise<Void> promise = new AsyncPromise<>();
       UIUtil.putClientProperty(tree, EXPANDING, promise);
       consumer.accept(promise);
@@ -470,9 +470,9 @@ public class TreeState implements JDOMExternalizable {
     TreeModel model = tree.getModel();
     if (!(model instanceof TreeVisitor.Acceptor)) return false;
 
-    expand(tree, promise -> expand(tree).processed(expanded -> {
+    expand(tree, promise -> expand(tree).onProcessed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {
-        select(tree).processed(selected -> {
+        select(tree).onProcessed(selected -> {
           if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);

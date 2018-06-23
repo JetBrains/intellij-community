@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui;
 
 import com.intellij.ide.IdeBundle;
@@ -62,7 +48,18 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
     if (cache == null) cache = new CachedOptions(manager);
 
+    if (isCacheExpired()) {
+      cache.map.remove(getClass());
+      cacheUpdated();
+    }
+
     return cache.map.computeIfAbsent(getClass(), type -> getOptions(project));
+  }
+
+  protected void cacheUpdated() {}
+
+  protected boolean isCacheExpired() {
+    return false;
   }
 
   @Override
@@ -97,7 +94,7 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     return true;
   }
 
-  static String messageApp(String property) {
+  public static String messageApp(String property) {
     return StringUtil.stripHtml(ApplicationBundle.message(property), false);
   }
 
@@ -161,21 +158,28 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
         String name = project == null ? "application" : "project";
         AtomicLong time = new AtomicLong();
         for (SearchTopHitProvider provider : SearchTopHitProvider.EP_NAME.getExtensions()) {
-          if (provider instanceof OptionsTopHitProvider) {
-            application.invokeLater(() -> time.addAndGet(cache((OptionsTopHitProvider)provider, indicator, project)));
+          if (provider instanceof ConfigurableOptionsTopHitProvider) {
+            // process on EDT, because it creates a Swing components
+            application.invokeLater(() -> {
+              long millisOnEDT = System.currentTimeMillis();
+              cache((ConfigurableOptionsTopHitProvider)provider, indicator, project);
+              time.addAndGet(System.currentTimeMillis() - millisOnEDT);
+            });
+          }
+          else if (provider instanceof OptionsTopHitProvider) {
+            cache((OptionsTopHitProvider)provider, indicator, project);
           }
         }
-        application.invokeLater(() -> LOG.info(time.get() + " ms spent to cache options in " + name));
-        time.addAndGet(System.currentTimeMillis() - millis);
+        application.invokeLater(() -> LOG.info(time.get() + " ms spent on EDT to cache options in " + name));
+        long delta = System.currentTimeMillis() - millis;
+        LOG.info(delta + " ms spent to cache options in " + name);
       }
     }
 
-    private static long cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
-      if (indicator != null && indicator.isCanceled()) return 0; // if application is closed
-      if (project != null && project.isDisposed()) return 0; // if project is closed
-      long millis = System.currentTimeMillis();
+    private static void cache(@NotNull OptionsTopHitProvider provider, @Nullable ProgressIndicator indicator, @Nullable Project project) {
+      if (indicator != null && indicator.isCanceled()) return; // if application is closed
+      if (project != null && project.isDisposed()) return; // if project is closed
       if (provider.isEnabled(project)) provider.getCachedOptions(project);
-      return System.currentTimeMillis() - millis;
     }
   }
 }

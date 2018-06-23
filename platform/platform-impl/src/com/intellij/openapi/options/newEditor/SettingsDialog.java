@@ -6,13 +6,16 @@ import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.ShortcutSet;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurableGroup;
+import com.intellij.openapi.options.OptionsBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.IdeUICustomization;
 import com.intellij.ui.SearchTextField.FindAction;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +76,10 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   private void init(Configurable configurable, @Nullable Project project) {
     String name = configurable == null ? null : configurable.getDisplayName();
     String title = CommonBundle.settingsTitle();
-    if (project != null && project.isDefault()) title = "Default " + title;
+    if (project != null && project.isDefault()) {
+      title = OptionsBundle.message("title.for.new.projects",
+                                    title, StringUtil.capitalize(IdeUICustomization.getInstance().getProjectConceptName()));
+    }
     setTitle(name == null ? title : name.replace('\n', ' '));
     ShortcutSet set = getFindActionShortcutSet();
     if (set != null) new FindAction().registerCustomShortcutSet(set, getRootPane(), myDisposable);
@@ -157,7 +163,7 @@ public class SettingsDialog extends DialogWrapper implements DataProvider {
   @Override
   public void doOKAction() {
     if (myEditor.apply()) {
-      ApplicationManager.getApplication().saveAll(true);
+      StoreUtil.saveProjectsAndApp(true);
       super.doOKAction();
     }
   }

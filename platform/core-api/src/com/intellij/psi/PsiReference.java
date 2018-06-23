@@ -44,6 +44,7 @@ public interface PsiReference {
    *
    * @return the underlying element of the reference.
    */
+  @NotNull
   PsiElement getElement();
 
   /**
@@ -52,6 +53,7 @@ public interface PsiReference {
    *
    * @return Relative range in element
    */
+  @NotNull
   TextRange getRangeInElement();
 
   /**

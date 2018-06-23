@@ -23,6 +23,6 @@ class JavaULiteralExpression(
   override val psi: PsiLiteralExpression,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), ULiteralExpression {
-  override fun evaluate() = psi.value
-  override val value by lz { evaluate() }
+  override fun evaluate(): Any? = psi.value
+  override val value: Any? by lz { evaluate() }
 }

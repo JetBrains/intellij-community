@@ -98,7 +98,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       }
     }
 
-    Icon icon = SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add;
+    Icon icon = AllIcons.General.Add;
     ((Group)result).addHyperlink(new Hyperlink(icon, "Choose a phase/goal to assign a shortcut") {
       @Override
       public void onClick(MouseEvent e) {

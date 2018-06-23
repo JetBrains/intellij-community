@@ -4,5 +4,5 @@ class A:
 
 class B(A):
     async def foo(self):
-        return super().foo()
+        return await super().foo()
 

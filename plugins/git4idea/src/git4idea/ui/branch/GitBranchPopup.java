@@ -16,12 +16,14 @@
 package git4idea.ui.branch;
 
 import com.intellij.dvcs.DvcsUtil;
+import com.intellij.dvcs.MultiRootBranches;
 import com.intellij.dvcs.branch.DvcsBranchPopup;
 import com.intellij.dvcs.repo.AbstractRepositoryManager;
 import com.intellij.dvcs.ui.BranchActionGroup;
 import com.intellij.dvcs.ui.RootAction;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Condition;
 import com.intellij.util.containers.ContainerUtil;
@@ -104,7 +106,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
     final GitBranchIncomingOutgoingManager gitBranchIncomingOutgoingManager = GitBranchIncomingOutgoingManager.getInstance(myProject);
     if (gitBranchIncomingOutgoingManager.hasAuthenticationProblems()) {
       AnAction updateBranchInfoWithAuthenticationAction =
-        new AnAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
+        new DumbAwareAction("Authentication failed. Click to retry", null, AllIcons.General.Warning) {
           @Override
           public void actionPerformed(AnActionEvent e) {
             gitBranchIncomingOutgoingManager.forceUpdateBranches(true);
@@ -137,7 +139,7 @@ class GitBranchPopup extends DvcsBranchPopup<GitRepository> {
       .sorted(FAVORITE_BRANCH_COMPARATOR)
       .collect(toList());
     int topShownBranches = getNumOfTopShownBranches(localBranchActions);
-    String currentBranch = myMultiRootBranchConfig.getCurrentBranch();
+    String currentBranch = MultiRootBranches.getCommonCurrentBranch(allRepositories);
     if (currentBranch != null) {
       localBranchActions
         .add(0, new GitBranchPopupActions.CurrentBranchActions(myProject, allRepositories, currentBranch, myCurrentRepository));

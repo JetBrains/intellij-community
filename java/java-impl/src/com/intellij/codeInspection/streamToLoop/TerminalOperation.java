@@ -38,9 +38,6 @@ import java.util.Objects;
 import java.util.function.Consumer;
 import java.util.function.Function;
 
-/**
- * @author Tagir Valeev
- */
 abstract class TerminalOperation extends Operation {
   @Override
   final String wrap(StreamVariable inVar, StreamVariable outVar, String code, StreamToLoopReplacementContext context) {
@@ -329,7 +326,7 @@ abstract class TerminalOperation extends Operation {
     Project project = resultClass.getProject();
     PsiClass superClass = JavaPsiFacade.getInstance(project).findClass(superClassName, resultClass.getResolveScope());
     if(superClass == null) return resultType;
-    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY, null);
+    PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(superClass, resultClass, PsiSubstitutor.EMPTY);
     if(superClassSubstitutor == null) {
       // inconsistent class hierarchy: probably something is not resolved
       return resultType;
@@ -798,11 +795,13 @@ abstract class TerminalOperation extends Operation {
     private final PsiType myType;
     private final String myTemplate;
     private @Nullable final FunctionHelper myComparator;
+    private final boolean myMax;
 
-    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator) {
+    public MinMaxTerminalOperation(PsiType type, String template, @Nullable FunctionHelper comparator, boolean max) {
       myType = type;
       myTemplate = template;
       myComparator = comparator;
+      myMax = max;
     }
 
     @Override
@@ -812,8 +811,33 @@ abstract class TerminalOperation extends Operation {
       }
     }
 
+    Number getExtremeValue() {
+      if (PsiType.INT.equals(myType)) {
+        return myMax ? Integer.MIN_VALUE : Integer.MAX_VALUE;
+      }
+      if (PsiType.LONG.equals(myType)) {
+        return myMax ? Long.MIN_VALUE : Long.MAX_VALUE;
+      }
+      return null;
+    }
+
+    String getExtremeValueExpression() {
+      if (PsiType.INT.equals(myType)) {
+        return CommonClassNames.JAVA_LANG_INTEGER + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
+      }
+      if (PsiType.LONG.equals(myType)) {
+        return CommonClassNames.JAVA_LANG_LONG + (myMax ? ".MIN_VALUE" : ".MAX_VALUE");
+      }
+      return null;
+    }
+
     @Override
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      if (getExtremeValue() != null && context.tryUnwrapOrElse(getExtremeValue())) {
+        String best = context.declareResult("best", myType, getExtremeValueExpression(), ResultKind.NON_FINAL);
+        String comparePredicate = myTemplate.replace("{best}", best).replace("{item}", inVar.getName());
+        return "if(" + comparePredicate + ")\n" + best + "=" + inVar + ";\n";
+      }
       String seen = context.declare("seen", "boolean", "false");
       String best = context.declareResult("best", myType, myType instanceof PsiPrimitiveType ? "0" : "null", ResultKind.UNKNOWN);
       context.setFinisher(new ConditionalExpression.Optional(myType, seen, best));
@@ -837,16 +861,16 @@ abstract class TerminalOperation extends Operation {
       String sign = max ? ">" : "<";
       if(comparator == null) {
         if (PsiType.INT.equals(elementType) || PsiType.LONG.equals(elementType)) {
-          return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null);
+          return new MinMaxTerminalOperation(elementType, "{item}" + sign + "{best}", null, max);
         }
         if (PsiType.DOUBLE.equals(elementType)) {
-          return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null);
+          return new MinMaxTerminalOperation(elementType, "java.lang.Double.compare({item},{best})" + sign + "0", null, max);
         }
       }
       else {
         FunctionHelper fn = FunctionHelper.create(comparator, 2);
         if(fn != null) {
-          return new MinMaxTerminalOperation(elementType, "{comparator}"+sign+"0", fn);
+          return new MinMaxTerminalOperation(elementType, "{comparator}" + sign + "0", fn, max);
         }
       }
       return null;
@@ -1139,6 +1163,48 @@ abstract class TerminalOperation extends Operation {
     String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
       myFn.transform(context, inVar.getName());
       return myFn.getStatementText();
+    }
+  }
+
+  static class MapForEachTerminalOperation extends TerminalOperation {
+    private final FunctionHelper myFn;
+    private final PsiType myKeyType;
+    private final PsiType myValueType;
+
+    public MapForEachTerminalOperation(FunctionHelper fn, PsiType keyType, PsiType valueType) {
+      myFn = fn;
+      myKeyType = keyType;
+      myValueType = valueType;
+    }
+
+    @Override
+    public void preprocessVariables(StreamToLoopReplacementContext context, StreamVariable inVar, StreamVariable outVar) {
+      inVar.addBestNameCandidate("entry");
+      inVar.addBestNameCandidate("e");
+      inVar.addBestNameCandidate("mapEntry");
+    }
+
+    @Override
+    public void registerReusedElements(Consumer<PsiElement> consumer) {
+      myFn.registerReusedElements(consumer);
+    }
+
+    @Override
+    String generate(StreamVariable inVar, StreamToLoopReplacementContext context) {
+      StreamVariable keyVar = new StreamVariable(myKeyType);
+      myFn.preprocessVariable(context, keyVar, 0);
+      keyVar.addBestNameCandidate("key");
+      keyVar.addBestNameCandidate("k");
+      StreamVariable valueVar = new StreamVariable(myValueType);
+      myFn.preprocessVariable(context, valueVar, 1);
+      valueVar.addBestNameCandidate("value");
+      valueVar.addBestNameCandidate("v");
+      keyVar.register(context);
+      valueVar.register(context);
+      myFn.transform(context, keyVar.getName(), valueVar.getName());
+      return keyVar.getDeclaration(inVar.getName() + ".getKey()") +
+             valueVar.getDeclaration(inVar.getName() + ".getValue()") +
+             myFn.getStatementText();
     }
   }
 

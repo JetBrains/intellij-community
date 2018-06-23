@@ -37,6 +37,10 @@ public class ConvertToInstance8MethodTest extends ConvertToInstanceMethodTest {
     doTest(-1);
   }
 
+  public void testStaticMethodOfInterfaceWithNonAccessibleInheritor() {
+    doTest(0);
+  }
+
   public void testConvertToInstanceMethodOfTheSameClassWithTypeParams() {
     try {
       doTest(-1);

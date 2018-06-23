@@ -17,6 +17,7 @@
 package com.intellij.openapi.project;
 
 import com.intellij.ui.components.JBPanelWithEmptyText;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,13 +27,15 @@ import java.awt.*;
  */
 public class DumbUnawareHider extends JBPanelWithEmptyText {
 
-  public DumbUnawareHider(JComponent dumbUnawareContent) {
+  public DumbUnawareHider(@NotNull JComponent dumbUnawareContent) {
     super(new BorderLayout());
     getEmptyText().setText("This view is not available until indices are built");
     add(dumbUnawareContent, BorderLayout.CENTER);
   }
 
   public void setContentVisible(boolean show) {
-    getComponent(0).setVisible(show);
+    for (int i = 0, count = getComponentCount(); i < count; i++) {
+      getComponent(i).setVisible(show);
+    }
   }
 }

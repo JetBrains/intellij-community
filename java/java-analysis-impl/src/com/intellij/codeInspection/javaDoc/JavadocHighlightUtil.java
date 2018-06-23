@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.javaDoc;
 
 import com.intellij.codeInspection.InspectionsBundle;
@@ -323,14 +323,14 @@ public class JavadocHighlightUtil {
     });
   }
 
-  static void checkMissingTypeParamTags(@NotNull PsiClass psiClass,
+  static void checkMissingTypeParamTags(@NotNull PsiTypeParameterListOwner owner,
                                         @NotNull PsiDocTag[] tags,
                                         @NotNull PsiElement toHighlight,
                                         @NotNull ProblemHolder holder) {
-    if (psiClass.hasTypeParameters()) {
+    if (owner.hasTypeParameters()) {
       List<PsiTypeParameter> absentParameters = null;
 
-      for (PsiTypeParameter typeParameter : psiClass.getTypeParameters()) {
+      for (PsiTypeParameter typeParameter : owner.getTypeParameters()) {
         if (!hasTagForParameter(tags, typeParameter)) {
           (absentParameters = list(absentParameters)).add(typeParameter);
         }
@@ -338,8 +338,12 @@ public class JavadocHighlightUtil {
 
       if (absentParameters != null) {
         for (PsiTypeParameter typeParameter : absentParameters) {
-          String message = InspectionsBundle.message("inspection.javadoc.problem.missing.tag", "<code>@param</code>");
-          holder.problem(toHighlight, message, holder.addMissingTagFix("param", "<" + typeParameter.getName() + ">"));
+          String name = typeParameter.getName();
+          if (name != null) {
+            String tagText = "<code>&lt;" + name + "&gt;</code>";
+            String message = InspectionsBundle.message("inspection.javadoc.method.problem.missing.param.tag", tagText);
+            holder.problem(toHighlight, message, holder.addMissingTagFix("param", "<" + name + ">"));
+          }
         }
       }
     }
@@ -362,7 +366,7 @@ public class JavadocHighlightUtil {
                                     @NotNull PsiMethod psiMethod,
                                     @NotNull PsiElement toHighlight,
                                     @NotNull ProblemHolder holder) {
-    List<PsiParameter> absentParameters = null;
+    List<PsiNamedElement> absentParameters = null;
 
     for (PsiParameter param : psiMethod.getParameterList().getParameters()) {
       if (!hasTagForParameter(tags, param)) {
@@ -371,7 +375,7 @@ public class JavadocHighlightUtil {
     }
 
     if (absentParameters != null) {
-      for (PsiParameter parameter : absentParameters) {
+      for (PsiNamedElement parameter : absentParameters) {
         String name = parameter.getName();
         if (name != null) {
           String tagText = "<code>" + name + "</code>";

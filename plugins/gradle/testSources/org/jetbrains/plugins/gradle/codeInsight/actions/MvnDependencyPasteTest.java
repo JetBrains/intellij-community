@@ -62,10 +62,10 @@ public class MvnDependencyPasteTest extends LightCodeInsightTestCase {
     performPaste();
     checkResultByText("dependencies {\n" +
                       "    <dependency>\n" +
-                      "    <groupId>group</groupId>\n" +
-                      "  <version>1.0</version>\n" +
-                      "    <scope>runtime</scope>\n" +
-                      "</dependency>\n" +
+                      "      <groupId>group</groupId>\n" +
+                      "      <version>1.0</version>\n" +
+                      "      <scope>runtime</scope>\n" +
+                      "    </dependency>\n" +
                       "}");
   }
 

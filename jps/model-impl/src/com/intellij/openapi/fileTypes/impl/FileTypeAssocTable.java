@@ -247,6 +247,18 @@ public class FileTypeAssocTable<T> {
     return false;
   }
 
+  Map<FileNameMatcher, T> getRemovedMappings(FileTypeAssocTable<T> newTable, Collection<T> keys) {
+    Map<FileNameMatcher, T> map = new HashMap<>();
+    for (T key : keys) {
+      List<FileNameMatcher> associations = getAssociations(key);
+      associations.removeAll(newTable.getAssociations(key));
+      for (FileNameMatcher matcher : associations) {
+        map.put(matcher, key);
+      }
+    }
+    return map;
+  }
+
   public boolean equals(Object o) {
     if (this == o) {
       return true;

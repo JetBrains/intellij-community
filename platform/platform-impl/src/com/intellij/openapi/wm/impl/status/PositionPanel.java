@@ -48,7 +48,6 @@ public class PositionPanel extends EditorBasedWidget
   public static final String SPACE = "     ";
   public static final String SEPARATOR = ":";
   public static final String MAX_POSSIBLE_TEXT = "0000000000000";
-  public static final String ID = "Position";
 
   private static final int CHAR_COUNT_SYNC_LIMIT = 500_000;
   private static final String CHAR_COUNT_UNKNOWN = "...";
@@ -71,7 +70,7 @@ public class PositionPanel extends EditorBasedWidget
   @Override
   @NotNull
   public String ID() {
-    return ID;
+    return StatusBar.StandardWidgets.POSITION_PANEL;
   }
 
   @Override
