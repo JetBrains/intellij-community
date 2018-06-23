@@ -258,6 +258,11 @@
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
   <change-notes><![CDATA[
 		<ul>
+		<li>0.18
+				<ol>
+            <li>Fixed #481: Fix plugin compatibility with IntelliJ 2018.2 EAP</li>
+				</ol>
+			</li>
 		<li>0.17
 				<ol>
             <li>Fixed #375: Added support for @Builder.Default</li>

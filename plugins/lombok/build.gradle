@@ -6,8 +6,8 @@ buildscript {
     maven { url 'https://jitpack.io' }
   }
   dependencies {
-    classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.3.0-SNAPSHOT"
-    classpath "com.github.hurricup:gradle-grammar-kit-plugin:2017.1.1"
+    classpath "org.jetbrains.intellij.plugins:gradle-intellij-plugin:0.4.0-SNAPSHOT"
+    classpath "com.github.hurricup:gradle-grammar-kit-plugin:2018.1.2"
   }
 }
 
@@ -75,6 +75,8 @@ patchPluginXml {
   ideaVersion = ideaVersionExternDefinition ? ideaVersionExternDefinition : ideaVersion
 
   version pluginVersion + "-" + ideaVersion
+  // use open until build for last release
+  untilBuild ""
 }
 
 publishPlugin {
@@ -84,9 +86,9 @@ publishPlugin {
 
 grammarKit {
   //tag or short commit hash of IntelliJ patched JFlex
-  jflexRelease = '1.7.0'
+  jflexRelease = '1.7.0-1'
   //tag or short commit hash of Grammar-Kit to use
-  grammarKitRelease = '1.5.2'
+  grammarKitRelease = '34fd65b92a'
 }
 
 plugins.withType(JavaPlugin) {
@@ -168,10 +170,10 @@ copy {
 task generateLombokConfigParser(type: GenerateParser) {
   println "Generating Parser for GrammerKit: ${grammarKit.grammarKitRelease}"
 
-  source 'src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf'
-  targetRoot = 'generated/src'
-  pathToParser '/de/plushnikov/intellij/plugin/language/parser/LombokConfigParser.java'
-  pathToPsiRoot '/de/plushnikov/intellij/plugin/language/psi'
+  source "src/main/resources/de/plushnikov/intellij/plugin/language/lombokConfig.bnf"
+  targetRoot = "generated/src"
+  pathToParser "/de/plushnikov/intellij/plugin/language/parser/LombokConfigParser.java"
+  pathToPsiRoot "/de/plushnikov/intellij/plugin/language/psi"
 }
 
 task generateLombokConfigLexer(type: GenerateLexer) {
