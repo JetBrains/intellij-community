@@ -48,7 +48,18 @@ public abstract class OptionsTopHitProvider implements SearchTopHitProvider {
     CachedOptions cache = manager.getUserData(CachedOptions.KEY);
     if (cache == null) cache = new CachedOptions(manager);
 
+    if (isCacheExpired()) {
+      cache.map.remove(getClass());
+      cacheUpdated();
+    }
+
     return cache.map.computeIfAbsent(getClass(), type -> getOptions(project));
+  }
+
+  protected void cacheUpdated() {}
+
+  protected boolean isCacheExpired() {
+    return false;
   }
 
   @Override

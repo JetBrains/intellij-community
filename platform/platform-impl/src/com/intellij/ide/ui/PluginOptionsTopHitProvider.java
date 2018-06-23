@@ -31,6 +31,23 @@ import java.util.stream.Collectors;
  * @author Konstantin Bulenkov
  */
 public class PluginOptionsTopHitProvider extends OptionsTopHitProvider {
+
+  private boolean myCacheExpired;
+
+  public PluginOptionsTopHitProvider() {
+    PluginManagerCore.addDisablePluginListener(() -> myCacheExpired = true);
+  }
+
+  @Override
+  protected boolean isCacheExpired() {
+    return myCacheExpired;
+  }
+
+  @Override
+  protected void cacheUpdated() {
+    myCacheExpired = false;
+  }
+
   @NotNull
   @Override
   public Collection<OptionDescription> getOptions(@Nullable Project project) {
