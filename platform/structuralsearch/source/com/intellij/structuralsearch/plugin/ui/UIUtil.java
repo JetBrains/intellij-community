@@ -17,6 +17,9 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -26,6 +29,7 @@ import com.intellij.structuralsearch.SSRBundle;
 import com.intellij.structuralsearch.StructuralSearchProfile;
 import com.intellij.structuralsearch.plugin.StructuralReplaceAction;
 import com.intellij.structuralsearch.plugin.StructuralSearchAction;
+import com.intellij.ui.EditorTextField;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -209,5 +213,28 @@ public class UIUtil {
       }
     });
     return completeMatchInfo;
+  }
+
+  public static EditorTextField createTextComponent(String text, Project project) {
+    return createEditorComponent(text, "1.txt", project);
+  }
+
+  public static EditorTextField createRegexComponent(String text, Project project) {
+    return createEditorComponent(text, "1.regexp", project);
+  }
+
+  public static EditorTextField createScriptComponent(String text, Project project) {
+    return createEditorComponent(text, "1.groovy", project);
+  }
+
+  @NotNull
+  public static EditorTextField createEditorComponent(String text, String fileName, Project project) {
+    return new EditorTextField(text, project, getFileType(fileName));
+  }
+
+  private static FileType getFileType(final String fileName) {
+    FileType fileType = FileTypeManager.getInstance().getFileTypeByFileName(fileName);
+    if (fileType == FileTypes.UNKNOWN) fileType = FileTypes.PLAIN_TEXT;
+    return fileType;
   }
 }

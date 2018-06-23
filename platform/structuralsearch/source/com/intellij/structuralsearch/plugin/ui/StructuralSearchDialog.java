@@ -47,6 +47,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
+import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -77,7 +78,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   // search info
-  protected SearchContext mySearchContext;
+  protected final SearchContext mySearchContext;
   protected Configuration myConfiguration;
   @NonNls FileType myFileType = StructuralSearchUtil.getDefaultFileType();
   Language myDialect = null;
