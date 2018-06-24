@@ -1,6 +1,7 @@
 package circlet.reviews
 
 import circlet.client.api.*
+import circlet.platform.api.*
 import circlet.platform.client.*
 import org.joda.time.*
 
