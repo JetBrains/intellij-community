@@ -250,4 +250,8 @@ public class YAMLParserTest extends ParsingTestCase {
   public void testInlineMapWithBlockScalarValue()  {
     doTest(true);
   }
+
+  public void testPlainMultilineScalarRuby21788() {
+    doTest(true);
+  }
 }

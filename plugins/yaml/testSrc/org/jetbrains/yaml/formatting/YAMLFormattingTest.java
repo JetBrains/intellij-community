@@ -100,9 +100,6 @@ public class YAMLFormattingTest extends LightPlatformCodeInsightFixtureTestCase 
     doWholeFileTest();
   }
 
-  // TODO: fix ticket RUBY-21788
-  @Bombed(year = 2018, month = Calendar.JULY, day = 10, user = "alexey.merkulov",
-    description = "Ticket RUBY-21788")
   public void testParsingBug2() {
     doWholeFileTest();
   }
