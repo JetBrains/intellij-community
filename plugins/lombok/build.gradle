@@ -112,11 +112,13 @@ jacocoTestReport {
 // Configurations
 configurations {
   lombok
+  lombok_dep
   hrisey
 }
 
 dependencies {
-  lombok group: 'org.projectlombok', name: 'lombok', version: '1.16.20', classifier: 'sources', ext: 'jar'
+  lombok group: 'org.projectlombok', name: 'lombok', version: '1.18.0', classifier: 'sources', ext: 'jar'
+  lombok_dep group: 'org.projectlombok', name: 'lombok', version: '1.16.20', classifier: 'sources', ext: 'jar'
   hrisey group: 'pl.mg6.hrisey', name: 'hrisey', version: '0.3.1', classifier: 'sources', ext: 'jar'
 
   compile(project(':patcher')) {
@@ -151,6 +153,15 @@ copy {
     include 'lombok/var.java'
     include 'lombok/Singular.java'
     include 'lombok/core/handlers/Singulars.java'
+  }
+  into("generated/src")
+}
+
+copy {
+  includeEmptyDirs = false
+  from({ zipTree(configurations.lombok_dep.singleFile) }) {
+    include 'lombok/experimental/Value.java'
+    include 'lombok/experimental/Builder.java'
   }
   into("generated/src")
 }
