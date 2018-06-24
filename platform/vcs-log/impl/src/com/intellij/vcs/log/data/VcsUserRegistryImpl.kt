@@ -16,9 +16,11 @@
 package com.intellij.vcs.log.data
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.application.PathManager
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
+import com.intellij.util.EventDispatcher
 import com.intellij.util.containers.ContainerUtil
 import com.intellij.util.containers.Interner
 import com.intellij.util.io.*
@@ -29,31 +31,42 @@ import java.io.DataInput
 import java.io.DataOutput
 import java.io.File
 import java.io.IOException
+import java.util.*
+import java.util.concurrent.atomic.AtomicReference
 
 /**
  *
  */
 class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, VcsUserRegistry {
+  private val _persistentEnumerator = AtomicReference<PersistentEnumeratorBase<VcsUser>?>()
   private val persistentEnumerator: PersistentEnumeratorBase<VcsUser>?
+    get() = _persistentEnumerator.get()
   private val interner: Interner<VcsUser>
+  private val mapFile = File(USER_CACHE_APP_DIR, project.locationHash + "." + STORAGE_VERSION)
+  private val eventDispatcher = EventDispatcher.create<VcsUserRegistryListener>(VcsUserRegistryListener::class.java)
 
   init {
-    val mapFile = File(USER_CACHE_APP_DIR, project.locationHash + "." + STORAGE_VERSION)
-    persistentEnumerator = initEnumerator(mapFile)
+    initEnumerator()
     interner = Interner()
   }
 
-  private fun initEnumerator(mapFile: File): PersistentEnumeratorBase<VcsUser>? {
-    return try {
-      IOUtil.openCleanOrResetBroken({
-                                      PersistentBTreeEnumerator(mapFile, MyDescriptor(), Page.PAGE_SIZE, null,
-                                                                STORAGE_VERSION)
-                                    }, mapFile)
+  private fun initEnumerator(): Boolean {
+    try {
+      val enumerator = IOUtil.openCleanOrResetBroken({
+                                                       PersistentBTreeEnumerator(mapFile, MyDescriptor(), Page.PAGE_SIZE, null,
+                                                                                 STORAGE_VERSION)
+                                                     }, mapFile)
+      val wasSet = _persistentEnumerator.compareAndSet(null, enumerator)
+      if (!wasSet) {
+        LOG.error("Could not assign newly opened enumerator")
+        enumerator?.close()
+      }
+      return wasSet
     }
     catch (e: IOException) {
       LOG.warn(e)
-      null
     }
+    return false
   }
 
   override fun createUser(name: String, email: String): VcsUser {
@@ -68,8 +81,8 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     }
     catch (e: IOException) {
       LOG.warn(e)
+      rebuild(e)
     }
-
   }
 
   fun addUsers(users: Collection<VcsUser>) {
@@ -84,8 +97,32 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     }
     catch (e: IOException) {
       LOG.warn(e)
+      rebuild(e)
       emptySet()
     }
+  }
+
+  private fun rebuild(t: Throwable) {
+    if (persistentEnumerator?.isCorrupted == true) {
+      _persistentEnumerator.getAndSet(null)?.let { oldEnumerator ->
+        ApplicationManager.getApplication().executeOnPooledThread {
+          try {
+            oldEnumerator.close()
+          }
+          catch (_: IOException) {
+          }
+          finally {
+            if (initEnumerator()) {
+              eventDispatcher.multicaster.onRebuild(t)
+            }
+          }
+        }
+      }
+    }
+  }
+
+  fun addRebuildListener(listener: VcsUserRegistryListener, disposable: Disposable) {
+    eventDispatcher.addListener(listener, disposable)
   }
 
   fun flush() {
@@ -139,4 +176,8 @@ class VcsUserRegistryImpl internal constructor(project: Project) : Disposable, V
     private val USER_CACHE_APP_DIR = File(PathManager.getSystemPath(), "vcs-users")
     private const val STORAGE_VERSION = 2
   }
+}
+
+interface VcsUserRegistryListener : EventListener {
+  fun onRebuild(t: Throwable)
 }
