@@ -8,6 +8,7 @@ import com.intellij.codeInspection.*;
 import com.intellij.ide.util.SuperMethodWarningUtil;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.WriteCommandAction;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
@@ -44,6 +45,7 @@ import java.util.List;
  * {@code "void process(Processor<T> p)"  -> "void process(Processor<? super T> p)"}
  */
 public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTool {
+  private static final Logger LOG = Logger.getInstance(BoundedWildcardInspection.class);
   @SuppressWarnings("WeakerAccess") public boolean REPORT_INVARIANT_CLASSES = true;
   @SuppressWarnings("WeakerAccess") public boolean REPORT_PRIVATE_METHODS = true;
   private JBCheckBox myReportInvariantClassesCB;
@@ -82,7 +84,10 @@ public class BoundedWildcardInspection extends AbstractBaseJavaLocalInspectionTo
                       ? InspectionGadgetsBundle.message("bounded.wildcard.covariant.descriptor")
                       : InspectionGadgetsBundle.message("bounded.wildcard.contravariant.descriptor")) +
                      (wildCardIsUseless ? " but decided against it" : "");
-        holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+        // show verbose message in debug mode only
+        if (!wildCardIsUseless || LOG.isDebugEnabled()) {
+          holder.registerProblem(typeElement, msg, type, new ReplaceWithQuestionTFix(isOverriddenOrOverrides(candidate.method), canBeExtends));
+        }
       }
     };
   }
