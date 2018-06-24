@@ -128,7 +128,7 @@ public interface UastCallMatcher {
 
     private boolean classMatches(@NotNull UCallableReferenceExpression expression) {
       return myClassFqn == null ||
-             myClassFqn.equals(AnalysisUastUtil.getCallableReferenceClass(expression));
+             myClassFqn.equals(AnalysisUastUtil.getCallableReferenceClassFqn(expression));
     }
 
     private boolean returnTypeMatches(@NotNull UCallExpression expression) {

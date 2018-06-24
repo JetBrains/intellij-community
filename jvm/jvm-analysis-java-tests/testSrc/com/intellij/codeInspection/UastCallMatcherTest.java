@@ -3,22 +3,17 @@ package com.intellij.codeInspection;
 import com.intellij.jvm.analysis.JvmAnalysisTestsUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.IdeaTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
-import com.intellij.util.PathUtil;
 import org.jetbrains.uast.UCallExpression;
-import org.jetbrains.uast.UCallableReferenceExpression;
 
-import java.util.Locale;
 import java.util.Set;
 
 import static com.intellij.codeInspection.JvmAnalysisTestsUastUtil.getUElementsOfTypeFromFile;
 import static com.intellij.codeInspection.UastCallMatcher.builder;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/uastCallMatcher")
-public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
+public class UastCallMatcherTest extends UastCallMatcherTestBase {
   @Override
   protected String getBasePath() {
     return JvmAnalysisTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/uastCallMatcher";
@@ -26,9 +21,13 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
 
   @Override
   protected void tuneFixture(JavaModuleFixtureBuilder moduleBuilder) {
+    super.tuneFixture(moduleBuilder);
     moduleBuilder.setLanguageLevel(LanguageLevel.JDK_1_8);
-    moduleBuilder.addJdk(IdeaTestUtil.getMockJdk18Path().getPath());
-    moduleBuilder.addLibrary("javaUtil", PathUtil.getJarPathForClass(Locale.class));
+  }
+
+
+  public void testCallableReferences() {
+    doTestCallableReferences("MethodReferences.java");
   }
 
   public void testSimpleMatcher() {
@@ -104,63 +103,5 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
       builder().withArgumentTypes("java.util.Collection").withMatchArgumentTypeInheritors(true).build(),
       expressions
     ));
-  }
-
-  public void _testCallableReferences() {
-    PsiFile file = myFixture.configureByFile("MethodReferences.java");
-    Set<UCallableReferenceExpression> expressions = getUElementsOfTypeFromFile(file, UCallableReferenceExpression.class);
-    assertSize(5, expressions);
-
-    assertEquals(2, matchCallableReferenceExpression(
-      builder().withClassFqn("java.lang.String").build(),
-      expressions
-    ));
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("java.util.Objects").build(),
-      expressions
-    ));
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("java.util.function.Function").build(),
-      expressions
-    ));
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("MethodReferences").build(),
-      expressions
-    ));
-
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("java.lang.String").withMethodName("toUpperCase").build(),
-      expressions
-    ));
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("java.util.Objects").withMethodName("hashCode").build(),
-      expressions
-    ));
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("java.util.function.Function").withMethodName("apply").build(),
-      expressions
-    ));
-    assertEquals(1, matchCallableReferenceExpression(
-      builder().withClassFqn("MethodReferences").withMethodName("bar").build(),
-      expressions
-    ));
-
-    assertEquals(3, matchCallableReferenceExpression(
-      builder().withArgumentsCount(1).build(),
-      expressions
-    ));
-
-    assertEquals(3, matchCallableReferenceExpression( // one is for Function<String, String>#apply
-      builder().withReturnType("java.lang.String").build(),
-      expressions
-    ));
-  }
-
-  private static int matchCallExpression(UastCallMatcher matcher, Set<UCallExpression> expressions) {
-    return (int)expressions.stream().filter(matcher::testCallExpression).count();
-  }
-
-  private static int matchCallableReferenceExpression(UastCallMatcher matcher, Set<UCallableReferenceExpression> expressions) {
-    return (int)expressions.stream().filter(matcher::testCallableReferenceExpression).count();
   }
 }

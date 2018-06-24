@@ -59,8 +59,11 @@ public final class AnalysisUastUtil {
   }
 
   @Nullable
-  public static String getCallableReferenceClass(@NotNull UCallableReferenceExpression expression) {
-    //TODO why getQualifierType() -> null?
+  public static String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
+    //TODO why getQualifierType() -> null for Java?
+    String classFqn = getTypeClassFqn(expression.getQualifierType());
+    if (classFqn != null) return classFqn;
+
     UExpression qualifierExpression = expression.getQualifierExpression();
     if (qualifierExpression == null) return null;
     if (qualifierExpression instanceof UReferenceExpression) {
