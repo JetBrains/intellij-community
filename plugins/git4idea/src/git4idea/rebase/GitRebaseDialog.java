@@ -161,8 +161,6 @@ public class GitRebaseDialog extends DialogWrapper {
       }
     });
 
-    setupBranches();
-
     myInteractiveCheckBox.setSelected(mySettings.isInteractive());
     myPreserveMergesCheckBox.setSelected(mySettings.isPreserveMerges());
     myShowTagsCheckBox.setSelected(mySettings.showTags());
@@ -171,6 +169,7 @@ public class GitRebaseDialog extends DialogWrapper {
 
     myOriginalOntoBranch = GitUIUtil.getTextField(myOntoComboBox).getText();
 
+    setupBranches();
     validateFields();
   }
 
