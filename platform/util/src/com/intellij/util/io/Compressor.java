@@ -143,6 +143,17 @@ public abstract class Compressor implements Closeable {
     }
   }
 
+  public final void addFile(@NotNull String entryName, @NotNull InputStream content) throws IOException {
+    addFile(entryName, content, -1);
+  }
+
+  public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
+    entryName = entryName(entryName);
+    if (accepts(entryName)) {
+      writeFileEntry(entryName, content, -1, timestamp(timestamp));
+    }
+  }
+
   public final void addDirectory(@NotNull String entryName) throws IOException {
     addDirectory(entryName, -1);
   }

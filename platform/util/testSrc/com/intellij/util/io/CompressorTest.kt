@@ -7,6 +7,7 @@ import org.apache.commons.compress.compressors.gzip.GzipCompressorInputStream
 import org.assertj.core.api.Assertions.assertThat
 import org.junit.Rule
 import org.junit.Test
+import java.io.ByteArrayInputStream
 import java.io.File
 import java.io.FileInputStream
 import java.util.jar.Attributes
@@ -19,8 +20,11 @@ class CompressorTest {
 
   @Test fun simpleZip() {
     val zip = tempDir.newFile("test.zip")
-    Compressor.Zip(zip).use { it.addFile("file.txt", "123".toByteArray()) }
-    assertZip(zip, "file.txt" to "123")
+    Compressor.Zip(zip).use {
+      it.addFile("file1.txt", "123".toByteArray())
+      it.addFile("file2.txt", ByteArrayInputStream("456".toByteArray()))
+    }
+    assertZip(zip, "file1.txt" to "123", "file2.txt" to "456")
   }
 
   @Test fun simpleZipWithFilters() {
