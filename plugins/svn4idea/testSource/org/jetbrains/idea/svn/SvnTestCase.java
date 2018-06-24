@@ -179,8 +179,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @After
   public void tearDown() throws Exception {
-    ((ChangeListManagerImpl) ChangeListManager.getInstance(myProject)).stopEveryThingIfInTestMode();
-    sleep(100);
+    ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
     runInEdtAndWait(() -> {
       tearDownProject();
 
