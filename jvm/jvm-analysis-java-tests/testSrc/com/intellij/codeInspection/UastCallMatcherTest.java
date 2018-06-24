@@ -146,6 +146,11 @@ public class UastCallMatcherTest extends JavaCodeInsightFixtureTestCase {
     ));
 
     assertEquals(3, matchCallableReferenceExpression(
+      builder().withArgumentsCount(1).build(),
+      expressions
+    ));
+
+    assertEquals(3, matchCallableReferenceExpression( // one is for Function<String, String>#apply
       builder().withReturnType("java.lang.String").build(),
       expressions
     ));

@@ -1,10 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.NullUtils;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -56,11 +54,10 @@ public interface UastCallMatcher {
 
 
 
-
-
   //TODO support primitive types for receiver/return types and arguments
   //TODO support static methods
   //TODO support inheritors for classFqn
+  //TODO support generics
   class SimpleUastCallMatcher implements UastCallMatcher {
     // for all fields 'null' = doesn't matter
 
@@ -189,7 +186,16 @@ public interface UastCallMatcher {
 
     private boolean argumentsMatch(@NotNull UCallableReferenceExpression expression) {
       if (myArguments == null) return true;
-      return true; //TODO implement (seems like it only has meaning for static method references)
+      PsiElement resolved = expression.resolve();
+      if (!(resolved instanceof PsiMethod)) return false;
+
+      PsiMethod method = (PsiMethod)resolved;
+      PsiParameterList parameterList = method.getParameterList();
+      if (myArguments.length != parameterList.getParametersCount()) {
+        return false;
+      }
+      //TODO implement argument types matching
+      return true;
     }
   }
 
@@ -245,6 +251,10 @@ public interface UastCallMatcher {
 
     @NotNull
     public UastCallMatcher build() {
+      if (!NullUtils.hasNotNull(myMethodName, myArguments, myClassFqn, myReturnTypeClassFqn)) {
+        throw new IllegalStateException("At least one qualifier must be specified");
+      }
+
       return new SimpleUastCallMatcher(myMethodName,
                                        myArguments,
                                        myMatchArgumentTypeInheritors,
