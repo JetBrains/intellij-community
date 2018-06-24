@@ -79,6 +79,9 @@ patchPluginXml {
   if(ideaVersion.contains("LATEST-EAP-SNAPSHOT")) {
     untilBuild ""
   }
+
+  pluginDescription(file(descriptionFile).text)
+  changeNotes(file(changesFile).text)
 }
 
 publishPlugin {

@@ -1,0 +1,374 @@
+<ul>
+  <li>0.19
+    <ol>
+      <li>Fixed #:</li>
+    </ol>
+  </li>
+  <li>0.18
+    <ol>
+      <li>Fixed #481: Fix plugin compatibility with IntelliJ 2018.2 EAP</li>
+    </ol>
+  </li>
+  <li>0.17
+    <ol>
+      <li>Fixed #375: Added support for @Builder.Default</li>
+      <li>Fixed #465: Fix plugin compatibility with IntelliJ 2018.1</li>
+    </ol>
+  </li>
+  <li>0.16
+    <ol>
+      <li>Fixed #210: Changing log annotation requires restart of Intellij to work</li>
+      <li>Fixed #270: Compile errors after moving an @Setter annotation by using IntelliJ move keyboard shortcut ⌥⇧↑</li>
+      <li>Fixed #365: [Feature request]IDEA .var suffix feature replacement</li>
+      <li>Fixed #379: StackOverflowException occurs sporadically when plugin enabled</li>
+      <li>Fixed #419: Stackoverflow in Intellij because of recursive delegation in @Delegate</li>
+      <li>Fixed #426: PSI equals shouldn't perform resolve</li>
+      <li>Fixed #427: Exception thrown when using *Find Usages* with ideavim</li>
+    </ol>
+  </li>
+  <li>0.15.17.2
+    <ol>
+      <li>Fixed #415: Plugin Error: Lombok Plugin threw an uncaught NoClassDefFoundError</li>
+    </ol>
+  </li>
+  <li>0.15
+    <ol>
+      <li>Fixed #134: Add suppot for toBuilder = true</li>
+      <li>Fixed #145: Overriding builder() method for @Builder shows false compilation error</li>
+      <li>Fixed #162: @Data/@XConstructor bug with default constructor</li>
+      <li>Improved #260: Handling val - Inferred Type is Object</li>
+      <li>Fixed #290: Getter and FieldDefaults with parameter AccessLevel in Enum shows "cannot access"</li>
+      <li>Fixed #337: Component name collision: 'UpdateComponent'</li>
+      <li>Fixed #339: Delombok for @ToString should use simpleName for class</li>
+      <li>Fixed #342: @EqualsAndHashCode/@ToString should treat explicit "of = {}" differently</li>
+      <li>Fixed #359: Explicit type can be diamond inspection is overloaded with the same id</li>
+      <li>Fixed #367: @Data on parent and child should be marked as compilation error</li>
+      <li>Fixed #393: @Builder with @Singular map produces duplicated variables</li>
+      <li>Fixed #399: IndexNotReadyException in FieldFindUsagesHandler</li>
+      <li>Fixed #412: @Accessors(fluent = true) does not impact @Wither but the plugin assumes it does</li>
+    </ol>
+  </li>
+  <li>0.14
+    <ol>
+      <li>Fixed #209: Fixed @EqualsAndHashCode unnecessary warning</li>
+      <li>Fixed #212: Fixed Inspection "Field may be 'final'" triggers in spite of @Setter</li>
+      <li>Fixed #253: Fixed Refactor "Default @Getter" removes annotation on JPA entity classes</li>
+      <li>Fixed #302: Changed linked text in "Lombok Requires Annotation Processing" notification</li>
+      <li>Fixed #304: Fixed @FieldDefaults`s access level 'PUBLIC' doesn't work</li>
+      <li>Fixed #306: Problem with @Builder and generics</li>
+      <li>Fixed #308: Write access is allowed from write-safe contexts only</li>
+      <li>Fixed #313: Missed substitution when class and builder have generics</li>
+      <li>Fixed #320: Fixed No availability to generate any constructor</li>
+      <li>Fixed #322: Added support of lombok.experimental.var</li>
+      <li>Fixed #332: @Value(staticConstructor = "of") breaks intellij's type inference</li>
+      <li>Fixed #334: Added support for inlining getters/setters</li>
+    </ol>
+  </li>
+  <li>0.13
+    <ol>
+      <li>Fixed #226: @Setter(AccessLevel.NONE) triggers error and not just warning on final fields</li>
+      <li>Fixed #254: Properties from lombok.config does not involve on suggestion list</li>
+      <li>Fixed #259: Support JBoss Logging (new in Lombok 1.16.10)</li>
+      <li>Fixed #262: When lombok.accessors.chain=true setters show void return value</li>
+      <li>Fixed #268: Lombok Dependency is possible outdated' message even when 'Enable lombok version warning' is unchecked.</li>
+    </ol>
+  </li>
+  <li>0.12
+    <ol>
+      <li>Added support for transparent changing of visibility of existing fields and variables for IntelliJ 2016.2</li>
+      <li>Fixed #56: Missing auto-generated modifiers on fields and class shown in the "Structure" window when using `@Value`</li>
+      <li>Fixed #137: Private visibility added by @Value not respected by IDE.</li>
+      <li>Fixed #143: Support UtilityClass</li>
+      <li>Fixed #147: @FieldDefaults(makeFinal = true) and bitwise operators produce an error message</li>
+      <li>Fixed #158: val causes intellij to show an invalid error when used alongside an anonymous class</li>
+      <li>Fixed #202: @Builder supports setter for final field (@Value)</li>
+      <li>Fixed #230: @Value / @EqualsAndHashCode callSuper false warning: lombok.config ignored</li>
+    </ol>
+  </li>
+  <li>0.11
+    <ol>
+      <li>Fixed #153: Configuration keys</li>
+      <li>Fixed #125: Support for lombok.getter.noIsPrefix</li>
+      <li>Fixed #128: Support @Slf4j with custom logger name</li>
+    </ol>
+  </li>
+  <li>0.10
+    <ol>
+      <li>Overall significant performance optimizations</li>
+      <li>Fixed #88: Delegating to class with generics using @Delegate annotation</li>
+      <li>Fixed #136: "Cannot infer arguments" with @RequiredArgsConstructor</li>
+      <li>Fixed #157: Intellij fails to infer type for constructor defined with @RequiredArgsConstructor</li>
+      <li>Fixed #176: Unchecked warning when using static constructor for @Data and @Value on parametrized class</li>
+      <li>Fixed #180: Low performance of @Builder analysis</li>
+      <li>Fixed #184: Linter suggests to add @EqualsAndHashCode to declare callSuper, but already overriden</li>
+      <li>Fixed #105: val sometimes fails to be parsed correctly</li>
+      <li>Fixed #142: IDE highlights val as an error if it had reparsed code before the line was completed</li>
+      <li>Fixed #168: val does not work with generic method calls as the initializer expression</li>
+      <li>Fixed #180: Low performance of @Builder analysis</li>
+      <li>Fixed #183: val can not work when method has Generic return</li>
+    </ol>
+  </li>
+  <li>0.9.8
+    <ol>
+      <li>Fixed #151: Builder issues with Accessors</li>
+      <li>Fixed #153: IntelliJ produces warning when specifying generic type on val declaration</li>
+      <li>Fixed #156: Exception in @Singular handling</li>
+      <li>Fixed #165: Can't correctly resolve multiple @Builder methods in same class having partial implementations</li>
+      <li>Fixed #172: "Lombok needs a default constructor in the base class" error in enum</li>
+      <li>Fixed #175: Added support for @Tolerate for @Getter and @Setter</li>
+      <li>Fixed #177: Null pointer in intellij version 15.0.3</li>
+    </ol>
+  </li>
+  <li>0.9.7
+    <ol>
+      <li>Added caching of produced PsiElements to reduce probability of recursive invocation #112,#123, #126, #129</li>
+      <li>Fixed #130: @XArgsConstructor don't show error when used on a subclass that requires non-empty super call</li>
+      <li>Fixed #132: Make @EqualsAndHashCode(callSuper = true) default</li>
+      <li>Fixed #135: Added support for @NoArgsConstructor(force = true)</li>
+      <li>Fixed #149: Idea cannot generate another constructor when @NoArgsConstructor is used</li>
+    </ol>
+  </li>
+  <li>0.9.6
+    <ol>
+      <li>Fixed #47: Feature request: support onX annotations via @__</li>
+      <li>Fixed #77: Support new @Singular annotation for @Builder collection fields</li>
+      <li>Fixed #123: SpinAllocator has exhausted! Too many threads or you're going to get StackOverflow</li>
+    </ol>
+  </li>
+  <li>0.9.5
+    <ol>
+      <li>Fixed #48: Importing @Builder generated builder classes does not work</li>
+      <li>Added #77: Basic Support for new @Singular annotation for @Builder collection fields</li>
+      <li>Fixed #111: @Builder on constructors/methods is not recognized in Android Studio</li>
+      <li>Fixed #116: @Builder - Builder class can't be found without a static import</li>
+      <li>Added Hrisey @Parcelable support patch</li>
+      <li>Dropped outdated support for some lombok_pg annotations</li>
+    </ol>
+  </li>
+  <li>0.9.4
+    <ol>
+      <li>Fixed regression #108: Getter/Setter wrong after last Update</li>
+      <li>Fixed #100, #72: AssertionError: Stub and PSI element type mismatch</li>
+    </ol>
+  </li>
+  <li>0.9.3
+    <ol>
+      <li>Fixed #95: Fluent Setter Override Error</li>
+      <li>Fixed #96: @Value and @Wither not playing well together</li>
+      <li>Fixed #97: Two constructors being shown when using @Builder and @AllArgsConstructor together</li>
+      <li>Fixed #98: Plugin crash: IndexNotReadyException val processing</li>
+      <li>Fixed #101: @SneakyThrows causes incorrect errors in IntelliJ 14</li>
+    </ol>
+  </li>
+  <li>0.9.2
+    <ol>
+      <li>Added #9: Basic val support in IntelliJ 14.1</li>
+      <li>Fixed #81: @Builder: buildMethod should have same throws-list as annotated static method</li>
+      <li>Fixed #82: Abstract Class + @Delegate</li>
+      <li>Fixed #83: Getting inconvertible types error assigning new builder instance</li>
+      <li>Fixed #84: Properly find usages of @Getters & @Setters on fields with @Acccessor prefixes</li>
+      <li>Fixed #90: Renaming a field with different case doesn't rename getter</li>
+      <li>Fixed #92: Improved @Wither support</li>
+      <li>Fixed #93: IntelliJ unable to resolve constructor when using @Builder and @Value together</li>
+    </ol>
+  </li>
+  <li>0.9.1
+    <ol>
+      <li>Fixed #33: Builder annotation with partial implementation shows errors</li>
+      <li>Fixed #78: Support for constructors of @Value objects with assigned final fields</li>
+      <li>Fixed #79: Support for multiple @Builder in same java class</li>
+      <li>Fixed #80: Some issues with "delomboked" @Builder on static method</li>
+    </ol>
+  </li>
+  <li>0.9.0
+    <ol>
+      <li>Added Delombok Feature for @Builder</li>
+      <li>Issue #53: Basic Support for Lombok configuration keys</li>
+      <li>Fixed #57: Incorrect constructors appear in "Structure" when `@Value` and `@Builder`</li>
+      <li>Fixed #70: Conflict resolution failed on renaming field together with its accessors in IntelliJ 14</li>
+      <li>Issue #74: Fixed (only IntelliJ 14+) Sneaky Throws Not Correctly Detected for Anonymous Inner Class</li>
+      <li>Issue #75: Added support for @lombok.Builder (lombok version 1.16)</li>
+    </ol>
+  </li>
+  <li>0.8.9
+    <ol>
+      <li>Fixed #67: Updates and Improvements for IntelliJ 14, fixed incompatibility</li>
+    </ol>
+  </li>
+  <li>0.8.8
+    <ol>
+      <li>Fixed #52 : Invalid stub element type in index</li>
+      <li>Fixed #54 : @Wither copies @Nullable annotation to generated method</li>
+      <li>Fixed #62 : Intellij shows error on Lazy Getter</li>
+      <li>Fixed #63 : Added support for @Tolerate (together with @Value, @Data)</li>
+      <li>Fixed issue 109(on GoogleCode): Intellij freezes regularly when the lombok plugin is enabled</li>
+      <li>Fixed issue 106(on GoogleCode): Static methods annotated with @Builder are not recognized</li>
+      <li>Updated to lombok changes: canEqual (of @EqualsAndHashCode fame) should be protected instead of public.</li>
+      <li>Basic autocompletion and highlighting for lombok.config files</li>
+    </ol>
+  </li>
+  <li>0.8.7
+    <ol>
+      <li>Fixed issue 104(on GoogleCode): Intellij reports unused field with @Getter and @Setter</li>
+      <li>Fixed #50 : @SneakyThrows does not work for try-with-resource statements</li>
+      <li>Fixed #51 : Delegate annotation moved to experimental</li>
+      <li>Fixed #58 : NoSuchMethodError in IntelliJ 14 EAP</li>
+    </ol>
+  </li>
+  <li>0.8.6
+    <ol>
+      <li>Added basic refactoring actions for Lombok @Data, @ToString and @EqualsAndHashcode methods</li>
+      <li>Fixed #46 : @SneakyThrows does not work on methods which throws multiple exceptions</li>
+    </ol>
+  </li>
+  <li>0.8.5
+    <ol>
+      <li>Fixed #44 : @SneakyThrows doesn't hide exception on Intellij13</li>
+    </ol>
+  </li>
+  <li>0.8.4
+    <ol>
+      <li>Fixed #20 : Inspection of lombok annotations say I can't use @Builder on constructor</li>
+      <li>Fixed issue 92(on Googlecode) : Plugin flags @Builder annotations when they are placed on contructors</li>
+      <li>Fixed #41 : Error with @Builder</li>
+      <li>Fixed #42 : Added Extension to populate Structure view</li>
+      <li>Fixed issue 13(on GoogleCode): @SneakyThrows does not hide Unhandled Exception Error</li>
+    </ol>
+  </li>
+  <li>0.8.3
+    <ol>
+      <li>Fixed #17: Cyclic parent child relation</li>
+      <li>Fixed #34: Lombok plugin crashes</li>
+      <li>Fixed #36: Possible class cast exception</li>
+      <li>Fixed #37: Delombok of files included as library failes</li>
+    </ol>
+  </li>
+  <li>0.8.2
+    <ol>
+      <li>Added support for "topic" annotation value of all @Log annotations (Lombok >= 1.12.6)</li>
+      <li>Added validation of static fields/methods of @Delegate annotation (@Delegate is legal only on instance fields or no-argument instance methods)</li>
+      <li>Fixed #19: Slf4j in static context</li>
+      <li>Fixed #29: Renaming a class with the @Log* annotation adds extra qualification to calls</li>
+      <li>Fixed #31: Prevent errors with invalid identifiers for builderClassName in @Builder annotation</li>
+      <li>Fixed #32: Refactor -> Extract -> Parameter Object || Change Signature broken</li>
+      <li>Fixed (on GoogleCode) #83: @Slf4j does not work when added for first time</li>
+      <li>Fixed (on GoogleCode) #100: Refactor Change Signature || Extract - Parameter Object</li>
+    </ol>
+  </li>
+  <li>0.8.1
+    <ol>
+      <li>Issue (on Git) #23: Fixed @Delegate inspection reports error</li>
+      <li>Issue (on Git) #27: Fixed @Delegate on a type parameter doesn't fail</li>
+      <li>Issue #60: Fixed @Delegate on methods is not supported now</li>
+      <li>Issue #98: Fixed Lombok Experimental Accessor Prefix does not handle non-alphanumeric prefixes</li>
+    </ol>
+  </li>
+  <li>0.8.0
+    <ol>
+      <li>Added refactoring action for Lombok @Log and friends, @Getter and @Setter methods</li>
+      <li>Added refactoring actions to Delombok @Data, @Value, @Wither, @Constructors, @Getter, @Setter, @EqualsAndHashCode, @ToString and @Log annotations</li>
+      <li>Fixed problem with renaming fields in class containing lombok @Getter and @Setter</li>
+      <li>Issue #94: Fixed Intellij does not correctly create the constructor with @RequiredAllConstructor for classes with @Value</li>
+    </ol>
+  </li>
+  <li>0.7.3
+    <ol>
+      <li>Fix IllegalArgumentException when trying to expand method names on IntelliJ 11</li>
+    </ol>
+  </li>
+  <li>0.7.2
+    <ol>
+      <li>Fix multiple stackoverflow exceptions</li>
+    </ol>
+  </li>
+  <li>0.7.1
+    <ol>
+      <li>Some performance optimizations</li>
+    </ol>
+  </li>
+  <li>0.7
+    <ol>
+      <li>Added partial support for @Value lombok annotations</li>
+      <li>Added support for @Accessors lombok experimental annotation</li>
+      <li>Added support for @Wither lombok experimental annotation</li>
+      <li>Added support for @Builder lombok experimental annotations</li>
+    </ol>
+  </li>
+  <li>0.6.5
+    <ol>
+      <li>Issue #20 Fixed Using @Delegate together with generic methods produced red underlining in the editor window</li>
+      <li>Issue #29 Fixed @Delegate leads to exception in LombokLightParameter</li>
+      <li>Issue #37 and #59 Fixed @EqualsAndHashCode inspection for callSuper parameter</li>
+      <li>Issue #54 Valid code produces inspections errors - anonymous instance, partial implementation</li>
+    </ol>
+  </li>
+  <li>0.6.4
+    <ol>
+      <li>Issue #49 Deprecated fields should generate deprecated methods</li>
+    </ol>
+  </li>
+  <li>0.6.3
+    <ol>
+      <li>Issue #41 Added support for XSlf4j and Log4j2 logger</li>
+      <li>Issue #44 Fixed Getter- and Setter- method generation, when method is already there with a parameter(s)</li>
+      <li>Issue #56 Removed obsolete plugin dependencies (they have been merged into intellij core)</li>
+    </ol>
+  </li>
+  <li>0.6.2
+    <ol>
+      <li>Issue #50 Compiled with java 1.7 -> Don't work under java 1.6 vms</li>
+    </ol>
+  </li>
+  <li>0.6
+    <ol>
+      <li>Issue #23 Updated to run with IntelliJ 12</li>
+      <li>Issue #42 IllegalArgumentException with Intellij 12</li>
+      <li>Issue #48 IllegalArgumentException with Intellij 12</li>
+      <li>Issue #38 Added ability to enable/disable lombok-intellij-plugin per project-configuration
+        and reduced logging-level of plugin
+      </li>
+    </ol>
+  </li>
+  <li>0.5
+    <ol>
+      <li>Issue #23 Initial support for IntelliJ 12</li>
+      <li>Issue #12 Added support for "Singleton" and "EnumId" annotations from lombok-pg</li>
+      <li>Fixed Issue #27 "@EqualsAndHashCode on final classes: Should not have a canEquals in that case."</li>
+      <li>Fixed Issue #28 "Getters and setters should be generated even if the method exists with different parameter count"</li>
+    </ol>
+  </li>
+  <li>0.4
+    <ol>
+      <li>fix reflection access for intellij ultimate</li>
+    </ol>
+  </li>
+  <li>0.3
+    <ol>
+      <li>Fixed issue #4 "Getter/Setter on generic types"</li>
+      <li>Fixed issue #6 "The Plugin panel in IDEA lists the plugin as "Lombook Plugin (doubled letter 'o')"</li>
+      <li>Fixed issue #7 "Added support for IntelliJ 11"</li>
+      <li>Fixed issue #9 "@Data(staticConstructor="of") is not created"</li>
+      <li>Fixed issue #10 "Empty constructor is created even if it already exists"</li>
+      <li>Fixed issue #15 "@Data with @NoArgsConstructor does not generate default constructor"</li>
+      <li>Fixed issue #17 "Incompatibility with javax.annotation.Nonnull/Nullable"</li>
+      <li>Added more inspections and QuickFixes for some of lombok annotations.</li>
+      <li>Fixed: skip constructor generation for @Data if some constructor is already defined in the class</li>
+      <li>Fixed: skip getter generation for invalid lazy-getters</li>
+      <li>Added support for "LazyGetter" and "FluentSetter" annotations from lombok-pg</li>
+    </ol>
+  </li>
+  <li>0.2
+    <ol>
+      <li>Added inspections for lombok annotations.</li>
+      <li>Added some simple QuickFixes for lombok inspections.</li>
+      <li>Fixed bug with not working auto-completion in the same source file with lombok annotations that generate methods.</li>
+      <li>Better support of lombok annotations, especially for 'staticName','types' and 'excludes' properties of @Delegate and @XXXConstructor</li>
+      <li>General bug fixing and many improvements</li>
+    </ol>
+  </li>
+  <li>0.1
+    <ol>
+      <li>Initial Release for IDEA >= 10.0</li>
+    </ol>
+  </li>
+</ul>
