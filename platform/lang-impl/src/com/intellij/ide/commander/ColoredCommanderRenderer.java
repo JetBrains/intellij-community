@@ -74,14 +74,14 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
 
       if (descriptor instanceof AbstractTreeNode) {
         final AbstractTreeNode treeNode = (AbstractTreeNode)descriptor;
-        final TextAttributesKey attributesKey = treeNode.getAttributesKey();
+        final TextAttributesKey attributesKey = treeNode.getPresentation().getTextAttributesKey();
 
         if (attributesKey != null) {
           final TextAttributes textAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(attributesKey);
 
           if (textAttributes != null) attributes =  SimpleTextAttributes.fromTextAttributes(textAttributes);
         }
-        locationString = treeNode.getLocationString();
+        locationString = treeNode.getPresentation().getLocationString();
 
         final PresentationData presentation = treeNode.getPresentation();
         if (presentation.hasSeparatorAbove() && !selected) {

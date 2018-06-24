@@ -300,17 +300,6 @@ public class WolfTheProblemSolverImpl extends WolfTheProblemSolver {
   }
 
   @Override
-  public void registerFileHighlightFilter(@NotNull final Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
-    myFilters.add(filter);
-    Disposer.register(parentDisposable, new Disposable() {
-      @Override
-      public void dispose() {
-        myFilters.remove(filter);
-      }
-    });
-  }
-
-  @Override
   public void queue(VirtualFile suspiciousFile) {
     if (!isToBeHighlighted(suspiciousFile)) return;
     doQueue(suspiciousFile);

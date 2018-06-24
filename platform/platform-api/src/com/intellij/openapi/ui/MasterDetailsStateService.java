@@ -25,13 +25,6 @@ public class MasterDetailsStateService implements PersistentStateComponent<Maste
     return ServiceManager.getService(project, MasterDetailsStateService.class);
   }
 
-  /**
-   * @deprecated override {@link MasterDetailsComponent#getComponentStateKey()} and {@link MasterDetailsComponent#getStateService()} instead
-   */
-  @Deprecated
-  public void register(String key, MasterDetailsComponent component) {
-  }
-
   @Nullable
   public MasterDetailsState getComponentState(@NotNull @NonNls String key, Class<? extends MasterDetailsState> stateClass) {
     ComponentState state = myStates.get(key);

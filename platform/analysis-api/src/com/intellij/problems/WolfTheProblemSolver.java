@@ -17,7 +17,7 @@ import java.util.List;
  * @author cdr
  */
 public abstract class WolfTheProblemSolver {
-  public static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
+  protected static final ExtensionPointName<Condition<VirtualFile>> FILTER_EP_NAME = ExtensionPointName.create("com.intellij.problemFileHighlightFilter");
 
   public static WolfTheProblemSolver getInstance(Project project) {
     return project.getComponent(WolfTheProblemSolver.class);
@@ -41,10 +41,10 @@ public abstract class WolfTheProblemSolver {
 
   @Deprecated
   public abstract static class ProblemListener implements com.intellij.problems.ProblemListener {
+    @Override
     public void problemsAppeared(@NotNull VirtualFile file) {}
 
-    public void problemsChanged(@NotNull VirtualFile file) {}
-
+    @Override
     public void problemsDisappeared(@NotNull VirtualFile file) {}
   }
 
@@ -54,10 +54,5 @@ public abstract class WolfTheProblemSolver {
   @Deprecated
   public abstract void addProblemListener(@NotNull ProblemListener listener, @NotNull Disposable parentDisposable);
 
-  /**
-   * @deprecated register extensions to {@link #FILTER_EP_NAME} instead
-   */
-  @Deprecated
-  public abstract void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable);
   public abstract void queue(VirtualFile suspiciousFile);
 }

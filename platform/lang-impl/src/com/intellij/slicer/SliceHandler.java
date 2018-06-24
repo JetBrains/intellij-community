@@ -12,12 +12,14 @@ import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 /**
  * @author cdr
@@ -77,8 +79,9 @@ public class SliceHandler implements CodeInsightActionHandler {
     analysisUIOptions.save(storedSettingsBean.analysisUIOptions);
 
     BaseAnalysisActionDialog dialog =
-      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, analysisScope, module, true, analysisUIOptions,
-                                   element);
+      new BaseAnalysisActionDialog(dialogTitle, "Analyze scope", myProject, BaseAnalysisActionDialog.standardItems(myProject, analysisScope,
+                                                                                                                   module, element),
+                                   analysisUIOptions, true, ModuleUtil.isSupportedRootType(myProject, JavaSourceRootType.TEST_SOURCE));
     if (!dialog.showAndGet()) {
       return null;
     }

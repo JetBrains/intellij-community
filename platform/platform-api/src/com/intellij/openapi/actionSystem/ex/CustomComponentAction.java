@@ -11,9 +11,7 @@ import javax.swing.*;
 
 public interface CustomComponentAction {
 
-  @Deprecated String CUSTOM_COMPONENT_PROPERTY = "customComponent";
-
-  Key<JComponent> COMPONENT_KEY = Key.create(CUSTOM_COMPONENT_PROPERTY);
+  Key<JComponent> COMPONENT_KEY = Key.create("customComponent");
   Key<AnAction> ACTION_KEY = Key.create("customComponentAction");
 
   /**

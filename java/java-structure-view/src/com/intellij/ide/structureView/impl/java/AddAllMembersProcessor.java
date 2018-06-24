@@ -1,5 +1,5 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package com.intellij.ide.structureView.impl;
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+package com.intellij.ide.structureView.impl.java;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
@@ -16,12 +16,12 @@ import java.util.Map;
  * @deprecated use conflict-filter processor with duplicates resolver {@link com.intellij.psi.scope.processor.ConflictFilterProcessor}
  */
 @Deprecated
-public class AddAllMembersProcessor implements PsiScopeProcessor {
+class AddAllMembersProcessor implements PsiScopeProcessor {
   private final Collection<PsiElement> myAllMembers;
   private final PsiClass myPsiClass;
   private final Map<MethodSignature,PsiMethod> myMethodsBySignature = new HashMap<>();
 
-  public AddAllMembersProcessor(@NotNull Collection<PsiElement> allMembers, @NotNull PsiClass psiClass) {
+  AddAllMembersProcessor(@NotNull Collection<PsiElement> allMembers, @NotNull PsiClass psiClass) {
     for (PsiElement psiElement : allMembers) {
       if (psiElement instanceof PsiMethod) mapMethodBySignature((PsiMethod)psiElement);
     }

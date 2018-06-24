@@ -35,15 +35,6 @@ public abstract class InspectionProjectProfileManager implements InspectionProfi
     return getCurrentProfile();
   }
 
-  /**
-   * @deprecated use {@link #getCurrentProfile()} instead
-   */
-  @Deprecated
-  @NotNull
-  public InspectionProfile getInspectionProfile(PsiElement element) {
-    return getCurrentProfile();
-  }
-
   public static boolean isInformationLevel(String shortName, @NotNull PsiElement element) {
     final HighlightDisplayKey key = HighlightDisplayKey.find(shortName);
     if (key != null) {

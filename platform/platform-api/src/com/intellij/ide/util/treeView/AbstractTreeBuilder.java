@@ -241,16 +241,6 @@ public class AbstractTreeBuilder implements Disposable {
     if (ui != null) ui.initRootNode();
   }
 
-  /**
-   * @see #queueUpdateFrom
-   * @deprecated
-   */
-  @Deprecated
-  @NotNull
-  protected ActionCallback updateFromRootCB() {
-    return queueUpdate();
-  }
-
   @NotNull
   public final ActionCallback queueUpdate() {
     return queueUpdate(true);
@@ -344,16 +334,6 @@ public class AbstractTreeBuilder implements Disposable {
     return getUi() == null;
   }
 
-  /**
-   * @param node
-   * @deprecated
-   */
-  @Deprecated
-  public final void updateSubtree(final DefaultMutableTreeNode node) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.updateSubtree(node, true);
-  }
-
   public final boolean wasRootNodeInitialized() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.wasRootNodeInitialized();
@@ -362,26 +342,6 @@ public class AbstractTreeBuilder implements Disposable {
   public final boolean isNodeBeingBuilt(final TreePath path) {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isNodeBeingBuilt(path);
-  }
-
-  /**
-   * @param path
-   * @deprecated
-   */
-  @Deprecated
-  public final void buildNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-  }
-
-  /**
-   * @deprecated
-   */
-  @Deprecated
-  @Nullable
-  public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    return ui == null ? null : ui.getNodeForPath(path);
   }
 
   @Nullable

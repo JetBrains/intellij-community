@@ -123,13 +123,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     return StringUtil.isEmpty(myText) ? "" : myPrefix + ": " + myText;
   }
 
-  @NotNull
-  @Override
-  @Deprecated
-  public String getMaxValue() {
-    return "";
-  }
-
   @Nullable
   @Override
   public String getTooltipText() {
