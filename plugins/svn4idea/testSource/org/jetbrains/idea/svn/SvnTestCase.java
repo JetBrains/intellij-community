@@ -60,15 +60,13 @@ import static org.junit.Assert.*;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
-  public static String ourGlobalTestDataDir;
-
   protected TempDirTestFixture myTempDirFixture;
   protected Url myRepositoryUrl;
   protected String myRepoUrl;
   protected TestClientRunner myRunner;
   protected String myWcRootName;
 
-  private String myTestDataDir;
+  private final String myTestDataDir;
   private File myRepoRoot;
   private File myWcRoot;
   private ChangeListManagerGate myGate;
@@ -100,11 +98,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @Before
   public void setUp() throws Exception {
-    String property = System.getProperty("svn.test.data.directory");
-    if (!StringUtil.isEmpty(property)) {
-      myTestDataDir = property;
-    }
-
     runInEdtAndWait(() -> {
       final IdeaTestFixtureFactory fixtureFactory = IdeaTestFixtureFactory.getFixtureFactory();
       myTempDirFixture = fixtureFactory.createTempDirTestFixture();
@@ -274,11 +267,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   public String getTestDataDir() {
-    return StringUtil.isEmpty(ourGlobalTestDataDir) ? myTestDataDir : ourGlobalTestDataDir;
-  }
-
-  public void setTestDataDir(String testDataDir) {
-    myTestDataDir = testDataDir;
+    return myTestDataDir;
   }
 
   protected class SubTree {
