@@ -2,24 +2,24 @@ lombok-intellij-plugin [![Donate](https://www.paypal.com/en_US/i/btn/btn_donateC
 ======================
 [![Build Status][badge-travis-img]][badge-travis] [![Code Coverage](https://img.shields.io/codecov/c/github/mplushnikov/lombok-intellij-plugin/master.svg)](https://codecov.io/github/mplushnikov/lombok-intellij-plugin?branch=master)
 
-[![Version](http://phpstorm.espend.de/badge/6317/version)](https://plugins.jetbrains.com/plugin/6317)
-[![Downloads](http://phpstorm.espend.de/badge/6317/downloads)](https://plugins.jetbrains.com/plugin/6317)
-[![Downloads last month](http://phpstorm.espend.de/badge/6317/last-month)](https://plugins.jetbrains.com/plugin/6317)
+[![JetBrains Plugins](https://img.shields.io/jetbrains/plugin/v/6317-lombok-plugin.svg)](https://plugins.jetbrains.com/plugin/6317-lombok-plugin)
+[![Downloads](https://img.shields.io/jetbrains/plugin/d/6317-lombok-plugin.svg)](https://plugins.jetbrains.com/plugin/6317-lombok-plugin)
+[![Downloads last month](http://phpstorm.espend.de/badge/6317/last-month)](https://plugins.jetbrains.com/plugin/6317-lombok-plugin)
 
 [![Gitter][badge-gitter-img]][badge-gitter] [![Donate][badge-paypal-img]][badge-paypal]
 
 
-## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317) to support [Lombok](https://projectlombok.org) annotations. ##
+## Plugin for [IntelliJ IDEA](http://plugins.jetbrains.com/plugin/6317-lombok-plugin) to support [Lombok](https://projectlombok.org) annotations. ##
 
 Provides support for lombok annotations to write great Java code with IntelliJ IDEA.
 
-**Last version (0.16) released on 04.02.2018**
+**Last version (0.18) released on 23.06.2018**
 
-Twenty-third version of plugin released. Contains a lot of bugfixes and some new features!
+Twenty-fourth version of plugin released. Contains a lot of bugfixes and some new features!
 
 Install it automatically from IntelliJ Idea plugin repository.
 
-Tested and supports IntelliJ versions: 15.0.6, 2016.3.7, 2017.3.4
+Tested and supports IntelliJ versions: 15.0.6, 2016.3.8, 2017.3.5, 2018.1.5
 
 Last support for IntelliJ 14.1.7 by plugin version 0.14!
 
@@ -95,7 +95,7 @@ In your `pom.xml`:
 	<dependency>
 		<groupId>org.projectlombok</groupId>
 		<artifactId>lombok</artifactId>
-		<version>1.16.20</version>
+		<version>1.18.0</version>
 		<scope>provided</scope>
 	</dependency>
 </dependencies>
@@ -104,7 +104,7 @@ In your `pom.xml`:
 ##### Ivy
 In your `ivy.xml`:
 ```xml
-<dependency org="org.projectlombok" name="lombok" rev="1.16.20" conf="build" />
+<dependency org="org.projectlombok" name="lombok" rev="1.18.0" conf="build" />
 ```
 
 IntelliJ and Eclipse compiler
@@ -126,6 +126,7 @@ Developed By
 - [**@adamarmistead** adamarmistead](https://github.com/adamarmistead)
 - [**@AlexejK** Alexej Kubarev](https://github.com/AlexejK)
 - [**@bulgakovalexander** Alexander Bulgakov](https://github.com/bulgakovalexander)
+- [**@Jessevanbekkum** Jesse van Bekkum](https://github.com/Jessevanbekkum)
 - [**@krzyk** Krzysztof Krasoń](https://github.com/krzyk)
 - [**@mg6maciej** Maciej Górski](https://github.com/mg6maciej)
 - [**@mlueders** Mike Lueders](https://github.com/mlueders)
