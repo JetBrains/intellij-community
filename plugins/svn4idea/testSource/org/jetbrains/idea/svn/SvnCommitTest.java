@@ -186,7 +186,7 @@ public class SvnCommitTest extends SvnTestCase {
   }
 
   @Test
-  public void testSameRepoPlusInnerCopyCommitNative() throws Exception {
+  public void testSameRepoPlusInnerCopyCommit() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     prepareInnerCopy(false);
@@ -223,44 +223,7 @@ public class SvnCommitTest extends SvnTestCase {
   }
 
   @Test
-  public void testSameRepoPlusInnerCopyCommitSvnkit() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    prepareInnerCopy(false);
-    final MyRunner runner = new MyRunner() {
-      @Override
-      protected void run() {
-        final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-        final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
-
-        Assert.assertTrue(file1.exists());
-        Assert.assertTrue(fileInner.exists());
-        final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-        Assert.assertNotNull(vf1);
-        Assert.assertNotNull(vf2);
-
-        editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
-        editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
-
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        final HashSet<String> strings = checkinFiles(vf1, vf2);
-        System.out.println("" + StringUtil.join(strings, "\n"));
-        Assert.assertEquals(1, strings.size());
-      }
-
-      @Override
-      protected void cleanup() {
-      }
-    };
-    setNativeAcceleration(true);
-    runner.run();
-  }
-
-  @Test
-  public void testAnotherRepoPlusInnerCopyCommitNative() throws Exception {
+  public void testAnotherRepoPlusInnerCopyCommit() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     prepareInnerCopy(true);
@@ -295,42 +258,7 @@ public class SvnCommitTest extends SvnTestCase {
   }
 
   @Test
-  public void testAnotherRepoPlusInnerCopyCommitSvnkit() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    prepareInnerCopy(true);
-    final MyRunner runner = new MyRunner() {
-      @Override
-      protected void run() {
-        final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-        final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
-
-        Assert.assertTrue(file1.exists());
-        Assert.assertTrue(fileInner.exists());
-        final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-        Assert.assertNotNull(vf1);
-        Assert.assertNotNull(vf2);
-
-        editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
-        editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
-
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinFiles(vf1, vf2);
-      }
-
-      @Override
-      protected void cleanup() {
-      }
-    };
-    setNativeAcceleration(true);
-    runner.run();
-  }
-
-  @Test
-  public void testPlusExternalCopyCommitNative() throws Exception {
+  public void testPlusExternalCopyCommit() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     prepareExternal();
@@ -361,41 +289,6 @@ public class SvnCommitTest extends SvnTestCase {
       }
     };
     setNativeAcceleration(true);
-    runner.run();
-  }
-
-  @Test
-  public void testPlusExternalCopyCommitSvnkit() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    prepareExternal();
-    final MyRunner runner = new MyRunner() {
-      @Override
-      protected void run() {
-        final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-        final File fileInner = new File(myWorkingCopyDir.getPath(), "source/external/t11.txt");
-
-        Assert.assertTrue(file1.exists());
-        Assert.assertTrue(fileInner.exists());
-        final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-        Assert.assertNotNull(vf1);
-        Assert.assertNotNull(vf2);
-
-        editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
-        editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
-
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinFiles(vf1, vf2);
-      }
-
-      @Override
-      protected void cleanup() {
-      }
-    };
-    setNativeAcceleration(false);
     runner.run();
   }
 
@@ -453,10 +346,6 @@ public class SvnCommitTest extends SvnTestCase {
   }
 
   protected void run2variants(final MyRunner runner) {
-    // TODO: Change this to run different variants separately. See SvnTestCase.myUseAcceleration.
-    setNativeAcceleration(false);
-    runner.run();
-    runner.cleanup();
     setNativeAcceleration(true);
     runner.run();
   }
