@@ -9,6 +9,9 @@ import org.junit.Rule
 import org.junit.Test
 import java.io.File
 import java.io.FileInputStream
+import java.util.jar.Attributes
+import java.util.jar.JarFile
+import java.util.jar.Manifest
 import java.util.zip.ZipInputStream
 
 class CompressorTest {
@@ -81,16 +84,24 @@ class CompressorTest {
     assertZip(zip, "file.txt" to "123")
   }
 
+  @Test fun jarWithManifest() {
+    val jar = tempDir.newFile("test.jar")
+    val mf = Manifest()
+    mf.mainAttributes[Attributes.Name.MANIFEST_VERSION] = "9.75"
+    Compressor.Jar(jar).use { it.addManifest(mf) }
+    assertZip(jar, JarFile.MANIFEST_NAME to "Manifest-Version: 9.75")
+  }
+
   private fun assertZip(zip: File, vararg expected: Pair<String, String>) {
     val actual = ZipInputStream(FileInputStream(zip)).use {
-      generateSequence(it::getNextEntry).map { entry -> entry.name to String(it.readBytes()) }.toList()
+      generateSequence(it::getNextEntry).map { entry -> entry.name to String(it.readBytes()).trim() }.toList()
     }
     assertThat(actual).containsExactlyInAnyOrder(*expected)
   }
 
   private fun assertTar(tar: File, vararg expected: Pair<String, String>) {
     val actual = TarArchiveInputStream(GzipCompressorInputStream(FileInputStream(tar))).use {
-      generateSequence(it::getNextTarEntry).map { entry -> entry.name to String(it.readBytes()) }.toList()
+      generateSequence(it::getNextTarEntry).map { entry -> entry.name to String(it.readBytes()).trim() }.toList()
     }
     assertThat(actual).containsExactlyInAnyOrder(*expected)
   }
