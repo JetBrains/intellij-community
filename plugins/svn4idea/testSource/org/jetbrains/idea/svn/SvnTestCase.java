@@ -521,9 +521,4 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final ProcessOutput output = runner.runClient("svn", null, workingDir, input);
     primitiveVerifier.process(output);
   }
-
-  protected void setNativeAcceleration(final boolean value) {
-    System.out.println("Set native acceleration to " + value);
-    SvnApplicationSettings.getInstance().setCommandLinePath(myClientBinaryPath + File.separator + "svn");
-  }
 }

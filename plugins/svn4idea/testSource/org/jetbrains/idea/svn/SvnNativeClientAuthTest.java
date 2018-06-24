@@ -54,7 +54,6 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   public void setUp() throws Exception {
     super.setUp();
     final File certFile = new File(myPluginRoot, getTestDataDir() + "/svn/____.pfx");
-    setNativeAcceleration(true);
     myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);

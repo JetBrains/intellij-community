@@ -218,7 +218,6 @@ public class SvnCommitTest extends SvnTestCase {
       protected void cleanup() {
       }
     };
-    setNativeAcceleration(true);
     runner.run();
   }
 
@@ -253,7 +252,6 @@ public class SvnCommitTest extends SvnTestCase {
       protected void cleanup() {
       }
     };
-    setNativeAcceleration(true);
     runner.run();
   }
 
@@ -288,7 +286,6 @@ public class SvnCommitTest extends SvnTestCase {
       protected void cleanup() {
       }
     };
-    setNativeAcceleration(true);
     runner.run();
   }
 
@@ -346,7 +343,6 @@ public class SvnCommitTest extends SvnTestCase {
   }
 
   protected void run2variants(final MyRunner runner) {
-    setNativeAcceleration(true);
     runner.run();
   }
 
