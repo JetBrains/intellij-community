@@ -47,6 +47,7 @@ import java.util.List;
 
 import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.util.ObjectUtils.assertNotNull;
+import static git4idea.branch.GitBranchUtil.sortBranchesByName;
 
 /**
  * The dialog that allows initiating git rebase activity
@@ -339,8 +340,8 @@ public class GitRebaseDialog extends DialogWrapper {
       final VirtualFile root = gitRoot();
       GitRepository repository = GitUtil.getRepositoryManager(myProject).getRepositoryForRoot(root);
       if (repository != null) {
-        myLocalBranches.addAll(repository.getBranches().getLocalBranches());
-        myRemoteBranches.addAll(repository.getBranches().getRemoteBranches());
+        myLocalBranches.addAll(sortBranchesByName(repository.getBranches().getLocalBranches()));
+        myRemoteBranches.addAll(sortBranchesByName(repository.getBranches().getRemoteBranches()));
         myCurrentBranch = repository.getCurrentBranch();
       }
       else {

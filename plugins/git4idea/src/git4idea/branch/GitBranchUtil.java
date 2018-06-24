@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.NaturalComparator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -44,6 +45,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.util.*;
+import java.util.stream.Collectors;
 
 import static com.intellij.util.ObjectUtils.assertNotNull;
 
@@ -343,6 +345,13 @@ public class GitBranchUtil {
     }
 
     return commonBranches != null ? StreamEx.of(commonBranches).sorted(StringUtil::naturalCompare).toList() : Collections.emptyList();
+  }
+
+  @NotNull
+  public static <T extends GitReference> List<T> sortBranchesByName(Collection<T> branches) {
+    return branches.stream()
+                   .sorted(Comparator.comparing(GitReference::getFullName, NaturalComparator.INSTANCE))
+                   .collect(Collectors.toList());
   }
 
   /**
