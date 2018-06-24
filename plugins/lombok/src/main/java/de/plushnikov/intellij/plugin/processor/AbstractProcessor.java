@@ -44,6 +44,18 @@ public abstract class AbstractProcessor implements Processor {
   /**
    * Constructor for all Lombok-Processors
    *
+   * @param supportedClass           kind of output elements this processor supports
+   * @param supportedAnnotationClass annotation this processor supports
+   */
+  protected AbstractProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+                              @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    this.supportedClass = supportedClass;
+    this.supportedAnnotationClasses = new Class[]{supportedAnnotationClass};
+  }
+
+  /**
+   * Constructor for all Lombok-Processors
+   *
    * @param supportedClass              kind of output elements this processor supports
    * @param supportedAnnotationClass    annotation this processor supports
    * @param equivalentAnnotationClasses any other equivalent annotations

@@ -32,12 +32,26 @@ public class LombokProcessorUtil {
 
   @Nullable
   public static String getMethodModifier(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "value"));
+    return getLevelVisibility(psiAnnotation, "value");
   }
 
   @Nullable
   public static String getAccessVisibility(@NotNull PsiAnnotation psiAnnotation) {
-    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "access"));
+    return getLevelVisibility(psiAnnotation, "access");
+  }
+
+  @Nullable
+  public static String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation) {
+    return getLevelVisibility(psiAnnotation, "level");
+  }
+
+  @Nullable
+  public static String getLevelVisibility(@NotNull PsiAnnotation psiAnnotation, @NotNull String parameter) {
+    return convertAccessLevelToJavaModifier(PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, parameter));
+  }
+
+  public static boolean isLevelVisible(@NotNull PsiAnnotation psiAnnotation) {
+    return null != getLevelVisibility(psiAnnotation);
   }
 
   @NotNull

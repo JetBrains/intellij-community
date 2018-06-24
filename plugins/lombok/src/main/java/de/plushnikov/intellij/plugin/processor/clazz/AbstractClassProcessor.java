@@ -40,6 +40,11 @@ import java.util.List;
 public abstract class AbstractClassProcessor extends AbstractProcessor implements ClassProcessor {
 
   protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
+                                   @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass);
+  }
+
+  protected AbstractClassProcessor(@NotNull Class<? extends PsiElement> supportedClass,
                                    @NotNull Class<? extends Annotation> supportedAnnotationClass,
                                    @NotNull Class<? extends Annotation>... equivalentAnnotationClasses) {
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);

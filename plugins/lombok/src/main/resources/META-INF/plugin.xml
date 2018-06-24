@@ -7,9 +7,7 @@
 
   <idea-version since-build="171.00"/>
 
-  <description><![CDATA[
-
-    ]]></description>
+  <description><![CDATA[ ]]></description>
   <category>Tools Integration</category>
 
   <depends>com.intellij.modules.lang</depends>
@@ -111,11 +109,13 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.ValueProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.UtilityClassProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.FieldNameConstantsProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.method.DelegateMethodProcessor"/>
 
@@ -212,6 +212,9 @@
       <action id="delombokLogger" class="de.plushnikov.intellij.plugin.action.delombok.DelombokLoggerAction"
               text="@Log (and friends)" description="Action to replace lombok @Log (and other) annotation with vanilla log field">
       </action>
+      <action id="delombokFieldNameCostants" class="de.plushnikov.intellij.plugin.action.delombok.DelombokFieldNameConstantsAction"
+              text="@FieldNameConstants" description="Action to replace lombok @FieldNameConstants annotation with vanilla java fields">
+      </action>
 
       <add-to-group group-id="RefactoringMenu" anchor="last"/>
     </group>
@@ -222,8 +225,6 @@
 
   <!--TODO @Builder requires specifying 'builderClassName' if used on methods with a type parameter as return type.-->
   <!--TODO @Builder is not supported on constructors with constructor type parameters..-->
-  <change-notes><![CDATA[
-
-	]]>
+  <change-notes><![CDATA[	]]>
   </change-notes>
 </idea-plugin>

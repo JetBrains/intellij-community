@@ -30,6 +30,10 @@ import java.util.regex.Pattern;
  */
 public abstract class AbstractFieldProcessor extends AbstractProcessor implements FieldProcessor {
 
+  AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass) {
+    super(supportedClass, supportedAnnotationClass);
+  }
+
   AbstractFieldProcessor(@NotNull Class<? extends PsiElement> supportedClass, @NotNull Class<? extends Annotation> supportedAnnotationClass, Class<? extends Annotation>... equivalentAnnotationClasses) {
     super(supportedClass, supportedAnnotationClass, equivalentAnnotationClasses);
   }

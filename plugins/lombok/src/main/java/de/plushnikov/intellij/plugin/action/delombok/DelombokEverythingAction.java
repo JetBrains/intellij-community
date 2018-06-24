@@ -2,6 +2,7 @@ package de.plushnikov.intellij.plugin.action.delombok;
 
 import de.plushnikov.intellij.plugin.processor.clazz.DataProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.FieldNameConstantsProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.GetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.SetterProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.ToStringProcessor;
@@ -22,6 +23,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.log.LogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Slf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor;
 import de.plushnikov.intellij.plugin.processor.field.DelegateFieldProcessor;
+import de.plushnikov.intellij.plugin.processor.field.FieldNameConstantsFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.GetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.SetterFieldProcessor;
 import de.plushnikov.intellij.plugin.processor.field.WitherFieldProcessor;
@@ -54,6 +56,8 @@ public class DelombokEverythingAction extends BaseDelombokAction {
     final DelegateHandler delegateHandler = new DelegateHandler();
     final BuilderHandler builderHandler = new BuilderHandler(toStringProcessor, noArgsConstructorProcessor);
 
+    final FieldNameConstantsFieldProcessor fieldNameConstantsFieldProcessor = new FieldNameConstantsFieldProcessor();
+
     return new BaseDelombokHandler(true,
       requiredArgsConstructorProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor,
       new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor),
@@ -65,6 +69,9 @@ public class DelombokEverythingAction extends BaseDelombokAction {
       new WitherFieldProcessor(requiredArgsConstructorProcessor),
       new DelegateFieldProcessor(delegateHandler),
       new DelegateMethodProcessor(delegateHandler),
+
+      fieldNameConstantsFieldProcessor,
+      new FieldNameConstantsProcessor(fieldNameConstantsFieldProcessor),
 
       new BuilderPreDefinedInnerClassFieldProcessor(builderHandler),
       new BuilderPreDefinedInnerClassMethodProcessor(builderHandler),
