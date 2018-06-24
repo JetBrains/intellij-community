@@ -39,150 +39,86 @@ public class SvnCommitTest extends SvnTestCase {
   @Test
   public void testSimpleCommit() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    run2variants(new MyRunner() {
-      private String myName = "a.txt";
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "123");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-      @Override
-      protected void run() {
-        final VirtualFile file = createFileInCommand(myWorkingCopyDir, myName, "123");
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinFile(file, FileStatus.ADDED);
-      }
-
-      @Override
-      protected void cleanup() {
-        myName = "b.txt";
-      }
-    });
+    checkinFile(file, FileStatus.ADDED);
   }
 
   @Test
   public void testCommitRename() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    run2variants(new MyRunner() {
-      private String myName = "a.txt";
-      private String myRenamedName = "aRenamed.txt";
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "123");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-      @Override
-      protected void run() {
-        final VirtualFile file = createFileInCommand(myWorkingCopyDir, myName, "123");
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    checkinFile(file, FileStatus.ADDED);
 
-        checkinFile(file, FileStatus.ADDED);
+    renameFileInCommand(file, "aRenamed.txt");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        renameFileInCommand(file, myRenamedName);
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinFile(file, FileStatus.MODIFIED);
-      }
-
-      @Override
-      protected void cleanup() {
-        myName = "b.txt";
-        myRenamedName = "bRenamed.txt";
-      }
-    });
+    checkinFile(file, FileStatus.MODIFIED);
   }
 
   @Test
   public void testRenameReplace() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    run2variants(new MyRunner() {
-      private String myName = "a.txt";
-      private String myName2 = "aRenamed.txt";
+    final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "123");
+    final VirtualFile file2 = createFileInCommand(myWorkingCopyDir, "aRenamed.txt", "1235");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-      @Override
-      protected void run() {
-        final VirtualFile file = createFileInCommand(myWorkingCopyDir, myName, "123");
-        final VirtualFile file2 = createFileInCommand(myWorkingCopyDir, myName2, "1235");
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    checkinFiles(file, file2);
 
-        checkinFiles(file, file2);
+    renameFileInCommand(file, file.getName() + "7.txt");
+    renameFileInCommand(file2, "a.txt");
 
-        renameFileInCommand(file, file.getName() + "7.txt");
-        renameFileInCommand(file2, myName);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinFiles(file, file2);
-      }
-
-      @Override
-      protected void cleanup() {
-        myName = "b.txt";
-        myName2 = "bRenamed.txt";
-      }
-    });
+    checkinFiles(file, file2);
   }
 
   @Test
   public void testRenameFolder() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    run2variants(new MyRunner() {
-      private String folder = "f";
+    final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "f");
+    final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
+    final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-      @Override
-      protected void run() {
-        final VirtualFile dir = createDirInCommand(myWorkingCopyDir, folder);
-        final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
-        final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    checkinFiles(dir, file, file2);
 
-        checkinFiles(dir, file, file2);
+    renameFileInCommand(dir, dir.getName() + "dd");
 
-        renameFileInCommand(dir, dir.getName() + "dd");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinFiles(dir, file, file2);
-      }
-
-      @Override
-      protected void cleanup() {
-        folder = "f1";
-      }
-    });
+    checkinFiles(dir, file, file2);
   }
 
   @Test
   public void testCommitDeletion() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    run2variants(new MyRunner() {
-      private String folder = "f";
+    final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "f");
+    final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
+    final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-      @Override
-      protected void run() {
-        final VirtualFile dir = createDirInCommand(myWorkingCopyDir, folder);
-        final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
-        final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    checkinFiles(dir, file, file2);
 
-        checkinFiles(dir, file, file2);
+    final FilePath dirPath = VcsUtil.getFilePath(dir.getPath(), true);
+    deleteFileInCommand(dir);
 
-        final FilePath dirPath = VcsUtil.getFilePath(dir.getPath(), true);
-        deleteFileInCommand(dir);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
-
-        checkinPaths(dirPath);
-      }
-
-      @Override
-      protected void cleanup() {
-        folder = "f1";
-      }
-    });
+    checkinPaths(dirPath);
   }
 
   @Test
@@ -190,35 +126,25 @@ public class SvnCommitTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     prepareInnerCopy(false);
-    final MyRunner runner = new MyRunner() {
-      @Override
-      protected void run() {
-        final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-        final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
+    final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
+    final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
-        Assert.assertTrue(file1.exists());
-        Assert.assertTrue(fileInner.exists());
-        final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-        Assert.assertNotNull(vf1);
-        Assert.assertNotNull(vf2);
+    Assert.assertTrue(file1.exists());
+    Assert.assertTrue(fileInner.exists());
+    final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
+    final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
+    Assert.assertNotNull(vf1);
+    Assert.assertNotNull(vf2);
 
-        editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
-        editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
+    editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
+    editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
 
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        final HashSet<String> strings = checkinFiles(vf1, vf2);
-        System.out.println("" + StringUtil.join(strings, "\n"));
-        Assert.assertEquals(1, strings.size());
-      }
-
-      @Override
-      protected void cleanup() {
-      }
-    };
-    runner.run();
+    final HashSet<String> strings = checkinFiles(vf1, vf2);
+    System.out.println("" + StringUtil.join(strings, "\n"));
+    Assert.assertEquals(1, strings.size());
   }
 
   @Test
@@ -226,33 +152,23 @@ public class SvnCommitTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     prepareInnerCopy(true);
-    final MyRunner runner = new MyRunner() {
-      @Override
-      protected void run() {
-        final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-        final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
+    final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
+    final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
-        Assert.assertTrue(file1.exists());
-        Assert.assertTrue(fileInner.exists());
-        final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-        Assert.assertNotNull(vf1);
-        Assert.assertNotNull(vf2);
+    Assert.assertTrue(file1.exists());
+    Assert.assertTrue(fileInner.exists());
+    final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
+    final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
+    Assert.assertNotNull(vf1);
+    Assert.assertNotNull(vf2);
 
-        editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
-        editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
+    editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
+    editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
 
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        checkinFiles(vf1, vf2);
-      }
-
-      @Override
-      protected void cleanup() {
-      }
-    };
-    runner.run();
+    checkinFiles(vf1, vf2);
   }
 
   @Test
@@ -260,33 +176,23 @@ public class SvnCommitTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     prepareExternal();
-    final MyRunner runner = new MyRunner() {
-      @Override
-      protected void run() {
-        final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
-        final File fileInner = new File(myWorkingCopyDir.getPath(), "source/external/t11.txt");
+    final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
+    final File fileInner = new File(myWorkingCopyDir.getPath(), "source/external/t11.txt");
 
-        Assert.assertTrue(file1.exists());
-        Assert.assertTrue(fileInner.exists());
-        final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
-        final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-        Assert.assertNotNull(vf1);
-        Assert.assertNotNull(vf2);
+    Assert.assertTrue(file1.exists());
+    Assert.assertTrue(fileInner.exists());
+    final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
+    final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
+    Assert.assertNotNull(vf1);
+    Assert.assertNotNull(vf2);
 
-        editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
-        editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
+    editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
+    editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
 
-        myDirtyScopeManager.markEverythingDirty();
-        myChangeListManager.ensureUpToDate(false);
+    myDirtyScopeManager.markEverythingDirty();
+    myChangeListManager.ensureUpToDate(false);
 
-        checkinFiles(vf1, vf2);
-      }
-
-      @Override
-      protected void cleanup() {
-      }
-    };
-    runner.run();
+    checkinFiles(vf1, vf2);
   }
 
   private void checkinPaths(FilePath... files) {
@@ -340,14 +246,5 @@ public class SvnCommitTest extends SvnTestCase {
     myChangeListManager.ensureUpToDate(false);
     final Change changeA = myChangeListManager.getChange(file);
     Assert.assertNull(changeA);
-  }
-
-  protected void run2variants(final MyRunner runner) {
-    runner.run();
-  }
-
-  private static abstract class MyRunner {
-    protected abstract void run();
-    protected abstract void cleanup();
   }
 }
