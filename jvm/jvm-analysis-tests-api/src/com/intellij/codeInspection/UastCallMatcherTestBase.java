@@ -9,6 +9,7 @@ import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.uast.UCallExpression;
 import org.jetbrains.uast.UCallableReferenceExpression;
+import org.jetbrains.uast.UastCallKind;
 
 import java.util.Locale;
 import java.util.Set;
@@ -31,7 +32,83 @@ public abstract class UastCallMatcherTestBase extends JavaCodeInsightFixtureTest
     return (int)expressions.stream().filter(matcher::testCallableReferenceExpression).count();
   }
 
-  // expected matched expressions count are the same for Kotlin and Java tests for callable reference expressions
+
+  protected void doTestCallExpressions(@TestDataFile @NotNull String file) {
+    PsiFile psiFile = myFixture.configureByFile(file);
+    Set<UCallExpression> expressions = getUElementsOfTypeFromFile(psiFile, UCallExpression.class,
+                                                                  e -> e.getKind() == UastCallKind.METHOD_CALL);
+    assertSize(5, expressions);
+
+    assertEquals(1, matchCallExpression(
+      builder().withClassFqn("java.util.ArrayList").build(),
+      expressions)
+    );
+    assertEquals(0, matchCallExpression(
+      builder().withClassFqn("java.util.ArrayList").withMethodName("size").build(),
+      expressions)
+    );
+    assertEquals(0, matchCallExpression(
+      builder().withMethodName("size").build(),
+      expressions)
+    );
+    assertEquals(1, matchCallExpression(
+      builder().withClassFqn("java.util.ArrayList").withMethodName("addAll").withArgumentsCount(1).build(),
+      expressions)
+    );
+    assertEquals(1, matchCallExpression(
+      builder().withClassFqn("java.util.ArrayList").withMethodName("addAll").withArgumentTypes("java.util.Collection").build(),
+      expressions)
+    );
+
+    assertEquals(4, matchCallExpression(
+      builder().withClassFqn("java.lang.String").build(),
+      expressions
+    ));
+    assertEquals(2, matchCallExpression(
+      builder().withMethodName("toUpperCase").build(),
+      expressions
+    ));
+    assertEquals(2, matchCallExpression(
+      builder().withClassFqn("java.lang.String").withMethodName("toUpperCase").build(),
+      expressions
+    ));
+
+    assertEquals(3, matchCallExpression(
+      builder().withReturnType("java.lang.String").build(),
+      expressions
+    ));
+    assertEquals(2, matchCallExpression(
+      builder().withReturnType("java.lang.String").withMethodName("toUpperCase").build(),
+      expressions
+    ));
+    assertEquals(1, matchCallExpression(
+      builder().withReturnType("java.lang.String").withMethodName("toUpperCase").withArgumentsCount(1).build(),
+      expressions
+    ));
+    assertEquals(1, matchCallExpression(
+      builder().withReturnType("java.lang.String").withMethodName("toUpperCase").withArgumentTypes("java.util.Locale").build(),
+      expressions
+    ));
+
+    assertEquals(2, matchCallExpression(
+      builder().withArgumentsCount(0).build(),
+      expressions
+    ));
+    assertEquals(3, matchCallExpression(
+      builder().withArgumentsCount(1).build(),
+      expressions
+    ));
+
+    assertEquals(1, matchCallExpression(
+      builder().withArgumentTypes("java.util.Locale").build(),
+      expressions
+    ));
+    assertEquals(1, matchCallExpression(
+      builder().withArgumentTypes("java.util.Collection").withMatchArgumentTypeInheritors(true).build(),
+      expressions
+    ));
+  }
+
   protected void doTestCallableReferences(@TestDataFile @NotNull String file) {
     PsiFile psiFile = myFixture.configureByFile(file);
     Set<UCallableReferenceExpression> expressions = getUElementsOfTypeFromFile(psiFile, UCallableReferenceExpression.class);
