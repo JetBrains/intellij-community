@@ -83,7 +83,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       }
 
       numberOfItems++;
-      final IElementType parsedTokenType = parseSingleStatement(eolSeen ? myIndent : indent);
+      final IElementType parsedTokenType = parseSingleStatement(eolSeen ? myIndent : indent, indent);
       if (nodeType == null) {
         if (parsedTokenType == YAMLElementTypes.SEQUENCE_ITEM) {
           nodeType = YAMLElementTypes.SEQUENCE;
@@ -144,7 +144,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   @Nullable
-  private IElementType parseSingleStatement(int indent) {
+  private IElementType parseSingleStatement(int indent, int minIndent) {
     if (eof()) {
       return null;
     }
@@ -170,7 +170,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       nodeType = parseScalarKeyValue(indent);
     }
     else if (YAMLElementTypes.SCALAR_VALUES.contains(getTokenType())) {
-      nodeType = parseScalarValue(indent);
+      nodeType = parseScalarValue(minIndent);
     }
     else if (tokenType == STAR) {
       advanceLexer(); // symbol *
@@ -431,7 +431,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
         advanceLexer();
         break;
       }
-      parseSingleStatement(0);
+      parseSingleStatement(0, 0);
     }
 
     myStopTokensStack.pop();
@@ -456,7 +456,7 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
       }
 
       final PsiBuilder.Marker marker = mark();
-      final IElementType parsedElement = parseSingleStatement(0);
+      final IElementType parsedElement = parseSingleStatement(0, 0);
       if (parsedElement != null) {
         marker.done(YAMLElementTypes.SEQUENCE_ITEM);
       }
