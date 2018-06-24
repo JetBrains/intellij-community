@@ -39,13 +39,19 @@ public class YAMLParser implements PsiParser, YAMLTokenTypes {
   }
 
   private void parseFile() {
+    PsiBuilder.Marker marker = mark();
     passJunk();
-    parseDocument();
-    passJunk();
-    while (!myBuilder.eof()) {
+    if (myBuilder.getTokenType() != DOCUMENT_MARKER) {
+      dropEolMarker();
+      marker.rollbackTo();
+    }
+    else {
+      marker.drop();
+    }
+    do {
       parseDocument();
       passJunk();
-    }
+    } while (!myBuilder.eof());
     dropEolMarker();
   }
 

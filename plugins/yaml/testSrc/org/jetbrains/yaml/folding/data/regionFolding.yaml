@@ -1,4 +1,12 @@
----
+<fold text='---'>
+<fold text='head-region-without---'>#region head-region-without---
+head1: <fold text='true'>true</fold>
+head2: <fold text='true'>true</fold>
+#endregion</fold>
+
+node: <fold text='value'>value</fold>
+</fold>
+<fold text='---'>---
 
 <fold text='head-top-level-region'>#region head-top-level-region
 node1: <fold text='true'>true</fold>
@@ -30,4 +38,4 @@ node2: <fold text='true'>true</fold>
 <fold text='tail-top-level-region'>#region tail-top-level-region
 last1: <fold text='true'>true</fold>
 last2: <fold text='true'>true</fold>
-#endregion</fold>
+#endregion</fold></fold>
