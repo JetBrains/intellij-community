@@ -156,6 +156,8 @@ public abstract class AbstractViewManager implements ViewManager, BuildProgressL
   }
 
   void onBuildsViewRemove(@NotNull MultipleBuildsView buildsView) {
+    if (isDisposed.get()) return;
+
     if (myBuildsViewValue.getValue() == buildsView) {
       myBuildsViewValue.drop();
     }
