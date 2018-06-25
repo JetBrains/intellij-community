@@ -122,7 +122,7 @@ class ProjectData {
   @Nullable BarContainer get(BarType type) {
     BarContainer result = myPermanentBars.get(type);
     if (result == null) {
-      result = new BarContainer(type, TouchBar.EMPTY, null);
+      result = new BarContainer(type, TouchBar.EMPTY, null, null);
       _fillBarContainer(result);
       myPermanentBars.put(type, result);
     }
