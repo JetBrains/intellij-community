@@ -874,15 +874,24 @@ public class SortContentAction extends PsiElementBaseIntentionAction {
       for(PsiElement current = newClassLBrace.getNextSibling(); current != newClassRBrace; current = current.getNextSibling()) {
         finalText.append(current.getText());
       }
-      PsiClass anEnum = createEnum(project, finalText.toString(), aClass.getText());
+      String prefix = aClass.getText();
+
+      // Workaround of deleting \n between comment after enum and lBrace when after class there are at least one \n
+      PsiElement lastChild = aClass.getLastChild();
+      if (lastChild instanceof PsiComment && ((PsiComment)lastChild).getTokenType() == JavaTokenType.END_OF_LINE_COMMENT)  {
+        prefix += "\n";
+      }
+      //if (aClass.getLastChild() instanceof PsiComment)
+      PsiClass anEnum = createEnum(project, finalText.toString(), prefix);
       if (anEnum != null) {
         aClass.replace(anEnum);
       }
     }
 
     private static PsiClass createEnum(Project project, String text, String prefix) {
+      String enumText = prefix + " {" + text + "}";
       PsiJavaFile file = (PsiJavaFile)PsiFileFactory.getInstance(project)
-                                                    .createFileFromText("_DUMMY_", JavaFileType.INSTANCE, prefix + " {" + text + "}");
+                                                    .createFileFromText("_DUMMY_", JavaFileType.INSTANCE, enumText);
       PsiClass[] classes = file.getClasses();
       if (classes.length != 1) return null;
       return classes[0];
