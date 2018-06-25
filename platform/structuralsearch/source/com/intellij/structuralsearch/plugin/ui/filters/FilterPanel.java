@@ -210,7 +210,7 @@ public class FilterPanel implements FilterTable {
     myProfile = profile;
   }
 
-  public void setCompiledPattern(CompiledPattern compiledPattern) {
+  public void setCompiledPattern(@NotNull CompiledPattern compiledPattern) {
     myCompiledPattern = compiledPattern;
   }
 

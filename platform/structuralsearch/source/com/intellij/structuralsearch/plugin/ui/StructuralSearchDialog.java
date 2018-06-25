@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
@@ -207,9 +208,11 @@ public class StructuralSearchDialog extends DialogWrapper {
   private boolean isCompiled() {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false);
-      myFilterPanel.setCompiledPattern(compiledPattern);
-      if (!myFilterPanel.isInitialized()) {
-        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+      if (compiledPattern != null) {
+        myFilterPanel.setCompiledPattern(compiledPattern);
+        if (!myFilterPanel.isInitialized()) {
+          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+        }
       }
       return compiledPattern != null;
     } catch (MalformedPatternException e) {
@@ -690,16 +693,19 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   protected boolean isValid() {
+    final MatchOptions matchOptions = getConfiguration().getMatchOptions();
     try {
-      Matcher.validate(mySearchContext.getProject(), getConfiguration().getMatchOptions());
+      Matcher.validate(mySearchContext.getProject(), matchOptions);
     }
-    catch (MalformedPatternException ex) {
-      reportMessage(SSRBundle.message("this.pattern.is.malformed.message",
-                                      (ex.getMessage() != null) ? ex.getMessage() : ""), mySearchCriteriaEdit);
+    catch (MalformedPatternException e) {
+      final String message = StringUtil.isEmpty(matchOptions.getSearchPattern())
+                             ? null
+                             : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
+      reportMessage(message, mySearchCriteriaEdit);
       return false;
     }
-    catch (UnsupportedPatternException ex) {
-      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", ex.getMessage()), mySearchCriteriaEdit);
+    catch (UnsupportedPatternException e) {
+      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), mySearchCriteriaEdit);
       return false;
     }
     catch (NoMatchFoundException e) {
@@ -723,7 +729,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       else {
         balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
       }
-      //balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, 0)), Balloon.Position.above);
       balloon.showInCenterOf(component);
       Disposer.register(myDisposable, balloon);
       IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> IdeFocusManager.getGlobalInstance().requestFocus(component, true));
