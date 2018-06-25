@@ -7,7 +7,6 @@ import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.codeInsight.intention.IntentionActionDelegate
 import com.intellij.codeInsight.intention.impl.CachedIntentions
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler
-import com.intellij.codeInspection.ex.QuickFixWrapper
 import com.intellij.ide.actions.ActionsCollector
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.Editor
@@ -41,10 +40,8 @@ class DaemonTooltipAction(private val myFixText: String, private val myActualOff
     for (descriptor in intentions) {
       val action = descriptor.action
       if (action.text == myFixText) {
-        if (action !is QuickFixWrapper) {
-          //unfortunately it is very common case when q fix uses caret position :(
-          editor.caretModel.moveToOffset(myActualOffset)
-        }
+        //unfortunately it is very common case when quick fixes/refactorings use caret position
+        editor.caretModel.moveToOffset(myActualOffset)
         ShowIntentionActionsHandler.chooseActionAndInvoke(psiFile, editor, action, myFixText)
         return
       }
@@ -93,11 +90,11 @@ fun getFirstAvailableAction(psiFile: PsiFile,
                             editor: Editor,
                             intentionsInfo: ShowIntentionsPass.IntentionsInfo): IntentionAction? {
   val project = psiFile.project
-  
+
   //sort the actions
   val cachedIntentions = CachedIntentions.createAndUpdateActions(project, psiFile, editor, intentionsInfo)
   val allActions = cachedIntentions.allActions
-  
+
   if (allActions.isEmpty()) return null
 
   allActions.forEach {
