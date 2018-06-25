@@ -686,7 +686,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacingAroundVarKeyword() {
-    doMethodTest("for (  var  path:  paths) ;", "for (var path: paths) ;");
+    doMethodTest("for (  var  path :  paths) ;", "for (var path : paths) ;");
     doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
   }
 

@@ -22,7 +22,7 @@ public class Test extends ArrayList<String> {
     new Runnable() {
       @Override
       public void run() {
-          for (String s: Test.this) {
+          for (String s : Test.this) {
               System.out.println(s);
           }
       }

@@ -21,7 +21,7 @@ public class Test {
   private String[] fields = null;
 
   void test() {
-      for (String field: this.fields) {
+      for (String field : this.fields) {
       }
   }
 }
