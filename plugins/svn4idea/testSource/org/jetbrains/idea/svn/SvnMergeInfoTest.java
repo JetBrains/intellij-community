@@ -48,7 +48,6 @@ public class SvnMergeInfoTest extends SvnTestCase {
   private WCInfoWithBranches myWCInfoWithBranches;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
 
-  private SvnVcs myVcs;
   private BranchInfo myMergeChecker;
 
   private File trunk;
@@ -78,11 +77,10 @@ public class SvnMergeInfoTest extends SvnTestCase {
     Node node = new Node(vcsRoot, createUrl(myBranchUrl), createUrl(myRepoUrl));
     RootUrlInfo root = new RootUrlInfo(node, WorkingCopyFormat.ONE_DOT_SIX, vcsRoot, null);
     myWCInfo = new WCInfo(root, true, Depth.INFINITY);
-    myMergeContext = new MergeContext(SvnVcs.getInstance(myProject), parseUrl(myTrunkUrl, false), myWCInfo, Url.tail(myTrunkUrl), vcsRoot);
+    myMergeContext = new MergeContext(vcs, parseUrl(myTrunkUrl, false), myWCInfo, Url.tail(myTrunkUrl), vcsRoot);
     myOneShotMergeInfoHelper = new OneShotMergeInfoHelper(myMergeContext);
 
-    myVcs = SvnVcs.getInstance(myProject);
-    myVcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);
+    vcs.getSvnConfiguration().setCheckNestedForQuickMerge(true);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -90,7 +88,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     Url repoUrl = createUrl(myRepoUrl, false);
     myWCInfoWithBranches =
       new WCInfoWithBranches(myWCInfo, Collections.emptyList(), vcsRoot, new WCInfoWithBranches.Branch(repoUrl.appendPath("trunk", false)));
-    myMergeChecker = new BranchInfo(myVcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)));
+    myMergeChecker = new BranchInfo(vcs, myWCInfoWithBranches, new WCInfoWithBranches.Branch(repoUrl.appendPath("branch", false)));
   }
 
   @Test
@@ -248,7 +246,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
     assertMergeInfo(myBranchVcsRoot, "/trunk:3");
 
-    final Info f1info = myVcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
+    final Info f1info = vcs.getInfo(new File(myBranchVcsRoot, "folder/f1.txt"));
     assert f1info.getRevision().getNumber() == 2;
 
     final List<SvnChangeList> changeListList = getTrunkChangeLists();
@@ -286,7 +284,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
 
   @NotNull
   private List<SvnChangeList> getTrunkChangeLists() throws com.intellij.openapi.vcs.VcsException {
-    final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = myVcs.getCommittedChangesProvider();
+    final CommittedChangesProvider<SvnChangeList, ChangeBrowserSettings> provider = vcs.getCommittedChangesProvider();
 
     return provider.getCommittedChanges(provider.createDefaultSettings(), new SvnRepositoryLocation(parseUrl(myTrunkUrl, false)), 0);
   }
@@ -342,7 +340,6 @@ public class SvnMergeInfoTest extends SvnTestCase {
   }
 
   private void assertMergeInfo(@NotNull File file, @NotNull String... values) throws SvnBindException {
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
     PropertyValue propertyValue =
       vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, Revision.WORKING);
     assert propertyValue != null;

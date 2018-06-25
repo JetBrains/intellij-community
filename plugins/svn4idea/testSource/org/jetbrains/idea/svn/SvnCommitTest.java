@@ -24,7 +24,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class SvnCommitTest extends SvnTestCase {
-  private SvnVcs myVcs;
   private VcsDirtyScopeManager myDirtyScopeManager;
   private ChangeListManager myChangeListManager;
 
@@ -32,7 +31,6 @@ public class SvnCommitTest extends SvnTestCase {
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myVcs = SvnVcs.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
@@ -203,7 +201,7 @@ public class SvnCommitTest extends SvnTestCase {
       assertNotNull(change);
       changes.add(change);
     }
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list");
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(changes, "test comment list");
     assertTrue(exceptions == null || exceptions.isEmpty());
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -222,7 +220,7 @@ public class SvnCommitTest extends SvnTestCase {
       changes.add(change);
     }
     final HashSet<String> feedback = new HashSet<>();
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list", o -> null, feedback);
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(changes, "test comment list", o -> null, feedback);
     if (exceptions !=null && ! exceptions.isEmpty()) {
       exceptions.get(0).printStackTrace();
     }
@@ -241,7 +239,7 @@ public class SvnCommitTest extends SvnTestCase {
     final Change change = myChangeListManager.getChange(file);
     assertNotNull(change);
     assertEquals(status, change.getFileStatus());
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "test comment");
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "test comment");
     assertTrue(exceptions == null || exceptions.isEmpty());
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);

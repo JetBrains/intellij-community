@@ -170,8 +170,8 @@ public class SvnRenameTest extends SvnTestCase {
       Assert.assertNotNull(change);
 
       final List<VcsException> exceptions = new ArrayList<>();
-      SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
-                                                                             RollbackProgressListener.EMPTY);
+      vcs.getRollbackEnvironment().rollbackChanges(Collections.singletonList(change), exceptions,
+                                                   RollbackProgressListener.EMPTY);
       Assert.assertTrue(exceptions.isEmpty());
       Assert.assertFalse(new File(myWorkingCopyDir.getPath(), "newchild").exists());
       Assert.assertTrue(new File(myWorkingCopyDir.getPath(), "child").exists());
@@ -236,7 +236,7 @@ public class SvnRenameTest extends SvnTestCase {
       changes.add(ChangeListManager.getInstance(myProject).getChange(myWorkingCopyDir.findChild("newchild")));
 
       final List<VcsException> exceptions = new ArrayList<>();
-      SvnVcs.getInstance(myProject).getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+      vcs.getRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
       TimeoutUtil.sleep(300);
       Assert.assertTrue(exceptions.isEmpty());
       final File fileA = new File(childPath, "a.txt");
@@ -265,7 +265,7 @@ public class SvnRenameTest extends SvnTestCase {
       refreshVfs();   // wait for end of refresh operations initiated from SvnFileSystemListener
       changeListManager.ensureUpToDate(false);
       final List<Change> changes = new ArrayList<>(changeListManager.getDefaultChangeList().getChanges());
-      final List<VcsException> list = SvnVcs.getInstance(myProject).getCheckinEnvironment().commit(changes, "test");
+      final List<VcsException> list = vcs.getCheckinEnvironment().commit(changes, "test");
       Assert.assertEquals(0, list.size());
     });
   }

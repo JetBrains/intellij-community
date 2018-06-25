@@ -33,7 +33,6 @@ public class SvnCommandLineStabilityTest extends SvnTestCase {
 
   @NotNull
   private CommandExecutor runInfo() throws SvnBindException {
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
     File workingDirectory = VfsUtilCore.virtualToIoFile(myWorkingCopyDir);
     Command command = new Command(SvnCommandName.info);
 

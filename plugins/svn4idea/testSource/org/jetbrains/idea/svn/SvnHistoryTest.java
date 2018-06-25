@@ -28,7 +28,7 @@ public class SvnHistoryTest extends SvnTestCase {
   public void testRepositoryRootHistory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
@@ -46,7 +46,7 @@ public class SvnHistoryTest extends SvnTestCase {
   public void testSimpleHistory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
@@ -64,7 +64,7 @@ public class SvnHistoryTest extends SvnTestCase {
   public void testSimpleHistoryLocal() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
@@ -81,7 +81,7 @@ public class SvnHistoryTest extends SvnTestCase {
   public void testLocallyRenamedFileHistory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 
@@ -102,7 +102,7 @@ public class SvnHistoryTest extends SvnTestCase {
   public void testLocallyMovedToRenamedDirectory() throws Exception {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    final VcsHistoryProvider provider = SvnVcs.getInstance(myProject).getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final SubTree tree = new SubTree(myWorkingCopyDir);
     checkin();
 

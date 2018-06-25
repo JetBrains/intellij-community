@@ -28,7 +28,6 @@ public class SvnRollbackTest extends SvnTestCase {
 
   private VcsDirtyScopeManager myDirtyScopeManager;
   private ChangeListManager myChangeListManager;
-  private SvnVcs myVcs;
 
   @Override
   @Before
@@ -36,8 +35,6 @@ public class SvnRollbackTest extends SvnTestCase {
     super.setUp();
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
-
-    myVcs = SvnVcs.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -60,7 +57,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
   private void rollbackIMpl(List<Change> changes, final List<Change> allowedAfter) throws VcsException {
     final List<VcsException> exceptions = new ArrayList<>();
-    myVcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
+    vcs.createRollbackEnvironment().rollbackChanges(changes, exceptions, RollbackProgressListener.EMPTY);
     if (! exceptions.isEmpty()) {
       throw exceptions.get(0);
     }
@@ -287,13 +284,13 @@ public class SvnRollbackTest extends SvnTestCase {
   }
 
   private String getProperty(File file, String name) throws SvnBindException {
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), name, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), name, false, WORKING);
 
     return PropertyValue.toString(value);
   }
 
   private void setProperty(final File file, final String name, final String value) throws SvnBindException {
-    myVcs.getFactory(file).createPropertyClient().setProperty(file, name, PropertyValue.create(value), Depth.EMPTY, true);
+    vcs.getFactory(file).createPropertyClient().setProperty(file, name, PropertyValue.create(value), Depth.EMPTY, true);
   }
 
   @Test
@@ -395,7 +392,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasIgnored = virtualToIoFile(ignored);
     final FileGroupInfo groupInfo = new FileGroupInfo();
     groupInfo.onFileEnabled(ignored);
-    SvnPropertyService.doAddToIgnoreProperty(myVcs, false, new VirtualFile[]{ignored}, groupInfo);
+    SvnPropertyService.doAddToIgnoreProperty(vcs, false, new VirtualFile[]{ignored}, groupInfo);
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
@@ -428,7 +425,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasIgnored = virtualToIoFile(ignored);
     final FileGroupInfo groupInfo = new FileGroupInfo();
     groupInfo.onFileEnabled(ignored);
-    SvnPropertyService.doAddToIgnoreProperty(myVcs, false, new VirtualFile[]{ignored}, groupInfo);
+    SvnPropertyService.doAddToIgnoreProperty(vcs, false, new VirtualFile[]{ignored}, groupInfo);
     checkin();
 
     myDirtyScopeManager.markEverythingDirty();
@@ -623,7 +620,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
   private void rollbackLocallyDeleted(final List<FilePath> locally, final List<FilePath> allowed) {
     final List<VcsException> exceptions = new ArrayList<>();
-    myVcs.createRollbackEnvironment().rollbackMissingFileDeletion(locally, exceptions, RollbackProgressListener.EMPTY);
+    vcs.createRollbackEnvironment().rollbackMissingFileDeletion(locally, exceptions, RollbackProgressListener.EMPTY);
     Assert.assertTrue(exceptions.isEmpty());
 
     myDirtyScopeManager.markEverythingDirty();

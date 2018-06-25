@@ -73,6 +73,8 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myAnotherRepoUrl;
   protected File myPluginRoot;
 
+  protected SvnVcs vcs;
+
   protected SvnTestCase() {
     this("testData");
   }
@@ -145,6 +147,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       initProject(myWcRoot, this.getTestName());
       activateVCS(SvnVcs.VCS_NAME);
 
+      vcs = SvnVcs.getInstance(myProject);
       myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
 
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
@@ -160,7 +163,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected void refreshSvnMappingsSynchronously() {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     if (! myInitChangeListManager) {
       return;
     }
@@ -216,7 +218,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected List<Change> getChangesInScope(final VcsDirtyScope dirtyScope) throws VcsException {
-    ChangeProvider changeProvider = SvnVcs.getInstance(myProject).getChangeProvider();
+    ChangeProvider changeProvider = vcs.getChangeProvider();
     MockChangelistBuilder builder = new MockChangelistBuilder();
     changeProvider.getChanges(dirtyScope, builder, new EmptyProgressIndicator(), myGate);
     return builder.getChanges();
@@ -316,7 +318,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   public String prepareBranchesStructure() throws Exception {
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final String mainUrl = myRepoUrl + "/trunk";
     runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", mainUrl);
     runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", myRepoUrl + "/branches");
@@ -357,7 +358,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   public void prepareExternal(final boolean commitExternalDefinition, final boolean updateExternal,
                               final boolean anotherRepository) throws Exception {
     final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
-    final SvnVcs vcs = SvnVcs.getInstance(myProject);
     final String mainUrl = myRepoUrl + "/root/source";
     final String externalURL;
     if (anotherRepository) {

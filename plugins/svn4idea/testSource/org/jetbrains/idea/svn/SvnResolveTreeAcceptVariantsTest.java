@@ -39,7 +39,6 @@ import static org.junit.Assert.*;
 public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
-  private SvnVcs myVcs;
   private VcsDirtyScopeManager myDirtyScopeManager;
   private ChangeListManager myChangeListManager;
 
@@ -53,7 +52,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     clearWc(true);
 
-    myVcs = SvnVcs.getInstance(myProject);
     myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myTraceClient = true;
@@ -99,10 +97,10 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       sleep(200);
 
       ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-        Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), myVcs.getName())));
+        Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), vcs.getName())));
       createSubTree(data);
       myTheirs.refresh(false, true);
-      final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
+      final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
       sleep(200);
 
@@ -122,7 +120,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       final SvnRevisionNumber committedRevision =
         change.getBeforeRevision() != null ? (SvnRevisionNumber)change.getBeforeRevision().getRevisionNumber() : null;
       //SvnRevisionNumber committedRevision = new SvnRevisionNumber(Revision.of(cnt * 2 + 1));
-      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, null);
+      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(vcs, filePath, null);
 
       resolver.resolveSelectMineFull();
 
@@ -148,13 +146,13 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   }
 
   private void checkStatusesAfterMineFullResolve(TreeConflictData.Data data, File conflictIoFile) {
-    Status conflStatus = SvnUtil.getStatus(myVcs, conflictIoFile);
+    Status conflStatus = SvnUtil.getStatus(vcs, conflictIoFile);
     assertTrue(createTestFailedComment(data, conflictIoFile.getPath()) + " tree conflict resolved",
                       conflStatus.getTreeConflict() == null);
     Collection<TreeConflictData.FileData> leftFiles = data.getLeftFiles();
     for (TreeConflictData.FileData file : leftFiles) {
       File exFile = new File(myWorkingCopyDir.getPath(), file.myRelativePath);
-      final Status status = SvnUtil.getStatus(myVcs, exFile);
+      final Status status = SvnUtil.getStatus(vcs, exFile);
       boolean theirsExists = new File(myTheirs.getPath(), file.myRelativePath).exists();
 
       if (StatusType.STATUS_UNVERSIONED.equals(file.myNodeStatus)) {
@@ -224,7 +222,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
 
       createSubTree(data);
-      final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
+      final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
 
       myDirtyScopeManager.markEverythingDirty();
@@ -246,7 +244,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
         beforePath = change.getBeforeRevision().getFile();
       }
       //SvnRevisionNumber committedRevision = new SvnRevisionNumber(Revision.of(cnt * 2 + 1));
-      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(myVcs, filePath, beforePath);
+      final SvnTreeConflictResolver resolver = new SvnTreeConflictResolver(vcs, filePath, beforePath);
 
       resolver.resolveSelectTheirsFull();
 
@@ -265,8 +263,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
                      exists);
         }
         final File theirsFile = virtualToIoFile(file);
-        Info theirsInfo = myVcs.getInfo(theirsFile);
-        Info thisInfo = myVcs.getInfo(workingFile);
+        Info theirsInfo = vcs.getInfo(theirsFile);
+        Info thisInfo = vcs.getInfo(workingFile);
         if (theirsInfo != null) {
           assertEquals("Check failed for test: " + getTestName(data) + " and file: " + relative + " in: " + myWorkingCopyDir.getPath() +
                        ", theirs: " + theirsInfo.getRevision().getNumber() + ", mine: " + thisInfo.getRevision().getNumber(),

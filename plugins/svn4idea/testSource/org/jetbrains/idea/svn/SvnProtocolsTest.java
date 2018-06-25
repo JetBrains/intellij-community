@@ -57,17 +57,14 @@ public class SvnProtocolsTest extends SvnTestCase {
   public static final String SSH_USER_NAME = "user";
   public static final String SSH_PASSWORD = "qwerty4321";
   public static final int SSH_PORT_NUMBER = 222;
-  private SvnVcs myVcs;
-
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
-    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
+    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(vcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
       public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
@@ -76,7 +73,7 @@ public class SvnProtocolsTest extends SvnTestCase {
     };
     interactiveManager.setAuthenticationProvider(authentication);
 
-    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
+    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(vcs);
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
@@ -94,7 +91,7 @@ public class SvnProtocolsTest extends SvnTestCase {
 
   private void testBrowseRepositoryImpl(Url url) throws VcsException {
     List<DirectoryEntry> list = newArrayList();
-    myVcs.getFactoryFromSettings().createBrowseClient().list(Target.on(url), null, null, list::add);
+    vcs.getFactoryFromSettings().createBrowseClient().list(Target.on(url), null, null, list::add);
 
     assertTrue(!list.isEmpty());
   }
@@ -116,7 +113,7 @@ public class SvnProtocolsTest extends SvnTestCase {
   }
 
   private void testHistoryImpl(Url s) throws VcsException {
-    final VcsHistoryProvider provider = myVcs.getVcsHistoryProvider();
+    final VcsHistoryProvider provider = vcs.getVcsHistoryProvider();
     final VcsAppendableHistoryPartnerAdapter partner = new VcsAppendableHistoryPartnerAdapter() {
       @Override
       public void acceptRevision(VcsFileRevision revision) {
@@ -155,8 +152,8 @@ public class SvnProtocolsTest extends SvnTestCase {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<>());
+      vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
+                                                   new Ref<>());
     assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
     assertTrue(!session.isCanceled());
     assertTrue(!files.getGroupById(FileGroup.CREATED_ID).getFiles().isEmpty());
@@ -172,11 +169,11 @@ public class SvnProtocolsTest extends SvnTestCase {
     assertNotNull(vf);
     final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
+    final List<VcsException> commit = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
     assertTrue(commit.isEmpty());
     return file;
   }

@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diff.impl.patch.*;
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -24,18 +23,18 @@ import java.util.List;
 import static org.junit.Assert.assertEquals;
 
 public class ConflictCreator {
-  private final Project myProject;
+  private final SvnVcs myVcs;
   private final VirtualFile myTheirsDir;
   private final VirtualFile myMineDir;
   private final TreeConflictData.Data myData;
   private final SvnClientRunner myClientRunner;
 
-  public ConflictCreator(final Project project,
+  public ConflictCreator(SvnVcs vcs,
                          VirtualFile dir,
                          VirtualFile mineDir,
                          TreeConflictData.Data data,
                          final SvnClientRunner clientRunner) {
-    myProject = project;
+    myVcs = vcs;
     myTheirsDir = dir;
     myMineDir = mineDir;
     myData = data;
@@ -60,15 +59,14 @@ public class ConflictCreator {
     }
 
     if (! filePatchList.isEmpty()) {
-      PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myProject, myTheirsDir, filePatchList, (LocalChangeList)null, null);
+      PatchApplier<BinaryFilePatch> applier =
+        new PatchApplier<>(myVcs.getProject(), myTheirsDir, filePatchList, (LocalChangeList)null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
       assertEquals(0, applier.getRemainingPatches().size());
     }
 
     TimeoutUtil.sleep(10);
-
-    SvnVcs vcs = SvnVcs.getInstance(myProject);
 
     for (TextFilePatch patch : patches) {
       if (patch.isNewFile() || ! Comparing.equal(patch.getAfterName(), patch.getBeforeName())) {
@@ -77,7 +75,7 @@ public class ConflictCreator {
         String subPath = "";
         for (String part : parts) {
           final String path = subPath + part;
-          Info info = vcs.getInfo(new File(myTheirsDir.getPath(), path));
+          Info info = myVcs.getInfo(new File(myTheirsDir.getPath(), path));
           if (info == null || info.getURL() == null) {
             myClientRunner.add(myTheirsDir, path);
           }

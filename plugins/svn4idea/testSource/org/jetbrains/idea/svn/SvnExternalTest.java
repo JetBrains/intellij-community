@@ -24,7 +24,6 @@ import static org.junit.Assert.*;
 
 public class SvnExternalTest extends SvnTestCase {
   private ChangeListManagerImpl clManager;
-  private SvnVcs myVcs;
   private Url myMainUrl;
   private Url myExternalURL;
 
@@ -36,7 +35,6 @@ public class SvnExternalTest extends SvnTestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myVcs = SvnVcs.getInstance(myProject);
     myMainUrl = parseUrl(myRepoUrl + "/root/source", false);
     myExternalURL = parseUrl(myRepoUrl + "/root/target", false);
   }
@@ -54,7 +52,7 @@ public class SvnExternalTest extends SvnTestCase {
   }
 
   private void externalCopyIsDetectedImpl() {
-    final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    final SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     assertEquals(2, infos.size());
     Set<Url> expectedUrls = new HashSet<>();
@@ -79,7 +77,7 @@ public class SvnExternalTest extends SvnTestCase {
   public void testInnerCopyDetected() throws Exception {
     prepareInnerCopy();
 
-    final SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    final SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
     final List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     assertEquals(2, infos.size());
     Set<Url> expectedUrls = new HashSet<>();
@@ -161,7 +159,7 @@ public class SvnExternalTest extends SvnTestCase {
 
   private void setNewDirectoryMappings(final File sourceDir) {
     UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), myVcs.getName()))));
+      Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
   }
 
   @Test

@@ -41,7 +41,6 @@ import static org.jetbrains.idea.svn.api.Revision.WORKING;
 import static org.junit.Assert.*;
 
 public class SvnQuickMergeTest extends SvnTestCase {
-  private SvnVcs myVcs;
   private String myBranchUrl;
   private File myBranchRoot;
   private VirtualFile myBranchVf;
@@ -54,7 +53,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myVcs = SvnVcs.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myBranchUrl = prepareBranchesStructure();
     myBranchRoot = new File(myTempDirFixture.getTempDirPath(), "b1");
@@ -116,7 +114,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
   @Test
   public void testSelectRevisionsWithQuickSelectCheckForLocalChanges() throws Exception {
-    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -158,7 +156,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
     assertEquals("/branches/b1:" + (numberBefore + 1), value.toString());
   }
@@ -167,7 +165,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
   // trunk->b1->b2 merges between trunk and b2
   @Test
   public void testSelectRevisionsWithQuickSelect() throws Exception {
-    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -182,7 +180,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
     }
 
     // before copy
-    Info info2 = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info2 = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     assertNotNull(info2);
     final long numberBeforeCopy = info2.getRevision().getNumber();
 
@@ -224,14 +222,14 @@ public class SvnQuickMergeTest extends SvnTestCase {
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
     assertEquals("/branches/b2:" + (numberBeforeCopy + 2), value.toString());
   }
 
   @Test
   public void testSelectRevisions() throws Exception {
-    Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
+    Info info = vcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
     assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
@@ -264,7 +262,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
-    PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
+    PropertyValue value = vcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
     assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), value.toString());
   }
@@ -272,7 +270,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
   private WCInfo getWcInfo() {
     WCInfo found = null;
     final File workingIoFile = virtualToIoFile(myWorkingCopyDir);
-    final List<WCInfo> infos = myVcs.getAllWcInfos();
+    final List<WCInfo> infos = vcs.getAllWcInfos();
     for (WCInfo info : infos) {
       if (FileUtil.filesEqual(workingIoFile, new File(info.getPath()))) {
         found = info;
@@ -313,7 +311,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
   }
 
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {
-    MergeContext mergeContext = new MergeContext(myVcs, parseUrl(sourceUrl, false), getWcInfo(), Url.tail(sourceUrl), myWorkingCopyDir);
+    MergeContext mergeContext = new MergeContext(vcs, parseUrl(sourceUrl, false), getWcInfo(), Url.tail(sourceUrl), myWorkingCopyDir);
     QuickMerge quickMerge = new QuickMerge(mergeContext, interaction);
 
     getApplication().invokeAndWait(quickMerge::execute);

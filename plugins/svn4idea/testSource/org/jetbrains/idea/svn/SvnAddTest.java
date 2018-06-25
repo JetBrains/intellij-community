@@ -55,7 +55,7 @@ public class SvnAddTest extends SvnTestCase {
     final List<VirtualFile> files = new ArrayList<>();
     files.add(file);
     files.add(dir);
-    final List<VcsException> errors = SvnVcs.getInstance(myProject).getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
+    final List<VcsException> errors = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     Assert.assertEquals(0, errors.size());
   }
 

@@ -21,14 +21,12 @@ import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
 
 public class SvnIgnoreTest extends SvnTestCase {
   private ChangeListManager clManager;
-  private SvnVcs myVcs;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
 
     clManager = ChangeListManager.getInstance(myProject);
-    myVcs = SvnVcs.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -39,7 +37,7 @@ public class SvnIgnoreTest extends SvnTestCase {
     final VirtualFile versionedParent = createDirInCommand(myWorkingCopyDir, "versionedParent");
     final String name = "ign123";
     File file = virtualToIoFile(versionedParent);
-    myVcs.getFactory(file).createPropertyClient().setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n"), Depth.EMPTY, true);
+    vcs.getFactory(file).createPropertyClient().setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n"), Depth.EMPTY, true);
     checkin();
     update();
 
@@ -69,8 +67,8 @@ public class SvnIgnoreTest extends SvnTestCase {
     final String name = "ign123";
     final String name2 = "ign321";
     File file = virtualToIoFile(versionedParent);
-    myVcs.getFactory().createPropertyClient()
-      .setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n" + name2 + "\n"), Depth.EMPTY, true);
+    vcs.getFactory().createPropertyClient()
+       .setProperty(file, SVN_IGNORE, PropertyValue.create(name + "\n" + name2 + "\n"), Depth.EMPTY, true);
     checkin();
     update();
 

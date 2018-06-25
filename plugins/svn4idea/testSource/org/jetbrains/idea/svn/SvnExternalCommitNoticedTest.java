@@ -21,7 +21,6 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnExternalCommitNoticedTest extends SvnTestCase {
   private ChangeListManagerImpl clManager;
-  private SvnVcs myVcs;
   private VcsDirtyScopeManager myVcsDirtyScopeManager;
 
   @Override
@@ -35,7 +34,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
-    myVcs = SvnVcs.getInstance(myProject);
   }
 
   @Test
@@ -110,10 +108,10 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     final String branchUrl = prepareBranchesStructure();
     final SubTree tree = new SubTree(myWorkingCopyDir);
 
-    myVcs.invokeRefreshSvnRoots();
+    vcs.invokeRefreshSvnRoots();
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);
-    SvnFileUrlMapping workingCopies = myVcs.getSvnFileUrlMapping();
+    SvnFileUrlMapping workingCopies = vcs.getSvnFileUrlMapping();
     List<RootUrlInfo> infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(1, infos.size());
     Assert.assertEquals(parseUrl(myRepoUrl + "/trunk", false), infos.get(0).getUrl());
@@ -127,7 +125,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     clManager.ensureUpToDate(false);
     clManager.ensureUpToDate(false);  //first run queries one more update
 
-    workingCopies = myVcs.getSvnFileUrlMapping();
+    workingCopies = vcs.getSvnFileUrlMapping();
     infos = workingCopies.getAllWcInfos();
     Assert.assertEquals(1, infos.size());
     Assert.assertEquals(parseUrl(branchUrl, false), infos.get(0).getUrl());

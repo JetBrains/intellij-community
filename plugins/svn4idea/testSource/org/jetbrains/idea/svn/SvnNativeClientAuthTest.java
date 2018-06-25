@@ -31,7 +31,6 @@ import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 public class SvnNativeClientAuthTest extends SvnTestCase {
-  private SvnVcs myVcs;
   private AcceptResult myCertificateAnswer = AcceptResult.ACCEPTED_TEMPORARILY;
   private boolean myCredentialsCorrect = true;
   private boolean mySaveCredentials = false;
@@ -55,13 +54,12 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   public void setUp() throws Exception {
     super.setUp();
     final File certFile = new File(myPluginRoot, getTestDataDir() + "/svn/____.pfx");
-    myVcs = SvnVcs.getInstance(myProject);
     // replace authentication provider so that pass credentials without dialogs
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myProject);
     final File svnconfig = FileUtil.createTempDirectory("svnconfig", "");
     configuration.setConfigurationDirParameters(false, svnconfig.getPath());
 
-    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(myVcs);
+    final SvnAuthenticationManager interactiveManager = configuration.getInteractiveManager(vcs);
     final SvnTestInteractiveAuthentication authentication = new SvnTestInteractiveAuthentication() {
       @Override
       public AcceptResult acceptServerAuthentication(Url url, String realm, Object certificate, boolean canCache) {
@@ -77,7 +75,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     };
     interactiveManager.setAuthenticationProvider(authentication);
 
-    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(myVcs);
+    final SvnAuthenticationManager manager = configuration.getAuthenticationManager(vcs);
     // will be the same as in interactive -> authentication notifier is not used
     manager.setAuthenticationProvider(authentication);
 
@@ -482,11 +480,11 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     assertNotNull(vf);
     final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
-    final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
+    final List<VcsException> exceptions = vcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
     assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
-    final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
+    final List<VcsException> commit = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
     assertTrue(commit.isEmpty());
     ++ myExpectedCreds;
     ++ myExpectedCert;
@@ -529,8 +527,8 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<>());
+      vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
+                                                   new Ref<>());
     assertTrue(session.getExceptions() != null && !session.getExceptions().isEmpty());
     assertTrue(!session.isCanceled());
     assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
@@ -546,8 +544,8 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
-      myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
-                                                     new Ref<>());
+      vcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
+                                                   new Ref<>());
     assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
     assertTrue(!session.isCanceled());
     if (myIsSecure) {

@@ -42,7 +42,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
 
   @Test
   public void testFile2File_MINE_UNV_THEIRS_ADD() throws Exception {
-    final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir,
+    final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir,
                                                         TreeConflictData.FileToFile.MINE_UNV_THEIRS_ADD, mySvnClientRunner);
     creator.create();
     final String conflictFile = TreeConflictData.FileToFile.MINE_UNV_THEIRS_ADD.getConflictFile();
@@ -105,7 +105,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     mySvnClientRunner.testSvnVersion(myWorkingCopyDir);
     createSubTree();
 
-    final ConflictCreator creator = new ConflictCreator(myProject, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
+    final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
     creator.create();
     return data.getConflictFile();
   }
