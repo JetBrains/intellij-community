@@ -138,6 +138,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   }
 
   private VirtualFilePointerTracker myVirtualFilePointerTracker;
+  private CodeStyleSettingsTracker myCodeStyleSettingsTracker;
 
   /**
    * @return Project to be used in tests for example for project components retrieval.
@@ -275,7 +276,10 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       doSetup(descriptor, configureLocalInspectionTools(), getTestRootDisposable());
       InjectedLanguageManagerImpl.pushInjectors(getProject());
 
-      storeSettings();
+      myCodeStyleSettingsTracker = new CodeStyleSettingsTracker(
+        () -> isStressTest() ||
+              ApplicationManager.getApplication() == null ||
+              ApplicationManager.getApplication() instanceof MockApplication ? null : CodeStyle.getDefaultSettings());
 
       myThreadTracker = new ThreadTracker();
       ModuleRootManager.getInstance(ourModule).orderEntries().getAllLibrariesAndSdkClassesRoots();
@@ -381,7 +385,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
     //noinspection Convert2MethodRef
     new RunAll(
       () -> CodeStyle.dropTemporarySettings(project),
-      this::checkForSettingsDamage,
+      () -> myCodeStyleSettingsTracker.checkForSettingsDamage(),
       () -> doTearDown(project, ourApplication),
       () -> checkEditorsReleased(),
       () -> myOldSdks.checkForJdkTableLeaks(),

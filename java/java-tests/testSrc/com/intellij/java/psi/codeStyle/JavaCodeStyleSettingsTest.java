@@ -34,9 +34,9 @@ import java.util.List;
 public class JavaCodeStyleSettingsTest extends CodeStyleTestCase {
 
   public void testSettingsClone() {
-    List<String> annotations = Arrays.asList("anno1", "anno2");
-    JavaCodeStyleSettings original = (JavaCodeStyleSettings)JavaCodeStyleSettings.getInstance(getProject()).clone();
+    JavaCodeStyleSettings original = JavaCodeStyleSettings.getInstance(getProject());
     original.getImportLayoutTable().addEntry(new PackageEntry(false, "test", true));
+    List<String> annotations = Arrays.asList("anno1", "anno2");
     original.setRepeatAnnotations(annotations);
     original.getPackagesToUseImportOnDemand().addEntry(new PackageEntry(false, "test2", true));
     original.FIELD_TYPE_TO_NAME.addPair("foo", "bar");

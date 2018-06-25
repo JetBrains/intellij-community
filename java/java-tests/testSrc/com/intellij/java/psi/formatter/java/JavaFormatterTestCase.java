@@ -44,6 +44,6 @@ public abstract class JavaFormatterTestCase extends FormatterTestCase {
   }
 
   protected JavaCodeStyleSettings getCustomJavaSettings() {
-    return getSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    return JavaCodeStyleSettings.getInstance(getProject());
   }
 }
