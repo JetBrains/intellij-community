@@ -201,16 +201,11 @@ public class UserDefinedJsonSchemaConfiguration {
 
     if (applicationDefined != info.applicationDefined) return false;
     if (schemaVersion != info.schemaVersion) return false;
-    if (name != null ? !name.equals(info.name) : info.name != null) return false;
-    if (relativePathToSchema != null
-        ? !relativePathToSchema.equals(info.relativePathToSchema)
-        : info.relativePathToSchema != null) {
-      return false;
-    }
-    //noinspection RedundantIfStatement
-    if (patterns != null ? !patterns.equals(info.patterns) : info.patterns != null) return false;
+    if (!Objects.equals(name, info.name)) return false;
+    if (!Objects.equals(relativePathToSchema, info.relativePathToSchema)) return false;
 
-    return true;
+    //noinspection RedundantIfStatement
+    return Objects.equals(patterns, info.patterns);
   }
 
   @Override
@@ -243,7 +238,7 @@ public class UserDefinedJsonSchemaConfiguration {
     @NotNull
     private static String normalizePath(String path) {
       if (preserveSlashes(path)) return path;
-      return StringUtil.trimEnd(path.replace('/', File.separatorChar), File.separatorChar);
+      return StringUtil.trimEnd(FileUtilRt.toSystemDependentName(path), File.separatorChar);
     }
 
     private static boolean preserveSlashes(String path) {
@@ -255,7 +250,7 @@ public class UserDefinedJsonSchemaConfiguration {
     @NotNull
     private static String neutralizePath(String path) {
       if (preserveSlashes(path)) return path;
-      return StringUtil.trimEnd(path.replace('\\', '/').replace(File.separatorChar, '/'), '/');
+      return StringUtil.trimEnd(FileUtilRt.toSystemIndependentName(path), '/');
     }
 
     public String getPath() {
@@ -315,9 +310,7 @@ public class UserDefinedJsonSchemaConfiguration {
 
       if (mappingKind != item.mappingKind) return false;
       //noinspection RedundantIfStatement
-      if (path != null ? !path.equals(item.path) : item.path != null) return false;
-
-      return true;
+      return Objects.equals(path, item.path);
     }
 
     @Override
