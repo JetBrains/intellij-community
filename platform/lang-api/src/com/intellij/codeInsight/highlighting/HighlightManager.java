@@ -159,13 +159,4 @@ public abstract class HighlightManager {
                                               @HideFlags int flags,
                                               @Nullable Collection<RangeHighlighter> outHighlighters,
                                               @Nullable Color scrollmarkColor);
-
-  /**
-   * @deprecated Use {@link #addOccurrenceHighlights(com.intellij.openapi.editor.Editor, com.intellij.psi.PsiElement[], com.intellij.openapi.editor.markup.TextAttributes, boolean, java.util.Collection)} instead (it does the same thing).
-   */
-  public abstract void addElementsOccurrenceHighlights(@NotNull Editor editor,
-                                                       @NotNull PsiElement[] elements,
-                                                       @NotNull TextAttributes attributes,
-                                                       boolean hideByTextChange,
-                                                       @Nullable Collection<RangeHighlighter> outHighlighters);
 }

@@ -506,12 +506,14 @@ public class VfsUtil extends VfsUtilCore {
   //<editor-fold desc="Deprecated stuff.">
 
   /** @deprecated use {@link VfsUtilCore#toIdeaUrl(String)} to be removed in IDEA 2019 */
+  @Deprecated
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static String toIdeaUrl(@NotNull String url) {
     return toIdeaUrl(url, true);
   }
 
   /** @deprecated to be removed in IDEA 2018 */
+  @Deprecated
   public static VirtualFile copyFileRelative(Object requestor, @NotNull VirtualFile file, @NotNull VirtualFile toDir, @NotNull String relativePath) throws IOException {
     StringTokenizer tokenizer = new StringTokenizer(relativePath,"/");
     VirtualFile curDir = toDir;
@@ -532,6 +534,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect when {@code src} is a directory; use {@link #findRelativePath(VirtualFile, VirtualFile, char)} instead */
+  @Deprecated
   @Nullable
   public static String getPath(@NotNull VirtualFile src, @NotNull VirtualFile dst, char separatorChar) {
     final VirtualFile commonAncestor = getCommonAncestor(src, dst);
@@ -551,6 +554,7 @@ public class VfsUtil extends VfsUtilCore {
   }
 
   /** @deprecated incorrect, use {@link #toUri(String)} if needed (to be removed in IDEA 2019 */
+  @Deprecated
   @NotNull
   public static URI toUri(@NotNull VirtualFile file) {
     String path = file.getPath();

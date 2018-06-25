@@ -35,6 +35,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.event.AncestorEvent;
+import javax.swing.event.AncestorListener;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.Map;
@@ -280,13 +282,35 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       setBackground(new JBColor(Gray._200, Gray._90));
     }
 
-    // Add listeners
-    registerKeyboardAction(new ActionListener() {
+    AncestorListener ancestorListener = new AncestorListener() {
+
+      private final static String FOCUS_EDITOR_ACTION_KEY = "FOCUS_EDITOR_ACTION_KEY";
+
       @Override
-      public void actionPerformed(final ActionEvent e) {
-        ToolWindowManager.getInstance(myProject).activateEditorComponent();
+      public void ancestorAdded(AncestorEvent event) {
+        registerEscapeAction();
       }
-    }, KeyStroke.getKeyStroke(KeyEvent.VK_ESCAPE, 0), JComponent.WHEN_ANCESTOR_OF_FOCUSED_COMPONENT);
+
+      @Override
+      public void ancestorMoved(AncestorEvent event) {}
+
+      private void registerEscapeAction() {
+
+        getInputMap(WHEN_ANCESTOR_OF_FOCUSED_COMPONENT).put(KeyStroke.getKeyStroke(
+          KeyEvent.VK_ESCAPE, 0),FOCUS_EDITOR_ACTION_KEY);
+        getActionMap().put(FOCUS_EDITOR_ACTION_KEY, new AbstractAction() {
+          @Override
+          public void actionPerformed(ActionEvent e) {
+            ToolWindowManager.getInstance(myProject).activateEditorComponent();
+          }
+        });
+      }
+
+      @Override
+      public void ancestorRemoved(AncestorEvent event) {}
+    };
+    addAncestorListener(ancestorListener);
+    Disposer.register(myProject, () -> removeAncestorListener(ancestorListener));
   }
 
   public void setTitleActions(AnAction[] actions) {
@@ -466,7 +490,11 @@ public final class InternalDecorator extends JPanel implements Queryable, DataPr
       if (myInfo == null) return;
 
       if (myAdditionalGearActions != null) {
-        addSorted(this, myAdditionalGearActions);
+        if (myAdditionalGearActions.isPopup() && !StringUtil.isEmpty(myAdditionalGearActions.getTemplatePresentation().getText())) {
+          add(myAdditionalGearActions);
+        } else {
+          addSorted(this, myAdditionalGearActions);
+        }
         addSeparator();
       }
       addAction(myToggleToolbarGroup).setAsSecondary(true);

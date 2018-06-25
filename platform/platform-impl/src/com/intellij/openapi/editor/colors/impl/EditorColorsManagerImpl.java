@@ -289,11 +289,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Pers
   public void removeAllSchemes() {
   }
 
-  @Override
-  public void setSchemes(@NotNull List<EditorColorsScheme> schemes) {
-    mySchemeManager.setSchemes(schemes);
-  }
-
   @NotNull
   @Override
   public EditorColorsScheme[] getAllSchemes() {

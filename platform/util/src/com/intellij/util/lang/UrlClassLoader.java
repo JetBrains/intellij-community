@@ -140,11 +140,6 @@ public class UrlClassLoader extends ClassLoader {
     public Builder allowBootstrapResources() { myAllowBootstrapResources = true; return this; }
     public Builder setLogErrorOnMissingJar(boolean log) {myErrorOnMissingJar = log; return this; }
 
-    /** @deprecated use {@link #allowUnescaped()} (to be removed in IDEA 2018) */
-    public Builder allowUnescaped(boolean acceptUnescaped) { myAcceptUnescaped = acceptUnescaped; return this; }
-    /** @deprecated use {@link #noPreload()} (to be removed in IDEA 2018) */
-    public Builder preload(boolean preload) { myPreload = preload; return this; }
-
     public UrlClassLoader get() { return new UrlClassLoader(this); }
   }
 
@@ -158,6 +153,7 @@ public class UrlClassLoader extends ClassLoader {
   private final boolean myAllowBootstrapResources;
 
   /** @deprecated use {@link #build()}, left for compatibility with java.system.class.loader setting */
+  @Deprecated
   public UrlClassLoader(@NotNull ClassLoader parent) {
     this(build().urls(((URLClassLoader)parent).getURLs()).parent(parent.getParent()).allowLock().useCache()
            .usePersistentClasspathIndexForLocalClassDirectories());

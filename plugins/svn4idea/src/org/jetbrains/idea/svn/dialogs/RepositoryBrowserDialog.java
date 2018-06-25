@@ -15,6 +15,8 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -309,7 +311,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return getRepositoryBrowser().getSelectedNode();
   }
 
-  protected class HistoryAction extends AnAction {
+  protected class HistoryAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText(SvnBundle.message("repository.browser.history.action"));
       e.getPresentation().setDescription(SvnBundle.message("repository.browser.history.action"));
@@ -332,7 +334,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  public static class RefreshAction extends AnAction {
+  public static class RefreshAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public RefreshAction(final RepositoryBrowserComponent browserComponent) {
@@ -355,7 +357,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected static class AddLocationAction extends AnAction {
+  protected static class AddLocationAction extends DumbAwareAction {
 
     private final RepositoryBrowserComponent myBrowserComponent;
 
@@ -387,7 +389,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected static class EditLocationAction extends AnAction {
+  protected static class EditLocationAction extends DumbAwareAction {
 
     @NotNull private final RepositoryBrowserComponent myBrowserComponent;
 
@@ -440,7 +442,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected static class DiscardLocationAction extends AnAction {
+  protected static class DiscardLocationAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public DiscardLocationAction(final RepositoryBrowserComponent browserComponent) {
@@ -473,7 +475,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  public static class MkDirAction extends AnAction {
+  public static class MkDirAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public MkDirAction(final RepositoryBrowserComponent browserComponent) {
@@ -511,7 +513,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class DiffAction extends AnAction {
+  protected class DiffAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Compare With...", true);
       setEnabled(e, getRepositoryBrowser().getSelectedNode());
@@ -573,7 +575,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class CopyOrMoveAction extends AnAction {
+  protected class CopyOrMoveAction extends DumbAwareAction {
     private final String myActionName;
     private final String myDialogTitleKey;
     private final boolean myMove;
@@ -711,7 +713,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     };
   }
 
-  protected class CopyUrlAction extends AnAction {
+  protected class CopyUrlAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Copy URL...");
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
@@ -727,7 +729,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  public static class DeleteAction extends AnAction {
+  public static class DeleteAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public DeleteAction(final RepositoryBrowserComponent browserComponent) {
@@ -806,7 +808,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class ImportAction extends AnAction {
+  protected class ImportAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(showImportAction());
       e.getPresentation().setText(SvnBundle.message("repository.browser.import.action"));
@@ -820,7 +822,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class ExportAction extends AnAction {
+  protected class ExportAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Export...");
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
@@ -843,7 +845,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
   }
-  protected class CheckoutAction extends AnAction {
+
+  protected class CheckoutAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Checkout...", true);
       setEnabled(e, getRepositoryBrowser().getSelectedNode());
@@ -865,7 +868,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     e.getPresentation().setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().isDirectory()) && !isRunning);
   }
 
-  protected class BrowseChangesAction extends AnAction {
+  protected class BrowseChangesAction extends DumbAwareAction {
     public BrowseChangesAction() {
       super(SvnBundle.message("repository.browser.browse.changes.action"),
             SvnBundle.message("repository.browser.browse.changes.description"), null);
@@ -886,7 +889,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class DetailsAction extends ToggleAction {
+  protected class DetailsAction extends DumbAwareToggleAction {
 
     private boolean myIsSelected;
 

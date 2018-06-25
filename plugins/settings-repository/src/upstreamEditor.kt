@@ -45,7 +45,7 @@ fun createMergeActions(project: Project?, urlTextField: TextFieldWithBrowseButto
       }
 
       override fun actionPerformed(event: ActionEvent) {
-        ActionsCollector.getInstance().record("Ics.${getValue(Action.NAME)}")
+        ActionsCollector.getInstance().record("Ics.${getValue(Action.NAME)}", icsManager::class.java)
         val repositoryWillBeCreated = !icsManager.repositoryManager.isRepositoryExists()
         var upstreamSet = false
         try {

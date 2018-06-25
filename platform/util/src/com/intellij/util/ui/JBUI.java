@@ -555,14 +555,6 @@ public class JBUI {
     return insets(0, 0, 0, r);
   }
 
-  /**
-   * @deprecated use JBUI.scale(EmptyIcon.create(size)) instead
-   */
-  @NotNull
-  public static EmptyIcon emptyIcon(int size) {
-    return scale(EmptyIcon.create(size));
-  }
-
   @NotNull
   @SuppressWarnings("unchecked")
   public static <T extends JBIcon> T scale(@NotNull T icon) {
@@ -1638,14 +1630,16 @@ public class JBUI {
         return active ? JBColor.namedColor("Focus.activeWarningBorderColor", 0xe2a53a) :
                         JBColor.namedColor("Focus.inactiveWarningBorderColor",0xffd385);
       }
+    }
 
-      public static class TabbedPane {
-        public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedСolor", 0x357ecc);
-        public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
-        public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
-        public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
-        public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 2);
-      }
+    public static class TabbedPane {
+      public static final Color ENABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedColor", 0x4083C9);
+      public static final Color DISABLED_SELECTED_COLOR = JBColor.namedColor("TabbedPane.selectedDisabledColor", Gray.xAB);
+      public static final Color DISABLED_TEXT_COLOR = JBColor.namedColor("TabbedPane.disabledText", Gray.x99);
+      public static final Color HOVER_COLOR = JBColor.namedColor("TabbedPane.hoverColor", Gray.xD9);
+      public static final Color FOCUS_COLOR = JBColor.namedColor("TabbedPane.focusColor", 0xDAE4ED);
+      public static final JBValue TAB_HEIGHT = new JBValue.UIInteger("TabbedPane.tabHeight", 32);
+      public static final JBValue SELECTION_HEIGHT = new JBValue.UIInteger("TabbedPane.tabSelectionHeight", 3);
     }
 
     //todo #UX-1 maybe move to popup
@@ -1671,10 +1665,10 @@ public class JBUI {
       }
 
       public static Insets searchFieldInsets() {
-        return insets(0, 12, 0, 10);
+        return insets(0, 6, 0, 5);
       }
 
-      public static int maxListHeght() {
+      public static int maxListHeight() {
         return JBUI.scale(600);
       }
 

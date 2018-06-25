@@ -44,6 +44,7 @@ public class ChooseByNameRegistry {
    * @param contributor the contributor instance.
    * @deprecated use {@link com.intellij.navigation.ChooseByNameContributor#SYMBOL_EP_NAME} extension point instead
    */
+  @Deprecated
   public void contributeToSymbols(ChooseByNameContributor contributor) {
     myGotoSymbolContributors.add(contributor);
   }

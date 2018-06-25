@@ -118,6 +118,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   private final EditorImpl myEditor;
   private final FoldingAnchorsOverlayStrategy myAnchorsDisplayStrategy;
   @Nullable private TIntObjectHashMap<List<GutterMark>> myLineToGutterRenderers;
+  private boolean myLineToGutterRenderersCacheForLogicalLines;
   private int myStartIconAreaWidth = START_ICON_AREA_WIDTH;
   private int myIconsAreaWidth;
   private int myLineNumberAreaWidth;
@@ -247,17 +248,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   protected void setUI(ComponentUI newUI) {
     super.setUI(newUI);
-    reinitSettings();
+    reinitSettings(true);
   }
 
   @Override
   public void updateUI() {
     super.updateUI();
-    reinitSettings();
+    reinitSettings(true);
   }
 
-  public void reinitSettings() {
-    updateSize(false, !Boolean.TRUE.equals(myEditor.getUserData(EditorImpl.DONT_SHRINK_GUTTER_SIZE)));
+  public void reinitSettings(boolean updateGutterSize) {
+    updateSize(false, updateGutterSize);
     repaint();
   }
 
@@ -743,11 +744,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     }
   }
 
+  private boolean logicalLinesMatchVisualOnes() {
+    return myEditor.getSoftWrapModel().getSoftWrapsIntroducedLinesNumber() == 0 &&
+           myEditor.getFoldingModel().getTotalNumberOfFoldedLines() == 0;
+  }
+
   void clearLineToGutterRenderersCache() {
     myLineToGutterRenderers = null;
   }
 
   private void buildGutterRenderersCache() {
+    myLineToGutterRenderersCacheForLogicalLines = logicalLinesMatchVisualOnes();
     myLineToGutterRenderers = new TIntObjectHashMap<>();
     processRangeHighlighters(0, myEditor.getDocument().getTextLength(), highlighter -> {
       GutterMark renderer = highlighter.getGutterIconRenderer();
@@ -824,14 +831,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Nullable
   private List<GutterMark> getGutterRenderers(int line) {
-    if (myLineToGutterRenderers == null) {
+    if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
     return myLineToGutterRenderers.get(line);
   }
 
   private void processGutterRenderers(@NotNull TIntObjectProcedure<List<GutterMark>> processor) {
-    if (myLineToGutterRenderers == null) {
+    if (myLineToGutterRenderers == null || myLineToGutterRenderersCacheForLogicalLines != logicalLinesMatchVisualOnes()) {
       buildGutterRenderersCache();
     }
     myLineToGutterRenderers.forEachEntry(processor);
@@ -919,11 +926,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     // top edge of the last line of the highlighted area
     int endY = myEditor.visibleLineToY(myEditor.offsetToVisualLine(endOffset));
     // => add one line height to make height correct (bottom edge of the highlighted area)
-    DocumentEx document = myEditor.getDocument();
-    if (document.getLineStartOffset(document.getLineNumber(endOffset)) != endOffset) {
-      // but if the highlighter ends with the end of line, its line number is the next line, but that line should not be highlighted
-      endY += myEditor.getLineHeight();
-    }
+    endY += myEditor.getLineHeight();
 
     LineMarkerRenderer renderer = ObjectUtils.assertNotNull(highlighter.getLineMarkerRenderer());
     LineMarkerRendererEx.Position position = getLineMarkerPosition(renderer);
@@ -1429,8 +1432,10 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     Collection<DisplayedFoldingAnchor> displayedAnchors = myAnchorsDisplayStrategy.getAnchorsToDisplay(neighbourhoodStartOffset,
                                                                                                        neighbourhoodEndOffset,
                                                                                                        null);
+    x = convertX(x);
     for (DisplayedFoldingAnchor anchor : displayedAnchors) {
-      if (rectangleByFoldOffset(anchor.visualLine, anchorWidth, anchorX).contains(convertX(x), y)) return anchor.foldRegion;
+      Rectangle r = rectangleByFoldOffset(anchor.visualLine, anchorWidth, anchorX);
+      if (r.x < x && x <= (r.x + r.width) && r.y < y && y <= (r.y + r.height)) return anchor.foldRegion;
     }
 
     return null;
@@ -1685,7 +1690,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
     AnActionEvent actionEvent = AnActionEvent.createFromAnAction(action, e, place, context);
     action.update(actionEvent);
     if (actionEvent.getPresentation().isEnabledAndVisible()) {
-      ActionUtil.performActionDumbAware(action, actionEvent);
+      ActionUtil.performActionDumbAwareWithCallbacks(action, actionEvent, context);
     }
   }
 

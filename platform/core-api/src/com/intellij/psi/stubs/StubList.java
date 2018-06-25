@@ -3,6 +3,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.util.IntIntFunction;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -184,7 +185,7 @@ class StubList {
                                                                                  IntIntFunction idList,
                                                                                  int start, int end) {
     for (int i = start; i < end; ++i) {
-      int id = idList.get(i);
+      int id = idList.fun(i);
       if (elementType.getIndex() == getStubTypeIndex(id)) {
         //noinspection unchecked
         return (S)myPlainList.get(id);

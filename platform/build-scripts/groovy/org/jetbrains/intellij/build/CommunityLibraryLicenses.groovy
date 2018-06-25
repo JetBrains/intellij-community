@@ -426,6 +426,14 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
+    new LibraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino", version: "1.7.8", license: "MPL 1.1",
+                       url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
+    new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", version: "0.0.6", license: "Apache 2.0",
+                       url: "https://github.com/javadelight/delight-rhino-sandbox", licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
+
+    new LibraryLicense(name: "error-prone-annotations", libraryName: "error-prone-annotations", version: "2.3.1", license: "Apache 2.0",
+                       url: "https://github.com/google/error-prone", licenseUrl: "https://github.com/google/error-prone/blob/master/COPYING"),
+
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("CoverageReport"),

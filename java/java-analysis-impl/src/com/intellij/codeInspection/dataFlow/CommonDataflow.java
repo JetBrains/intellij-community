@@ -1,17 +1,13 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.dataFlow;
 
-import com.intellij.codeInspection.dataFlow.instructions.*;
+import com.intellij.codeInspection.dataFlow.instructions.EndOfInitializerInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.JavaPsiConstructorUtil;
-import com.intellij.util.ObjectUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
@@ -42,6 +38,12 @@ public class CommonDataflow {
           newMap = newMap.with(DfaFactType.CAN_BE_NULL, false);
         }
         myFacts.put(expression, existing == null ? newMap : existing.union(newMap));
+
+        PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+        if (parent instanceof PsiConditionalExpression &&
+            !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), expression, false)) {
+          add((PsiExpression)parent, memState, value);
+        }
       }
     }
 
@@ -91,7 +93,7 @@ public class CommonDataflow {
   private static DataflowResult runDFA(@Nullable PsiElement block) {
     if (block == null) return null;
     DataFlowRunner runner = new DataFlowRunner(false, block);
-    CommonDataflowVisitor visitor = new CommonDataflowVisitor(runner);
+    CommonDataflowVisitor visitor = new CommonDataflowVisitor();
     RunnerResult result = runner.analyzeMethodRecursively(block, visitor);
     if (result != RunnerResult.OK) return null;
     if (!(block instanceof PsiClass)) return visitor.myResult;
@@ -146,14 +148,8 @@ public class CommonDataflow {
   }
 
   private static class CommonDataflowVisitor extends StandardInstructionVisitor {
-    private DataflowResult myResult;
-    private final DfaConstValue myFail;
+    private DataflowResult myResult = new DataflowResult();
     private final List<DfaMemoryState> myEndOfInitializerStates = new ArrayList<>();
-
-    public CommonDataflowVisitor(DataFlowRunner runner) {
-      myFail = runner.getFactory().getConstFactory().getContractFail();
-      myResult = new DataflowResult();
-    }
 
     @Override
     public DfaInstructionState[] visitEndOfInitializer(EndOfInitializerInstruction instruction,
@@ -166,76 +162,14 @@ public class CommonDataflow {
     }
 
     @Override
-    public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitPush(instruction, runner, memState);
-      PsiExpression place = instruction.getPlace();
-      if (place != null && !instruction.isReferenceWrite()) {
-        for (DfaInstructionState state : states) {
-          DfaMemoryState afterState = state.getMemoryState();
-          myResult.add(place, (DfaMemoryStateImpl)afterState, instruction.getValue());
-        }
+    protected void beforeExpressionPush(@NotNull DfaValue value,
+                                     @NotNull PsiExpression expression,
+                                     @Nullable TextRange range,
+                                     @NotNull DfaMemoryState state) {
+      if (range == null && !DfaConstValue.isContractFail(value)) {
+        // Do not track instructions which cover part of expression
+        myResult.add(expression, (DfaMemoryStateImpl)state, value);
       }
-      return states;
-    }
-
-    @Override
-    public DfaInstructionState[] visitArrayAccess(ArrayAccessInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitArrayAccess(instruction, runner, memState);
-      PsiArrayAccessExpression anchor = instruction.getExpression();
-      for (DfaInstructionState state : states) {
-        DfaMemoryState afterState = state.getMemoryState();
-        myResult.add(anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
-      }
-      return states;
-    }
-
-    @Override
-    public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitBinop(instruction, runner, memState);
-      PsiElement anchor = instruction.getPsiAnchor();
-      if (anchor instanceof PsiExpression) {
-        for (DfaInstructionState state : states) {
-          DfaMemoryState afterState = state.getMemoryState();
-          myResult.add((PsiExpression)anchor, (DfaMemoryStateImpl)afterState, afterState.peek());
-        }
-      }
-      return states;
-    }
-
-    @NotNull
-    @Override
-    protected DfaCallArguments popCall(MethodCallInstruction instruction,
-                                       DataFlowRunner runner,
-                                       DfaMemoryState memState,
-                                       boolean contractOnly) {
-      DfaCallArguments arguments = super.popCall(instruction, runner, memState, contractOnly);
-      PsiElement context = instruction.getContext();
-      if (instruction.getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL &&
-          context instanceof PsiMethodCallExpression) {
-        PsiExpression qualifier =
-          PsiUtil.skipParenthesizedExprDown(((PsiMethodCallExpression)context).getMethodExpression().getQualifierExpression());
-        if (qualifier != null) {
-          myResult.add(qualifier, (DfaMemoryStateImpl)memState, arguments.myQualifier);
-        }
-      }
-      return arguments;
-    }
-
-    @Override
-    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
-                                                 DataFlowRunner runner,
-                                                 DfaMemoryState memState) {
-      DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
-      PsiExpression context = ObjectUtils.tryCast(instruction.getContext(), PsiExpression.class);
-      if (context != null && ExpressionUtils.getCallForQualifier(context) == null) {
-        for (DfaInstructionState state : states) {
-          DfaValue value = state.getMemoryState().peek();
-          if (value != myFail) {
-            myResult.add(context, (DfaMemoryStateImpl)state.getMemoryState(), value);
-          }
-        }
-      }
-      return states;
     }
   }
 }

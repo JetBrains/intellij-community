@@ -108,6 +108,7 @@ public abstract class TaskRepository {
    * @see #createCancellableConnection()
    * @deprecated
    */
+  @Deprecated
   public void testConnection() throws Exception {
   }
 
@@ -136,14 +137,6 @@ public abstract class TaskRepository {
   @Deprecated
   public Task[] getIssues(@Nullable String query, int max, long since) throws Exception {
     throw new UnsupportedOperationException("Deprecated: should not be called");
-  }
-
-  /**
-   * @deprecated To be removed in IDEA 14. Use {@link #getIssues(String, int, int, boolean, ProgressIndicator)} instead.
-   */
-  @Deprecated
-  public Task[] getIssues(@Nullable String query, int max, long since, @NotNull ProgressIndicator cancelled) throws Exception {
-    return getIssues(query, max, since);
   }
 
   /**

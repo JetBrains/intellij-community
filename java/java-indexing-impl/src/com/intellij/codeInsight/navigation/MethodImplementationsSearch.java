@@ -12,7 +12,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.QueryExecutor;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 
 public class MethodImplementationsSearch implements QueryExecutor<PsiElement, DefinitionsScopedSearch.SearchParameters> {
@@ -37,12 +36,5 @@ public class MethodImplementationsSearch implements QueryExecutor<PsiElement, De
 
   private static boolean processOverridingMethods(PsiMethod method, SearchScope scope, Processor<? super PsiMethod> processor) {
     return OverridingMethodsSearch.search(method, scope, true).forEach(processor);
-  }
-
-  @Deprecated
-  public static PsiMethod[] getMethodImplementations(final PsiMethod method, SearchScope scope) {
-    List<PsiMethod> result = new ArrayList<>();
-    processOverridingMethods(method, scope, new CommonProcessors.CollectProcessor<>(result));
-    return result.toArray(PsiMethod.EMPTY_ARRAY);
   }
 }

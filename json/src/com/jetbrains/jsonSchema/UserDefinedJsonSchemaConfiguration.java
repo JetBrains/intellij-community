@@ -140,17 +140,18 @@ public class UserDefinedJsonSchemaConfiguration {
     for (final Item patternText : patterns) {
       switch (patternText.mappingKind) {
         case File:
-          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.path));
+          result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.getPath()));
           break;
         case Pattern:
-          result.add(new PairProcessor<Project, VirtualFile>() {
-            private final Pattern pattern = PatternUtil.fromMask(patternText.path);
-
-            @Override
-            public boolean process(Project project, VirtualFile file) {
-              return JsonSchemaObject.matchPattern(pattern, file.getName());
-            }
-          });
+          String pathText = patternText.getPath().replace(File.separatorChar, '/');
+          final Pattern pattern = pathText.isEmpty()
+                                  ? PatternUtil.NOTHING
+                                  : pathText.indexOf('/') >= 0
+                                    ? PatternUtil.compileSafe(".*" + PatternUtil.convertToRegex(pathText), PatternUtil.NOTHING)
+                                    : PatternUtil.fromMask(pathText);
+          result.add((project, file) -> JsonSchemaObject.matchPattern(pattern, pathText.indexOf('/') >= 0
+                                                        ? file.getPath()
+                                                        : file.getName()));
           break;
         case Directory:
           result.add((project, vfile) -> {
@@ -230,26 +231,39 @@ public class UserDefinedJsonSchemaConfiguration {
     }
 
     public Item(String path, JsonMappingKind mappingKind) {
-      this.path = normalizePath(path);
+      this.path = neutralizePath(path);
       this.mappingKind = mappingKind;
     }
 
     public Item(String path, boolean isPattern, boolean isDirectory) {
-      this.path = normalizePath(path);
+      this.path = neutralizePath(path);
       this.mappingKind = isPattern ? JsonMappingKind.Pattern : isDirectory ? JsonMappingKind.Directory : JsonMappingKind.File;
     }
 
     @NotNull
     private static String normalizePath(String path) {
-      return StringUtil.trimEnd(path.replace('\\', '/').replace('/', File.separatorChar), File.separatorChar);
+      if (preserveSlashes(path)) return path;
+      return StringUtil.trimEnd(path.replace('/', File.separatorChar), File.separatorChar);
+    }
+
+    private static boolean preserveSlashes(String path) {
+      // http/https URLs to schemas
+      // mock URLs of fragments editor
+      return StringUtil.startsWith(path, "http") || StringUtil.startsWith(path, "mock");
+    }
+
+    @NotNull
+    private static String neutralizePath(String path) {
+      if (preserveSlashes(path)) return path;
+      return StringUtil.trimEnd(path.replace('\\', '/').replace(File.separatorChar, '/'), '/');
     }
 
     public String getPath() {
-      return path;
+      return normalizePath(path);
     }
 
     public void setPath(String path) {
-      this.path = normalizePath(path);
+      this.path = neutralizePath(path);
     }
 
     public String getError() {
@@ -257,7 +271,7 @@ public class UserDefinedJsonSchemaConfiguration {
         case File:
           return !StringUtil.isEmpty(path) ? null : "Empty file path doesn't match anything";
         case Pattern:
-          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches everything";
+          return !StringUtil.isEmpty(path) ? null : "Empty pattern matches nothing";
         case Directory:
           return null;
       }
@@ -285,7 +299,7 @@ public class UserDefinedJsonSchemaConfiguration {
       if (mappingKind == JsonMappingKind.Directory && StringUtil.isEmpty(path)) {
         return mappingKind.getPrefix() + "[Project Directory]";
       }
-      return mappingKind.getPrefix() + path;
+      return mappingKind.getPrefix() + getPath();
     }
 
     public String[] getPathParts() {

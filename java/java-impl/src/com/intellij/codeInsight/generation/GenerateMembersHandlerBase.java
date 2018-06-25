@@ -140,11 +140,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     else {
       final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newMembers) {
-        if (!(member instanceof TemplateGenerationInfo)) {
-          final PsiMember psiMember = member.getPsiMember();
-          if (psiMember != null) {
-            elements.add(psiMember);
-          }
+        if (!(member instanceof TemplateGenerationInfo) && member.isMemberValid()) {
+          elements.add(member.getPsiMember());
         }
       }
 

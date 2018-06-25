@@ -44,7 +44,8 @@ public class FunctionalExpressionCanBeFoldedInspection extends AbstractBaseJavaL
         if (qualifierExpression != null && referenceNameElement != null && !(qualifierExpression instanceof PsiSuperExpression)) {
           final PsiType qualifierType = qualifierExpression.getType();
           if (qualifierType != null) {
-            final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
+            //don't get ground type as check is required over expected type instead
+            final PsiType functionalInterfaceType = LambdaUtil.getFunctionalInterfaceType(expression, true);
             final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
             if (interfaceMethod != null) {
               final PsiElement resolve = resolver.get();

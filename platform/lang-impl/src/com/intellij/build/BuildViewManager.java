@@ -27,6 +27,6 @@ public class BuildViewManager extends AbstractViewManager {
 
   @Override
   public String getViewName() {
-    return "Build";
+    return "Build Output";
   }
 }

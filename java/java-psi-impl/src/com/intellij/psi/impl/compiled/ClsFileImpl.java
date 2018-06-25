@@ -308,17 +308,12 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   @Override
   @NotNull
   public PsiElement getNavigationElement() {
-    //noinspection deprecation
-    for (ClsCustomNavigationPolicy customNavigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
-      if (customNavigationPolicy instanceof ClsCustomNavigationPolicyEx) {
-        try {
-          PsiFile navigationElement = ((ClsCustomNavigationPolicyEx)customNavigationPolicy).getFileNavigationElement(this);
-          if (navigationElement != null) {
-            return navigationElement;
-          }
-        }
-        catch (IndexNotReadyException ignore) { }
+    for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
+      try {
+        PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
+        if (navigationElement != null) return navigationElement;
       }
+      catch (IndexNotReadyException ignore) { }
     }
 
     return CachedValuesManager.getCachedValue(this, () -> {

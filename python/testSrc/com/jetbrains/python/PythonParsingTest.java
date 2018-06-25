@@ -560,7 +560,7 @@ public class PythonParsingTest extends ParsingTestCase {
   }
 
   @Override
-  protected PsiFile createFile(String name, String text) {
+  protected PsiFile createFile(@NotNull String name, @NotNull String text) {
     final PsiFile file = super.createFile(name, text);
     file.getVirtualFile().putUserData(LanguageLevel.KEY, myLanguageLevel);
     return file;

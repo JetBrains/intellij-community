@@ -649,6 +649,8 @@
   </extensions>
 
   <extensionPoints>
+    <extensionPoint qualifiedName="Pythonid.pyTestFixtureSubjectDetector" interface="com.jetbrains.python.testing.pyTestFixtures.PyTestFixtureSubjectDetectorExtension"/>
+    <extensionPoint qualifiedName="Pythonid.pyTestConfigurationSelector"  interface="com.jetbrains.python.testing.PyTestConfigurationSelector"/>
     <extensionPoint qualifiedName="Pythonid.pythonDocumentationQuickInfoProvider" interface="com.jetbrains.python.documentation.PythonDocumentationQuickInfoProvider"/>
     <extensionPoint qualifiedName="Pythonid.pythonCommandLineEnvironmentProvider" interface="com.jetbrains.python.run.PythonCommandLineEnvironmentProvider"/>
     <extensionPoint qualifiedName="Pythonid.importResolver" interface="com.jetbrains.python.psi.impl.PyImportResolver"/>
@@ -781,6 +783,11 @@
     <visitorFilter language="PyFunctionTypeComment"
                    implementationClass="com.jetbrains.python.codeInsight.functionTypeComments.PyFunctionTypeAnnotationVisitorFilter"/>
 
+    <!-- Pipenv -->
+    <pyAddSdkProvider implementation="com.jetbrains.python.sdk.pipenv.PyAddPipEnvSdkProvider"/>
+    <pythonFlavorProvider implementation="com.jetbrains.python.sdk.pipenv.PyPipEnvSdkFlavorProvider"/>
+
+    <!-- Other -->
     <pythonFlavorProvider implementation="com.jetbrains.python.sdk.flavors.MayaFlavorProvider"/>
     <pyPregeneratedSkeletonsProvider id="default" implementation="com.jetbrains.python.sdk.skeletons.DefaultPregeneratedSkeletonsProvider"/>
   </extensions>
@@ -931,4 +938,10 @@
       <implementation-class>com.jetbrains.python.testing.PyTestLegacyInteropInitializer</implementation-class>
     </component>
   </application-components>
+
+  <project-components>
+    <component>
+      <implementation-class>com.jetbrains.python.sdk.pipenv.PipEnvPipFileWatcherComponent</implementation-class>
+    </component>
+  </project-components>
 </idea-plugin>

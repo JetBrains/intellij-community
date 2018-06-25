@@ -33,6 +33,7 @@ abstract class StructureElement {
 
 class StructureNode extends StructureElement {
   final List<StructureElement> children;
+  @NotNull StructureKind kind = StructureKind.GENERIC;
   boolean shrinkProhibited;
 
   StructureNode(NodeId id) {
@@ -70,12 +71,12 @@ class StructureNode extends StructureElement {
   ShrinkStep shrink() {
     if (shrinkProhibited) return null;
 
-    return isList() ? new RemoveListRange(this) : shrinkChild(children.size() - 1);
+    return kind == StructureKind.LIST && children.size() > 1 ? RemoveListRange.fromEnd(this) : shrinkChild(children.size() - 1);
   }
 
   @Nullable
   ShrinkStep shrinkChild(int index) {
-    int minIndex = isList() ? 1 : 0;
+    int minIndex = kind == StructureKind.GENERIC ? 0 : 1;
     for (; index >= minIndex; index--) {
       ShrinkStep childShrink = children.get(index).shrink();
       if (childShrink != null) return wrapChildShrink(index, childShrink);
@@ -126,15 +127,8 @@ class StructureNode extends StructureElement {
     };
   }
 
-  private boolean isList() {
-    if (children.size() > 1 &&
-        children.get(0) instanceof IntData && ((IntData)children.get(0)).value >= children.size() - 1) {
-      for (int i = 1; i < children.size(); i++) {
-        if (!(children.get(i) instanceof StructureNode)) return false;
-      }
-      return true;
-    }
-    return false;
+  boolean isIncompleteList() {
+    return ((IntData)children.get(0)).value > children.size() - 1;
   }
 
   private void findChildrenWithGenerator(int generatorHash, List<StructureNode> result) {
@@ -188,6 +182,7 @@ class StructureNode extends StructureElement {
     newChildren.set(index, newChild);
     StructureNode copy = new StructureNode(this.id, newChildren);
     copy.shrinkProhibited = this.shrinkProhibited;
+    copy.kind = this.kind;
     return copy;
   }
 
@@ -225,7 +220,11 @@ class StructureNode extends StructureElement {
   @Override
   public String toString() {
     String inner = children.stream().map(Object::toString).collect(Collectors.joining(", "));
-    return isList() ? "[" + inner + "]" : "(" + inner + ")";
+    switch (kind) {
+      case LIST: return "[" + inner + "]";
+      case CHOICE: return "?(" + inner + ")";
+      default: return "(" + inner + ")";
+    }
   }
 
 }
@@ -300,4 +299,8 @@ class IntData extends StructureElement {
   public int hashCode() {
     return value;
   }
+}
+
+enum StructureKind {
+  GENERIC, LIST, CHOICE
 }

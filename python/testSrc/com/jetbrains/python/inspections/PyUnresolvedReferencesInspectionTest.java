@@ -749,6 +749,10 @@ public class PyUnresolvedReferencesInspectionTest extends PyInspectionTestCase {
                  "        self.one.<warning descr=\"Cannot find reference 'abc' in 'function'\">abc</warning>");
   }
 
+  public void testNamedTupleFunction() {
+    doTest();
+  }
+
   @NotNull
   @Override
   protected Class<? extends PyInspection> getInspectionClass() {

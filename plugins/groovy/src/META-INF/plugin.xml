@@ -314,8 +314,6 @@
                              implementationClass="org.jetbrains.plugins.groovy.codeInsight.hint.GrClassInitializerDeclarationRangeHandler"/>
 
 
-    <psi.clsCustomNavigationPolicy implementation="org.jetbrains.plugins.groovy.codeInsight.GroovyClsCustomNavigationPolicy"/>
-
     <moduleBuilder builderClass="org.jetbrains.plugins.groovy.config.GroovyAwareModuleBuilder"/>
 
     <itemPresentationProvider forClass="org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl"

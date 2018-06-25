@@ -544,7 +544,6 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
       myEditor = editor;
       if (myEditor != null) {
         JPanel panel = myEditor.createPanel();
-        myProvider.customizeSettings(myEditor, LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
         panel.setBorder(BorderFactory.createEmptyBorder(10, 10, 10, 10));
         JScrollPane scroll = ScrollPaneFactory.createScrollPane(panel, true);
         scroll.setPreferredSize(new Dimension(panel.getPreferredSize().width + scroll.getVerticalScrollBar().getPreferredSize().width + 5, -1));

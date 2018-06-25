@@ -251,6 +251,7 @@ hardlink
 hardlinks
 hashbang
 hashcode
+hashtable
 hateoas
 haxe
 hazelcast
@@ -517,6 +518,8 @@ pctversion
 permalink
 petersburg
 pipelined
+pipenv
+pipfile
 plaintext
 playlist
 plist
@@ -583,6 +586,7 @@ refactor
 refactored
 refactoring
 refactorings
+referencable
 referer
 regex
 regexp

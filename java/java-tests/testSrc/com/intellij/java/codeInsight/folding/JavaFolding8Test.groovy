@@ -109,7 +109,9 @@ class Test {
     def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
 
     def indexOf = text.indexOf("System.out.println")
-    assert foldingModel.allFoldRegions.find {it -> it.startOffset < indexOf && indexOf < it.endOffset }?.placeholderText == '{...}'
+    assert foldingModel.allFoldRegions.findAll {it -> it.startOffset < indexOf && indexOf < it.endOffset }.toString() == 
+      '[FoldRegion -(36:92), placeholder=\'{...}\', ' +
+      'FoldRegion -(50:88), placeholder=\'{...}\']'
   }
   
   void "test parameter annotations"() {

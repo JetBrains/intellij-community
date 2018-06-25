@@ -118,7 +118,8 @@ public class MetaRegistry extends MetaDataRegistrar {
    * @see com.intellij.psi.meta.MetaDataContributor
    * @deprecated
    */
-  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
+  @Deprecated
+  static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
                                                                 Class<T> aMetadataClass,
                                                                 Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);
@@ -135,6 +136,7 @@ public class MetaRegistry extends MetaDataRegistrar {
    * @see com.intellij.psi.meta.MetaDataContributor
    * @deprecated
    */
+  @Deprecated
   public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter, Class<T> aMetadataClass) {
     addBinding(new MyBinding(filter, aMetadataClass));
   }

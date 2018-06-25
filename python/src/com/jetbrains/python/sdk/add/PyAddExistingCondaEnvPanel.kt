@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.sdk.add
 
+import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.ValidationInfo
@@ -29,12 +30,13 @@ import javax.swing.Icon
  * @author vlan
  */
 class PyAddExistingCondaEnvPanel(private val project: Project?,
+                                 private val module: Module?,
                                  private val existingSdks: List<Sdk>,
                                  override var newProjectPath: String?) : PyAddSdkPanel() {
   override val panelName: String = "Existing environment"
   override val icon: Icon = PythonIcons.Python.Condaenv
-  private val sdkComboBox = PySdkPathChoosingComboBox(detectCondaEnvs(project, existingSdks)
-                                                        .filterNot { it.isAssociatedWithAnotherProject(project) },
+  private val sdkComboBox = PySdkPathChoosingComboBox(detectCondaEnvs(module, existingSdks)
+                                                        .filterNot { it.isAssociatedWithAnotherModule(module) },
                                                       null)
   private val makeSharedField = JBCheckBox("Make available to all projects")
 
@@ -54,7 +56,7 @@ class PyAddExistingCondaEnvPanel(private val project: Project?,
     return when (sdk) {
       is PyDetectedSdk -> sdk.setupAssociated(existingSdks, newProjectPath ?: project?.basePath)?.apply {
         if (!makeSharedField.isSelected) {
-          associateWithProject(project, newProjectPath != null)
+          associateWithModule(module, newProjectPath)
         }
       }
       else -> sdk

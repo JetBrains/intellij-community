@@ -28,15 +28,13 @@ public class HintUtil {
   @Deprecated
   public static final Color INFORMATION_COLOR = new JBColor(0xF7F7F7, 0x4B4D4D);
   private static final Color INFORMATION_BORDER = new JBColor(0xE6E6E6, 0x5C5C5C);
-  /** @deprecated use getQuestionColor() */
-  @Deprecated
-  public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
   /** @deprecated use getErrorColor() */
   @Deprecated
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
 
   public static final ColorKey INFORMATION_COLOR_KEY = ColorKey.createColorKey("INFORMATION_HINT", INFORMATION_COLOR);
-  public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT", QUESTION_COLOR);
+  public static final ColorKey QUESTION_COLOR_KEY = ColorKey.createColorKey("QUESTION_HINT",
+                                                                            new JBColor(new Color(181, 208, 251), new Color(55, 108, 137)));
   public static final ColorKey ERROR_COLOR_KEY = ColorKey.createColorKey("ERROR_HINT", ERROR_COLOR);
 
   public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();

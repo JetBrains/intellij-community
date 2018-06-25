@@ -24,11 +24,9 @@ parser.add_argument('-n', '--dry-run', action='store_true', help="Don't actually
 parser.add_argument('-x', '--exclude', type=str, nargs='*', help="Exclude pattern")
 parser.add_argument('-p', '--python-version', type=str, nargs='*',
                     help="These versions only (major[.minor])")
-parser.add_argument('--no-implicit-optional', action='store_true',
-                    help="Run mypy with --no-implicit-optional (causes lots of errors)")
 parser.add_argument('--warn-unused-ignores', action='store_true',
                     help="Run mypy with --warn-unused-ignores "
-                    "(hint: only git rid of warnings that are "
+                    "(hint: only get rid of warnings that are "
                     "unused for all platforms and Python versions)")
 
 parser.add_argument('filter', type=str, nargs='*', help="Include pattern (default all)")
@@ -132,8 +130,8 @@ def main():
             flags = ['--python-version', '%d.%d' % (major, minor)]
             flags.append('--strict-optional')
             flags.append('--no-site-packages')
-            if args.no_implicit_optional:
-                flags.append('--no-implicit-optional')
+            flags.append('--show-traceback')
+            flags.append('--no-implicit-optional')
             if args.warn_unused_ignores:
                 flags.append('--warn-unused-ignores')
             sys.argv = ['mypy'] + flags + files

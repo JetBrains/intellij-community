@@ -166,6 +166,7 @@
     <fileTypeFactory implementation="com.intellij.spi.SPIFileTypeFactory"/>
     <writingAccessProvider implementation="com.intellij.refactoring.util.ClsElementWritingAccessProvider"/>
     <psi.referenceContributor language="JAVA" implementation="com.intellij.psi.impl.source.resolve.reference.impl.JavaReflectionReferenceContributor"/>
+    <implicitUsageProvider implementation="com.intellij.psi.impl.source.resolve.reference.impl.AtomicReferenceImplicitUsageProvider"/>
     <projectTemplateParameterFactory implementation="com.intellij.openapi.module.BasePackageParameterFactory"/>
     <java.elementFinder implementation="com.intellij.psi.impl.migration.MigrationElementFinder"/>
     <java.elementFinder implementation="com.intellij.psi.impl.PackagePrefixElementFinder"/>
@@ -500,6 +501,7 @@
     <encapsulateFields.Helper implementationClass="com.intellij.refactoring.encapsulateFields.JavaEncapsulateFieldHelper" language="JAVA"/>
     <lang.refactoringSupport.classMembersRefactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaClassMembersRefactoringSupport"/>
     <lang.refactoringSupport language="JAVA" implementationClass="com.intellij.lang.java.JavaRefactoringSupportProvider"/>
+    <languageCompilerRefAdapter implementation="com.intellij.compiler.backwardRefs.JavaCompilerRefAdapter"/>
     <localInspection language="JAVA" shortName="MoveFieldAssignmentToInitializer" enabledByDefault="true" level="INFORMATION"
                      groupPath="Java" groupBundle="messages.InspectionsBundle" groupKey="group.names.code.style.issues"
                      displayName="Field assignment can be moved to initializer"
@@ -780,26 +782,16 @@
                      enabledByDefault="true" level="WARNING"
                      key="inspection.undeclared.service.usage.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.java19api.Java9UndeclaredServiceUsageInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeRemovedNarrowingVariableType"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
-                     enabledByDefault="true" level="WARNING"
-                     key="inspection.cast.can.be.removed.narrowing.variable.type.name" bundle="messages.InspectionsBundle"
-                     implementationClass="com.intellij.codeInspection.redundantCast.CastCanBeRemovedNarrowingVariableTypeInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="RedundantComparatorComparing"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
                      enabledByDefault="true" level="WARNING"
-                     key="inspection.redundant.comparator.comparing.display.name" bundle="messages.InspectionsBundle"
+                     key="inspection.simplifiable.comparator.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.RedundantComparatorComparingInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SuspiciousListRemoveInLoop"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
                      enabledByDefault="true" level="WARNING"
                      key="inspection.suspicious.list.remove.display.name" bundle="messages.InspectionsBundle"
                      implementationClass="com.intellij.codeInspection.SuspiciousListRemoveInLoopInspection"/>
-    <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
-                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
-                     enabledByDefault="true" level="WARNING"
-                     key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
-                     implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
     <localInspection groupPath="Java,Java language level migration aids" language="JAVA" shortName="FoldExpressionIntoStream"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.language.level.specific.issues.and.migration.aids8"
                      enabledByDefault="true" level="INFORMATION"

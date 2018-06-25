@@ -20,6 +20,7 @@ import com.intellij.openapi.roots.libraries.ui.RootDetector;
 /**
  * @deprecated please use {@link LibrarySourceRootDetectorUtil} directly
  */
+@Deprecated
 public class PathUIUtils extends LibrarySourceRootDetectorUtil {
   public static final RootDetector JAVA_SOURCE_ROOT_DETECTOR = new LibraryJavaSourceRootDetector();
 

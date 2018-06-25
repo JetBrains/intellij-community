@@ -16,7 +16,6 @@
 package com.intellij.openapi.progress.util;
 
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.util.containers.DoubleArrayList;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
@@ -32,8 +31,4 @@ public interface ProgressIndicatorStacked extends ProgressIndicator {
 
   @NotNull
   Stack<String> getText2Stack();
-
-  /** use {@link ProgressManager#executeNonCancelableSection(Runnable)} instead of manually checking counters*/
-  @Deprecated
-  int getNonCancelableCount();
 }

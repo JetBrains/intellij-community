@@ -429,14 +429,6 @@ final class TestEditorManagerImpl extends FileEditorManagerEx implements Disposa
     return result;
   }
 
-  @Override
-  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-  }
-
-
-  @Override
-  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-  }
 
   @Override
   public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {

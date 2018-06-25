@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,17 +27,9 @@ import java.util.List;
 /**
  * plugin.dtd:group interface.
  */
-@Presentation(icon = "AllIcons.Actions.GroupByPackage")
+@Presentation(icon = "AllIcons.Actions.GroupByPackage", typeName = "Group")
 @Stubbed
 public interface Group extends Actions, ActionOrGroup {
-
-	/**
-	 * Returns the value of the popup child.
-	 * Attribute popup
-	 * @return the value of the popup child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getPopup();
 
 	/**
 	 * Returns the value of the compact child.
@@ -46,24 +38,6 @@ public interface Group extends Actions, ActionOrGroup {
 	 */
 	@NotNull
 	GenericAttributeValue<Boolean> getCompact();
-
-
-	/**
-	 * Returns the value of the icon child.
-	 * Attribute icon
-	 * @return the value of the icon child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getIcon();
-
-
-	/**
-	 * Returns the value of the description child.
-	 * Attribute description
-	 * @return the value of the description child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getDescription();
 
 
 	/**
@@ -78,14 +52,6 @@ public interface Group extends Actions, ActionOrGroup {
         @Convert(PluginPsiClassConverter.class)
 	GenericAttributeValue<PsiClass> getClazz();
 
-
-	/**
-	 * Returns the value of the text child.
-	 * Attribute text
-	 * @return the value of the text child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getText();
 
 
 	/**

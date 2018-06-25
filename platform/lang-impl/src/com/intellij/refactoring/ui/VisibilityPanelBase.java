@@ -28,7 +28,7 @@ public abstract class VisibilityPanelBase<V> extends JPanel {
    * @deprecated To be removed in 2018.2. Actually replaced by 'private'.
    * Use {@link #stateChanged(ChangeEvent)} instead. This field will become private.
    */
-  protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
+  @Deprecated protected final EventDispatcher<ChangeListener> myEventDispatcher = EventDispatcher.create(ChangeListener.class);
 
   @Nullable
   public abstract V getVisibility();

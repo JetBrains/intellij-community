@@ -610,6 +610,7 @@ public class SMTestProxy extends AbstractTestProxy {
   /**
    * @deprecated use {@link #addOutput(String, Key)}
    */
+  @Deprecated
   public void addStdOutput(final String output, final Key outputType) {
     addOutput(output, outputType);
   }

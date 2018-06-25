@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.completion
 
 import com.intellij.java.testFramework.fixtures.LightJava9ModulesCodeInsightFixtureTestCase
@@ -70,6 +70,14 @@ class ModuleCompletionTest : LightJava9ModulesCodeInsightFixtureTestCase() {
     myFixture.configureByText("test.java", "import pkg.m2.<caret>")
     myFixture.completeBasic()
     assertThat(myFixture.lookupElementStrings).containsExactly("*", "C2")  // no 'C2Impl'
+  }
+
+  fun testTypeParameter() {
+    addFile("module-info.java", "module M { }")
+    addTestFile("whatever/test.txt", "-")
+    myFixture.configureByText("test.java", "package whatever;\nclass Foo<TParam> { TPar<caret> p; }")
+    myFixture.completeBasic()
+    myFixture.checkResult("package whatever;\nclass Foo<TParam> { TParam<caret> p; }")
   }
 
   //<editor-fold desc="Helpers.">

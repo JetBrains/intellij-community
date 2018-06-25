@@ -86,9 +86,6 @@
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Enum java.lang.String name()'>
-        <annotation name='org.jetbrains.annotations.NotNull'/>
-    </item>
-  <item name='java.lang.Enum java.lang.String toString()'>
     <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Integer int bitCount(int)'>

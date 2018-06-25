@@ -16,8 +16,11 @@
 package com.intellij.codeInsight.navigation;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
+import com.intellij.ui.components.JBList;
 import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.usages.UsageView;
 import org.jetbrains.annotations.NotNull;
@@ -36,6 +39,7 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
   /**
    * @deprecated Use {@link #ListBackgroundUpdaterTask(Project, String, Comparator)}
    */
+  @Deprecated
   public ListBackgroundUpdaterTask(@Nullable final Project project, @NotNull final String title) {
     this(project, title, null);
   }
@@ -47,6 +51,8 @@ public abstract class ListBackgroundUpdaterTask extends BackgroundUpdaterTask {
   @Deprecated
   public void init(@NotNull AbstractPopup popup, @NotNull Object component, @NotNull Ref<UsageView> usageView) {
     myPopup = popup;
-    super.init(myPopup, component, usageView);
+    if (component instanceof JBList) {
+      init((JBPopup)myPopup, new JBListUpdater((JBList)component), usageView);
+    }
   }
 }

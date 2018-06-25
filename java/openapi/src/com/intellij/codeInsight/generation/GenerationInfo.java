@@ -34,6 +34,10 @@ public interface GenerationInfo {
   @NotNull
   PsiMember getPsiMember();
 
+  default boolean isMemberValid() {
+    return true;
+  }
+
   /**
    * @param leaf leaf element. Is guaranteed to be a tree descendant of aClass.
    * @return the value that will be passed to the {@link #insert(PsiClass, PsiElement, boolean)} method later.

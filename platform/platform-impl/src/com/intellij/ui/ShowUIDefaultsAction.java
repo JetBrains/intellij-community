@@ -92,7 +92,8 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
             return column == 1 && (value instanceof Color ||
                                    value instanceof Integer ||
                                    value instanceof Border ||
-                                   value instanceof UIUtil.GrayFilter);
+                                   value instanceof UIUtil.GrayFilter ||
+                                   value instanceof Font);
           }
         }) {
           @Override
@@ -132,6 +133,13 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
                 UIUtil.GrayFilter f = (UIUtil.GrayFilter)value;
                 String oldFilter = String.format("%d,%d,%d", f.getBrightness(), f.getContrast(), f.getAlpha());
                 UIUtil.GrayFilter newValue = editGrayFilter(key.toString(), oldFilter);
+                if (newValue != null) {
+                  UIManager.getDefaults().remove(key);
+                  UIManager.getDefaults().put(key, newValue);
+                  setValueAt(newValue, row, column);
+                }
+              } else if (value instanceof Font) {
+                Font newValue = editFontSize(key.toString(), (Font)value);
                 if (newValue != null) {
                   UIManager.getDefaults().remove(key);
                   UIManager.getDefaults().put(key, newValue);
@@ -282,6 +290,35 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
         }
       }
 
+      @Nullable
+      private Font editFontSize(String key, Font font) {
+        String newValue = Messages.showInputDialog(getRootPane(),
+                                                   "Enter new font size for " + key,
+                                                   "Font Size Editor", null, Integer.toString(font.getSize()),
+                                                   new InputValidator() {
+                                                     @Override
+                                                     public boolean checkInput(String inputString) {
+                                                       return parseFontSize(font, inputString) != null;
+                                                     }
+
+                                                     @Override
+                                                     public boolean canClose(String inputString) {
+                                                       return checkInput(inputString);
+                                                     }
+                                                   });
+
+        return newValue != null ? parseFontSize(font, newValue) : null;
+      }
+
+      @Nullable
+      private Font parseFontSize(Font font, String value) {
+        try {
+          int newSize = Integer.parseInt(value);
+          return (newSize > 0) ? font.deriveFont((float)newSize) : null;
+        } catch (NumberFormatException nex) {
+          return null;
+        }
+      }
     }.show();
   }
 

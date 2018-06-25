@@ -205,7 +205,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                @NotNull DataContext dataContext,
                                @Nullable String actionPlace,
                                int maxRowCount) {
-      super(aParent, step, maxRowCount);
+      super(aParent, step, null, maxRowCount);
       myDisposeCallback = disposeCallback;
       myComponent = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
       myActionPlace = actionPlace == null ? ActionPlaces.UNKNOWN : actionPlace;
@@ -406,12 +406,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
     }
 
     return false;
-  }
-
-  @NotNull
-  @Override
-  public ListPopup createWizardStep(@NotNull PopupStep step) {
-    return new ListPopupImpl((ListPopupStep)step);
   }
 
   @NotNull

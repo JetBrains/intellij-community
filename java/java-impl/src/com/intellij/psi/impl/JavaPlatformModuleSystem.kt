@@ -30,10 +30,10 @@ class JavaPlatformModuleSystem : JavaModuleSystemEx {
   override fun getName(): String = "Java Platform Module System"
 
   override fun isAccessible(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): Boolean =
-    checkAccess(targetPackageName, targetFile, place, quick = true) == null
+    checkAccess(targetPackageName, targetFile?.originalFile, place, quick = true) == null
 
   override fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement): ErrorWithFixes? =
-    checkAccess(targetPackageName, targetFile, place, quick = false)
+    checkAccess(targetPackageName, targetFile?.originalFile, place, quick = false)
 
   private fun checkAccess(targetPackageName: String, targetFile: PsiFile?, place: PsiElement, quick: Boolean): ErrorWithFixes? {
     val useFile = place.containingFile?.originalFile

@@ -3,8 +3,7 @@ package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
-import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
-import com.intellij.codeInspection.dataFlow.instructions.Instruction;
+import com.intellij.codeInspection.dataFlow.instructions.ControlTransferInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.ReturnInstruction;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
@@ -26,32 +25,111 @@ import java.util.Set;
 /**
 * @author peter
 */
-class ContractChecker extends DataFlowRunner {
-  private final PsiMethod myMethod;
-  private final StandardMethodContract myContract;
-  private final boolean myOwnContract;
-  private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
-  private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
-  private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
-  private boolean myMayReturnNormally = false;
+class ContractChecker {
+  private static class ContractCheckerVisitor extends StandardInstructionVisitor {
+    private final PsiMethod myMethod;
+    private final StandardMethodContract myContract;
+    private final boolean myOwnContract;
+    private final Set<PsiElement> myViolations = ContainerUtil.newHashSet();
+    private final Set<PsiElement> myNonViolations = ContainerUtil.newHashSet();
+    private final Set<PsiElement> myFailures = ContainerUtil.newHashSet();
+    private boolean myMayReturnNormally = false;
 
-  private ContractChecker(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
-    super(false, null);
-    myMethod = method;
-    myContract = contract;
-    myOwnContract = ownContract;
+    ContractCheckerVisitor(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
+      myMethod = method;
+      myContract = contract;
+      myOwnContract = ownContract;
+    }
+
+    @Override
+    protected void checkReturnValue(@NotNull DfaValue value,
+                                    @NotNull PsiExpression expression,
+                                    @NotNull PsiParameterListOwner context,
+                                    @NotNull DfaMemoryState state) {
+      if (context != myMethod || state.isEphemeral()) return;
+      if (!myContract.getReturnValue().isValueCompatible(state, value)) {
+        myViolations.add(expression);
+      } else {
+        myNonViolations.add(expression);
+      }
+    }
+
+    @Override
+    public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction,
+                                                 DataFlowRunner runner,
+                                                 DfaMemoryState memState) {
+      if (!memState.isEphemeral() && instruction.getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
+        if (myContract.getReturnValue().isFail()) {
+          ContainerUtil.addIfNotNull(myFailures, instruction.getCallExpression());
+          return DfaInstructionState.EMPTY_ARRAY;
+        }
+        if (weCannotInferAnythingAboutMethodReturnValue(instruction)) {
+          DfaInstructionState[] states = super.visitMethodCall(instruction, runner, memState);
+          for (DfaInstructionState state: states) {
+            state.getMemoryState().markEphemeral();
+          }
+          return states;
+        }
+      }
+      return super.visitMethodCall(instruction, runner, memState);
+    }
+
+    @NotNull
+    @Override
+    public DfaInstructionState[] visitControlTransfer(@NotNull ControlTransferInstruction instruction,
+                                                      @NotNull DataFlowRunner runner,
+                                                      @NotNull DfaMemoryState state) {
+      if (!state.isEphemeral()) {
+        if (instruction instanceof ReturnInstruction && ((ReturnInstruction)instruction).isViaException()) {
+          ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
+        }
+        else {
+          myMayReturnNormally = true;
+        }
+      }
+      return super.visitControlTransfer(instruction, runner, state);
+    }
+
+    private Map<PsiElement, String> getErrors() {
+      HashMap<PsiElement, String> errors = ContainerUtil.newHashMap();
+      for (PsiElement element : myViolations) {
+        if (!myNonViolations.contains(element)) {
+          errors.put(element, "Contract clause '" + myContract + "' is violated");
+        }
+      }
+
+      if (!myContract.getReturnValue().isFail()) {
+        if (myOwnContract && !myMayReturnNormally &&
+            !(PsiUtil.canBeOverridden(myMethod) && ControlFlowUtils.methodAlwaysThrowsException(myMethod))) {
+          for (PsiElement element : myFailures) {
+            errors.put(element, "Return value of clause '" + myContract + "' could be replaced with 'fail' as method always fails"+
+                                (myContract.isTrivial() ? "" : " in this case"));
+          }
+        }
+      } else if (myFailures.isEmpty() && errors.isEmpty()) {
+        PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
+        errors.put(nameIdentifier != null ? nameIdentifier : myMethod,
+                   "Contract clause '" + myContract + "' is violated: no exception is thrown");
+      }
+
+      return errors;
+    }
+
+    private static boolean weCannotInferAnythingAboutMethodReturnValue(MethodCallInstruction instruction) {
+      PsiMethod target = instruction.getTargetMethod();
+      return instruction.getContracts().isEmpty() && target != null && !target.isConstructor() && !NullableNotNullManager.isNotNull(target);
+    }
   }
 
   static Map<PsiElement, String> checkContractClause(PsiMethod method, StandardMethodContract contract, boolean ownContract) {
-
     PsiCodeBlock body = method.getBody();
     if (body == null) return Collections.emptyMap();
 
-    ContractChecker checker = new ContractChecker(method, contract, ownContract);
+    DataFlowRunner runner = new StandardDataFlowRunner(false, null);
 
     PsiParameter[] parameters = method.getParameterList().getParameters();
-    final DfaMemoryState initialState = checker.createMemoryState();
-    final DfaValueFactory factory = checker.getFactory();
+    final DfaMemoryState initialState = runner.createMemoryState();
+    final DfaValueFactory factory = runner.getFactory();
     for (int i = 0; i < contract.getParameterCount(); i++) {
       ValueConstraint constraint = contract.getParameterConstraint(i);
       DfaConstValue comparisonValue = constraint.getComparisonValue(factory);
@@ -62,89 +140,8 @@ class ContractChecker extends DataFlowRunner {
       }
     }
 
-    checker.analyzeMethod(body, new StandardInstructionVisitor(), false, Collections.singletonList(initialState));
-    return checker.getErrors();
-  }
-
-  @NotNull
-  @Override
-  protected DfaInstructionState[] acceptInstruction(@NotNull InstructionVisitor visitor, @NotNull DfaInstructionState instructionState) {
-    DfaMemoryState memState = instructionState.getMemoryState();
-    if (memState.isEphemeral()) {
-      return super.acceptInstruction(visitor, instructionState);
-    }
-    Instruction instruction = instructionState.getInstruction();
-    if (instruction instanceof CheckReturnValueInstruction) {
-      PsiElement anchor = ((CheckReturnValueInstruction)instruction).getReturn();
-      DfaValue retValue = memState.pop();
-      if (!myContract.getReturnValue().isValueCompatible(memState, retValue)) {
-        myViolations.add(anchor);
-      } else {
-        myNonViolations.add(anchor);
-      }
-      return InstructionVisitor.nextInstruction(instruction, this, memState);
-
-    }
-
-    if (instruction instanceof ReturnInstruction) {
-      if (((ReturnInstruction)instruction).isViaException()) {
-        ContainerUtil.addIfNotNull(myFailures, ((ReturnInstruction)instruction).getAnchor());
-      } else {
-        myMayReturnNormally = true;
-      }
-    }
-
-    if (instruction instanceof MethodCallInstruction &&
-        ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.REGULAR_METHOD_CALL) {
-      if (myContract.getReturnValue().isFail()) {
-        ContainerUtil.addIfNotNull(myFailures, ((MethodCallInstruction)instruction).getCallExpression());
-        return DfaInstructionState.EMPTY_ARRAY;
-      }
-      if (weCannotInferAnythingAboutMethodReturnValue((MethodCallInstruction)instruction)) {
-        return markEverythingEphemeral(visitor, instructionState);
-      }
-    }
-
-    return super.acceptInstruction(visitor, instructionState);
-  }
-
-  private static boolean weCannotInferAnythingAboutMethodReturnValue(MethodCallInstruction instruction) {
-    PsiMethod target = instruction.getTargetMethod();
-    return instruction.getContracts().isEmpty() && target != null && !target.isConstructor() && !NullableNotNullManager.isNotNull(target);
-  }
-
-  @NotNull
-  private DfaInstructionState[] markEverythingEphemeral(@NotNull InstructionVisitor visitor,
-                                                        @NotNull DfaInstructionState instructionState) {
-    DfaInstructionState[] result = super.acceptInstruction(visitor, instructionState);
-    for (DfaInstructionState state : result) {
-      state.getMemoryState().markEphemeral();
-    }
-    return result;
-  }
-
-  private Map<PsiElement, String> getErrors() {
-    HashMap<PsiElement, String> errors = ContainerUtil.newHashMap();
-    for (PsiElement element : myViolations) {
-      if (!myNonViolations.contains(element)) {
-        errors.put(element, "Contract clause '" + myContract + "' is violated");
-      }
-    }
-
-    if (!myContract.getReturnValue().isFail()) {
-      if (myOwnContract && !myMayReturnNormally &&
-          !(PsiUtil.canBeOverridden(myMethod) && ControlFlowUtils.methodAlwaysThrowsException(myMethod))) {
-        for (PsiElement element : myFailures) {
-          errors.put(element, "Return value of clause '" + myContract + "' could be replaced with 'fail' as method always fails"+
-                              (myContract.isTrivial() ? "" : " in this case"));
-        }
-      }
-    } else if (myFailures.isEmpty() && errors.isEmpty()) {
-      PsiIdentifier nameIdentifier = myMethod.getNameIdentifier();
-      errors.put(nameIdentifier != null ? nameIdentifier : myMethod,
-                 "Contract clause '" + myContract + "' is violated: no exception is thrown");
-    }
-
-    return errors;
+    ContractCheckerVisitor visitor = new ContractCheckerVisitor(method, contract, ownContract);
+    runner.analyzeMethod(body, visitor, false, Collections.singletonList(initialState));
+    return visitor.getErrors();
   }
 }

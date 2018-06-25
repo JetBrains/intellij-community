@@ -44,9 +44,12 @@ public interface ParameterInfoHandler <ParameterOwner, ParameterType> {
   }
 
   /** @deprecated not used */
+  @Deprecated
   default @Nullable Object[] getParametersForDocumentation(ParameterType p, ParameterInfoContext context) { return null; }
   /** @deprecated not used */
+  @Deprecated
   default @Nullable String getParameterCloseChars() { return null; }
   /** @deprecated not used */
+  @Deprecated
   default boolean tracksParameterIndex() { return false; }
 }

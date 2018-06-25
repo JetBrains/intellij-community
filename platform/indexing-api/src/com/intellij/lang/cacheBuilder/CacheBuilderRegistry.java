@@ -34,15 +34,6 @@ public abstract class CacheBuilderRegistry {
   }
 
   /**
-   * Registers a cache builder for the specified file type.
-   *
-   * @param fileType the file type for which the cache builder is registered.
-   * @param cacheBuilder the cache builder to use for the specified file type.
-   */
-  @Deprecated
-  public abstract void registerCacheBuilder(@NotNull FileType fileType, WordsScanner cacheBuilder);
-
-  /**
    * Returns the cache builder registered for the specified file type.
    *
    * @param fileType the file type for which the cache builder is registered.

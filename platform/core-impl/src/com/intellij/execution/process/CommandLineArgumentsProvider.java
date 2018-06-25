@@ -44,10 +44,7 @@ public class CommandLineArgumentsProvider {
 
 
   public String getCommandLineString() {
-    return toCommandLine(getArguments());
-  }
-
-  public static String toCommandLine(String... commands) {
+    String[] commands = getArguments();
     if (commands.length > 0) {
       commands[0] = FileUtil.toSystemDependentName(commands[0]);
       return StringUtil.join(commands, " ");

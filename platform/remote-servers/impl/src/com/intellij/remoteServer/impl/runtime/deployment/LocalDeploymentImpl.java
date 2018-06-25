@@ -84,4 +84,8 @@ public class LocalDeploymentImpl<D extends DeploymentConfiguration> extends Depl
     }
     return result;
   }
+
+  public boolean hasRemoteDeloyment() {
+    return myRemoteDeployment != null;
+  }
 }

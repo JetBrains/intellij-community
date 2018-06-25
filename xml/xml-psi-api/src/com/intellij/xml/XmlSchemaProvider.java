@@ -21,7 +21,6 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.util.Condition;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.xml.XmlFile;
@@ -65,20 +64,6 @@ public abstract class XmlSchemaProvider {
     final PsiDirectory directory = baseFile.getParent();
     final Module module = ModuleUtilCore.findModuleForPsiElement(directory == null ? baseFile : directory);
     return findSchema(namespace, module, baseFile);
-  }
-
-  /**
-   * @see #getAvailableProviders(com.intellij.psi.xml.XmlFile)
-   */
-  @Deprecated
-  @Nullable
-  public static XmlSchemaProvider getAvailableProvider(@NotNull final XmlFile file) {
-    for (XmlSchemaProvider provider: Extensions.getExtensions(EP_NAME)) {
-      if (provider.isAvailable(file)) {
-        return provider;
-      }
-    }
-    return null;    
   }
 
   public static List<XmlSchemaProvider> getAvailableProviders(@NotNull final XmlFile file) {

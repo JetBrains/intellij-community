@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.panel.ComponentPanel;
@@ -21,6 +22,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.components.BorderLayoutPanel;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -30,6 +33,31 @@ import java.awt.*;
 import java.util.Arrays;
 
 public class ComponentPanelTestAction extends DumbAwareAction {
+  private enum Placement {
+    Top    (SwingConstants.TOP, "Top"),
+    Bottom (SwingConstants.BOTTOM, "Bottom"),
+    Left   (SwingConstants.LEFT, "Left"),
+    Right  (SwingConstants.RIGHT, "Right");
+
+    private final String name;
+    private final int placement;
+
+    Placement(int placement, String name) {
+      this.name = name;
+      this.placement = placement;
+    }
+
+    @Override
+    public String toString() {
+      return name;
+    }
+
+    @MagicConstant(intValues = {SwingConstants.TOP, SwingConstants.BOTTOM, SwingConstants.LEFT, SwingConstants.RIGHT})
+    public int placement() {
+      return placement;
+    }
+  }
+
   @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
@@ -65,9 +93,6 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         pane.addTab(title, JBUI.Panels.simplePanel(label));
       }
 
-      //pane.setTabLayoutPolicy(JTabbedPane.SCROLL_TAB_LAYOUT);
-      //pane.putClientProperty("JTabbedPane.hasFullBorder", Boolean.TRUE);
-
       pane.addChangeListener(e -> {
         if (pane.getSelectedIndex() == 2) {
           myAlarm.addRequest(progressTimerRequest, 200, ModalityState.any());
@@ -76,7 +101,29 @@ public class ComponentPanelTestAction extends DumbAwareAction {
         }
       });
 
-      return pane;
+      BorderLayoutPanel panel = JBUI.Panels.simplePanel(pane);
+
+      JPanel southPanel = new JPanel();
+      southPanel.setLayout(new BoxLayout(southPanel, BoxLayout.X_AXIS));
+
+      JCheckBox enabledCB = new JCheckBox("Enable TabPane", true);
+      enabledCB.addActionListener(e -> pane.setEnabled(enabledCB.isSelected()));
+      southPanel.add(enabledCB);
+
+      southPanel.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
+
+      JComboBox<Placement> placementCombo = new ComboBox<>(Placement.values());
+      placementCombo.setSelectedIndex(0);
+      placementCombo.addActionListener(e -> {
+        Placement p = (Placement)placementCombo.getSelectedItem();
+        if (p != null) pane.setTabPlacement(p.placement());
+      });
+      southPanel.add(placementCombo);
+      southPanel.add(new Box.Filler(JBUI.size(0), JBUI.size(0), JBUI.size(Integer.MAX_VALUE, 0)));
+
+      panel.addToBottom(southPanel);
+
+      return panel;
     }
 
     private JComponent createComponentPanel() {

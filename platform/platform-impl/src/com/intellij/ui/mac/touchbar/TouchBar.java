@@ -10,6 +10,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -26,6 +27,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
   private ID myNativePeer;        // java wrapper holds native object
   private TimerListener myTimerListener;
+  private String myDefaultOptionalContextName;
 
   public static final TouchBar EMPTY = new TouchBar();
 
@@ -60,9 +62,25 @@ class TouchBar implements NSTLibrary.ItemCreator {
     myReleaseOnClose = releaseOnClose;
   }
 
+  static TouchBar buildFromCustomizedGroup(@NotNull String touchbarName, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
+    final TouchBar result = new TouchBar(touchbarName, replaceEsc);
+
+    final String groupId = BuildUtils.getActionId(customizedGroup);
+    if (groupId == null) {
+      LOG.error("unregistered customized group: " + customizedGroup);
+      return result;
+    }
+
+    final String filterPrefix = groupId + "_";
+    result.myDefaultOptionalContextName = groupId + "OptionalGroup";
+    BuildUtils.addActionGroupButtons(result.myItems, customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, filterPrefix, result.myDefaultOptionalContextName, false);
+    result.selectVisibleItemsToShow();
+    return result;
+  }
+
   static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup customizedGroup, boolean replaceEsc) {
     final TouchBar result = new TouchBar(touchbarName, replaceEsc);
-    BuildUtils.addCustomizedActionGroup(result.myItems, customizedGroup);
+    BuildUtils.addActionGroupButtons(result.myItems, customizedGroup, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, null, null, false);
     result.selectVisibleItemsToShow();
     return result;
   }
@@ -102,9 +120,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   // NOTE: must call 'selectVisibleItemsToShow' after touchbar filling
   //
   @NotNull TBItemButton addButton() { return myItems.addButton(); }
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, boolean hiddenWhenDisabled, int showMode, ModalityState modality) {
-    return myItems.addAnActionButton(act, hiddenWhenDisabled, showMode, modality);
-  }
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) { return myItems.addAnActionButton(act, showMode, modality); }
   @NotNull TBItemGroup addGroup() { return myItems.addGroup(); }
   @NotNull TBItemScrubber addScrubber() { return myItems.addScrubber(); }
   @NotNull TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {
@@ -112,6 +128,41 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
   @NotNull void addSpacing(boolean large) { myItems.addSpacing(large); }
   @NotNull void addFlexibleSpacing() { myItems.addFlexibleSpacing(); }
+
+  void setDefaultOptionalContextName(@NotNull String defaultCtxName) { myDefaultOptionalContextName = defaultCtxName; }
+
+  void setOptionalContextItems(@NotNull ActionGroup actions, @NotNull String contextName) {
+    myItems.releaseItems(tbi -> contextName.equals(tbi.myOptionalContextName));
+    BuildUtils.addActionGroupButtons(myItems, actions, null, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, null, contextName, true);
+    selectVisibleItemsToShow();
+  }
+
+  void removeOptionalContextItems(@NotNull String contextName) {
+    myItems.releaseItems(tbi -> contextName.equals(tbi.myOptionalContextName));
+    selectVisibleItemsToShow();
+  }
+
+  // when contextName == null sets default optional-context
+  void setOptionalContextVisible(@Nullable String contextName) {
+    final @Nullable String ctx = contextName == null ? myDefaultOptionalContextName : contextName;
+
+    final boolean visibilityChanged[] = {false};
+    myItems.forEachDeep(tbi -> {
+      if (tbi.myOptionalContextName == null)
+        return;
+
+      final boolean newVisible = tbi.myOptionalContextName.equals(ctx);
+      if (tbi.myIsVisible != newVisible) {
+        if (tbi instanceof TBItemAnActionButton)
+          ((TBItemAnActionButton)tbi).setAutoVisibility(newVisible);
+        tbi.myIsVisible = newVisible;
+        visibilityChanged[0] = true;
+      }
+    });
+
+    if (visibilityChanged[0])
+      selectVisibleItemsToShow();
+  }
 
   void selectVisibleItemsToShow() {
     if (myItems.isEmpty())
@@ -164,11 +215,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
         presentation.setVisible(false);
       }
 
-      if (item.isAutoVisibility()) {
-        final boolean itemVisibilityChanged = item.updateVisibility(presentation);
-        if (itemVisibilityChanged)
-          layoutChanged[0] = true;
-      }
+      final boolean itemVisibilityChanged = item.updateVisibility(presentation);
+      if (itemVisibilityChanged)
+        layoutChanged[0] = true;
       item.updateView(presentation);
     });
 
@@ -183,7 +232,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
     });
   }
 
-  private void _closeSelf() { TouchBarsManager.closeTouchBar(this); }
+  private void _closeSelf() { TouchBarsManager.removeTouchBar(this); }
 
   private void _stopTimer() {
     if (myTimerListener != null) {

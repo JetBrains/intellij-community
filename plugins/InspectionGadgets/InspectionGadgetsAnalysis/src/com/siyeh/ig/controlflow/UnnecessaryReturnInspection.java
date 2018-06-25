@@ -88,7 +88,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
     public void visitReturnStatement(@NotNull PsiReturnStatement statement) {
       super.visitReturnStatement(statement);
       final Ref<Boolean> constructorRef = Ref.create();
-      if (isReturnRedundant(statement, ignoreInThenBranch, constructorRef)) {
+      if (isReturnRedundant(statement, ignoreInThenBranch, true, constructorRef)) {
         registerStatementError(statement, constructorRef.get());
       }
     }
@@ -97,6 +97,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
 
   public static boolean isReturnRedundant(@NotNull PsiReturnStatement statement,
                                           boolean ignoreInThenBranch,
+                                          boolean checkReturnType,
                                           @Nullable Ref<Boolean> isInConstructorRef) {
     if (statement.getReturnValue() != null) {
       return false;
@@ -109,7 +110,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
       if (isInConstructorRef != null) {
         isInConstructorRef.set(method.isConstructor());
       }
-      if (!method.isConstructor() && !PsiType.VOID.equals(method.getReturnType())) {
+      if (checkReturnType && !method.isConstructor() && !PsiType.VOID.equals(method.getReturnType())) {
         return false;
       }
     }
@@ -118,7 +119,7 @@ public class UnnecessaryReturnInspection extends BaseInspection {
         isInConstructorRef.set(false);
       }
       final PsiLambdaExpression lambdaExpression = (PsiLambdaExpression)methodParent;
-      if (!PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
+      if (checkReturnType && !PsiType.VOID.equals(LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression))) {
         return false;
       }
       final PsiElement lambdaBody = lambdaExpression.getBody();

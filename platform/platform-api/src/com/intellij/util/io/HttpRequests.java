@@ -78,6 +78,7 @@ public final class HttpRequests {
     BufferedReader getReader(@Nullable ProgressIndicator indicator) throws IOException;
 
     /** @deprecated Called automatically on open connection. Use {@link RequestBuilder#tryConnect()} to get response code */
+    @Deprecated
     boolean isSuccessful() throws IOException;
 
     @NotNull

@@ -131,6 +131,7 @@ public interface RunnerAndConfigurationSettings {
    * @deprecated
    * @see ExecutionTargetManager#canRun(com.intellij.execution.RunnerAndConfigurationSettings, com.intellij.execution.ExecutionTarget)
    */
+  @Deprecated
   @SuppressWarnings({"DeprecatedIsStillUsed", "unused"})
   default boolean canRunOn(@NotNull ExecutionTarget target) { return true; }
 

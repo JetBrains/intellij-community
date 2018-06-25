@@ -61,9 +61,13 @@ public final class NettyUtil {
       return false;
     }
 
-    return (throwable instanceof IOException && message.equals("An existing connection was forcibly closed by the remote host")) ||
-           (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
-           throwable instanceof BindException ||
+    if (throwable instanceof IOException) {
+      return throwable instanceof BindException ||
+             message.equals("An existing connection was forcibly closed by the remote host") ||
+             message.equals("\u0423\u0434\u0430\u043b\u0435\u043d\u043d\u044b\u0439 \u0445\u043e\u0441\u0442 \u043f\u0440\u0438\u043d\u0443\u0434\u0438\u0442\u0435\u043b\u044c\u043d\u043e \u0440\u0430\u0437\u043e\u0440\u0432\u0430\u043b \u0441\u0443\u0449\u0435\u0441\u0442\u0432\u0443\u044e\u0449\u0435\u0435 \u043f\u043e\u0434\u043a\u043b\u044e\u0447\u0435\u043d\u0438\u0435");
+    }
+
+    return (throwable instanceof ChannelException && message.startsWith("Failed to bind to: ")) ||
            (message.startsWith("Connection reset") || message.equals("Operation timed out") || message.equals("Connection timed out"));
   }
 

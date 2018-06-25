@@ -79,18 +79,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   @Override
-  public Object[] getParametersForDocumentation(Object resolveResult, ParameterInfoContext context) {
-    if (resolveResult instanceof GroovyResolveResult) {
-      final PsiElement element = ((GroovyResolveResult)resolveResult).getElement();
-      if (element instanceof PsiMethod) {
-        return ((PsiMethod)element).getParameterList().getParameters();
-      }
-    }
-
-    return ArrayUtil.EMPTY_OBJECT_ARRAY;
-  }
-
-  @Override
   public GroovyPsiElement findElementForParameterInfo(@NotNull CreateParameterInfoContext context) {
     return findAnchorElement(context.getEditor().getCaretModel().getOffset(), context.getFile());
   }
@@ -300,16 +288,6 @@ public class GroovyParameterInfoHandler implements ParameterInfoHandlerWithTabAc
     if (!(child instanceof GrNamedArgument)) return false;
     final PsiElement element = PsiUtil.skipWhitespacesAndComments(child.getPrevSibling(), false);
     return element != null && element.getNode().getElementType() == GroovyTokenTypes.mCOMMA;
-  }
-
-  @Override
-  public String getParameterCloseChars() {
-    return ",){}";
-  }
-
-  @Override
-  public boolean tracksParameterIndex() {
-    return true;
   }
 
   @Override

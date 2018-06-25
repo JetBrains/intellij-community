@@ -54,12 +54,12 @@ public class DistributionFactoryExt extends DistributionFactory {
     super(Time.clock());
   }
 
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleHome) {
+  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
     File propertiesFile = new File(wrapperPropertyFile);
     if (propertiesFile.exists()) {
       WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
       if (wrapper.getDistribution() != null) {
-        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleHome);
+        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleUserHome);
         try {
           setDistributionField(connector, distribution);
         }

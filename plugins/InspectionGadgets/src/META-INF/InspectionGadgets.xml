@@ -2485,7 +2485,7 @@
     <localInspection groupPath="Java" language="JAVA" suppressId="UnclearExpression" alternativeId="UnclearBinaryExpression"
                      shortName="UnclearBinaryExpression" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unclear.binary.expression.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     groupKey="group.names.code.style.issues" enabledByDefault="true" level="INFORMATION"
                      implementationClass="com.siyeh.ig.style.UnclearBinaryExpressionInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="SizeReplaceableByIsEmpty" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="size.replaceable.by.isempty.display.name" groupBundle="messages.InspectionsBundle"

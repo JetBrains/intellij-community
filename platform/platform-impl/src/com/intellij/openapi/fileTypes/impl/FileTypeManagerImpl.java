@@ -708,13 +708,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
            null;
   }
 
-  @NotNull
-  @Override
-  @Deprecated
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return file.getFileType();
-  }
-
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
     boolean wasAutodetectedAsText = fileType == PlainTextFileType.INSTANCE;
     boolean wasAutodetectedAsBinary = fileType == UnknownFileType.INSTANCE;

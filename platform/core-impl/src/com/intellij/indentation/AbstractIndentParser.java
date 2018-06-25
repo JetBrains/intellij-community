@@ -105,10 +105,6 @@ public abstract class AbstractIndentParser implements PsiParser {
     return tokenSet.contains(getTokenType());
   }
 
-  protected static boolean tokenIn(@Nullable final IElementType elementType, @NotNull final TokenSet tokenSet) {
-    return tokenSet.contains(elementType);
-  }
-
   @NotNull
   protected String getTokenText() {
     String result = myBuilder.getTokenText();
@@ -175,12 +171,12 @@ public abstract class AbstractIndentParser implements PsiParser {
     errorMarker.error(message);
   }
   
-  protected void errorUntilEof(@NotNull String message) {
+  protected void errorUntilEof() {
     PsiBuilder.Marker errorMarker = mark();
     while (!eof()) {
       advance();
     }
-    errorMarker.error(message);
+    errorMarker.error("Unexpected token");
   }
 
   protected void expectEolOrEof() {

@@ -432,4 +432,5 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testGetClassInAnonymous() { doTest6(false); }
   public void testInheritFromDifferentParameterizations() { doTest6(false); }
   public void testCheckAccessibilityBeforeSuperFieldReferenceInSuperCall() { doTest6(false); }
+  public void testIDEA128159() { doTest6(false); }
 }

@@ -4,7 +4,6 @@ package org.jetbrains.plugins.groovy.annotator
 import com.intellij.lang.annotation.AnnotationHolder
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectAllParamsFromNamedVariantMethod
 
@@ -14,11 +13,10 @@ import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectAll
 class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVisitor() {
 
   override fun visitMethod(method: GrMethod) {
-    collectAllParamsFromNamedVariantMethod(method).groupBy { it.first }.filter { it.value.size > 1 }.forEach { entry ->
-      val clashingParameters: List<Pair<String, GrParameter>> = entry.value
-      val parametersList = clashingParameters.joinToString(", ", "", "") { "'${it.second.name}'" }
-      clashingParameters.drop(1).map { it.second }.forEach {
-        holder.createErrorAnnotation(it, GroovyBundle.message("duplicating.named.parameter", entry.key, parametersList))
+    collectAllParamsFromNamedVariantMethod(method).groupBy { it.first }.filter { it.value.size > 1 }.forEach { (name, parameters) ->
+      val parametersList = parameters.joinToString { "'${it.second.name}'" }
+      parameters.drop(1).map { (_, parameter) -> parameter }.forEach {
+        holder.createErrorAnnotation(it.nameIdentifierGroovy, GroovyBundle.message("duplicating.named.parameter", name, parametersList))
       }
     }
     super.visitMethod(method)

@@ -21,6 +21,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
@@ -1017,6 +1018,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     if (finallyClause != null) {
       oldPending = myPending;
       myPending = new ArrayList<>();
+    }
+
+    GrTryResourceList resourceList = tryCatchStatement.getResourceList();
+    if (resourceList != null) {
+      resourceList.accept(this);
     }
 
     InstructionImpl tryBegin = startNode(tryBlock);

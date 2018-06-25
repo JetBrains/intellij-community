@@ -415,6 +415,7 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
       .setHideOnKeyOutside(false)
       .setBlockClicksThroughBalloon(true)
       .setHideOnAction(false)
+      .setShadow(false)
       .createBalloon();
     if (balloonLayout != null) {
       class MyListener implements JBPopupListener, Runnable {
@@ -703,7 +704,10 @@ public class InfoAndProgressPanel extends JPanel implements CustomStatusBarWidge
         } else {
           suspender.suspendProcess(null);
         }
-        ActionsCollector.getInstance().record(suspender.isSuspended() ? "Progress Paused" : "Progress Resumed");
+        ActionsCollector.getInstance().record(
+          suspender.isSuspended() ? "Progress Paused" : "Progress Resumed",
+          MyInlineProgressIndicator.class
+        );
       }).setFillBg(false);
       suspendButton.setVisible(false);
 

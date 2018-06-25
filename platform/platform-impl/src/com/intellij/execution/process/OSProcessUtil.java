@@ -130,6 +130,7 @@ public class OSProcessUtil {
   }
 
   /** @deprecated trivial; use {@link #getProcessList()} directly (to be removed in IDEA 2019) */
+  @Deprecated
   public static List<String> getCommandLinesOfRunningProcesses() {
     List<String> result = new ArrayList<>();
     for (ProcessInfo each : getProcessList()) {

@@ -330,7 +330,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     }
     final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
-      if (expression instanceof PsiReferenceExpression) {
+      if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiCallExpression)) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();
         if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
           return true;

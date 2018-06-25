@@ -209,8 +209,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
     myEditors.add(editor);
     myEditorEventMulticaster.registerEditor(editor);
     myEditorFactoryEventDispatcher.getMulticaster().editorCreated(new EditorFactoryEvent(this, editor));
-
-    TouchBarsManager.attachEditorBar(editor);
+    TouchBarsManager.registerEditor(editor);
 
     if (LOG.isDebugEnabled()) {
       LOG.debug("number of Editors after create: " + myEditors.size());
@@ -235,6 +234,7 @@ public class EditorFactoryImpl extends EditorFactory implements ApplicationCompo
         }
       }
     }
+    TouchBarsManager.releaseEditor(editor);
   }
 
   @Override

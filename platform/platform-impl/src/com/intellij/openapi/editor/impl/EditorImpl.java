@@ -34,7 +34,6 @@ import com.intellij.openapi.editor.ex.util.EmptyEditorHighlighter;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterClient;
 import com.intellij.openapi.editor.impl.event.MarkupModelListener;
-import com.intellij.openapi.editor.impl.softwrap.SoftWrapAppliancePlaces;
 import com.intellij.openapi.editor.impl.view.EditorView;
 import com.intellij.openapi.editor.markup.GutterDraggableObject;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
@@ -63,11 +62,16 @@ import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeBackgroundUtil;
 import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettingsChangeEvent;
+import com.intellij.psi.codeStyle.CodeStyleSettingsListener;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.mac.MacGestureSupportForEditor;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.paint.PaintUtil;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.*;
@@ -119,7 +123,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.IntFunction;
 
-public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable {
+public final class EditorImpl extends UserDataHolderBase implements EditorEx, HighlighterClient, Queryable, Dumpable,
+                                                                    CodeStyleSettingsListener {
   public static final int TEXT_ALIGNMENT_LEFT = 0;
   public static final int TEXT_ALIGNMENT_RIGHT = 1;
 
@@ -135,7 +140,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @SuppressWarnings("WeakerAccess")
   public static final Key<Boolean> DISABLE_CARET_POSITION_KEEPING = Key.create("editor.disable.caret.position.keeping");
   static final Key<Boolean> DISABLE_CARET_SHIFT_ON_WHITESPACE_INSERTION = Key.create("editor.disable.caret.shift.on.whitespace.insertion");
-  public static final Key<Boolean> DONT_SHRINK_GUTTER_SIZE = Key.create("dont.shrink.gutter.size");
   private static final boolean HONOR_CAMEL_HUMPS_ON_TRIPLE_CLICK = Boolean.parseBoolean(System.getProperty("idea.honor.camel.humps.on.triple.click"));
   private static final Key<BufferedImage> BUFFER = Key.create("buffer");
   @NotNull private final DocumentEx myDocument;
@@ -581,6 +585,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     };
     myDocument.addPropertyChangeListener(propertyChangeListener);
     Disposer.register(myDisposable, () -> myDocument.removePropertyChangeListener(propertyChangeListener));
+
+    CodeStyleSettingsManager.getInstance(myProject).addListener(this);
   }
 
   private void moveCaretIntoViewIfCoveredByToolWindowBelow(VisibleAreaEvent e) {
@@ -769,11 +775,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   }
 
   @Override
-  public void setSoftWrapAppliancePlace(@NotNull SoftWrapAppliancePlaces place) {
-    mySettings.setSoftWrapAppliancePlace(place);
-  }
-
-  @Override
   @NotNull
   public SelectionModelImpl getSelectionModel() {
     return mySelectionModel;
@@ -840,6 +841,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public void reinitSettings() {
+    reinitSettings(true);
+  }
+
+  private void reinitSettings(boolean updateGutterSize) {
     assertIsDispatchThread();
 
     for (EditorColorsScheme scheme = myScheme; scheme instanceof DelegateColorScheme; scheme = ((DelegateColorScheme)scheme).getDelegate()) {
@@ -868,7 +873,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myHighlighter.setColorScheme(myScheme);
     myFoldingModel.refreshSettings();
 
-    myGutterComponent.reinitSettings();
+    myGutterComponent.reinitSettings(updateGutterSize);
     myGutterComponent.revalidate();
 
     myEditorComponent.repaint();
@@ -940,6 +945,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myGutterComponent.removeMouseListener(myMouseListener);
     myEditorComponent.removeMouseMotionListener(myMouseMotionListener);
     myGutterComponent.removeMouseMotionListener(myMouseMotionListener);
+
+    CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
 
     if (myBulkUpdateListener != null) {
       ((DocumentImpl)myDocument).removeInternalBulkModeListener(myBulkUpdateListener);
@@ -1812,6 +1819,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     myHeaderPanel.revalidate();
     myHeaderPanel.repaint();
+
+    TouchBarsManager.onUpdateEditorHeader(this, header);
   }
 
   @Override
@@ -2111,11 +2120,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
     return lineIndex;
-  }
-
-  @Override
-  public int calcColumnNumber(int offset, int lineIndex) {
-    return myView.offsetToLogicalPosition(offset).column;
   }
 
   private VisualPosition getTargetPosition(int x, int y, boolean trimToLineWidth) {
@@ -3130,6 +3134,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   @Override
   public void setVerticalScrollbarOrientation(int type) {
     assertIsDispatchThread();
+    if (myScrollBarOrientation == type) return;
     int currentHorOffset = myScrollingModel.getHorizontalScrollOffset();
     myScrollBarOrientation = type;
     myScrollPane.putClientProperty(JBScrollPane.Flip.class,
@@ -4528,11 +4533,6 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return getGutterComponentEx();
   }
 
-  @Override
-  public int calcColumnNumber(@NotNull CharSequence text, int start, int offset, int tabSize) {
-    return myView.offsetToLogicalPosition(offset).column;
-  }
-
   public boolean isInDistractionFreeMode() {
     return EditorUtil.isRealFileEditor(this)
            && (Registry.is("editor.distraction.free.mode") || isInPresentationMode());
@@ -4569,6 +4569,17 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
         e.consume();
       }
+    }
+  }
+
+  @Override
+  public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
+    if (myProject != null) {
+      if (event.getPsiFile() != null) {
+        PsiFile editorFile = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(getDocument());
+        if (editorFile != event.getPsiFile()) return;
+      }
+      reinitSettings(false);
     }
   }
 

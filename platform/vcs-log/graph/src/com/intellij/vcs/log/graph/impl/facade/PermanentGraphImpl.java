@@ -112,26 +112,19 @@ public class PermanentGraphImpl<CommitId> implements PermanentGraph<CommitId>, P
   private LinearGraphController createFilteredController(@NotNull LinearGraphController baseController,
                                                          @NotNull SortType sortType,
                                                          @Nullable Set<CommitId> visibleHeads, @Nullable Set<CommitId> matchingCommits) {
-    LinearGraphController controller;
+    Set<Integer> visibleHeadsIds = visibleHeads != null ? myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true) : null;
     if (matchingCommits != null) {
-      controller = new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits));
-      if (visibleHeads != null) {
-        return new BranchFilterController(controller, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-      }
-      return controller;
+      return new FilteredController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(matchingCommits), visibleHeadsIds);
     }
 
     if (sortType == SortType.LinearBek) {
-      if (visibleHeads != null) {
-        return new BranchFilterController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
+      if (visibleHeadsIds != null) {
+        return new BranchFilterController(baseController, this, visibleHeadsIds);
       }
       return baseController;
     }
 
-    if (visibleHeads != null) {
-      return new CollapsedController(baseController, this, myPermanentCommitsInfo.convertToNodeIds(visibleHeads, true));
-    }
-    return new CollapsedController(baseController, this, null);
+    return new CollapsedController(baseController, this, visibleHeadsIds);
   }
 
   @NotNull

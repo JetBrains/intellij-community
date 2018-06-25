@@ -37,8 +37,8 @@ abstract class FilePathProvider {
 
 
     /**
-     * If user was offline for a long time we don't want to sent all 1000 files,
-     * instead we will send only last 2Mb of data
+     * If user was offline for a long time we don't want to store all 1000 files,
+     * instead we will store only last 2Mb of data
      */
     abstract fun cleanupOldFiles()
 

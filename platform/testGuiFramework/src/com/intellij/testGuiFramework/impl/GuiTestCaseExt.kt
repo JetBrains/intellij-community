@@ -2,8 +2,10 @@
 package com.intellij.testGuiFramework.impl
 
 import com.intellij.testGuiFramework.fixtures.GutterFixture
+import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.util.*
+import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.timing.Pause
 import org.hamcrest.Matcher
 import org.junit.After
@@ -174,8 +176,8 @@ fun GuiTestCase.checkProjectIsCompiled(expectedStatus: String) {
   }
 }
 
-fun GuiTestCase.checkRunConfiguration(vararg configuration: String) {
-  val cfgName = configuration[configuration.size - 1]
+fun GuiTestCase.checkRunConfiguration(expectedValues: Map<String, String>, vararg configuration: String) {
+  val cfgName = configuration.last()
   val runDebugConfigurations = "Run/Debug Configurations"
   ideFrame {
     logTestStep("Going to check presence of Run/Debug configuration `$cfgName`")
@@ -187,8 +189,23 @@ fun GuiTestCase.checkRunConfiguration(vararg configuration: String) {
     dialog(runDebugConfigurations) {
       assert(exists { jTree(*configuration) })
       jTree(*configuration).clickPath(*configuration)
+      for ((field, expectedValue) in expectedValues) {
+        logTestStep("Field `$field`has a value = `$expectedValue`")
+        checkOneValue(this@checkRunConfiguration, field, expectedValue)
+      }
       button("Cancel").click()
     }
+  }
+}
+
+fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String, expectedValue: String){
+  val actualValue = when {
+    guiTestCase.exists {textfield(expectedField)} -> textfield(expectedField).text()
+    guiTestCase.exists { combobox(expectedField) } -> combobox(expectedField).selectedItem()
+    else -> throw ComponentLookupException("Cannot find component with label `$expectedField`")
+  }
+  assert(actualValue == expectedValue) {
+    "Field `$expectedField`: actual value = `$actualValue`, expected value = `$expectedValue`"
   }
 }
 
@@ -215,28 +232,27 @@ fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
   }
 }
 
-fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLines: List<String>){
+fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLines: List<String>) {
   ideFrame {
     logTestStep("Going to check whether $expectedNumberOfRunIcons `Run` gutter icons are present")
-    GuiTestUtilKt.runOnEdt {
-      editor {
-        assert(gutter.isGutterIconPresent(GutterFixture.GutterIcon.RUN_SCRIPT)) {
-          "No `Run` icons found on gutter panel"
+    editor {
+      waitUntilFileIsLoaded()
+      waitUntilErrorAnalysisFinishes()
+      assert(gutter.isGutterIconPresent(GutterFixture.GutterIcon.RUN_SCRIPT)) {
+        "No `Run` icons found on gutter panel"
+      }
+      val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
+      assert(gutterRunLines.size == expectedNumberOfRunIcons) {
+        "Found ${gutterRunLines.size} gutter icons `Run`, but expected $expectedNumberOfRunIcons"
+      }
+      val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
+      for ((index, line) in gutterRunLines.withIndex()) {
+        // line numbers start with 1, but index in the contents list starts with 0
+        val currentLine = contents[line - 1]
+        val expectedLine = expectedRunLines[index]
+        assert(currentLine.contains(expectedLine)) {
+          "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
         }
-        val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
-        assert(gutterRunLines.size == expectedNumberOfRunIcons) {
-          "Found ${gutterRunLines.size} gutter icons `Run`, but expected $expectedNumberOfRunIcons"
-        }
-        val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
-        for ((index, line) in gutterRunLines.withIndex()) {
-          // line numbers start with 1, but index in the contents list starts with 0
-          val currentLine = contents[line - 1]
-          val expectedLine = expectedRunLines[index]
-          assert(currentLine.contains(expectedLine)) {
-            "At line #$line the actual text is `$currentLine`, but it was expected `$expectedLine`"
-          }
-        }
-        waitUntilErrorAnalysisFinishes()
       }
     }
   }

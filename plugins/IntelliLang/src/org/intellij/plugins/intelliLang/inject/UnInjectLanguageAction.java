@@ -93,14 +93,7 @@ public class UnInjectLanguageAction implements IntentionAction, LowPriorityActio
     final LanguageInjectionSupport support = psiFile.getUserData(LanguageInjectionSupport.INJECTOR_SUPPORT);
     if (support == null) return;
     try {
-      if (psiFile.getUserData(LanguageInjectionSupport.TEMPORARY_INJECTED_LANGUAGE) != null) {
-        // temporary injection
-        TemporaryPlacesRegistry temporaryPlacesRegistry = TemporaryPlacesRegistry.getInstance(project);
-        for (PsiLanguageInjectionHost.Shred shred : InjectedLanguageUtil.getShreds(psiFile)) {
-          if (temporaryPlacesRegistry.removeHostWithUndo(project, shred.getHost())) break;
-        }
-      }
-      else if (!support.removeInjectionInPlace(host)) {
+      if (!support.removeInjectionInPlace(host)) {
         defaultFunctionalityWorked(host);
       }
     }

@@ -24,14 +24,14 @@ import java.util.function.BiConsumer
 internal class FileHistoryBuilder(private val startCommit: Int?,
                                   private val startPath: FilePath,
                                   private val fileNamesData: FileNamesData) : BiConsumer<LinearGraphController, PermanentGraphInfo<Int>> {
-  val pathsMap = mutableMapOf<Int, FilePath>()
+  val pathsMap = mutableMapOf<Int, FilePath?>()
 
   override fun accept(controller: LinearGraphController, permanentGraphInfo: PermanentGraphInfo<Int>) {
     pathsMap.putAll(refine(controller, startCommit, permanentGraphInfo))
 
     val trivialCandidates = mutableSetOf<Int>()
     pathsMap.forEach { c, p ->
-      if (fileNamesData.isTrivialMerge(c, p)) {
+      if (p != null && fileNamesData.isTrivialMerge(c, p)) {
         trivialCandidates.add(c)
       }
     }
@@ -46,7 +46,7 @@ internal class FileHistoryBuilder(private val startCommit: Int?,
 
   private fun refine(controller: LinearGraphController,
                      startCommit: Int?,
-                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, FilePath> {
+                     permanentGraphInfo: PermanentGraphInfo<Int>): Map<Int, FilePath?> {
     if (fileNamesData.hasRenames) {
       val visibleLinearGraph = controller.compiledGraph
 
@@ -145,10 +145,10 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
   private val paths = Stack<FilePath>()
   private val visibilityBuffer = BitSetFlags(permanentLinearGraph.nodesCount()) // a reusable buffer for bfs
-  private val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath>()
+  private val pathsForCommits = ContainerUtil.newHashMap<Int, FilePath?>()
   private val excluded = ContainerUtil.newHashSet<Int>()
 
-  fun refine(row: Int, startPath: FilePath): Pair<HashMap<Int, FilePath>, HashSet<Int>> {
+  fun refine(row: Int, startPath: FilePath): Pair<HashMap<Int, FilePath?>, HashSet<Int>> {
     paths.push(startPath)
     DfsUtil.walk(LinearGraphUtils.asLiteLinearGraph(visibleLinearGraph), row, this)
 
@@ -216,15 +216,13 @@ internal class FileHistoryRefiner(private val visibleLinearGraph: LinearGraph,
 
 abstract class FileNamesData {
   private val commitToPathAndChanges = TIntObjectHashMap<MutableMap<FilePath, MutableMap<Int, VcsLogPathsIndex.ChangeData>>>()
-  var hasRenames = false
-    private set
 
   val commits: Set<Int>
-    get() {
-      val result = ContainerUtil.newHashSet<Int>()
-      commitToPathAndChanges.forEach { result.add(it) }
-      return result
-    }
+    get() = commitToPathAndChanges.keys().toSet()
+  val isEmpty: Boolean
+    get() = commitToPathAndChanges.isEmpty
+  var hasRenames = false
+    private set
 
   protected abstract fun getPathById(pathId: Int): FilePath
 

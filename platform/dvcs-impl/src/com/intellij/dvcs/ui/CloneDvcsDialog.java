@@ -42,7 +42,6 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -311,14 +310,14 @@ public abstract class CloneDvcsDialog extends DialogWrapper {
 
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        Pair<List<String>, List<RepositoryListLoadingException>> loadingResult =
+        RepositoryListLoader.Result loadingResult =
           loader.getAvailableRepositoriesFromMultipleSources(indicator);
-        for (String repository: loadingResult.first) {
+        for (String repository: loadingResult.getUrls()) {
           if (myUniqueAvailableRepositories.add(repository)) {
             myNewRepositories.add(repository);
           }
         }
-        myErrors.addAll(loadingResult.second);
+        myErrors.addAll(loadingResult.getErrors());
       }
 
       @Override

@@ -31,10 +31,12 @@ public abstract class FileTypeManagerEx extends FileTypeManager{
   /**
    * @deprecated use {@link FileTypeFactory} instead
    */
+  @Deprecated
   public abstract void registerFileType(@NotNull FileType fileType);
   /**
    * @deprecated use {@link FileTypeFactory} instead
    */
+  @Deprecated
   public abstract void unregisterFileType(@NotNull FileType fileType);
 
   public abstract boolean isIgnoredFilesListEqualToCurrent(@NotNull String list);

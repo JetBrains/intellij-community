@@ -34,10 +34,6 @@ public abstract class RecentProjectsManager {
 
   public abstract void setLastProjectCreationLocation(@Nullable @SystemIndependent String lastProjectLocation);
 
-  /** @deprecated do not use this method directly */
-  @Deprecated 
-  public abstract void clearNameCache();
-
   public abstract void updateLastProjectPath();
 
   @SystemIndependent

@@ -72,6 +72,7 @@ public class FSOperations {
    * @throws IOException
    *
    */
+  @Deprecated
   public static void markDirty(CompileContext context, final File file) throws IOException {
     markDirty(context, CompilationRound.NEXT, file);
   }
@@ -87,6 +88,7 @@ public class FSOperations {
   /**
    * @deprecated use markDirtyIfNotDeleted(CompileContext context, final CompilationRound round, final File file)
    */
+  @Deprecated
   public static void markDirtyIfNotDeleted(CompileContext context, final File file) throws IOException {
     markDirtyIfNotDeleted(context, CompilationRound.NEXT, file);
   }
@@ -110,6 +112,7 @@ public class FSOperations {
   /**
    * @deprecated use markDirty(CompileContext context, final CompilationRound round, final ModuleChunk chunk, @Nullable FileFilter filter)
    */
+  @Deprecated
   public static void markDirty(CompileContext context, final ModuleChunk chunk, @Nullable FileFilter filter) throws IOException {
     markDirty(context, CompilationRound.NEXT, chunk, filter);
   }
@@ -128,6 +131,7 @@ public class FSOperations {
   /**
    * @deprecated use markDirtyRecursively(CompileContext context, final CompilationRound round, ModuleChunk chunk, FileFilter filter)
    */
+  @Deprecated
   public static void markDirtyRecursively(CompileContext context, ModuleChunk chunk) throws IOException {
     markDirtyRecursively(context, CompilationRound.NEXT, chunk);
   }

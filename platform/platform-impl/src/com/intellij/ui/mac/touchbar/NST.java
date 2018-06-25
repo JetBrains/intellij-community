@@ -257,8 +257,7 @@ public class NST {
     // icons generally should not exceed 44px in height (36px for circular icons)
     // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
     // Maximum icon size    44px × 44px (22pt × 22pt @2x)
-    final int newIconW = 40;
-    final float fMulX = newIconW/(float)icon.getIconWidth();
+    final float fMulX = 40/16.f;
     return _getImg4ByteRGBA(icon, fMulX);
   }
 

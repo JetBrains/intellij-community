@@ -23,6 +23,7 @@
     <orderEntry type="module" module-name="intellij.java.compiler.impl" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution" exported="" />
     <orderEntry type="module" module-name="intellij.java.execution.impl" exported="" />
+    <orderEntry type="module" module-name="intellij.java.debugger.impl" />
     <orderEntry type="module" module-name="intellij.java.ui" exported="" />
     <orderEntry type="module" module-name="intellij.java.guiForms.rt" exported="" />
     <orderEntry type="library" name="jgoodies-forms" level="project" />

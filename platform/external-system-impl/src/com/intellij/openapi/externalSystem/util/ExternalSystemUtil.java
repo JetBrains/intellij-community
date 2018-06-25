@@ -717,19 +717,6 @@ public class ExternalSystemUtil {
     return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
   }
 
-  /**
-   * @deprecated to be removed in 2018.2
-   */
-  @NotNull
-  public static FailureResultImpl createFailureResult(@NotNull Exception exception,
-                                                      @NotNull String projectName,
-                                                      @NotNull ProjectSystemId externalSystemId,
-                                                      @NotNull Project project) {
-    ExternalSystemNotificationManager notificationManager = ExternalSystemNotificationManager.getInstance(project);
-    NotificationData notificationData = notificationManager.createNotification(exception, projectName, externalSystemId, project);
-    return createFailureResult(exception, externalSystemId, project, notificationManager, notificationData);
-  }
-
   @NotNull
   private static FailureResultImpl createFailureResult(@NotNull Exception exception,
                                                        @NotNull ProjectSystemId externalSystemId,
@@ -997,18 +984,6 @@ public class ExternalSystemUtil {
     if (settings == null) return null;
 
     return new ExecutionEnvironment(executor, runner, settings, project);
-  }
-
-  /**
-   * @deprecated to be removed in IDEA 2017, use {@link #createExecutionEnvironment}
-   */
-  @Nullable
-  public static Pair<ProgramRunner, ExecutionEnvironment> createRunner(@NotNull ExternalSystemTaskExecutionSettings taskSettings,
-                                                                       @NotNull String executorId,
-                                                                       @NotNull Project project,
-                                                                       @NotNull ProjectSystemId externalSystemId) {
-    ExecutionEnvironment executionEnvironment = createExecutionEnvironment(project, externalSystemId, taskSettings, executorId);
-    return executionEnvironment == null ? null : Pair.create(executionEnvironment.getRunner(), executionEnvironment);
   }
 
   @Nullable

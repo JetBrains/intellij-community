@@ -223,7 +223,7 @@ object GuiTestLocalLauncher {
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
-      .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plus(if (ide.ideType.platformPrefix.isNullOrEmpty()) "" else "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(customVmOptions)
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")

@@ -222,3 +222,11 @@ class LambdaWithBody {
     InputStream map(String name);
   }
 }
+
+class ParensUsage {
+  public static void main(String[] args) {
+    SortedMap<String, String> s = new TreeMap<>();
+    System.out.println(s.keySet());
+    System.out.println((s).firstKey());
+  }
+}

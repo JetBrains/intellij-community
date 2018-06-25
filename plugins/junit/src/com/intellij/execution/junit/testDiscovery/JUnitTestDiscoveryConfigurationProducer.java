@@ -16,6 +16,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
+import com.intellij.rt.execution.junit.JUnitStarter;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
@@ -62,6 +63,16 @@ public class JUnitTestDiscoveryConfigurationProducer extends TestDiscoveryConfig
             })
             .collect(Collectors.toCollection(LinkedHashSet::new)));
     data.TEST_OBJECT = JUnitConfiguration.TEST_PATTERN;
-    return new TestsPattern((JUnitConfiguration)configuration, environment);
+    return new TestsPattern((JUnitConfiguration)configuration, environment) {
+      @Override
+      protected boolean forkPerModule() {
+        return module == null;
+      }
+
+      @Override
+      protected String getRunner() {
+        return JUnitStarter.JUNIT4_PARAMETER;
+      }
+    };
   }
 }

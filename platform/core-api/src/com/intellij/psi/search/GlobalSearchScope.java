@@ -776,7 +776,8 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     /**
      * @deprecated use {@link GlobalSearchScope#filesScope(Project, Collection)}
      */
-    public FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
+    @Deprecated
+    private FilesScope(@Nullable Project project, @NotNull Collection<VirtualFile> files) {
       this(project, files, null, false);
     }
 
@@ -792,11 +793,6 @@ public abstract class GlobalSearchScope extends SearchScope implements ProjectAw
     @Override
     public boolean contains(@NotNull final VirtualFile file) {
       return myFiles.contains(file);
-    }
-
-    @Override
-    public int compare(@NotNull final VirtualFile file1, @NotNull final VirtualFile file2) {
-      return 0;
     }
 
     @Override

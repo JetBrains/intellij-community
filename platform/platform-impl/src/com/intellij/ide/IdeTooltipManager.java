@@ -111,7 +111,7 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     Component c = me.getComponent();
     if (me.getID() == MouseEvent.MOUSE_ENTERED) {
       boolean canShow = true;
-      if (c != myCurrentComponent) {
+      if (componentContextHasChanged(c)) {
         canShow = hideCurrent(me, null, null);
       }
       if (canShow) {
@@ -159,6 +159,20 @@ public class IdeTooltipManager implements Disposable, AWTEventListener, Applicat
     else if (me.getID() == MouseEvent.MOUSE_DRAGGED) {
       hideCurrent(me, null, null);
     }
+  }
+
+  private boolean componentContextHasChanged(Component eventComponent) {
+    if (eventComponent == myCurrentComponent) return false;
+
+    if (myQueuedTooltip != null) {
+      // The case when a tooltip is going to appear on the Component but the MOUSE_ENTERED event comes to the Component before it,
+      // we dont want to hide the tooltip in that case (IDEA-194208)
+      Point tooltipPoint = myQueuedTooltip.getPoint();
+      Component realQueuedComponent = SwingUtilities.getDeepestComponentAt(myQueuedTooltip.getComponent(), tooltipPoint.x, tooltipPoint.y);
+      return eventComponent != realQueuedComponent;
+    }
+
+    return true;
   }
 
   private void maybeShowFor(Component c, MouseEvent me) {

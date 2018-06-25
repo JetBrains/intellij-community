@@ -190,9 +190,10 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
   }
   public void expand(@Nullable final Object[] path, final boolean requestFocus){
     if (getTreeBuilder() == null || path == null) return;
-    getTreeBuilder().buildNodeForPath(path);
+    AbstractTreeUi ui = getTreeBuilder().getUi();
+    if (ui != null) ui.buildNodeForPath(path);
 
-    DefaultMutableTreeNode node = getTreeBuilder().getNodeForPath(path);
+    DefaultMutableTreeNode node = ui == null ? null : ui.getNodeForPath(path);
     if (node == null) {
       return;
     }
@@ -593,19 +594,12 @@ public abstract class AbstractProjectViewPane implements DataProvider, Disposabl
         Object component = path.getLastPathComponent();
         if (component instanceof DefaultMutableTreeNode) {
           //noinspection deprecation
-          return getSelectedDirectoriesInAmbiguousCase((DefaultMutableTreeNode)component);
+          return getSelectedDirectoriesInAmbiguousCase(((DefaultMutableTreeNode)component).getUserObject());
         }
         return getSelectedDirectoriesInAmbiguousCase(component);
       }
     }
     return PsiDirectory.EMPTY_ARRAY;
-  }
-
-  @NotNull
-  @Deprecated
-  @SuppressWarnings("DeprecatedIsStillUsed")
-  protected PsiDirectory[] getSelectedDirectoriesInAmbiguousCase(@NotNull final DefaultMutableTreeNode node) {
-    return getSelectedDirectoriesInAmbiguousCase(node.getUserObject());
   }
 
   @NotNull

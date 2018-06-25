@@ -245,5 +245,15 @@
                      enabledByDefault="true" level="WARNING" groupBundle="messages.InspectionsBundle" 
                      groupKey="group.names.language.level.specific.issues.and.migration.aids12" bundle="messages.InspectionsBundle" shortName="RedundantBackticksAroundRawStringLiteral"
                      implementationClass="com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection" key="redundant.backticks.around.raw.string.literal.display.name"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeRemovedNarrowingVariableType"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.cast.can.be.removed.narrowing.variable.type.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.redundantCast.CastCanBeRemovedNarrowingVariableTypeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
   </extensions>
 </idea-plugin>

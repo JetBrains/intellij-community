@@ -635,18 +635,6 @@ public class XmlUtil {
     return (XmlTag)parent.add(child);
   }
 
-  /**
-   * @see XmlTag#getAttributeValue(String)
-   */
-  @Nullable
-  @Deprecated
-  public static String getAttributeValue(XmlTag tag, String name) {
-    for (XmlAttribute attribute : tag.getAttributes()) {
-      if (name.equals(attribute.getName())) return attribute.getValue();
-    }
-    return null;
-  }
-
   // Read the function name and parameter names to find out what this function does... :-)
   @Nullable
   public static XmlTag find(String subTag, String withValue, String forTag, XmlTag insideRoot) {

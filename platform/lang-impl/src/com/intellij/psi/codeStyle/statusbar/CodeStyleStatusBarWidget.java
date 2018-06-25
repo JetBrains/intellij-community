@@ -5,7 +5,6 @@ import com.intellij.application.options.CodeStyle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -31,6 +30,10 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) return WidgetState.HIDDEN;
     CodeStyleSettings.IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
+    CodeStyleSettings.IndentOptions projectIndentOptions = CodeStyle.getIndentOptionsByFileType(psiFile);
+    if (projectIndentOptions.equals(indentOptions)) {
+      return WidgetState.HIDDEN;
+    }
     return createWidgetState(indentOptions);
   }
 
@@ -94,17 +97,11 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Override
   protected void registerCustomListeners() {
-    //noinspection deprecation
     CodeStyleSettingsManager.getInstance(getProject()).addListener(this);
   }
 
   @Override
   public void codeStyleSettingsChanged(@NotNull CodeStyleSettingsChangeEvent event) {
-    // TODO:<rv> Consider another place for editor update
-    Editor editor = getEditor();
-    if (editor instanceof EditorEx) {
-      ((EditorEx)editor).reinitSettings();
-    }
     update();
   }
 
@@ -143,8 +140,9 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   @Override
   public void dispose() {
-    //noinspection deprecation
-    CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+    if (!myProject.isDisposed()) {
+      CodeStyleSettingsManager.getInstance(myProject).removeListener(this);
+    }
     super.dispose();
   }
 }

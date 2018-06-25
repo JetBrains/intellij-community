@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -42,7 +43,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -1124,14 +1124,14 @@ public class PyUtil {
   /**
    * Constructs new lookup element for completion of keyword argument with equals sign appended.
    *
-   * @param name    name of the parameter
-   * @param project project instance to check code style settings and surround equals sign with spaces if necessary
+   * @param name name of the parameter
+   * @param settingsAnchor file to check code style settings and surround equals sign with spaces if necessary
    * @return lookup element
    */
   @NotNull
-  public static LookupElement createNamedParameterLookup(@NotNull String name, @Nullable Project project) {
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor) {
     final String suffix;
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+    if (CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
       suffix = " = ";
     }
     else {

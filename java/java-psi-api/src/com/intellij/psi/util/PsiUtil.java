@@ -665,6 +665,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
+  @Deprecated
   public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
     return isCompileTimeConstant((PsiVariable)field);
   }
@@ -946,6 +947,7 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * @deprecated Use {@link #canBeOverridden(PsiMethod)} instead
    */
+  @Deprecated
   public static boolean canBeOverriden(@NotNull PsiMethod method) {
     return canBeOverridden(method);
   }

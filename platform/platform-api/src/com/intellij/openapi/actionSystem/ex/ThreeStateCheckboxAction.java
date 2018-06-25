@@ -48,7 +48,7 @@ public abstract class ThreeStateCheckboxAction extends AnAction implements Custo
     Presentation presentation = e.getPresentation();
     presentation.putClientProperty(STATE_PROPERTY, state);
 
-    Object property = presentation.getClientProperty(CUSTOM_COMPONENT_PROPERTY);
+    JComponent property = presentation.getClientProperty(COMPONENT_KEY);
     if (property instanceof ThreeStateCheckBox) {
       ThreeStateCheckBox checkBox = (ThreeStateCheckBox)property;
 

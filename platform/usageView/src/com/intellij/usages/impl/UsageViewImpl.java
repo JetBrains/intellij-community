@@ -364,7 +364,10 @@ public class UsageViewImpl implements UsageViewEx {
   private final Consumer<Node> edtNodeChangedQueue = node -> {
     if (!getPresentation().isDetachedMode()) {
       synchronized (changedNodesToFire) {
-        changedNodesToFire.putValue((Node)node.getParent(), node);
+        Node parent = (Node)node.getParent();
+        if (parent != null) {
+          changedNodesToFire.putValue(parent, node);
+        }
       }
     }
   };

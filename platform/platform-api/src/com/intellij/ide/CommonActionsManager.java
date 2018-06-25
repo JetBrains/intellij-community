@@ -22,17 +22,11 @@ public abstract class CommonActionsManager {
 
   public abstract AnAction createNextOccurenceAction(OccurenceNavigator navigator);
 
-  @Deprecated
-  public abstract AnAction createExpandAllAction(TreeExpander expander);
-
   public abstract AnAction createExpandAllAction(TreeExpander expander, JComponent component);
 
   public abstract AnAction createExpandAllHeaderAction(TreeExpander expander, JComponent component);
 
   public abstract AnAction createExpandAllHeaderAction(JTree tree);
-
-  @Deprecated
-  public abstract AnAction createCollapseAllAction(TreeExpander expander);
 
   public abstract AnAction createCollapseAllAction(TreeExpander expander, JComponent component);
 

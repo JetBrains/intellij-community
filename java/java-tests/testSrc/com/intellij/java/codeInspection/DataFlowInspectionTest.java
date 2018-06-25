@@ -280,6 +280,11 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testFinalGetter() { doTest(); }
   public void testGetterResultsNotSame() { doTest(); }
   public void testIntersectionTypeInstanceof() { doTest(); }
+  
+  public void testKeepComments() { 
+    doTest();
+    checkIntentionResult("Simplify");
+  }
 
   public void testImmutableClassNonGetterMethod() {
     myFixture.addClass("package javax.annotation.concurrent; public @interface Immutable {}");
@@ -614,4 +619,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNanComparisonWrong() { doTest(); }
   public void testConstantMethods() { doTest(); }
   public void testPolyadicEquality() { doTest(); }
+  public void testEqualsInLoopNotTooComplex() { doTest(); }
+  public void testEqualsWithItself() { doTest(); }
+  public void testBoxingBoolean() { doTest(); }
+  public void testOrWithAssignment() { doTest(); }
+  public void testAndAndWithOr() { doTest(); }
 }

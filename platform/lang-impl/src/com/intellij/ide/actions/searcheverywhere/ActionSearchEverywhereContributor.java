@@ -3,6 +3,7 @@ package com.intellij.ide.actions.searcheverywhere;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.GotoActionAction;
+import com.intellij.ide.actions.SetShortcutAction;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
 import com.intellij.ide.util.gotoByName.GotoActionItemProvider;
 import com.intellij.ide.util.gotoByName.GotoActionModel;
@@ -50,6 +51,11 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
   }
 
   @Override
+  public boolean isShownInSeparateTab() {
+    return true;
+  }
+
+  @Override
   public ContributorSearchResult<Object> search(String pattern,
                                                 boolean everywhere,
                                                 SearchEverywhereContributorFilter<Void> filter,
@@ -61,11 +67,12 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
     ContributorSearchResult.Builder<Object> builder = ContributorSearchResult.builder();
     myProvider.filterElements(pattern, element -> {
+      if (progressIndicator.isCanceled()) return false;
+
       if (!everywhere && element.value instanceof GotoActionModel.ActionWrapper && !((GotoActionModel.ActionWrapper) element.value).isAvailable()) {
         return true;
       }
 
-      if (progressIndicator.isCanceled()) return false;
       if (element == null) {
         LOG.error("Null action has been returned from model");
         return true;
@@ -102,6 +109,17 @@ public class ActionSearchEverywhereContributor implements SearchEverywhereContri
 
   @Override
   public Object getDataForItem(Object element, String dataId) {
+    if (SetShortcutAction.SELECTED_ACTION.is(dataId)) {
+      Object value = ((GotoActionModel.MatchedValue)element).value;
+      if (value instanceof GotoActionModel.ActionWrapper) {
+        value = ((GotoActionModel.ActionWrapper)value).getAction();
+      }
+
+      if (value instanceof AnAction) {
+        return value;
+      }
+    }
+
     return null;
   }
 

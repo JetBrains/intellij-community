@@ -356,6 +356,7 @@
       <separator/>
       <reference ref="ShelvedChanges.ShowHideDeleted"/>
       <reference ref="ShelvedChanges.CleanMarkedToDelete"/>
+      <reference ref="ShelfChanges.Settings"/>
       <separator/>
 
       <add-to-group group-id="Vcs.KeymapGroup" anchor="first"/>

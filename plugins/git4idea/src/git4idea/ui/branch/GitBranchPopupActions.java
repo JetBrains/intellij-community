@@ -29,6 +29,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.EmptyIcon;
 import git4idea.GitBranch;
 import git4idea.GitLocalBranch;
+import git4idea.GitProtectedBranchesKt;
 import git4idea.actions.GitAbstractRebaseAction;
 import git4idea.branch.*;
 import git4idea.config.GitVcsSettings;
@@ -517,6 +518,11 @@ class GitBranchPopupActions {
         GitBrancher brancher = GitBrancher.getInstance(myProject);
         brancher.deleteRemoteBranch(myBranchName, myRepositories);
         reportUsage(myProject, "git.branch.delete.remote");
+      }
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(!GitProtectedBranchesKt.isRemoteBranchProtected(myRepositories, myBranchName));
       }
     }
   }

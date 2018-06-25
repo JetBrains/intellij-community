@@ -16,16 +16,14 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorColorsUtil;
 import com.intellij.openapi.editor.colors.impl.DelegateColorScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.editor.impl.EditorImpl;
+import com.intellij.openapi.editor.impl.EditorTextFieldRendererDocument;
 import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -148,13 +146,14 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     @NotNull
     private static Pair<EditorTextField, EditorEx> createEditor(Project project, @Nullable FileType fileType, boolean inheritFontFromLaF) {
-      EditorTextField field = new EditorTextField(new MyDocument(), project, fileType, false, false);
+      EditorTextField field = new EditorTextField(new EditorTextFieldRendererDocument(), project, fileType, false, false);
       field.setSupplementary(true);
       field.setFontInheritedFromLAF(inheritFontFromLaF);
       field.addNotify(); // creates editor
 
       EditorEx editor = (EditorEx)ObjectUtils.assertNotNull(field.getEditor());
       editor.setRendererMode(true);
+      editor.getSettings().setAnimatedScrolling(false);
 
       editor.setColorsScheme(editor.createBoundColorSchemeDelegate(null));
       editor.getSettings().setCaretRowShown(false);
@@ -189,7 +188,7 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
 
     void setTextToEditor(String text) {
       myEditor.getMarkupModel().removeAllHighlighters();
-      WriteAction.run(() -> myEditor.getDocument().setText(text));
+      myEditor.getDocument().setText(text);
       ((EditorImpl)myEditor).resetSizes();
       myEditor.getHighlighter().setText(text);
       if (myTextAttributes != null) {
@@ -342,54 +341,6 @@ public abstract class EditorTextFieldCellRenderer implements TableCellRenderer, 
       }
 
       return abbrLength;
-    }
-  }
-
-  private static class MyDocument extends DocumentImpl {
-    public MyDocument() {
-      super("");
-    }
-
-    @Override
-    public void replaceText(@NotNull CharSequence chars, long newModificationStamp) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void moveText(int srcStart, int srcEnd, int dstOffset) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void insertString(int offset, @NotNull CharSequence s) {
-      throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void deleteString(int startOffset, int endOffset) {
-      throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public void replaceString(int startOffset, int endOffset, @NotNull CharSequence s) {
-      throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @Override
-    public long getModificationStamp() {
-      return 0;
-    }
-
-    @NotNull
-    @Override
-    public RangeMarker createRangeMarker(int startOffset, int endOffset, boolean surviveOnExternalChange) {
-      throw new UnsupportedOperationException("Not implemented");
-    }
-
-    @NotNull
-    @Override
-    public RangeMarker createGuardedBlock(int startOffset, int endOffset) {
-      throw new UnsupportedOperationException("Not implemented");
     }
   }
 }

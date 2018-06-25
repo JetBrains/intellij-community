@@ -75,7 +75,7 @@ public class ColorUtil {
   }
 
   @NotNull
-  private static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
+  public static Color hackBrightness(@NotNull Color color, int howMuch, float hackValue) {
     return hackBrightness(color.getRed(), color.getGreen(), color.getBlue(), howMuch, hackValue);
   }
 

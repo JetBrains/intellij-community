@@ -30,6 +30,7 @@ import javax.swing.tree.TreeNode;
  * @deprecated use HintUpdateSupply directly
  * @see HintUpdateSupply
  */
+@Deprecated
 public class JBTreeWithHintProvider extends DnDAwareTree {
   {
     HintUpdateSupply.installHintUpdateSupply(this, o -> getPsiElementForHint(o));

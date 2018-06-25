@@ -35,11 +35,6 @@ public interface ContentManager extends Disposable, BusyObject {
   void addContent(@NotNull Content content);
   void addContent(@NotNull Content content, final int order);
 
-  /**
-   * @deprecated use {@link #addContent(Content)} instead, {@code constraints} parameter isn't used anyway
-   */
-  void addContent(@NotNull Content content, Object constraints);
-
   boolean removeContent(@NotNull Content content, final boolean dispose);
   @NotNull
   ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);

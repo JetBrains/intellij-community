@@ -307,6 +307,7 @@ public class UIUtil {
   }
 
   /** @deprecated Apple JRE is no longer supported (to be removed in IDEA 2019) */
+  @Deprecated
   public static boolean isAppleRetina() {
     return false;
   }
@@ -1175,6 +1176,7 @@ public class UIUtil {
   /**
    * @deprecated use com.intellij.util.ui.UIUtil#getTextFieldBackground()
    */
+  @Deprecated
   public static Color getActiveTextFieldBackgroundColor() {
     return getTextFieldBackground();
   }
@@ -1209,6 +1211,7 @@ public class UIUtil {
   /**
    * @deprecated use com.intellij.util.ui.UIUtil#getInactiveTextColor()
    */
+  @Deprecated
   public static Color getTextInactiveTextColor() {
     return getInactiveTextColor();
   }
@@ -1238,7 +1241,7 @@ public class UIUtil {
   }
   
   public static Color getToolTipActionBackground() {
-    return JBColor.namedColor("ToolTip.actions.background", new JBColor(new Color(0xf1f1ca), new Color(0x4d5052))); 
+    return JBColor.namedColor("ToolTip.actions.background", new JBColor(0xf1f1ca, 0x43474a)); 
   }
 
   public static Color getToolTipForeground() {
@@ -1443,6 +1446,7 @@ public class UIUtil {
   /**
    * @deprecated use com.intellij.util.ui.UIUtil#getPanelBackground() instead
    */
+  @Deprecated
   public static Color getPanelBackgound() {
     return getPanelBackground();
   }
@@ -1560,6 +1564,7 @@ public class UIUtil {
    * @return false
    * @deprecated
    */
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyLookAndFeel() {
     return false;
@@ -1570,6 +1575,7 @@ public class UIUtil {
    * @return false
    * @deprecated
    */
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderAlloyIDEALookAndFeel() {
     return false;
@@ -1596,6 +1602,7 @@ public class UIUtil {
    * @return false
    * @deprecated
    */
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderNimbusLookAndFeel() {
     return false;
@@ -1606,6 +1613,7 @@ public class UIUtil {
    * @return false
    * @deprecated
    */
+  @Deprecated
   @SuppressWarnings("HardCodedStringLiteral")
   public static boolean isUnderJGoodiesLookAndFeel() {
     return false;
@@ -2170,6 +2178,7 @@ public class UIUtil {
   /**
    * @deprecated use {@link #createImage(Graphics, int, int, int)}
    */
+  @Deprecated
   @NotNull
   public static BufferedImage createImageForGraphics(Graphics2D g, int width, int height, int type) {
     return createImage(g, width, height, type);
@@ -2587,11 +2596,6 @@ public class UIUtil {
     return null;
   }
 
-  @Deprecated
-  public static <T extends Component> T findParentByClass(@NotNull Component c, Class<T> cls) {
-    return getParentOfType(cls, c);
-  }
-
   //x and y should be from {0, 0} to {parent.getWidth(), parent.getHeight()}
   @Nullable
   public static Component getDeepestComponentAt(@NotNull Component parent, int x, int y) {
@@ -2751,6 +2755,7 @@ public class UIUtil {
   /**
    * @deprecated use {@link JBColor#border()}
    */
+  @Deprecated
   public static Color getBorderColor() {
     return isUnderDarcula() ? Gray._50 : BORDER_COLOR;
   }
@@ -2763,6 +2768,7 @@ public class UIUtil {
   /**
    * @deprecated use getBorderColor instead
    */
+  @Deprecated
   public static Color getBorderInactiveColor() {
     return getBorderColor();
   }
@@ -2770,6 +2776,7 @@ public class UIUtil {
   /**
    * @deprecated use getBorderColor instead
    */
+  @Deprecated
   public static Color getBorderActiveColor() {
     return getBorderColor();
   }
@@ -2777,6 +2784,7 @@ public class UIUtil {
   /**
    * @deprecated use getBorderColor instead
    */
+  @Deprecated
   public static Color getBorderSeparatorColor() {
     return getBorderColor();
   }

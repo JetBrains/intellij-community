@@ -125,13 +125,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return null;
   }
 
-  /**
-   * @deprecated adjust offset with PsiElement should be used instead to provide correct checking for identifier part
-   */
-  public static int adjustOffset(Document document, final int offset) {
-    return adjustOffset(null, document, offset);
-  }
-
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {
     CharSequence text = document.getCharsSequence();
     int correctedOffset = offset;
@@ -274,7 +267,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return true;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustElement(final Editor editor, final int flags, @Nullable PsiElement element, @Nullable PsiElement contextElement) {
     PsiElement langElement = element == null ? contextElement : element;
@@ -285,7 +277,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return element;
   }
 
-  @Override
   @Nullable
   public PsiElement adjustReference(@NotNull PsiReference ref) {
     PsiElement element = ref.getElement();
@@ -443,7 +434,6 @@ public class TargetElementUtil extends TargetElementUtilBase {
     return evaluator == null || evaluator.includeSelfInGotoImplementation(element);
   }
 
-  @Override
   public boolean acceptImplementationForReference(@Nullable PsiReference reference, @Nullable PsiElement element) {
     TargetElementEvaluatorEx2 evaluator = element != null ? getElementEvaluatorsEx2(ReadAction.compute(element::getLanguage)) : null;
     return evaluator == null || evaluator.acceptImplementationForReference(reference, element);

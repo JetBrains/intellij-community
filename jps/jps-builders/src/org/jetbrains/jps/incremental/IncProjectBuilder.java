@@ -170,6 +170,7 @@ public class IncProjectBuilder {
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
+      myProjectDescriptor.getFSCache().clear();
       JavacMain.clearCompilerZipFileCache();
       myProjectDescriptor.dataManager.flush(false);
       myProjectDescriptor.timestamps.getStorage().force();
@@ -1406,15 +1407,8 @@ public class IncProjectBuilder {
   }
 
   private void storeBuilderStatistics(Builder builder, long elapsedTime, int processedFiles) {
-    if (!myElapsedTimeNanosByBuilder.containsKey(builder)) {
-      myElapsedTimeNanosByBuilder.putIfAbsent(builder, new AtomicLong());
-    }
-    myElapsedTimeNanosByBuilder.get(builder).addAndGet(elapsedTime);
-
-    if (!myNumberOfSourcesProcessedByBuilder.containsKey(builder)) {
-      myNumberOfSourcesProcessedByBuilder.putIfAbsent(builder, new AtomicInteger());
-    }
-    myNumberOfSourcesProcessedByBuilder.get(builder).addAndGet(processedFiles);
+    myElapsedTimeNanosByBuilder.computeIfAbsent(builder, b -> new AtomicLong()).addAndGet(elapsedTime);
+    myNumberOfSourcesProcessedByBuilder.computeIfAbsent(builder, b -> new AtomicInteger()).addAndGet(processedFiles);
   }
 
   private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {

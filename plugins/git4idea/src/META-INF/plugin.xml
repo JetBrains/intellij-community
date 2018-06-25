@@ -40,6 +40,26 @@
     <action class="git4idea.log.GitShowCommitInLogAction" id="Git.SelectInGitLog"/>
     <action class="git4idea.log.GitBrowseRepoAtRevisionAction" id="Git.BrowseRepoAtRevision"/>
 
+    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
+    <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
+    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
+            description="Create new branch starting from the selected commit"/>
+    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
+            description="Create new tag pointing to this commit"/>
+    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
+    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
+            description="Produce a new commit, which reverts the changes made in the original commit"/>
+    <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
+            description="Undo last commit and put its changes into selected changelist"/>
+    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
+            description="Change commit message" />
+    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
+            description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
+    <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
+      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
+      <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
+    </action>
+
     <group id="GitFileActions">
       <reference ref="CheckinFiles"/>
       <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
@@ -98,29 +118,10 @@
     </group>
 
     <group id="Git.FileHistory.ContextMenu">
+      <reference id="Git.Revert.In.Log" />
       <reference id="Git.SelectInGitLog"/>
       <add-to-group group-id="Vcs.FileHistory.ContextMenu"/>
     </group>
-
-    <action class="git4idea.actions.GitCheckoutRevisionAction" id="Git.CheckoutRevision" text="Checkout Revision"/>
-    <group class="git4idea.ui.branch.GitLogBranchOperationsActionGroup" id="Git.BranchOperationGroup"/>
-    <action class="git4idea.actions.GitCreateNewBranchAction" id="Git.CreateNewBranch" text="New Branch..."
-            description="Create new branch starting from the selected commit"/>
-    <action class="git4idea.actions.GitCreateTagAction" id="Git.CreateNewTag" text="New Tag..."
-            description="Create new tag pointing to this commit"/>
-    <action id="Git.Reset.In.Log" class="git4idea.reset.GitResetAction" text="Reset Current Branch to Here..." icon="AllIcons.Actions.Rollback"/>
-    <action id="Git.Revert.In.Log" class="git4idea.revert.GitRevertAction" text="Revert"
-            description="Produce a new commit, which reverts the changes made in the original commit"/>
-    <action id="Git.Uncommit" class="git4idea.reset.GitUncommitAction" text="Undo Commit..."
-            description="Undo last commit and put its changes into selected changelist"/>
-    <action id="Git.Reword.Commit" class="git4idea.rebase.GitRewordAction" text="Reword..."
-            description="Change commit message" />
-    <action id="Git.Interactive.Rebase" class="git4idea.rebase.GitInteractiveRebaseAction" text="Interactively Rebase from Here..."
-            description="Show the dialog for interactive rebase which allows to squash, fixup, reorder, remove and reword commits" />
-    <action id="Git.Commit.And.Push.Executor" class="git4idea.actions.GitCommitAndPushExecutorAction" text="Commit and &amp;Push...">
-      <add-to-group group-id="Vcs.CommitExecutor.Actions"/>
-      <keyboard-shortcut first-keystroke="control alt K" keymap="$default"/>
-    </action>
 
     <group id="Git.Log.ContextMenu">
       <separator/>
@@ -164,6 +165,7 @@
     <vcsChangesViewRefresher implementation="git4idea.changes.GitChangesViewRefresher" />
     <pushSupport implementation="git4idea.push.GitPushSupport"/>
     <cherryPicker implementation="git4idea.cherrypick.GitCherryPicker"/>
+    <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitToggleAnnotationOptionsActionProvider" />
     <vcsAnnotationGutterActionProvider implementation="git4idea.actions.GitShowCommitInLogAnnotationGutterActionProvider" />
     <statistics.projectUsagesCollector implementation="git4idea.GitStatisticsCollector"/>
     <statistics.projectUsagesCollector implementation="git4idea.GitUsagesTriggerCollector"/>

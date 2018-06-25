@@ -61,17 +61,6 @@ public class PerformanceTestInfo {
     return this;
   }
 
-  /**
-   * @deprecated tests are CPU-bound by default, so no need to call this method.
-   */
-  @Contract(pure = true) // to warn about not calling .assertTiming() in the end
-  @Deprecated
-  public PerformanceTestInfo cpuBound() {
-    adjustForIO = false;
-    adjustForCPU = true;
-    return this;
-  }
-
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo ioBound() {
     adjustForIO = true;
@@ -90,6 +79,7 @@ public class PerformanceTestInfo {
    * seem to be meaningful, and is known to make results worse in some cases. Consider migration off this setting, recalibrating
    * expected execution time accordingly.
    */
+  @Deprecated
   @Contract(pure = true) // to warn about not calling .assertTiming() in the end
   public PerformanceTestInfo useLegacyScaling() {
     useLegacyScaling = true;

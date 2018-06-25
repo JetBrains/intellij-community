@@ -49,11 +49,17 @@ public class PluginXmlDomStubsTest extends DomStubTest {
                   "      Element:action\n" +
                   "        Attribute:id:actionId\n" +
                   "        Attribute:text:actionText\n" +
+                  "        Attribute:description:descriptionText\n" +
+                  "        Attribute:popup:false\n" +
                   "      Element:group\n" +
                   "        Attribute:id:groupId\n" +
+                  "        Attribute:description:groupDescriptionText\n" +
+                  "        Attribute:text:groupText\n" +
+                  "        Attribute:popup:true\n" +
                   "        Element:action\n" +
                   "          Attribute:id:groupAction\n" +
                   "          Attribute:text:groupActionText\n" +
+                  "          Attribute:description:groupActionDescriptionText\n" +
                   "        Element:group\n" +
                   "          Attribute:id:nestedGroup\n" +
                   "          Element:action\n" +

@@ -134,15 +134,9 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
 
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiMethodImpl method) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (findAnnotation(method, manager.getNotNulls(), true) != null || findAnnotation(method, manager.getNullables(), true) != null) {
+    if (hasExplicitNullability(method)) {
       return null;
     }
-
-    if (manager.findNullityDefaultInHierarchy(method) != null) {
-      return null;
-    }
-
     Nullability nullability = JavaSourceInference.inferNullability(method);
     if (nullability == Nullability.NOT_NULL) {
       return ProjectBytecodeAnalysis.getInstance(myProject).getNotNullAnnotation();
@@ -153,10 +147,16 @@ public class InferredAnnotationsManagerImpl extends InferredAnnotationsManager {
     return null;
   }
 
+  private boolean hasExplicitNullability(PsiModifierListOwner owner) {
+    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
+    return findAnnotation(owner, manager.getNotNulls(), true) != null ||
+           findAnnotation(owner, manager.getNullables(), true) != null ||
+           manager.findNullityDefaultInHierarchy(owner) != null;
+  }
+
   @Nullable
   private PsiAnnotation getInferredNullabilityAnnotation(PsiParameter parameter) {
-    NullableNotNullManager manager = NullableNotNullManager.getInstance(myProject);
-    if (findAnnotation(parameter, manager.getNotNulls(), true) != null || findAnnotation(parameter, manager.getNullables(), true) != null) {
+    if (hasExplicitNullability(parameter)) {
       return null;
     }
     PsiElement parent = parameter.getParent();

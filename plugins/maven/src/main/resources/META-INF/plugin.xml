@@ -28,6 +28,7 @@
     <extensionPoint name="pluginDescriptor" beanClass="org.jetbrains.idea.maven.plugins.api.MavenPluginDescriptor" />
 
     <extensionPoint name="repositoryProvider" interface="org.jetbrains.idea.maven.indices.MavenRepositoryProvider"/>
+    <extensionPoint name="executionEnvironmentProvider" interface="org.jetbrains.idea.maven.execution.build.MavenExecutionEnvironmentProvider"/>
   </extensionPoints>
 
   <depends>com.intellij.properties</depends>
@@ -311,6 +312,7 @@
     </pluginDescriptor>
 
     <importer implementation="org.jetbrains.idea.maven.importing.MavenCompilerAnnotationProcessorPathsImporter"/>
+    <executionEnvironmentProvider implementation="org.jetbrains.idea.maven.execution.MavenApplicationConfigurationExecutionEnvironmentProvider"/>
   </extensions>
 
   <application-components>

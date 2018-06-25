@@ -21,6 +21,7 @@ import com.intellij.psi.search.DelegatingGlobalSearchScope;
 /**
  * @deprecated use {@link Module#getModuleContentScope()}
  */
+@Deprecated
 public class ModuleContentRootSearchScope extends DelegatingGlobalSearchScope {
 
   public ModuleContentRootSearchScope(final Module module) {

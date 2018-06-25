@@ -15,7 +15,6 @@
  */
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
@@ -36,6 +35,7 @@ public class PyFunctionBuilder {
   private final List<String> myParameters = new ArrayList<>();
   private final List<String> myStatements = new ArrayList<>();
   private final List<String> myDecorators = new ArrayList<>();
+  private final PsiElement mySettingAnchor;
   private String myAnnotation = null;
   @NotNull
   private final Map<String, String> myDecoratorValues = new HashMap<>();
@@ -74,12 +74,6 @@ public class PyFunctionBuilder {
     return functionBuilder;
   }
 
-  @Deprecated
-  public PyFunctionBuilder(@NotNull String name) {
-    myName = name;
-    myDocStringGenerator = null;
-  }
-
   /**
    * @param settingsAnchor any PSI element, presumably in the same file/module where generated function is going to be inserted.
    *                       It's needed to detect configured docstring format and Python indentation size and, as result, 
@@ -88,8 +82,9 @@ public class PyFunctionBuilder {
   public PyFunctionBuilder(@NotNull String name, @NotNull PsiElement settingsAnchor) {
     myName = name;
     myDocStringGenerator = PyDocstringGenerator.create(DocStringUtil.getConfiguredDocStringFormatOrPlain(settingsAnchor), 
-                                                       PyIndentUtil.getIndentFromSettings(settingsAnchor.getProject()), 
+                                                       PyIndentUtil.getIndentFromSettings(settingsAnchor.getContainingFile()),
                                                        settingsAnchor);
+    mySettingAnchor = settingsAnchor;
   }
 
   /**
@@ -141,26 +136,25 @@ public class PyFunctionBuilder {
     return this;
   }
 
-  public PyFunction addFunction(PsiElement target, final LanguageLevel languageLevel) {
-    return (PyFunction)target.add(buildFunction(target.getProject(), languageLevel));
+  public PyFunction addFunction(PsiElement target) {
+    return (PyFunction)target.add(buildFunction());
   }
 
-  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor, final LanguageLevel languageLevel) {
-    return (PyFunction)target.addAfter(buildFunction(target.getProject(), languageLevel), anchor);
+  public PyFunction addFunctionAfter(PsiElement target, PsiElement anchor) {
+    return (PyFunction)target.addAfter(buildFunction(), anchor);
   }
 
-  public PyFunction buildFunction(Project project, final LanguageLevel languageLevel) {
-    PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    String text = buildText(project, generator, languageLevel);
-    return generator.createFromText(languageLevel, PyFunction.class, text);
+  public PyFunction buildFunction() {
+    PyElementGenerator generator = PyElementGenerator.getInstance(mySettingAnchor.getProject());
+    return generator.createFromText(LanguageLevel.forElement(mySettingAnchor), PyFunction.class, buildText(generator));
   }
 
-  private String buildText(Project project, PyElementGenerator generator, LanguageLevel languageLevel) {
+  private String buildText(PyElementGenerator generator) {
     StringBuilder builder = new StringBuilder();
     for (String decorator : myDecorators) {
       final StringBuilder decoratorAppender = builder.append('@' + decorator);
       if (myDecoratorValues.containsKey(decorator)) {
-        final PyCallExpression fakeCall = generator.createCallExpression(languageLevel, "fakeFunction");
+        final PyCallExpression fakeCall = generator.createCallExpression(LanguageLevel.forElement(mySettingAnchor), "fakeFunction");
         fakeCall.getArgumentList().addArgument(generator.createStringLiteralFromString(myDecoratorValues.get(decorator)));
         decoratorAppender.append(fakeCall.getArgumentList().getText());
       }
@@ -179,7 +173,7 @@ public class PyFunctionBuilder {
     builder.append(":");
     List<String> statements = myStatements.isEmpty() ? Collections.singletonList(PyNames.PASS) : myStatements;
 
-    final String indent = PyIndentUtil.getIndentFromSettings(project);
+    final String indent = PyIndentUtil.getIndentFromSettings(mySettingAnchor.getContainingFile());
     // There was original docstring or some parameters were added via parameterWithType()
     if (!myDocStringGenerator.isNewMode() || myDocStringGenerator.hasParametersToAdd()) {
       final String docstring = PyIndentUtil.changeIndent(myDocStringGenerator.buildDocString(), true, indent);

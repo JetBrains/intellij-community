@@ -393,6 +393,9 @@ public class RefactoringUtil {
       ExpectedTypeInfo[] infos = ExpectedTypesProvider.getExpectedTypes(expr, false);
       if (infos.length == 1) {
         type = infos[0].getType();
+        if (type instanceof PsiPrimitiveType) {
+          type = ((PsiPrimitiveType)type).getBoxedType(expr);
+        }
       }
       else {
         type = factory.createTypeByFQClassName(CommonClassNames.JAVA_LANG_OBJECT, expr.getResolveScope());

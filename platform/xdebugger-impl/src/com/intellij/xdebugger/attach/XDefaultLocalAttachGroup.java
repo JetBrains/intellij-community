@@ -27,6 +27,7 @@ import javax.swing.*;
 /**
  * @deprecated use {@link XAttachPresentationGroup} instead
  */
+@Deprecated
 public class XDefaultLocalAttachGroup implements XLocalAttachGroup {
   public static final XDefaultLocalAttachGroup INSTANCE = new XDefaultLocalAttachGroup();
 

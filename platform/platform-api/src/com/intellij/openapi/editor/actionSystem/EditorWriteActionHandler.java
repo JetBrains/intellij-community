@@ -70,6 +70,7 @@ public abstract class EditorWriteActionHandler extends EditorActionHandler {
    * {@link #executeWriteAction(Editor, Caret, DataContext)}
    * instead.
    */
+  @Deprecated
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     if (inExecution) {
       return;

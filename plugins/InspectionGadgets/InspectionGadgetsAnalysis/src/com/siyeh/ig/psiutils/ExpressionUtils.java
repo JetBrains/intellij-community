@@ -225,7 +225,7 @@ public class ExpressionUtils {
   @Contract("null -> false")
   public static boolean isNullLiteral(@Nullable PsiExpression expression) {
     expression = PsiUtil.deparenthesizeExpression(expression);
-    return expression != null && PsiType.NULL.equals(expression.getType());
+    return expression instanceof PsiLiteralExpression && ((PsiLiteralExpression)expression).getValue() == null;
   }
 
   /**
@@ -1119,14 +1119,6 @@ public class ExpressionUtils {
   @Contract("null -> false")
   public static boolean isNewObject(@Nullable PsiExpression expression) {
     return expression != null && nonStructuralChildren(expression).allMatch(PsiNewExpression.class::isInstance);
-  }
-
-  /**
-   * Use {@link ExpressionUtil#isEffectivelyUnqualified} instead
-   */
-  @Deprecated
-  public static boolean isEffectivelyUnqualified(PsiReferenceExpression refExpression) {
-    return ExpressionUtil.isEffectivelyUnqualified(refExpression);
   }
 
   /**

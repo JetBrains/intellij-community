@@ -96,10 +96,11 @@ fun PluginsDialogModel.pressOk(): Unit = pressButton("OK")
 fun PluginsDialogModel.pressCancel(): Unit = pressButton("Cancel")
 
 fun PluginsDialogModel.installPluginFromDisk(pluginFileName: String){
-  with(testCase){
-    logUIStep("Press `Install plugin from disk`")
-    pressButton("Install plugin from disk...")
-    chooseFileInFileChooser(pluginFileName)
+  with(connectDialog()){
+    guiTestCase.logUIStep("Press `Install plugin from disk`")
+    actionButtonByClass("").click()
+    popupClick("Install Plugin from Disk...")
+    guiTestCase.chooseFileInFileChooser(pluginFileName)
     pressOk()
     ensureButtonOkHasPressed()
   }

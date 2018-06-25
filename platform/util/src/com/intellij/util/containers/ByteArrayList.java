@@ -6,15 +6,12 @@ import gnu.trove.TByteArrayList;
 /**
  * @deprecated use {@link TByteArrayList instead}
  */
+@Deprecated
 public class ByteArrayList extends TByteArrayList {
   public ByteArrayList() {
   }
 
   public ByteArrayList(int capacity) {
     super(capacity);
-  }
-
-  public ByteArrayList(byte[] values) {
-    super(values);
   }
 }

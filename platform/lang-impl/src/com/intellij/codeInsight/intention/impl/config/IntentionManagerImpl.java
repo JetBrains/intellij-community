@@ -129,28 +129,11 @@ public class IntentionManagerImpl extends IntentionManager implements Disposable
     return fqn.substring(fqn.lastIndexOf('.') + 1).replaceAll("\\$", "");
   }
 
-  @Override
   public void registerIntentionAndMetaData(@NotNull IntentionAction action,
                                            @NotNull String[] categories,
                                            @NotNull @NonNls String descriptionDirectoryName) {
     addAction(action);
     mySettings.registerIntentionMetaData(action, categories, descriptionDirectoryName);
-  }
-
-  @Override
-  public void registerIntentionAndMetaData(@NotNull final IntentionAction action,
-                                           @NotNull final String[] category,
-                                           @NotNull final String description,
-                                           @NotNull final String exampleFileExtension,
-                                           @NotNull final String[] exampleTextBefore,
-                                           @NotNull final String[] exampleTextAfter) {
-    addAction(action);
-
-    IntentionActionMetaData metaData = new IntentionActionMetaData(action, category,
-                                                                   new PlainTextDescriptor(description, "description.html"),
-                                                                   mapToDescriptors(exampleTextBefore, "before." + exampleFileExtension),
-                                                                   mapToDescriptors(exampleTextAfter, "after." + exampleFileExtension));
-    mySettings.registerMetaData(metaData);
   }
 
   @Override

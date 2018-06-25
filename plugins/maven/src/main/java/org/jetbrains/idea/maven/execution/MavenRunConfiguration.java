@@ -57,8 +57,15 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
   }
 
   @Override
-  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
-    JavaCommandLineState state = new JavaCommandLineState(env) {
+  public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
+    class JavaCommandLineStateImpl extends JavaCommandLineState implements RemoteConnectionCreator {
+
+      private RemoteConnectionCreator myRemoteConnectionCreator;
+
+      protected JavaCommandLineStateImpl(@NotNull ExecutionEnvironment environment) {
+        super(environment);
+      }
+
       @Override
       protected JavaParameters createJavaParameters() throws ExecutionException {
         return MavenRunConfiguration.this.createJavaParameters(env.getProject());
@@ -89,9 +96,49 @@ public class MavenRunConfiguration extends LocatableConfigurationBase implements
         });
         return result;
       }
-    };
+
+      public RemoteConnectionCreator getRemoteConnectionCreator() {
+        if (myRemoteConnectionCreator == null) {
+          try {
+            myRemoteConnectionCreator = MavenRunConfiguration.this.createRemoteConnectionCreator(getJavaParameters());
+          }
+          catch (ExecutionException e) {
+            throw new RuntimeException("Cannot create java parameters", e);
+          }
+        }
+        return myRemoteConnectionCreator;
+      }
+
+      @Nullable
+      @Override
+      public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+        return getRemoteConnectionCreator().createRemoteConnection(environment);
+      }
+
+      @Override
+      public boolean isPollConnection() {
+        return getRemoteConnectionCreator().isPollConnection();
+      }
+    }
+    JavaCommandLineState state = new JavaCommandLineStateImpl(env);
     state.setConsoleBuilder(MavenConsoleImpl.createConsoleBuilder(getProject()));
     return state;
+  }
+
+  @NotNull
+  public RemoteConnectionCreator createRemoteConnectionCreator(JavaParameters javaParameters) {
+    return new RemoteConnectionCreator() {
+      @Nullable
+      @Override
+      public RemoteConnection createRemoteConnection(ExecutionEnvironment environment) {
+        return null; //TODO IDEA-189973 filter and patch exec goals to support debug
+      }
+
+      @Override
+      public boolean isPollConnection() {
+        return true;
+      }
+    };
   }
 
   private void updateProjectsFolders() {

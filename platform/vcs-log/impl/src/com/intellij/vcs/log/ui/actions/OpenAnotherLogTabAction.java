@@ -28,7 +28,7 @@ import com.intellij.vcs.log.util.VcsLogUtil;
 
 public class OpenAnotherLogTabAction extends DumbAwareAction {
   protected OpenAnotherLogTabAction() {
-    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.General.Add);
+    super("Open Another Log Tab", "Open Another Log Tab", AllIcons.ToolbarDecorator.Export);
   }
 
   @Override

@@ -33,7 +33,8 @@ public class ExpandedItemRendererComponentWrapper extends JComponent {
   /**
    * @deprecated use {@link #wrap(Component)}} instead to create an instance
    */
-  public ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
+  @Deprecated
+  private ExpandedItemRendererComponentWrapper(@NotNull final Component rendererComponent) {
     add(rendererComponent);
     setOpaque(false);
     setLayout(new AbstractLayoutManager() {

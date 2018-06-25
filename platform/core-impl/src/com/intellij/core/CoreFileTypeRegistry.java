@@ -91,12 +91,6 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     }
   }
 
-  @NotNull
-  @Override
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return UnknownFileType.INSTANCE;
-  }
-
   @Nullable
   @Override
   public FileType findFileTypeByName(@NotNull String fileTypeName) {

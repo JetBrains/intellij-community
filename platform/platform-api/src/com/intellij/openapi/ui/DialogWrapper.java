@@ -6,7 +6,7 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.eventLog.FeatureUsageUiEvents;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
@@ -1790,17 +1790,27 @@ public abstract class DialogWrapper {
   }
 
   private void logCloseDialogEvent(int exitCode) {
-    final String className = getClass().getName();
-    if (StringUtil.isNotEmpty(className)) {
-      FeatureUsageUiEvents.INSTANCE.logCloseDialog(className, exitCode);
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
     }
   }
 
   private void logShowDialogEvent() {
-    final String className = getClass().getName();
-    if (StringUtil.isNotEmpty(className)) {
-      FeatureUsageUiEvents.INSTANCE.logShowDialog(className);
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
     }
+  }
+
+  /**
+   * The ID will be recorded in user event log, it can be used to understand how often this dialog is used.
+   *
+   * @return null if we shouldn't record the dialog.
+   */
+  @Nullable
+  protected String getLoggedDialogId() {
+    return getClass().getName();
   }
 
   /**
@@ -1877,7 +1887,7 @@ public abstract class DialogWrapper {
   private void recordAction(String name, AWTEvent event) {
     if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
-      ActionsCollector.getInstance().record(name + " " + shortcut);
+      ActionsCollector.getInstance().record(name + " " + shortcut, getClass());
     }
   }
 

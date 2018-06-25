@@ -498,6 +498,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   /**
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
+  @Deprecated
   public AnAction[] getTreeActions() {
     return new AnAction[]{
       ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),

@@ -21,7 +21,7 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 
-final class ContractConverter {
+public final class ContractConverter {
   private ContractConverter() {}
 
   @Nullable
@@ -30,9 +30,9 @@ final class ContractConverter {
   }
 
   @Nullable
-  static PsiAnnotation convertContract(@NotNull PsiMethod method,
-                                       @NotNull String[] oldParameterNames,
-                                       @NotNull JavaParameterInfo[] newParameters) throws ContractConversionException {
+  public static PsiAnnotation convertContract(@NotNull PsiMethod method,
+                                              @NotNull String[] oldParameterNames,
+                                              @NotNull JavaParameterInfo[] newParameters) throws ContractConversionException {
     PsiAnnotation annotation = JavaMethodContractUtil.findContractAnnotation(method);
     if (annotation == null || AnnotationUtil.isInferredAnnotation(annotation)) return null;
     if (AnnotationUtil.isExternalAnnotation(annotation)) {
@@ -114,7 +114,7 @@ final class ContractConverter {
     return oldToNewIndex;
   }
 
-  static final class ContractConversionException extends Exception {
+  public static final class ContractConversionException extends Exception {
     ContractConversionException(String message) {
       super(message);
     }

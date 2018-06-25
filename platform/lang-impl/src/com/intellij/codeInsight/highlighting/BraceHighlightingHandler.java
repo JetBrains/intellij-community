@@ -347,7 +347,14 @@ public class BraceHighlightingHandler {
 
   @NotNull
   private FileType getFileTypeByIterator(@NotNull HighlighterIterator iterator) {
-    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, iterator.getStart()).getFileType();
+    int start;
+    try {
+      start = iterator.getStart();
+    }
+    catch (IndexOutOfBoundsException e) {
+      throw new RuntimeException("Error getting file type for " + myEditor + ", text length: " + myDocument.getTextLength(), e);
+    }
+    return PsiUtilBase.getPsiFileAtOffset(myPsiFile, start).getFileType();
   }
 
   @NotNull
@@ -561,7 +568,7 @@ public class BraceHighlightingHandler {
     if (startLine >= endLine || endLine >= myDocument.getLineCount()) return;
 
     int startOffset = myDocument.getLineStartOffset(startLine);
-    int endOffset = myDocument.getLineStartOffset(endLine);
+    int endOffset = myDocument.getLineEndOffset(endLine);
 
     LineMarkerRenderer renderer = createLineMarkerRenderer(matched);
     if (renderer == null) return;
@@ -605,11 +612,10 @@ public class BraceHighlightingHandler {
 
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      int height = r.height + editor.getLineHeight();
       g.setColor(myColor);
-      g.fillRect(r.x, r.y, THICKNESS, height);
+      g.fillRect(r.x, r.y, THICKNESS, r.height);
       g.fillRect(r.x + THICKNESS, r.y, DEEPNESS, THICKNESS);
-      g.fillRect(r.x + THICKNESS, r.y + height - THICKNESS, DEEPNESS, THICKNESS);
+      g.fillRect(r.x + THICKNESS, r.y + r.height - THICKNESS, DEEPNESS, THICKNESS);
     }
   }
 }

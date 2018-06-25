@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.ide.presentation.Presentation;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NotNull;
@@ -27,33 +28,8 @@ import java.util.List;
 /**
  * plugin.dtd:action interface.
  */
+@Presentation(typeName = "Action")
 public interface Action extends ActionOrGroup {
-
-	/**
-	 * Returns the value of the popup child.
-	 * Attribute popup
-	 * @return the value of the popup child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getPopup();
-
-
-	/**
-	 * Returns the value of the icon child.
-	 * Attribute icon
-	 * @return the value of the icon child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getIcon();
-
-
-	/**
-	 * Returns the value of the description child.
-	 * Attribute description
-	 * @return the value of the description child.
-	 */
-	@NotNull
-	GenericAttributeValue<String> getDescription();
 
 
 	/**
@@ -69,25 +45,6 @@ public interface Action extends ActionOrGroup {
         @Convert(PluginPsiClassConverter.class)
         GenericAttributeValue<PsiClass> getClazz();
 
-
-	/**
-	 * Returns the value of the text child.
-	 * Attribute text
-	 * @return the value of the text child.
-	 */
-	@NotNull
-	@Stubbed
-	GenericAttributeValue<String> getText();
-
-	/**
-	 * Returns the value of the id child.
-	 * Attribute id
-	 * @return the value of the id child.
-	 */
-	@NotNull
-	@Required
-	@Stubbed
-	GenericAttributeValue<String> getId();
 
 	/**
 	 * Returns the list of keyboard-shortcut children.

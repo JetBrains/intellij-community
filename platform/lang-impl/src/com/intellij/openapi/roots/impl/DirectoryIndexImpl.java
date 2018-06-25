@@ -113,12 +113,6 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     return rootIndex;
   }
 
-  @Override
-  public DirectoryInfo getInfoForDirectory(@NotNull VirtualFile dir) {
-    DirectoryInfo info = getInfoForFile(dir);
-    return info.isInProject(dir) ? info : null;
-  }
-
   @NotNull
   @Override
   public DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
@@ -133,7 +127,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @Nullable
   public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
-    if (info.isInModuleSource()) {
+    boolean inModuleSource = info instanceof DirectoryInfoImpl && ((DirectoryInfoImpl)info).isInModuleSource();
+    if (inModuleSource) {
       return getRootIndex().getSourceRootType(info);
     }
     return null;

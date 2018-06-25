@@ -413,6 +413,7 @@
 
     <group id="ToolbarRunGroup">
       <separator/>
+      <reference ref="RunAnything"/>
       <reference ref="RunConfiguration"/>
       <reference ref="RunnerActions"/>
       <reference ref="Stop"/>
@@ -506,6 +507,7 @@
       <separator/>
       <reference ref="VersionControlsGroup"/>
       <action id="SynchronizeCurrentFile" class="com.intellij.ide.actions.SynchronizeCurrentFileAction" icon="AllIcons.Actions.Refresh"/>
+      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
       <separator/>
       <reference ref="ShowFilePath"/>
       <action id="GoToLinkTarget" class="com.intellij.ide.actions.GoToLinkTargetAction"/>
@@ -588,8 +590,6 @@
 
     <group id="ScopeViewPopupMenu">
       <reference ref="ProjectViewPopupMenu"/>
-      <separator/>
-      <action id="ScopeView.EditScopes" class="com.intellij.ide.scopeView.EditScopesAction"/>
     </group>
 
     <group id="StructureViewPopupMenu">
@@ -1103,27 +1103,29 @@
         <reference ref="RunConfiguration"/>
         <group id="RunnerActionsTouchbar"/> <!--filled from ExecutorRegistry-->
         <reference ref="Stop"/>
-        <separator/>
-        <reference ref="Vcs.UpdateProject"/>
-        <reference ref="CheckinProject"/>
+        <separator text="type.small"/>
+        <separator text="type.large"/>
+        <group id="TouchBarDefaultOptionalGroup">
+          <reference ref="Vcs.UpdateProject"/>
+          <reference ref="CheckinProject"/>
+        </group>
         <group id="TouchBarDefault_alt" text="Default with Alt key">
           <separator text="type.flexible"/>
-          <reference ref="RevealGroup"/>
         </group>
         <group id="TouchBarDefault_cmd" text="Default with Cmd key">
           <!--Use Cmd modifier key to show Navigation buttons, Bookmark and Breakpoint toggles and to Show Usages/-->
           <!--Cmd key is used, because it’s used in most of the action shortcuts: Back/Forward, Breakpoint and Find Usages./-->
           <reference ref="Back"/>
           <reference ref="Forward"/>
-          <separator text="type.big"/>
+          <separator text="type.large"/>
           <reference ref="ToggleBookmark"/>
           <reference ref="ToggleLineBreakpoint"/>
           <separator text="type.flexible"/>
-          <reference ref="FindUsages"/>
+          <reference ref="ShowUsages"/>
         </group>
         <group id="TouchBarDefault_cmd.alt" text="Default with Alt+Cmd key">
           <separator text="type.flexible"/>
-          <reference ref="ShowUsages"/>
+          <reference ref="FindUsages"/>
         </group>
         <group id="TouchBarDefault_shift" text="Default with Shift key">
           <!--Use Shift to show Refactor actions/-->
@@ -1136,27 +1138,27 @@
       </group>
       <group id="TouchBarDebug" text="Debugger">
         <reference ref="Rerun"/>
-        <reference ref="Pause"/>
         <reference ref="Resume"/>
+        <reference ref="Pause"/>
         <reference ref="Stop"/>
-        <separator/>
+        <separator text="type.small"/>
         <reference ref="XDebugger.MuteBreakpoints"/>
-        <separator/>
-        <reference ref="StepOver"/>
-        <reference ref="StepInto"/>
-        <reference ref="StepOut"/>
-        <separator/>
-        <reference ref="EvaluateExpression"/>
-        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
-          <separator/>
-          <reference ref="ViewBreakpoints"/>
-          <separator/>
-          <reference ref="ForceStepOver"/>
-          <reference ref="ForceStepInto"/>
-          <reference ref="SmartStepInto"/>
-          <reference ref="RunToCursor"/>
+        <separator text="type.large"/>
+        <group id="TouchBarDebug.StepButtons" compact="true">
+          <reference ref="StepOver"/>
+          <reference ref="StepInto"/>
+          <reference ref="StepOut"/>
         </group>
-        <group id="TouchBarDebug_cmd" text="Debugger with Cmd key"/>
+        <group id="TouchBarDebug_alt" text="Debugger with Alt key">
+          <reference ref="ViewBreakpoints"/>
+          <separator text="type.flexible"/>
+          <group id="TouchBarDebug.ForceStepButtons" compact="true">
+            <reference ref="ForceStepOver"/>
+            <reference ref="ForceStepInto"/>
+            <reference ref="SmartStepInto"/>
+            <reference ref="RunToCursor"/>
+          </group>
+        </group>
       </group>
     </group>
   </actions>

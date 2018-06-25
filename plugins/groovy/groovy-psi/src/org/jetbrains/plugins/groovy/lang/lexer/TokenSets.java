@@ -160,9 +160,6 @@ public interface TokenSets {
 
   TokenSet POSTFIX_UNARY_OP_SET = TokenSet.create(mDEC, mINC);
 
-  @Deprecated
-  TokenSet BINARY_OP_SET = GroovyTokenSets.BINARY_OPERATORS;
-
   TokenSet PARENTHESIZED_BINARY_OP_SET = TokenSet.create(mEQUAL, mNOT_EQUAL);
 
   TokenSet ASSOCIATIVE_BINARY_OP_SET = TokenSet.create(mBAND, mBOR, mBXOR, mLOR, mPLUS, mSTAR, mLAND);

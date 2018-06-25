@@ -20,6 +20,7 @@ package com.intellij.openapi.actionSystem;
  * @deprecated This API proved to be rather inconvenient
  * @see com.intellij.openapi.actionSystem.DataProvider
  */
+@Deprecated
 public interface TypeSafeDataProvider {
   void calcData(DataKey key, DataSink sink);
 }

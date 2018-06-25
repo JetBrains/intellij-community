@@ -144,18 +144,6 @@ public class NanoXmlUtil {
     }
   }
 
-  @Deprecated  // TODO: remove
-  @NotNull
-  public static XmlFileHeader parseHeader(final InputStream inputStream) {
-    try {
-      return parseHeader(new MyXMLReader(inputStream));
-    }
-    catch (IOException e) {
-      LOG.error(e);
-      return null;
-    }
-  }
-
   @NotNull
   public static XmlFileHeader parseHeader(final Reader reader) {
     return parseHeader(new MyXMLReader(reader));

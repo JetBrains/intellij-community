@@ -198,6 +198,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
       @Override
       public void visitReferenceExpression(PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
+        if (expression.getParent() instanceof PsiMethodCallExpression) {
+          return;
+        }
         if (expression.resolve() == parent) {
           referenced = true;
         }

@@ -16,6 +16,7 @@
 package com.intellij.testFramework;
 
 import com.intellij.ProjectTopics;
+import com.intellij.ReviseWhenPortedToJDK;
 import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.completion.CompletionProgressIndicator;
 import com.intellij.codeInsight.hint.HintManager;
@@ -29,7 +30,6 @@ import com.intellij.ide.startup.StartupManagerEx;
 import com.intellij.ide.startup.impl.StartupManagerImpl;
 import com.intellij.idea.IdeaLogger;
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.lang.Language;
 import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -80,7 +80,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.impl.PsiDocumentManagerImpl;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageManagerImpl;
@@ -458,6 +457,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
   
   private static int ourTestCount;
 
+  @ReviseWhenPortedToJDK("9")
   private static void checkJavaSwingTimersAreDisposed() throws Exception {
     Class<?> TimerQueueClass = Class.forName("javax.swing.TimerQueue");
     Method sharedInstance = ReflectionUtil.getMethod(TimerQueueClass, "sharedInstance");
@@ -471,7 +471,12 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       Method getTimer = ReflectionUtil.getDeclaredMethod(timer.getClass(), "getTimer");
       Timer swingTimer = (Timer)getTimer.invoke(timer);
       text = "Timer (listeners: "+Arrays.asList(swingTimer.getActionListeners()) + ") "+text;
-      throw new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue);
+      try {
+        throw new AssertionFailedError("Not disposed java.swing.Timer: " + text + "; queue:" + timerQueue);
+      }
+      finally {
+        swingTimer.stop();
+      }
     }
   }
 

@@ -33,7 +33,14 @@ private fun Array<String>.find(arg: String) = this.find {
 }?.removePrefix("$arg=")
 
 private fun printUsageAndExit() {
-  println("Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$syncIcons=false|true] [$syncDevIcons=false|true]")
+  println("""
+    |Usage: $repoArg=<devRepoDir>,<iconsRepoDir> [$patternArg=...] [$syncIcons=false|true] [$syncDevIcons=false|true]
+    |
+    |* `$repoArg` - comma-separated repository paths, first is developers' repo, second is designers'
+    |* `$patternArg` - test data folders regular expression
+    |* `$syncDevIcons` - update icons in developers' repo. Switch off to run check only
+    |* `$syncIcons` - update icons in designers' repo. Switch off to run check only
+  """.trimMargin())
   System.exit(1)
 }
 

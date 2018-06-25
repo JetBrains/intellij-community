@@ -262,6 +262,7 @@ public class PsiTestUtil {
   /**
    * @deprecated to attract attention and motivate to fix tests which fail these checks
    */
+  @Deprecated
   public static void disablePsiTextConsistencyChecks(@NotNull Disposable parentDisposable) {
     Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, parentDisposable);
   }

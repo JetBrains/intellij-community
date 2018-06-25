@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.InspectionToolProvider;
 import com.intellij.codeInspection.LocalInspectionTool;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
@@ -40,7 +39,6 @@ import com.intellij.ide.util.gotoByName.GotoClassModel2;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.injected.editor.VirtualFileWindow;
-import com.intellij.lang.Language;
 import com.intellij.lang.LanguageStructureViewBuilder;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -109,8 +107,6 @@ import com.intellij.testFramework.*;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.utils.inlays.CaretAndInlaysInfo;
 import com.intellij.testFramework.utils.inlays.InlayHintsChecker;
-import com.intellij.ui.breadcrumbs.BreadcrumbsProvider;
-import com.intellij.ui.breadcrumbs.BreadcrumbsUtil;
 import com.intellij.ui.components.breadcrumbs.Crumb;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.*;
@@ -560,16 +556,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (filePaths.length != 0) {
       configureByFilesInner(filePaths);
     }
-    List<HighlightInfo> infos = doHighlighting();
-    List<IntentionAction> actions = new ArrayList<>();
-    for (HighlightInfo info : infos) {
-      if (info.quickFixActionRanges != null) {
-        for (Pair<HighlightInfo.IntentionActionDescriptor, TextRange> pair : info.quickFixActionRanges) {
-          actions.add(pair.getFirst().getAction());
-        }
-      }
-    }
-    return actions;
+    return myEditorTestFixture.getAllQuickFixes();
   }
 
   @Override
@@ -1499,6 +1486,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   public String getFoldingDescription(boolean withCollapseStatus) {
     final Editor topEditor = getHostEditor();
     CodeFoldingManager.getInstance(getProject()).buildInitialFoldings(topEditor);
+    return getFoldingData(topEditor, withCollapseStatus);
+  }
+
+  @NotNull
+  public static String getFoldingData(Editor topEditor, boolean withCollapseStatus) {
     return getTagsFromSegments(topEditor.getDocument().getText(),
                                Arrays.asList(topEditor.getFoldingModel().getAllFoldRegions()),
                                FOLD,
@@ -1553,8 +1545,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assertNotNull(expectedContent);
 
     expectedContent = StringUtil.replace(expectedContent, "\r", "");
-    final String cleanContent = expectedContent.replaceAll("<" + FOLD + "\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>", "")
-      .replace("</" + FOLD + ">", "");
+    final String cleanContent = removeFoldingMarkers(expectedContent);
     if (destinationFileName == null) {
       configureByText(FileTypeManager.getInstance().getFileTypeByFileName(verificationFileName), cleanContent);
     }
@@ -1573,6 +1564,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     if (!expectedContent.equals(actual)) {
       throw new FileComparisonFailure(verificationFile.getName(), expectedContent, actual, verificationFile.getPath());
     }
+  }
+
+  @NotNull
+  public static String removeFoldingMarkers(String expectedContent) {
+    return expectedContent.replaceAll("<" + FOLD + "\\stext=\'[^\']*\'(\\sexpand=\'[^\']*\')*>", "")
+      .replace("</" + FOLD + ">", "");
   }
 
   @Override
@@ -1702,26 +1699,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   @NotNull
   @Override
   public List<Crumb> getBreadcrumbsAtCaret() {
-    PsiElement element = getFile().findElementAt(getCaretOffset());
-    if (element == null) {
-      return Collections.emptyList();
-    }
-    final Language language = element.getContainingFile().getLanguage();
-
-    final BreadcrumbsProvider provider = BreadcrumbsUtil.getInfoProvider(language);
-
-    if (provider == null) {
-      return Collections.emptyList();
-    }
-
-    List<Crumb> result = new ArrayList<>();
-    while (element != null) {
-      if (provider.acceptElement(element)) {
-        result.add(new Crumb.Impl(provider, element));
-      }
-      element = provider.getParent(element);
-    }
-    return ContainerUtil.reverse(result);
+    return myEditorTestFixture.getBreadcrumbsAtCaret();
   }
 
   @NotNull
@@ -1862,13 +1840,4 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     return myProjectFixture.getTestRootDisposable();
   }
 
-  //<editor-fold desc="Deprecated stuff.">
-  @Deprecated
-  public static GlobalInspectionContextForTests createGlobalContextForTool(@NotNull AnalysisScope scope,
-                                                                           @NotNull final Project project,
-                                                                           @NotNull InspectionManagerEx inspectionManager,
-                                                                           @NotNull final InspectionToolWrapper... toolWrappers) {
-    return InspectionsKt.createGlobalContextForTool(scope, project, Arrays.<InspectionToolWrapper<?, ?>>asList(toolWrappers));
-  }
-  //</editor-fold>
 }

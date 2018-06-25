@@ -479,9 +479,9 @@ public class TreeTraverserTest extends TestCase {
     assertEquals(Arrays.asList(1, 2, 3, 4, 5), uniqueMod5.toList()); // same results again
   }
 
-  public void testSorted() {
+  public void testSort() {
     JBIterable<Integer> it1 = JBIterable.generate(1, INCREMENT).take(30);
-    JBIterable<Integer> it2 = JBIterable.generate(30, o -> o - 1).take(30).sorted(Integer::compareTo);
+    JBIterable<Integer> it2 = JBIterable.generate(30, o -> o - 1).take(30).sort(Integer::compareTo);
     assertEquals(it1.toList(), it2.unique().toList());
   }
 

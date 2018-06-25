@@ -21,6 +21,11 @@ fun PsiElement.contexts(): Sequence<PsiElement> = generateSequence(this) {
   it.context
 }
 
+fun PsiElement.backwardSiblings(): Sequence<PsiElement> = generateSequence(this) {
+  ProgressManager.checkCanceled()
+  it.prevSibling
+}
+
 @JvmOverloads
 fun PsiElement.treeWalkUp(processor: PsiScopeProcessor, state: ResolveState = ResolveState.initial(), place: PsiElement = this): Boolean {
   for ((scope, lastParent) in contexts().withPrevious()) {

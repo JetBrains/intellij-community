@@ -11,6 +11,7 @@ import com.intellij.lang.PsiBuilderUtil.parseBlockLazy
 import com.intellij.lang.parser.GeneratedParserUtilBase.*
 import com.intellij.openapi.util.Key
 import com.intellij.openapi.util.KeyWithDefaultValue
+import com.intellij.openapi.util.text.StringUtil.contains
 import com.intellij.psi.tree.IElementType
 import com.intellij.psi.tree.TokenSet
 import org.jetbrains.plugins.groovy.GroovyBundle
@@ -393,3 +394,12 @@ fun withProtectedLastVariantPos(builder: PsiBuilder, level: Int, parser: Parser)
 }
 
 private val PsiBuilder.state: ErrorState get() = ErrorState.get(this)
+
+fun newLine(builder: PsiBuilder, level: Int): Boolean {
+  builder.eof() // force skip whitespaces
+  val prevStart = builder.rawTokenTypeStart(-1)
+  val currentStart = builder.rawTokenTypeStart(0)
+  return contains(builder.originalText, prevStart, currentStart, '\n')
+}
+
+fun noNewLine(builder: PsiBuilder, level: Int): Boolean = !newLine(builder, level)

@@ -148,12 +148,12 @@ public class WrapExpressionFix implements IntentionAction {
       for (int j = 0; j < expressions.length; j++) {
         PsiExpression expression = expressions[j];
         final PsiType exprType = expression.getType();
-        if (exprType != null) {
+        if (exprType != null && !PsiType.NULL.equals(exprType)) {
           PsiType paramType = parameters[Math.min(j, parameters.length - 1)].getType();
           if (paramType instanceof PsiEllipsisType) {
             paramType = ((PsiEllipsisType)paramType).getComponentType();
           }
-          paramType = substitutor != null ? substitutor.substitute(paramType) : paramType;
+          paramType = substitutor.substitute(paramType);
           if (paramType.isAssignableFrom(exprType)) continue;
           final PsiClassType classType = getClassType(paramType, expression);
           if (expectedType == null && classType != null && findWrapper(exprType, classType, paramType instanceof PsiPrimitiveType) != null) {

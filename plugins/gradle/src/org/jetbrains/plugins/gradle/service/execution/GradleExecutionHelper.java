@@ -330,6 +330,7 @@ public class GradleExecutionHelper {
     int ttl = -1;
 
     if (settings != null) {
+      File serviceDirectory = settings.getServiceDirectory() == null ? null : new File(settings.getServiceDirectory());
       File gradleHome = settings.getGradleHome() == null ? null : new File(settings.getGradleHome());
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (settings.getDistributionType()) {
@@ -340,15 +341,14 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), gradleHome);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
           }
           break;
       }
 
       // Setup service directory if necessary.
-      String serviceDirectory = settings.getServiceDirectory();
       if (serviceDirectory != null) {
-        connector.useGradleUserHomeDir(new File(serviceDirectory));
+        connector.useGradleUserHomeDir(serviceDirectory);
       }
 
       // Setup logging if necessary.
@@ -557,6 +557,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated {@link #getModelBuilder(Class, ExternalSystemTaskId, GradleExecutionSettings, ProjectConnection, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
@@ -574,6 +575,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated {@link #getBuildLauncher(ExternalSystemTaskId, ProjectConnection, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
@@ -609,6 +611,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated to be removed in future version
    */
+  @Deprecated
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
@@ -624,6 +627,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection)}
    */
+  @Deprecated
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
@@ -640,6 +644,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection, OutputStream, OutputStream)}
    */
+  @Deprecated
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,

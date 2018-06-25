@@ -5,6 +5,7 @@ import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
@@ -408,6 +409,7 @@ public class JBTabsImpl extends JComponent
   }
 
   protected void resetTabsCache() {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     myAllTabs = null;
   }
 

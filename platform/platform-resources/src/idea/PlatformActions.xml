@@ -77,6 +77,12 @@
       <keyboard-shortcut first-keystroke="shift ENTER" keymap="$default"/>
     </action>>
     <action id="SearchEverywhere" class="com.intellij.ide.actions.SearchEverywhereAction" icon="AllIcons.Actions.Find"/>
+
+    <action id="RunAnything" icon="AllIcons.Actions.Run_anything"
+            class="com.intellij.ide.actions.runAnything.RunAnythingAction"
+            text="Run anything" description="Allows to execute any command">
+    </action>
+
     <action id="SmartSelect" class="com.intellij.ide.actions.SmartSelect" use-shortcut-of="EditorSelectWord"/>
     <action id="SmartUnSelect" class="com.intellij.ide.actions.SmartUnSelect" use-shortcut-of="EditorUnSelectWord"/>
 
@@ -889,5 +895,7 @@
 
     <action id="MarkNotificationsAsRead" class="com.intellij.notification.impl.actions.MarkAllNotificationsAsReadAction"/>
     <action class="com.intellij.ide.actions.SelectInProjectViewAction" id="SelectInProjectView" text="Select in Project View" />
+
+    <action id="SetShortcutAction" class="com.intellij.ide.actions.SetShortcutAction" use-shortcut-of="ShowIntentionActions"/>
   </actions>
 </idea-plugin>

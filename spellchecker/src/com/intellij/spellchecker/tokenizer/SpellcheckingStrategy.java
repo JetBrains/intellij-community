@@ -88,6 +88,7 @@ public class SpellcheckingStrategy {
   /**
    * @deprecated will be removed in 2018.X, use @link {@link SpellcheckingStrategy#getDefaultRegularFixes(boolean, String, PsiElement)} instead
    */
+  @Deprecated
   public static SpellCheckerQuickFix[] getDefaultRegularFixes(boolean useRename, String wordWithTypo) {
     return getDefaultRegularFixes(useRename, wordWithTypo, null);
   }

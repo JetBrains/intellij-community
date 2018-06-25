@@ -72,7 +72,7 @@ import java.lang.reflect.Modifier;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY;
+import static com.intellij.openapi.actionSystem.ex.CustomComponentAction.ACTION_KEY;
 import static java.util.Locale.ENGLISH;
 
 public class UiInspectorAction extends ToggleAction implements DumbAware {
@@ -665,6 +665,24 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
           return result;
         }
       });
+      new DoubleClickListener(){
+        @Override
+        protected boolean onDoubleClick(MouseEvent event) {
+          int row = table.rowAtPoint(event.getPoint());
+          int column = table.columnAtPoint(event.getPoint());
+          if (row >=0 && row < table.getRowCount() && column >=0 && column < table.getColumnCount()) {
+            Component renderer = table.getCellRenderer(row, column)
+                                        .getTableCellRendererComponent(table, myModel.getValueAt(row, column), false, false, row, column);
+            if (renderer instanceof JLabel) {
+              //noinspection UseOfSystemOutOrSystemErr
+              System.out.println((component != null ? getComponentName(component) : "" )
+                                 + ((JLabel)renderer).getText().replace("\tat", "\n\tat"));
+              return true;
+            }
+          }
+          return false;
+        }
+      }.installOn(table);
 
       table.setAutoResizeMode(JTable.AUTO_RESIZE_LAST_COLUMN);
 
@@ -1424,13 +1442,7 @@ public class UiInspectorAction extends ToggleAction implements DumbAware {
 
   @Nullable
   private static AnAction getAction(Component c) {
-    if (c instanceof JComponent) {
-      Object obj = ((JComponent)c).getClientProperty(CUSTOM_COMPONENT_ACTION_PROPERTY);
-      if (obj instanceof AnAction) {
-        return (AnAction)obj;
-      }
-    }
-    return null;
+    return UIUtil.getClientProperty(c, ACTION_KEY);
   }
 
   private static class UiInspector implements AWTEventListener, Disposable {

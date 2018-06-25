@@ -5,23 +5,18 @@ import com.intellij.psi.CommonClassNames.JAVA_LANG_OBJECT
 import com.intellij.psi.CommonClassNames.JAVA_UTIL_MAP
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
+import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.getAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightModifierList
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_NAMED_PARAM
-import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRANSFORM_NAMED_VARIANT
 import org.jetbrains.plugins.groovy.transformations.AstTransformationSupport
 import org.jetbrains.plugins.groovy.transformations.TransformationContext
 
-private const val NAMED_VARIANT_ORIGIN_INFO: String = "via @NamedVariant"
-private const val NAMED_ARGS_PARAMETER_NAME = "__namedArgs"
-
 class NamedVariantTransformationSupport : AstTransformationSupport {
   override fun applyTransformation(context: TransformationContext) {
-    context.methods.filterIsInstance(GrMethod::class.java).forEach {
-      val annotation = PsiImplUtil.getAnnotation(it, GROOVY_TRANSFORM_NAMED_VARIANT) ?: return@forEach
+    context.codeClass.codeMethods.forEach {
+      val annotation = getAnnotation(it, GROOVY_TRANSFORM_NAMED_VARIANT) ?: return@forEach
       val method = constructNamedMethod(it) ?: return@forEach
       method.navigationElement = annotation
       context.addMethod(method)
@@ -43,10 +38,10 @@ class NamedVariantTransformationSupport : AstTransformationSupport {
       }
     }
 
-    val setOfProcessedParams = namedParams.map { it.origin }.toSet()
-    method.parameterList.parameters.filter { !setOfProcessedParams.contains(it) }.forEach {
-      parameters.add(GrLightParameter(it))
-    }
+    method.parameterList.parameters
+      .filter {
+        getAnnotation(it, GROOVY_TRANSFORM_NAMED_PARAM) == null && getAnnotation(it, GROOVY_TRANSFORM_NAMED_DELEGATE) == null
+      }.forEach { parameters.add(GrLightParameter(it)) }
 
     return buildMethod(parameters, method)
   }

@@ -319,7 +319,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     if (!methodSet.isEmpty()) {
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(containingClass);
-      if (interfaceMethod != null && FunctionalExpressionSearch.search(containingClass).findFirst() != null) {
+      if (interfaceMethod != null &&
+          methodSet.contains(interfaceMethod) &&
+          FunctionalExpressionSearch.search(containingClass).findFirst() != null) {
         overridden.add(interfaceMethod);
       }
     }

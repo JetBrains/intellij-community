@@ -45,10 +45,6 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
     myDebugName = debugName;
   }
 
-  public boolean isInProject() {
-    return false;
-  }
-
   @Override
   public boolean isInProject(@NotNull VirtualFile file) {
     return false;
@@ -85,14 +81,6 @@ class NonProjectDirectoryInfo extends DirectoryInfo {
   @Nullable
   public VirtualFile getContentRoot() {
     return null;
-  }
-
-  public boolean isInModuleSource() {
-    return false;
-  }
-
-  public boolean isInLibrarySource() {
-    return false;
   }
 
   @Override

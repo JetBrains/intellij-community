@@ -77,33 +77,33 @@ public abstract class CodeStyleFacade {
   /**
    * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(com.intellij.psi.PsiFile)} instead.
    */
+  @Deprecated
   public abstract int getIndentSize(FileType fileType);
-
-  /**
-   * @deprecated
-   */
-  public abstract boolean isSmartTabs(final FileType fileType);
 
   /**
    * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
+  @Deprecated
   public abstract int getRightMargin(Language language);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).TAB_SIZE}. See {@code CodeStyle for more information}
    */
+  @Deprecated
   public abstract int getTabSize(final FileType fileType);
 
   /**
    * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}
    */
+  @Deprecated
   public abstract boolean useTabCharacter(final FileType fileType);
 
   /**
    * @deprecated Use {@code getLineSeparator()} method of {@code CodeStyle.getSettings(PsiFile)} or
    *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
    */
+  @Deprecated
   public abstract String getLineSeparator();
 
   public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);

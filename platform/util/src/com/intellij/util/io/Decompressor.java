@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -11,8 +12,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Enumeration;
 import java.util.zip.ZipEntry;
-import java.util.zip.ZipInputStream;
+import java.util.zip.ZipFile;
 
 public abstract class Decompressor<Stream> {
   public static class Tar extends Decompressor<TarArchiveInputStream> {
@@ -57,36 +59,41 @@ public abstract class Decompressor<Stream> {
     //</editor-fold>
   }
 
-  public static class Zip extends Decompressor<ZipInputStream> {
+  public static class Zip extends Decompressor<ZipFile> {
     public Zip(@NotNull File file) {
       mySource = file;
     }
 
     //<editor-fold desc="Implementation">
     private final File mySource;
+    private Enumeration<? extends ZipEntry> myEntries;
+    private ZipEntry myEntry;
 
     @Override
-    protected ZipInputStream openStream() throws IOException {
-      return new ZipInputStream(new FileInputStream(mySource));
+    protected ZipFile openStream() throws IOException {
+      return new ZipFile(mySource);
     }
 
     @Override
-    protected Entry nextEntry(ZipInputStream zip) throws IOException {
-      ZipEntry zipEntry = zip.getNextEntry();
-      return zipEntry == null ? null : new Entry(zipEntry.getName(), zipEntry.isDirectory());
+    protected Entry nextEntry(ZipFile zip) {
+      if (myEntries == null) myEntries = zip.entries();
+      myEntry = myEntries.hasMoreElements() ? myEntries.nextElement() : null;
+      return myEntry == null ? null : new Entry(myEntry.getName(), myEntry.isDirectory());
     }
 
     @Override
-    protected InputStream openEntryStream(ZipInputStream stream, Entry entry) {
-      return stream;
+    protected InputStream openEntryStream(ZipFile zip, Entry entry) throws IOException {
+      return zip.getInputStream(myEntry);
     }
 
     @Override
-    protected void closeEntryStream(InputStream stream) { }
-
-    @Override
-    protected void closeStream(ZipInputStream stream) throws IOException {
+    protected void closeEntryStream(InputStream stream) throws IOException {
       stream.close();
+    }
+
+    @Override
+    protected void closeStream(ZipFile zip) throws IOException {
+      zip.close();
     }
     //</editor-fold>
   }
@@ -120,7 +127,7 @@ public abstract class Decompressor<Stream> {
           continue;
         }
 
-        File outputFile = ZipUtil.newFileForEntry(outputDir, name);
+        File outputFile = entryFile(outputDir, name);
 
         if (entry.isDirectory) {
           FileUtil.createDirectory(outputFile);
@@ -171,4 +178,12 @@ public abstract class Decompressor<Stream> {
   protected abstract void closeEntryStream(InputStream stream) throws IOException;
   protected abstract void closeStream(Stream stream) throws IOException;
   //</editor-fold>
+
+  @NotNull
+  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+    if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
+      throw new IOException("Invalid entry name: " + entryName);
+    }
+    return new File(outputDir, entryName);
+  }
 }

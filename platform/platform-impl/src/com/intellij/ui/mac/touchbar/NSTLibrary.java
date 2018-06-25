@@ -47,7 +47,7 @@ public interface NSTLibrary extends Library {
   ID createScrubber(String uid, int itemWidth, ScrubberItemData[] items, int count);
   ID createGroupItem(String uid, ID[] items, int count);
 
-  int BUTTON_UPDATE_WIDTH   = 1;
+  int BUTTON_UPDATE_LAYOUT  = 1;
   int BUTTON_UPDATE_FLAGS   = 1 << 1;
   int BUTTON_UPDATE_TEXT    = 1 << 2;
   int BUTTON_UPDATE_IMG     = 1 << 3;
@@ -57,6 +57,15 @@ public interface NSTLibrary extends Library {
   int BUTTON_FLAG_DISABLED  = 1;
   int BUTTON_FLAG_SELECTED  = 1 << 1;
   int BUTTON_FLAG_COLORED   = 1 << 2;
+  int BUTTON_FLAG_TOGGLE    = 1 << 3;
+
+  int LAYOUT_WIDTH_MASK       = 0x0FFF;
+  int LAYOUT_FLAG_MIN_WIDTH   = 1 << 15;
+  int LAYOUT_FLAG_MAX_WIDTH   = 1 << 14;
+  int LAYOUT_MARGIN_SHIFT     = 2*8;
+  int LAYOUT_MARGIN_MASK      = 0xFF << LAYOUT_MARGIN_SHIFT;
+  int LAYOUT_BORDER_SHIFT     = 3*8;
+  int LAYOUT_BORDER_MASK      = 0xFF << LAYOUT_BORDER_SHIFT;
 
   int BUTTON_PRIORITY_SHIFT     = 3*8;
   int BUTTON_PRIORITY_MASK      = 0xFF << BUTTON_PRIORITY_SHIFT;
@@ -68,4 +77,6 @@ public interface NSTLibrary extends Library {
   void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
 
   static int priority2mask(byte prio) { return (prio + 128) << BUTTON_PRIORITY_SHIFT; }
+  static int margin2mask(byte margin) { return ((int)margin & 0xFF) << LAYOUT_MARGIN_SHIFT; }
+  static int border2mask(byte border) { return ((int)border & 0xFF) << LAYOUT_BORDER_SHIFT; }
 }

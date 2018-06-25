@@ -23,6 +23,7 @@ import com.intellij.execution.configurations.ConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.configurations.LocatableConfigurationBase;
 import com.intellij.execution.configurations.RunConfiguration;
+import com.intellij.ide.macro.MacroManager;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -125,6 +126,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
   @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
+    MacroManager.getInstance().cacheMacrosPreview(e.getDataContext());
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
     final RunnerAndConfigurationSettings existing = context.findExisting();
     if (existing == null) {

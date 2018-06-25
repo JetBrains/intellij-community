@@ -786,6 +786,10 @@
       <with attribute="instance" implements="com.intellij.application.options.editor.EditorSmartKeysConfigurable"/>
     </extensionPoint>
 
+    <extensionPoint name="codeCompletionConfigurable" beanClass="com.intellij.application.options.CodeCompletionConfigurableEP">
+      <with attribute="instance" implements="com.intellij.application.options.CodeCompletionOptions" />
+    </extensionPoint>
+
     <extensionPoint name="optionsApplicabilityFilter" interface="com.intellij.application.options.OptionsApplicabilityFilter"/>
 
     <extensionPoint name="metaDataContributor" interface="com.intellij.psi.meta.MetaDataContributor"/>
@@ -883,8 +887,6 @@
 
     <extensionPoint name="aliasingPsiTargetMapper" interface="com.intellij.psi.targets.AliasingPsiTargetMapper"/>
 
-    <extensionPoint name="sourceRootFinder" interface="com.intellij.ide.util.newProjectWizard.SourceRootFinder"/>
-
     <extensionPoint name="inspectionsReportConverter"
                     interface="com.intellij.codeInspection.InspectionsReportConverter"/>
 
@@ -965,6 +967,8 @@
 
     <extensionPoint name="runningApplicationUpdaterProvider"
                     interface="com.intellij.execution.update.RunningApplicationUpdaterProvider"/>
+ 
+    <extensionPoint name="languageCompilerRefAdapter" interface="com.intellij.compiler.backwardRefs.LanguageCompilerRefAdapter"/>
   </extensionPoints>
 </idea-plugin>
 

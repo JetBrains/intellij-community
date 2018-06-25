@@ -24,17 +24,19 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated Use XAttachProcessPresentationGroup (will be removed in 2018.2)
  */
+@Deprecated
 @ApiStatus.Experimental
 public interface XLocalAttachGroup extends XAttachProcessPresentationGroup {
   /**
    * @deprecated will be removed in 2018.2
    */
-  @NotNull
+  @Deprecated @NotNull
   XLocalAttachGroup DEFAULT = new XDefaultLocalAttachGroup();
 
   /**
    * @deprecated use {@link #compare(Object, Object)} (will be removed in 2018.2)
    */
+  @Deprecated
   default int compare(@NotNull Project project, @NotNull ProcessInfo a, @NotNull ProcessInfo b, @NotNull UserDataHolder dataHolder) {
     return compare(a, b);
   }

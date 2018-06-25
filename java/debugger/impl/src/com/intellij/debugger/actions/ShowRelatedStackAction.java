@@ -12,6 +12,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.project.Project;
 import com.sun.jdi.ObjectReference;
+import com.sun.jdi.Value;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -46,8 +47,11 @@ public class ShowRelatedStackAction extends AnAction {
     if (values.size() == 1) {
       ValueDescriptorImpl descriptor = values.get(0).getDescriptor();
       if (descriptor.isValueReady()) {
-        DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
-        return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)descriptor.getValue(), debuggerContext.getDebugProcess());
+        Value value = descriptor.getValue();
+        if (value instanceof ObjectReference) {
+          DebuggerContextImpl debuggerContext = DebuggerAction.getDebuggerContext(e.getDataContext());
+          return StackCapturingLineBreakpoint.getRelatedStack((ObjectReference)value, debuggerContext.getDebugProcess());
+        }
       }
     }
 

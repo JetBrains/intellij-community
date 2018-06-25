@@ -315,9 +315,4 @@ public class AbstractProgressIndicatorBase extends UserDataHolderBase implements
     if (myText2Stack == null) myText2Stack = new Stack<>(2);
     return myText2Stack;
   }
-
-  @Override
-  public int getNonCancelableCount() {
-    return ProgressManager.getInstance().isInNonCancelableSection() ? 1 : 0;
-  }
 }

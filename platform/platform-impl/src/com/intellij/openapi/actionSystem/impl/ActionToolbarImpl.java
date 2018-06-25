@@ -29,7 +29,6 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
@@ -363,11 +362,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private JComponent getCustomComponent(AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
-    JComponent customComponent = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY), JComponent.class);
+    JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
-      presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
-      customComponent.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_ACTION_PROPERTY, action);
+      presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
+      UIUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
     tweakActionComponentUI(customComponent);
 
@@ -715,7 +714,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more than 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+        int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+        for (int i = 0; i < componentCount; i++) {
+          final Component component = getComponent(i);
+          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+            maxRowWidth -= getChildPreferredSize(i).width;
+          }
+        }
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
             xOffset = 0;
@@ -765,7 +770,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
+        int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
+        for (int i = 0; i < componentCount; i++) {
+          final Component component = getComponent(i);
+          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+            maxRowWidth -= getChildPreferredSize(i).width;
+          }
+        }
+
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (xOffset + d.width > maxRowWidth) { // place component at new row

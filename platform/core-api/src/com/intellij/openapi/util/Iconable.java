@@ -27,7 +27,6 @@ public interface Iconable {
   int ICON_FLAG_VISIBILITY = 0x0001;
   int ICON_FLAG_READ_STATUS = 0x0002;
   @Deprecated int ICON_FLAG_OPEN = 0x0004;
-  @Deprecated int ICON_FLAG_CLOSED = 0x0008;
 
   Key<Integer> ICON_FLAG_IGNORE_MASK = new Key<>("ICON_FLAG_IGNORE_MASK");
 

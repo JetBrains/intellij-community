@@ -25,6 +25,7 @@ import java.util.regex.Pattern;
  * 
  * @deprecated Use {@link GitRefNameValidator}.
  */
+@Deprecated
 public class GitBranchNameValidator implements InputValidator {
   /**
    * the regular expression that checks branch name

@@ -73,6 +73,7 @@ public interface IdeaPluginDescriptor extends PluginDescriptor {
   boolean getUseIdeaClassLoader();
 
   /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDownloads (to be removed in IDEA 2019) */
+  @Deprecated
   String getDownloads();
 
   String getSinceBuild();

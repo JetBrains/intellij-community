@@ -42,6 +42,9 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
   protected static final Pattern patternToDetectMembers = Pattern.compile("(.+)(#)(.*)");
   protected static final Pattern patternToDetectSignatures = Pattern.compile("(.+#.*)\\(.*\\)");
 
+  //space character in the end of pattern forces full matches search
+  private static final String fullMatchSearchSuffix = " ";
+
   protected final Project myProject;
 
   protected AbstractGotoSEContributor(Project project) {
@@ -54,6 +57,11 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
     return getClass().getSimpleName();
   }
 
+  @Override
+  public boolean isShownInSeparateTab() {
+    return true;
+  }
+
   private static final Logger LOG = Logger.getInstance(AbstractGotoSEContributor.class);
 
   @Override
@@ -62,7 +70,8 @@ public abstract class AbstractGotoSEContributor<F> implements SearchEverywhereCo
       return ContributorSearchResult.empty();
     }
 
-    String searchString = filterControlSymbols(pattern);
+    String suffix = pattern.endsWith(fullMatchSearchSuffix) ? fullMatchSearchSuffix : "";
+    String searchString = filterControlSymbols(pattern) + suffix;
     FilteringGotoByModel<F> model = createModel(myProject);
     model.setFilterItems(filter.getSelectedElements());
     ChooseByNamePopup popup = ChooseByNamePopup.createPopup(myProject, model, (PsiElement)null);

@@ -99,17 +99,18 @@
     <JsonSchema.ProviderFactory implementation="com.jetbrains.jsonSchema.extension.JsonSchemaProjectSelfProviderFactory"/>
   </extensions>
 
-  <extensions defaultExtensionNs="Json">
-    <Like.Psi.Walker.Factory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
-    <Schema.Enabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler" />
+  <extensions defaultExtensionNs="com.intellij.json">
+    <jsonLikePsiWalkerFactory implementation="com.intellij.json.json5.Json5PsiWalkerFactory"/>
+    <jsonSchemaEnabler implementation="com.jetbrains.jsonSchema.impl.JsonSchemaInJsonFilesEnabler" />
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.json.jsonStandardComplianceProvider"
                     interface="com.intellij.json.codeinsight.JsonStandardComplianceProvider"/>
     <extensionPoint qualifiedName="JavaScript.JsonSchema.ProviderFactory" interface="com.jetbrains.jsonSchema.extension.JsonSchemaProviderFactory"/>
-    <extensionPoint qualifiedName="Json.Like.Psi.Walker.Factory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
-    <extensionPoint qualifiedName="Json.Schema.Enabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonLikePsiWalkerFactory" interface="com.jetbrains.jsonSchema.extension.JsonLikePsiWalkerFactory"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonSchemaEnabler" interface="com.jetbrains.jsonSchema.extension.JsonSchemaEnabler"/>
+    <extensionPoint qualifiedName="com.intellij.json.jsonWidgetSuppressor" interface="com.jetbrains.jsonSchema.extension.JsonWidgetSuppressor"/>
     <extensionPoint qualifiedName="com.intellij.json.jsonLiteralChecker" interface="com.intellij.json.codeinsight.JsonLiteralChecker"/>
     <extensionPoint qualifiedName="com.intellij.json.catalog.exclusion" interface="com.jetbrains.jsonSchema.remote.JsonSchemaCatalogExclusion"/>
   </extensionPoints>

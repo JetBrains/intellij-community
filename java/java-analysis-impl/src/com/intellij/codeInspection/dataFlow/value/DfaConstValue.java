@@ -24,6 +24,7 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -189,5 +190,26 @@ public class DfaConstValue extends DfaValue {
     if (this == myFactory.getConstFactory().getTrue()) return myFactory.getConstFactory().getFalse();
     if (this == myFactory.getConstFactory().getFalse()) return myFactory.getConstFactory() .getTrue();
     return DfaUnknownValue.getInstance();
+  }
+
+  /**
+   * Checks whether given value is a special value representing method failure, according to its contract
+   *
+   * @param value value to check
+   * @return true if specified value represents method failure
+   */
+  @Contract("null -> false")
+  public static boolean isContractFail(DfaValue value) {
+    return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == ourThrowable;
+  }
+
+  /**
+   * Checks whether given value is a special internal sentinel value returned by {@link Factory#getSentinel()}.
+   *
+   * @param value value to check
+   * @return true if specified value is a sentinel value
+   */
+  public static boolean isSentinel(DfaValue value) {
+    return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == SENTINEL;
   }
 }

@@ -722,6 +722,7 @@ public class VfsUtilCore {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<VirtualFile> processor,
                                              @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {

@@ -56,10 +56,6 @@ public abstract class RainbowVisitor implements HighlightVisitor {
     return true;
   }
 
-  @Override
-  public int order() {
-    return 1;
-  }
 
   protected void addInfo(@Nullable HighlightInfo highlightInfo) {
     myHolder.add(highlightInfo);

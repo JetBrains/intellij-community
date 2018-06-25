@@ -1084,3 +1084,11 @@ class T75 {
     private Inner() {innerField = 0;}
   }
 }
+// IDEA-193896
+class T76 {
+  private T76 a;
+  T76(T76 other) {
+    a = other;
+    other.a = null;
+  }
+}

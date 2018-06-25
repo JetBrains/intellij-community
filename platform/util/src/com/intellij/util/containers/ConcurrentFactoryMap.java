@@ -166,40 +166,23 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   }
 
   @Override
-  public V putIfAbsent(K key, V value) {
+  public V putIfAbsent(@NotNull K key, V value) {
     return nullize(myMap.putIfAbsent(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
   @Override
-  public boolean remove(Object key, Object value) {
+  public boolean remove(@NotNull Object key, Object value) {
     return myMap.remove(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value));
   }
 
   @Override
-  public boolean replace(K key, V oldValue, V newValue) {
+  public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
     return myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(oldValue), ConcurrentFactoryMap.<V>notNull(newValue));
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
     return nullize(myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
-  }
-
-  /**
-   * Use {@link #createMap(Function)} instead
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
-  @NotNull
-  public static <T, V> ConcurrentFactoryMap<T, V> createConcurrentMap(@NotNull final Function<T, V> computeValue) {
-    //noinspection deprecation
-    return new ConcurrentFactoryMap<T, V>() {
-      @Nullable
-      @Override
-      protected V create(T key) {
-        return computeValue.fun(key);
-      }
-    };
   }
 
   @NotNull
@@ -255,10 +238,11 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   private static class CollectionWrapper<K> extends AbstractCollection<K> {
     private final Collection<K> myDelegate;
 
-    public CollectionWrapper(Collection<K> delegate) {
+    CollectionWrapper(Collection<K> delegate) {
       myDelegate = delegate;
     }
 
+    @NotNull
     @Override
     public Iterator<K> iterator() {
       return new Iterator<K>() {

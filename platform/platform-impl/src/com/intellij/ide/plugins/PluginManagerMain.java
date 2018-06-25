@@ -411,6 +411,7 @@ public abstract class PluginManagerMain implements Disposable {
   /**
    * @deprecated use {@link #downloadPlugins(List, List, Runnable, PluginEnabler, Runnable)} instead
    */
+  @Deprecated
   public static boolean downloadPlugins(List<PluginNode> plugins,
                                         List<PluginId> allPlugins,
                                         Runnable onSuccess,

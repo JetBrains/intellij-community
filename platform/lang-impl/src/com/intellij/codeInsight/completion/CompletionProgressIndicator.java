@@ -17,6 +17,7 @@ import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.application.ApplicationManager;
@@ -229,7 +230,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
   private void addDefaultAdvertisements(CompletionParameters parameters) {
     if (DumbService.isDumb(getProject())) {
-      addAdvertisement("The results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
+      addAdvertisement("Results might be incomplete while indexing is in progress", MessageType.WARNING.getPopupBackground());
       return;
     }
 
@@ -743,29 +744,25 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
 
     LOG.assertTrue(!isAutopopupCompletion());
 
-    if (!myHandler.invokedExplicitly) {
-      CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
-      return;
-    }
-
     CompletionParameters parameters = getParameters();
-    if (parameters != null && runContributorsOnEmptyLookup(awaitSecondInvocation, parameters)) {
-      return;
+    if (myHandler.invokedExplicitly && parameters != null) {
+      LightweightHint hint = showErrorHint(getProject(), getEditor(), getNoSuggestionsMessage(parameters));
+      if (awaitSecondInvocation) {
+        CompletionServiceImpl.setCompletionPhase(new CompletionPhase.NoSuggestionsHint(hint, this));
+        return;
+      }
     }
     CompletionServiceImpl.setCompletionPhase(CompletionPhase.NoCompletion);
   }
 
-  private boolean runContributorsOnEmptyLookup(boolean awaitSecondInvocation, CompletionParameters parameters) {
-    for (CompletionContributor contributor : CompletionContributor.forParameters(parameters)) {
-      final String text = contributor.handleEmptyLookup(parameters, getEditor());
-      if (StringUtil.isNotEmpty(text)) {
-        LightweightHint hint = showErrorHint(getProject(), getEditor(), text);
-        CompletionServiceImpl.setCompletionPhase(
-          awaitSecondInvocation ? new CompletionPhase.NoSuggestionsHint(hint, this) : CompletionPhase.NoCompletion);
-        return true;
-      }
-    }
-    return false;
+  private String getNoSuggestionsMessage(CompletionParameters parameters) {
+    String text = CompletionContributor.forParameters(parameters)
+                                       .stream()
+                                       .map(c -> c.handleEmptyLookup(parameters, getEditor()))
+                                       .filter(StringUtil::isNotEmpty)
+                                       .findFirst()
+                                       .orElse(LangBundle.message("completion.no.suggestions"));
+    return DumbService.isDumb(getProject()) ? text + "; results might be incomplete while indexing is in progress" : text;
   }
 
   private static LightweightHint showErrorHint(Project project, Editor editor, String text) {

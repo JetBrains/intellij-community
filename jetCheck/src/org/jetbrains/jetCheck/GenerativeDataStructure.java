@@ -60,6 +60,11 @@ class GenerativeDataStructure extends AbstractDataStructure {
     throw new CannotSatisfyCondition(condition);
   }
 
+  @Override
+  void changeKind(StructureKind kind) {
+    node.kind = kind;
+  }
+
   private class CurrentData {
     DataStructure current = GenerativeDataStructure.this;
 

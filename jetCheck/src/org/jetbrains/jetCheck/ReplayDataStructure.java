@@ -47,6 +47,13 @@ class ReplayDataStructure extends AbstractDataStructure {
   }
 
   @Override
+  void changeKind(StructureKind kind) {
+    if (node.kind != kind) {
+      throw new CannotRestoreValue();
+    }
+  }
+
+  @Override
   public String toString() {
     return node.toString();
   }

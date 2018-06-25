@@ -270,6 +270,7 @@ public abstract class SdkType implements SdkTypeId {
   }
 
   /** @deprecated use {@link #showCustomCreateUI(SdkModel, JComponent, Sdk, Consumer)} method instead */
+  @Deprecated
   @SuppressWarnings("DeprecatedIsStillUsed")
   public void showCustomCreateUI(@NotNull SdkModel sdkModel, @NotNull JComponent parentComponent, @NotNull Consumer<Sdk> sdkCreatedCallback) { }
 

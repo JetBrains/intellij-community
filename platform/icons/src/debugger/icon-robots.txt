@@ -18,10 +18,9 @@ deprecated: db_muted_verified_field_breakpoint.png -> /debugger/db_muted_field_b
 deprecated: db_muted_verified_method_breakpoint.png -> /debugger/db_muted_field_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_field_breakpoint
 deprecated: db_muted_verified_warning_breakpoint.png; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
 deprecated: db_muted_temporary_breakpoint.png -> /debugger/db_muted_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_muted_breakpoint
+deprecated: db_pending_breakpoint.png -> /debugger/db_set_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint
 deprecated: db_temporary_breakpoint.png -> /debugger/db_set_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint
-deprecated: db_verified_breakpoint.png -> /debugger/db_set_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_set_breakpoint
-deprecated: db_verified_field_breakpoint.png -> /debugger/db_field_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_field_breakpoint
-deprecated: db_verified_method_breakpoint.png -> /debugger/db_method_breakpoint.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_method_breakpoint
 deprecated: db_verified_warning_breakpoint.png; to be removed in IDEA 2020 - use AllIcons.Debugger.Db_exception_breakpoint
 deprecated: newWatch.png -> /general/add.svg; to be removed in IDEA 2020 - use AllIcons.General.Add
+deprecated: stackFrame.png -> /debugger/frame.png; to be removed in IDEA 2020 - use AllIcons.Debugger.Frame
 deprecated: watches.png -> /debugger/watch.svg; to be removed in IDEA 2020 - use AllIcons.Debugger.Watch

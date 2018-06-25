@@ -16,6 +16,7 @@
 package com.siyeh.ig.migration;
 
 import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -42,7 +43,7 @@ import javax.swing.*;
  * @author Bas Leijdekkers
  */
 public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
-  public boolean checkNotNull = true;
+  public boolean checkNotNull;
 
   private static final EquivalenceChecker EQUIVALENCE = new NoSideEffectExpressionEquivalenceChecker();
 
@@ -141,15 +142,15 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
           return;
         }
       }
-      if (!checkNotNull) {
-        if (qualifierExpression == null) {
-          return;
-        }
-        final PsiExpression argumentExpression = getArgumentExpression(expression);
-        if (argumentExpression == null) {
-          return;
-        }
-        registerError(expression, qualifierExpression.getText(), argumentExpression.getText(), true);
+      if (qualifierExpression == null) {
+        return;
+      }
+      final PsiExpression argumentExpression = getArgumentExpression(expression);
+      if (argumentExpression == null) {
+        return;
+      }
+      if (isOnTheFly()) {
+        registerError(expression, ProblemHighlightType.INFORMATION, qualifierExpression.getText(), argumentExpression.getText(), true);
       }
     }
 
@@ -219,7 +220,12 @@ public class EqualsReplaceableByObjectsCallInspection extends BaseInspection {
             final PsiExpression argumentExpression = getArgumentExpression(methodCallExpression);
             if (argumentExpression != null) {
               final PsiExpression expressionToReplace = checkEqualityBefore(expression, equal, qualifierExpression, argumentExpression);
-              registerError(expressionToReplace, nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              ProblemHighlightType highlightType = checkNotNull || expression != expressionToReplace ?
+                                                   ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.INFORMATION;
+              if (isOnTheFly() || highlightType == ProblemHighlightType.GENERIC_ERROR_OR_WARNING) {
+                registerError(expressionToReplace, highlightType,
+                              nullCheckedExpression.getText(), argumentExpression.getText(), Boolean.valueOf(equal));
+              }
               return true;
             }
           }

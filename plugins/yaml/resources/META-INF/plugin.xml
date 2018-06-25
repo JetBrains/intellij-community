@@ -21,10 +21,18 @@
     <lang.psiStructureViewFactory language="yaml" implementationClass="org.jetbrains.yaml.structureView.YAMLStructureViewFactory"/>
     <langCodeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLLanguageCodeStyleSettingsProvider"/>
     <codeStyleSettingsProvider implementation="org.jetbrains.yaml.YAMLCodeStyleSettingsProvider"/>
-    
+    <qualifiedNameProvider implementation="org.jetbrains.yaml.navigation.YAMLQualifiedNameProvider"/>
+    <pom.declarationSearcher implementation="org.jetbrains.yaml.navigation.YAMLScalarKeyDeclarationSearcher"/>
+    <fileBasedIndex implementation="org.jetbrains.yaml.navigation.YAMLKeysIndex"/>
+    <searchEverywhereContributor implementation="org.jetbrains.yaml.navigation.YAMLKeysSearchEverywhereContributor$Factory"/>
+
     <psi.treeChangePreprocessor implementation="org.jetbrains.yaml.psi.YAMLPsiManager"/>
 
     <projectService serviceImplementation="org.jetbrains.yaml.YAMLElementGenerator"/>
+
+    <completion.contributor order="first" language="yaml"
+                            implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaCompletionContributor"/>
+    <lang.documentationProvider language="yaml" implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaDocumentationProvider" order="first"/>
 
     <lang.elementManipulator forClass="org.jetbrains.yaml.psi.impl.YAMLScalarImpl"
                              implementationClass="org.jetbrains.yaml.psi.impl.YAMLScalarElementManipulator"/>
@@ -55,8 +63,20 @@
                      groupKey="inspections.group.name" enabledByDefault="true"
                      implementationClass="org.jetbrains.yaml.inspections.YAMLUnusedAnchorInspection"/>
 
+    <localInspection language="yaml" bundle="messages.YAMLBundle"
+                     shortName="YAMLSchemaValidation"
+                     key="inspections.schema.validation.name"
+                     groupKey="inspections.group.name"
+                     enabledByDefault="true"
+                     level="WARNING"
+                     implementationClass="org.jetbrains.yaml.schema.YamlJsonSchemaHighlightingInspection"/>
   </extensions>
-  
+
+  <extensions defaultExtensionNs="com.intellij.json">
+    <jsonLikePsiWalkerFactory implementation="org.jetbrains.yaml.schema.YamlJsonLikePsiWalkerFactory"/>
+    <jsonSchemaEnabler implementation="org.jetbrains.yaml.schema.YamlJsonEnabler" />
+  </extensions>
+
   <extensions defaultExtensionNs="com.intellij.spellchecker">
     <support language="yaml" implementationClass="org.jetbrains.yaml.YAMLSpellcheckerStrategy"/>
   </extensions>

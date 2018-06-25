@@ -1,7 +1,9 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.openapi.actionSystem.ActionGroup;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.Map;
@@ -10,7 +12,8 @@ enum BarType {
   DEFAULT,
   DEBUGGER, // debugger must use context of focused component (for example, to use selected text in the Editor)
   POPUP,
-  DIALOG
+  DIALOG,
+  EDITOR_SEARCH
 }
 
 class BarContainer {
@@ -41,12 +44,15 @@ class BarContainer {
     if (alt != null)
       myCurrent = alt;
   }
+  @NotNull TouchBar getMain() { return myMain; }
 
   TouchBar get() {
     if (myCurrent == null)
       myCurrent = myMain;
     return myCurrent;
   }
+
+  void show() { TouchBarsManager.showContainer(this); }
 
   @NotNull BarType getType() { return myType; }
 
@@ -56,6 +62,17 @@ class BarContainer {
     myMain.setComponent(component);
     if (myKeyMask2Alt != null)
       myKeyMask2Alt.values().forEach(tb -> { tb.setComponent(component); });
+  }
+
+  void setOptionalContextActions(@Nullable ActionGroup actions, @NotNull String contextName) {
+    if (actions == null)
+      myMain.removeOptionalContextItems(contextName);
+    else
+      myMain.setOptionalContextItems(actions, contextName);
+  }
+
+  void setOptionalContextVisible(@Nullable String contextName) {
+    myMain.setOptionalContextVisible(contextName);
   }
 
   void release() {

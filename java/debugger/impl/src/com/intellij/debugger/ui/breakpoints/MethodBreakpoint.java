@@ -37,6 +37,7 @@ import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.ui.LayeredIcon;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -367,14 +368,9 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return null;
   }
 
-  @NotNull
-  protected Icon getInvalidIcon(boolean isMuted) {
-    return AllIcons.Debugger.Db_invalid_breakpoint;
-  }
-
   @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return null; //return isMuted? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint;
+    return isSuspend() ? AllIcons.Debugger.Db_verified_method_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_method_breakpoint;
   }
 
   @NotNull
@@ -452,10 +448,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         return null;
       }
       final int methodOffset = method.getTextOffset();
-      if (methodOffset < 0) {
-        return null;
-      }
-      if (document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
+      if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
         return null;
       }
 

@@ -77,6 +77,18 @@ public class TestLogger extends Log4jBasedLogger {
   }
 
   @Override
+  public void trace(String message) {
+    super.trace(message);
+    TestLoggerFactory.log(myLogger, Level.TRACE, message, null);
+  }
+
+  @Override
+  public void trace(@Nullable Throwable t) {
+    super.trace(t);
+    TestLoggerFactory.log(myLogger, Level.TRACE, null, t);
+  }
+
+  @Override
   public boolean isDebugEnabled() {
     if (ApplicationInfoImpl.isInStressTest()) {
       return super.isDebugEnabled();

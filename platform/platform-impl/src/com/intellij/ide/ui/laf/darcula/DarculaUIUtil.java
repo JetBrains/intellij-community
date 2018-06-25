@@ -423,9 +423,11 @@ public class DarculaUIUtil {
            new JBColor(Gray.xCF, Gray._100);
   }
 
-  public static Color getArrowButtonBackgroundColor(boolean enabled) {
-    Color color = UIManager.getColor("ComboBox.darcula.arrowButtonBackground");
-    return enabled && color != null ? color : UIUtil.getPanelBackground();
+  public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
+    return enabled ?
+      editable ? JBColor.namedColor("ComboBox.darcula.editable.arrowButtonBackground", Gray.xFC) :
+                 JBColor.namedColor("ComboBox.darcula.arrowButtonBackground", Gray.xFC)
+      : UIUtil.getPanelBackground();
   }
 
   public static Color getArrowButtonForegroundColor(boolean enabled) {

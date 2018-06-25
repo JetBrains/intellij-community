@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.PsiImmediateClassType;
+import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -57,10 +58,14 @@ public class AnnotationsHighlightUtil {
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInsight.daemon.impl.analysis.AnnotationsHighlightUtil");
 
   @Nullable
-  static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair) {
+  static HighlightInfo checkNameValuePair(@NotNull PsiNameValuePair pair,
+                                          RefCountHolder refCountHolder) {
     PsiReference ref = pair.getReference();
     if (ref == null) return null;
     PsiMethod method = (PsiMethod)ref.resolve();
+    if (refCountHolder != null) {
+      refCountHolder.registerReference(ref, method != null ? new CandidateInfo(method, PsiSubstitutor.EMPTY) : JavaResolveResult.EMPTY);
+    }
     if (method == null) {
       if (pair.getName() != null) {
         final String description = JavaErrorMessages.message("annotation.unknown.method", ref.getCanonicalText());

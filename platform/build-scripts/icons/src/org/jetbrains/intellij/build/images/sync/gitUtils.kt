@@ -96,8 +96,49 @@ internal fun addChangesToGit(files: List<String>, repo: File) {
   }
 }
 
-internal fun latestChangeTime(file: String, repo: File) =
-  listOf(GIT, "log", "--max-count", "1", "--format=%cd", "--date=raw", "--", file)
-    .execute(repo, true)
-    .splitWithSpace()
-    .let { if (it.isEmpty()) -1 else it[0].toLong() }
+/**
+ * see [https://stackoverflow.com/questions/8475448/find-merge-commit-which-include-a-specific-commit]
+ *
+ * @return latest commit (or merge) time
+ */
+internal fun latestChangeTime(file: String, repo: File): Long {
+  // latest commit for file
+  val commit = commitInfo(repo, "--", file)
+  if (commit.timestamp <= 0) return -1
+  // list commits that are both descendants of commit hash and ancestors of HEAD
+  val ancestryPathList = listOf(GIT, "rev-list", "${commit.hash}..HEAD", "--ancestry-path")
+    .execute(repo, true).lineSequence().filter { it.isNotBlank() }
+  // follow only the first parent commit upon seeing a merge commit
+  val firstParentList = listOf(GIT, "rev-list", "${commit.hash}..HEAD", "--first-parent")
+    .execute(repo, true).lineSequence().filter { it.isNotBlank() }.toSet()
+  // latest merge commit
+  val mergeCommit = ancestryPathList
+    // last common commit is the latest merge
+    .lastOrNull { firstParentList.contains(it) }
+    ?.let { commitInfo(repo, it) }
+    // should be merge
+    ?.takeIf { it.isMerge }
+  return Math.max(commit.timestamp, mergeCommit?.timestamp ?: -1)
+}
+
+private fun commitInfo(repo: File, vararg args: String): CommitInfo {
+  val output = listOf(GIT, "log", "--max-count", "1", "--format=%H/%cd/%P", "--date=raw", *args)
+    .execute(repo, true).splitNotBlank("/")
+  // <hash>/<timestamp> <timezone>/<parent hashes>
+  return if (output.size != 3) {
+    CommitInfo()
+  }
+  else {
+    CommitInfo(
+      hash = output[0],
+      timestamp = output[1].splitWithSpace()[0].toLong(),
+      isMerge = output[2].splitWithSpace().size > 1
+    )
+  }
+}
+
+private class CommitInfo(
+  val hash: String = "",
+  val timestamp: Long = -1,
+  val isMerge: Boolean = false
+)

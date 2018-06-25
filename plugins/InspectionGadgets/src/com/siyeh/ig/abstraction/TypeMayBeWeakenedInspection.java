@@ -28,6 +28,7 @@ import com.intellij.openapi.command.undo.BasicUndoableAction;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
@@ -40,6 +41,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.ui.components.JBScrollBar;
@@ -442,6 +444,10 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
             return;
           }
         }
+      }
+      if (variable instanceof PsiParameter) {
+        PsiMethod method = PsiTreeUtil.getParentOfType(variable, PsiMethod.class);
+        if (method == null || UnusedSymbolUtil.isImplicitUsage(variable.getProject(), method, null)) return;
       }
       if (UnusedSymbolUtil.isImplicitWrite(variable) || UnusedSymbolUtil.isImplicitRead(variable)) {
         return;

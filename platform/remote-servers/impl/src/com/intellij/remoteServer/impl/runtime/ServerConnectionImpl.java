@@ -551,11 +551,16 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
     private Collection<Deployment> doListDeployments() {
       //assumed myLock
       Map<Deployment, DeploymentImpl> orderedDeployments = new TreeMap<>(myDeploymentComparator);
+      List<LocalDeploymentImpl> matchedLocalsBefore = new LinkedList<>();
 
       for (LocalDeploymentImpl localDeployment : myLocalDeployments.values()) {
+        if (localDeployment.hasRemoteDeloyment()) {
+          matchedLocalsBefore.add(localDeployment);
+        }
         localDeployment.setRemoteDeployment(null);
         orderedDeployments.put(localDeployment, localDeployment);
       }
+
       Set<Deployment> result = new LinkedHashSet<>(orderedDeployments.keySet());
 
       for (DeploymentImpl remoteDeployment : myRemoteDeployments.values()) {
@@ -567,6 +572,13 @@ public class ServerConnectionImpl<D extends DeploymentConfiguration> implements 
         }
         else {
           orderedDeployments.put(remoteDeployment, remoteDeployment);
+        }
+      }
+
+      final DeploymentStatus finishedExternally = DeploymentStatus.NOT_DEPLOYED;
+      for (LocalDeploymentImpl nextLocal : matchedLocalsBefore) {
+        if (!nextLocal.hasRemoteDeloyment()) {
+          nextLocal.changeState(DeploymentStatus.DEPLOYED, finishedExternally, null, null);
         }
       }
 

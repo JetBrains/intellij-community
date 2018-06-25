@@ -37,9 +37,14 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     final PsiLambdaExpression expression = (PsiLambdaExpression)parent;
     final PsiParameter[] parameters = parameterList.getParameters();
     for (PsiParameter parameter : parameters) {
-      if (parameter.getTypeElement() == null) return false;
-      if (!PsiUtil.isLanguageLevel11OrHigher(parameterList) && 
-          AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter, Collections.emptySet())) return false;
+      PsiTypeElement typeElement = parameter.getTypeElement();
+      if (typeElement == null) return false;
+      if (!PsiUtil.isLanguageLevel11OrHigher(parameterList)) {
+        if (AnonymousCanBeLambdaInspection.hasRuntimeAnnotations(parameter, Collections.emptySet())) {
+          return false;
+        }
+      }
+      else if (typeElement.isInferredType() && keepVarType(parameter)) return false;
     }
     if (parameters.length == 0) return false;
     final PsiType functionalInterfaceType = expression.getFunctionalInterfaceType();
@@ -72,8 +77,7 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
     if (lambdaExpression != null) {
       final PsiParameter[] parameters = lambdaExpression.getParameterList().getParameters();
       if (PsiUtil.isLanguageLevel11OrHigher(lambdaExpression) &&
-          Arrays.stream(parameters).anyMatch(parameter -> parameter.hasModifierProperty(PsiModifier.FINAL) || 
-                                                          parameter.getAnnotations().length > 0)) {
+          Arrays.stream(parameters).anyMatch(parameter -> keepVarType(parameter))) {
         for (PsiParameter parameter : parameters) {
           PsiTypeElement element = parameter.getTypeElement();
           if (element != null) {
@@ -94,6 +98,11 @@ public class RedundantLambdaParameterTypeInspection extends AbstractBaseJavaLoca
       CommentTracker tracker = new CommentTracker();
       tracker.replaceAndRestoreComments(lambdaExpression.getParameterList(), expression.getParameterList());
     }
+  }
+
+  private static boolean keepVarType(PsiParameter parameter) {
+    return parameter.hasModifierProperty(PsiModifier.FINAL) || 
+                                                    parameter.getAnnotations().length > 0;
   }
 
   private static class LambdaParametersFix implements LocalQuickFix {

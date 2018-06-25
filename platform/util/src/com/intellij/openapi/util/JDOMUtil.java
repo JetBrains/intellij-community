@@ -11,7 +11,6 @@ import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.util.text.CharSequenceReader;
-import com.intellij.util.text.StringFactory;
 import org.jdom.*;
 import org.jdom.filter.Filter;
 import org.jdom.input.SAXBuilder;
@@ -370,18 +369,6 @@ public class JDOMUtil {
     finally {
       writer.close();
     }
-  }
-
-  /**
-   * @deprecated Use {@link #writeDocument(Document, String)} or {@link #writeElement(Element)}}
-   */
-  @NotNull
-  @Deprecated
-  public static byte[] printDocument(@NotNull Document document, String lineSeparator) throws IOException {
-    CharArrayWriter writer = new CharArrayWriter();
-    writeDocument(document, writer, lineSeparator);
-
-    return StringFactory.createShared(writer.toCharArray()).getBytes(CharsetToolkit.UTF8_CHARSET);
   }
 
   @NotNull

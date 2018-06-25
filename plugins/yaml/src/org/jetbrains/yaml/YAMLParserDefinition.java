@@ -104,7 +104,7 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
     return new YAMLFileImpl(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.dom.ide;
 
 import com.intellij.openapi.project.Project;
@@ -15,6 +15,7 @@ import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomService;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.idea.devkit.dom.ActionOrGroup;
 import org.jetbrains.idea.devkit.dom.Extension;
 import org.jetbrains.idea.devkit.dom.ExtensionPoint;
 import org.jetbrains.idea.devkit.dom.IdeaPlugin;
@@ -30,7 +31,9 @@ public class PluginDescriptorUseScopeEnlarger extends UseScopeEnlarger {
       PomTarget target = ((PomTargetPsiElement)element).getTarget();
       if (target instanceof DomTarget) {
         DomElement domElement = ((DomTarget)target).getDomElement();
-        if (domElement instanceof ExtensionPoint || domElement instanceof Extension) {
+        if (domElement instanceof ExtensionPoint ||
+            domElement instanceof Extension ||
+            domElement instanceof ActionOrGroup) {
           return createAllPluginDescriptorFilesSearchScope(element);
         }
       }

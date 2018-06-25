@@ -8,6 +8,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.io.Decompressor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -154,7 +155,7 @@ public class ZipUtil {
         return;
       }
     }
-    File child = com.intellij.util.io.ZipUtil.newFileForEntry(extractToDir, relativeExtractPath);
+    File child = Decompressor.entryFile(extractToDir, relativeExtractPath);
     File dir = zipEntry.isDirectory() ? child : child.getParentFile();
     if (!dir.exists() && !dir.mkdirs()) {
       throw new IOException("Unable to create dir: '" + dir + "'!");

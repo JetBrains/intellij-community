@@ -434,4 +434,42 @@ class Cl {
   }
 '''
   }
+
+  void 'test call without reference'() {
+    testHighlighting '''
+class E {
+    E call() {
+        null
+    }
+    E bar() {null}
+
+}
+
+new E().bar()()
+
+'''
+  }
+
+//TODO: IDEA-194192
+  void '_test call without reference with generics'() {
+    testHighlighting '''
+import groovy.transform.CompileStatic
+
+class E {
+    def <K,V> Map<K, V> call(Map<K, V> m) {
+        m
+    }
+    E bar() {null}
+}
+
+static <K,V> Map<K, V> getMap() {
+  return new HashMap<K,V>()
+}
+
+@CompileStatic
+def com() {
+    Map<String, Integer> correct = new E()(getMap().withDefault({ 0 }))
+}
+'''
+  }
 }
