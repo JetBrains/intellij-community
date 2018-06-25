@@ -11,7 +11,7 @@ class Test {
       System.out.println("never");
     }
     y = x;
-    if(x.equals(y)) {
+    if(<warning descr="Condition 'x.equals(y)' is always 'true'">x.equals(y)</warning>) {
       System.out.println("always");
     }
   }

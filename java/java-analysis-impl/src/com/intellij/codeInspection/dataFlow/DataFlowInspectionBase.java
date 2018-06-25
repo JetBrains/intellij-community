@@ -14,7 +14,6 @@ import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
 import com.intellij.codeInspection.dataFlow.fix.SimplifyToAssignmentFix;
 import com.intellij.codeInspection.dataFlow.instructions.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.nullable.NullableStuffInspectionBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -254,7 +253,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     for (Instruction instruction : allProblems) {
       if (instruction instanceof TypeCastInstruction &&
-               reportedAnchors.add(((TypeCastInstruction)instruction).getCastExpression().getCastType())) {
+               reportedAnchors.add(((TypeCastInstruction)instruction).getExpression().getCastType())) {
         reportCastMayFail(holder, (TypeCastInstruction)instruction);
       }
       else if (instruction instanceof BranchingInstruction) {
@@ -263,8 +262,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
 
     reportAlwaysFailingCalls(holder, visitor, reportedAnchors);
-
-    reportConstantPushes(runner, holder, reportedAnchors);
 
     reportNullabilityProblems(holder, visitor, reportedAnchors);
     reportNullableReturns(visitor, holder, reportedAnchors, scope);
@@ -275,9 +272,9 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, visitor.getOfNullableCalls());
 
-    visitor.getBooleanCalls().forEach((call, state) -> {
-      if (state != ThreeState.UNSURE && reportedAnchors.add(call)) {
-        reportConstantCondition(holder, call, state.toBoolean());
+    visitor.getBooleanExpressions().forEach((expression, state) -> {
+      if (state != ThreeState.UNSURE && reportedAnchors.add(expression)) {
+        reportConstantBoolean(holder, expression, state.toBoolean());
       }
     });
 
@@ -471,21 +468,6 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     return call;
   }
 
-  private void reportConstantPushes(StandardDataFlowRunner runner,
-                                    ProblemsHolder holder,
-                                    Set<PsiElement> reportedAnchors) {
-    for (Instruction instruction : runner.getInstructions()) {
-      if (instruction instanceof PushInstruction) {
-        PsiExpression place = ((PushInstruction)instruction).getExpression();
-        DfaValue value = ((PushInstruction)instruction).getValue();
-        Object constant = value instanceof DfaConstValue ? ((DfaConstValue)value).getValue() : null;
-        if (place instanceof PsiPolyadicExpression && constant instanceof Boolean && !isFlagCheck(place) && reportedAnchors.add(place)) {
-          reportConstantCondition(holder, place, (Boolean)constant);
-        }
-      }
-    }
-  }
-
   private static void reportOptionalOfNullableImprovements(ProblemsHolder holder,
                                                            Set<PsiElement> reportedAnchors,
                                                            Map<PsiElement, ThreeState> nullArgs) {
@@ -611,7 +593,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   }
 
   private static void reportCastMayFail(ProblemsHolder holder, TypeCastInstruction instruction) {
-    PsiTypeCastExpression typeCast = instruction.getCastExpression();
+    PsiTypeCastExpression typeCast = instruction.getExpression();
     PsiExpression operand = typeCast.getOperand();
     PsiTypeElement castType = typeCast.getCastType();
     assert castType != null;
@@ -882,7 +864,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     return false;
   }
 
-  private static boolean isFlagCheck(PsiElement element) {
+  static boolean isFlagCheck(PsiElement element) {
     PsiElement scope = PsiTreeUtil.getParentOfType(element, PsiStatement.class, PsiVariable.class);
     PsiExpression topExpression = scope instanceof PsiIfStatement ? ((PsiIfStatement)scope).getCondition() :
                                   scope instanceof PsiVariable ? ((PsiVariable)scope).getInitializer() :
