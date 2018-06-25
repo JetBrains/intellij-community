@@ -11,6 +11,7 @@ import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -76,6 +77,10 @@ public class YAMLKeysSearchEverywhereContributor implements SearchEverywhereCont
                                                 SearchEverywhereContributorFilter<Language> filter,
                                                 ProgressIndicator progressIndicator,
                                                 int elementsLimit) {
+    if (myProject == null || DumbService.getInstance(myProject).isDumb()) {
+      return ContributorSearchResult.empty();
+    }
+
     if (pattern.isEmpty()) {
       return ContributorSearchResult.empty();
     }
