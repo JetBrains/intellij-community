@@ -15,6 +15,7 @@
  */
 package git4idea.update
 
+import com.intellij.dvcs.branch.DvcsSyncSettings
 import com.intellij.openapi.progress.EmptyProgressIndicator
 import com.intellij.openapi.vcs.Executor.cd
 import com.intellij.openapi.vcs.update.UpdatedFiles
@@ -70,31 +71,69 @@ class GitMultiRepoUpdateTest : GitUpdateBaseTest() {
     assumeTrue("Not tested: fetch --prune doesn't work in Git ${vcs.version}",
                GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(vcs.version))
 
-    listOf(bro, bromunity).forEach {
-      cd(it)
-      git("checkout -b feature")
-      git("push -u origin feature")
-    }
-    listOf(repository, community).forEach {
-      cd(it)
-      git("pull")
-      git("checkout -b feature origin/feature")
-      it.update()
-    }
+    val syncSetting = settings.syncSetting
+    try {
+      settings.syncSetting = DvcsSyncSettings.Value.SYNC
 
-    // commit in one repo to let update work
+      listOf(bro, bromunity).forEach {
+        cd(it)
+        git("checkout -b feature")
+        git("push -u origin feature")
+      }
+      listOf(repository, community).forEach {
+        cd(it)
+        git("pull")
+        git("checkout -b feature origin/feature")
+        it.update()
+      }
+
+      // commit in one repo to let update work
+      cd(bro)
+      tac("bro.txt")
+      git("push")
+      // remove branch in another repo
+      cd(bromunity)
+      git("push origin :feature")
+
+      val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+      val result = updateProcess.update(UpdateMethod.MERGE)
+
+      assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
+      assertErrorNotification("Can't Update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
+    }
+    finally {
+      settings.syncSetting = syncSetting
+    }
+  }
+
+  fun `test skip repo in detached HEAD`() {
     cd(bro)
     tac("bro.txt")
     git("push")
-    // remove branch in another repo
-    cd(bromunity)
-    git("push origin :feature")
+
+    community.checkout("HEAD^0")
 
     val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
     val result = updateProcess.update(UpdateMethod.MERGE)
 
+    assertEquals("Update result is incorrect", GitUpdateResult.SUCCESS, result)
+    assertNoNotification()   // the notification is produced by the common code which we don't call
+  }
+
+  fun `test notify error if all repos are in detached HEAD`() {
+    cd(bro)
+    tac("bro.txt")
+    git("push")
+    cd(bromunity)
+    tac("com.txt")
+    git("push")
+
+    repositories().forEach { it.checkout("HEAD^0")}
+
+    val updateProcess = GitUpdateProcess(project, EmptyProgressIndicator(), repositories(), UpdatedFiles.create(), false, true)
+    val result = updateProcess.update(UpdateMethod.MERGE)
     assertEquals("Update result is incorrect", GitUpdateResult.NOT_READY, result)
-    assertErrorNotification("Can't Update", GitUpdateProcess.getNoTrackedBranchError(community, "feature"))
+    assertErrorNotification("Can't update: no current branch", GitUpdateProcess.getDetachedHeadErrorNotificationContent(community))
   }
 
   private fun updateWithMerge(): GitUpdateResult {
