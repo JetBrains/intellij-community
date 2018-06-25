@@ -277,8 +277,7 @@ public class CaptureStorage {
   }
 
   private static String getCallerDescriptor(Throwable e) {
-    StackTraceElement[] stackTrace = e.getStackTrace();
-    StackTraceElement caller = stackTrace[stackTrace.length - 2];
+    StackTraceElement caller = e.getStackTrace()[1];
     return caller.getClassName() + "." + caller.getMethodName();
   }
 }
