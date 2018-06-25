@@ -140,7 +140,7 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
-    _showTouchBar(buttons, defaultButton);
+    _showTouchBar(buttons, myController.getDefaultButton() != null ? myController.getDefaultButton().getText() : null);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
 
