@@ -219,7 +219,14 @@ public final class IconLoader {
       }
       if (newPath != null) {
         LOG.info("replace '" + path + "' with '" + newPath + "'");
-        return Pair.create(newPath, patcher.getContextClassLoader(path, classLoader));
+        ClassLoader contextClassLoader = patcher.getContextClassLoader(path, classLoader);
+        if (contextClassLoader == null) {
+          Class contextClass = patcher.getContextClass(path);
+          if (contextClass != null) {
+            contextClassLoader = contextClass.getClassLoader();
+          }
+        }
+        return Pair.create(newPath, contextClassLoader);
       }
     }
     return Pair.create(path, null);
