@@ -155,13 +155,22 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     });
 
-    final EditorTextField textField = new EditorTextField(document, searchContext.getProject(), myFileType) {
+    final EditorTextField textField = new EditorTextField(document, searchContext.getProject(), myFileType, false, false) {
       @Override
       protected EditorEx createEditor() {
-        final EditorEx editorEx = super.createEditor();
-        TextCompletionUtil.installCompletionHint(editorEx);
-        editorEx.putUserData(STRUCTURAL_SEARCH, true);
-        return editorEx;
+        final EditorEx editor = super.createEditor();
+        TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
+        SubstitutionShortInfoHandler.install(editor, variableName ->
+          myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
+        editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
+        final Project project = mySearchContext.getProject();
+        final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(mySearchCriteriaEdit.getDocument());
+        if (file != null) {
+          DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
+        }
+        TextCompletionUtil.installCompletionHint(editor);
+        editor.putUserData(STRUCTURAL_SEARCH, true);
+        return editor;
       }
     };
     textField.setPreferredSize(new Dimension(850, 150));
@@ -232,24 +241,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       myEditorPanel.revalidate();
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(myFileType);
       assert profile != null;
-
-      mySearchCriteriaEdit.addPropertyChangeListener(new PropertyChangeListener() {
-        @Override
-        public void propertyChange(PropertyChangeEvent evt) {
-          final Editor editor = mySearchCriteriaEdit.getEditor();
-          if (editor == null) return;
-          TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
-          SubstitutionShortInfoHandler.install(editor, variableName ->
-            myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
-          editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
-          final Project project = mySearchContext.getProject();
-          final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(mySearchCriteriaEdit.getDocument());
-          if (file != null) {
-            DaemonCodeAnalyzer.getInstance(project).setHighlightingEnabled(file, false);
-          }
-          mySearchCriteriaEdit.removePropertyChangeListener(this);
-        }
-      });
     }
   }
 
