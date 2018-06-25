@@ -272,7 +272,7 @@ public class TouchBarsManager {
           ed.containerSearch.release();
         }
 
-        ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, false), null, header);
+        ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
         ourStack.showContainer(ed.containerSearch);
       }
     }
@@ -314,7 +314,7 @@ public class TouchBarsManager {
       _findAllTouchbarProviders(actions, contentPane);
       if (!actions.isEmpty()) {
         final ActionGroup ag = actions.values().iterator().next();
-        final TouchBar tb = TouchBar.buildFromGroup("dialog_with_actions", ag, false);
+        final TouchBar tb = TouchBar.buildFromGroup("dialog_with_actions", ag, true, true);
         bc = new BarContainer(btype, tb, null, contentPane);
         final BarContainer fbc = bc;
         ag.addPropertyChangeListener(new PropertyChangeListener() {

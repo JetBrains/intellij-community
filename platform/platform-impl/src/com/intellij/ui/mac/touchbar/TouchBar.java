@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.util.function.Consumer;
 
 class TouchBar implements NSTLibrary.ItemCreator {
@@ -40,10 +41,10 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   TouchBar(@NotNull String touchbarName, boolean replaceEsc) {
-    this(touchbarName, replaceEsc, false);
+    this(touchbarName, replaceEsc, false, false);
   }
 
-  TouchBar(@NotNull String touchbarName, boolean replaceEsc, boolean autoClose) {
+  TouchBar(@NotNull String touchbarName, boolean replaceEsc, boolean autoClose, boolean emulateESC) {
     if (autoClose) {
       myItemListener = (src, evcode) -> {
         // NOTE: called from AppKit thread
@@ -54,7 +55,18 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
     myItems = new ItemsContainer(touchbarName, myItemListener);
     if (replaceEsc)
-      myCustomEsc = new TBItemButton(touchbarName + "_custom_esc_button", myItemListener).setIcon(AllIcons.Actions.Cancel).setThreadSafeAction(this::_closeSelf);
+      myCustomEsc = new TBItemButton(touchbarName + "_custom_esc_button", myItemListener).setIcon(AllIcons.Actions.Cancel).setThreadSafeAction(()-> {
+        _closeSelf();
+        if (emulateESC) {
+          try {
+            Robot robot = new Robot();
+            robot.keyPress(KeyEvent.VK_ESCAPE);
+            robot.keyRelease(KeyEvent.VK_ESCAPE);
+          } catch (AWTException e) {
+            LOG.error(e);
+          }
+        }
+      });
     else
       myCustomEsc = null;
 
@@ -77,8 +89,8 @@ class TouchBar implements NSTLibrary.ItemCreator {
     return result;
   }
 
-  static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup actions, boolean replaceEsc) {
-    final TouchBar result = new TouchBar(touchbarName, replaceEsc);
+  static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup actions, boolean replaceEsc, boolean emulateESC) {
+    final TouchBar result = new TouchBar(touchbarName, replaceEsc, false, emulateESC);
     addActionGroup(result, actions);
     return result;
   }
