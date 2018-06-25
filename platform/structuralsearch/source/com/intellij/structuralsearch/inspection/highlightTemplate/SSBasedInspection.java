@@ -41,14 +41,14 @@ public class SSBasedInspection extends LocalInspectionTool {
 
   @Override
   public void writeSettings(@NotNull Element node) throws WriteExternalException {
-    ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.emptyList());
+    ConfigurationManager.writeConfigurations(node, myConfigurations);
   }
 
   @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     myProblemsReported.clear();
     myConfigurations.clear();
-    ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<>());
+    ConfigurationManager.readConfigurations(node, myConfigurations);
   }
 
   @Override
