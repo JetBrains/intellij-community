@@ -31,12 +31,11 @@ public interface GenerationInfo {
 
   void insert(@NotNull PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException;
 
-  @NotNull
+  /**
+   * @return the associated PSI member or null if it has become invalid
+   */
+  @Nullable
   PsiMember getPsiMember();
-
-  default boolean isMemberValid() {
-    return true;
-  }
 
   /**
    * @param leaf leaf element. Is guaranteed to be a tree descendant of aClass.

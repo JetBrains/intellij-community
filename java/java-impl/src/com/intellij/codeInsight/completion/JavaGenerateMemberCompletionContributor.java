@@ -177,7 +177,7 @@ public class JavaGenerateMemberCompletionContributor {
       final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newInfos) {
         if (!(member instanceof TemplateGenerationInfo)) {
-          elements.add(member.getPsiMember());
+          ContainerUtil.addIfNotNull(elements, member.getPsiMember());
         }
       }
 

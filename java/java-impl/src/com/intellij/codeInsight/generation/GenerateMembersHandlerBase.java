@@ -44,6 +44,7 @@ import org.jetbrains.java.generate.exception.GenerateCodeException;
 import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Objects;
 
 public abstract class GenerateMembersHandlerBase implements CodeInsightActionHandler, ContextAwareActionHandler {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.generation.GenerateMembersHandlerBase");
@@ -140,8 +141,8 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     else {
       final List<PsiElement> elements = new ArrayList<>();
       for (GenerationInfo member : newMembers) {
-        if (!(member instanceof TemplateGenerationInfo) && member.isMemberValid()) {
-          elements.add(member.getPsiMember());
+        if (!(member instanceof TemplateGenerationInfo)) {
+          ContainerUtil.addIfNotNull(elements, member.getPsiMember());
         }
       }
 
@@ -171,7 +172,7 @@ public abstract class GenerateMembersHandlerBase implements CodeInsightActionHan
     TemplateGenerationInfo info = templates.get(index);
     final Template template = info.getTemplate();
 
-    final PsiElement element = info.getPsiMember();
+    PsiElement element = Objects.requireNonNull(info.getPsiMember());
     final TextRange range = element.getTextRange();
     WriteAction.run(() -> editor.getDocument().deleteString(range.getStartOffset(), range.getEndOffset()));
     int offset = range.getStartOffset();
