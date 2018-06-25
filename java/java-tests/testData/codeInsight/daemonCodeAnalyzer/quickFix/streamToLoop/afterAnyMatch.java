@@ -6,9 +6,9 @@ import static java.util.Arrays.asList;
 
 public class Main {
   public static boolean test(List<List<String>> list) {
-      for (List<String> x: list) {
+      for (List<String> x : list) {
           if (x != null) {
-              for (String s: x) {
+              for (String s : x) {
                   if (s.startsWith("a")) {
                       return true;
                   }
@@ -19,7 +19,7 @@ public class Main {
   }
 
   String testTernary(String[] strings) {
-      for (String s: strings) {
+      for (String s : strings) {
           if (s != null) {
               if (!s.startsWith("xyz")) {
                   return "s";

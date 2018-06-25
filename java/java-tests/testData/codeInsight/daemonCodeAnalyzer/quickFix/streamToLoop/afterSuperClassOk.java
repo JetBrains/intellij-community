@@ -14,7 +14,7 @@ public class Main {
     Child() {
       super(false);
         boolean b = false;
-        for (String s: Arrays.asList("a", "b", "c")) {
+        for (String s : Arrays.asList("a", "b", "c")) {
             if (s != null) {
                 b = true;
                 break;
