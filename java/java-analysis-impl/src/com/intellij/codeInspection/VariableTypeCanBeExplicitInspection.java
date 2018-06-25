@@ -35,6 +35,10 @@ public class VariableTypeCanBeExplicitInspection extends AbstractBaseJavaLocalIn
 
       @Override
       public void visitVariable(PsiVariable variable) {
+        if (variable instanceof PsiParameter && 
+            ((PsiParameter)variable).getDeclarationScope() instanceof PsiLambdaExpression) {
+          return;
+        }
         PsiTypeElement typeElement = getTypeElementToExpand(variable);
         if (typeElement != null) {
           registerTypeElementProblem(typeElement);
