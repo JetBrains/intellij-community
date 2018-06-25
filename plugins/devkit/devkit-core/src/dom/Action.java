@@ -25,84 +25,49 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-/**
- * plugin.dtd:action interface.
- */
 @Presentation(typeName = "Action")
 public interface Action extends ActionOrGroup {
 
-
-	/**
-	 * Returns the value of the class child.
-	 * Attribute class
-	 * @return the value of the class child.
-	 */
-	@NotNull
-	@Attribute ("class")
-	@Required
-        @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
-		allowNonPublic = true, allowAbstract = false, allowInterface = false)
-        @Convert(PluginPsiClassConverter.class)
-        GenericAttributeValue<PsiClass> getClazz();
+  @NotNull
+  @Attribute("class")
+  @Required
+  @ExtendClass(value = "com.intellij.openapi.actionSystem.AnAction",
+    allowNonPublic = true, allowAbstract = false, allowInterface = false)
+  @Convert(PluginPsiClassConverter.class)
+  GenericAttributeValue<PsiClass> getClazz();
 
 
-	/**
-	 * Returns the list of keyboard-shortcut children.
-	 * @return the list of keyboard-shortcut children.
-	 */
-	@NotNull
-	List<KeyboardShortcut> getKeyboardShortcuts();
-	/**
-	 * Adds new child to the list of keyboard-shortcut children.
-	 * @return created child
-	 */
-	KeyboardShortcut addKeyboardShortcut();
+  @NotNull
+  List<KeyboardShortcut> getKeyboardShortcuts();
+
+  KeyboardShortcut addKeyboardShortcut();
 
 
-	/**
-	 * Returns the list of mouse-shortcut children.
-	 * @return the list of mouse-shortcut children.
-	 */
-	@NotNull
-	List<MouseShortcut> getMouseShortcuts();
-	/**
-	 * Adds new child to the list of mouse-shortcut children.
-	 * @return created child
-	 */
-	MouseShortcut addMouseShortcut();
+  @NotNull
+  List<MouseShortcut> getMouseShortcuts();
 
-        /**
- 	 * Returns the list of abbreviation children.
- 	 * @return the list of abbreviation children.
- 	 */
- 	@NotNull
- 	List<Abbreviation> getAbbreviations();
+  MouseShortcut addMouseShortcut();
 
- 	/**
- 	 * Adds new child to the list of abbreviation children.
- 	 * @return created child
- 	 */
-        Abbreviation addAbbreviation();
 
-	/**
-	 * Returns the list of add-to-group children.
-	 * @return the list of add-to-group children.
-	 */
-	@NotNull
-	List<AddToGroup> getAddToGroups();
-	/**
-	 * Adds new child to the list of add-to-group children.
-	 * @return created child
-	 */
-	AddToGroup addAddToGroup();
+  @NotNull
+  List<Abbreviation> getAbbreviations();
 
-        @NotNull
-	@Convert(ActionOrGroupResolveConverter.OnlyActions.class)
-        GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+  Abbreviation addAbbreviation();
 
-        @NotNull
-        GenericAttributeValue<String> getKeymap();
 
- 	@NotNull
- 	GenericAttributeValue<String> getProjectType();
+  @NotNull
+  List<AddToGroup> getAddToGroups();
+
+  AddToGroup addAddToGroup();
+
+
+  @NotNull
+  @Convert(ActionOrGroupResolveConverter.OnlyActions.class)
+  GenericAttributeValue<ActionOrGroup> getUseShortcutOf();
+
+  @NotNull
+  GenericAttributeValue<String> getKeymap();
+
+  @NotNull
+  GenericAttributeValue<String> getProjectType();
 }
