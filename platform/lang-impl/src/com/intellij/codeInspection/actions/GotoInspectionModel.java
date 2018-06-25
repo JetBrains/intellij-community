@@ -48,11 +48,14 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     for (ScopeToolState state : rootProfile.getAllTools()) {
       InspectionToolWrapper tool = LocalInspectionToolWrapper.findTool2RunInBatch(project, null, rootProfile, state.getTool());
       if (tool != null) {
-        String name = tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ");
-        myToolNames.put(name, tool);
+        myToolNames.put(getSearchString(tool), tool);
       }
     }
     myNames = ArrayUtil.toStringArray(myToolNames.keySet());
+  }
+
+  private static String getSearchString(InspectionToolWrapper tool) {
+    return tool.getDisplayName() + " " + StringUtil.join(tool.getGroupPath(), " ") + " " + tool.getShortName();
   }
 
   @Override
@@ -77,8 +80,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   @Override
   public String getElementName(final Object element) {
     if (element instanceof InspectionElement) {
-      InspectionToolWrapper entry = ((InspectionElement)element).getToolWrapper();
-      return entry.getDisplayName() + " " + StringUtil.join(entry.getGroupPath(), " ");
+      return getSearchString(((InspectionElement)element).getToolWrapper());
     }
     return null;
   }
