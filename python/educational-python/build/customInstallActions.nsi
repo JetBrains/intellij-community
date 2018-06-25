@@ -65,21 +65,28 @@ run_in_user_mode:
   ClearErrors
   ${ConfigRead} "$R1" "launcher32=" $R3
   IfErrors launcher_64
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
 
 launcher_64:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
+  IfErrors update_PATH
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
+
+update_PATH:
+  ClearErrors
+  ${ConfigRead} "$R1" "updatePATH=" $R3
   IfErrors download_jre32
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
 
 download_jre32:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors download_python2
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
 download_python2:
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "State" 0
@@ -128,7 +135,6 @@ Function customInstallActions
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
   StrCpy $internetConnection "No"
-;  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded." /SD IDOK
   goto check_python
 getPythonInfo:  
   Call getPythonInfo
