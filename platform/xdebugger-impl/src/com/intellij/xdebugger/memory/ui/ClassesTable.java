@@ -1,8 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.memory.ui;
 
-import com.intellij.xdebugger.memory.component.InstancesTracker;
-import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
@@ -19,6 +17,8 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.containers.FList;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
+import com.intellij.xdebugger.memory.component.InstancesTracker;
+import com.intellij.xdebugger.memory.tracking.TrackerForNewInstancesBase;
 import com.intellij.xdebugger.memory.tracking.TrackingType;
 import com.intellij.xdebugger.memory.utils.AbstractTableColumnDescriptor;
 import com.intellij.xdebugger.memory.utils.AbstractTableModelWithColumns;
@@ -242,8 +242,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       }
     };
 
-    boolean mouseOnTable = !ApplicationManager.getApplication().isUnitTestMode() && getMousePosition() != null;
-    listener.updateTable(mouseOnTable);
+    listener.updateTable(isUnderMouseCursor());
 
     myMouseListener = listener;
     addMouseListener(myMouseListener);
@@ -391,6 +390,16 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
   @Override
   public void dispose() {
     ApplicationManager.getApplication().invokeLater(() -> clean(""));
+  }
+
+  private boolean isUnderMouseCursor() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) return false;
+    try {
+      return getMousePosition() != null;
+    }
+    catch (NullPointerException e) { // A workaround for https://bugs.openjdk.java.net/browse/JDK-6840067
+      return false;
+    }
   }
 
   @Nullable
