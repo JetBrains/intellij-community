@@ -31,6 +31,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -171,7 +172,7 @@ public class SplitDeclarationAction extends PsiElementBaseIntentionAction {
         }
 
         final PsiElement parent = block.getParent();
-        PsiExpressionStatement replaced = (PsiExpressionStatement)decl.replace(statement);
+        PsiExpressionStatement replaced = (PsiExpressionStatement)new CommentTracker().replaceAndRestoreComments(decl, statement);
         if (!(parent instanceof PsiCodeBlock)) {
           final PsiBlockStatement blockStatement =
             (PsiBlockStatement)JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", block);
