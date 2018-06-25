@@ -78,13 +78,13 @@ public class VcsRootScanner implements ModuleRootListener, AsyncVfsEventsListene
       @Override
       public VirtualFileVisitor.Result visitFileEx(@NotNull VirtualFile file) {
         ProgressManager.checkCanceled();
-        if (ReadAction.compute(() -> myProject.isDisposed() || myProjectManager.getFileIndex().isExcluded(file))) {
-          return SKIP_CHILDREN;
-        }
-
         if (isVcsDir(file.getPath())) {
           scheduleScan();
           return skipTo(root);
+        }
+
+        if (ReadAction.compute(() -> myProject.isDisposed() || myProjectManager.getFileIndex().isExcluded(file))) {
+          return SKIP_CHILDREN;
         }
 
         return CONTINUE;
