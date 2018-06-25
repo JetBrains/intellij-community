@@ -209,7 +209,7 @@ fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String
   }
 }
 
-fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
+fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   val buttonRun = "Run"
   logTestStep("Going to run configuration `$configuration`")
   ideFrame {
@@ -220,13 +220,11 @@ fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
     toolwindow(id = buttonRun) {
       content(tabName = configuration) {
         editor {
-          val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
-          logInfo("output: ${output.map { "\n\t$it" }}")
-          logInfo("expected message = '$message'")
-          assert(output.firstOrNull { it.contains(message) } != null) {
-            "Run output:\n" +
-            "\t${output.joinToString("\n\t")}\n" +
-            "doesn't contain expected message `$message`"
+          GuiTestUtilKt.waitUntil("Wait for '$message' appears") {
+            val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
+            logInfo("output: ${output.map { "\n\t$it" }}")
+            logInfo("expected message = '$message'")
+            output.firstOrNull { it.contains(message) } != null
           }
         }
       }
