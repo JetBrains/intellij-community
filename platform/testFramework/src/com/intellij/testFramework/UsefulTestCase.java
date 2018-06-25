@@ -6,10 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.lang.Language;
-import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -85,7 +82,6 @@ public abstract class UsefulTestCase extends TestCase {
   static String ourPathToKeep;
   private final List<String> myPathsToKeep = new ArrayList<>();
 
-  private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
 
   static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
@@ -229,24 +225,7 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected void checkForSettingsDamage() {
-    Application app = ApplicationManager.getApplication();
-    if (isStressTest() || app == null || app instanceof MockApplication) {
-      return;
-    }
-
-    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
-    if (oldCodeStyleSettings == null) {
-      return;
-    }
-
-    myOldCodeStyleSettings = null;
-
-    doCheckForSettingsDamage(oldCodeStyleSettings, CodeStyle.getDefaultSettings());
-  }
-
-  public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                              @NotNull CodeStyleSettings currentCodeStyleSettings) {
+  static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -281,13 +260,6 @@ public abstract class UsefulTestCase extends TestCase {
       .append(() -> InplaceRefactoring.checkCleared())
       .append(() -> StartMarkAction.checkCleared())
       .run();
-  }
-
-  void storeSettings() {
-    if (!isStressTest() && ApplicationManager.getApplication() != null) {
-      myOldCodeStyleSettings = CodeStyle.getDefaultSettings().clone();
-      myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-    }
   }
 
   @NotNull
@@ -719,7 +691,7 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   public static void assertNotEmpty(final Collection<?> collection) {
-    if (collection == null) return;
+    assertNotNull(collection);
     assertTrue(!collection.isEmpty());
   }
 
@@ -736,24 +708,25 @@ public abstract class UsefulTestCase extends TestCase {
     assertTrue(s, StringUtil.isEmpty(s));
   }
 
-  public static <T> void assertEmpty(final String errorMsg, final Collection<T> collection) {
+  public static <T> void assertEmpty(@Nullable String errorMsg, @NotNull Collection<T> collection) {
     assertOrderedEquals(errorMsg, collection, Collections.emptyList());
   }
 
-  public static void assertSize(int expectedSize, final Object[] array) {
+  public static void assertSize(int expectedSize, @NotNull Object[] array) {
     assertEquals(toString(Arrays.asList(array)), expectedSize, array.length);
   }
 
-  public static void assertSize(int expectedSize, final Collection<?> c) {
+  public static void assertSize(int expectedSize, @NotNull Collection<?> c) {
     assertEquals(toString(c), expectedSize, c.size());
   }
 
-  protected <T extends Disposable> T disposeOnTearDown(final T disposable) {
+  @NotNull
+  protected <T extends Disposable> T disposeOnTearDown(@NotNull T disposable) {
     Disposer.register(getTestRootDisposable(), disposable);
     return disposable;
   }
 
-  public static void assertSameLines(String expected, String actual) {
+  public static void assertSameLines(@NotNull String expected, @NotNull String actual) {
     String expectedText = StringUtil.convertLineSeparators(expected.trim());
     String actualText = StringUtil.convertLineSeparators(actual.trim());
     Assert.assertEquals(expectedText, actualText);
@@ -773,20 +746,21 @@ public abstract class UsefulTestCase extends TestCase {
   }
 
   @NotNull
-  public static String getTestName(String name, boolean lowercaseFirstLetter) {
+  public static String getTestName(@Nullable String name, boolean lowercaseFirstLetter) {
     return name == null ? "" : PlatformTestUtil.getTestName(name, lowercaseFirstLetter);
   }
 
+  @NotNull
   protected String getTestDirectoryName() {
     final String testName = getTestName(true);
     return testName.replaceAll("_.*", "");
   }
 
-  public static void assertSameLinesWithFile(String filePath, String actualText) {
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText) {
     assertSameLinesWithFile(filePath, actualText, true);
   }
 
-  public static void assertSameLinesWithFile(String filePath, String actualText, boolean trimBeforeComparing) {
+  public static void assertSameLinesWithFile(@NotNull String filePath, @NotNull String actualText, boolean trimBeforeComparing) {
     String fileText;
     try {
       if (OVERWRITE_TESTDATA) {

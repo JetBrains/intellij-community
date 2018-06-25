@@ -76,28 +76,8 @@ public class GeneralSettings implements PersistentStateComponent<GeneralSettings
     return myBrowserPath;
   }
 
-  /**
-   * Use RecentProjectsManagerBase
-   */
-  @Deprecated
-  public String getLastProjectCreationLocation() {
-    return null;
-  }
-
-  /**
-   * Use RecentProjectsManagerBase
-   */
-  @Deprecated
-  public void setLastProjectCreationLocation(String lastProjectLocation) {
-  }
-
   public void setBrowserPath(String browserPath) {
     myBrowserPath = browserPath;
-  }
-
-  @Deprecated
-  public boolean showTipsOnStartup() {
-    return isShowTipsOnStartup();
   }
 
   public boolean isShowTipsOnStartup() {

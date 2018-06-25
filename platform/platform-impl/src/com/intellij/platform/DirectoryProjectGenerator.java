@@ -34,12 +34,6 @@ import javax.swing.*;
 public interface DirectoryProjectGenerator<T> {
   ExtensionPointName<DirectoryProjectGenerator> EP_NAME = ExtensionPointName.create("com.intellij.directoryProjectGenerator");
 
-  @Deprecated
-  @Nullable
-  default Integer getPreferredDescriptionWidth() {
-    return null;
-  }
-
   /**
    * @deprecated todo[vokin]: delete in 2016.3
    */

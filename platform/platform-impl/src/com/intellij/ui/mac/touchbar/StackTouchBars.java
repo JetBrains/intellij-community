@@ -54,23 +54,6 @@ public class StackTouchBars {
   void setTouchBarFromTopContainer() { _setTouchBarFromTopContainer(); }
 
   synchronized
-  void removeTouchBar(TouchBar tb) {
-    if (tb == null)
-      return;
-
-    tb.onClose();
-    if (myContainersStack.isEmpty())
-      return;
-
-    BarContainer top = myContainersStack.peek();
-    if (top.get() == tb) {
-      myContainersStack.pop();
-      _setTouchBarFromTopContainer();
-    } else
-      myContainersStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
-  }
-
-  synchronized
   void showContainer(BarContainer bar) {
     if (bar == null)
       return;
@@ -88,6 +71,8 @@ public class StackTouchBars {
   void removeContainer(BarContainer tb) {
     if (tb == null || myContainersStack.isEmpty())
       return;
+
+    tb.onHide();
 
     BarContainer top = myContainersStack.peek();
     if (top == tb) {
@@ -107,7 +92,7 @@ public class StackTouchBars {
     if (top == bar)
       return;
 
-    final boolean preserveTop = top != null && (top.isTemporary() || top.get().isManualClose());
+    final boolean preserveTop = top != null && (top.isPopup() || top.isDialog() || top.get().isManualClose());
     if (preserveTop) {
       myContainersStack.remove(bar);
       myContainersStack.remove(top);
@@ -139,7 +124,7 @@ public class StackTouchBars {
       // the usual event sequence "focus lost -> show underlay bar -> focus gained" produces annoying flicker
       // use slightly deferred update to skip "showing underlay bar"
       myNextBar = bar;
-      final Timer timer = new Timer(50, (event)->{
+      final Timer timer = new Timer(100, (event)->{
         _setNextTouchBar();
       });
       timer.setRepeats(false);

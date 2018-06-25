@@ -101,7 +101,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       checkNotNullable(memState, dfaSource, kind.problem(rValue));
     }
 
-    memState.push(dfaDest);
+    pushExpressionResult(dfaDest, instruction, memState);
     flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dfaDest, memState);
 
     return nextInstruction(instruction, runner, memState);
@@ -153,15 +153,6 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     for (DfaVariableValue v : new ArrayList<>(var.getDependentVariables())) {
       state.dropFact(v, DfaFactType.LOCALITY);
     }
-  }
-
-  @Override
-  public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
-                                                     DataFlowRunner runner,
-                                                     DfaMemoryState memState) {
-    final DfaValue retValue = memState.pop();
-    checkNotNullable(memState, retValue, NullabilityProblemKind.nullableReturn.problem(instruction.getReturn()));
-    return nextInstruction(instruction, runner, memState);
   }
 
   @Override
@@ -280,9 +271,11 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       onInstructionProducesCCE(instruction);
     }
 
+    DfaValue value = memState.pop();
     if (type instanceof PsiPrimitiveType) {
-      memState.push(factory.getBoxedFactory().createUnboxed(memState.pop()));
+      value = factory.getBoxedFactory().createUnboxed(value);
     }
+    pushExpressionResult(value, instruction, memState);
 
     return nextInstruction(instruction, runner, memState);
   }
@@ -595,8 +588,12 @@ public class StandardInstructionVisitor extends InstructionVisitor {
 
   @Override
   public DfaInstructionState[] visitCheckNotNull(CheckNotNullInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
-    DfaValue result = dereference(memState, memState.pop(), instruction.getProblem());
-    memState.push(result);
+    NullabilityProblemKind.NullabilityProblem<?> problem = instruction.getProblem();
+    if (NullabilityProblemKind.nullableReturn.isMyProblem(problem)) {
+      checkNotNullable(memState, memState.peek(), problem);
+    } else {
+      memState.push(dereference(memState, memState.pop(), problem));
+    }
     return super.visitCheckNotNull(instruction, runner, memState);
   }
 

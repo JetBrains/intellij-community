@@ -38,7 +38,7 @@ class Test {
 
   private static void testOrNotFail(boolean a, boolean b, boolean c) {
     if(b) {
-      assert <warning descr="Condition '!(a || b || c)' is always 'false'">!(a || <warning descr="Condition 'b' is always 'true'">b</warning> || c)</warning>;
+      assert <warning descr="Condition '!(a || b || c)' is always 'false'">!(<warning descr="Condition 'a || b || c' is always 'true'">a || <warning descr="Condition 'b' is always 'true'">b</warning> || c</warning>)</warning>;
     }
   }
 

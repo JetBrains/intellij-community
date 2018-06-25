@@ -652,10 +652,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
     return path.endsWith(".ipr") ? FileUtilRt.getNameWithoutExtension(name) : name;
   }
 
-  @Override
-  public void clearNameCache() {
-  }
-
   private static String readProjectName(@NotNull String path) {
     final File file = new File(path);
     if (file.isDirectory()) {

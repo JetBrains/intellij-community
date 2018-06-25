@@ -174,7 +174,7 @@ class BuildUtils {
   }
 
   static TouchBar createMessageDlgBar(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
-    final TouchBar result = new TouchBar("message_dlg_bar", false, true, false);
+    final TouchBar result = new TouchBar("message_dlg_bar", false, false);
     final TBItemGroup gr = result.addGroup();
     final ItemsContainer group = gr.getContainer();
 
@@ -206,7 +206,7 @@ class BuildUtils {
 
   // creates releaseOnClose touchbar
   static TouchBar createButtonsBar(List<JButton> jbuttons) {
-    final TouchBar result = new TouchBar("dialog_buttons", false, true, false);
+    final TouchBar result = new TouchBar("dialog_buttons", false, false);
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
 
     // 1. add option buttons (at left)
@@ -262,7 +262,7 @@ class BuildUtils {
 
   // creates releaseOnClose touchbar
   static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
-    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, false, true, false);
+    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, false, false);
 
     final TBItemScrubber scrub = result.addScrubber();
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
@@ -292,7 +292,7 @@ class BuildUtils {
 
   // creates releaseOnClose touchbar
   static TouchBar createStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
-    final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true, true);
+    final TouchBar tb = new TouchBar("select_running_configuration_to_stop", true, true);
     tb.addButton().setText("Stop All").setActionOnEDT(() -> {
       stoppableDescriptors.forEach((pair) -> { pair.second.run(); });
     });

@@ -47,15 +47,6 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable, UIS
   private final DefaultActionGroup myActionGroup = new DefaultActionGroup();
   private ActionToolbar myToolbar;
 
-  /**
-   * @deprecated
-   * @param info won't be used anymore
-   */
-  @Deprecated
-  ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull WindowInfoImpl info, @NotNull final Producer<ActionGroup> gearProducer) {
-    this(toolWindow, gearProducer);
-  }
-
   ToolWindowHeader(final ToolWindowImpl toolWindow, @NotNull final Producer<ActionGroup> gearProducer) {
     myGearProducer = gearProducer;
     setLayout(new BorderLayout());

@@ -3,6 +3,7 @@ package com.intellij.util.io;
 
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveInputStream;
@@ -126,7 +127,7 @@ public abstract class Decompressor<Stream> {
           continue;
         }
 
-        File outputFile = ZipUtil.newFileForEntry(outputDir, name);
+        File outputFile = entryFile(outputDir, name);
 
         if (entry.isDirectory) {
           FileUtil.createDirectory(outputFile);
@@ -177,4 +178,12 @@ public abstract class Decompressor<Stream> {
   protected abstract void closeEntryStream(InputStream stream) throws IOException;
   protected abstract void closeStream(Stream stream) throws IOException;
   //</editor-fold>
+
+  @NotNull
+  public static File entryFile(@NotNull File outputDir, @NotNull String entryName) throws IOException {
+    if (entryName.contains("..") && ArrayUtil.contains("..", entryName.split("[/\\\\]"))) {
+      throw new IOException("Invalid entry name: " + entryName);
+    }
+    return new File(outputDir, entryName);
+  }
 }

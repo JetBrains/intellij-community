@@ -35,7 +35,7 @@ import java.io.File
 import java.util.*
 
 
-class GitCommitTest : GitSingleRepoTest() {
+open class GitCommitTest : GitSingleRepoTest() {
   private val myMovementProvider = MyExplicitMovementProvider()
 
   override fun getDebugLogCategories() = super.getDebugLogCategories().plus("#" + GitCheckinEnvironment::class.java.name)
@@ -533,7 +533,7 @@ class GitCommitTest : GitSingleRepoTest() {
 
   fun `test commit rename with conflicting staged rename`() {
     `assume version where git reset returns 0 exit code on success `()
-    assumeTrue(Registry.`is`("git.force.commit.using.staging.area"))
+    assumeTrue(Registry.`is`("git.force.commit.using.staging.area")) // known bug in "--only" implementation
 
     tac("a.txt", "file content")
 

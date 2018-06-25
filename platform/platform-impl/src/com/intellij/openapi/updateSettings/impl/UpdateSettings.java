@@ -169,11 +169,5 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
     return myState.getUpdateChannelType();
   }
 
-  /** @deprecated use {@link #setSelectedChannelStatus(ChannelStatus)} (to be removed in IDEA 2018) */
-  @Deprecated
-  @SuppressWarnings("unused")
-  public void setUpdateChannelType(@NotNull String value) {
-    myState.setUpdateChannelType(value);
-  }
   //</editor-fold>
 }

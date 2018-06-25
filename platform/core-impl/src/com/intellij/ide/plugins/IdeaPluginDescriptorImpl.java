@@ -562,12 +562,6 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return null;
   }
 
-  /** @deprecated doesn't make sense for installed plugins; use PluginNode#getDate (to be removed in IDEA 2019) */
-  @Deprecated
-  public long getDate() {
-    return 0;
-  }
-
   @Override
   public ClassLoader getPluginClassLoader() {
     return myLoader != null ? myLoader : getClass().getClassLoader();

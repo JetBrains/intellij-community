@@ -108,7 +108,8 @@ public class RedundantComparatorComparingInspection extends AbstractBaseJavaLoca
     }
     if (REVERSE_ORDER_FOR_COMPARATOR.test(call)) {
       PsiExpression arg = call.getArgumentList().getExpressions()[0];
-      if (call.getType() != null && call.getType().equals(arg.getType())) {
+      PsiType type = call.getType();
+      if (type != null && type.equals(arg.getType())) {
         return ct.text(arg);
       }
     }

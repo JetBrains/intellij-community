@@ -45,4 +45,9 @@ public class TerminalHandlerImpl extends TerminalHandlerBase {
   public JComponent getComponent() {
     return myTerminalWidget.getComponent();
   }
+
+  @Override
+  public JComponent getPreferredFocusableComponent() {
+    return (JComponent)myTerminalWidget.getFocusableComponent();
+  }
 }

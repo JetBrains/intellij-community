@@ -16,7 +16,7 @@ public enum JsonMappingKind {
       case File:
         return "file";
       case Pattern:
-        return "file name pattern";
+        return "file path pattern";
       case Directory:
         return "directory";
     }

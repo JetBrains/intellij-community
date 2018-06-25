@@ -35,7 +35,6 @@ class CheckboxTreeFixture(robot: Robot, checkboxTree: CheckboxTree) : ExtendedTr
 
   fun setCheckboxValue(value: Boolean, vararg pathStrings: String) {
     val checkbox = getCheckboxComponent(*pathStrings)
-    println("setCheckboxValue for ${pathStrings.joinToString()}: state = ${checkbox?.isSelected}")
     if (checkbox != null && checkbox.isSelected != value) {
       clickCheckbox(*pathStrings)
     }
@@ -45,12 +44,25 @@ class CheckboxTreeFixture(robot: Robot, checkboxTree: CheckboxTree) : ExtendedTr
    * Sometimes one click doesn't work - e.g. it can be swallowed by scrolling
    * Then the second click must help.
    * */
-  fun ensureCheckboxValue(value: Boolean, vararg pathString: String){
-    setCheckboxValue(value, *pathString)
-    setCheckboxValue(value, *pathString)
+  private fun ensureCheckboxValue(value: Boolean, mainPathString: Array<out String>, reservePathStrings: Array<out String>) {
+    setCheckboxValue(value, *mainPathString)
+    setCheckboxValue(value, *reservePathStrings)
   }
 
-  fun check(vararg pathStrings: String) = ensureCheckboxValue(true, *pathStrings)
+  fun check(vararg pathStrings: String) {
+    ensureCheckboxValue(true, pathStrings, pathStrings)
+  }
 
-  fun uncheck(vararg pathStrings: String) = ensureCheckboxValue(false, *pathStrings)
+  fun uncheck(vararg pathStrings: String) = ensureCheckboxValue(false, pathStrings, pathStrings)
+
+  /**
+   * Sometimes checkbox can change its text after being clicked (e.g. "JBoss Drools" after selecting becomes "JBoss Drools (6.2.0)")
+   * in such cases the changed path specify in the parameter `reservePathStrings`
+   * */
+  fun checkWithReserve(mainPathStrings: Array<out String>, reservePathStrings: Array<out String>) {
+    ensureCheckboxValue(true, mainPathStrings, reservePathStrings)
+  }
+
+  fun uncheckWithReserve(mainPathStrings: Array<out String>, reservePathStrings: Array<out String>) =
+    ensureCheckboxValue(false, mainPathStrings, reservePathStrings)
 }

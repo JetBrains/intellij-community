@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2018 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,14 +21,10 @@ import com.intellij.util.xml.NameValue;
 import com.intellij.util.xml.Stubbed;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Dmitry Avdeev
- */
 public interface PluginModule extends DomElement {
 
   @NotNull
   @Stubbed
   @NameValue
   GenericAttributeValue<String> getValue();
-
 }

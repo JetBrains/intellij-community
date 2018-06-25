@@ -105,7 +105,6 @@ public class DataFlowInspectionAncientTest extends InspectionTestCase {
   public void testIDEADEV2605() { doTest15(); }
   public void testConstantsDifferentTypes() { doTest15(); }
   public void testBoxingNaN() { doTest15(); }
-  public void testBoxingBoolean() { doTest15(true); }
   public void testCheckedExceptionDominance() { doTest15(); }
   public void testIDEADEV10489() { doTest15(); }
   public void testPlusOnStrings() { doTest15(); }

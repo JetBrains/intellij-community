@@ -22,7 +22,6 @@ import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.xml.XmlFile;
@@ -91,7 +90,6 @@ public class DomElementsErrorPanel extends JPanel implements CommittablePanel, H
     if (!areValid()) return;
 
     repaint();
-    setToolTipText(myErrorStripeRenderer.getTooltipMessage());
 
     if (!isHighlightingFinished()) {
       addUpdateRequest();

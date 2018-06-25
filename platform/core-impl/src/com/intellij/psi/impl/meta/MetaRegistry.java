@@ -119,7 +119,7 @@ public class MetaRegistry extends MetaDataRegistrar {
    * @deprecated
    */
   @Deprecated
-  public static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
+  static <T extends PsiMetaData> void addMetadataBinding(ElementFilter filter,
                                                                 Class<T> aMetadataClass,
                                                                 Disposable parentDisposable) {
     final MyBinding binding = new MyBinding(filter, aMetadataClass);

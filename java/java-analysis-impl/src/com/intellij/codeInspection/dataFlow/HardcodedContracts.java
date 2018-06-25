@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
+import com.intellij.codeInspection.dataFlow.value.DfaRelationValue;
 import com.intellij.codeInspection.dataFlow.value.DfaRelationValue.RelationType;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.*;
@@ -35,6 +36,7 @@ import java.util.List;
 import java.util.function.Supplier;
 
 import static com.intellij.codeInspection.dataFlow.ContractReturnValue.*;
+import static com.intellij.codeInspection.dataFlow.MethodContract.singleConditionContract;
 import static com.intellij.codeInspection.dataFlow.MethodContract.trivialContract;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint.*;
 import static com.intellij.codeInspection.dataFlow.StandardMethodContract.createConstraintArray;
@@ -48,11 +50,11 @@ public class HardcodedContracts {
   private static final List<MethodContract> ARRAY_RANGE_CONTRACTS = ContainerUtil.immutableList(
     nonnegativeArgumentContract(1),
     nonnegativeArgumentContract(2),
-    MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT,
-                                           ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), fail()),
-    MethodContract.singleConditionContract(ContractValue.argument(2), RelationType.GT,
-                                           ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH), fail()),
-    MethodContract.singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail())
+    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
+                            fail()),
+    singleConditionContract(ContractValue.argument(2), RelationType.GT, ContractValue.argument(0).specialField(SpecialField.ARRAY_LENGTH),
+                            fail()),
+    singleConditionContract(ContractValue.argument(1), RelationType.GT, ContractValue.argument(2), fail())
   );
 
   private static final CallMatcher QUEUE_POLL = instanceCall("java.util.Queue", "poll").parameterCount(0);
@@ -103,17 +105,17 @@ public class HardcodedContracts {
     .register(instanceCall(JAVA_UTIL_MAP, "equals").parameterTypes(JAVA_LANG_OBJECT),
               ContractProvider.list(SpecialField.MAP_SIZE::getEqualsContracts))
     .register(instanceCall(JAVA_UTIL_COLLECTION, "contains").parameterCount(1),
-              ContractProvider.single(() -> MethodContract.singleConditionContract(
+              ContractProvider.single(() -> singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ, ContractValue.zero(),
                 returnFalse())))
     .register(instanceCall(JAVA_UTIL_MAP, "containsKey", "containsValue").parameterCount(1),
-              ContractProvider.single(() -> MethodContract.singleConditionContract(
+              ContractProvider.single(() -> singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.MAP_SIZE), RelationType.EQ, ContractValue.zero(), returnFalse())))
     .register(instanceCall(JAVA_UTIL_LIST, "get").parameterTypes("int"),
               ContractProvider.list(() -> Arrays.asList(nonnegativeArgumentContract(0),
                                                         specialFieldRangeContract(0, RelationType.LT, SpecialField.COLLECTION_SIZE))))
     .register(instanceCall("java.util.SortedSet", "first", "last").parameterCount(0),
-              ContractProvider.single(() -> MethodContract.singleConditionContract(
+              ContractProvider.single(() -> singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), fail())))
     // All these methods take array as 1st parameter, from index as 2nd and to index as 3rd
@@ -123,7 +125,7 @@ public class HardcodedContracts {
     .register(staticCall("org.mockito.ArgumentMatchers", "argThat").parameterCount(1),
               ContractProvider.single(() -> new StandardMethodContract(new ValueConstraint[]{ANY_VALUE}, returnAny())))
     .register(instanceCall("java.util.Queue", "peek", "poll").parameterCount(0),
-              (call, paramCount) -> Arrays.asList(MethodContract.singleConditionContract(
+              (call, paramCount) -> Arrays.asList(singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.COLLECTION_SIZE), RelationType.EQ,
                 ContractValue.zero(), returnNull()), trivialContract(returnAny())))
     .register(anyOf(staticCall(JAVA_LANG_MATH, "max").parameterTypes("int", "int"),
@@ -137,9 +139,11 @@ public class HardcodedContracts {
                     staticCall(JAVA_LANG_LONG, "min").parameterTypes("long", "long")),
               (call, paramCount) -> mathMinMax(false))
     .register(instanceCall(JAVA_LANG_STRING, "startsWith", "endsWith", "contains"),
-              ContractProvider.single(() -> MethodContract.singleConditionContract(
+              ContractProvider.single(() -> singleConditionContract(
                 ContractValue.qualifier().specialField(SpecialField.STRING_LENGTH), RelationType.LT,
-                ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())));
+                ContractValue.argument(0).specialField(SpecialField.STRING_LENGTH), returnFalse())))
+    .register(instanceCall(JAVA_LANG_OBJECT, "equals").parameterTypes(JAVA_LANG_OBJECT),
+              (call, paramCount) -> equalsContracts(call));
 
   public static List<MethodContract> getHardcodedContracts(@NotNull PsiMethod method, @Nullable PsiMethodCallExpression call) {
     PsiClass owner = method.getContainingClass();
@@ -204,32 +208,47 @@ public class HardcodedContracts {
     if (endLimited) {
       contracts.add(nonnegativeArgumentContract(1));
       contracts.add(specialFieldRangeContract(1, RelationType.LE, SpecialField.STRING_LENGTH));
-      contracts.add(MethodContract
-                      .singleConditionContract(ContractValue.argument(0), RelationType.LE.getNegated(),
-                                               ContractValue.argument(1), fail()));
+      contracts.add(singleConditionContract(ContractValue.argument(0), RelationType.LE.getNegated(), ContractValue.argument(1), fail()));
     }
     return contracts;
   }
 
   static MethodContract optionalAbsentContract(ContractReturnValue returnValue) {
-    return MethodContract
-      .singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
+    return singleConditionContract(ContractValue.qualifier(), RelationType.IS, ContractValue.optionalValue(false), returnValue);
   }
 
   static MethodContract nonnegativeArgumentContract(int argNumber) {
-    return MethodContract
-      .singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.zero(), fail());
+    return singleConditionContract(ContractValue.argument(argNumber), RelationType.LT, ContractValue.zero(), fail());
   }
 
   static MethodContract specialFieldRangeContract(int index, RelationType type, SpecialField specialField) {
-    return MethodContract.singleConditionContract(ContractValue.argument(index), type.getNegated(),
-                                                  ContractValue.qualifier().specialField(specialField), fail());
+    return singleConditionContract(ContractValue.argument(index), type.getNegated(), ContractValue.qualifier().specialField(specialField),
+                                   fail());
   }
 
   static List<MethodContract> mathMinMax(boolean isMax) {
-    return Arrays.asList(MethodContract.singleConditionContract(
+    return Arrays.asList(singleConditionContract(
       ContractValue.argument(0), isMax ? RelationType.GT : RelationType.LT, ContractValue.argument(1), returnParameter(0)),
                          trivialContract(returnParameter(1)));
+  }
+
+  private static List<MethodContract> equalsContracts(PsiMethodCallExpression call) {
+    PsiExpression qualifier = call == null ? null : call.getMethodExpression().getQualifierExpression();
+    if (qualifier != null && knownAsEqualByReference(qualifier.getType())) {
+      return Arrays.asList(
+        singleConditionContract(ContractValue.qualifier(), RelationType.EQ, ContractValue.argument(0), returnTrue()),
+        trivialContract(returnFalse())
+      );
+    }
+    return Arrays.asList(new StandardMethodContract(new StandardMethodContract.ValueConstraint[]{NULL_VALUE}, returnFalse()),
+                         singleConditionContract(ContractValue.qualifier(), DfaRelationValue.RelationType.EQ,
+                                                 ContractValue.argument(0), returnTrue()));
+  }
+
+  private static boolean knownAsEqualByReference(PsiType type) {
+    if (type instanceof PsiArrayType) return true;
+    PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(type);
+    return psiClass != null && (psiClass.isEnum() || JAVA_LANG_CLASS.equals(psiClass.getQualifiedName()));
   }
 
   private static boolean isJunit(String className) {

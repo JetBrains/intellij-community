@@ -237,12 +237,6 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   }
 
   @Override
-  public String getTooltipMessage() {
-    // see TrafficProgressPanel
-    return null;
-  }
-
-  @Override
   public void paint(Component c, Graphics g, Rectangle r) {
     DaemonCodeAnalyzerStatus status = getDaemonCodeAnalyzerStatus(mySeverityRegistrar);
     Icon icon = getIcon(status);

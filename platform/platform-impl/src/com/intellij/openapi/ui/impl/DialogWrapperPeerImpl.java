@@ -6,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -71,8 +72,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
   private ActionCallback myTypeAheadCallback;
-
-  private Runnable myTouchBarCloser;
   private List<JButton> myTouchBarButtons;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
@@ -252,11 +251,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
           myDialog.remove(myDialog.getRootPane());
         }
       });
-
-      if (myTouchBarCloser != null) {
-        myTouchBarCloser.run();
-        myTouchBarCloser = null;
-      }
     };
 
     UIUtil.invokeLaterIfNeeded(disposer);
@@ -429,8 +423,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(true);
 
-    if (myTouchBarButtons != null && myProject != null)
-      myTouchBarCloser = TouchBarsManager.showDlgButtonsBar(myTouchBarButtons);
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myTouchBarButtons, myDialog.getContentPane());
+    if (tb != null)
+      myDisposeActions.add(() -> Disposer.dispose(tb));
 
     try {
       myDialog.show();

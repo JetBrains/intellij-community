@@ -127,7 +127,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   @Override
   @Nullable
   public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo info) {
-    if (info.isInModuleSource()) {
+    boolean inModuleSource = info instanceof DirectoryInfoImpl && ((DirectoryInfoImpl)info).isInModuleSource();
+    if (inModuleSource) {
       return getRootIndex().getSourceRootType(info);
     }
     return null;

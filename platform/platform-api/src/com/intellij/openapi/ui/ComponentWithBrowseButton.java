@@ -164,15 +164,6 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     addActionListener(actionListener);
   }
 
-  /**
-   * @deprecated use {@link #addActionListener(ActionListener)} instead
-   */
-  @Deprecated
-  @SuppressWarnings("UnusedParameters")
-  public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
-    addActionListener(actionListener);
-  }
-
   @Override
   public void dispose() {
     ActionListener[] listeners = myBrowseButton.getActionListeners();

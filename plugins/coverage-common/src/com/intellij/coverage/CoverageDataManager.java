@@ -66,17 +66,6 @@ public abstract class CoverageDataManager implements ProjectComponent, JDOMExter
 
 
   public abstract CoverageSuite addCoverageSuite(CoverageEnabledConfiguration config);
-  /**
-   * TeamCity 3.1.1 compatibility
-   */
-  @Deprecated
-  public CoverageSuite addCoverageSuite(String name,
-                                        CoverageFileProvider fileProvider,
-                                        String[] filters,
-                                        long lastCoverageTimeStamp,
-                                        boolean suiteToMergeWith) {
-    return addCoverageSuite(name, fileProvider, filters, lastCoverageTimeStamp, null, null, false, false);
-  }
 
 
   /**

@@ -15,21 +15,30 @@
  */
 package com.intellij.ide.ui;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.plugins.PluginManagerConfigurable;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.ide.ui.search.BooleanOptionDescription;
+import com.intellij.notification.*;
 import com.intellij.openapi.extensions.PluginId;
 
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   private final PluginId myId;
+
+  private static final NotificationGroup PLUGINS_CHANGED_NOTIFICATION_GROUP =
+    new NotificationGroup("Plugins updates", NotificationDisplayType.STICKY_BALLOON, false);
+  private static final Notifier ourNotifier = new Notifier();
 
   public PluginBooleanOptionDescriptor(PluginId id) {
     //noinspection ConstantConditions
@@ -40,7 +49,11 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
   @Override
   public boolean isOptionEnabled() {
     //noinspection ConstantConditions
-    return PluginManager.getPlugin(myId).isEnabled();
+    return optionalDescriptor().map(IdeaPluginDescriptor::isEnabled).orElse(false);
+  }
+
+  private Optional<IdeaPluginDescriptor> optionalDescriptor() {
+    return Optional.ofNullable(PluginManager.getPlugin(myId));
   }
 
   @Override
@@ -53,9 +66,30 @@ public class PluginBooleanOptionDescriptor extends BooleanOptionDescription {
     }
     try {
       PluginManagerCore.saveDisabledPlugins(disabledPlugins, false);
-      PluginManagerConfigurable.shutdownOrRestartApp();
+      optionalDescriptor().ifPresent(descriptor -> descriptor.setEnabled(enabled));
+      ourNotifier.showNotification();
     }
     catch (IOException e) {//
+    }
+  }
+
+  private static class Notifier {
+    private final AtomicReference<Notification> prevNotification = new AtomicReference<>();
+
+    public void showNotification() {
+      Notification prev = prevNotification.get();
+
+      if (prev != null && prev.getBalloon() != null && !prev.getBalloon().isDisposed()) {
+        return;
+      }
+
+      Notification next = PLUGINS_CHANGED_NOTIFICATION_GROUP
+        .createNotification(IdeBundle.message("plugins.changed.notification.content"), NotificationType.INFORMATION)
+        .setTitle(IdeBundle.message("plugins.changed.notification.title"));
+
+      if (prevNotification.compareAndSet(prev, next)) {
+        Notifications.Bus.notify(next);
+      }
     }
   }
 }

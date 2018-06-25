@@ -55,10 +55,12 @@ import static java.util.Collections.singletonList;
 public class PluginManagerCore {
   private static final Logger LOG = Logger.getInstance(PluginManagerCore.class);
 
+  private static final String META_INF = "META-INF/";
+
   public static final String DISABLED_PLUGINS_FILENAME = "disabled_plugins.txt";
   public static final String CORE_PLUGIN_ID = "com.intellij";
-  private static final String META_INF = "META-INF";
   public static final String PLUGIN_XML = "plugin.xml";
+  public static final String PLUGIN_XML_PATH = META_INF + PLUGIN_XML;
 
   public static final float PLUGINS_PROGRESS_PART = 0.3f;
   public static final float LOADERS_PROGRESS_PART = 0.35f;
@@ -626,7 +628,7 @@ public class PluginManagerCore {
                                                                 @NotNull String pathName,
                                                                 @Nullable File pluginPath,
                                                                 boolean bundled) {
-    File descriptorFile = new File(file, META_INF + '/' + pathName);
+    File descriptorFile = new File(file, META_INF + pathName);
     if (descriptorFile.exists()) {
       try {
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
@@ -659,10 +661,11 @@ public class PluginManagerCore {
                                                                 @Nullable File pluginPath,
                                                                 boolean bundled) {
     try {
-      URL jarURL = URLUtil.getJarEntryURL(file, FileUtil.toCanonicalPath(META_INF + '/' + fileName, '/'));
+      String entryName = META_INF + fileName;
+      URL jarURL = URLUtil.getJarEntryURL(file, FileUtil.toCanonicalPath(entryName, '/'));
 
       ZipFile zipFile = context.open(file);
-      ZipEntry entry = zipFile.getEntry(META_INF + '/' + fileName);
+      ZipEntry entry = zipFile.getEntry(entryName);
       if (entry != null) {
         Document document = JDOMUtil.loadDocument(zipFile.getInputStream(entry));
         IdeaPluginDescriptorImpl descriptor = new IdeaPluginDescriptorImpl(notNull(pluginPath, file), bundled);
@@ -783,7 +786,7 @@ public class PluginManagerCore {
           // JDOMXIncluder can find included descriptor files via classloading in URLUtil.openResourceStream
           // and here code supports the same behavior.
           // Note that this code is meant for IDE development / testing purposes
-          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + '/' + optPathName);
+          URL resource = PluginManagerCore.class.getClassLoader().getResource(META_INF + optPathName);
           if (resource != null) {
             optionalDescriptor = loadDescriptorFromResource(resource, optPathName, bundled);
           }
@@ -1008,14 +1011,14 @@ public class PluginManagerCore {
     String platformPrefix = System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY);
     if (platformPrefix != null) {
       String fileName = platformPrefix + "Plugin.xml";
-      URL resource = loader.getResource(META_INF + '/' + fileName);
+      URL resource = loader.getResource(META_INF + fileName);
       if (resource != null) {
         urls.put(resource, fileName);
       }
     }
 
     try {
-      Enumeration<URL> enumeration = loader.getResources(META_INF + '/' + PLUGIN_XML);
+      Enumeration<URL> enumeration = loader.getResources(PLUGIN_XML_PATH);
       while (enumeration.hasMoreElements()) {
         urls.put(enumeration.nextElement(), PLUGIN_XML);
       }

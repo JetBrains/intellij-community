@@ -24,10 +24,11 @@ import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.PsiAssignmentExpression;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiVariable;
+import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.Nullable;
 
-public class AssignInstruction extends Instruction {
+public class AssignInstruction extends Instruction implements ExpressionPushingInstruction {
   private final PsiExpression myRExpression;
   private final PsiExpression myLExpression;
   @Nullable private final DfaValue myAssignedValue;
@@ -68,6 +69,13 @@ public class AssignInstruction extends Instruction {
 
   public String toString() {
     return "ASSIGN";
+  }
+
+  @Nullable
+  @Override
+  public PsiAssignmentExpression getExpression() {
+    if(myRExpression== null) return null;
+    return ObjectUtils.tryCast(myRExpression.getParent(), PsiAssignmentExpression.class);
   }
 
   @Contract("null -> null")

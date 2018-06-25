@@ -22,24 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class TextEditorHighlightingPassRegistrar {
-
-  /**
-   * @deprecated
-   */
-  @Deprecated public static final int FIRST = 0;
-  /**
-   * @deprecated
-   */
-  @Deprecated public static final int LAST = 1;
-  /**
-   * @deprecated
-   */
-  @Deprecated public static final int BEFORE = 3;
-  /**
-   * @deprecated
-   */
-  @Deprecated public static final int AFTER = 2;
-
   public enum Anchor {
     FIRST, LAST, BEFORE, AFTER,
   }
@@ -47,12 +29,6 @@ public abstract class TextEditorHighlightingPassRegistrar {
   public static TextEditorHighlightingPassRegistrar getInstance(Project project){
     return ServiceManager.getService(project, TextEditorHighlightingPassRegistrar.class);
   }
-
-  /**
-   * @deprecated
-   */
-  @Deprecated
-  public abstract void registerTextEditorHighlightingPass(TextEditorHighlightingPassFactory factory, int anchor, int anchorPass);
 
   /**
    * Registers the factory for the new highlighting pass.

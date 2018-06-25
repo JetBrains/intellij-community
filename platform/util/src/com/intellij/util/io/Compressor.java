@@ -11,6 +11,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.jar.JarFile;
+import java.util.jar.JarOutputStream;
+import java.util.jar.Manifest;
 import java.util.zip.ZipEntry;
 import java.util.zip.ZipOutputStream;
 
@@ -55,7 +58,7 @@ public abstract class Compressor implements Closeable {
 
   public static class Zip extends Compressor {
     public Zip(@NotNull File file) throws FileNotFoundException {
-      myStream = new ZipOutputStream(new FileOutputStream(file));
+      myStream = new ZipOutputStream(new BufferedOutputStream(new FileOutputStream(file)));
     }
 
     public Zip(@NotNull ZipOutputStream stream) {
@@ -97,6 +100,18 @@ public abstract class Compressor implements Closeable {
     //</editor-fold>
   }
 
+  public static class Jar extends Zip {
+    public Jar(@NotNull File file) throws IOException {
+      super(new JarOutputStream(new BufferedOutputStream(new FileOutputStream(file))));
+    }
+
+    public final void addManifest(@NotNull Manifest manifest) throws IOException {
+      ByteArrayOutputStream buffer = new ByteArrayOutputStream();
+      manifest.write(buffer);
+      addFile(JarFile.MANIFEST_NAME, buffer.toByteArray());
+    }
+  }
+
   private Condition<String> myFilter = null;
 
   public Compressor filter(@Nullable Condition<String> filter) {
@@ -125,6 +140,17 @@ public abstract class Compressor implements Closeable {
     entryName = entryName(entryName);
     if (accepts(entryName)) {
       writeFileEntry(entryName, new ByteArrayInputStream(content), content.length, timestamp(timestamp));
+    }
+  }
+
+  public final void addFile(@NotNull String entryName, @NotNull InputStream content) throws IOException {
+    addFile(entryName, content, -1);
+  }
+
+  public final void addFile(@NotNull String entryName, @NotNull InputStream content, long timestamp) throws IOException {
+    entryName = entryName(entryName);
+    if (accepts(entryName)) {
+      writeFileEntry(entryName, content, -1, timestamp(timestamp));
     }
   }
 

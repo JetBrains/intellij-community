@@ -6,15 +6,16 @@ import com.intellij.openapi.util.io.FileUtil;
 import org.apache.commons.compress.archivers.tar.TarArchiveEntry;
 import org.apache.commons.compress.archivers.tar.TarArchiveOutputStream;
 import org.apache.commons.compress.compressors.gzip.GzipCompressorOutputStream;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 import java.util.Set;
 
-/**
- * @author traff
- */
+/** @deprecated use {@link Compressor.Tar} */
+@ApiStatus.ScheduledForRemoval(inVersion = "2019.1")
+@SuppressWarnings("ALL")
 public class TarUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.io.TarUtil");
 

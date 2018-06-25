@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package org.jetbrains.idea.devkit.dom;
 
 import com.intellij.ide.presentation.Presentation;
@@ -24,60 +23,29 @@ import org.jetbrains.idea.devkit.dom.impl.PluginPsiClassConverter;
 
 import java.util.List;
 
-/**
- * plugin.dtd:group interface.
- */
 @Presentation(icon = "AllIcons.Actions.GroupByPackage", typeName = "Group")
 @Stubbed
 public interface Group extends Actions, ActionOrGroup {
 
-	/**
-	 * Returns the value of the compact child.
-	 * Attribute popup
-	 * @return the value of the compact child.
-	 */
-	@NotNull
-	GenericAttributeValue<Boolean> getCompact();
+  @NotNull
+  GenericAttributeValue<Boolean> getCompact();
+
+  @NotNull
+  @Attribute("class")
+  @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
+    allowAbstract = false, allowInterface = false)
+  @Convert(PluginPsiClassConverter.class)
+  GenericAttributeValue<PsiClass> getClazz();
 
 
-	/**
-	 * Returns the value of the class child.
-	 * Attribute class
-	 * @return the value of the class child.
-	 */
-	@NotNull
-	@Attribute ("class")
-        @ExtendClass(value = "com.intellij.openapi.actionSystem.ActionGroup",
-		allowAbstract = false, allowInterface = false)
-        @Convert(PluginPsiClassConverter.class)
-	GenericAttributeValue<PsiClass> getClazz();
+  @NotNull
+  List<Separator> getSeparators();
+
+  Separator addSeparator();
 
 
+  @NotNull
+  List<AddToGroup> getAddToGroups();
 
-	/**
-	 * Returns the value of the separator child.
-	 * @return the value of the separator child.
-	 */
-	@NotNull
-	List<Separator> getSeparators();
-	/**
-	 * Adds new child to the list of separator children.
-	 * @return created child
-	 */
-	Separator addSeparator();
-
-
-	/**
-	 * Returns the list of add-to-group children.
-	 * @return the list of add-to-group children.
-	 */
-	@NotNull
-	List<AddToGroup> getAddToGroups();
-	/**
-	 * Adds new child to the list of add-to-group children.
-	 * @return created child
-	 */
-	AddToGroup addAddToGroup();
-
-
+  AddToGroup addAddToGroup();
 }

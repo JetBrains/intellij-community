@@ -53,20 +53,4 @@ public abstract class JBListWithHintProvider extends JBList {
   
   @Nullable
   protected abstract PsiElement getPsiElementForHint(final Object selectedValue);
-
-  @Deprecated
-  public void registerHint(JBPopup hint) {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).registerHint(hint);
-  }
-
-  @Deprecated
-  public void hideHint() {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).hideHint();
-  }
-
-  @Deprecated
-  public void updateHint(PsiElement element) {
-    ObjectUtils.assertNotNull(HintUpdateSupply.getSupply(this)).updateHint(element);
-  }
-
 }

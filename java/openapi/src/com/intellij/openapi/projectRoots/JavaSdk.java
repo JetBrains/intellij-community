@@ -4,7 +4,6 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.projectRoots.impl.SdkVersionUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,12 +41,6 @@ public abstract class JavaSdk extends SdkType implements JavaSdkType {
   @Deprecated
   public static boolean checkForJre(@NotNull String file) {
     return JdkUtil.checkForJre(file);
-  }
-
-  /** @deprecated use {@link SdkVersionUtil#getJdkVersionInfo} (to be removed in IDEA 2019) */
-  @Deprecated
-  public static String getJdkVersion(@NotNull String sdkHome) {
-    return SdkVersionUtil.detectJdkVersion(sdkHome);
   }
 
   /** @deprecated use {@link JavaSdkVersion#fromVersionString} (to be removed in IDEA 2019) */

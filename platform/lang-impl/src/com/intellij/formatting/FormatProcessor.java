@@ -189,7 +189,7 @@ public class FormatProcessor {
     }
 
     IndentAdjuster adjuster = myWrapState.getIndentAdjuster();
-    return adjuster.adjustLineIndent(current, info);
+    return adjuster.adjustLineIndent(info);
   }
 
   @Nullable

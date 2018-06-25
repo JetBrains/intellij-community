@@ -331,7 +331,7 @@ done:
 FunctionEnd
 
 
-Function getControllPostions
+Function getInstallationOptionsPostions
   !insertmacro INSTALLOPTIONS_READ $launcherShortcut "Desktop.ini" "Settings" "DesktopShortcutToLauncher"
   !insertmacro INSTALLOPTIONS_READ $secondLauncherShortcut "Desktop.ini" "Settings" "DesktopShortcutToSecondLauncher"
   !insertmacro INSTALLOPTIONS_READ $addToPath "Desktop.ini" "Settings" "AddToPath"
@@ -351,7 +351,7 @@ Function ConfirmDesktopShortcut
     StrCpy $R1 ""
   ${EndIf}
 
-  Call getControllPostions
+  Call getInstallationOptionsPostions
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "Text" $R0
 
   ${If} $R1 != ""
@@ -507,6 +507,7 @@ LicenseLangString myLicenseData ${LANG_JAPANESE} "${LICENSE_FILE}.txt"
 Function .onInit
   SetRegView 32
   !insertmacro INSTALLOPTIONS_EXTRACT "Desktop.ini"
+  Call getInstallationOptionsPostions
   IfSilent silent_mode uac_elevate
 silent_mode:
   IntCmp ${CUSTOM_SILENT_CONFIG} 0 silent_config silent_config custom_silent_config
@@ -553,7 +554,7 @@ FunctionEnd
 
 Function silentConfigReader
   ; read Desktop.ini
-  Call getControllPostions
+  Call getInstallationOptionsPostions
   ${GetParameters} $R0
   ClearErrors
 
@@ -574,9 +575,16 @@ launcher_32:
 launcher_64:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
-  IfErrors download_jre32
+  IfErrors update_PATH
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
   !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
+
+update_PATH:
+  ClearErrors
+  ${ConfigRead} "$R1" "updatePATH=" $R3
+  IfErrors download_jre32
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
 
 download_jre32:
   ClearErrors
@@ -946,7 +954,6 @@ FunctionEnd
 ;------------------------------------------------------------------------------
 Section "IDEA Files" CopyIdeaFiles
   CreateDirectory $INSTDIR
-  Call getControllPostions
   Call customInstallActions
   SetRegView 32
 
@@ -987,9 +994,9 @@ add_to_path:
 do_association:
   StrCpy $R2 ${INSTALL_OPTION_ELEMENTS}
 get_user_choice:
-  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $launcherShortcut" "State"
+  !insertmacro INSTALLOPTIONS_READ $R3 "Desktop.ini" "Field $R2" "State"
   StrCmp $R3 1 "" next_association
-  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $launcherShortcut" "Text"
+  !insertmacro INSTALLOPTIONS_READ $R4 "Desktop.ini" "Field $R2" "Text"
   call ProductAssociation
 next_association:
   IntOp $R2 $R2 + 1

@@ -1,9 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
-import sun.misc.JavaLangAccess;
-import sun.misc.SharedSecrets;
-
 import java.lang.ref.ReferenceQueue;
 import java.lang.ref.WeakReference;
 import java.util.*;
@@ -15,14 +12,15 @@ import java.util.concurrent.ConcurrentMap;
  */
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class CaptureStorage {
+  public static final String GENERATED_INSERT_METHOD_POSTFIX = "$$$capture";
   private static final ReferenceQueue KEY_REFERENCE_QUEUE = new ReferenceQueue();
   private static final ConcurrentMap<WeakReference, CapturedStack> STORAGE = new ConcurrentHashMap<WeakReference, CapturedStack>();
 
   @SuppressWarnings("SSBasedInspection")
-  private static final ThreadLocal<Deque<InsertMatch>> CURRENT_STACKS = new ThreadLocal<Deque<InsertMatch>>() {
+  private static final ThreadLocal<Deque<CapturedStack>> CURRENT_STACKS = new ThreadLocal<Deque<CapturedStack>>() {
     @Override
-    protected Deque<InsertMatch> initialValue() {
-      return new LinkedList<InsertMatch>();
+    protected Deque<CapturedStack> initialValue() {
+      return new LinkedList<CapturedStack>();
     }
   };
 
@@ -59,20 +57,11 @@ public class CaptureStorage {
     try {
       //noinspection SuspiciousMethodCalls
       CapturedStack stack = STORAGE.get(new HardKey(key));
-      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
-      if (stack != null) {
-        Throwable exception = new Throwable();
-        currentStacks.add(InsertMatch.create(stack, exception));
-        if (DEBUG) {
-          System.out.println("insert " + getCallerDescriptor(exception) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
-        }
-      }
-      else {
-        currentStacks.add(InsertMatch.EMPTY);
-        if (DEBUG) {
-          System.out.println(
-            "insert " + getCallerDescriptor(new Throwable()) + " -> " + key + ", no stack found (" + currentStacks.size() + ")");
-        }
+      Deque<CapturedStack> currentStacks = CURRENT_STACKS.get();
+      currentStacks.add(stack);
+      if (DEBUG) {
+        System.out.println(
+          "insert " + getCallerDescriptor(new Throwable()) + " -> " + key + ", stack saved (" + currentStacks.size() + ")");
       }
     }
     catch (Exception e) {
@@ -86,7 +75,7 @@ public class CaptureStorage {
       return;
     }
     try {
-      Deque<InsertMatch> currentStacks = CURRENT_STACKS.get();
+      Deque<CapturedStack> currentStacks = CURRENT_STACKS.get();
       currentStacks.removeLast();
       if (DEBUG) {
         System.out.println(
@@ -154,8 +143,8 @@ public class CaptureStorage {
     }
   }
 
-  private static CapturedStack createCapturedStack(Throwable exception, InsertMatch insertMatch) {
-    if (insertMatch != null && insertMatch != InsertMatch.EMPTY) {
+  private static CapturedStack createCapturedStack(Throwable exception, CapturedStack insertMatch) {
+    if (insertMatch != null) {
       CapturedStack stack = new DeepCapturedStack(exception, insertMatch);
       if (stack.getRecursionDepth() > 100) {
         ArrayList<StackTraceElement> trace = getStackTrace(stack, 500);
@@ -210,69 +199,18 @@ public class CaptureStorage {
   }
 
   private static class DeepCapturedStack extends ExceptionCapturedStack {
-    final InsertMatch myInsertMatch;
+    final CapturedStack myInsertMatch;
     final int myRecursionDepth;
 
-    public DeepCapturedStack(Throwable exception, InsertMatch insertMatch) {
+    public DeepCapturedStack(Throwable exception, CapturedStack insertMatch) {
       super(exception);
       myInsertMatch = insertMatch;
-      myRecursionDepth = insertMatch.myStack.getRecursionDepth() + 1;
+      myRecursionDepth = insertMatch.getRecursionDepth() + 1;
     }
 
     @Override
     public int getRecursionDepth() {
       return myRecursionDepth;
-    }
-  }
-
-  private static abstract class InsertMatch {
-    private final CapturedStack myStack;
-
-    static final InsertMatch EMPTY = new InsertMatch(null) {
-      @Override
-      int getDepth() {
-        return 0;
-      }
-    };
-
-    private InsertMatch(CapturedStack stack) {
-      myStack = stack;
-    }
-
-    static InsertMatch create(CapturedStack stack, Throwable throwable) {
-      return ourJavaLangAccess != null
-             ? new WithDepth(stack, ourJavaLangAccess.getStackTraceDepth(throwable))
-             : new WithThrowable(stack, throwable);
-    }
-
-    abstract int getDepth();
-
-    static class WithDepth extends InsertMatch {
-      final int myDepth;
-
-      public WithDepth(CapturedStack stack, int depth) {
-        super(stack);
-        myDepth = depth;
-      }
-
-      @Override
-      public int getDepth() {
-        return myDepth;
-      }
-    }
-
-    static class WithThrowable extends InsertMatch {
-      final Throwable myThrowable;
-
-      public WithThrowable(CapturedStack stack, Throwable throwable) {
-        super(stack);
-        this.myThrowable = throwable;
-      }
-
-      @Override
-      int getDepth() {
-        return myThrowable.getStackTrace().length;
-      }
     }
   }
 
@@ -303,11 +241,14 @@ public class CaptureStorage {
     while (stack != null && res.size() <= limit) {
       List<StackTraceElement> stackTrace = stack.getStackTrace();
       if (stack instanceof DeepCapturedStack) {
-        InsertMatch match = ((DeepCapturedStack)stack).myInsertMatch;
-        if (match != null && match != InsertMatch.EMPTY) {
-          stackTrace = stackTrace.subList(0, stackTrace.size() - match.getDepth() + 2);
-          stack = match.myStack;
+        int depth = 0;
+        for (; depth < stackTrace.size(); depth++) {
+          if (stackTrace.get(depth).getMethodName().endsWith(GENERATED_INSERT_METHOD_POSTFIX)) {
+            break;
+          }
         }
+        stackTrace = stackTrace.subList(0, depth + 2);
+        stack = ((DeepCapturedStack)stack).myInsertMatch;
       }
       else {
         stack = null;
@@ -328,21 +269,6 @@ public class CaptureStorage {
     ENABLED = enabled;
   }
 
-  private static final JavaLangAccess ourJavaLangAccess;
-  static {
-    JavaLangAccess access;
-    try {
-      access = SharedSecrets.getJavaLangAccess();
-      if (access != null) {
-        access.getStackTraceDepth(new Throwable()); // may throw UnsupportedOperationException in some implementations
-      }
-    }
-    catch (Throwable e) {
-      access = null;
-    }
-    ourJavaLangAccess = access;
-  }
-
   private static void handleException(Throwable e) {
     ENABLED = false;
     System.err.println("Critical error in IDEA Async Stacktraces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
@@ -351,8 +277,7 @@ public class CaptureStorage {
   }
 
   private static String getCallerDescriptor(Throwable e) {
-    StackTraceElement[] stackTrace = e.getStackTrace();
-    StackTraceElement caller = stackTrace[stackTrace.length - 2];
+    StackTraceElement caller = e.getStackTrace()[1];
     return caller.getClassName() + "." + caller.getMethodName();
   }
 }

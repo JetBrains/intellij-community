@@ -659,16 +659,6 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
     myInitializedConfigurables.add(configurable);
   }
 
-  /**
-   * @deprecated use {@link #checkForEmptyAndDuplicatedNames(String, String, Class)} instead
-   */
-  @Deprecated
-  protected void checkApply(Set<MyNode> rootNodes, String prefix, String title) throws ConfigurationException {
-    for (MyNode rootNode : rootNodes) {
-      checkForEmptyAndDuplicatedNames(rootNode, prefix, title, NamedConfigurable.class, false);
-    }
-  }
-
   protected final void checkForEmptyAndDuplicatedNames(String prefix, String title,
                                                        Class<? extends NamedConfigurable> configurableClass) throws ConfigurationException {
     checkForEmptyAndDuplicatedNames(myRoot, prefix, title, configurableClass, true);

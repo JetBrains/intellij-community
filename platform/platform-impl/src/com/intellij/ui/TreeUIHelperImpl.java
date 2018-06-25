@@ -15,8 +15,6 @@
  */
 package com.intellij.ui;
 
-import com.intellij.ui.components.JBList;
-import com.intellij.ui.table.JBTable;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
@@ -33,17 +31,6 @@ public class TreeUIHelperImpl extends TreeUIHelper {
   public void installToolTipHandler(final JTree tree) {
     if (tree instanceof Tree) return;
     new TreeExpandableItemsHandler(tree);
-  }
-
-  public void installToolTipHandler(final JTable table) {
-    if (table instanceof JBTable) return;
-    new TableExpandableItemsHandler(table);
-  }
-
-  @Override
-  public void installToolTipHandler(JList list) {
-    if (list instanceof JBList) return;
-    new ListExpandableItemsHandler(list);
   }
 
   public void installEditSourceOnDoubleClick(final JTree tree) {

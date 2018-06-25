@@ -19,7 +19,6 @@ import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.refactoring.makeStatic.MakeClassStaticProcessor;
 import com.intellij.refactoring.makeStatic.MakeStaticUtil;
@@ -64,15 +63,9 @@ public class MakeClassStaticTest extends LightRefactoringTestCase {
   }
 
   public void testFieldWithMyPrefix() {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    String oldPrefix = settings.FIELD_NAME_PREFIX;
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
     settings.FIELD_NAME_PREFIX = "my";
-    try {
-      performWithFields();
-    }
-    finally {
-      settings.FIELD_NAME_PREFIX = oldPrefix;
-    }
+    performWithFields();
   }
 
   private void perform() {

@@ -619,4 +619,9 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testNanComparisonWrong() { doTest(); }
   public void testConstantMethods() { doTest(); }
   public void testPolyadicEquality() { doTest(); }
+  public void testEqualsInLoopNotTooComplex() { doTest(); }
+  public void testEqualsWithItself() { doTest(); }
+  public void testBoxingBoolean() { doTest(); }
+  public void testOrWithAssignment() { doTest(); }
+  public void testAndAndWithOr() { doTest(); }
 }

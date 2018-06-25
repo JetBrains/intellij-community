@@ -33,15 +33,15 @@ import java.util.function.Consumer;
 /**
  * @author Bas Leijdekkers
  */
-class ScopePanel extends JPanel {
+public class ScopePanel extends JPanel {
 
   private final Project myProject;
   private SearchScope myScope;
-  private Scopes.Type myScopeType;
   private Consumer<SearchScope> myCallback;
+  Scopes.Type myScopeType;
 
-  private final ActionToolbarImpl myToolbar;
-  private final JPanel myScopeDetailsPanel = new JPanel(new JBCardLayout());
+  final ActionToolbarImpl myToolbar;
+  final JPanel myScopeDetailsPanel = new JPanel(new JBCardLayout());
   private final ModulesComboBox myModulesComboBox = new ModulesComboBox();
   private final DirectoryComboBoxWithButtons myDirectoryComboBox;
   private final ScopeChooserCombo myScopesComboBox = new ScopeChooserCombo();
@@ -132,7 +132,7 @@ class ScopePanel extends JPanel {
     return myScope;
   }
 
-  private void setScopeFromUI(Scopes.Type type) {
+  void setScopeFromUI(Scopes.Type type) {
     switch (type) {
       case PROJECT:
         myScope = GlobalSearchScope.projectScope(myProject);
@@ -144,8 +144,7 @@ class ScopePanel extends JPanel {
         break;
       case DIRECTORY:
         final VirtualFile directory = myDirectoryComboBox.getDirectory();
-        if (directory == null) return;
-        myScope = GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
+        myScope = (directory == null) ? null : GlobalSearchScopesCore.directoryScope(myProject, directory, myDirectoryComboBox.isRecursive());
         break;
       case NAMED:
         myScope = myScopesComboBox.getSelectedScope();

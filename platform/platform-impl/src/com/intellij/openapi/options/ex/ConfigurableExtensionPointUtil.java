@@ -513,11 +513,6 @@ public class ConfigurableExtensionPointUtil {
   }
 
   @NotNull
-  public static <T extends Configurable> T findApplicationConfigurable(@NotNull Class<T> configurableClass) {
-    return findConfigurable(Configurable.APPLICATION_CONFIGURABLE.getExtensions(), configurableClass);
-  }
-
-  @NotNull
   private static <T extends Configurable> T findConfigurable(ConfigurableEP<Configurable>[] extensions, Class<T> configurableClass) {
     for (ConfigurableEP<Configurable> extension : extensions) {
       if (extension.canCreateConfigurable()) {
