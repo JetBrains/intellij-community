@@ -2,7 +2,6 @@ package circlet.reviews
 
 import circlet.client.api.*
 import circlet.platform.api.*
-import circlet.platform.client.*
 import org.joda.time.*
 
 data class Review(
@@ -12,7 +11,7 @@ data class Review(
     val timestamp: DateTime
 )
 
-fun CodeReviewWithCount.toReview(client: KCircletClient): Review =
+fun CodeReviewWithCount.toReview(): Review =
     Review(
         id = review.id,
         title = review.title,
