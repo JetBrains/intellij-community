@@ -11,12 +11,13 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeVfsListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
+
+import static org.junit.Assert.assertTrue;
 
 public class SvnTestDirtyScopeStateTest extends SvnTestCase {
   @Override
@@ -48,29 +49,29 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
     vcsDirtyScopeManager.fileDirty(fileB);
 
     final Collection<FilePath> dirty1 = vcsDirtyScopeManager.whatFilesDirty(list);
-    Assert.assertTrue(dirty1.contains(VcsUtil.getFilePath(file)));
-    Assert.assertTrue(dirty1.contains(VcsUtil.getFilePath(fileB)));
+    assertTrue(dirty1.contains(VcsUtil.getFilePath(file)));
+    assertTrue(dirty1.contains(VcsUtil.getFilePath(fileB)));
 
-    Assert.assertTrue(! dirty1.contains(VcsUtil.getFilePath(fileC)));
-    Assert.assertTrue(! dirty1.contains(VcsUtil.getFilePath(fileD)));
+    assertTrue(!dirty1.contains(VcsUtil.getFilePath(fileC)));
+    assertTrue(!dirty1.contains(VcsUtil.getFilePath(fileD)));
 
     vcsDirtyScopeManager.retrieveScopes();
 
     final Collection<FilePath> dirty2 = vcsDirtyScopeManager.whatFilesDirty(list);
-    Assert.assertTrue(dirty2.contains(VcsUtil.getFilePath(file)));
-    Assert.assertTrue(dirty2.contains(VcsUtil.getFilePath(fileB)));
+    assertTrue(dirty2.contains(VcsUtil.getFilePath(file)));
+    assertTrue(dirty2.contains(VcsUtil.getFilePath(fileB)));
 
-    Assert.assertTrue(! dirty2.contains(VcsUtil.getFilePath(fileC)));
-    Assert.assertTrue(! dirty2.contains(VcsUtil.getFilePath(fileD)));
+    assertTrue(!dirty2.contains(VcsUtil.getFilePath(fileC)));
+    assertTrue(!dirty2.contains(VcsUtil.getFilePath(fileD)));
 
     vcsDirtyScopeManager.changesProcessed();
 
     final Collection<FilePath> dirty3 = vcsDirtyScopeManager.whatFilesDirty(list);
-    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(file)));
-    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(fileB)));
+    assertTrue(!dirty3.contains(VcsUtil.getFilePath(file)));
+    assertTrue(!dirty3.contains(VcsUtil.getFilePath(fileB)));
 
-    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(fileC)));
-    Assert.assertTrue(! dirty3.contains(VcsUtil.getFilePath(fileD)));
+    assertTrue(!dirty3.contains(VcsUtil.getFilePath(fileC)));
+    assertTrue(!dirty3.contains(VcsUtil.getFilePath(fileD)));
   }
 
   private void waitABit() {
@@ -115,6 +116,6 @@ public class SvnTestDirtyScopeStateTest extends SvnTestCase {
       final Collection<FilePath> dirty1 = vcsDirtyScopeManager.whatFilesDirty(list);
       if (dirty1.contains(fp) && dirty1.contains(fpB)) return;
     }
-    Assert.assertTrue(false);
+    assertTrue(false);
   }
 }

@@ -10,10 +10,12 @@ import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
-import junit.framework.Assert;
 import org.junit.Test;
 
 import java.util.Collection;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 
 public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
   private DuringChangeListManagerUpdateTestScheme myScheme;
@@ -64,11 +66,11 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.ensureUpToDate(false);
 
     final Runnable check = () -> {
-      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
-      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
-      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
-      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
-      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
+      assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
+      assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
+      assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
+      assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
+      assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
     };
     // do before refresh check
     check.run();
@@ -82,11 +84,11 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     changeListManager.ensureUpToDate(false);
 
     final Runnable check2 = () -> {
-      Assert.assertEquals(FileStatus.MODIFIED, changeListManager.getStatus(tree.myS1File));
-      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
-      Assert.assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
-      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
-      Assert.assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
+      assertEquals(FileStatus.MODIFIED, changeListManager.getStatus(tree.myS1File));
+      assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.myS2File));
+      assertEquals(FileStatus.NOT_CHANGED, changeListManager.getStatus(tree.mySourceDir));
+      assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetDir));
+      assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myTargetFiles.get(1)));
     };
     myScheme.doTest(check2);
 
@@ -327,9 +329,9 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
 
   private void checkFilesAreInList(final VirtualFile[] files, final String listName, final ChangeListManager manager) {
     System.out.println("Checking files for list: " + listName);
-    Assert.assertNotNull(manager.findChangeList(listName));
+    assertNotNull(manager.findChangeList(listName));
     final Collection<Change> changes = manager.findChangeList(listName).getChanges();
-    Assert.assertEquals(changes.size(), files.length);
+    assertEquals(changes.size(), files.length);
 
     for (Change change : changes) {
       final VirtualFile vf = change.getAfterRevision().getFile().getVirtualFile();

@@ -10,7 +10,6 @@ import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.vcs.AbstractJunitVcsTestCase;
 import com.intellij.util.containers.MultiMap;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
@@ -38,6 +37,7 @@ import static com.intellij.util.io.PathKt.inputStream;
 import static com.intellij.util.io.PathKt.readText;
 import static org.jetbrains.idea.svn.SvnTestCase.getPluginHome;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
+import static org.junit.Assert.*;
 
 @TestDataPath("$CONTENT_ROOT/../testData/parse/")
 public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
@@ -57,7 +57,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(inputStream(getTestData()), handler);
 
-    Assert.assertNotNull(info[0]);
+    assertNotNull(info[0]);
   }
 
   @Test
@@ -84,12 +84,12 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       }
       if (isWindows) {
         final int idx = o.getPath().indexOf(":");
-        Assert.assertTrue(idx > 0);
+        assertTrue(idx > 0);
         final int secondIdx = o.getPath().indexOf(":", idx + 1);
-        Assert.assertTrue(o.getPath(), secondIdx == -1);
+        assertTrue(o.getPath(), secondIdx == -1);
       } else {
         if (o.getPath().contains(LINUX_ROOT)) {
-          Assert.assertFalse(o.getPath().contains(basePath));
+          assertFalse(o.getPath().contains(basePath));
         }
       }
       try {
@@ -128,11 +128,11 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       if (new File(
         "C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\MacMessagesParser.java")
         .equals(status1.getFile())) {
-        Assert.assertEquals("http://external/src/com/slave/MacMessagesParser.java", status1.getURL().toString());
+        assertEquals("http://external/src/com/slave/MacMessagesParser.java", status1.getURL().toString());
       }
       if (new File("C:\\TestProjects\\sortedProjects\\Subversion\\local2\\sep12main\\main\\slave\\src\\com\\slave\\SomeOtherClass.java")
         .equals(status1.getFile())) {
-        Assert.assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
+        assertEquals("http://external/src/com/slave/SomeOtherClass.java", status1.getURL().toString());
       }
     }, baseFile, createStubInfo(basePath, "http://mainurl/"), () -> handler.get().getPending());
     handler.set(new SvnStatusHandler(callback, baseFile, o -> {
@@ -177,12 +177,12 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       }
       if (isWindows) {
         final int idx = o.getPath().indexOf(":");
-        Assert.assertTrue(idx > 0);
+        assertTrue(idx > 0);
         final int secondIdx = o.getPath().indexOf(":", idx + 1);
-        Assert.assertTrue(o.getPath(), secondIdx == -1);
+        assertTrue(o.getPath(), secondIdx == -1);
       } else {
         if (o.getPath().contains(LINUX_ROOT)) {
-          Assert.assertFalse(o.getPath().contains(basePath));
+          assertFalse(o.getPath().contains(basePath));
         }
       }
       try {
@@ -204,7 +204,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     }
     int cntMatched = 0;
     for (PortableStatus status : statuses) {
-      Assert.assertTrue(status.isSwitched());
+      assertTrue(status.isSwitched());
       final String path = FileUtil.toSystemDependentName(status.getPath());
       for (String s1 : expected) {
         if (s1.equals(path)) {
@@ -213,7 +213,7 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
         }
       }
     }
-    Assert.assertEquals(2, cntMatched);
+    assertEquals(2, cntMatched);
   }
 
   @Test
@@ -246,12 +246,12 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
       }
       if (isWindows) {
         final int idx = o.getPath().indexOf(":");
-        Assert.assertTrue(idx > 0);
+        assertTrue(idx > 0);
         final int secondIdx = o.getPath().indexOf(":", idx + 1);
-        Assert.assertTrue(o.getPath(), secondIdx == -1);
+        assertTrue(o.getPath(), secondIdx == -1);
       } else {
         if (o.getPath().contains(LINUX_ROOT)) {
-          Assert.assertFalse(o.getPath().contains(basePath));
+          assertFalse(o.getPath().contains(basePath));
         }
       }
       try {
@@ -267,9 +267,9 @@ public class SvnParseCommandLineParseTest extends AbstractJunitVcsTestCase {
     SAXParser parser = SAXParserFactory.newInstance().newSAXParser();
     parser.parse(new ByteArrayInputStream(osChecked.getBytes(CharsetToolkit.UTF8_CHARSET)), handler);
 
-    Assert.assertEquals(1, statuses.size());
+    assertEquals(1, statuses.size());
     final PortableStatus next = statuses.iterator().next();
-    Assert.assertEquals("a.txt", next.getPath());
-    Assert.assertEquals("target", next.getChangelistName());
+    assertEquals("a.txt", next.getPath());
+    assertEquals("target", next.getChangelistName());
   }
 }

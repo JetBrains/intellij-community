@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -21,6 +20,8 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class SvnCommitTest extends SvnTestCase {
   private SvnVcs myVcs;
@@ -129,12 +130,12 @@ public class SvnCommitTest extends SvnTestCase {
     final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
     final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
-    Assert.assertTrue(file1.exists());
-    Assert.assertTrue(fileInner.exists());
+    assertTrue(file1.exists());
+    assertTrue(fileInner.exists());
     final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
     final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-    Assert.assertNotNull(vf1);
-    Assert.assertNotNull(vf2);
+    assertNotNull(vf1);
+    assertNotNull(vf2);
 
     editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
     editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
@@ -144,7 +145,7 @@ public class SvnCommitTest extends SvnTestCase {
 
     final HashSet<String> strings = checkinFiles(vf1, vf2);
     System.out.println("" + StringUtil.join(strings, "\n"));
-    Assert.assertEquals(1, strings.size());
+    assertEquals(1, strings.size());
   }
 
   @Test
@@ -155,12 +156,12 @@ public class SvnCommitTest extends SvnTestCase {
     final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
     final File fileInner = new File(myWorkingCopyDir.getPath(), "source/inner1/inner2/inner/t11.txt");
 
-    Assert.assertTrue(file1.exists());
-    Assert.assertTrue(fileInner.exists());
+    assertTrue(file1.exists());
+    assertTrue(fileInner.exists());
     final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
     final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-    Assert.assertNotNull(vf1);
-    Assert.assertNotNull(vf2);
+    assertNotNull(vf1);
+    assertNotNull(vf2);
 
     editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
     editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
@@ -179,12 +180,12 @@ public class SvnCommitTest extends SvnTestCase {
     final File file1 = new File(myWorkingCopyDir.getPath(), "source/s1.txt");
     final File fileInner = new File(myWorkingCopyDir.getPath(), "source/external/t11.txt");
 
-    Assert.assertTrue(file1.exists());
-    Assert.assertTrue(fileInner.exists());
+    assertTrue(file1.exists());
+    assertTrue(fileInner.exists());
     final VirtualFile vf1 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file1);
     final VirtualFile vf2 = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(fileInner);
-    Assert.assertNotNull(vf1);
-    Assert.assertNotNull(vf2);
+    assertNotNull(vf1);
+    assertNotNull(vf2);
 
     editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
     editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
@@ -199,17 +200,17 @@ public class SvnCommitTest extends SvnTestCase {
     final List<Change> changes = new ArrayList<>();
     for (FilePath file : files) {
       final Change change = myChangeListManager.getChange(file);
-      Assert.assertNotNull(change);
+      assertNotNull(change);
       changes.add(change);
     }
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(changes, "test comment list");
-    Assert.assertTrue(exceptions == null || exceptions.isEmpty());
+    assertTrue(exceptions == null || exceptions.isEmpty());
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
     for (FilePath file : files) {
       final Change changeA = myChangeListManager.getChange(file);
-      Assert.assertNull(changeA);
+      assertNull(changeA);
     }
   }
 
@@ -217,7 +218,7 @@ public class SvnCommitTest extends SvnTestCase {
     final List<Change> changes = new ArrayList<>();
     for (VirtualFile file : files) {
       final Change change = myChangeListManager.getChange(file);
-      Assert.assertNotNull(change);
+      assertNotNull(change);
       changes.add(change);
     }
     final HashSet<String> feedback = new HashSet<>();
@@ -225,26 +226,26 @@ public class SvnCommitTest extends SvnTestCase {
     if (exceptions !=null && ! exceptions.isEmpty()) {
       exceptions.get(0).printStackTrace();
     }
-    Assert.assertTrue(exceptions == null || exceptions.isEmpty());
+    assertTrue(exceptions == null || exceptions.isEmpty());
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
 
     for (VirtualFile file : files) {
       final Change changeA = myChangeListManager.getChange(file);
-      Assert.assertNull(changeA);
+      assertNull(changeA);
     }
     return feedback;
   }
 
   protected void checkinFile(VirtualFile file, FileStatus status) {
     final Change change = myChangeListManager.getChange(file);
-    Assert.assertNotNull(change);
-    Assert.assertEquals(status, change.getFileStatus());
+    assertNotNull(change);
+    assertEquals(status, change.getFileStatus());
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "test comment");
-    Assert.assertTrue(exceptions == null || exceptions.isEmpty());
+    assertTrue(exceptions == null || exceptions.isEmpty());
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
     final Change changeA = myChangeListManager.getChange(file);
-    Assert.assertNull(changeA);
+    assertNull(changeA);
   }
 }

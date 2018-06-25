@@ -12,7 +12,6 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.Revision;
@@ -28,6 +27,8 @@ import java.util.Collections;
 import java.util.List;
 
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
+import static org.junit.Assert.assertNotNull;
+import static org.junit.Assert.assertTrue;
 
 public class SvnNativeClientAuthTest extends SvnTestCase {
   private SvnVcs myVcs;
@@ -475,18 +476,18 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   }
 
   private File testCommitImpl(File wc1) throws IOException {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final File file = FileUtil.createTempFile(wc1, "file", ".txt");
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
-    Assert.assertNotNull(vf);
+    assertNotNull(vf);
     final ArrayList<VirtualFile> files = new ArrayList<>();
     files.add(vf);
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().scheduleUnversionedFilesForAddition(files);
-    Assert.assertTrue(exceptions.isEmpty());
+    assertTrue(exceptions.isEmpty());
 
     final Change change = new Change(null, new CurrentContentRevision(VcsUtil.getFilePath(vf)));
     final List<VcsException> commit = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    Assert.assertTrue(commit.isEmpty());
+    assertTrue(commit.isEmpty());
     ++ myExpectedCreds;
     ++ myExpectedCert;
     return file;
@@ -495,7 +496,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   private File testCheckoutImpl(@NotNull Url url) throws IOException {
     final File root = FileUtil.createTempDirectory("checkoutRoot", "");
     root.deleteOnExit();
-    Assert.assertTrue(root.exists());
+    assertTrue(root.exists());
     SvnCheckoutProvider
       .checkout(myProject, root, url, Revision.HEAD, Depth.INFINITY, false, new CheckoutProvider.Listener() {
         @Override
@@ -512,7 +513,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
       ++ cnt[0];
       return ! (cnt[0] > 1);
     });
-    Assert.assertTrue(cnt[0] > 1);
+    assertTrue(cnt[0] > 1);
     myIsSecure = "https".equals(url.getProtocol());
     if (myIsSecure) {
       ++ myExpectedCreds;
@@ -524,15 +525,15 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   }
 
   private void updateExpectAuthCanceled(File wc1, String expectedText) {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
       myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                      new Ref<>());
-    Assert.assertTrue(session.getExceptions() != null && ! session.getExceptions().isEmpty());
-    Assert.assertTrue(!session.isCanceled());
-    Assert.assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
+    assertTrue(session.getExceptions() != null && !session.getExceptions().isEmpty());
+    assertTrue(!session.isCanceled());
+    assertTrue(session.getExceptions().get(0).getMessage().contains(expectedText));
 
     if (myIsSecure) {
       ++ myExpectedCreds;
@@ -541,14 +542,14 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
   }
 
   private void updateSimple(File wc1) {
-    Assert.assertTrue(wc1.isDirectory());
+    assertTrue(wc1.isDirectory());
     final VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wc1);
     final UpdatedFiles files = UpdatedFiles.create();
     final UpdateSession session =
       myVcs.getUpdateEnvironment().updateDirectories(new FilePath[]{VcsUtil.getFilePath(vf)}, files, new EmptyProgressIndicator(),
                                                      new Ref<>());
-    Assert.assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
-    Assert.assertTrue(!session.isCanceled());
+    assertTrue(session.getExceptions() == null || session.getExceptions().isEmpty());
+    assertTrue(!session.isCanceled());
     if (myIsSecure) {
       ++ myExpectedCreds;
       ++ myExpectedCert;

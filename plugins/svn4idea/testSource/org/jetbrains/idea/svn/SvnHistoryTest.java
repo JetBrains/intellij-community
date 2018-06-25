@@ -14,11 +14,13 @@ import com.intellij.openapi.vcs.history.VcsFileRevision;
 import com.intellij.openapi.vcs.history.VcsHistoryProvider;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.vcsUtil.VcsUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
 import java.util.concurrent.atomic.AtomicInteger;
+
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertTrue;
 
 public class SvnHistoryTest extends SvnTestCase {
 
@@ -37,7 +39,7 @@ public class SvnHistoryTest extends SvnTestCase {
 
     FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl, true);
     int count = reportHistory(provider, rootPath, true);
-    Assert.assertTrue(count > 0);
+    assertTrue(count > 0);
   }
 
   @Test
@@ -55,7 +57,7 @@ public class SvnHistoryTest extends SvnTestCase {
 
     FilePath rootPath = VcsContextFactory.SERVICE.getInstance().createFilePathOnNonLocal(myRepoUrl + "/root/source/s1.txt", true);
     int count = reportHistory(provider, rootPath);
-    Assert.assertEquals(11, count);
+    assertEquals(11, count);
   }
 
   @Test
@@ -72,7 +74,7 @@ public class SvnHistoryTest extends SvnTestCase {
     }
 
     int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
-    Assert.assertEquals(11, count);
+    assertEquals(11, count);
   }
 
   @Test
@@ -93,7 +95,7 @@ public class SvnHistoryTest extends SvnTestCase {
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
 
     int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
-    Assert.assertEquals(11, count);
+    assertEquals(11, count);
   }
 
   @Test
@@ -115,13 +117,13 @@ public class SvnHistoryTest extends SvnTestCase {
     ChangeListManager.getInstance(myProject).ensureUpToDate(false);
 
     int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
-    Assert.assertEquals(11, count);
+    assertEquals(11, count);
 
     count = reportHistory(provider, VcsUtil.getFilePath(tree.myTargetDir));
-    Assert.assertEquals(1, count);
+    assertEquals(1, count);
 
     count = reportHistory(provider, VcsUtil.getFilePath(tree.myTargetFiles.get(0)));
-    Assert.assertEquals(1, count);
+    assertEquals(1, count);
   }
 
   private static int reportHistory(@NotNull VcsHistoryProvider provider, @NotNull FilePath path) throws VcsException {

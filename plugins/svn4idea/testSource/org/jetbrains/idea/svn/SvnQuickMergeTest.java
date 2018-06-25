@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -39,6 +38,7 @@ import static org.jetbrains.idea.svn.SvnPropertyKeys.MERGE_INFO;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.jetbrains.idea.svn.api.Revision.WORKING;
+import static org.junit.Assert.*;
 
 public class SvnQuickMergeTest extends SvnTestCase {
   private SvnVcs myVcs;
@@ -60,9 +60,9 @@ public class SvnQuickMergeTest extends SvnTestCase {
     myBranchRoot = new File(myTempDirFixture.getTempDirPath(), "b1");
 
     runInAndVerifyIgnoreOutput("co", myBranchUrl, myBranchRoot.getPath());
-    Assert.assertTrue(myBranchRoot.exists());
+    assertTrue(myBranchRoot.exists());
     myBranchVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(myBranchRoot);
-    Assert.assertNotNull(myBranchVf);
+    assertNotNull(myBranchVf);
 
     myBranchTree = new SubTree(myBranchVf);
     myTree = new SubTree(myWorkingCopyDir);
@@ -92,12 +92,12 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }
 
   // if we create branches like this:
@@ -117,7 +117,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
   @Test
   public void testSelectRevisionsWithQuickSelectCheckForLocalChanges() throws Exception {
     Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info);
+    assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
     final int totalChanges = 3;
@@ -150,17 +150,17 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
     PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
-    Assert.assertEquals("/branches/b1:" + (numberBefore + 1), value.toString());
+    assertEquals("/branches/b1:" + (numberBefore + 1), value.toString());
   }
 
   // this test is mainly to check revisions selection. at the moment we are not sure whether we support
@@ -168,7 +168,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
   @Test
   public void testSelectRevisionsWithQuickSelect() throws Exception {
     Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info);
+    assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
     final int totalChanges = 3;
@@ -183,7 +183,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     // before copy
     Info info2 = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info2);
+    assertNotNull(info2);
     final long numberBeforeCopy = info2.getRevision().getNumber();
 
     runInAndVerifyIgnoreOutput("copy", "-q", "-m", "copy1", myBranchUrl, myRepoUrl + "/branches/b2");
@@ -216,23 +216,23 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS2File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
     PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
-    Assert.assertEquals("/branches/b2:" + (numberBeforeCopy + 2), value.toString());
+    assertEquals("/branches/b2:" + (numberBeforeCopy + 2), value.toString());
   }
 
   @Test
   public void testSelectRevisions() throws Exception {
     Info info = myVcs.getInfo(virtualToIoFile(myBranchTree.myS1File), WORKING);
-    Assert.assertNotNull(info);
+    assertNotNull(info);
 
     final long numberBefore = info.getRevision().getNumber();
     final int totalChanges = 10;
@@ -256,17 +256,17 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
     File file = virtualToIoFile(myWorkingCopyDir);
     PropertyValue value = myVcs.getFactory(file).createPropertyClient().getProperty(Target.on(file), MERGE_INFO, false, WORKING);
     System.out.println(value.toString());
-    Assert.assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), value.toString());
+    assertEquals("/branches/b1:" + (numberBefore + 1) + "-" + (numberBefore + 2), value.toString());
   }
 
   private WCInfo getWcInfo() {
@@ -279,7 +279,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
         break;
       }
     }
-    Assert.assertNotNull(found);
+    assertNotNull(found);
     return found;
   }
 
@@ -304,12 +304,12 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
-    Assert.assertNotNull(fileChange);
-    Assert.assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
+    assertNotNull(fileChange);
+    assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
     final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
-    Assert.assertNotNull(dirChange);
-    Assert.assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
+    assertNotNull(dirChange);
+    assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }
 
   private void waitQuickMerge(@NotNull String sourceUrl, @NotNull QuickMergeTestInteraction interaction) throws Exception {

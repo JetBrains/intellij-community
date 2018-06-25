@@ -13,13 +13,14 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import junit.framework.Assert;
 import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.Collections;
 import java.util.List;
+
+import static org.junit.Assert.*;
 
 public class SvnAnnotationIsClosedTest extends SvnTestCase {
   private volatile boolean myIsClosed;
@@ -59,21 +60,21 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     listener.registerAnnotation(tree.myS1File, annotation);
 
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
-    Assert.assertFalse(myIsClosed); // not closed on typing
+    assertFalse(myIsClosed); // not closed on typing
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
     final Change change = myChangeListManager.getChange(tree.myS1File);
-    Assert.assertNotNull(change);
+    assertNotNull(change);
 
     final List<VcsException> exceptions = myVcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
-    Assert.assertTrue(exceptions == null || exceptions.isEmpty());
+    assertTrue(exceptions == null || exceptions.isEmpty());
     myDirtyScopeManager.fileDirty(tree.myS1File);
 
     myChangeListManager.ensureUpToDate(false);
     myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
-    Assert.assertTrue(myIsClosed);
+    assertTrue(myIsClosed);
   }
 
   @Test
@@ -98,7 +99,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     myChangeListManager.ensureUpToDate(false);
 
     imitUpdate(myProject);
-    Assert.assertTrue(myIsClosed);
+    assertTrue(myIsClosed);
   }
 
   @Test
@@ -122,10 +123,10 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
-    Assert.assertFalse(myIsClosed);
+    assertFalse(myIsClosed);
 
     imitUpdate(myProject);
-    Assert.assertTrue(myIsClosed);
+    assertTrue(myIsClosed);
   }
 
   @Test
@@ -149,7 +150,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
-    Assert.assertFalse(myIsClosed);
+    assertFalse(myIsClosed);
 
     update();
     myWorkingCopyDir.refresh(false, true);
@@ -158,7 +159,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     myChangeListManager.ensureUpToDate(false);
     myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
-    Assert.assertTrue(myIsClosed);
+    assertTrue(myIsClosed);
   }
 
   @Test
@@ -179,14 +180,14 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     listener.registerAnnotation(tree.myS1File, annotation);
 
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
-    Assert.assertFalse(myIsClosed); // not closed on typing
+    assertFalse(myIsClosed); // not closed on typing
     VcsTestUtil.renameFileInCommand(myProject, tree.myS1File, "5364536");
-    Assert.assertFalse(myIsClosed); // not closed on typing
+    assertFalse(myIsClosed); // not closed on typing
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
     final Change change = myChangeListManager.getChange(tree.myS1File);
-    Assert.assertNotNull(change);
+    assertNotNull(change);
   }
 
   @Test
@@ -207,12 +208,12 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
-    Assert.assertFalse(myIsClosed); // not closed on typing
+    assertFalse(myIsClosed); // not closed on typing
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
     final Change change = myChangeListManager.getChange(tree.myS1File);
-    Assert.assertNotNull(change);
+    assertNotNull(change);
   }
 
   @Test
@@ -235,7 +236,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     myDirtyScopeManager.markEverythingDirty();
     myChangeListManager.ensureUpToDate(false);
-    Assert.assertFalse(myIsClosed);
+    assertFalse(myIsClosed);
 
     checkin();
     myWorkingCopyDir.refresh(false, true);
@@ -244,7 +245,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     myChangeListManager.ensureUpToDate(false);
     myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
-    Assert.assertTrue(myIsClosed);
+    assertTrue(myIsClosed);
   }
 
   @Test
@@ -258,8 +259,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     final VirtualFile vf1 = lfs.refreshAndFindFileByIoFile(sourceFile);
     final VirtualFile vf2 = lfs.refreshAndFindFileByIoFile(externalFile);
 
-    Assert.assertNotNull(vf1);
-    Assert.assertNotNull(vf2);
+    assertNotNull(vf1);
+    assertNotNull(vf2);
 
     VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
     VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
@@ -269,8 +270,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     final Change change1 = myChangeListManager.getChange(vf1);
     final Change change2 = myChangeListManager.getChange(vf2);
-    Assert.assertNotNull(change1);
-    Assert.assertNotNull(change2);
+    assertNotNull(change1);
+    assertNotNull(change2);
 
     final File sourceDir = new File(myWorkingCopyDir.getPath(), "source");
     final File externalDir = new File(myWorkingCopyDir.getPath(), "source/external");
@@ -318,13 +319,13 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertRevision(vf1, diffProvider, 3);
     assertRevision(vf2, diffProvider, 5);
 
-    Assert.assertTrue(myIsClosed1);
-    Assert.assertFalse(myIsClosed);  // in source is not closed..
+    assertTrue(myIsClosed1);
+    assertFalse(myIsClosed);  // in source is not closed..
   }
 
   private void assertRevision(VirtualFile vf1, SvnDiffProvider diffProvider, final long number) {
     final VcsRevisionDescription vf1Rev = diffProvider.getCurrentRevisionDescription(vf1);
-    Assert.assertEquals(number, ((SvnRevisionNumber) vf1Rev.getRevisionNumber()).getLongRevisionNumber());
+    assertEquals(number, ((SvnRevisionNumber)vf1Rev.getRevisionNumber()).getLongRevisionNumber());
   }
 
   // test is not closed by ext/int update to not-last-committed-rev (rev that changes another file) +

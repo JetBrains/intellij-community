@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.TimeoutUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
@@ -12,6 +11,8 @@ import org.jetbrains.idea.svn.commandLine.*;
 import org.junit.Test;
 
 import java.io.File;
+
+import static org.junit.Assert.assertNotNull;
 
 // TODO: Rather strange test - probably it should be removed
 public class SvnCommandLineStabilityTest extends SvnTestCase {
@@ -27,7 +28,7 @@ public class SvnCommandLineStabilityTest extends SvnTestCase {
   private void call() throws VcsException {
     String result = runInfo().getOutput();
     System.out.println(result);
-    Assert.assertNotNull(result);
+    assertNotNull(result);
   }
 
   @NotNull

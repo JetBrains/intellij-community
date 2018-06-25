@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.diff.impl.patch.*;
@@ -25,7 +11,6 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.util.TimeoutUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.info.Info;
 import org.jetbrains.idea.svn.status.StatusType;
@@ -35,6 +20,8 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Iterator;
 import java.util.List;
+
+import static org.junit.Assert.assertEquals;
 
 public class ConflictCreator {
   private final Project myProject;
@@ -76,7 +63,7 @@ public class ConflictCreator {
       PatchApplier<BinaryFilePatch> applier = new PatchApplier<>(myProject, myTheirsDir, filePatchList, (LocalChangeList)null, null);
       applier.setIgnoreContentRootsCheck();
       applier.execute();
-      Assert.assertEquals(0, applier.getRemainingPatches().size());
+      assertEquals(0, applier.getRemainingPatches().size());
     }
 
     TimeoutUtil.sleep(10);
