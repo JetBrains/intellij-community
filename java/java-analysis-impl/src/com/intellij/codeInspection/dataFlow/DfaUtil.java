@@ -14,10 +14,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.JavaResolveUtil;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
@@ -27,7 +24,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.function.Predicate;
 
 /**
@@ -146,57 +142,59 @@ public class DfaUtil {
 
   @NotNull
   public static Nullability inferMethodNullability(PsiMethod method) {
-    final PsiCodeBlock body = method.getBody();
-    if (body == null || PsiUtil.resolveClassInType(method.getReturnType()) == null) {
+    if (PsiUtil.resolveClassInType(method.getReturnType()) == null) {
       return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullability(body, InferenceFromSourceUtil.suppressNullable(method));
+    return inferBlockNullability(method, InferenceFromSourceUtil.suppressNullable(method));
   }
 
   @NotNull
   public static Nullability inferLambdaNullability(PsiLambdaExpression lambda) {
-    final PsiElement body = lambda.getBody();
-    if (body == null || LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
+    if (LambdaUtil.getFunctionalInterfaceReturnType(lambda) == null) {
       return Nullability.UNKNOWN;
     }
 
-    return inferBlockNullability(body, false);
+    return inferBlockNullability(lambda, false);
   }
 
   @NotNull
-  private static Nullability inferBlockNullability(PsiElement body, boolean suppressNullable) {
-    final AtomicBoolean hasNulls = new AtomicBoolean();
-    final AtomicBoolean hasNotNulls = new AtomicBoolean();
-    final AtomicBoolean hasUnknowns = new AtomicBoolean();
+  private static Nullability inferBlockNullability(PsiParameterListOwner owner, boolean suppressNullable) {
+    PsiElement body = owner.getBody();
+    if (body == null) return Nullability.UNKNOWN;
 
     final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final RunnerResult rc = dfaRunner.analyzeMethod(body, new StandardInstructionVisitor() {
+    class BlockNullabilityVisitor extends StandardInstructionVisitor {
+      boolean hasNulls = false;
+      boolean hasNotNulls = false;
+      boolean hasUnknowns = false;
+
       @Override
-      public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
-                                                         DataFlowRunner runner,
-                                                         DfaMemoryState memState) {
-        if(PsiTreeUtil.isAncestor(body, instruction.getReturn(), false)) {
-          DfaValue returned = memState.peek();
-          if (memState.isNull(returned)) {
-            hasNulls.set(true);
+      protected void checkReturnValue(@NotNull DfaValue value,
+                                      @NotNull PsiExpression expression,
+                                      @NotNull PsiParameterListOwner context,
+                                      @NotNull DfaMemoryState state) {
+        if (context == owner) {
+          if (TypeConversionUtil.isPrimitiveAndNotNull(expression.getType()) || state.isNotNull(value)) {
+            hasNotNulls = true;
           }
-          else if (memState.isNotNull(returned)) {
-            hasNotNulls.set(true);
+          else if (state.isNull(value)) {
+            hasNulls = true;
           }
           else {
-            hasUnknowns.set(true);
+            hasUnknowns = true;
           }
         }
-        return super.visitCheckReturnValue(instruction, runner, memState);
       }
-    });
+    }
+    BlockNullabilityVisitor visitor = new BlockNullabilityVisitor();
+    final RunnerResult rc = dfaRunner.analyzeMethod(body, visitor);
 
     if (rc == RunnerResult.OK) {
-      if (hasNulls.get()) {
+      if (visitor.hasNulls) {
         return suppressNullable ? Nullability.UNKNOWN : Nullability.NULLABLE;
       }
-      if (hasNotNulls.get() && !hasUnknowns.get()) {
+      if (visitor.hasNotNulls && !visitor.hasUnknowns) {
         return Nullability.NOT_NULL;
       }
     }

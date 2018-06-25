@@ -81,11 +81,10 @@ public class OptionalChainInliner implements CallInliner {
           .ifNotNull()
           .swap() // stack: .. optValue, elseValue
           .end()
-          .pop();
+          .pop()
+          .resultOf(call);
       })
-      .register(OPTIONAL_OR_NULL, (builder, call) -> {
-        // no op!
-      })
+      .register(OPTIONAL_OR_NULL, CFGBuilder::resultOf)
       .register(OPTIONAL_OR_ELSE_GET, (builder, call) -> {
         PsiExpression fn = call.getArgumentList().getExpressions()[0];
         builder
@@ -94,7 +93,8 @@ public class OptionalChainInliner implements CallInliner {
           .ifNull()
           .pop()
           .invokeFunction(0, fn)
-          .end();
+          .end()
+          .resultOf(call);
       })
       .register(OPTIONAL_IF_PRESENT, (builder, call) -> {
         PsiExpression fn = call.getArgumentList().getExpressions()[0];
@@ -106,7 +106,8 @@ public class OptionalChainInliner implements CallInliner {
           .elseBranch()
           .pop()
           .pushUnknown()
-          .end();
+          .end()
+          .resultOf(call);
       });
 
   private static final CallMapper<BiConsumer<CFGBuilder, PsiExpression>> INTERMEDIATE_MAPPER =

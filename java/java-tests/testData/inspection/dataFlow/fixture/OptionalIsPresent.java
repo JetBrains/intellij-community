@@ -29,8 +29,8 @@ class Test {
       maybe = Optional.empty();
       System.out.println(maybe.<warning descr="The call to 'get' always fails, according to its method contracts">get</warning>());
     }
-    boolean b = <warning descr="Condition '((maybe.isPresent()))' is always 'false'">((<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning>))</warning> && maybe.get() == 1;
-    boolean c = <warning descr="Condition '(!maybe.isPresent())' is always 'true'">(!<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning>)</warning> || maybe.get() == 1;
+    boolean b = <warning descr="Condition '((maybe.isPresent())) && maybe.get() == 1' is always 'false'"><warning descr="Condition '((maybe.isPresent()))' is always 'false'">((<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning>))</warning> && maybe.get() == 1</warning>;
+    boolean c = <warning descr="Condition '(!maybe.isPresent()) || maybe.get() == 1' is always 'true'"><warning descr="Condition '(!maybe.isPresent())' is always 'true'">(<warning descr="Condition '!maybe.isPresent()' is always 'true'">!<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning></warning>)</warning> || maybe.get() == 1</warning>;
     Integer value = <warning descr="Condition '!maybe.isPresent()' is always 'true'">!<warning descr="Condition 'maybe.isPresent()' is always 'false'">maybe.isPresent()</warning></warning> ? 0 : maybe.get();
   }
 
