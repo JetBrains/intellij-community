@@ -96,6 +96,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     listener.after(events);
   }
 
+  @NotNull
+  public static String getPluginHome() {
+    return PluginPathManager.getPluginHomePath("svn4idea");
+  }
+
   @Before
   public void setUp() throws Exception {
     runInEdtAndWait(() -> {
@@ -107,7 +112,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       boolean isRepoRootCreated = myRepoRoot.mkdir() || myRepoRoot.isDirectory();
       assert isRepoRootCreated : myRepoRoot;
 
-      myPluginRoot = new File(PluginPathManager.getPluginHomePath("svn4idea"));
+      myPluginRoot = new File(getPluginHome());
       File svnBinDir = new File(myPluginRoot, getTestDataDir() + "/svn/bin");
       File svnExecutable = null;
       if (SystemInfo.isWindows) {
