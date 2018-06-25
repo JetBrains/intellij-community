@@ -36,7 +36,7 @@ Features / Supports
 - [@ToString](http://projectlombok.org/features/ToString.html)
 - [@EqualsAndHashCode](http://projectlombok.org/features/EqualsAndHashCode.html)
 - [@AllArgsConstructor, @RequiredArgsConstructor and @NoArgsConstructor](http://projectlombok.org/features/Constructor.html)
-- [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog, @JBossLog](http://projectlombok.org/features/Log.html)
+- [@Log, @Log4j, @Log4j2, @Slf4j, @XSlf4j, @CommonsLog, @JBossLog, @Flogger](http://projectlombok.org/features/Log.html)
 - [@Data](https://projectlombok.org/features/Data.html)
 - [@Builder](https://projectlombok.org/features/Builder.html)
 - [@Singular](https://projectlombok.org/features/Builder.html#singular)

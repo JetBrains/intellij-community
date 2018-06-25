@@ -91,6 +91,7 @@
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.XSlf4jProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor"/>
+    <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.log.FloggerProcessor"/>
 
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.DataProcessor"/>
     <processor implementation="de.plushnikov.intellij.plugin.processor.clazz.EqualsAndHashCodeProcessor"/>

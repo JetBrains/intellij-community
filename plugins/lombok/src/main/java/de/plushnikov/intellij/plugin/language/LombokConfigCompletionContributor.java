@@ -38,7 +38,7 @@ public class LombokConfigCompletionContributor extends CompletionContributor {
       "lombok.fieldDefaults.flagUsage", "lombok.getter.flagUsage", "lombok.getter.lazy.flagUsage",
       "lombok.log.apacheCommons.flagUsage", "lombok.log.flagUsage", "lombok.log.javaUtilLogging.flagUsage",
       "lombok.log.log4j.flagUsage", "lombok.log.log4j2.flagUsage", "lombok.log.slf4j.flagUsage",
-      "lombok.log.xslf4j.flagUsage", "lombok.log.jbosslog.flagUsage",
+      "lombok.log.xslf4j.flagUsage", "lombok.log.jbosslog.flagUsage", "lombok.log.flogger.flagUsage",
       "lombok.noArgsConstructor.flagUsage", "lombok.nonNull.flagUsage",
       "lombok.requiredArgsConstructor.flagUsage", "lombok.setter.flagUsage", "lombok.sneakyThrows.flagUsage",
       "lombok.synchronized.flagUsage", "lombok.toString.flagUsage", "lombok.val.flagUsage", "lombok.value.flagUsage",

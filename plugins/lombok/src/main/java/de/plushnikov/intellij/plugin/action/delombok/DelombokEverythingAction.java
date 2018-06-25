@@ -16,6 +16,7 @@ import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstruc
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.CommonsLogProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.log.FloggerProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.JBossLogProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Log4j2Processor;
 import de.plushnikov.intellij.plugin.processor.clazz.log.Log4jProcessor;
@@ -64,7 +65,7 @@ public class DelombokEverythingAction extends BaseDelombokAction {
       getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor),
       new WitherProcessor(new WitherFieldProcessor(requiredArgsConstructorProcessor)),
       setterProcessor, equalsAndHashCodeProcessor, toStringProcessor,
-      new CommonsLogProcessor(), new JBossLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(),
+      new CommonsLogProcessor(), new JBossLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(), new FloggerProcessor(),
       getterFieldProcessor, setterFieldProcessor,
       new WitherFieldProcessor(requiredArgsConstructorProcessor),
       new DelegateFieldProcessor(delegateHandler),

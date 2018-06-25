@@ -41,4 +41,8 @@ public class DelombokLoggerActionTest extends LombokLightActionTestCase {
   public void testJBossLog() throws Exception {
     doTest();
   }
+
+  public void testFlogger() throws Exception {
+    doTest();
+  }
 }

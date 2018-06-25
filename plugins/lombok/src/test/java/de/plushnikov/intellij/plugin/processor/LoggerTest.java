@@ -52,4 +52,8 @@ public class LoggerTest extends AbstractLombokParsingTestCase {
   public void testLogger$LoggerJBossLog() throws IOException {
     doTest(true);
   }
+
+  public void testLogger$LoggerFlogger() throws IOException {
+    doTest(true);
+  }
 }
