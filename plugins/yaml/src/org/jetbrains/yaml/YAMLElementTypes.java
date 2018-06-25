@@ -83,4 +83,12 @@ public interface YAMLElementTypes {
     FILE,
     DOCUMENT
   );
+
+  TokenSet INCOMPLETE_BLOCKS = TokenSet.create(
+    MAPPING,
+    SEQUENCE,
+    COMPOUND_VALUE,
+    SCALAR_LIST_VALUE,
+    SCALAR_TEXT_VALUE
+  );
 }
