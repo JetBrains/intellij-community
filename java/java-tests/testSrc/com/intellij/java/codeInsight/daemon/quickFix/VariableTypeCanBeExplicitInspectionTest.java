@@ -6,7 +6,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.VariableTypeCanBeExplicitInspection;
 import org.jetbrains.annotations.NotNull;
 
-
 public class VariableTypeCanBeExplicitInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

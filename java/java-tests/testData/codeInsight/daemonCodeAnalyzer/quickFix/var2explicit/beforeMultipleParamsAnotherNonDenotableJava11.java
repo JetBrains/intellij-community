@@ -1,6 +1,5 @@
 // "Replace 'var' with explicit type" "false"
 final class Example<J, T>  {
-
     interface I<A, B> {
         void m(A a, B b);
     }
@@ -8,6 +7,6 @@ final class Example<J, T>  {
     void m(I<T, J> i) {}
     
     void m(Example<? super String, Integer> e) {
-        e.m((var a, v<caret>ar b) -> {});
+        e.m((var a, <caret>var b) -> {});
     }
 }
