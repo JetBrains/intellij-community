@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.Ref;
@@ -22,7 +8,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.MultiMap;
 import junit.framework.Assert;
-import junit.framework.TestCase;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.api.NodeKind;
 import org.jetbrains.idea.svn.api.Revision;
@@ -32,6 +17,7 @@ import org.jetbrains.idea.svn.info.SvnInfoHandler;
 import org.jetbrains.idea.svn.status.CmdStatusClient;
 import org.jetbrains.idea.svn.status.PortableStatus;
 import org.jetbrains.idea.svn.status.SvnStatusHandler;
+import org.junit.Test;
 
 import javax.xml.parsers.SAXParser;
 import javax.xml.parsers.SAXParserFactory;
@@ -44,10 +30,11 @@ import java.util.Set;
 
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
-public class SvnParseCommandLineParseTest extends TestCase {
+public class SvnParseCommandLineParseTest {
 
   public static final String LINUX_ROOT = "/c7181320/";
 
+  @Test
   public void testInfo() throws Exception {
     final String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                      "<info>\n" +
@@ -83,6 +70,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
     Assert.assertNotNull(info[0]);
   }
 
+  @Test
   public void testStatus() throws Exception {
     final String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                      "<status>\n" +
@@ -603,6 +591,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
                     createUrl("http://a.b.c"), 1, new Date(), "me", null, Depth.EMPTY);
   }
 
+  @Test
   public void testStatusInExternalMove() throws Exception {
     final String status = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                           "<status>\n" +
@@ -681,6 +670,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
     final MultiMap<String, PortableStatus> changes = handler.get().getCurrentListChanges();
   }
 
+  @Test
   public void testStatusWithSwitched() throws Exception {
     final String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                      "<status>\n" +
@@ -780,6 +770,7 @@ public class SvnParseCommandLineParseTest extends TestCase {
     Assert.assertEquals(2, cntMatched);
   }
 
+  @Test
   public void testOneFileInChangeListStatus() throws Exception {
     final String s = "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                      "<status>\n" +
