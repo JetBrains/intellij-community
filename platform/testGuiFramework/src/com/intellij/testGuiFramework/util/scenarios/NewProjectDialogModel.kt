@@ -111,6 +111,7 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     const val libArquillianJUnit = "Arquillian JUnit"
     const val libArquillianTestNG = "Arquillian TestNG"
     const val libJBossDrools = "JBoss Drools"
+    const val libJBossDroolsReserved = "JBoss Drools,  (6.2.0)"
     const val itemKotlinMpp = "Kotlin (Multiplatform - Experimental)"
   }
 
@@ -166,6 +167,25 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
 
     override fun toString() = title
   }
+
+  data class LibraryOrFramework(val mainPath: Array<out String>, val reservePath: Array<out String> = emptyArray()) {
+    override fun equals(other: Any?): Boolean {
+      if (other == null) return false
+      if (other !is LibraryOrFramework) return false
+      return this.mainPath.contentEquals(other.mainPath) && this.reservePath.contentEquals(other.reservePath)
+    }
+
+    override fun hashCode(): Int {
+      val hashCodePrime = 31
+      return mainPath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc } * hashCodePrime +
+             reservePath.fold(1) { acc, s -> s.hashCode() * hashCodePrime + acc }
+    }
+
+    override fun toString(): String {
+      return "${mainPath.toList()} (${if (reservePath.isNotEmpty()) reservePath.toList().toString() else ""})"
+    }
+
+  }
 }
 
 val GuiTestCase.newProjectDialogModel by NewProjectDialogModel
@@ -177,7 +197,7 @@ fun assertProjectPathExists(projectPath: String) {
   assert(FileUtil.exists(projectPath)) { "Test project $projectPath should be created before test starting" }
 }
 
-typealias LibrariesSet = Set<Array<String>>
+typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
 
 /**
  * Creates a new project from Java group
@@ -193,12 +213,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       list.clickItem(groupJava)
-      if (setLibraries) {
-        for (lib in libs) {
-          logUIStep("Include `${lib.joinToString()}` to the project")
-          checkboxTree(*lib).check(*lib)
-        }
-      }
+      if (setLibraries) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
         if(setTemplate){
@@ -249,12 +264,7 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
           jList(template).clickItem(template)
         }
       }
-      else {
-        for (lib in libs) {
-          logUIStep("Include `${lib.joinToString()}` to the project")
-          checkboxTree(*lib).check(*lib)
-        }
-      }
+      else setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -483,8 +493,7 @@ fun NewProjectDialogModel.assertGroupPresent(group: NewProjectDialogModel.Groups
  * Supported only simple groups with 2 pages - first with framework selection and last with specifying project location
  * @param group - group where project is expected to be created. Not all groups are supported
  * @param projectPath - path where the project is going to be created
- * @param libs - path to additional library/framework that should be checked
- * Note: only one library/framework can be checked!
+ * @param libs - set of additional libraries/frameworks that should be checked
  * */
 internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogModel.Groups,
                                                         projectPath: String,
@@ -495,10 +504,7 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(group)
       list.clickItem(group.toString())
-      for (lib in libs) {
-        logUIStep("Include `${lib.joinToString()}` to the project")
-        checkboxTree(*lib).check(*lib)
-      }
+      if (libs.isNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -530,7 +536,7 @@ fun NewProjectDialogModel.createGriffonProject(projectPath: String, libs: Librar
   createProjectInGroup(NewProjectDialogModel.Groups.Griffon, projectPath, libs)
 }
 
-fun NewProjectDialogModel.waitLoadingTemplates(){
+fun NewProjectDialogModel.waitLoadingTemplates() {
   GuiTestUtilKt.waitProgressDialogUntilGone(
     GuiRobotHolder.robot,
     progressTitle = progressLoadingTemplates
@@ -571,4 +577,17 @@ fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
              .contains(serverName)) { "Appserver `$serverName` doesn't exist" }
     button(buttonCancel).click()
   }
+}
+
+fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
+  with(connectDialog()) {
+    for (lib in libs) {
+      guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
+      if (lib.reservePath.isEmpty())
+        checkboxTree(*lib.mainPath).check(*lib.mainPath)
+      else
+        checkboxTree(*lib.mainPath).checkWithReserve(lib.mainPath, lib.reservePath)
+    }
+  }
+
 }
