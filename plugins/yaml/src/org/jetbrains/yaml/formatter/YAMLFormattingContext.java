@@ -18,7 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
 import org.jetbrains.yaml.YAMLTokenTypes;
-import org.jetbrains.yaml.psi.*;
+import org.jetbrains.yaml.psi.YAMLKeyValue;
+import org.jetbrains.yaml.psi.YAMLSequenceItem;
+import org.jetbrains.yaml.psi.YAMLValue;
 
 import java.util.Map;
 import java.util.function.Predicate;
@@ -165,9 +167,8 @@ class YAMLFormattingContext {
 
   public boolean isIncomplete(@NotNull ASTNode node) {
     Predicate<YAMLValue> possiblyIncompleteValue = value ->
-      value == null ||
-      value instanceof YAMLCompoundValue ||
-      value instanceof YAMLBlockScalar;
+      value == null || YAMLElementTypes.INCOMPLETE_BLOCKS.contains(PsiUtilCore.getElementType(value));
+
     if (PsiUtilCore.getElementType(node) == YAMLElementTypes.KEY_VALUE_PAIR) {
       YAMLValue value = ((YAMLKeyValue)node.getPsi()).getValue();
       if (possiblyIncompleteValue.test(value)) {
