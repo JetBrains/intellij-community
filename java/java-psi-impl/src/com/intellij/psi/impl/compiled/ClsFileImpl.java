@@ -310,7 +310,9 @@ public class ClsFileImpl extends PsiBinaryFileImpl
   public PsiElement getNavigationElement() {
     for (ClsCustomNavigationPolicy navigationPolicy : Extensions.getExtensions(ClsCustomNavigationPolicy.EP_NAME)) {
       try {
-        PsiElement navigationElement = navigationPolicy.getNavigationElement(this);
+        @SuppressWarnings("deprecation") PsiElement navigationElement =
+          navigationPolicy instanceof ClsCustomNavigationPolicyEx ? ((ClsCustomNavigationPolicyEx)navigationPolicy).getFileNavigationElement(this) :
+          navigationPolicy.getNavigationElement(this);
         if (navigationElement != null) return navigationElement;
       }
       catch (IndexNotReadyException ignore) { }

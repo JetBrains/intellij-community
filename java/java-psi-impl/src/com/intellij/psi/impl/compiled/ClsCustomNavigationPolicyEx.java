@@ -6,6 +6,7 @@ import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 
 /** @deprecated use {@link ClsCustomNavigationPolicy} directly */
+@SuppressWarnings("DeprecatedIsStillUsed")
 @ApiStatus.ScheduledForRemoval(inVersion = "2019")
 public abstract class ClsCustomNavigationPolicyEx implements ClsCustomNavigationPolicy {
   @SuppressWarnings("unused")
