@@ -31,6 +31,7 @@ import java.lang.management.MemoryNotificationInfo;
 import java.lang.management.MemoryPoolMXBean;
 import java.lang.management.MemoryType;
 import java.util.MissingResourceException;
+import java.util.concurrent.Executor;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -55,7 +56,7 @@ public class LowMemoryWatcherManager implements Disposable {
     }
   };
 
-  public LowMemoryWatcherManager(@NotNull ExecutorService executorService) {
+  public LowMemoryWatcherManager(@NotNull Executor executorService) {
     myExecutorService = SequentialTaskExecutor.createSequentialApplicationPoolExecutor("LowMemoryWatcherManager", executorService);
     try {
       for (MemoryPoolMXBean bean : ManagementFactory.getMemoryPoolMXBeans()) {
