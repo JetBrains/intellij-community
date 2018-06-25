@@ -419,8 +419,8 @@ public class DarculaUIUtil {
 
   public static Color getOutlineColor(boolean enabled, boolean focused) {
     return enabled ?
-            focused ? new JBColor(0x87AFDA, 0x466D94) : new JBColor(Gray.xBF, Gray._100) :
-           new JBColor(Gray.xCF, Gray._100);
+            focused ? JBColor.namedColor("Outline.focusedColor", 0x87AFDA) : JBColor.namedColor("Outline.color", Gray.xBF) :
+           JBColor.namedColor("Outline.disabledColor", Gray.xCF);
   }
 
   public static Color getArrowButtonBackgroundColor(boolean enabled, boolean editable) {
