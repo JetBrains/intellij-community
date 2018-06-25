@@ -496,4 +496,6 @@ public class SheetController implements Disposable {
     mySheetPanel.unregisterKeyboardAction(VK_ESC_KEYSTROKE);
     mySheetMessage = null;
   }
+
+  JButton getDefaultButton() { return myDefaultButton; }
 }
