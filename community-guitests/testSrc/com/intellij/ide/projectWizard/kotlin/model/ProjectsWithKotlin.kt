@@ -11,9 +11,6 @@ import com.intellij.testGuiFramework.util.*
 import com.intellij.testGuiFramework.util.scenarios.*
 import org.fest.swing.exception.ComponentLookupException
 import java.io.File
-import java.nio.file.Files
-import java.nio.file.Paths
-import java.nio.file.StandardCopyOption
 import org.hamcrest.core.Is.`is` as Matcher_Is
 
 /**

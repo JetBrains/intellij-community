@@ -13,7 +13,10 @@ class NewProjectDialogScenarios(val testCase: GuiTestCase) : TestUtilsClass(test
 
 val GuiTestCase.newProjectDialogScenarios by NewProjectDialogScenarios
 
-fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
+fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String,
+                                                        libs: LibrariesSet = emptySet(),
+                                                        template: String = "",
+                                                        basePackage: String = "") {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
@@ -21,7 +24,9 @@ fun NewProjectDialogScenarios.createJavaProjectScenario(projectPath: String, lib
   }
 }
 
-fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "") {
+fun NewProjectDialogScenarios.createJavaEnterpriseProjectScenario(projectPath: String,
+                                                                  libs: LibrariesSet = emptySet(),
+                                                                  template: String = "") {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
@@ -45,7 +50,9 @@ fun NewProjectDialogScenarios.createJBossProjectScenario(projectPath: String, li
  * @param libs - path to additional library/framework that should be checked
  * Note: only one library/framework can be checked!
  * */
-fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups, projectPath: String, libs: LibrariesSet = emptySet()) {
+fun NewProjectDialogScenarios.createProjectInGroupScenario(group: NewProjectDialogModel.Groups,
+                                                           projectPath: String,
+                                                           libs: LibrariesSet = emptySet()) {
   with(testCase) {
     assertProjectPathExists(projectPath)
     welcomePageDialogModel.createNewProject()
