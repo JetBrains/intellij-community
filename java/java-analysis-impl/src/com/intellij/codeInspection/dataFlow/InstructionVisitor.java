@@ -147,6 +147,11 @@ public abstract class InstructionVisitor {
     return nextInstruction(instruction, runner, state);
   }
 
+  public DfaInstructionState[] visitResultOf(ResultOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
+    pushExpressionResult(state.pop(), instruction, state);
+    return nextInstruction(instruction, runner, state);
+  }
+
   protected static DfaInstructionState[] nextInstruction(Instruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
   }

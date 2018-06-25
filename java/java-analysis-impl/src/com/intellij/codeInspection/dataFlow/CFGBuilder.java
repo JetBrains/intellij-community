@@ -208,6 +208,16 @@ public class CFGBuilder {
   }
 
   /**
+   * Generate instructions to bind top-of-stack value to the given expression. Stack remains unchanged.
+   *
+   * @param expression expression to bind top-of-stack value to
+   * @return this builder
+   */
+  public CFGBuilder resultOf(PsiExpression expression) {
+    return add(new ResultOfInstruction(expression));
+  }
+
+  /**
    * Generate instructions to perform an Class.isInstance operation
    * <p>
    * Stack before: ... object class_object

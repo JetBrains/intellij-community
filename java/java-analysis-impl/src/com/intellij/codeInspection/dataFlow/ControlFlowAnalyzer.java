@@ -1512,6 +1512,9 @@ public class ControlFlowAnalyzer extends JavaElementVisitor {
         addInstruction(new GotoInstruction(getEndOffset(operands[operands.length - 1])));
       }
     }
+    if (shortCircuit) {
+      addInstruction(new ResultOfInstruction(expression));
+    }
   }
 
   @Override public void visitClassObjectAccessExpression(PsiClassObjectAccessExpression expression) {

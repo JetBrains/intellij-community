@@ -243,6 +243,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   private static boolean shouldCollectBooleanResult(PsiExpression expression) {
+    if (expression instanceof PsiLiteralExpression) return false;
     PsiType type = expression.getType();
     if (type == null || !PsiType.BOOLEAN.isAssignableFrom(type)) return false;
     if (expression instanceof PsiPrefixExpression || expression instanceof PsiPolyadicExpression) {

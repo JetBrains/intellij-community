@@ -41,7 +41,7 @@ class S {
   }
   public void te5(boolean b){
     Boolean c = Boolean.TRUE;
-    boolean o = <warning descr="Condition 'b||c' is always 'true'">b||<warning descr="Condition 'c' is always 'true' when reached">c</warning></warning>;
+    boolean o = b||<warning descr="Condition 'c' is always 'true' when reached">c</warning>;
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }
   }

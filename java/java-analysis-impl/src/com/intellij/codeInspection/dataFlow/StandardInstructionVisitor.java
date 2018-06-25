@@ -101,7 +101,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
       checkNotNullable(memState, dfaSource, kind.problem(rValue));
     }
 
-    memState.push(dfaDest);
+    pushExpressionResult(dfaDest, instruction, memState);
     flushArrayOnUnknownAssignment(instruction, runner.getFactory(), dfaDest, memState);
 
     return nextInstruction(instruction, runner, memState);
