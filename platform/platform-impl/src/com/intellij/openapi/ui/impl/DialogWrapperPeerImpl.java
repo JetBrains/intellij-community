@@ -423,11 +423,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(true);
 
-    if (myTouchBarButtons != null) {
-      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myTouchBarButtons);
-      if (tb != null)
-        myDisposeActions.add(() -> Disposer.dispose(tb));
-    }
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myTouchBarButtons, myDialog.getContentPane());
+    if (tb != null)
+      myDisposeActions.add(() -> Disposer.dispose(tb));
 
     try {
       myDialog.show();
