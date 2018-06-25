@@ -87,7 +87,6 @@ abstract class BaseIdeaProperties extends ProductProperties {
         withModule("intellij.java.uast", JAVA_IMPL_JAR, JAVA_RESOURCES_JAR)
 
         withModule("intellij.java.rt", "idea_rt.jar", null)
-        withModule("intellij.tools.jetCheck", "jetCheck.jar")
         withArtifact("debugger-agent", "rt")
         withProjectLibrary("Eclipse")
         withProjectLibrary("jgoodies-common")

@@ -124,7 +124,6 @@
     <orderEntry type="module" module-name="intellij.java.debugger.streams" />
     <orderEntry type="library" scope="RUNTIME" name="jgoodies-common" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="commons-net" level="project" />
-    <orderEntry type="module" module-name="intellij.tools.jetCheck" scope="TEST" />
     <orderEntry type="module" module-name="intellij.devkit.java.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.testng.rt.tests" scope="TEST" />
   </component>
