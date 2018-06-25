@@ -9,7 +9,7 @@ import java.util.stream.Stream;
 public class Main {
   private static IntSummaryStatistics testOfArray() {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (Integer i: new Integer[] /*create array*/{1, 2, 3}) {
+      for (Integer i : new Integer[] /*create array*/{1, 2, 3}) {
           int i1 = i;
           stat.accept(i1);
       }
@@ -18,7 +18,7 @@ public class Main {
 
   private static IntSummaryStatistics testOfArrayAsElement() {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (Number[] nums: Arrays.<Number[]>asList(new Integer[]{1, 2, 3})) {
+      for (Number[] nums : Arrays.<Number[]>asList(new Integer[]{1, 2, 3})) {
           int num = (int) nums[0];
           stat.accept(num);
       }
@@ -27,7 +27,7 @@ public class Main {
 
   private static IntSummaryStatistics testOfSupplier() {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (Supplier<Integer> sup: Arrays.<Supplier<Integer>>asList(() -> 1, /*between*/ () /*supply 2*/ -> 2, () -> 3)) {
+      for (Supplier<Integer> sup : Arrays.<Supplier<Integer>>asList(() -> 1, /*between*/ () /*supply 2*/ -> 2, () -> 3)) {
           int i = sup.get();
           stat.accept(i);
       }
@@ -36,7 +36,7 @@ public class Main {
 
   private static IntSummaryStatistics testIntStreamOf() {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (int i: new int[]{1,/*two*/2,/*three*/3}) {
+      for (int i : new int[]{1,/*two*/2,/*three*/3}) {
           stat.accept(i);
       }
       return stat;
@@ -44,7 +44,7 @@ public class Main {
 
   private static IntSummaryStatistics testIntStreamOfArray() {
       IntSummaryStatistics stat = new IntSummaryStatistics();
-      for (int i: new int[]{1, 2, 3}) {
+      for (int i : new int[]{1, 2, 3}) {
           stat.accept(i);
       }
       return stat;

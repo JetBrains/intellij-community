@@ -4,7 +4,7 @@ import java.util.Map;
 
 class Foo {
     void foo(Map<File, Object> files, File file, Object filx) {
-        for (File file1: file.) {
+        for (File file1 : file.) {
             
         }
     }
