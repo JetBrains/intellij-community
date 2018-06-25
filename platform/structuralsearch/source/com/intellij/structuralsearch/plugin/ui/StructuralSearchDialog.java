@@ -49,6 +49,7 @@ import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
 import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
+import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -72,7 +73,7 @@ import java.util.Collections;
 import java.util.List;
 
 /**
- *  Class to show the user the request for search
+ * @author Bas Leijdekkers
  */
 public class StructuralSearchDialog extends DialogWrapper {
   static final Key<Boolean> STRUCTURAL_SEARCH = Key.create("STRUCTURAL_SEARCH_AREA");
@@ -308,7 +309,10 @@ public class StructuralSearchDialog extends DialogWrapper {
         break;
       }
     }
-    myScopePanel.setScope(matchOptions.getScope());
+    final SearchScope scope = matchOptions.getScope();
+    if (scope != null) {
+      myScopePanel.setScope(scope);
+    }
 
     final Document document = mySearchCriteriaEdit.getDocument();
     CommandProcessor.getInstance().executeCommand(mySearchContext.getProject(), () -> {
@@ -446,15 +450,24 @@ public class StructuralSearchDialog extends DialogWrapper {
     final DefaultActionGroup historyActionGroup = new DefaultActionGroup(new AnAction(getShowHistoryIcon()) {
       @Override
       public void actionPerformed(AnActionEvent e) {
-        final SelectTemplateDialog dialog = new SelectTemplateDialog(mySearchContext.getProject(), true, isReplaceDialog());
-        if (!dialog.showAndGet()) {
-          return;
-        }
-        final Configuration[] configurations = dialog.getSelectedConfigurations();
-        if (configurations.length == 1) {
-          setSearchPattern(configurations[0]);
-          initiateValidation();
-        }
+        final Object source = e.getInputEvent().getSource();
+        if (!(source instanceof Component)) return;
+        JBPopupFactory.getInstance()
+                      .createPopupChooserBuilder(ConfigurationManager.getInstance(getProject()).getHistoryConfigurations())
+                      .setRenderer(new ColoredListCellRenderer<Configuration>() {
+                        @Override
+                        protected void customizeCellRenderer(@NotNull JList<? extends Configuration> list,
+                                                             Configuration value,
+                                                             int index,
+                                                             boolean selected,
+                                                             boolean hasFocus) {
+                          append(StringUtil.shortenTextWithEllipsis(value.getName(), 100, 0, true));
+                        }
+                      })
+                      .setItemChosenCallback(c -> setSearchPattern(c))
+                      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+                      .createPopup()
+                      .showUnderneathOf((Component)source);
       }
     });
     final ActionToolbarImpl historyToolbar =
@@ -626,6 +639,7 @@ public class StructuralSearchDialog extends DialogWrapper {
 
         if (selectionModel.hasSelection()) {
           setText(selectionModel.getSelectedText());
+          myScopePanel.setScope(null);
           setSomeText = true;
         }
       }
