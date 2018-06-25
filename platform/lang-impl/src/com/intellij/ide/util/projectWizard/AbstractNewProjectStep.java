@@ -158,18 +158,9 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
       final Project projectToClose = frame != null ? frame.getProject() : null;
       final DirectoryProjectGenerator generator = settings.getProjectGenerator();
 
-      //backward compatibility
-      final Object projectSettings = getProjectSettings(generator);
-      Object actualSettings = projectSettings != null ? projectSettings : projectGeneratorPeer.getSettings();
+      Object actualSettings = projectGeneratorPeer.getSettings();
 
       doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
-    }
-
-    // use createLazyPeer and get settings from it instead
-    @Deprecated
-    @Nullable
-    protected Object getProjectSettings(@NotNull DirectoryProjectGenerator generator) {
-      return null;
     }
   }
 

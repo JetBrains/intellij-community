@@ -55,10 +55,6 @@ public class MockWolfTheProblemSolver extends WolfTheProblemSolver {
   }
 
   @Override
-  public void registerFileHighlightFilter(@NotNull Condition<VirtualFile> filter, @NotNull Disposable parentDisposable) {
-  }
-
-  @Override
   public void queue(VirtualFile suspiciousFile) {
     if (myDelegate != null) myDelegate.queue(suspiciousFile);
   }

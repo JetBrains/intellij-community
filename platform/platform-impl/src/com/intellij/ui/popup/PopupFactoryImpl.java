@@ -410,12 +410,6 @@ public class PopupFactoryImpl extends JBPopupFactory {
 
   @NotNull
   @Override
-  public ListPopup createWizardStep(@NotNull PopupStep step) {
-    return new ListPopupImpl((ListPopupStep)step);
-  }
-
-  @NotNull
-  @Override
   public ListPopup createListPopup(@NotNull ListPopupStep step) {
     return new ListPopupImpl(step);
   }

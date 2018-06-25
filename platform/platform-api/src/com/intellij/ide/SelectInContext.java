@@ -27,8 +27,6 @@ import org.jetbrains.annotations.Nullable;
 public interface SelectInContext {
   DataKey<SelectInContext> DATA_KEY = DataKey.create("SelectInContext");
 
-  @Deprecated String DATA_CONTEXT_ID = DATA_KEY.getName();
-
   @NotNull
   Project getProject();
 

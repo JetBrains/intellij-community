@@ -17,7 +17,6 @@
 package com.intellij.codeInsight.daemon;
 
 import com.intellij.psi.PsiElement;
-import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -33,11 +32,6 @@ public interface Validator<T extends PsiElement> {
       WARNING, ERROR, INFO
     }
 
-    /**
-     * @deprecated Use {@link #addMessage(PsiElement, String, ErrorType)} instead
-     */
-    @Deprecated
-    void addMessage(PsiElement context, String message, @MagicConstant(intValues = {INFO, WARNING, ERROR}) int type);
     void addMessage(PsiElement context, String message, @NotNull ErrorType type);
   }
 

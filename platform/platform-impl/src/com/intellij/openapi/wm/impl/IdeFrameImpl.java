@@ -476,7 +476,6 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, AccessibleContex
       }
       widgetIDs.clear();
 
-      //noinspection deprecation
       ((StatusBarEx)statusBar).removeCustomIndicationComponents();
     });
   }

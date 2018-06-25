@@ -47,6 +47,7 @@ import com.intellij.structuralsearch.*;
 import com.intellij.structuralsearch.impl.matcher.CompiledPattern;
 import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.plugin.StructuralSearchPlugin;
+import com.intellij.structuralsearch.plugin.ui.filters.FilterPanel;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.OnePixelSplitter;
 import com.intellij.ui.awt.RelativePoint;
@@ -61,7 +62,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.beans.PropertyChangeEvent;
@@ -78,11 +78,11 @@ public class StructuralSearchDialog extends DialogWrapper {
   public static final String USER_DEFINED = SSRBundle.message("new.template.defaultname");
 
   // search info
-  protected SearchContext mySearchContext;
+  protected final SearchContext mySearchContext;
   protected Configuration myConfiguration;
-  @NonNls private FileType myFileType = StructuralSearchUtil.getDefaultFileType();
-  private Language myDialect = null;
-  private String myContext = null;
+  @NonNls FileType myFileType = StructuralSearchUtil.getDefaultFileType();
+  Language myDialect = null;
+  String myContext = null;
 
   // ui management
   private final Alarm myAlarm;
@@ -91,15 +91,15 @@ public class StructuralSearchDialog extends DialogWrapper {
   private final boolean myRunFindActionOnClose;
   private boolean myDoingOkAction;
   private String mySavedEditorText;
-  private boolean myFilterButtonEnabled = false;
+  boolean myFilterButtonEnabled = false;
 
   // components
   private JCheckBox myRecursiveMatching;
   private JCheckBox myCaseSensitiveMatch;
-  private FileTypeSelector myFileTypesComboBox;
+  FileTypeSelector myFileTypesComboBox;
   protected EditorTextField mySearchCriteriaEdit;
-  private OnePixelSplitter myEditorPanel;
-      private FilterPanel myFilterPanel;
+  OnePixelSplitter myEditorPanel;
+  FilterPanel myFilterPanel;
   private LinkComboBox myTargetComboBox;
   private ScopePanel myScopePanel;
   private JCheckBox myOpenInNewTab;
@@ -156,7 +156,7 @@ public class StructuralSearchDialog extends DialogWrapper {
     final EditorTextField textField = new EditorTextField(document, searchContext.getProject(), myFileType) {
       @Override
       protected EditorEx createEditor() {
-        EditorEx editorEx = super.createEditor();
+        final EditorEx editorEx = super.createEditor();
         TextCompletionUtil.installCompletionHint(editorEx);
         editorEx.putUserData(STRUCTURAL_SEARCH, true);
         return editorEx;
@@ -208,6 +208,9 @@ public class StructuralSearchDialog extends DialogWrapper {
     try {
       final CompiledPattern compiledPattern = PatternCompiler.compilePattern(getProject(), myConfiguration.getMatchOptions(), false);
       myFilterPanel.setCompiledPattern(compiledPattern);
+      if (!myFilterPanel.isInitialized()) {
+        myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+      }
       return compiledPattern != null;
     } catch (MalformedPatternException e) {
       return false;
@@ -233,8 +236,7 @@ public class StructuralSearchDialog extends DialogWrapper {
           if (editor == null) return;
           TemplateEditorUtil.setHighlighter(editor, profile.getTemplateContextType());
           SubstitutionShortInfoHandler.install(editor, variableName ->
-            myFilterPanel.setFilters(myConfiguration.getMatchOptions().getVariableConstraint(variableName)));
-          //myFilterPanel.setFilters(UIUtil.getOrAddVariableConstraint(Configuration.CONTEXT_VAR_NAME, myConfiguration));
+            myFilterPanel.initFilters(UIUtil.getOrAddVariableConstraint(variableName, myConfiguration)));
           editor.putUserData(SubstitutionShortInfoHandler.CURRENT_CONFIGURATION_KEY, myConfiguration);
           final Project project = mySearchContext.getProject();
           final PsiFile file = PsiDocumentManager.getInstance(project).getPsiFile(mySearchCriteriaEdit.getDocument());
@@ -264,9 +266,9 @@ public class StructuralSearchDialog extends DialogWrapper {
 
       FileType detectedFileType = null;
 
-      StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
+      final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
       if (profile != null) {
-        FileType fileType = profile.detectFileType(context);
+        final FileType fileType = profile.detectFileType(context);
         if (fileType != null) {
           detectedFileType = fileType;
         }
@@ -304,7 +306,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
     myScopePanel.setScope(matchOptions.getScope());
-    myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
 
     final Document document = mySearchCriteriaEdit.getDocument();
     CommandProcessor.getInstance().executeCommand(mySearchContext.getProject(), () -> {
@@ -389,8 +390,13 @@ public class StructuralSearchDialog extends DialogWrapper {
     myEditorPanel.add(BorderLayout.CENTER, mySearchCriteriaEdit);
 
     myScopePanel = new ScopePanel(getProject());
-    myScopePanel.setEnabled(myShowScopePanel);
-    myScopePanel.setScopeCallback(s -> initiateValidation());
+    if (myShowScopePanel) {
+      myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
+      myScopePanel.setScopeCallback(s -> initiateValidation());
+    }
+    else {
+      myScopePanel.setEnabled(false);
+    }
 
     myFilterPanel =
       new FilterPanel(getProject(), StructuralSearchUtil.getProfileByFileType(myFileType), getDisposable());
@@ -496,7 +502,6 @@ public class StructuralSearchDialog extends DialogWrapper {
       new AnAction(SSRBundle.message("copy.existing.template.button")) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          System.out.println("StructuralSearchDialog.actionPerformed(" + e + ")");
           final SelectTemplateDialog dialog = new SelectTemplateDialog(mySearchContext.getProject(), false, isReplaceDialog());
           if (!dialog.showAndGet()) {
             return;
@@ -571,7 +576,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   @Override
   protected JPanel createSouthAdditionalPanel() {
     if (!myRunFindActionOnClose) return null;
-    JPanel panel = new JPanel(new BorderLayout());
+    final JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(BorderFactory.createEmptyBorder(0, 6, 0, 0));
     myOpenInNewTab = new JCheckBox(SSRBundle.message("open.in.new.tab.checkbox"));
     myOpenInNewTab.setSelected(FindSettings.getInstance().isShowResultsInSeparateView());
@@ -593,7 +598,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   protected static List<String> getVarsFrom(Editor searchCriteriaEdit) {
-    SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
+    final SubstitutionShortInfoHandler handler = SubstitutionShortInfoHandler.retrieve(searchCriteriaEdit);
     return (handler == null) ? new SmartList<>() : new ArrayList<>(handler.getVariables());
   }
 
@@ -649,11 +654,10 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     myAlarm.cancelAllRequests();
     removeUnusedVariableConstraints(myConfiguration);
-    super.doOKAction();
-    if (!myRunFindActionOnClose) return;
-
     final SearchScope scope = myScopePanel.getScope();
     if (scope == null) return;
+    super.doOKAction();
+    if (!myRunFindActionOnClose) return;
 
     if (scope instanceof GlobalSearchScopesCore.DirectoryScope) {
       final GlobalSearchScopesCore.DirectoryScope directoryScope = (GlobalSearchScopesCore.DirectoryScope)scope;
@@ -666,7 +670,6 @@ public class StructuralSearchDialog extends DialogWrapper {
 
     try {
       ConfigurationManager.getInstance(getProject()).addHistoryConfiguration(myConfiguration);
-
       startSearching();
     }
     catch (MalformedPatternException ex) {
@@ -704,7 +707,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       return false;
     }
     reportMessage(null, mySearchCriteriaEdit);
-    return true;
+    return myScopePanel.getScope() != null;
   }
 
   protected void reportMessage(String message, JComponent component) {
@@ -728,7 +731,7 @@ public class StructuralSearchDialog extends DialogWrapper {
   }
 
   protected void setValuesToConfig(Configuration config) {
-    MatchOptions options = config.getMatchOptions();
+    final MatchOptions options = config.getMatchOptions();
 
     if (myShowScopePanel) {
       final SearchScope scope = myScopePanel.getScope();

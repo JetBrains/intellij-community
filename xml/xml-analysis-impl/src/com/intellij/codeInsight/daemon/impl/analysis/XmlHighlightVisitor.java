@@ -543,11 +543,6 @@ public class XmlHighlightVisitor extends XmlElementVisitor implements HighlightV
   }
 
   @Override
-  public void addMessage(PsiElement context, String message, int type) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
   public void addMessage(PsiElement context, String message, @NotNull ErrorType type) {
     addMessageWithFixes(context, message, type);
   }

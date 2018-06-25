@@ -57,27 +57,22 @@ public class BaseAnalysisActionDialog extends DialogWrapper {
                                    final boolean rememberScope,
                                    @NotNull AnalysisUIOptions analysisUIOptions,
                                    @Nullable PsiElement context) {
-    this(title, analysisNoon, project, scope, moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null, rememberScope, analysisUIOptions, context);
+    this(title, analysisNoon, project, standardItems(project, scope,
+                                                                              moduleName != null ? ModuleManager.getInstance(project).findModuleByName(moduleName) : null,
+                                                                              context),
+         analysisUIOptions, rememberScope, ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
   }
 
-  /**
-   * @deprecated Use {@link BaseAnalysisActionDialog#BaseAnalysisActionDialog(String, String, Project, List, AnalysisUIOptions, boolean, boolean)} instead.
-   */
-  @Deprecated
-  public BaseAnalysisActionDialog(@NotNull String title,
-                                  @NotNull String analysisNoon,
-                                  @NotNull Project project,
-                                  @NotNull final AnalysisScope scope,
-                                  @Nullable Module module,
-                                  final boolean rememberScope,
-                                  @NotNull AnalysisUIOptions analysisUIOptions,
-                                  @Nullable PsiElement context) {
-    this(title, analysisNoon, project, Stream.of(new ProjectScopeItem(project),
-                                                 new CustomScopeItem(project, context),
-                                                 VcsScopeItem.createIfHasVCS(project),
-                                                 ModuleScopeItem.tryCreate(module),
-                                                 OtherScopeItem.tryCreate(scope)).filter(x -> x != null).collect(Collectors.toList()),
-         analysisUIOptions, rememberScope, ModuleUtil.isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
+  @NotNull
+  public static List<ModelScopeItem> standardItems(@NotNull Project project,
+                                                   @NotNull AnalysisScope scope,
+                                                   @Nullable Module module,
+                                                   @Nullable PsiElement context) {
+    return Stream.of(new ProjectScopeItem(project),
+                     new CustomScopeItem(project, context),
+                     VcsScopeItem.createIfHasVCS(project),
+                     ModuleScopeItem.tryCreate(module),
+                     OtherScopeItem.tryCreate(scope)).filter(x -> x != null).collect(Collectors.toList());
   }
 
   public BaseAnalysisActionDialog(@NotNull String title,

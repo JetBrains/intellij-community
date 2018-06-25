@@ -21,8 +21,7 @@ public interface ConfigurableGroup extends Configurable.Composite {
 
   String getDisplayName();
 
-  /** No one use it */
+  /** No one uses it */
   @Deprecated
-  String getShortName();
-
+  default String getShortName() { return null; }
 }

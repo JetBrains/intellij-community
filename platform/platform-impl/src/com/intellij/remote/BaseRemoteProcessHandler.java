@@ -100,11 +100,6 @@ public class BaseRemoteProcessHandler<T extends RemoteProcess> extends BaseProce
     super.startNotify();
   }
 
-  @Deprecated
-  protected void baseDestroyProcessImpl() {
-    super.destroyProcessImpl();
-  }
-
   @NotNull
   @Override
   public Future<?> executeTask(@NotNull Runnable task) {

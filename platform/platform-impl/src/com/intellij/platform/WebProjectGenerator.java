@@ -33,10 +33,6 @@ import javax.swing.*;
  */
 @Deprecated
 public abstract class WebProjectGenerator<T> extends DirectoryProjectGeneratorBase<T> {
-  @Nullable
-  public Integer getPreferredDescriptionWidth() {
-    return null;
-  }
 
   /**
    * Always returns {@link ValidationResult#OK}.

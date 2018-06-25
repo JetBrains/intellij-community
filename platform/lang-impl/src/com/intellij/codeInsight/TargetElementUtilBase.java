@@ -52,7 +52,7 @@ public abstract class TargetElementUtilBase {
   }
 
   public static int adjustOffset(Document document, final int offset) {
-    return TargetElementUtil.adjustOffset(document, offset);
+    return TargetElementUtil.adjustOffset(null, document, offset);
   }
 
   public static int adjustOffset(@Nullable PsiFile file, Document document, final int offset) {

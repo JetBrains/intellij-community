@@ -97,7 +97,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
   };
 
   /** @deprecated use {@link #getCurrentViewType()} (to be removed in IDEA 2018) */
-  @Deprecated @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   protected String myCurrentViewType;
 
   private final Map<String, HierarchyTreeBuilder> myType2BuilderMap;

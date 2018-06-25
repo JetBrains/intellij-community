@@ -12,19 +12,22 @@ import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileChooser.FileChooserFactory;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.Balloon;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.awt.RelativePoint;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.InputEvent;
-import java.awt.event.KeyEvent;
+import java.awt.event.*;
 import java.util.List;
 import java.util.function.BiConsumer;
 
@@ -32,17 +35,32 @@ import java.util.function.BiConsumer;
  * @author Bas Leijdekkers
  */
 public class DirectoryComboBoxWithButtons extends JPanel {
-  @NotNull private final ComboboxWithBrowseButton myDirectoryComboBox;
-  private boolean myRecursive = true;
-  private BiConsumer<VirtualFile, Boolean> myCallback;
+  @NotNull private final ComboboxWithBrowseButton myDirectoryComboBox = new ComboboxWithBrowseButton(new ComboBox<String>(200));
+  boolean myRecursive = true;
+  BiConsumer<VirtualFile, Boolean> myCallback;
 
-  @SuppressWarnings("WeakerAccess")
+  private final ActionListener myListener = e -> {
+    final VirtualFile directory = getDirectory();
+    final JComboBox comboBox = myDirectoryComboBox.getComboBox();
+    if (directory == null) {
+      comboBox.putClientProperty("JComponent.outline", "error");
+      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder("Not a directory", AllIcons.General.BalloonError,
+                                                                                        MessageType.ERROR.getPopupBackground(), null).createBalloon();
+      balloon.show(new RelativePoint(comboBox, new Point(comboBox.getWidth() / 2, 0)), Balloon.Position.above);
+    }
+    else {
+      comboBox.putClientProperty("JComponent.outline", null);
+    }
+    if (myCallback != null) {
+      myCallback.accept(directory, myRecursive);
+    }
+  };
+
   public DirectoryComboBoxWithButtons(@NotNull Project project) {
     super(new BorderLayout());
 
-    final ComboBox<Object> comboBox = new ComboBox<>(200);
-    myDirectoryComboBox = new ComboboxWithBrowseButton(comboBox);
-    myDirectoryComboBox.getComboBox().addItemListener(e -> myCallback.accept(getDirectory(), myRecursive));
+    @SuppressWarnings("unchecked") final ComboBox<String> comboBox = (ComboBox<String>)myDirectoryComboBox.getComboBox();
+    myDirectoryComboBox.getComboBox().addActionListener(myListener);
     comboBox.setEditable(true);
 
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
@@ -70,10 +88,12 @@ public class DirectoryComboBoxWithButtons extends JPanel {
 
   public void setRecentDirectories(@NotNull List<String> recentDirectories) {
     @SuppressWarnings("unchecked") final JComboBox<String> comboBox = myDirectoryComboBox.getComboBox();
+    comboBox.removeActionListener(myListener);
     comboBox.removeAllItems();
     for (int i = recentDirectories.size() - 1; i >= 0; i--) {
       comboBox.addItem(recentDirectories.get(i));
     }
+    comboBox.addActionListener(myListener);
   }
 
   public void setDirectory(@NotNull VirtualFile directory) {

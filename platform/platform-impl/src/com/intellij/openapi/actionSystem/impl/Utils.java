@@ -72,17 +72,6 @@ public class Utils{
     }
   }
 
-  @Deprecated
-  // Use #expandActionGroup with isModalContext instead
-  public static void expandActionGroup(@NotNull ActionGroup group,
-                                       List<AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       @NotNull DataContext context,
-                                       String place,
-                                       ActionManager actionManager){
-    expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
-  }
-
   /**
    * @param list this list contains expanded actions.
    * @param actionManager manager
@@ -97,56 +86,20 @@ public class Utils{
     expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, actionManager, false, group instanceof CompactActionGroup);
   }
 
-  @Deprecated
-  // Use #expandActionGroup with isModalContext instead
-  public static void expandActionGroup(@NotNull ActionGroup group,
-                                       List<AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       @NotNull String place,
-                                       ActionManager actionManager,
-                                       boolean transparentOnly) {
-    expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
-  }
-
-  public static void expandActionGroup(boolean isInModalContext,
-                                       @NotNull ActionGroup group,
-                                       List<AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       @NotNull String place,
-                                       ActionManager actionManager,
-                                       boolean transparentOnly) {
-    expandActionGroup(isInModalContext, group, list, presentationFactory, context, place, actionManager, transparentOnly, false);
-  }
-
-  @Deprecated
-  // Use #expandActionGroup with isModalContext instead
-  public static void expandActionGroup(@NotNull ActionGroup group,
-                                       List<AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       @NotNull String place,
-                                       ActionManager actionManager,
-                                       boolean transparentOnly,
-                                       boolean hideDisabled) {
-    expandActionGroup(false, group, list, presentationFactory, context, place, actionManager, transparentOnly, hideDisabled);
-  }
-
 
   /**
    * @param list this list contains expanded actions.
    * @param actionManager manager
    */
-  public static void expandActionGroup(boolean isInModalContext,
-                                       @NotNull ActionGroup group,
-                                       List<AnAction> list,
-                                       PresentationFactory presentationFactory,
-                                       DataContext context,
-                                       @NotNull String place,
-                                       ActionManager actionManager,
-                                       boolean transparentOnly,
-                                       boolean hideDisabled) {
+  private static void expandActionGroup(boolean isInModalContext,
+                                        @NotNull ActionGroup group,
+                                        List<AnAction> list,
+                                        PresentationFactory presentationFactory,
+                                        DataContext context,
+                                        @NotNull String place,
+                                        ActionManager actionManager,
+                                        boolean transparentOnly,
+                                        boolean hideDisabled) {
     expandActionGroup(isInModalContext , group, list, presentationFactory, context,
                       place, actionManager, transparentOnly, hideDisabled, false, false);
   }
@@ -238,12 +191,6 @@ public class Utils{
         list.add(child);
       }
     }
-  }
-
-  @Deprecated
-  // Use #doUpdate with isModalContext instead
-  private static boolean doUpdate(final AnAction action, final AnActionEvent e, final Presentation presentation) {
-    return doUpdate(false, action, e, presentation);
   }
 
   // returns false if exception was thrown and handled

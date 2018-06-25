@@ -79,7 +79,6 @@ public interface PlatformIcons {
   Icon CLASS_INITIALIZER = AllIcons.Nodes.ClassInitializer;
 
   Icon CLOSED_MODULE_GROUP_ICON = AllIcons.Nodes.ModuleGroup;
-  @Deprecated Icon OPENED_MODULE_GROUP_ICON = CLOSED_MODULE_GROUP_ICON;
 
   Icon FOLDER_ICON = AllIcons.Nodes.Folder;
   Icon SOURCE_FOLDERS_ICON = AllIcons.Nodes.SourceFolder;

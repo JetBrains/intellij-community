@@ -29,6 +29,7 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -49,6 +50,7 @@ import com.intellij.refactoring.extractMethod.InputVariables;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 
 import java.util.*;
 
@@ -81,9 +83,10 @@ public class MethodDuplicatesHandler implements RefactoringActionHandler, Contex
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
     final BaseAnalysisActionDialog dlg =
       new BaseAnalysisActionDialog(RefactoringBundle.message("replace.method.duplicates.scope.chooser.title", REFACTORING_NAME),
-                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"),
-                                   project, scope, module, false,
-                                   AnalysisUIOptions.getInstance(project), element);
+                                   RefactoringBundle.message("replace.method.duplicates.scope.chooser.message"), project, BaseAnalysisActionDialog.standardItems(
+        project, scope, module, element),
+                                   AnalysisUIOptions.getInstance(project), false, ModuleUtil
+                                     .isSupportedRootType(project, JavaSourceRootType.TEST_SOURCE));
     if (dlg.showAndGet()) {
       AnalysisScope selectedScope = dlg.getScope(AnalysisUIOptions.getInstance(project), scope, project, module);
       ProgressManager.getInstance().run(new Task.Backgroundable(project, "Locate duplicates", true) {
