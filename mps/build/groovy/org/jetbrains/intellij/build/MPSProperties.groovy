@@ -28,7 +28,7 @@ class MPSProperties extends ProductProperties {
                  "intellij.platform.externalSystem.impl"]
 
         productLayout.bundledPluginModules = [
-                "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.cvs",
+                "intellij.vcs.git", "intellij.platform.remoteServers.git", "intellij.java.remoteServers.git", "intellij.vcs.svn", "intellij.vcs.github", "intellij.vcs.cvs",
                 "intellij.terminal"
                 /*, "properties", "ant"*/
         ]
