@@ -143,7 +143,7 @@ public class UserDefinedJsonSchemaConfiguration {
           result.add((project, vfile) -> vfile.equals(getRelativeFile(project, patternText)) || vfile.getUrl().equals(patternText.getPath()));
           break;
         case Pattern:
-          String pathText = patternText.getPath().replace(File.separatorChar, '/');
+          String pathText = patternText.getPath().replace(File.separatorChar, '/').replace('\\', '/');
           final Pattern pattern = pathText.isEmpty()
                                   ? PatternUtil.NOTHING
                                   : pathText.indexOf('/') >= 0
@@ -244,7 +244,9 @@ public class UserDefinedJsonSchemaConfiguration {
     private static boolean preserveSlashes(String path) {
       // http/https URLs to schemas
       // mock URLs of fragments editor
-      return StringUtil.startsWith(path, "http") || StringUtil.startsWith(path, "mock");
+      return StringUtil.startsWith(path, "http:")
+             || StringUtil.startsWith(path, "https:")
+             || StringUtil.startsWith(path, "mock:");
     }
 
     @NotNull
