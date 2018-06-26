@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.devkit.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -25,9 +25,9 @@ public class ExtensionOrderKeywordCompletionContributor extends CompletionContri
   private static final LookupElementBuilder KEYWORD_VARIANT_FIRST = LookupElementBuilder.create(LoadingOrder.FIRST_STR);
   private static final LookupElementBuilder KEYWORD_VARIANT_LAST = LookupElementBuilder.create(LoadingOrder.LAST_STR);
   private static final LookupElementBuilder KEYWORD_VARIANT_BEFORE = LookupElementBuilder.create(LoadingOrder.BEFORE_STR.trim())
-    .withInsertHandler(new AddSpaceInsertHandler(true));
+    .withInsertHandler(AddSpaceInsertHandler.INSTANCE_WITH_AUTO_POPUP);
   private static final LookupElementBuilder KEYWORD_VARIANT_AFTER = LookupElementBuilder.create(LoadingOrder.AFTER_STR.trim())
-    .withInsertHandler(new AddSpaceInsertHandler(true));
+    .withInsertHandler(AddSpaceInsertHandler.INSTANCE_WITH_AUTO_POPUP);
 
   public ExtensionOrderKeywordCompletionContributor() {
     extend(CompletionType.BASIC, getCapture(), new CompletionProvider<CompletionParameters>() {
