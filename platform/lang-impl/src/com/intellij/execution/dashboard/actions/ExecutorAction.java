@@ -76,7 +76,24 @@ public abstract class ExecutorAction extends RunDashboardTreeLeafAction<RunDashb
            runner != null &&
            runner.canRun(executorId, configurationSettings.getConfiguration()) &&
            ExecutionTargetManager.canRun(configurationSettings, target) &&
-           !ExecutorRegistry.getInstance().isStarting(node.getProject(), executorId, runner.getRunnerId());
+           !isStarting(node.getProject(), configurationSettings, executorId, runner.getRunnerId());
+  }
+
+  private static boolean isStarting(Project project, RunnerAndConfigurationSettings configurationSettings, String executorId, String runnerId) {
+    ExecutorRegistry executorRegistry = ExecutorRegistry.getInstance();
+    if (executorRegistry.isStarting(project, executorId, runnerId)) return true;
+
+    if (!configurationSettings.isSingleton()) return false;
+
+    for (Executor executor : executorRegistry.getRegisteredExecutors()) {
+      if (executor.getId().equals(executorId)) continue;
+
+      ProgramRunner runner = ProgramRunnerUtil.getRunner(executor.getId(), configurationSettings);
+      if (runner == null) continue;
+
+      if (executorRegistry.isStarting(project, executor.getId(), runner.getRunnerId())) return true;
+    }
+    return false;
   }
 
   private boolean isValid(RunDashboardRunConfigurationNode node) {
