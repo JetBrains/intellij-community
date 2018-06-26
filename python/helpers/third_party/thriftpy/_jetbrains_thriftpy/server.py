@@ -5,8 +5,8 @@ from __future__ import absolute_import
 import logging
 import threading
 
-from thriftpy.protocol import TBinaryProtocolFactory
-from thriftpy.transport import (
+from _jetbrains_thriftpy.protocol import TBinaryProtocolFactory
+from _jetbrains_thriftpy.transport import (
     TBufferedTransportFactory,
     TTransportException
 )

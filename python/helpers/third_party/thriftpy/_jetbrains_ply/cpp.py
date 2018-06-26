@@ -881,7 +881,7 @@ class Preprocessor(object):
             return None
 
 if __name__ == '__main__':
-    import ply.lex as lex
+    import _jetbrains_ply.lex as lex
     lexer = lex.lex()
 
     # Run a preprocessor
