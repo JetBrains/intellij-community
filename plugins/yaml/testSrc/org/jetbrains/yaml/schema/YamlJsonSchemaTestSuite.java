@@ -13,6 +13,7 @@ public class YamlJsonSchemaTestSuite extends TestCase {
     suite.addTestSuite(YamlByJsonSchemaCompletionTest.class);
     suite.addTestSuite(YamlByJsonSchemaHeavyCompletionTest.class);
     suite.addTestSuite(YamlByJsonSchemaHighlightingTest.class);
+    suite.addTestSuite(YamlByJsonSchemaQuickFixTest.class);
     return suite;
   }
 }
