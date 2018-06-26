@@ -23,6 +23,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.AnnotationArgConverter;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Max Medvedev
@@ -44,6 +45,19 @@ public class GrLightAnnotation extends LightElement implements GrAnnotation {
 
     myAnnotationArgList = new GrLightAnnotationArgumentList(manager, language);
     myRef = new GrLightClassReferenceElement(qualifiedName, qualifiedName, this);
+  }
+
+  public GrLightAnnotation(@NotNull PsiAnnotationOwner owner,
+                           @NotNull PsiElement context,
+                           @NotNull String qualifiedName,
+                           @NotNull Map<String, String> params ) {
+    super(context.getManager(), context.getLanguage());
+    myQualifiedName = qualifiedName;
+    myOwner = owner;
+
+    myAnnotationArgList = new GrLightAnnotationArgumentList(context.getManager(), context.getLanguage());
+    myRef = new GrLightClassReferenceElement(qualifiedName, qualifiedName, this);
+    params.forEach((key, value) -> addAttribute(key, value));
   }
 
   @NotNull
