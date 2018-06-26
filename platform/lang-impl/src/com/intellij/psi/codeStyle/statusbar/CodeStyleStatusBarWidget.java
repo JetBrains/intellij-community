@@ -18,6 +18,8 @@ import com.intellij.psi.codeStyle.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.*;
+
 public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implements CodeStyleSettingsListener {
 
   public CodeStyleStatusBarWidget(@NotNull Project project) {
@@ -27,33 +29,40 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
   @NotNull
   @Override
   protected WidgetState getWidgetState(@Nullable VirtualFile file) {
+    if (file == null) return WidgetState.HIDDEN;
     PsiFile psiFile = getPsiFile();
     if (psiFile == null) return WidgetState.HIDDEN;
-    CodeStyleSettings.IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
-    CodeStyleSettings.IndentOptions projectIndentOptions = CodeStyle.getIndentOptionsByFileType(psiFile);
+    IndentOptions indentOptions = CodeStyle.getIndentOptions(psiFile);
+    IndentOptions projectIndentOptions = CodeStyle.getIndentOptionsByFileType(psiFile);
+    FileIndentOptionsProvider provider = findProvider(file, indentOptions);
     if (projectIndentOptions.equals(indentOptions)) {
-      return WidgetState.HIDDEN;
+      if (provider == null || !provider.areActionsAvailable(file, indentOptions)) {
+        return WidgetState.HIDDEN;
+      }
     }
-    return createWidgetState(indentOptions);
+    return createWidgetState(file, indentOptions, provider);
   }
 
-  private static WidgetState createWidgetState(@NotNull CommonCodeStyleSettings.IndentOptions indentOptions) {
-    String tooltip = "Current indent options: " + indentOptions.INDENT_SIZE;
-    StringBuilder messageBuilder = new StringBuilder();
-    boolean areActionsAvailable = false;
-    messageBuilder.append("Indent: ");
-    if (indentOptions.USE_TAB_CHARACTER) {
-      messageBuilder.append("Tab");
+  @Nullable
+  private static FileIndentOptionsProvider findProvider(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
+    FileIndentOptionsProvider optionsProvider = indentOptions.getFileIndentOptionsProvider();
+    if (optionsProvider != null) return optionsProvider;
+    for (FileIndentOptionsProvider provider : FileIndentOptionsProvider.EP_NAME.getExtensions()) {
+      if (provider.areActionsAvailable(file, indentOptions)) {
+        return provider;
+      }
     }
-    else {
-      messageBuilder.append(indentOptions.INDENT_SIZE);
-    }
-    String hint = indentOptions.getHint();
-    if (hint != null) {
-      messageBuilder.append(" (").append(hint).append(")");
-      areActionsAvailable = true;
-    }
-    return new MyWidgetState(tooltip, messageBuilder.toString(), areActionsAvailable, indentOptions.getFileIndentOptionsProvider());
+    return null;
+  }
+
+  private static WidgetState createWidgetState(@NotNull VirtualFile file,
+                                               @NotNull IndentOptions indentOptions,
+                                               @Nullable FileIndentOptionsProvider provider) {
+    String indentInfo = (provider != null
+                         ? provider.getTooltip(indentOptions)
+                         : FileIndentOptionsProvider.getDefaultTooltip(indentOptions));
+    String tooltip = "Current indent: " + indentInfo;
+    return new MyWidgetState(tooltip, indentInfo, file, indentOptions, provider);
   }
 
   @Nullable
@@ -77,7 +86,7 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
     if (state != WidgetState.HIDDEN && editor != null && psiFile != null) {
       FileIndentOptionsProvider provider = state.getProvider();
       if (provider != null) {
-        AnAction[] actions = provider.getActions(psiFile);
+        AnAction[] actions = provider.getActions(psiFile, state.getIndentOptions());
         if (actions != null) {
           ActionGroup actionGroup = new ActionGroup() {
             @NotNull
@@ -126,15 +135,25 @@ public class CodeStyleStatusBarWidget extends EditorBasedStatusBarPopup implemen
 
   private static class MyWidgetState extends WidgetState {
 
+    private final IndentOptions myIndentOptions;
     private final FileIndentOptionsProvider myProvider;
 
-    protected MyWidgetState(String toolTip, String text, boolean actionEnabled, @Nullable FileIndentOptionsProvider provider) {
-      super(toolTip, text, actionEnabled);
+    protected MyWidgetState(String toolTip,
+                            String text,
+                            @NotNull VirtualFile file,
+                            @NotNull IndentOptions indentOptions,
+                            @Nullable FileIndentOptionsProvider provider) {
+      super(toolTip, text, provider != null && provider.areActionsAvailable(file, indentOptions));
+      myIndentOptions = indentOptions;
       myProvider = provider;
     }
 
     public FileIndentOptionsProvider getProvider() {
       return myProvider;
+    }
+
+    public IndentOptions getIndentOptions() {
+      return myIndentOptions;
     }
   }
 

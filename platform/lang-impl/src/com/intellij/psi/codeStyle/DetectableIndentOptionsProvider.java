@@ -36,13 +36,12 @@ import com.intellij.psi.PsiFile;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.WeakList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ExecutorService;
 
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
@@ -59,7 +58,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     new NotificationGroup("Automatic indent detection", NotificationDisplayType.STICKY_BALLOON, true);
   
   private boolean myIsEnabledInTest;
-  private final Collection<VirtualFile> myDisabledFiles = new WeakList<>();
+  private final Map<VirtualFile,IndentOptions> myDiscardedOptions = ContainerUtil.createWeakMap();
 
   @Nullable
   @Override
@@ -117,7 +116,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       return myIsEnabledInTest;
     }
     VirtualFile vFile = file.getVirtualFile();
-    if (vFile == null || vFile instanceof LightVirtualFile || myDisabledFiles.contains(vFile)) return false;
+    if (vFile == null || vFile instanceof LightVirtualFile || myDiscardedOptions.containsKey(vFile)) return false;
     return LanguageFormatting.INSTANCE.forContext(file) != null && settings.AUTODETECT_INDENTS;
   }
 
@@ -129,32 +128,54 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
 
   @Nullable
   @Override
-  public AnAction[] getActions(@NotNull PsiFile file) {
+  public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
     List<AnAction> actions = ContainerUtil.newArrayList();
-    actions.add(
-      new AnAction("Discard detected for " + file.getVirtualFile().getName()) {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          disableForFile(file.getVirtualFile());
-          notifyIndentOptionsChanged(file.getProject(), file);
-        }
+    final VirtualFile virtualFile = file.getVirtualFile();
+    final Project project = file.getProject();
+    if (indentOptions instanceof TimeStampedIndentOptions) {
+      if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
+        actions.add(
+          new AnAction("Discard detected for " + virtualFile.getName()) {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              disableForFile(virtualFile, indentOptions);
+              notifyIndentOptionsChanged(project, file);
+            }
+          }
+        );
+        actions.add(
+          new AnAction("Disable detection in project") {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
+              notifyIndentOptionsChanged(project, null);
+              showDisabledDetectionNotification(project);
+            }
+          }
+        );
       }
-    );
-    actions.add(
-      new AnAction("Disable detection in project") {
-        @Override
-        public void actionPerformed(AnActionEvent e) {
-          CodeStyle.getSettings(file.getProject()).AUTODETECT_INDENTS = false;
-          notifyIndentOptionsChanged(file.getProject(), null);
-          showDisabledDetectionNotification(file.getProject());
-        }
+    }
+    else if (myDiscardedOptions.containsKey(virtualFile)) {
+      final IndentOptions discardedOptions = myDiscardedOptions.get(virtualFile);
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      if (document != null) {
+        actions.add(
+          new AnAction("with " + getTooltip(discardedOptions)) {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              myDiscardedOptions.remove(virtualFile);
+              discardedOptions.associateWithDocument(document);
+              notifyIndentOptionsChanged(project, file);
+            }
+          }
+        );
       }
-    );
+    }
     return ContainerUtil.toArray(actions, AnAction.EMPTY_ARRAY);
   }
 
-  private void disableForFile(@NotNull VirtualFile file) {
-    myDisabledFiles.add(file);
+  private void disableForFile(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
+    myDiscardedOptions.put(file, indentOptions);
   }
 
   public TimeStampedIndentOptions getValidCachedIndentOptions(PsiFile file, Document document) {
@@ -219,4 +240,19 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     }
   }
 
+  @Override
+  public String getTooltip(@NotNull IndentOptions indentOptions) {
+    String tooltip = super.getTooltip(indentOptions);
+    if (indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected()) {
+      tooltip += " (detected)";
+    }
+    return tooltip;
+  }
+
+  @Override
+  public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
+    return
+      indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected() ||
+      myDiscardedOptions.containsKey(file);
+  }
 }

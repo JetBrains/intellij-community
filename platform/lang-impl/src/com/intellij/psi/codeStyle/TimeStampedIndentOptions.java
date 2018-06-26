@@ -18,7 +18,6 @@ package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.editor.Document;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 
 public class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOptions {
@@ -49,9 +48,7 @@ public class TimeStampedIndentOptions extends CommonCodeStyleSettings.IndentOpti
            || defaultForFile.hashCode() != myOriginalIndentOptionsHash;
   }
 
-  @Nullable
-  @Override
-  public String getHint() {
-    return myDetected ? "detected" : null;
+  public boolean isDetected() {
+    return myDetected;
   }
 }
