@@ -619,4 +619,8 @@
   <action id="GotoPrevElementUnderCaretUsage">
     <keyboard-shortcut first-keystroke="ctrl alt UP"/>
   </action>
+
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="alt shift F5"/>
+  </action>
 </keymap>
