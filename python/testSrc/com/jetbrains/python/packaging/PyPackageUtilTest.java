@@ -114,12 +114,7 @@ public class PyPackageUtilTest extends PyTestCase {
       assertNotNull(setupPy);
 
       if (hasCall) {
-        final PyCallExpression callByModule = PyPackageUtil.findSetupCall(module);
-        final PyCallExpression callByFile = PyPackageUtil.findSetupCall(setupPy);
-
-        assertNotNull(callByModule);
-        assertNotNull(callByFile);
-        assertSame(callByFile, callByModule);
+        assertNotNull(PyPackageUtil.findSetupCall(module));
 
         if (requires) {
           checkRequirements(PyPackageUtil.findSetupPyRequires(module));
@@ -132,7 +127,6 @@ public class PyPackageUtilTest extends PyTestCase {
       }
       else {
         assertNull(PyPackageUtil.findSetupCall(module));
-        assertNull(PyPackageUtil.findSetupCall(setupPy));
         assertNull(PyPackageUtil.findSetupPyRequires(module));
       }
     }
