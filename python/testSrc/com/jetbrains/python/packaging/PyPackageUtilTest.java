@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.packaging;
 
+import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.module.Module;
 import com.jetbrains.python.fixtures.PyTestCase;
@@ -25,7 +26,10 @@ import com.jetbrains.python.psi.PyFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 public class PyPackageUtilTest extends PyTestCase {
 
@@ -37,19 +41,23 @@ public class PyPackageUtilTest extends PyTestCase {
   }
 
   public void testAbsentSetupPyReading() {
-    doTestSetupPyReading(false, false, false);
+    doTestSetupPyReading(false, false, false, false);
   }
 
   public void testAbsentSetupCallReading() {
-    doTestSetupPyReading(true, false, false);
+    doTestSetupPyReading(true, false, false, false);
   }
 
   public void testAbsentSetupPyRequiresReading() {
-    doTestSetupPyReading(true, true, false);
+    doTestSetupPyReading(true, true, false, false);
   }
 
   public void testSetupPyReading() {
-    doTestSetupPyReading(true, true, true);
+    doTestSetupPyReading(true, true, true, false);
+  }
+
+  public void testSetupPyExtrasReading() {
+    doTestSetupPyReading(true, true, true, true);
   }
 
   // PY-18966
@@ -104,7 +112,7 @@ public class PyPackageUtilTest extends PyTestCase {
     checkRequirements(PyPackageUtil.getRequirementsFromTxt(module));
   }
 
-  private void doTestSetupPyReading(boolean hasFile, boolean hasCall, boolean requires) {
+  private void doTestSetupPyReading(boolean hasFile, boolean hasCall, boolean requires, boolean extrasRequire) {
     final Module module = myFixture.getModule();
 
     if (hasFile) {
@@ -123,6 +131,21 @@ public class PyPackageUtilTest extends PyTestCase {
           final List<PyRequirement> requirements = PyPackageUtil.findSetupPyRequires(module);
           assertNotNull(requirements);
           assertEmpty(requirements);
+        }
+
+        if (extrasRequire) {
+          final Map<String, List<PyRequirement>> extrasRequirements = PyPackageUtil.findSetupPyExtrasRequire(module);
+
+          final ImmutableMap<String, List<PyRequirement>> expected = ImmutableMap.of(
+            "e1", Collections.singletonList(PyRequirementsKt.pyRequirement("r1")),
+            "e2", Collections.singletonList(PyRequirementsKt.pyRequirement("r2")),
+            "e3", Arrays.asList(PyRequirementsKt.pyRequirement("r3"), PyRequirementsKt.pyRequirement("r4"))
+          );
+
+          assertEquals(expected, extrasRequirements);
+        }
+        else {
+          assertNull(PyPackageUtil.findSetupPyExtrasRequire(module));
         }
       }
       else {

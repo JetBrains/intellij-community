@@ -42,6 +42,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -171,21 +172,11 @@ public class PyPackageUtil {
   @Nullable
   private static Pair<String, List<PyRequirement>> getExtraRequires(@NotNull PyExpression extra, @Nullable PyExpression requires) {
     if (extra instanceof PyStringLiteralExpression) {
-      final String requiresValue;
-
-      if (requires instanceof PyStringLiteralExpression) {
-        requiresValue = ((PyStringLiteralExpression)requires).getStringValue();
-      }
-      else if (requires instanceof PyListLiteralExpression) {
-        final List<String> requiresListValue = PyUtil.strListValue(requires);
-        requiresValue = requiresListValue != null ? StringUtil.join(requiresListValue, "\n") : null;
-      }
-      else {
-        requiresValue = null;
-      }
+      final List<String> requiresValue = resolveRequiresValue(requires);
 
       if (requiresValue != null) {
-        return Pair.createNonNull(((PyStringLiteralExpression)extra).getStringValue(), PyRequirementParser.fromText(requiresValue));
+        return Pair.createNonNull(((PyStringLiteralExpression)extra).getStringValue(),
+                                  PyRequirementParser.fromText(StringUtil.join(requiresValue, "\n")));
       }
     }
 
@@ -199,11 +190,7 @@ public class PyPackageUtil {
       StreamEx
         .of(argumentNames)
         .map(setupCall::getKeywordArgument)
-        .map(requires -> resolveValue(requires, PyListLiteralExpression.class))
-        .nonNull()
-        .flatMap(requires -> Stream.of(requires.getElements()))
-        .select(PyStringLiteralExpression.class)
-        .map(StringLiteralExpression::getStringValue)
+        .flatCollection(PyPackageUtil::resolveRequiresValue)
         .joining("\n")
     );
   }
@@ -239,6 +226,32 @@ public class PyPackageUtil {
         return cls.cast(element);
       }
     }
+    return null;
+  }
+
+  @Nullable
+  private static List<String> resolveRequiresValue(@Nullable PyExpression expression) {
+    PsiElement elementToAnalyze = PyPsiUtils.flattenParens(expression);
+
+    if (elementToAnalyze instanceof PyReferenceExpression) {
+      final TypeEvalContext context = TypeEvalContext.deepCodeInsight(elementToAnalyze.getProject());
+      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+      final QualifiedResolveResult result = ((PyReferenceExpression)elementToAnalyze).followAssignmentsChain(resolveContext);
+      elementToAnalyze = result.getElement();
+    }
+
+    if (elementToAnalyze instanceof PyStringLiteralExpression) {
+      return Collections.singletonList(((PyStringLiteralExpression)elementToAnalyze).getStringValue());
+    }
+    else if (elementToAnalyze instanceof PyListLiteralExpression || elementToAnalyze instanceof PyTupleExpression) {
+      return StreamEx
+        .of(((PySequenceExpression)elementToAnalyze).getElements())
+        .map(e -> resolveValue(e, PyStringLiteralExpression.class))
+        .select(PyStringLiteralExpression.class)
+        .map(PyStringLiteralExpression::getStringValue)
+        .toList();
+    }
+
     return null;
   }
 
