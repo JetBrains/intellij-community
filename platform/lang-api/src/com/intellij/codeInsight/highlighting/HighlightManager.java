@@ -137,7 +137,7 @@ public abstract class HighlightManager {
    * @param flags            the flags specifying when the highlighting is removed (a combination of
    *                         {@link #HIDE_BY_ESCAPE}, {@link #HIDE_BY_ANY_KEY} and {@link #HIDE_BY_TEXT_CHANGE}).
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} object is added to this collection.
-   * @param scrollmarkColor  if not null, a gutter mark with the specified color is added in addition to the editor highlight.
+   * @param scrollMarkColor  if not null, a gutter mark with the specified color is added in addition to the editor highlight.
    */
   public abstract void addOccurrenceHighlight(@NotNull Editor editor,
                                               int start,
@@ -145,5 +145,5 @@ public abstract class HighlightManager {
                                               TextAttributes attributes,
                                               @HideFlags int flags,
                                               @Nullable Collection<RangeHighlighter> outHighlighters,
-                                              @Nullable Color scrollmarkColor);
+                                              @Nullable Color scrollMarkColor);
 }

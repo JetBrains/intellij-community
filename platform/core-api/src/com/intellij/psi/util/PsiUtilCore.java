@@ -374,7 +374,7 @@ public class PsiUtilCore {
     return file;
   }
 
-  public static int compareElementsByPosition(final PsiElement element1, final PsiElement element2) {
+  public static int compareElementsByPosition(@Nullable PsiElement element1, @Nullable PsiElement element2) {
     if (element1 != null && element2 != null) {
       final PsiFile psiFile1 = element1.getContainingFile();
       final PsiFile psiFile2 = element2.getContainingFile();
@@ -406,10 +406,7 @@ public class PsiUtilCore {
     if (elt == null && offset > 0) {
       elt = file.findElementAt(offset - 1);
     }
-    if (elt == null) {
-      return file;
-    }
-    return elt;
+    return elt == null ? file : elt;
   }
 
   public static PsiFile getTemplateLanguageFile(@Nullable PsiElement element) {
@@ -533,7 +530,7 @@ public class PsiUtilCore {
    */
   @Deprecated
   @Nullable
-  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, final Class<? extends T> elementClass) {
+  public static <T extends PsiElement> T getOriginalElement(@NotNull T psiElement, @NotNull Class<? extends T> elementClass) {
     final PsiFile psiFile = psiElement.getContainingFile();
     final PsiFile originalFile = psiFile.getOriginalFile();
     if (originalFile == psiFile) return psiElement;
@@ -550,7 +547,7 @@ public class PsiUtilCore {
   }
 
   @NotNull
-  public static Language findLanguageFromElement(final PsiElement elt) {
+  public static Language findLanguageFromElement(@NotNull PsiElement elt) {
     if (!(elt instanceof PsiFile) && elt.getFirstChild() == null) { //is leaf
       final PsiElement parent = elt.getParent();
       if (parent != null) {
@@ -578,6 +575,7 @@ public class PsiUtilCore {
     return findLanguageFromElement(elt);
   }
 
+  @NotNull
   public static Project getProjectInReadAction(@NotNull final PsiElement element) {
     return ReadAction.compute(() -> element.getProject());
   }
