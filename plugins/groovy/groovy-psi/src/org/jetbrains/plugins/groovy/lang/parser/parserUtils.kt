@@ -403,3 +403,7 @@ fun newLine(builder: PsiBuilder, level: Int): Boolean {
 }
 
 fun noNewLine(builder: PsiBuilder, level: Int): Boolean = !newLine(builder, level)
+
+fun noParenthesized(builder: PsiBuilder, level: Int): Boolean {
+  return builder.latestDoneMarker?.tokenType != PARENTHESIZED_EXPRESSION
+}
