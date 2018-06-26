@@ -61,8 +61,8 @@ public class DelombokEverythingAction extends BaseDelombokAction {
 
     return new BaseDelombokHandler(true,
       requiredArgsConstructorProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor,
-      new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor),
-      getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor),
+      new DataProcessor(getterProcessor, setterProcessor, equalsAndHashCodeProcessor, toStringProcessor, requiredArgsConstructorProcessor, noArgsConstructorProcessor),
+      getterProcessor, new ValueProcessor(getterProcessor, equalsAndHashCodeProcessor, toStringProcessor, allArgsConstructorProcessor, noArgsConstructorProcessor),
       new WitherProcessor(new WitherFieldProcessor(requiredArgsConstructorProcessor)),
       setterProcessor, equalsAndHashCodeProcessor, toStringProcessor,
       new CommonsLogProcessor(), new JBossLogProcessor(), new Log4jProcessor(), new Log4j2Processor(), new LogProcessor(), new Slf4jProcessor(), new XSlf4jProcessor(), new FloggerProcessor(),

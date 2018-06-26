@@ -10,6 +10,7 @@ import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.AllArgsConstructorProcessor;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
 import de.plushnikov.intellij.plugin.util.PsiClassUtil;
@@ -34,16 +35,18 @@ public class ValueProcessor extends AbstractClassProcessor {
   private final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor;
   private final ToStringProcessor toStringProcessor;
   private final AllArgsConstructorProcessor allArgsConstructorProcessor;
+  private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
   @SuppressWarnings({"deprecation", "unchecked"})
   public ValueProcessor(GetterProcessor getterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
-                        ToStringProcessor toStringProcessor, AllArgsConstructorProcessor allArgsConstructorProcessor) {
+                        ToStringProcessor toStringProcessor, AllArgsConstructorProcessor allArgsConstructorProcessor, NoArgsConstructorProcessor noArgsConstructorProcessor) {
     super(PsiMethod.class, Value.class, lombok.experimental.Value.class);
 
     this.getterProcessor = getterProcessor;
     this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
     this.toStringProcessor = toStringProcessor;
     this.allArgsConstructorProcessor = allArgsConstructorProcessor;
+    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }
 
   @Override
@@ -92,7 +95,13 @@ public class ValueProcessor extends AbstractClassProcessor {
         }
       }
     }
+
+    if (shouldGenerateNoArgsConstructor(psiClass, allArgsConstructorProcessor)) {
+      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation));
+    }
   }
+
+
 
   @Override
   public LombokPsiElementUsage checkFieldUsage(@NotNull PsiField psiField, @NotNull PsiAnnotation psiAnnotation) {

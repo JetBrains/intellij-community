@@ -197,6 +197,11 @@ public abstract class AbstractConstructorClassProcessor extends AbstractClassPro
   }
 
   @NotNull
+  public Collection<PsiField> getAllFields(@NotNull PsiClass psiClass) {
+    return getAllNotInitializedAndNotStaticFields(psiClass);
+  }
+
+  @NotNull
   @SuppressWarnings("deprecation")
   public Collection<PsiField> getRequiredFields(@NotNull PsiClass psiClass) {
     Collection<PsiField> result = new ArrayList<PsiField>();

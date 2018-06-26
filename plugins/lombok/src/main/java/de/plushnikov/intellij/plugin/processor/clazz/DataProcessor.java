@@ -9,6 +9,7 @@ import com.intellij.psi.PsiModifier;
 import de.plushnikov.intellij.plugin.problem.ProblemBuilder;
 import de.plushnikov.intellij.plugin.problem.ProblemEmptyBuilder;
 import de.plushnikov.intellij.plugin.processor.LombokPsiElementUsage;
+import de.plushnikov.intellij.plugin.processor.clazz.constructor.NoArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.processor.clazz.constructor.RequiredArgsConstructorProcessor;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationSearchUtil;
 import de.plushnikov.intellij.plugin.util.PsiAnnotationUtil;
@@ -38,15 +39,17 @@ public class DataProcessor extends AbstractClassProcessor {
   private final EqualsAndHashCodeProcessor equalsAndHashCodeProcessor;
   private final ToStringProcessor toStringProcessor;
   private final RequiredArgsConstructorProcessor requiredArgsConstructorProcessor;
+  private final NoArgsConstructorProcessor noArgsConstructorProcessor;
 
   public DataProcessor(GetterProcessor getterProcessor, SetterProcessor setterProcessor, EqualsAndHashCodeProcessor equalsAndHashCodeProcessor,
-                       ToStringProcessor toStringProcessor, RequiredArgsConstructorProcessor requiredArgsConstructorProcessor) {
+                       ToStringProcessor toStringProcessor, RequiredArgsConstructorProcessor requiredArgsConstructorProcessor, NoArgsConstructorProcessor noArgsConstructorProcessor) {
     super(PsiMethod.class, Data.class);
     this.getterProcessor = getterProcessor;
     this.setterProcessor = setterProcessor;
     this.equalsAndHashCodeProcessor = equalsAndHashCodeProcessor;
     this.toStringProcessor = toStringProcessor;
     this.requiredArgsConstructorProcessor = requiredArgsConstructorProcessor;
+    this.noArgsConstructorProcessor = noArgsConstructorProcessor;
   }
 
   @Override
@@ -90,6 +93,10 @@ public class DataProcessor extends AbstractClassProcessor {
     final String staticName = PsiAnnotationUtil.getStringAnnotationValue(psiAnnotation, "staticConstructor");
     if (shouldGenerateRequiredArgsConstructor(psiClass, staticName)) {
       target.addAll(requiredArgsConstructorProcessor.createRequiredArgsConstructor(psiClass, PsiModifier.PUBLIC, psiAnnotation, staticName));
+    }
+
+    if (shouldGenerateNoArgsConstructor(psiClass, requiredArgsConstructorProcessor)) {
+      target.addAll(noArgsConstructorProcessor.createNoArgsConstructor(psiClass, PsiModifier.PRIVATE, psiAnnotation));
     }
   }
 
