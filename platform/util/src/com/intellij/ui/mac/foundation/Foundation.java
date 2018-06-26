@@ -403,12 +403,8 @@ public class Foundation {
     }
 
     public byte[] bytes() {
-      byte[] result = new byte[length()];
       Pointer data = new Pointer(invoke(myDelegate, "bytes").longValue());
-      for (int i = 0; i < result.length; ++i) {
-        result[i] = data.getByte(i);
-      }
-      return result;
+      return data.getByteArray(0, length());
     }
   }
 
