@@ -6,7 +6,7 @@ import java.util.Arrays;
 class X {
 
   void x(File[] files) {
-      for (File s: files) {
+      for (File s : files) {
           File dest = new File(s.getAbsolutePath());
           System.out.println("unable to rename " + s + " to " + dest); //comment
       }
