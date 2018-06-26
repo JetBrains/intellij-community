@@ -112,6 +112,9 @@ class MPSProperties extends ProductProperties {
         // copy jre version
         context.ant.copy(file: "$context.paths.communityHome/build/dependencies/gradle.properties",
                 todir: "$targetDirectory/build/dependencies/")
+
+        //for compatibility with users projects which refer to IDEA_HOME/lib/annotations.jar
+        context.ant.move(file: "$targetDirectory/lib/annotations-java5.jar", tofile: "$targetDirectory/lib/annotations.jar")
     }
 
     @Override
