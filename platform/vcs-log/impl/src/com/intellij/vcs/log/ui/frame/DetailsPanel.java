@@ -76,6 +76,7 @@ import static com.intellij.vcs.log.ui.frame.CommitPresentationUtil.buildPresenta
 public class DetailsPanel extends JPanel implements EditorColorsListener, Disposable {
   private static final int MAX_ROWS = 50;
   private static final int MIN_SIZE = 20;
+  private static final String EMPTY_TEXT = "Select commits to view details";
 
   @NotNull private final VcsLogData myLogData;
 
@@ -98,7 +99,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
 
     myScrollPane = new JBScrollPane(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
     myMainContentPanel = new MyMainContentPanel();
-    myEmptyText = new StatusText(myMainContentPanel) {
+    myEmptyText = new StatusText(this) {
       @Override
       protected boolean isStatusVisible() {
         return StringUtil.isNotEmpty(getText());
@@ -132,8 +133,18 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       }
     }, this);
 
-    myEmptyText.setText("Commit details");
+    myEmptyText.setText(EMPTY_TEXT);
     Disposer.register(parent, this);
+  }
+
+  @Override
+  protected void paintChildren(Graphics g) {
+    if (StringUtil.isNotEmpty(myEmptyText.getText())) {
+      myEmptyText.paint(this, g);
+    }
+    else {
+      super.paintChildren(g);
+    }
   }
 
   @Override
@@ -168,7 +179,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
   }
 
   private void rebuildCommitPanels(int[] selection) {
-    myEmptyText.setText("");
+    myEmptyText.setText(selection.length == 0 ? EMPTY_TEXT : "");
 
     int selectionLength = selection.length;
 
@@ -210,9 +221,9 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
 
         Set<String> fullHashes =
           ContainerUtil.newHashSet(ContainerUtil.filter(unResolvedHashes, h -> h.length() == HashImpl.FULL_HASH_LENGTH));
-        for (String fullHash : fullHashes) {
+        for (String fullHash: fullHashes) {
           Hash hash = HashImpl.build(fullHash);
-          for (VirtualFile root : myLogData.getRoots()) {
+          for (VirtualFile root: myLogData.getRoots()) {
             CommitId id = new CommitId(hash, root);
             if (myLogData.getStorage().containsCommit(id)) {
               resolvedHashes.putValue(fullHash, id);
@@ -224,7 +235,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
         if (!unResolvedHashes.isEmpty()) {
           myLogData.getStorage().iterateCommits(commitId -> {
 
-            for (String hashString : unResolvedHashes) {
+            for (String hashString: unResolvedHashes) {
               if (StringUtil.startsWithIgnoreCase(commitId.getHash().asString(), hashString)) {
                 resolvedHashes.putValue(hashString, commitId);
               }
@@ -309,7 +320,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
       List<Integer> currentSelection = mySelection;
       ApplicationManager.getApplication().executeOnPooledThread(() -> {
         List<Collection<VcsRef>> result = ContainerUtil.newArrayList();
-        for (Integer row : currentSelection) {
+        for (Integer row: currentSelection) {
           result.add(myGraphTable.getModel().getRefsAtRow(row));
         }
         ApplicationManager.getApplication().invokeLater(() -> {
@@ -326,7 +337,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     @Override
     protected void onEmptySelection() {
       cancelResolve();
-      setEmpty("No commits selected");
+      setEmpty(EMPTY_TEXT);
     }
 
     @NotNull
@@ -358,7 +369,7 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     }
   }
 
-  private class MyMainContentPanel extends ScrollablePanel {
+  private static class MyMainContentPanel extends ScrollablePanel {
     @Override
     public Insets getInsets() {
       // to fight ViewBorder
@@ -368,16 +379,6 @@ public class DetailsPanel extends JPanel implements EditorColorsListener, Dispos
     @Override
     public Color getBackground() {
       return CommitPanel.getCommitDetailsBackground();
-    }
-
-    @Override
-    protected void paintChildren(Graphics g) {
-      if (StringUtil.isNotEmpty(myEmptyText.getText())) {
-        myEmptyText.paint(this, g);
-      }
-      else {
-        super.paintChildren(g);
-      }
     }
   }
 }
