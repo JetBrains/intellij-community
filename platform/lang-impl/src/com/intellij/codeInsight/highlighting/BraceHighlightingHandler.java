@@ -336,13 +336,7 @@ public class BraceHighlightingHandler {
       return;
     }
 
-    final int _offset = offset;
-    final FileType _fileType = fileType;
-    myAlarm.addRequest(() -> {
-      if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-        highlightScope(_offset, _fileType);
-      }
-    }, 300);
+    highlightScope(offset, fileType);
   }
 
   @NotNull
@@ -461,17 +455,7 @@ public class BraceHighlightingHandler {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
       final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
       if (endLine - startLine > 0) {
-        final Runnable runnable = () -> {
-          if (myProject.isDisposed() || myEditor.isDisposed()) return;
-          lineMarkFragment(startLine, endLine, matched);
-        };
-
-        if (!scopeHighlighting) {
-          myAlarm.addRequest(runnable, 300);
-        }
-        else {
-          runnable.run();
-        }
+        lineMarkFragment(startLine, endLine, matched);
       }
       else {
         removeLineMarkers();
