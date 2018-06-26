@@ -13,4 +13,5 @@ setup(name='foo',
       tests_require=tests_require,
       setup_requires=(
           'numpy',
-      ))
+      ),
+      extras_require={"e1": "r1", "e2": ("r2",), "e3": ["r3", "r4"]})
