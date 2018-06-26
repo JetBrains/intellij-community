@@ -50,6 +50,7 @@ import java.awt.KeyboardFocusManager
 import java.io.File
 import java.util.*
 import java.util.concurrent.TimeUnit
+import javax.swing.JButton
 
 class GuiTestRule : TestRule {
 
@@ -196,7 +197,10 @@ class GuiTestRule : TestRule {
           else {
             closedModalDialogSet.add(modalDialog)
             ScreenshotOnFailure.takeScreenshot("$myTestName.checkForModalDialogFail")
-            robot().close(modalDialog)
+            if (isProcessIsRunningDialog(modalDialog))
+              closeProcessIsRunningDialog(modalDialog)
+            else
+              robot().close(modalDialog)
             errors.add(AssertionError("Modal dialog showing: ${modalDialog.javaClass.name} with title '${modalDialog.title}'"))
           }
           return@waitUntil false
@@ -206,6 +210,17 @@ class GuiTestRule : TestRule {
         errors.add(AssertionError("Modal dialogs closing exceeded timeout: ${timeoutError.message}"))
       }
       return errors
+    }
+
+    private fun isProcessIsRunningDialog(modalDialog: Dialog): Boolean {
+      return modalDialog.title.toLowerCase().contains("process")
+             && modalDialog.title.toLowerCase().contains("is running")
+    }
+
+    private fun closeProcessIsRunningDialog(modalDialog: Dialog) {
+      val terminateButton: JButton = robot().finder().find(modalDialog) { it is JButton && it.text == "Terminate" } as JButton
+      robot().click(terminateButton)
+      robot().waitForIdle()
     }
 
     // Note: this works with a cooperating window manager that returns focus properly. It does not work on bare Xvfb.
