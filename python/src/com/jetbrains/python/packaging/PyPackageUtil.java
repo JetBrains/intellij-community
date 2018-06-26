@@ -126,15 +126,14 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  private static PyListLiteralExpression findSetupPyInstallRequires(@Nullable PyCallExpression setupCall) {
+  private static PsiElement findSetupPyInstallRequires(@Nullable PyCallExpression setupCall) {
     if (setupCall == null) return null;
 
     return StreamEx
       .of(REQUIRES, INSTALL_REQUIRES)
       .map(setupCall::getKeywordArgument)
       .map(PyPackageUtil::resolveValue)
-      .select(PyListLiteralExpression.class)
-      .findFirst()
+      .findFirst(Objects::nonNull)
       .orElse(null);
   }
 
@@ -435,25 +434,18 @@ public class PyPackageUtil {
     }
 
     final PyFile setupPy = findSetupPy(module);
-    if (setupPy == null) {
-      return;
-    }
+    if (setupPy == null) return;
 
     final PyCallExpression setupCall = findSetupCall(setupPy);
-    final PyListLiteralExpression installRequires = findSetupPyInstallRequires(setupCall);
-    final PyElementGenerator generator = PyElementGenerator.getInstance(module.getProject());
+    if (setupCall == null) return;
 
-    if (installRequires != null && installRequires.isWritable()) {
-      final String text = String.format("'%s'", requirementName);
-      final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
-      installRequires.add(generated);
-
-      return;
+    final PsiElement installRequires = findSetupPyInstallRequires(setupCall);
+    if (installRequires != null) {
+      addRequirementToInstallRequires(installRequires, requirementName, languageLevel);
     }
-
-    if (setupCall != null) {
+    else {
       final PyArgumentList argumentList = setupCall.getArgumentList();
-      final PyKeywordArgument requiresArg = generateRequiresKwarg(setupPy, requirementName, languageLevel, generator);
+      final PyKeywordArgument requiresArg = generateRequiresKwarg(setupPy, requirementName, languageLevel);
 
       if (argumentList != null && requiresArg != null) {
         argumentList.addArgument(requiresArg);
@@ -461,14 +453,47 @@ public class PyPackageUtil {
     }
   }
 
+  private static void addRequirementToInstallRequires(@NotNull PsiElement installRequires,
+                                                      @NotNull String requirementName,
+                                                      @NotNull LanguageLevel languageLevel) {
+    final PyElementGenerator generator = PyElementGenerator.getInstance(installRequires.getProject());
+    final PyExpression newRequirement = generator.createExpressionFromText(languageLevel, "'" + requirementName + "'");
+
+    if (installRequires instanceof PyListLiteralExpression) {
+      installRequires.add(newRequirement);
+    }
+    else if (installRequires instanceof PyTupleExpression) {
+      final String newInstallRequiresText = StreamEx
+        .of(((PyTupleExpression)installRequires).getElements())
+        .append(newRequirement)
+        .map(PyExpression::getText)
+        .joining(",", "(", ")");
+
+      final PyExpression expression = generator.createExpressionFromText(languageLevel, newInstallRequiresText);
+
+      Optional
+        .ofNullable(PyUtil.as(expression, PyParenthesizedExpression.class))
+        .map(PyParenthesizedExpression::getContainedExpression)
+        .map(e -> PyUtil.as(e, PyTupleExpression.class))
+        .ifPresent(e -> installRequires.replace(e));
+    }
+    else if (installRequires instanceof PyStringLiteralExpression) {
+      final PyListLiteralExpression newInstallRequires = generator.createListLiteral();
+
+      newInstallRequires.add(installRequires);
+      newInstallRequires.add(newRequirement);
+
+      installRequires.replace(newInstallRequires);
+    }
+  }
+
   @Nullable
   private static PyKeywordArgument generateRequiresKwarg(@NotNull PyFile setupPy,
                                                          @NotNull String requirementName,
-                                                         @NotNull LanguageLevel languageLevel,
-                                                         @NotNull PyElementGenerator generator) {
+                                                         @NotNull LanguageLevel languageLevel) {
     final String keyword = SetupTaskIntrospector.usesSetuptools(setupPy) ? INSTALL_REQUIRES : REQUIRES;
     final String text = String.format("foo(%s=['%s'])", keyword, requirementName);
-    final PyExpression generated = generator.createExpressionFromText(languageLevel, text);
+    final PyExpression generated = PyElementGenerator.getInstance(setupPy.getProject()).createExpressionFromText(languageLevel, text);
 
     if (generated instanceof PyCallExpression) {
       final PyCallExpression callExpression = (PyCallExpression)generated;

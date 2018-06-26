@@ -89,12 +89,20 @@ public class PyPackageUtilTest extends PyTestCase {
     doTestUselessRequirementsTxtOrSetupPyUpdating(false);
   }
 
-  public void testDistutilsSetupPyUpdating() {
-    doTestSetupPyUpdating("requires");
+  public void testDistutilsSetupPyRequiresIntroduction() {
+    doTestSetupPyRequiresIntroduction("requires");
   }
 
-  public void testSetuptoolsSetupPyUpdating() {
-    doTestSetupPyUpdating("install_requires");
+  public void testSetuptoolsSetupPyRequiresIntroduction() {
+    doTestSetupPyRequiresIntroduction("install_requires");
+  }
+
+  public void testSetuptoolsSetupPyTupleRequiresAppending() {
+    doTestSetupPyRequiresAppending("('NewDjango==1.3.1',)", "('NewDjango==1.3.1', 'Markdown')");
+  }
+
+  public void testSetuptoolsSetupPyStringRequiresAppending() {
+    doTestSetupPyRequiresAppending("'NewDjango==1.3.1'", "['NewDjango==1.3.1', 'Markdown']");
   }
 
   public void testAbsentRequirementsTxtUpdating() {
@@ -204,7 +212,7 @@ public class PyPackageUtilTest extends PyTestCase {
     assertEquals(expected.subList(fromIndex, expected.size()), actual);
   }
 
-  private void doTestSetupPyUpdating(@NotNull String keyword) {
+  private void doTestSetupPyRequiresIntroduction(@NotNull String keyword) {
     final Module module = myFixture.getModule();
 
     checkSetupArgumentText(module, keyword, null);
@@ -220,6 +228,22 @@ public class PyPackageUtilTest extends PyTestCase {
     WriteCommandAction.runWriteCommandAction(myFixture.getProject(), updateRequires);
 
     checkSetupArgumentText(module, keyword, "['NewDjango==1.3.1', 'Markdown']");
+
+    final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
+    final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
+    assertEquals(expected, actual);
+  }
+
+  private void doTestSetupPyRequiresAppending(@NotNull String argumentBefore, @NotNull String argumentAfter) {
+    final Module module = myFixture.getModule();
+
+    checkSetupArgumentText(module, "install_requires", argumentBefore);
+    checkRequirements(PyPackageUtil.findSetupPyRequires(module), 1);
+
+    final Runnable appendToRequires = () -> PyPackageUtil.addRequirementToTxtOrSetupPy(module, "Markdown", LanguageLevel.PYTHON34);
+    WriteCommandAction.runWriteCommandAction(myFixture.getProject(), appendToRequires);
+
+    checkSetupArgumentText(module, "install_requires", argumentAfter);
 
     final List<PyRequirement> actual = PyPackageUtil.findSetupPyRequires(module);
     final List<PyRequirement> expected = PyRequirementParser.fromText("NewDjango==1.3.1\nMarkdown\nnumpy\nmynose");
