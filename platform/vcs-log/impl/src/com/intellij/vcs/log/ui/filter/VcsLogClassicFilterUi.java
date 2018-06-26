@@ -86,9 +86,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myUiProperties);
-    myUserFilterModel = new UserFilterModel(dataPackGetter, uiProperties);
-    myDateFilterModel = new DateFilterModel(dataPackGetter, uiProperties);
-    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), uiProperties);
+    myUserFilterModel = new UserFilterModel(dataPackGetter, myUiProperties);
+    myDateFilterModel = new DateFilterModel(dataPackGetter, myUiProperties);
+    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), myUiProperties);
     myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties);
 
     updateUiOnFilterChange();
