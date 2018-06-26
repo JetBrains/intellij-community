@@ -6,9 +6,8 @@ import circlet.components.*
 import circlet.platform.api.*
 import circlet.runtime.*
 import circlet.settings.*
+import circlet.ui.*
 import com.intellij.openapi.project.*
-import com.intellij.ui.*
-import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import klogging.*
 import kotlinx.coroutines.experimental.*
@@ -24,25 +23,15 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     val panel = JPanel(GridLayoutManager(1, 1))
 
-    private val model = ReviewListModel()
-    private val list = JBList<Review>(model)
+    private val list = ComponentBasedList()
 
     private val reloader = updater<Unit>("Reviews Reloader") {
         reloadImpl()
     }
 
     init {
-        list.selectionMode = ListSelectionModel.SINGLE_SELECTION
-        list.cellRenderer = ReviewListCellRenderer {
-            project.connection.loginModel?.me?.preferredLanguage
-        }
-
-        val scrollPane = ScrollPaneFactory.createScrollPane(
-            list, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
-        )
-
         panel.add(
-            scrollPane,
+            list.component,
             GridConstraints().apply {
                 row = 0
                 column = 0
@@ -67,7 +56,13 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     private fun reload(reviews: List<Review>) {
-        model.elements = reviews
+        list.removeAll()
+
+        val preferredLanguage = project.connection.loginModel?.me?.preferredLanguage
+
+        reviews.forEach { review -> list.add(ReviewListItem(review, preferredLanguage)) }
+
+        list.revalidate()
     }
 }
 

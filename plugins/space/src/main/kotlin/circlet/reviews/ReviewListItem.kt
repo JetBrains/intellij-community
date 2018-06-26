@@ -2,27 +2,36 @@ package circlet.reviews
 
 import circlet.client.api.*
 import circlet.platform.api.*
+import circlet.ui.*
 import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import com.intellij.util.ui.*
 import java.awt.*
 import javax.swing.*
 
-class ReviewListCellRenderer(private val getPreferredLanguage: () -> TID?) : ListCellRenderer<Review> {
+class ReviewListItem(review: Review, preferredLanguage: TID?) : ComponentBasedList.Item {
+    override val component: Component get() = panel
+
     private val panel = JPanel(GridLayoutManager(1, 4))
-    private val id = JBLabel()
-    private val title = JBLabel()
-    private val timestamp = JBLabel()
-    private val createdBy = JBLabel()
+    private val id = JBLabel("#${review.id}")
+    private val title = JBLabel(review.title)
+    private val timestamp = JBLabel(review.timestamp.toString())
+    private val createdBy = JBLabel(review.createdBy.fullname(preferredLanguage))
 
     init {
         panel.border = JBUI.Borders.empty(4)
+        panel.background = UIUtil.getListBackground()
 
+        val foreground = UIUtil.getListForeground()
+
+        id.foreground = foreground
         panel.add(
             id,
             createFixedSizeGridConstraints(0, JBUI.size(80, -1))
         )
 
+        title.foreground = foreground
+        title.toolTipText = title.text
         panel.add(
             title,
             GridConstraints().apply {
@@ -34,49 +43,19 @@ class ReviewListCellRenderer(private val getPreferredLanguage: () -> TID?) : Lis
             }
         )
 
+        timestamp.foreground = foreground
+        timestamp.toolTipText = timestamp.text // TODO
         panel.add(
             timestamp,
             createFixedSizeGridConstraints(2, JBUI.size(160, -1))
         )
 
+        createdBy.foreground = foreground
+        createdBy.toolTipText = createdBy.text
         panel.add(
             createdBy,
             createFixedSizeGridConstraints(3, JBUI.size(320, -1))
         )
-    }
-
-    override fun getListCellRendererComponent(
-        list: JList<out Review>,
-        value: Review,
-        index: Int,
-        isSelected: Boolean,
-        cellHasFocus: Boolean
-    ): Component {
-        id.text = "#${value.id}"
-        title.text = value.title
-        timestamp.text = value.timestamp.toString()
-        createdBy.text = value.createdBy.fullname(getPreferredLanguage())
-
-        val background: Color
-        val foreground: Color
-
-        if (isSelected) {
-            background = list.selectionBackground
-            foreground = list.selectionForeground
-        }
-        else {
-            background = list.background
-            foreground = list.foreground
-        }
-
-        panel.background = background
-
-        id.foreground = foreground
-        title.foreground = foreground
-        timestamp.foreground = foreground
-        createdBy.foreground = foreground
-
-        return panel
     }
 }
 
