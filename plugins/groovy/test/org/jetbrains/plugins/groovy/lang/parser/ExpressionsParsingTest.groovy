@@ -530,6 +530,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testtypecast$noExpression() { doTest() }
 
+  void testtypecast$parenthesizedOperand() { doTest() }
+
+  void testtypecast$parenthesizedQualifier() { doTest() }
+
+  void testtypecast$parenthesizedOperandError() { doTest() }
+
+  void testtypecast$nested() { doTest() }
+
+  void testtypecast$vsMethodCall() { doTest() }
+
   void testtypecast$conditional() throws Throwable { doTest() }
 
   void testAtHang() throws Throwable { doTest() }
