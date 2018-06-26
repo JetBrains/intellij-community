@@ -367,6 +367,55 @@ public class Q {
 
 
 
+  void "test DAG dependent methods BFS"() {
+    doTest(
+            initial: '''
+public class Q {
+  void a() {
+    b();
+    c();
+  }
+  
+  void d() {
+    e();
+  }
+  
+  void c() {
+    d();
+  }
+  
+  void b() {
+    d();
+  }
+  
+  void e() {
+  }
+
+}''',
+            expected: '''
+public class Q {
+  void a() {
+    b();
+    c();
+  }
+  void b() {
+    d();
+  }
+  void c() {
+    d();
+  }
+  void d() {
+    e();
+  }
+  void e() {
+  }
+
+}''',
+            groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
+
 
 
 }

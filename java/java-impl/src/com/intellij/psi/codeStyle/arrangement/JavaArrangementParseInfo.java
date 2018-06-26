@@ -85,6 +85,21 @@ public class JavaArrangementParseInfo {
     }
     return myMethodDependencyRoots;
   }
+  
+  // required for cycle detection
+  // Implicit 0 means that node has not been passed
+  private static final int IN_PROGRESS = 1;
+  private static final int PASSED = 2;
+
+  private static class DependencyGraphEntry {
+    final @NotNull PsiMethod myMethod;
+    final @NotNull ArrangementEntryDependencyInfo myDependencyInfo;
+
+    private DependencyGraphEntry(@NotNull PsiMethod method, @NotNull ArrangementEntryDependencyInfo info) {
+      myMethod = method;
+      myDependencyInfo = info;
+    }
+  }
 
   @Nullable
   private ArrangementEntryDependencyInfo buildMethodDependencyInfo(@NotNull final PsiMethod method,
@@ -94,34 +109,38 @@ public class JavaArrangementParseInfo {
       return null;
     }
     ArrangementEntryDependencyInfo result = new ArrangementEntryDependencyInfo(entry);
-    Stack<Pair<PsiMethod, ArrangementEntryDependencyInfo>> toProcess
-      = new Stack<>();
-    toProcess.push(Pair.create(method, result));
-    Set<PsiMethod> usedMethods = ContainerUtilRt.newHashSet();
-    while (!toProcess.isEmpty()) {
-      Pair<PsiMethod, ArrangementEntryDependencyInfo> pair = toProcess.pop();
-      Set<PsiMethod> dependentMethods = myMethodDependencies.get(pair.first);
-      if (dependentMethods == null) {
+    TObjectIntHashMap<PsiMethod> methodToStatus = new TObjectIntHashMap<>(); // value is one of NOT_PASSED, IN_PROGRESS, PASSED
+    Stack<DependencyGraphEntry> toProcess = new Stack<>();
+
+    toProcess.push(new DependencyGraphEntry(method, result));
+    while (!toProcess.empty()) {
+      DependencyGraphEntry graphEntry = toProcess.pop();
+      PsiMethod currentMethod = graphEntry.myMethod;
+      Set<PsiMethod> methodDependencies = myMethodDependencies.get(currentMethod);
+      if (methodDependencies == null) {
+        methodToStatus.put(currentMethod, PASSED);
         continue;
       }
-      usedMethods.add(pair.first);
-      for (PsiMethod dependentMethod : dependentMethods) {
-        if (usedMethods.contains(dependentMethod)) {
+      methodToStatus.put(currentMethod, IN_PROGRESS);
+      for (PsiMethod dependentMethod : methodDependencies) {
+        if (methodToStatus.get(dependentMethod) == IN_PROGRESS) {
           // Prevent cyclic dependencies.
           return null;
         }
         JavaElementArrangementEntry dependentEntry = myMethodEntriesMap.get(dependentMethod);
         if (dependentEntry == null) {
+          methodToStatus.put(currentMethod, PASSED);
           continue;
         }
         ArrangementEntryDependencyInfo dependentMethodInfo = cache.get(dependentMethod);
         if (dependentMethodInfo == null) {
           cache.put(dependentMethod, dependentMethodInfo = new ArrangementEntryDependencyInfo(dependentEntry));
         }
-        Pair<PsiMethod, ArrangementEntryDependencyInfo> dependentPair = Pair.create(dependentMethod, dependentMethodInfo);
-        pair.second.addDependentEntryInfo(dependentPair.second);
-        toProcess.push(dependentPair);
+        DependencyGraphEntry dependentGraphEntry = new DependencyGraphEntry(dependentMethod, dependentMethodInfo);
+        graphEntry.myDependencyInfo.addDependentEntryInfo(dependentMethodInfo);
+        toProcess.push(dependentGraphEntry);
       }
+      methodToStatus.put(currentMethod, PASSED);
     }
     return result;
   }
