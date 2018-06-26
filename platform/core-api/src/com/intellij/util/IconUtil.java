@@ -4,8 +4,11 @@ package com.intellij.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.FileIconPatcher;
 import com.intellij.ide.FileIconProvider;
-import com.intellij.ide.presentation.VirtualFilePresentation;
+import com.intellij.ide.TypePresentationService;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.fileTypes.DirectoryFileType;
+import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -130,16 +133,17 @@ public class IconUtil {
   }
 
   private static final NullableFunction<FileIconKey, Icon> ICON_NULLABLE_FUNCTION = key -> {
-    final VirtualFile file = key.getFile();
-    final int flags = filterFileIconFlags(file, key.getFlags());
-    final Project project = key.getProject();
+    VirtualFile file = key.getFile();
+    FileType fileType = key.getFileType();
+    int flags = filterFileIconFlags(file, fileType, key.getFlags());
+    Project project = key.getProject();
 
     if (!file.isValid() || project != null && (project.isDisposed() || !wasEverInitialized(project))) return null;
 
-    final Icon providersIcon = getProvidersIcon(file, flags, project);
-    Icon icon = providersIcon == null ? VirtualFilePresentation.getIconImpl(file) : providersIcon;
+    Icon providersIcon = getProvidersIcon(file, flags, project);
+    Icon icon = providersIcon == null ? getBaseIcon(file, fileType) : providersIcon;
 
-    final boolean dumb = project != null && DumbService.getInstance(project).isDumb();
+    boolean dumb = project != null && DumbService.getInstance(project).isDumb();
     for (FileIconPatcher patcher : getPatchers()) {
       if (dumb && !DumbService.isDumbAware(patcher)) {
         continue;
@@ -163,19 +167,39 @@ public class IconUtil {
   };
 
   @Iconable.IconFlags
-  private static int filterFileIconFlags(@NotNull VirtualFile file, @Iconable.IconFlags int flags) {
-    UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(file.getFileType(), UserDataHolder.class);
+  private static int filterFileIconFlags(VirtualFile file, FileType fileType, @Iconable.IconFlags int flags) {
+    UserDataHolder fileTypeDataHolder = ObjectUtils.tryCast(getFileType(file, fileType), UserDataHolder.class);
     int fileTypeFlagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(fileTypeDataHolder, 0);
     int flagIgnoreMask = Iconable.ICON_FLAG_IGNORE_MASK.get(file, fileTypeFlagIgnoreMask);
     //noinspection MagicConstant
     return flags & ~flagIgnoreMask;
   }
 
-  public static Icon getIcon(@NotNull final VirtualFile file, @Iconable.IconFlags final int flags, @Nullable final Project project) {
-    Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
+  public static Icon getIcon(@NotNull VirtualFile file, @Iconable.IconFlags int flags, @Nullable Project project) {
+    return getIcon(file, null, flags, project);
+  }
 
-    final Icon base = lastIcon != null ? lastIcon : VirtualFilePresentation.getIconImpl(file);
-    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, project, flags), ICON_NULLABLE_FUNCTION);
+  public static Icon getIcon(@NotNull VirtualFile file, @Nullable FileType fileType, @Iconable.IconFlags int flags, @Nullable Project project) {
+    Icon lastIcon = Iconable.LastComputedIcon.get(file, flags);
+    Icon base = lastIcon != null ? lastIcon : getBaseIcon(file, fileType);
+    return IconDeferrer.getInstance().defer(base, new FileIconKey(file, fileType, project, flags), ICON_NULLABLE_FUNCTION);
+  }
+
+  private static Icon getBaseIcon(VirtualFile vFile, FileType fileType) {
+    Icon icon = TypePresentationService.getService().getIcon(vFile);
+    if (icon != null) {
+      return icon;
+    }
+    fileType = getFileType(vFile, fileType);
+    if (vFile.isDirectory() && vFile.isInLocalFileSystem() && !(fileType instanceof DirectoryFileType)) {
+      return PlatformIcons.FOLDER_ICON;
+    }
+    return fileType.getIcon();
+  }
+
+  @NotNull
+  private static FileType getFileType(VirtualFile file, FileType fileType) {
+    return fileType != null ? fileType : FileTypeRegistry.getInstance().getFileTypeByFileName(file.getNameSequence());
   }
 
   @Nullable
