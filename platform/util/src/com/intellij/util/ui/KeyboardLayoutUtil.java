@@ -21,14 +21,19 @@ public class KeyboardLayoutUtil {
   @Nullable
   public static Character getAsciiForChar(char a) {
     Character c = ourLLtoASCII.get(a);
-    if (c == null && (ourLLtoASCII.isEmpty() || SystemInfo.isLinux)) {
+    if (c != null) return c;
+
+    if (ourLLtoASCII.isEmpty() || SystemInfo.isLinux) {
       // Linux note:
       // KeyEvent provides 'rawCode' (a physical |row|column| coordinate) instead of 'keyCode'.
       // ASCII rawCodes can be collected to map chars via their rawCode in future.
       // That would also allow map latin chars to latin chars when a layout switches latin keys.
-      c = HardCoded.LL.get(a);
+      char lc = Character.toLowerCase(a);
+      c = HardCoded.LL.get(lc);
+      if (c == null) return null;
+      return lc == a ? c : Character.toUpperCase(c);
     }
-    return c;
+    return null;
   }
 
   public static void storeAsciiForChar(@NotNull KeyEvent e) {
