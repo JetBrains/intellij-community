@@ -4,7 +4,6 @@ package com.intellij.ide.ui.laf.darcula.ui;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 
-import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -13,11 +12,19 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class DarculaMenuBarBorder implements Border, UIResource {
+  private Color lineColor = JBUI.CurrentTheme.CustomFrameDecorations.separatorForeground();
+
+  public DarculaMenuBarBorder() {}
+
+  public DarculaMenuBarBorder(Color lineColor) {
+    this.lineColor = lineColor;
+  }
+
   @Override
   public void paintBorder(Component c, Graphics g, int x, int y, int w, int h) {
     g.translate(x, y);
     w--;h--;
-    g.setColor(JBUI.CurrentTheme.ToolWindow.headerBorderBackground());
+    g.setColor(lineColor);
     UIUtil.drawLine(g, 0, h, w, h);
     g.translate(-x, -y);
   }
