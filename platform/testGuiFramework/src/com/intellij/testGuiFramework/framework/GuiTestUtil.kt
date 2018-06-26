@@ -73,7 +73,7 @@ import java.awt.event.KeyEvent
 import java.io.File
 import java.io.IOException
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 import java.nio.file.StandardCopyOption
 import java.util.concurrent.TimeUnit
 import java.util.concurrent.TimeUnit.MINUTES
@@ -802,15 +802,14 @@ object GuiTestUtil {
     return null
   }
 
-  fun fileSearchAndReplace(fileName: String, condition: (String) -> String) {
+  fun fileSearchAndReplace(fileName: Path, condition: (String) -> String) {
     val buffer = mutableListOf<String>()
-    val inputFile = Paths.get(fileName)
-    for (line in Files.readAllLines(inputFile)) {
+    for (line in Files.readAllLines(fileName)) {
       buffer.add(condition(line))
     }
-    val tmpFile = Files.createTempFile(inputFile.fileName.toString(), "tmp")
+    val tmpFile = Files.createTempFile(fileName.fileName.toString(), "tmp")
     Files.write(tmpFile, buffer)
-    Files.copy(tmpFile, inputFile, StandardCopyOption.REPLACE_EXISTING)
+    Files.copy(tmpFile, fileName, StandardCopyOption.REPLACE_EXISTING)
     tmpFile.toFile().deleteOnExit()
   }
 
