@@ -169,6 +169,8 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
   }
 
   data class LibraryOrFramework(val mainPath: Array<out String>, val reservePath: Array<out String> = emptyArray()) {
+    constructor(mainLibrary: String, reserveLibrary: String = "") : this(arrayOf(mainLibrary), arrayOf(reserveLibrary))
+
     override fun equals(other: Any?): Boolean {
       if (other == null) return false
       if (other !is LibraryOrFramework) return false
@@ -182,9 +184,12 @@ class NewProjectDialogModel(val testCase: GuiTestCase) : TestUtilsClass(testCase
     }
 
     override fun toString(): String {
-      return "${mainPath.toList()} (${if (reservePath.isNotEmpty()) reservePath.toList().toString() else ""})"
+      fun Array<out String>.toFormattedString() = if (this.isEmpty()) ""
+        else this.joinToString(separator = "-") { it.replace(",", "").replace(" ", "") }
+      return "${mainPath.toFormattedString()}(${reservePath.toFormattedString()})"
     }
 
+    fun isEmpty() = mainPath.isEmpty() || mainPath.first().isEmpty()
   }
 }
 
@@ -198,6 +203,8 @@ fun assertProjectPathExists(projectPath: String) {
 }
 
 typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
+fun LibrariesSet.isSetEmpty() = isEmpty() || all { it.isEmpty() }
+fun LibrariesSet.isSetNotEmpty() = !isSetEmpty()
 
 /**
  * Creates a new project from Java group
@@ -207,16 +214,14 @@ typealias LibrariesSet = Set<NewProjectDialogModel.LibraryOrFramework>
  * */
 fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: LibrariesSet = emptySet(), template: String = "", basePackage: String = "") {
   assertProjectPathExists(projectPath)
-  val setLibraries = libs.isNotEmpty()
-  val setTemplate = template.isNotEmpty()
   with(guiTestCase) {
     with(connectDialog()) {
       val list: JListFixture = jList(groupJava)
       list.clickItem(groupJava)
-      if (setLibraries) setLibrariesAndFrameworks(libs)
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       else {
         button(buttonNext).click()
-        if(setTemplate){
+        if(template.isNotEmpty()){
           checkbox(checkCreateProjectFromTemplate).isSelected = true
           jList(template).clickItem(template)
         }
@@ -227,7 +232,7 @@ fun NewProjectDialogModel.createJavaProject(projectPath: String, libs: Libraries
       shortcut(Key.TAB)
       shortcut(Modifier.CONTROL + Key.X)
       typeText(projectPath)
-      if(setTemplate && basePackage.isNotEmpty()){
+      if(template.isNotEmpty() && basePackage.isNotEmpty()){
         // base package is set only for Command Line app template
         logUIStep("Set Base package to `$basePackage`")
         textfield(textBasePackage).click()
@@ -257,14 +262,14 @@ fun NewProjectDialogModel.createJavaEnterpriseProject(projectPath: String, libs:
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(NewProjectDialogModel.Groups.JavaEnterprise)
       list.clickItem(groupJavaEnterprise)
-      if (libs.isEmpty()) {
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
+      else {
         button(buttonNext).click()
         if(template.isNotEmpty()){
           checkbox(checkCreateProjectFromTemplate).isSelected = true
           jList(template).clickItem(template)
         }
       }
-      else setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -504,7 +509,7 @@ internal fun NewProjectDialogModel.createProjectInGroup(group: NewProjectDialogM
       val list: JListFixture = jList(groupJava)
       assertGroupPresent(group)
       list.clickItem(group.toString())
-      if (libs.isNotEmpty()) setLibrariesAndFrameworks(libs)
+      if (libs.isSetNotEmpty()) setLibrariesAndFrameworks(libs)
       button(buttonNext).click()
       logUIStep("Fill Project location with `$projectPath`")
       textfield(textProjectLocation).click()
@@ -580,6 +585,7 @@ fun NewProjectDialogModel.checkAppServerExists(serverName: String) {
 }
 
 fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
+  if (libs.isSetEmpty()) return
   with(connectDialog()) {
     for (lib in libs) {
       guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
