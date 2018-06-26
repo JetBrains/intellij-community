@@ -236,7 +236,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     PsiNewExpression expression = getNewExpression();
-    if (expression.getQualifier() != null) {
+    if (rejectQualifier(expression.getQualifier())) {
       return false;
     }
 
@@ -253,6 +253,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     return false;
+  }
+
+  protected boolean rejectQualifier(PsiExpression qualifier) {
+    return qualifier != null;
   }
 
   protected String getText(final String varName) {

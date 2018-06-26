@@ -305,6 +305,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
           }
         }
       }
+      qualifier = newExpression.getQualifier();
     }
     else if (element instanceof PsiReferenceExpression) {
       qualifier = ((PsiReferenceExpression)element).getQualifierExpression();

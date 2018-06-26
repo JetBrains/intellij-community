@@ -2,8 +2,11 @@
 public class Test {
   public static void main() {
     Inner q = new Inner();
-    q.new <caret>ArrayList();
+    q.new ArrayList();
   }
 
-  static class Inner { }
+  static class Inner {
+      public class ArrayList {
+      }
+  }
 }
