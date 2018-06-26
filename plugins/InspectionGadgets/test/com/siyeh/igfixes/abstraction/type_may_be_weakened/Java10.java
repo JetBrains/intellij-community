@@ -4,12 +4,12 @@ package com.siyeh.igfixes.abstraction.type_may_be_weakened;
 import java.util.ArrayList;
 import java.util.List;
 
-class B {
+class B<T> {
   void foo() {}
 }
 
 
-class A extends B { }
+class A extends B<String> { }
 
 
 class Main {
