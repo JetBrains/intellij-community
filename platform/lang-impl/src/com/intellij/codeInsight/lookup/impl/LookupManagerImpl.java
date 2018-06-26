@@ -129,7 +129,7 @@ public class LookupManagerImpl extends LookupManager {
 
     final LookupImpl lookup = createLookup(editor, arranger, myProject);
 
-    final Alarm alarm = new Alarm();
+    final Alarm alarm = new Alarm(myProject);
 
     ApplicationManager.getApplication().assertIsDispatchThread();
 
