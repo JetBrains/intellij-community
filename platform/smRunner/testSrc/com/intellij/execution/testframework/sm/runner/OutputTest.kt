@@ -49,6 +49,38 @@ class OutputTest : BaseSMTRunnerTestCase() {
     assertEquals("inside test\n", printer.stdOut)
   }
 
+  fun testStdErrOutput() {
+    val suite = createTestProxy("parent")
+    suite.setTreeBuildBeforeStart()
+    val child = createTestProxy("child", suite)
+    child.setTreeBuildBeforeStart()
+
+    child.setStarted()
+    suite.addStdOutput("std out\n")
+    child.addStdErr("std error\n")
+    child.setFinished()
+
+    val child2 = createTestProxy("child2", suite)
+    child2.setTreeBuildBeforeStart()
+
+    child2.setStarted()
+    suite.addStdOutput("std out\n")
+    child2.addStdErr("std error\n")
+    child2.setFinished()
+
+    val printer = MockPrinter(true)
+    suite.printOn(printer)
+
+    assertEquals("std out\nstd error\nstd out\nstd error\n", printer.allOut)
+    printer.resetIfNecessary()
+
+    child.printOn(printer)
+    assertEquals("std out\nstd error\n", printer.allOut)
+
+    child2.printOn(printer)
+    assertEquals("std out\nstd error\n", printer.allOut)
+  }
+
   fun testBeforeAfterOrderWhenFlushed() {
     val suite = createTestProxy("parent")
     suite.setTreeBuildBeforeStart()
