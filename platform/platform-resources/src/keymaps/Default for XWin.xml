@@ -24,7 +24,7 @@
   <action id="ShowFilePath">
     <keyboard-shortcut first-keystroke="control alt shift 2"/>
   </action>
-  <action id="XDebugger.AttachToLocalProcess">
+  <action id="XDebugger.AttachToProcess">
     <keyboard-shortcut first-keystroke="control alt 5"/>
   </action>
 </keymap>
