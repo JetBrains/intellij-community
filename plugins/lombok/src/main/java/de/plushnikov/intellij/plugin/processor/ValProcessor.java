@@ -29,7 +29,6 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import de.plushnikov.intellij.plugin.problem.LombokProblem;
 import de.plushnikov.intellij.plugin.settings.ProjectSettings;
-import lombok.experimental.var;
 import lombok.val;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,11 +40,12 @@ public class ValProcessor extends AbstractProcessor {
 
   private static final String LOMBOK_VAL_FQN = "lombok.val";
   private static final String LOMBOK_VAL_SHORT_NAME = "val";
-  private static final String LOMBOK_VAR_FQN = "lombok.experimental.var";
+  private static final String LOMBOK_VAR_FQN = "lombok.var";
+  private static final String LOMBOK_VAR_EXPERIMENTAL_FQN = "lombok.experimental.var";
   private static final String LOMBOK_VAR_SHORT_NAME = "var";
 
   public ValProcessor() {
-    super(PsiElement.class, val.class, var.class);
+    super(PsiElement.class, val.class, lombok.experimental.var.class, lombok.var.class);
   }
 
   public static boolean isVal(@NotNull PsiLocalVariable psiLocalVariable) {
@@ -61,7 +61,7 @@ public class ValProcessor extends AbstractProcessor {
   }
 
   private static boolean isVar(String className) {
-    return LOMBOK_VAR_SHORT_NAME.equals(className) || LOMBOK_VAR_FQN.equals(className);
+    return LOMBOK_VAR_SHORT_NAME.equals(className) || LOMBOK_VAR_FQN.equals(className) || LOMBOK_VAR_EXPERIMENTAL_FQN.equals(className);
   }
 
   private static boolean isValOrVar(String className) {
