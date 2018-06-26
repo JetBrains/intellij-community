@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFileVisitor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -44,7 +45,6 @@ import com.jetbrains.python.packaging.setupPy.SetupTaskIntrospector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.remote.PyCredentialsContribution;
 import com.jetbrains.python.sdk.CredentialsTypeExChecker;
@@ -132,8 +132,9 @@ public class PyPackageUtil {
     return StreamEx
       .of(REQUIRES, INSTALL_REQUIRES)
       .map(setupCall::getKeywordArgument)
-      .map(requires -> resolveValue(requires, PyListLiteralExpression.class))
-      .findFirst(Objects::nonNull)
+      .map(PyPackageUtil::resolveValue)
+      .select(PyListLiteralExpression.class)
+      .findFirst()
       .orElse(null);
   }
 
@@ -154,7 +155,7 @@ public class PyPackageUtil {
     if (setupCall == null) return null;
 
     final PyDictLiteralExpression extrasRequire =
-      resolveValue(setupCall.getKeywordArgument("extras_require"), PyDictLiteralExpression.class);
+      PyUtil.as(resolveValue(setupCall.getKeywordArgument("extras_require")), PyDictLiteralExpression.class);
     if (extrasRequire == null) return null;
 
     final Map<String, List<PyRequirement>> result = new HashMap<>();
@@ -212,33 +213,33 @@ public class PyPackageUtil {
     return requirementsFromRequires;
   }
 
+  /**
+   * @param expression expression to resolve
+   * @return {@code expression} if it is not a reference or element that is found by following assignments chain.
+   * <i>Note: if result is {@code com.jetbrains.python.psi.PyExpression} then paretheses around will be flattened.</i>
+   */
   @Nullable
-  private static <T extends PyExpression> T resolveValue(@Nullable PyExpression expression, @NotNull Class<T> cls) {
-    if (cls.isInstance(expression)) {
-      return cls.cast(expression);
-    }
-    if (expression instanceof PyReferenceExpression) {
-      final TypeEvalContext context = TypeEvalContext.deepCodeInsight(expression.getProject());
-      final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final QualifiedResolveResult result = ((PyReferenceExpression)expression).followAssignmentsChain(resolveContext);
-      final PsiElement element = result.getElement();
-      if (cls.isInstance(element)) {
-        return cls.cast(element);
-      }
-    }
-    return null;
-  }
-
-  @Nullable
-  private static List<String> resolveRequiresValue(@Nullable PyExpression expression) {
-    PsiElement elementToAnalyze = PyPsiUtils.flattenParens(expression);
+  private static PsiElement resolveValue(@Nullable PyExpression expression) {
+    final PsiElement elementToAnalyze = PyPsiUtils.flattenParens(expression);
 
     if (elementToAnalyze instanceof PyReferenceExpression) {
       final TypeEvalContext context = TypeEvalContext.deepCodeInsight(elementToAnalyze.getProject());
       final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-      final QualifiedResolveResult result = ((PyReferenceExpression)elementToAnalyze).followAssignmentsChain(resolveContext);
-      elementToAnalyze = result.getElement();
+
+      return StreamEx
+        .of(((PyReferenceExpression)elementToAnalyze).multiFollowAssignmentsChain(resolveContext))
+        .map(ResolveResult::getElement)
+        .findFirst(Objects::nonNull)
+        .map(e -> e instanceof PyExpression ? PyPsiUtils.flattenParens((PyExpression)e) : e)
+        .orElse(null);
     }
+
+    return elementToAnalyze;
+  }
+
+  @Nullable
+  private static List<String> resolveRequiresValue(@Nullable PyExpression expression) {
+    final PsiElement elementToAnalyze = resolveValue(expression);
 
     if (elementToAnalyze instanceof PyStringLiteralExpression) {
       return Collections.singletonList(((PyStringLiteralExpression)elementToAnalyze).getStringValue());
@@ -246,7 +247,7 @@ public class PyPackageUtil {
     else if (elementToAnalyze instanceof PyListLiteralExpression || elementToAnalyze instanceof PyTupleExpression) {
       return StreamEx
         .of(((PySequenceExpression)elementToAnalyze).getElements())
-        .map(e -> resolveValue(e, PyStringLiteralExpression.class))
+        .map(PyPackageUtil::resolveValue)
         .select(PyStringLiteralExpression.class)
         .map(PyStringLiteralExpression::getStringValue)
         .toList();
