@@ -299,7 +299,6 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     specialGroup.add(myGlobalInspectionContext.getUIOptions().createFilterResolvedItemsAction(this));
     specialGroup.add(myGlobalInspectionContext.createToggleAutoscrollAction());
     specialGroup.add(new ExportHTMLAction(this));
-    specialGroup.add(ActionManager.getInstance().getAction("EditInspectionSettings"));
     specialGroup.add(new InvokeQuickFixAction(this));
     return createToolbar(specialGroup);
   }
@@ -308,12 +307,12 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
     final CommonActionsManager actionsManager = CommonActionsManager.getInstance();
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new RerunAction(this));
-    group.add(new CloseAction(myGlobalInspectionContext));
     final TreeExpander treeExpander = new DefaultTreeExpander(myTree);
     group.add(actionsManager.createExpandAllAction(treeExpander, myTree));
     group.add(actionsManager.createCollapseAllAction(treeExpander, myTree));
     group.add(actionsManager.createPrevOccurenceAction(myOccurenceNavigator));
     group.add(actionsManager.createNextOccurenceAction(myOccurenceNavigator));
+    group.add(ActionManager.getInstance().getAction("EditInspectionSettings"));
 
     return createToolbar(group);
   }
