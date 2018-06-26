@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.util.TextRange;
@@ -30,6 +16,7 @@ import java.util.regex.Pattern;
 
 import static com.intellij.openapi.util.text.StringUtil.newBombedCharSequence;
 import static com.intellij.util.io.URLUtil.URL_PATTERN;
+import static com.intellij.util.io.URLUtil.URL_PATTERN_M;
 
 public class PlainTextSplitter extends BaseSplitter {
   private static final PlainTextSplitter INSTANCE = new PlainTextSplitter();
@@ -44,8 +31,8 @@ public class PlainTextSplitter extends BaseSplitter {
   Pattern SPLIT_PATTERN = Pattern.compile("(\\s|\b)");
 
   @NonNls
-  private static final Pattern MAIL =
-    Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)");
+  private static final Matcher MAIL =
+    Pattern.compile("([\\p{L}0-9\\.\\-\\_\\+]+@([\\p{L}0-9\\-\\_]+(\\.)?)+(com|net|[a-z]{2})?)").matcher("");
   
   @Override
   public void split(@Nullable String text, @NotNull TextRange range, Consumer<TextRange> consumer) {
@@ -85,7 +72,7 @@ public class PlainTextSplitter extends BaseSplitter {
       }
       else
       if (word.contains("://")) {
-        toCheck = excludeByPattern(text, wRange, URL_PATTERN, 0);
+        toCheck = excludeByPattern(text, wRange, URL_PATTERN_M, 0);
       }
       else {
         toCheck = Collections.singletonList(wRange);

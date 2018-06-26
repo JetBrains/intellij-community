@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.spellchecker.inspections;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -22,6 +8,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -29,6 +16,8 @@ import java.text.CharacterIterator;
 import java.text.StringCharacterIterator;
 import java.util.Collections;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -86,44 +75,46 @@ public abstract class BaseSplitter implements Splitter {
     int l = till - from;
     return l <= MIN_RANGE_LENGTH;
   }
-
   @NotNull
-  static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Pattern toExclude, int groupToInclude) {
+  static protected List<TextRange> excludeByPattern(String text, TextRange range, @NotNull Matcher matcher, int groupToInclude) {
     List<TextRange> toCheck = new SmartList<>();
     int from = range.getStartOffset();
     int till;
     boolean addLast = true;
-    Matcher matcher = toExclude.matcher(StringUtil.newBombedCharSequence(range.substring(text), 500));
-    try {
-      while (matcher.find()) {
-        checkCancelled();
-        TextRange found = matcherRange(range, matcher);
-        till = found.getStartOffset();
-        if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
-          addLast = false;
+    synchronized (matcher) { //we control all parameters
+      final CharSequence input = StringUtil.newBombedCharSequence(range.substring(text), 500);
+      matcher.reset(input);
+      try {
+        while (matcher.find()) {
+          checkCancelled();
+          TextRange found = matcherRange(range, matcher);
+          till = found.getStartOffset();
+          if (range.getEndOffset() - found.getEndOffset() < MIN_RANGE_LENGTH) {
+            addLast = false;
+          }
+          if (!badSize(from, till)) {
+            toCheck.add(new TextRange(from, till));
+          }
+          if (groupToInclude > 0) {
+            TextRange contentFound = matcherRange(range, matcher, groupToInclude);
+            if (badSize(contentFound.getEndOffset(), contentFound.getStartOffset())) {
+              toCheck.add(TextRange.create(contentFound));
+            }
+          }
+          from = found.getEndOffset();
         }
-        if (!badSize(from, till)) {
+        till = range.getEndOffset();
+        if (badSize(from, till)) {
+          return toCheck;
+        }
+        if (addLast) {
           toCheck.add(new TextRange(from, till));
         }
-        if (groupToInclude > 0) {
-          TextRange contentFound = matcherRange(range, matcher, groupToInclude);
-          if (badSize(contentFound.getEndOffset(), contentFound.getStartOffset())) {
-            toCheck.add(TextRange.create(contentFound));
-          }
-        }
-        from = found.getEndOffset();
-      }
-      till = range.getEndOffset();
-      if (badSize(from, till)) {
         return toCheck;
       }
-      if (addLast) {
-        toCheck.add(new TextRange(from, till));
+      catch (ProcessCanceledException e) {
+        return Collections.singletonList(range);
       }
-      return toCheck;
-    }
-    catch (ProcessCanceledException e) {
-      return Collections.singletonList(range);
     }
   }
 
