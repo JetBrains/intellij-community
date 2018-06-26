@@ -287,7 +287,7 @@ public final class CompletionServiceImpl extends CompletionService {
 
   @SuppressWarnings("unused")
   public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
-    return new CompletionLookupArrangerImpl(parameters);
+    return new CompletionLookupArrangerImpl(parameters).withAllItemsVisible();
   }
 
   @SuppressWarnings("unused")
