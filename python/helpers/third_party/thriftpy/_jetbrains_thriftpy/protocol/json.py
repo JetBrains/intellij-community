@@ -5,7 +5,7 @@ from __future__ import absolute_import
 import json
 import struct
 
-from thriftpy.thrift import TType
+from _jetbrains_thriftpy.thrift import TType
 
 from .exc import TProtocolException
 

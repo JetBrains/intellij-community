@@ -2,9 +2,9 @@ import socket
 import threading
 
 from pydev_console.thrift_transport import TSyncClient, open_transports_as_client, _create_client_server_transports
-from thriftpy.protocol import TBinaryProtocolFactory
-from thriftpy.server import TThreadedServer
-from thriftpy.thrift import TProcessor
+from _jetbrains_thriftpy.protocol import TBinaryProtocolFactory
+from _jetbrains_thriftpy.server import TThreadedServer
+from _jetbrains_thriftpy.thrift import TProcessor
 
 
 def make_rpc_client(client_service, host, port, proto_factory=TBinaryProtocolFactory()):

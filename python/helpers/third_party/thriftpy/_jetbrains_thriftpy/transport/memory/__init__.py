@@ -4,7 +4,7 @@ from __future__ import absolute_import
 
 from io import BytesIO
 
-from thriftpy._compat import CYTHON
+from _jetbrains_thriftpy._compat import CYTHON
 from .. import TTransportBase
 
 
