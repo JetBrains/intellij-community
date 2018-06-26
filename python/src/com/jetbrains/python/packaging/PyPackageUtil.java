@@ -263,7 +263,7 @@ public class PyPackageUtil {
   }
 
   @Nullable
-  public static PyCallExpression findSetupCall(@NotNull PyFile file) {
+  private static PyCallExpression findSetupCall(@NotNull PyFile file) {
     final Ref<PyCallExpression> result = new Ref<>(null);
     file.acceptChildren(new PyRecursiveElementVisitor() {
       @Override
