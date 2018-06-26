@@ -308,7 +308,8 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
         return;
       }
       final PsiJavaCodeReferenceElement componentReferenceElement = typeElement.getInnermostComponentReferenceElement();
-      if (componentReferenceElement == null) {
+      boolean isInferredType = typeElement.isInferredType();
+      if (componentReferenceElement == null && !isInferredType) {
         return;
       }
       final PsiType oldType = typeElement.getType();
@@ -339,10 +340,17 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           classType = factory.createType(aClass, substitutor);
         }
       }
-      final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
-      final PsiElement replacement = componentReferenceElement.replace(referenceElement);
+      final PsiElement replacement;
+      if (isInferredType) {
+        PsiTypeElement newTypeElement = factory.createTypeElement(classType);
+        replacement = typeElement.replace(newTypeElement);
+      } else {
+        final PsiJavaCodeReferenceElement referenceElement = factory.createReferenceElementByType(classType);
+        replacement = componentReferenceElement.replace(referenceElement);
+      }
       final JavaCodeStyleManager javaCodeStyleManager = JavaCodeStyleManager.getInstance(project);
       javaCodeStyleManager.shortenClassReferences(replacement);
+
     }
   }
 
@@ -419,7 +427,7 @@ public class TypeMayBeWeakenedInspection extends AbstractBaseJavaLocalInspection
           return;
         }
       }
-      if (!doNotWeakenInferredVariableType) {
+      if (doNotWeakenInferredVariableType) {
         PsiTypeElement typeElement = variable.getTypeElement();
         if (typeElement != null && typeElement.isInferredType()) {
           return;
