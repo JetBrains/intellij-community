@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.paint;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.paint.PaintUtil.RoundingMode;
 import com.intellij.util.JBHiDPIScaledImage;
@@ -139,9 +140,9 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
         else {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
-          double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g);
+          double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g, RoundingMode.FLOOR);
           @SuppressWarnings("TestOnlyProblems")
-          double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), g, font), g);
+          double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), font), g, RoundingMode.FLOOR);
           drawLine(g, x, y - offset, width, thickness, this);
         }
       }
@@ -157,20 +158,22 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     if (width > 0 && height > 0) {
       if (Registry.is("ide.text.effect.new.metrics")) {
         if (font == null) font = g.getFont();
+        RoundingMode roundingMode = !UIUtil.isJreHiDPIEnabled() || painter != WAVE_UNDERSCORE || font.getSize2D() / UISettings.getDefFontSize() > 1 ?
+                                    RoundingMode.FLOOR : RoundingMode.CEIL;
         LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
         double devPixel = PaintUtil.devPixel(g);
-        double underlineThickness = maybeScaleFontMetricsThickness(metrics.getUnderlineThickness(), g, font);
+        double underlineThickness = maybeScaleFontMetricsThickness(metrics.getUnderlineThickness(), font);
         double underlineOffset = Math.max(devPixel, metrics.getUnderlineOffset());
 
-        thickness = PaintUtil.alignToInt(thickness * underlineThickness, g);
+        thickness = PaintUtil.alignToInt(thickness * underlineThickness, g, roundingMode);
         double offset = Math.min(height - thickness, underlineOffset);
 
         if (offset < devPixel) {
           offset = height > 3 * devPixel ? devPixel : 0;
-          thickness = PaintUtil.alignToInt(Math.min(thickness, height - offset), g);
+          thickness = PaintUtil.alignToInt(Math.min(thickness, height - offset), g, roundingMode);
         }
         else {
-          offset = PaintUtil.alignToInt(offset, g);
+          offset = PaintUtil.alignToInt(offset, g, roundingMode);
         }
         drawLine(g, x, y + offset, width, thickness, painter);
       }
@@ -189,13 +192,20 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
   }
 
   @TestOnly
-  public static double maybeScaleFontMetricsThickness_TestOnly(double fontMetricsThickness, @NotNull Graphics2D g, @NotNull Font font) {
-    return maybeScaleFontMetricsThickness(fontMetricsThickness, g, font);
+  public static double maybeScaleFontMetricsThickness_TestOnly(double fontMetricsThickness, @NotNull Font font) {
+    return maybeScaleFontMetricsThickness(fontMetricsThickness, font);
   }
 
-  private static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Graphics2D g, @NotNull Font font) {
-    double minValue = PaintUtil.alignToInt(JBUI.getFontScale(font.getSize2D()), g, RoundingMode.ROUND_FLOOR_BIAS);
-    return Math.max(fontMetricsThickness, minValue);
+  private static double maybeScaleFontMetricsThickness(double fontMetricsThickness, @NotNull Font font) {
+    float fontScale = JBUI.getFontScale(font.getSize2D());
+    float normalizedFontScale = font.getSize2D() / UISettings.getDefFontSize();
+    if (normalizedFontScale > 1) {
+      // k==1.0 with normalizedFontScale==1.0, k->0.5 fast enough with normalizedFontScale increasing
+      double k = 1 / (Math.pow(normalizedFontScale, 2) + 1) + 0.5;
+      fontScale *= k;
+    }
+    if (!UIUtil.isJreHiDPIEnabled()) fontScale = (int)fontScale;
+    return Math.max(fontMetricsThickness, fontScale);
   }
 
   private static void drawLineCentered(Graphics2D g, double x, double y, double width, double height, double thickness, EffectPainter2D painter) {
@@ -311,7 +321,7 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
 
     BufferedImage getImage(Graphics2D g, Color color, double height) {
-      Long key = color.getRGB() ^ ((long)height << 32);
+      Long key = color.getRGB() ^ ((long)(JBUI.sysScale(g) * height) << 32);
       ConcurrentHashMap<Long, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
       return cache.computeIfAbsent(key, k -> createImage(g, color, height));
     }
