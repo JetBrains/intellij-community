@@ -29,6 +29,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.cache.impl.id.IdIndex;
 import com.intellij.psi.impl.cache.impl.id.IdIndexEntry;
+import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -173,6 +174,8 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
   }
 
   private static void checkAnnotationsJarAttached(@NotNull PsiFile file, @NotNull ProblemsHolder holder) {
+    if (file.getViewProvider() instanceof InjectedFileViewProvider) return;
+
     final Project project = file.getProject();
     if (!holder.isOnTheFly()) {
       final Boolean found = project.getUserData(NO_ANNOTATIONS_FOUND);
