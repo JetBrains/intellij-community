@@ -19,24 +19,23 @@ class FileIconKey {
   private final VirtualFile myFile;
   private final FileType myFileType;
   private final Project myProject;
-  @Iconable.IconFlags private final int myFlags;
-  @Nullable private final Language myInitialLanguage;
+  private final @Iconable.IconFlags int myFlags;
+  private final @Nullable Language myInitialLanguage;
 
   FileIconKey(@NotNull VirtualFile file, FileType fileType, Project project, @Iconable.IconFlags int flags) {
     myFile = file;
     myFileType = fileType;
-    myInitialLanguage = myFile instanceof LightVirtualFile ? ((LightVirtualFile)myFile).getLanguage() : null;
     myProject = project;
     myFlags = flags;
+    myInitialLanguage = myFile instanceof LightVirtualFile ? ((LightVirtualFile)myFile).getLanguage() : null;
   }
 
   @Override
-  public boolean equals(final Object o) {
+  public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof FileIconKey)) return false;
 
-    final FileIconKey that = (FileIconKey)o;
-
+    FileIconKey that = (FileIconKey)o;
     if (myFlags != that.myFlags) return false;
     if (!myFile.equals(that.myFile)) return false;
     if (!Objects.equals(myFileType, that.myFileType)) return false;
@@ -56,20 +55,19 @@ class FileIconKey {
     return result;
   }
 
-  public VirtualFile getFile() {
+  VirtualFile getFile() {
     return myFile;
   }
 
-  public FileType getFileType() {
+  FileType getFileType() {
     return myFileType;
   }
 
-  public Project getProject() {
+  Project getProject() {
     return myProject;
   }
 
-  @Iconable.IconFlags
-  public int getFlags() {
+  @Iconable.IconFlags int getFlags() {
     return myFlags;
   }
 }
