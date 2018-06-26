@@ -34,6 +34,9 @@ class BarContainer {
     _updateTouchBarsParents();
   }
 
+  @Override
+  public String toString() { return myMain.toString(); }
+
   void set(@NotNull TouchBar main, Map<Long, TouchBar> alts) {
     myMain = main;
     myKeyMask2Alt = alts;

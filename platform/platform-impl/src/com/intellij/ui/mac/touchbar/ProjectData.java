@@ -140,7 +140,7 @@ class ProjectData {
     return false;
   }
 
-  @Nullable BarContainer findByComponent(Component child) {
+  @Nullable EditorData findEditorDataByComponent(Component child) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     for (EditorData editorData : myEditors.values()) {
@@ -151,9 +151,15 @@ class ProjectData {
           LOG.error("focused header of editor: " + editorData.editor + ", but BarContainer wasn't created, header: " + ecmp);
           continue;
         }
-        return editorData.containerSearch;
+        return editorData;
       }
     }
+
+    return null;
+  }
+
+  @Nullable BarContainer findDebugToolWindowByComponent(Component child) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
 
     if (myActiveDebugSessions.get() <= 0)
       return null;
@@ -272,12 +278,16 @@ class ProjectData {
 
   int getDbgSessions() { return myActiveDebugSessions.get(); }
 
+  static long getUsedKeyMask() { return InputEvent.ALT_DOWN_MASK | InputEvent.META_DOWN_MASK | InputEvent.CTRL_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK; }
+
   private static long _str2mask(@NotNull String modifierId) {
     if (!modifierId.contains(".")) {
       if (modifierId.equalsIgnoreCase("alt"))
         return InputEvent.ALT_DOWN_MASK;
       if (modifierId.equalsIgnoreCase("cmd"))
         return InputEvent.META_DOWN_MASK;
+      if (modifierId.equalsIgnoreCase("ctrl"))
+        return InputEvent.CTRL_DOWN_MASK;
       if (modifierId.equalsIgnoreCase("shift"))
         return InputEvent.SHIFT_DOWN_MASK;
       return 0;

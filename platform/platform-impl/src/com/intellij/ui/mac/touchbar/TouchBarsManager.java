@@ -124,20 +124,20 @@ public class TouchBarsManager {
     if (e instanceof MouseWheelEvent)
       return;
 
-    ourStack.updateKeyMask(e.getModifiersEx());
+    ourStack.updateKeyMask(e.getModifiersEx() & ProjectData.getUsedKeyMask());
   }
 
   public static void onFocusEvent(AWTEvent e) {
     if (!isTouchBarAvailable())
       return;
 
+    if (!(e.getSource() instanceof Container))
+      return;
+
+    final Container src = (Container)e.getSource();
+
     // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
-      if (!(e.getSource() instanceof Container))
-        return;
-
-      final Container src = (Container)e.getSource();
-
       if (_hasPopup()) {
         // System.out.println("skip focus event processing because popup exists: " + e);
         return;
@@ -146,6 +146,7 @@ public class TouchBarsManager {
       if (_hasNonModalDialog()) {
         final BarContainer barForParent = _findByParentComponent(src, ourTemporaryBars.values(), null);
         if (barForParent != null) {
+          // StackTouchBars.changeReason = "non-modal dialog gained focus";
           barForParent.show();
           return;
         }
@@ -155,27 +156,47 @@ public class TouchBarsManager {
         if (pd.isDisposed())
           continue;
 
-        if (pd.checkToolWindowContents((Component)e.getSource())) {
+        if (pd.checkToolWindowContents(src)) {
           // System.out.println("tool window gained focus: " + e);
           return;
         }
 
-        final BarContainer parent = pd.findByComponent((Component)e.getSource());
-        if (parent != null) {
-          // System.out.println("component gained focus: " + e);
-          ourStack.showContainer(parent);
+        final ProjectData.EditorData ed = pd.findEditorDataByComponent(src);
+        if (ed != null && ed.containerSearch != null) {
+          // System.out.println("editor-component gained focus: " + e);
+          // StackTouchBars.changeReason = "editor-search gained focus";
+          ourStack.showContainer(ed.containerSearch);
+          return;
+        }
+
+        final BarContainer twbc = pd.findDebugToolWindowByComponent(src);
+        if (twbc != null) {
+          // System.out.println("debugger component gained focus: " + e);
+          // StackTouchBars.changeReason = "tool-window gained focus";
+          ourStack.showContainer(twbc);
           return;
         }
       }
     } else if (e.getID() == FocusEvent.FOCUS_LOST) {
-      if (!(e.getSource() instanceof Container))
-        return;
-
-      final Container src = (Container)e.getSource();
       final BarContainer nonModalDialogParent = _findByParentComponent(src, ourTemporaryBars.values(), bc -> bc.isNonModalDialog());
       if (nonModalDialogParent != null) {
         // System.out.println("non-modal dialog window '" + nonModalDialogParent.getParentComponent() + "' lost focus: " + e);
+        // StackTouchBars.changeReason = "non-modal dialog lost focus";
         nonModalDialogParent.hide();
+        return;
+      }
+
+      for (ProjectData pd: ourProjectData.values()) {
+        if (pd.isDisposed())
+          continue;
+
+        final ProjectData.EditorData ed = pd.findEditorDataByComponent(src);
+        if (ed != null && ed.containerSearch != null) {
+          // System.out.println("editor-component lost focus: " + e);
+          // StackTouchBars.changeReason = "editor-component lost focus";
+          ourStack.removeContainer(ed.containerSearch);
+          return;
+        }
       }
     }
   }
@@ -208,6 +229,7 @@ public class TouchBarsManager {
         final boolean hasDebugSession = pd.getDbgSessions() > 0;
         if (!hasDebugSession) {
           // System.out.println("elevate default because editor window gained focus: " + editor);
+          // StackTouchBars.changeReason = "elevate default because editor gained focus";
           ourStack.elevateContainer(pd.get(BarType.DEFAULT));
         }
       }
@@ -254,6 +276,8 @@ public class TouchBarsManager {
       LOG.error("can't find editor-data to update header of editor: " + editor + ", project: " + proj);
       return;
     }
+
+    // System.out.printf("onUpdateEditorHeader: editor='%s', header='%s'\n", editor, header);
 
     final ActionGroup actions = header instanceof DataProvider ? TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)header) : null;
     if (header == null) {
