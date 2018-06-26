@@ -13,20 +13,36 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInspection.dataFlow.instructions;
 
-import com.intellij.codeInspection.dataFlow.*;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
+import com.intellij.codeInspection.dataFlow.DataFlowRunner;
+import com.intellij.codeInspection.dataFlow.DfaInstructionState;
+import com.intellij.codeInspection.dataFlow.DfaMemoryState;
+import com.intellij.codeInspection.dataFlow.InstructionVisitor;
+import com.intellij.psi.PsiExpression;
+import org.jetbrains.annotations.NotNull;
 
-public class NotInstruction extends Instruction {
+/**
+ * @author max
+ */
+public class CheckReturnValueInstruction extends Instruction {
+  private final @NotNull PsiExpression myReturnValue;
+
+  public CheckReturnValueInstruction(@NotNull PsiExpression returnValue) {
+    myReturnValue = returnValue;
+  }
 
   @Override
   public DfaInstructionState[] accept(DataFlowRunner runner, DfaMemoryState stateBefore, InstructionVisitor visitor) {
-    return visitor.visitNot(this, runner, stateBefore);
+    return visitor.visitCheckReturnValue(this, runner, stateBefore);
+  }
+
+  @NotNull
+  public PsiExpression getReturn() {
+    return myReturnValue;
   }
 
   public String toString() {
-    return "NOT";
+    return "CheckReturnValue";
   }
 }

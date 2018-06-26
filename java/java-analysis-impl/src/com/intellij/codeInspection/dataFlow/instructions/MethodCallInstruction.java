@@ -21,13 +21,14 @@ import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.psi.*;
 import com.intellij.util.ObjectUtils;
+import com.siyeh.ig.callMatcher.CallMatcher;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 
-public class MethodCallInstruction extends Instruction implements ExpressionPushingInstruction {
+public class MethodCallInstruction extends Instruction {
   private static final Nullability[] EMPTY_NULLABILITY_ARRAY = new Nullability[0];
 
   @Nullable private final PsiType myType;
@@ -119,10 +120,15 @@ public class MethodCallInstruction extends Instruction implements ExpressionPush
     myReturnNullability = call instanceof PsiNewExpression ? Nullability.NOT_NULL : DfaPsiUtil.getElementNullability(myType, myTargetMethod);
   }
 
-  @Nullable
-  @Override
-  public PsiExpression getExpression() {
-    return ObjectUtils.tryCast(myContext, PsiExpression.class);
+  public boolean matches(CallMatcher matcher) {
+    switch (myMethodType) {
+      case REGULAR_METHOD_CALL:
+        return myContext instanceof PsiMethodCallExpression && matcher.test((PsiMethodCallExpression)myContext);
+      case METHOD_REFERENCE_CALL:
+        return matcher.methodReferenceMatches((PsiMethodReferenceExpression)myContext);
+      default:
+        return false;
+    }
   }
 
   /**

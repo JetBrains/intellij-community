@@ -2,11 +2,13 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiAnnotation;
+import com.intellij.psi.PsiExpression;
+import com.intellij.psi.PsiMethod;
+import com.intellij.psi.PsiMethodCallExpression;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
-import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.psiutils.ExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import org.jetbrains.annotations.Contract;
@@ -31,18 +33,6 @@ public class JavaMethodContractUtil {
   /**
    * Returns a list of contracts defined for given method call (including hardcoded contracts if any)
    *
-   * @param call a method call site.
-   * @return list of contracts (empty list if no contracts found)
-   */
-  @NotNull
-  public static List<? extends MethodContract> getMethodCallContracts(@NotNull PsiCallExpression call) {
-    PsiMethod method = call.resolveMethod();
-    return method == null ? Collections.emptyList() : getMethodCallContracts(method, call);
-  }
-
-  /**
-   * Returns a list of contracts defined for given method call (including hardcoded contracts if any)
-   *
    * @param method a method to check the contracts for
    * @param call an optional call site. If specified, could be taken into account to derive contracts for some
    *             testing methods like assertThat(x, is(null))
@@ -50,9 +40,8 @@ public class JavaMethodContractUtil {
    */
   @NotNull
   public static List<? extends MethodContract> getMethodCallContracts(@NotNull final PsiMethod method,
-                                                                      @Nullable PsiCallExpression call) {
-    List<MethodContract> contracts =
-      HardcodedContracts.getHardcodedContracts(method, ObjectUtils.tryCast(call, PsiMethodCallExpression.class));
+                                                                      @Nullable PsiMethodCallExpression call) {
+    List<MethodContract> contracts = HardcodedContracts.getHardcodedContracts(method, call);
     return !contracts.isEmpty() ? contracts : getMethodContracts(method);
   }
 
@@ -211,7 +200,9 @@ public class JavaMethodContractUtil {
   @Contract("null -> null")
   public static PsiExpression findReturnedValue(@Nullable PsiMethodCallExpression call) {
     if (call == null) return null;
-    List<? extends MethodContract> contracts = getMethodCallContracts(call);
+    PsiMethod method = call.resolveMethod();
+    if (method == null) return null;
+    List<? extends MethodContract> contracts = getMethodCallContracts(method, call);
     ContractReturnValue returnValue = getNonFailingReturnValue(contracts);
     if (returnValue == null) return null;
     if (returnValue.equals(ContractReturnValue.returnThis())) {
