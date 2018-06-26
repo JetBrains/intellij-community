@@ -2,6 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.BrowserUtil;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.impl.ProjectUtil;
@@ -72,6 +73,8 @@ import javax.swing.border.Border;
 import javax.swing.event.DocumentEvent;
 import javax.swing.text.BadLocationException;
 import javax.swing.text.View;
+import javax.swing.text.html.HTMLEditorKit;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.IOException;
@@ -1014,7 +1017,7 @@ public class PluginManagerConfigurableNew
       linePanel.add(new JLabel(text));
     }
     else {
-      linePanel.add(new LinkLabel(text, null));
+      linePanel.add(new LinkLabel<>(text, null, (_0, _1) -> BrowserUtil.browse(link)));
     }
 
     return linePanel;
@@ -2645,7 +2648,7 @@ public class PluginManagerConfigurableNew
     }
 
     public void sortByName() {
-      ContainerUtil.sort(descriptors, Comparator.comparing(IdeaPluginDescriptor::getName));
+      ContainerUtil.sort(descriptors, (o1, o2) -> StringUtil.compare(o1.getName(), o2.getName(), true));
     }
   }
 
@@ -2889,11 +2892,16 @@ public class PluginManagerConfigurableNew
 
       createButtons(pluginForUpdate);
 
-      JPanel westPanel = new NonOpaquePanel(createCheckboxIconLayout());
-      westPanel.setBorder(JBUI.Borders.emptyTop(5));
-      westPanel.add(myEnableDisableButton);
-      addIconComponent(westPanel, null);
-      add(westPanel, BorderLayout.WEST);
+      if (pluginForUpdate) {
+        addIconComponent(this, BorderLayout.WEST);
+      }
+      else {
+        JPanel westPanel = new NonOpaquePanel(createCheckboxIconLayout());
+        westPanel.setBorder(JBUI.Borders.emptyTop(5));
+        westPanel.add(myEnableDisableButton);
+        addIconComponent(westPanel, null);
+        add(westPanel, BorderLayout.WEST);
+      }
 
       JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(0));
       add(centerPanel);
@@ -2908,10 +2916,7 @@ public class PluginManagerConfigurableNew
       }
       updateErrors();
 
-      if (pluginForUpdate) {
-        addDescriptionComponent(centerPanel, getChangeNotes(plugin), new LineFunction(3, false));
-      }
-      else {
+      if (!pluginForUpdate) {
         addDescriptionComponent(centerPanel, getShortDescription(plugin, false), new LineFunction(1, true));
       }
 
@@ -3054,12 +3059,6 @@ public class PluginManagerConfigurableNew
       else {
         myBaselinePanel.removeErrorComponents();
       }
-    }
-
-    @Nullable
-    private static String getChangeNotes(@NotNull IdeaPluginDescriptor plugin) {
-      String notes = plugin.getChangeNotes();
-      return StringUtil.isEmptyOrSpaces(notes) ? null : "<b>Change Notes</b><br>\n" + notes;
     }
 
     @Override
@@ -3845,7 +3844,7 @@ public class PluginManagerConfigurableNew
       nameButtons.add(myButtonsPanel = createButtons(update), BorderLayout.EAST);
       centerPanel.add(nameButtons, VerticalLayout.FILL_HORIZONTAL);
 
-      boolean bundled = myPlugin.isBundled();
+      boolean bundled = myPlugin.isBundled() && !myPlugin.allowBundledUpdate();
       String version = bundled ? "bundled" : myPlugin.getVersion();
 
       if (!StringUtil.isEmptyOrSpaces(version)) {
@@ -4122,12 +4121,16 @@ public class PluginManagerConfigurableNew
 
         if (!StringUtil.isEmptyOrSpaces(description)) {
           JEditorPane descriptionComponent = new JEditorPane();
-          descriptionComponent.setEditorKit(UIUtil.getHTMLEditorKit());
+          HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
+          StyleSheet sheet = kit.getStyleSheet();
+          sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
+          descriptionComponent.setEditorKit(kit);
           descriptionComponent.setEditable(false);
           descriptionComponent.setFocusable(false);
           descriptionComponent.setOpaque(false);
           descriptionComponent.setBorder(null);
           descriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
+          descriptionComponent.addHyperlinkListener(BrowserHyperlinkListener.INSTANCE);
 
           if (descriptionComponent.getCaret() != null) {
             descriptionComponent.setCaretPosition(0);
@@ -4423,7 +4426,6 @@ public class PluginManagerConfigurableNew
   @SuppressWarnings("UseJBColor")
   private static final Color WhiteForeground = new JBColor(Color.white, new Color(0xBBBBBB));
   @SuppressWarnings("UseJBColor")
-  private static final Color WhiteBackground = new JBColor(Color.white, new Color(0x3C3F41));
   private static final Color BlueColor = new JBColor(0x1D73BF, 0x134D80);
   private static final Color GreenColor = new JBColor(0x5D9B47, 0x457335);
   @SuppressWarnings("UseJBColor")
@@ -4470,7 +4472,7 @@ public class PluginManagerConfigurableNew
       else {
         setTextColor(GreenColor);
         setFocusedTextColor(GreenColor);
-        setBgColor(WhiteBackground);
+        setBgColor(MAIN_BG_COLOR);
       }
 
       setFocusedBgColor(GreenFocusedBackground);
