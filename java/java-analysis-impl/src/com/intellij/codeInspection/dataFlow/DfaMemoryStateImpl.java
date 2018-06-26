@@ -978,11 +978,23 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     else { // Not Equals
       if (isNull(dfaLeft) && isPrimitive(dfaRight) || isNull(dfaRight) && isPrimitive(dfaLeft)) return true;
+      if (applyBooleanInequality(dfaLeft, dfaRight) ||
+          applyBooleanInequality(dfaRight, dfaLeft)) {
+        return true;
+      }
       myDistinctClasses.addUnordered(c1Index, c2Index);
     }
     myCachedHash = null;
 
     return true;
+  }
+
+  private boolean applyBooleanInequality(DfaValue var, DfaValue value) {
+    if (!(var instanceof DfaVariableValue) || !PsiType.BOOLEAN.equals(((DfaVariableValue)var).getVariableType())) return false;
+    if (!(value instanceof DfaConstValue)) return false;
+    Object constValue = ((DfaConstValue)value).getValue();
+    if (!(constValue instanceof Boolean)) return false;
+    return applyRelation(var, myFactory.getBoolean(!((Boolean)constValue)), false);
   }
 
   private boolean applyLessThanRelation(@NotNull final DfaValue dfaLeft, @NotNull final DfaValue dfaRight) {

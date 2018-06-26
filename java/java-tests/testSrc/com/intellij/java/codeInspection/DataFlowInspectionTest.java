@@ -624,6 +624,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testEqualsWithItself() { doTest(); }
   public void testBoxingBoolean() { doTest(); }
   public void testOrWithAssignment() { doTest(); }
+  public void testAndAndLastOperand() { doTest(); }
   public void testAndAndWithOr() { doTest(); }
   public void testBoxUnboxArrayElement() { doTest(); }
   public void testExactInstanceOf() { doTest(); }

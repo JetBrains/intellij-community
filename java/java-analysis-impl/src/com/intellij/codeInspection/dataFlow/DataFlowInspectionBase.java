@@ -273,8 +273,8 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     reportOptionalOfNullableImprovements(holder, reportedAnchors, visitor.getOfNullableCalls());
 
     visitor.getBooleanExpressions().forEach((expression, state) -> {
-      if (state != ThreeState.UNSURE && reportedAnchors.add(expression)) {
-        reportConstantBoolean(holder, expression, state.toBoolean());
+      if (state != ThreeState.UNSURE) {
+        reportConstantBoolean(holder, expression, reportedAnchors, state.toBoolean());
       }
     });
 
@@ -620,7 +620,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
                                new RedundantInstanceofFix());
       }
       else {
-        reportConstantBoolean(holder, psiAnchor, true);
+        reportConstantBoolean(holder, psiAnchor, reportedAnchors, true);
       }
     }
     else if (psiAnchor instanceof PsiSwitchLabelStatement) {
@@ -649,50 +649,54 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
           String message = InspectionsBundle.message("dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
           holder.registerProblem(psiAnchor, range, message);
           // do not add to reported anchors if only part of expression was reported
-        } else if (reportedAnchors.add(psiAnchor)) {
-          reportConstantCondition(holder, psiAnchor, evaluatesToTrue);
+        }
+        else if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiForeachStatement) {
+          // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
+          if (!evaluatesToTrue || !reportedAnchors.add(psiAnchor)) {
+            // loop on always non-empty collection -- nothing to report
+            return;
+          }
+          boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
+          holder.registerProblem(psiAnchor, array ?
+                                            InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
+                                            InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
+        }
+        else if (psiAnchor instanceof PsiMethodReferenceExpression) {
+          if (reportedAnchors.add(psiAnchor)) {
+            holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.method.reference", evaluatesToTrue),
+                                   createReplaceWithTrivialLambdaFix(evaluatesToTrue));
+          }
+        }
+        else {
+          reportConstantBoolean(holder, psiAnchor, reportedAnchors, evaluatesToTrue);
         }
       }
     }
   }
 
-  private void reportConstantCondition(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
-    if (PsiUtil.skipParenthesizedExprUp(psiAnchor.getParent()) instanceof PsiForeachStatement) {
-      // highlighted for-each iterated value means evaluatesToTrue == "collection is always empty"
-      if (!evaluatesToTrue) {
-        // loop on always non-empty collection -- nothing to report
-        return;
-      }
-      boolean array = psiAnchor instanceof PsiExpression && ((PsiExpression)psiAnchor).getType() instanceof PsiArrayType;
-      holder.registerProblem(psiAnchor, array ?
-                                        InspectionsBundle.message("dataflow.message.loop.on.empty.array") :
-                                        InspectionsBundle.message("dataflow.message.loop.on.empty.collection"));
+  private void reportConstantBoolean(ProblemsHolder holder,
+                                     PsiElement psiAnchor,
+                                     HashSet<PsiElement> reportedAnchors,
+                                     boolean evaluatesToTrue) {
+    while (psiAnchor instanceof PsiParenthesizedExpression) {
+      psiAnchor = ((PsiParenthesizedExpression)psiAnchor).getExpression();
     }
-    else if (psiAnchor instanceof PsiMethodReferenceExpression) {
-      holder.registerProblem(psiAnchor, InspectionsBundle.message("dataflow.message.constant.method.reference", evaluatesToTrue),
-                             createReplaceWithTrivialLambdaFix(evaluatesToTrue));
-    }
-    else {
-      reportConstantBoolean(holder, psiAnchor, evaluatesToTrue);
-    }
-  }
-
-  private void reportConstantBoolean(ProblemsHolder holder, PsiElement psiAnchor, boolean evaluatesToTrue) {
-    if (shouldBeSuppressed(psiAnchor)) return;
+    if (psiAnchor == null || shouldBeSuppressed(psiAnchor)) return;
     boolean isAssertion = isAssertionEffectively(psiAnchor, evaluatesToTrue);
-    if (!DONT_REPORT_TRUE_ASSERT_STATEMENTS || !isAssertion) {
-      List<LocalQuickFix> fixes = new ArrayList<>();
-      ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
-      if (isAssertion && holder.isOnTheFly()) {
-        fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
-                                             InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
-      }
-      ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
-      String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
-                                                 "dataflow.message.constant.condition.when.reached" :
-                                                 "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
-      holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
+    if (DONT_REPORT_TRUE_ASSERT_STATEMENTS && isAssertion) return;
+    if (!reportedAnchors.add(psiAnchor)) return;
+
+    List<LocalQuickFix> fixes = new ArrayList<>();
+    ContainerUtil.addIfNotNull(fixes, createSimplifyBooleanExpressionFix(psiAnchor, evaluatesToTrue));
+    if (isAssertion && holder.isOnTheFly()) {
+      fixes.add(new SetInspectionOptionFix(this, "DONT_REPORT_TRUE_ASSERT_STATEMENTS",
+                                           InspectionsBundle.message("inspection.data.flow.turn.off.true.asserts.quickfix"), true));
     }
+    ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(psiAnchor, evaluatesToTrue));
+    String message = InspectionsBundle.message(isAtRHSOfBooleanAnd(psiAnchor) ?
+                                               "dataflow.message.constant.condition.when.reached" :
+                                               "dataflow.message.constant.condition", Boolean.toString(evaluatesToTrue));
+    holder.registerProblem(psiAnchor, message, fixes.toArray(LocalQuickFix.EMPTY_ARRAY));
   }
 
   private static boolean shouldBeSuppressed(PsiElement anchor) {
