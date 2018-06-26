@@ -58,8 +58,6 @@ open class GuiTestCaseExt : GuiTestCase() {
 
   @After
   fun tearDown() {
-    if (isIdeFrameRun())
-      closeProject()
     logEndTest(testMethod.methodName)
     guiTestRule.IdeHandling().tearDown()
   }
