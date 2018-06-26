@@ -313,6 +313,8 @@ public class CommentTracker {
 
   private void grabCommentsOnDelete(PsiElement element) {
     if (element instanceof PsiExpression && element.getParent() instanceof PsiExpressionStatement ||
+        (element.getParent() instanceof PsiDeclarationStatement &&
+         ((PsiDeclarationStatement)element.getParent()).getDeclaredElements().length == 1) ||
         element.getParent() instanceof PsiJavaCodeReferenceElement) {
       element = element.getParent();
     }
