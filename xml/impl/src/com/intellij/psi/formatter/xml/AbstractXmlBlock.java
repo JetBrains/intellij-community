@@ -303,7 +303,7 @@ public abstract class AbstractXmlBlock extends AbstractBlock {
   }
 
 
-  protected Block createSimpleChild(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
+  protected XmlBlock createSimpleChild(final ASTNode child, final Indent indent, final Wrap wrap, final Alignment alignment) {
     return new XmlBlock(child, wrap, alignment, myXmlFormattingPolicy, indent, null, isPreserveSpace());
   }
 
