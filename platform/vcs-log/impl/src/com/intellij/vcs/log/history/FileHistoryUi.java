@@ -216,7 +216,14 @@ public class FileHistoryUi extends AbstractVcsLogUi {
   }
 
   @Override
-  protected <T> void handleCommitNotFound(@NotNull T commitId, @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+  protected <T> void handleCommitNotFound(@NotNull T commitId,
+                                          boolean commitExists,
+                                          @NotNull PairFunction<GraphTableModel, T, Integer> rowGetter) {
+    if (!commitExists) {
+      super.handleCommitNotFound(commitId, false, rowGetter);
+      return;
+    }
+    
     String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
       showWarningWithLink(mainText + " in current branch.", "Show all branches and search again.", () -> {
@@ -239,9 +246,6 @@ public class FileHistoryUi extends AbstractVcsLogUi {
             }
           }
         });
-      }
-      else {
-        super.handleCommitNotFound(commitId, rowGetter);
       }
     }
   }
