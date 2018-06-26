@@ -1355,7 +1355,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     List<String> reusedVariables = findReusedVariables(match, myInputVariables, myOutputVariable);
-    PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+    PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable, myReturnType);
 
     PsiElement appendLocation = addNotNullConditionalCheck(match, replacedMatch);
     declareReusedVariables(appendLocation, reusedVariables);

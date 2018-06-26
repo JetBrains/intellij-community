@@ -1270,6 +1270,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testBoxedConditionalReturn() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testBeforeCommentAfterSelectedFragment() throws Exception {
     doTest();
   }
