@@ -107,7 +107,7 @@ public class ChangeRevision extends Revision {
   }
 
   public String toString() {
-    return getClass().getSimpleName() + ": " + myChangeToRevert;
+    return super.toString();
   }
 
   public boolean containsChangeWithId(long id) {
