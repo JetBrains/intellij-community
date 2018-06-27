@@ -15,8 +15,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class StructuralSearchRunConfiguration extends LocatableConfigurationBase {
 
-  public StructuralSearchRunConfiguration(Project project,
-                                          StructuralSearchConfigurationFactory factory, String name) {
+  public StructuralSearchRunConfiguration(Project project, ConfigurationFactory factory, String name) {
     super(project, factory, name);
   }
 

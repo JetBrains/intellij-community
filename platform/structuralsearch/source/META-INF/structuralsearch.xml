@@ -20,6 +20,8 @@
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
     <configurationType implementation="com.intellij.structuralsearch.dsl.StructuralSearchRunConfigurationType"/>
     <runConfigurationProducer implementation="com.intellij.structuralsearch.dsl.StructuralSearchConfigurationProducer"/>
+    <runLineMarkerContributor language="kotlin" id="StructuralSearchRunLineMarkerProvider"
+                              implementationClass="com.intellij.structuralsearch.dsl.StructuralSearchRunLineMarkerProvider"/>
   </extensions>
 
   <actions>
