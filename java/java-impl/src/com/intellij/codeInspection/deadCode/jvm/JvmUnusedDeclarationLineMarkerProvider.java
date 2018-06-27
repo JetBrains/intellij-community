@@ -3,9 +3,11 @@ package com.intellij.codeInspection.deadCode.jvm;
 
 import com.intellij.codeInsight.daemon.LineMarkerInfo;
 import com.intellij.codeInsight.daemon.LineMarkerProvider;
+import com.intellij.icons.AllIcons;
 import com.intellij.lang.jvm.JvmElement;
 import com.intellij.lang.jvm.JvmMethod;
 import com.intellij.lang.jvm.source.JvmDeclarationSearch;
+import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -17,19 +19,20 @@ public class JvmUnusedDeclarationLineMarkerProvider implements LineMarkerProvide
   @Nullable
   @Override
   public LineMarkerInfo getLineMarkerInfo(@NotNull PsiElement element) {
-    for (JvmElement e: JvmDeclarationSearch.getElementsByIdentifier(element)) {
-      if (e instanceof JvmMethod) {
-        if (!JvmDeadCodeSearcher.isDirectlyUsed(e.getSourceElement(), e)) {
-          //TODO
-        }
-      }
-    }
-
     return null;
   }
 
   @Override
   public void collectSlowLineMarkers(@NotNull List<PsiElement> elements, @NotNull Collection<LineMarkerInfo> result) {
-
+    for (PsiElement element: elements) {
+      for (JvmElement e: JvmDeclarationSearch.getElementsByIdentifier(element)) {
+        if (e instanceof JvmMethod) {
+          if (!JvmDeadCodeSearcher.isDirectlyUsed(e.getSourceElement(), e)) {
+            result.add(new LineMarkerInfo<>(element, element.getTextRange(), AllIcons.Actions.QuickfixBulb, 0, null, null,
+                                            GutterIconRenderer.Alignment.RIGHT));
+          }
+        }
+      }
+    }
   }
 }
