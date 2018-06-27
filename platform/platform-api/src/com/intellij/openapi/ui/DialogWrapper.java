@@ -34,6 +34,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -514,15 +515,16 @@ public abstract class DialogWrapper {
     List<JButton> leftSideButtons = createButtons(leftSideActions);
     List<JButton> rightSideButtons = createButtons(actions);
 
+    int index = 0;
     myButtonMap.clear();
     for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
       myButtonMap.put(button.getAction(), button);
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
+      final boolean isLeft = index < leftSideButtons.size();
+      TouchbarDataKeys.putClientPropertyDialogButton(button, !isLeft, false, index++);
     }
-
-    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }

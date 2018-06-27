@@ -37,11 +37,24 @@ class ItemsContainer {
     return butt;
   }
 
-  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) {
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality, @Nullable TBItem positionAnchor) {
     final String uid = String.format("%s.anActionButton.%d.%s", myName, myCounter++, ActionManager.getInstance().getId(act));
     final TBItemAnActionButton butt = new TBItemAnActionButton(uid, myListener, act, showMode, modality);
-    myItems.add(butt);
+
+    if (positionAnchor != null) {
+      final int index = myItems.indexOf(positionAnchor);
+      if (index >= 0 && index < myItems.size())
+        myItems.add(index, butt);
+      else
+        myItems.add(butt);
+    } else
+      myItems.add(butt);
+
     return butt;
+  }
+
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) {
+    return addAnActionButton(act, showMode, modality, null);
   }
 
   @NotNull TBItemGroup addGroup() {
