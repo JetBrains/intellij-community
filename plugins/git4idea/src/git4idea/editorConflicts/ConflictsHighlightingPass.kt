@@ -34,7 +34,7 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
   }
 
   private fun createRangeInfo(begin: PsiElement, end: PsiElement): HighlightInfo? {
-    val beginType = EditorConflictUtils.getConflictMarkerType(begin.text)
+    val beginType = getConflictMarkerType(begin)
     if (beginType == ConflictMarkerType.AfterLast) return null
     val d = document ?: return null
     val range = getSectionInnerRange(begin, end, d)
@@ -56,7 +56,9 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
       .needsUpdateOnTyping(false)
       .textAttributes(HighlighterColors.BAD_CHARACTER)
       .createUnconditionally()
-    getIntentionActions(element).forEach { info.registerFix(it, null, null, null, null) }
+    if (getConflictMarkerType(element) != AfterLast) {
+      getIntentionActions(element).forEach { info.registerFix(it, null, null, null, null) }
+    }
     return info
   }
 
@@ -82,7 +84,7 @@ private fun leafsSeq(e: PsiElement, fwd: Boolean) = buildSequence {
 }
 
 private class SetActiveIntentionAction(element: PsiElement) : IntentionAction {
-  private val markerText = element.text
+  private val type = getConflictMarkerType(element)
 
   override fun getText() = "Set active"
   override fun getFamilyName() = "Conflict Actions"
@@ -90,7 +92,7 @@ private class SetActiveIntentionAction(element: PsiElement) : IntentionAction {
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     runWriteAction {
-      EditorConflictUtils.setActiveMarkerType(project, EditorConflictUtils.getConflictMarkerType(markerText))
+      EditorConflictUtils.setActiveMarkerType(project, type)
       FileContentUtil.reparseOpenedFiles()
       PsiManager.getInstance(project).dropPsiCaches()
       DaemonCodeAnalyzer.getInstance(project).restart()
@@ -105,20 +107,22 @@ private fun getSectionInnerRange(begin: PsiElement, end: PsiElement, d: Document
 
 private fun getNextMarker(marker: PsiElement): PsiElement? {
   assert(marker.node?.elementType == TokenType.CONFLICT_MARKER)
-  val type = EditorConflictUtils.getConflictMarkerType(marker.text) ?: return null
+  val type = getConflictMarkerType(marker) ?: return null
   val next = leafsSeq(marker, true).firstOrNull { it.node?.elementType == TokenType.CONFLICT_MARKER }
-  val nextType = EditorConflictUtils.getConflictMarkerType(next?.text) ?: return null
+  val nextType = getConflictMarkerType(next) ?: return null
   return when {
     next != null && isNextMarker(type, nextType) -> next
     else -> null
   }
 }
 
+private fun getConflictMarkerType(marker: PsiElement?) = EditorConflictUtils.getConflictMarkerType(marker?.text)
+
 private fun getPrevMarker(marker: PsiElement): PsiElement? {
   assert(marker.node?.elementType == TokenType.CONFLICT_MARKER)
-  val type = EditorConflictUtils.getConflictMarkerType(marker.text) ?: return null
+  val type = getConflictMarkerType(marker) ?: return null
   val next = leafsSeq(marker, false).firstOrNull { it.node?.elementType == TokenType.CONFLICT_MARKER }
-  val nextType = EditorConflictUtils.getConflictMarkerType(next?.text) ?: return null
+  val nextType = getConflictMarkerType(next) ?: return null
   return when {
     next != null && isPrevMarker(type, nextType) -> next
     else -> null
