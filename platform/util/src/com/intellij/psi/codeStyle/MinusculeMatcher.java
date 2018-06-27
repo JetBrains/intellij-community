@@ -452,6 +452,7 @@ public class MinusculeMatcher implements Matcher {
    * When pattern is "CU" and the name is "CurrentUser", we already have a prefix "Cu" that matches,
    * but we try to find uppercase "U" later in name for better matching degree
    */
+  @Nullable
   private FList<TextRange> improveCamelHumps(@NotNull String name,
                                              int patternIndex,
                                              int nameIndex,
