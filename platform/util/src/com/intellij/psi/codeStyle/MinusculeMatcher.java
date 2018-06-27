@@ -474,7 +474,8 @@ public class MinusculeMatcher implements Matcher {
     return isUpperCase[patternIndex] && myPattern[patternIndex] != name.charAt(nameIndex);
   }
 
-  private FList<TextRange> findUppercaseMatchFurther(String name,
+  @Nullable
+  private FList<TextRange> findUppercaseMatchFurther(@NotNull String name,
                                                      int patternIndex,
                                                      int nameIndex,
                                                      boolean isAsciiName) {
