@@ -14,8 +14,10 @@ import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.openapi.project.Project
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.EditorConflictUtils
 import com.intellij.psi.*
+import com.intellij.util.DocumentUtil
 import com.intellij.util.FileContentUtil
 
 class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project, document) {
@@ -24,18 +26,25 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
   override fun doCollectInformation(progress: ProgressIndicator) {
     val conflicts = SyntaxTraverser.psiTraverser(file).filter { it.node?.elementType == TokenType.CONFLICT_MARKER }.toList()
     highlightInfos.addAll(conflicts.map { createMarkerInfo(it) })
-    highlightInfos.addAll(conflicts.zipWithNext { begin, end -> createRangeInfo(begin, end) })
-
-
-    highlightInfos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(file).needsUpdateOnTyping(false).textAttributes(DiffColors.DIFF_INSERTED).createUnconditionally())
+    highlightInfos.addAll(conflicts.zipWithNext { begin, end -> createRangeInfo(begin, end) }.filterNotNull())
   }
 
-  private fun createRangeInfo(begin: PsiElement, end: PsiElement): HighlightInfo {
-    val beginType = begin.text
-    val endType = end.text.substring(0, 8)
-  }
+  private fun createRangeInfo(begin: PsiElement, end: PsiElement): HighlightInfo? {
+    val beginType = EditorConflictUtils.getConflictMarkerType(begin.text)
+    if (beginType == EditorConflictUtils.ConflictMarkerType.AfterLast) return null
+    val d = document ?: return null
 
-  private fun getMarkerTextAttributesKey() = HighlighterColors.BAD_CHARACTER
+    val desiredType = EditorConflictUtils.getActiveMarkerType(myProject)
+    val range = TextRange(DocumentUtil.getLineEndOffset(begin.textOffset, d) + 1, end.textRange.startOffset)
+    val textAttrKey = if (beginType != desiredType) DiffColors.DIFF_DELETED else null
+
+    val infoBuilder = HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+    infoBuilder.range(range)
+    infoBuilder.needsUpdateOnTyping(false)
+    if (textAttrKey != null)
+      infoBuilder.textAttributes(textAttrKey)
+    return infoBuilder.createUnconditionally()
+  }
 
   private fun createMarkerInfo(element: PsiElement): HighlightInfo {
     val info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
@@ -64,7 +73,7 @@ private class SetActiveIntentionAction(element: PsiElement) : IntentionAction {
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
     runWriteAction {
-      project.putUserData(EditorConflictUtils.ACTIVE_REVISION, markerText)
+      EditorConflictUtils.setActiveMarkerType(project, EditorConflictUtils.getConflictMarkerType(markerText))
       FileContentUtil.reparseOpenedFiles()
       PsiManager.getInstance(project).dropPsiCaches()
       DaemonCodeAnalyzer.getInstance(project).restart()

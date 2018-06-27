@@ -19,7 +19,7 @@ class DebugEditorConflictAction : DumbAwareAction() {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val selection = editor.selectionModel.selectedText ?: return
     val commitish = commitishBySelection(selection, editor, project)
-    project.putUserData(EditorConflictUtils.ACTIVE_REVISION, commitish)
+//    project.putUserData(EditorConflictUtils.ACTIVE_CONFLICT_MARKER, commitish)
     if (commitish == null) {
       LOG.warn("Cant find commit by \"${selection}\"")
       return
