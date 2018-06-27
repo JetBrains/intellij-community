@@ -21,14 +21,15 @@ class ChmCheckinHandlerFactory : VcsCheckinHandlerFactory(GitVcs.getKey()) {
 }
 
 class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
-  private val vcs = GitVcs.getInstance(panel.project)
+  private val project = panel.project
+  private val vcs = GitVcs.getInstance(project)
   private val configurationPanel = MyConfigurationPanel()
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
 
     if (configurationPanel.isSelected()) {
       val ce = vcs.checkinEnvironment as GitCheckinEnvironment
-      ce.myOverridingCommitProcedure = MyCommitProcess()
+      ce.myOverridingCommitProcedure = MyCommitProcess(project, vcs)
     }
 
     return ReturnResult.COMMIT

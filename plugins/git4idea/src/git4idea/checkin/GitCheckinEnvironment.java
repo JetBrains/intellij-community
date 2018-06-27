@@ -185,7 +185,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
 
   public interface OverridingCommitProcedure {
 
-    void commit(List<Change> changes, String message);
+    void commit(GitCheckinEnvironment environment, List<Change> changes, String message);
 
   }
 
@@ -197,7 +197,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
 
     if (myOverridingCommitProcedure != null) {
-      myOverridingCommitProcedure.commit(changes, message);
+      myOverridingCommitProcedure.commit(this, changes, message);
       return emptyList();
     }
 
