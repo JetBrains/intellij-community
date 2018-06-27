@@ -183,10 +183,25 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     return GitBundle.getString("commit.action.name");
   }
 
+  public interface OverridingCommitProcedure {
+
+    void commit(List<Change> changes, String message);
+
+  }
+
+  public OverridingCommitProcedure myOverridingCommitProcedure;
+
   @Override
   public List<VcsException> commit(@NotNull List<Change> changes,
                                    @NotNull String message,
                                    @NotNull NullableFunction<Object, Object> parametersHolder, Set<String> feedback) {
+
+    if (myOverridingCommitProcedure != null) {
+      myOverridingCommitProcedure.commit(changes, message);
+      return emptyList();
+    }
+
+
     GitRepositoryManager manager = getRepositoryManager(myProject);
     List<VcsException> exceptions = new ArrayList<>();
     Map<VirtualFile, Collection<Change>> sortedChanges = sortChangesByGitRoot(myProject, changes, exceptions);
@@ -1118,6 +1133,7 @@ public class GitCheckinEnvironment implements CheckinEnvironment {
     myNextCommitIsPushed = null;
     myNextCommitAuthorDate = null;
     myNextCommitSkipHook = false;
+    myOverridingCommitProcedure = null;
   }
 
   public class GitCheckinOptions implements CheckinChangeListSpecificComponent, RefreshableOnComponent  {

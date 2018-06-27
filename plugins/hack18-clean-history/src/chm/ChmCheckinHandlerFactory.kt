@@ -2,6 +2,7 @@
 package chm
 
 import com.intellij.openapi.vcs.CheckinProjectPanel
+import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
@@ -10,6 +11,7 @@ import com.intellij.ui.NonFocusableCheckBox
 import com.intellij.util.PairConsumer
 import com.intellij.util.ui.JBUI
 import git4idea.GitVcs
+import git4idea.checkin.GitCheckinEnvironment
 import java.awt.event.KeyEvent
 import javax.swing.JComponent
 
@@ -24,6 +26,12 @@ class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
   private val configurationPanel = MyConfigurationPanel()
 
   override fun beforeCheckin(executor: CommitExecutor?, additionalDataConsumer: PairConsumer<Any, Any>): ReturnResult {
+
+    if (configurationPanel.isSelected()) {
+      val ce = vcs.checkinEnvironment as GitCheckinEnvironment
+      ce.myOverridingCommitProcedure = MyCommitProcess()
+    }
+
     return ReturnResult.COMMIT
   }
 
@@ -31,6 +39,7 @@ class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
 
   class MyConfigurationPanel : RefreshableOnComponent {
     private val cleanupCommit = NonFocusableCheckBox("Cleanup Commit")
+    fun  isSelected() = cleanupCommit.isSelected
 
     override fun getComponent(): JComponent {
       cleanupCommit.mnemonic = KeyEvent.VK_C
@@ -45,4 +54,12 @@ class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
     override fun restoreState() {}
 
   }
+}
+
+class MyCommitProcess : GitCheckinEnvironment.OverridingCommitProcedure {
+
+  override fun commit(changes: List<Change>, message: String) {
+  }
+
+
 }
