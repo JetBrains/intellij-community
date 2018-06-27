@@ -124,6 +124,9 @@ public class MavenResourceCompilerConfigurationGenerator {
     MavenProjectConfiguration projectConfig = new MavenProjectConfiguration();
 
     for (MavenProject mavenProject : myMavenProjectsManager.getProjects()) {
+      // do not add resource roots for 'pom' packaging projects
+      if ("pom".equals(mavenProject.getPackaging())) continue;
+
       VirtualFile pomXml = mavenProject.getFile();
 
       Module module = fileIndex.getModuleForFile(pomXml);
