@@ -50,7 +50,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
-  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commits to view changes";
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<CommitId, VcsShortCommitDetails> myDataGetter;
