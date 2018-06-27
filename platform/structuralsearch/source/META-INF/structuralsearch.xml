@@ -18,6 +18,8 @@
     <typedHandler implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTypedHandler"/>
     <completion.contributor language="any" implementationClass="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplatesCompletionContributor"/>
     <documentationProvider implementation="com.intellij.structuralsearch.plugin.ui.StructuralSearchTemplateDocumentationProvider"/>
+    <configurationType implementation="com.intellij.structuralsearch.dsl.StructuralSearchRunConfigurationType"/>
+    <runConfigurationProducer implementation="com.intellij.structuralsearch.dsl.StructuralSearchConfigurationProducer"/>
   </extensions>
 
   <actions>
