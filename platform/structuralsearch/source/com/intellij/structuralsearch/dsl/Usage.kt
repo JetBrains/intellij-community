@@ -15,7 +15,6 @@ fun main(args: Array<String>) {
     "anotherClassName" {
       text = "MatchOptions"
       text = !"MatchOptions"
-      isInvertRegExp = true
     }
     "count" {
       count = 0
