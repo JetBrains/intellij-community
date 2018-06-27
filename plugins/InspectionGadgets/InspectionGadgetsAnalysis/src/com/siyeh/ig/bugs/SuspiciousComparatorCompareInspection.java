@@ -161,7 +161,7 @@ public class SuspiciousComparatorCompareInspection extends BaseInspection {
       private final Set<PsiElement> myContexts = new HashSet<>();
       LongRangeSet myRange = LongRangeSet.empty();
 
-      public ComparatorVisitor(PsiParameterListOwner owner) {
+      private ComparatorVisitor(PsiParameterListOwner owner) {
         myOwner = owner;
       }
 
