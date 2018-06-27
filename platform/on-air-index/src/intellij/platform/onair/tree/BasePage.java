@@ -8,6 +8,9 @@ import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintStream;
+import java.util.Arrays;
+
 import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
 
 public abstract class BasePage {
@@ -40,7 +43,18 @@ public abstract class BasePage {
 
   protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
 
-  public abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage);
+  protected abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage);
+
+  protected abstract void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer);
+
+  // WARNING: this method allocates an array and must be used for debugging only
+  protected byte[] getKey(int index) {
+    final int bytesPerKey = tree.getKeySize();
+    byte[] result = new byte[bytesPerKey];
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * index;
+    System.arraycopy(backingArray, offset, result, 0, bytesPerKey);
+    return result;
+  }
 
   protected Address getChildAddress(int index) {
     final int bytesPerKey = tree.getKeySize();
@@ -50,7 +64,7 @@ public abstract class BasePage {
     return new Address(highBytes, lowBytes);
   }
 
-  protected byte[] getKey(@NotNull Novelty novelty, int index) {
+  protected byte[] getValue(@NotNull Novelty novelty, int index) {
     return tree.loadLeaf(novelty, getChildAddress(index));
   }
 
@@ -68,13 +82,13 @@ public abstract class BasePage {
     setSize(size - value);
   }
 
-  // TODO: consider caching minKey like xodus BasePageImmutable does
-  @NotNull byte[] getMinKey(@NotNull Novelty novelty) {
+  @NotNull
+  protected byte[] getMinKey() {
     if (size <= 0) {
       throw new ArrayIndexOutOfBoundsException("Page is empty.");
     }
 
-    return getKey(novelty, 0);
+    return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
   }
 
   protected int binarySearch(byte[] key, int low) {
@@ -87,7 +101,7 @@ public abstract class BasePage {
       final int mid = (low + high) >>> 1;
       final int offset = mid * bytesPerEntry;
 
-      final int cmp = compare(backingArray, bytesPerKey, offset, key, key.length, 0);
+      final int cmp = compare(backingArray, bytesPerKey, offset, key, bytesPerKey, 0);
       if (cmp < 0) {
         low = mid + 1;
       }
@@ -227,5 +241,9 @@ public abstract class BasePage {
     final int leftSize = left.size;
     final int rightSize = right.size;
     return leftSize == 0 || rightSize == 0 || leftSize + rightSize <= ((tree.getBase() * 7) >> 3);
+  }
+
+  static void indent(PrintStream out, int level) {
+    for (int i = 0; i < level; i++) out.print(" ");
   }
 }
