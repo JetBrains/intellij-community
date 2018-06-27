@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.storage;
 
+import com.intellij.util.containers.SLRUMap;
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Storage;
 import net.spy.memcached.BinaryConnectionFactory;
@@ -15,8 +16,10 @@ import java.util.Arrays;
 import java.util.Collections;
 
 public class StorageImpl implements Storage {
-  private static int MAX_VALUE_SIZE = 1024 * 1024 * 10;
+  private static final int MAX_VALUE_SIZE = 1024 * 1024 * 10;
+  private static final int LOCAL_CACHE_SIZE = 1000;
   private final MemcachedClient myClient;
+  private final SLRUMap<Address, byte[]> myLocalCache;
 
   private static class ByteArrayTranscoder implements Transcoder<byte[]> {
     @Override
@@ -44,11 +47,17 @@ public class StorageImpl implements Storage {
 
   public StorageImpl(InetSocketAddress addr) throws IOException {
     myClient = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static), Collections.singletonList(addr));
+    myLocalCache = new SLRUMap<>(LOCAL_CACHE_SIZE, LOCAL_CACHE_SIZE);
   }
 
   @Override
   public byte[] lookup(Address address) {
-    return myClient.get(address.toString(), myTranscoder);
+    byte[] result = myLocalCache.get(address);
+    if (result == null) {
+      result = myClient.get(address.toString(), myTranscoder);
+      myLocalCache.put(address, result);
+    }
+    return result;
   }
 
   @Override

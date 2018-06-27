@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.annotations" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="library" name="com.amazonaws:elasticache-java-cluster-client:1.1.1" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.util.rt" />
   </component>
 </module>
