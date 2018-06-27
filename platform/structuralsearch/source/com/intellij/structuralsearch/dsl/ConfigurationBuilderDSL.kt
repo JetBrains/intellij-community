@@ -3,6 +3,7 @@ package com.intellij.structuralsearch.dsl
 
 import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.structuralsearch.MatchVariableConstraint
+import com.intellij.structuralsearch.plugin.replace.ReplaceOptions
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 
@@ -20,6 +21,16 @@ class ConfigurationBuilder(val configuration: Configuration) {
     get() = configuration.matchOptions.searchPattern
     set(value) {
       configuration.matchOptions.searchPattern = value
+    }
+  var ConfigurationBuilder.replacement: Any
+    get() = this.replaceOptions?.replacement!!
+    set(value) {
+      when (value) {
+        is String -> {
+          this.replaceOptions = ReplaceOptions()
+          this.replaceOptions?.replacement = value
+        }
+      }
     }
 
   operator fun String.invoke(builder: MatchVariableConstraint.() -> Unit) {
@@ -81,6 +92,11 @@ class ConfigurationBuilder(val configuration: Configuration) {
     }
 
   fun MatchVariableConstraint.atLeast(from: Int): IntRange = IntRange(from, Int.MAX_VALUE)
+  fun replace(builder: ReplaceOptions.() -> Unit) {
+    val replaceOptions = ReplaceOptions()
+    replaceOptions.apply(builder)
+
+  }
 
   var ConfigurationBuilder.fileType: String
     get() = configuration.matchOptions.fileType.name
@@ -92,13 +108,19 @@ class ConfigurationBuilder(val configuration: Configuration) {
     set(value) {
       configuration.matchOptions.patternContext = value
     }
+  var replaceOptions: ReplaceOptions? = null
 }
 
 fun pattern(builder: ConfigurationBuilder.() -> Unit): Configuration {
   val configuration = SearchConfiguration()
   val configurationBuilder = ConfigurationBuilder(configuration)
   configurationBuilder.apply(builder)
-  return configuration;
+  if (configurationBuilder.replaceOptions == null) return configuration;
+
+  val replaceConfiguration = SearchConfiguration()
+  val replaceConfigurationBuilder = ConfigurationBuilder(replaceConfiguration)
+  replaceConfigurationBuilder.apply(builder)
+  return replaceConfiguration
 }
 
 data class InverseRegexp(val regexp: String)

@@ -24,5 +24,6 @@ fun main(args: Array<String>) {
     }
     fileType = "Java"
     context = "File"
+    replacement = "class \$className\$ extends \$anotherClassName\$ {}"
   }
 }
