@@ -70,6 +70,12 @@
       <interface-class>com.intellij.compiler.CompilerReferenceService</interface-class>
       <implementation-class>com.intellij.compiler.backwardRefs.CompilerReferenceServiceImpl</implementation-class>
     </component>
+
+    <component>
+      <interface-class>com.intellij.compiler.PwaService</interface-class>
+      <implementation-class>com.intellij.compiler.backwardRefs.PwaServiceImpl</implementation-class>
+    </component>
+
     <component>
       <implementation-class>com.intellij.execution.testDiscovery.AffectedTestsInChangeListPainter</implementation-class>
     </component>

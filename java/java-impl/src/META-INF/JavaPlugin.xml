@@ -1200,5 +1200,6 @@
       <className>com.intellij.codeInsight.intention.impl.ChangeUIDAction</className>
       <category>Serialization</category>
     </intentionAction>
+    <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.codeInspection.deadCode.jvm.JvmUnusedDeclarationLineMarkerProvider"/>
   </extensions>
 </idea-plugin>
