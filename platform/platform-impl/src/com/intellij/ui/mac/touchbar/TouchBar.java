@@ -9,6 +9,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.mac.foundation.ID;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -59,6 +60,10 @@ class TouchBar implements NSTLibrary.ItemCreator {
         _closeSelf();
         if (emulateESC) {
           try {
+            // https://stackoverflow.com/questions/10468432/do-robot-methods-need-to-be-run-on-the-event-queue
+            // The Robot methods you mentioned should not be run on the EDT.
+            // If you call any of these methods on the EDT while Robot.isAutoWaitForIdle is true, an exception will be thrown.
+            // This stands to reason that even if isAutoWaitForIdle is false, these methods shouldn't be called from the EDT.
             Robot robot = new Robot();
             robot.keyPress(KeyEvent.VK_ESCAPE);
             robot.keyRelease(KeyEvent.VK_ESCAPE);
@@ -90,6 +95,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
   }
 
   static TouchBar buildFromGroup(@NotNull String touchbarName, @NotNull ActionGroup actions, boolean replaceEsc, boolean emulateESC) {
+    final TouchbarDataKeys.ActionGroupDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+    if (groupDesc != null && !groupDesc.replaceEsc)
+      replaceEsc = false;
     final TouchBar result = new TouchBar(touchbarName, replaceEsc, false, emulateESC);
     addActionGroup(result, actions);
     return result;
@@ -97,7 +105,9 @@ class TouchBar implements NSTLibrary.ItemCreator {
 
   static void addActionGroup(TouchBar result, @NotNull ActionGroup actions) {
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
-    BuildUtils.addActionGroupButtons(result.myItems, actions, ms, TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED, null, null, false);
+    final TouchbarDataKeys.ActionGroupDesc groupDesc = actions.getTemplatePresentation().getClientProperty(TouchbarDataKeys.ACTIONS_DESCRIPTOR_KEY);
+    final int defaultShowMode = groupDesc == null || !groupDesc.showText ? TBItemAnActionButton.SHOWMODE_IMAGE_ONLY_IF_PRESENTED : TBItemAnActionButton.SHOWMODE_IMAGE_TEXT;
+    BuildUtils.addActionGroupButtons(result.myItems, actions, ms, defaultShowMode, null, null, false);
     result.selectVisibleItemsToShow();
   }
 
@@ -139,6 +149,7 @@ class TouchBar implements NSTLibrary.ItemCreator {
   //
   @NotNull TBItemButton addButton() { return myItems.addButton(); }
   @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality) { return myItems.addAnActionButton(act, showMode, modality); }
+  @NotNull TBItemAnActionButton addAnActionButton(@NotNull AnAction act, int showMode, ModalityState modality, @Nullable TBItem positionAnchor) { return myItems.addAnActionButton(act, showMode, modality, positionAnchor); }
   @NotNull TBItemGroup addGroup() { return myItems.addGroup(); }
   @NotNull TBItemScrubber addScrubber() { return myItems.addScrubber(); }
   @NotNull TBItemPopover addPopover(Icon icon, String text, int width, TouchBar expandTB, TouchBar tapAndHoldTB) {

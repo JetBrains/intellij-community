@@ -25,6 +25,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
 import com.intellij.util.containers.Predicate;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -213,7 +214,7 @@ public class TouchBarsManager {
 
     final ProjectData pd = ourProjectData.get(proj);
     if (pd == null) {
-      LOG.error("can't find project data to register editor: " + editor + ", project: " + proj);
+      // System.out.println("can't find project data to register editor: " + editor + ", project: " + proj);
       return;
     }
 
@@ -322,7 +323,7 @@ public class TouchBarsManager {
     };
   }
 
-  public static @Nullable Disposable showDialogWrapperButtons(List<JButton> jbuttons, Container contentPane) {
+  public static @Nullable Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
     if (!isTouchBarAvailable())
       return null;
 
@@ -330,10 +331,13 @@ public class TouchBarsManager {
     final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
     BarContainer bc = null;
 
+    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> jbuttons = _findAllDialogButtons(contentPane);
     if (jbuttons != null && !jbuttons.isEmpty()) {
+      // 1. if 'south-panel buttons' presented => show them
       final TouchBar tb = BuildUtils.createButtonsBar(jbuttons);
       bc = new BarContainer(btype, tb, null, contentPane);
-    } else if (contentPane != null) {
+    } else {
+      // 2. otherwise show actions collected from content children
       Map<Component, ActionGroup> actions = new HashMap<>();
       _findAllTouchbarProviders(actions, contentPane);
       if (!actions.isEmpty()) {
@@ -426,6 +430,25 @@ public class TouchBarsManager {
       }
       if (component instanceof Container)
         _findAllTouchbarProviders(out, (Container)component);
+    }
+  }
+
+  private static Map<TouchbarDataKeys.DlgButtonDesc, JButton> _findAllDialogButtons(@NotNull Container root) {
+    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> out = new HashMap<>();
+    _findAllDialogButtons(out, root);
+    return out;
+  }
+
+  private static void _findAllDialogButtons(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> out, @NotNull Container root) {
+    final Component[] children = root.getComponents();
+    for (Component component : children) {
+      if (component instanceof JButton) {
+        final TouchbarDataKeys.DlgButtonDesc desc = UIUtil.getClientProperty(component, TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY);
+        if (desc != null)
+          out.put(desc, (JButton)component);
+      }
+      if (component instanceof Container)
+        _findAllDialogButtons(out, (Container)component);
     }
   }
 

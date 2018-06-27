@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Comparing;
@@ -16,6 +17,7 @@ class TBItemButton extends TBItem {
   protected @Nullable String myText;
   protected int myLayoutBits = 0;
   protected int myFlags = 0;
+  protected boolean myHasArrowIcon = false;
 
   private @Nullable Runnable myAction;
   private @Nullable NSTLibrary.Action myNativeCallback;
@@ -37,6 +39,8 @@ class TBItemButton extends TBItem {
 
     return this;
   }
+
+  TBItemButton setHasArrowIcon(boolean hasArrowIcon) { myHasArrowIcon = hasArrowIcon; return this; }
 
   TBItemButton setText(String text) {
     if (!Comparing.equal(text, myText)) {
@@ -198,7 +202,10 @@ class TBItemButton extends TBItem {
   @Override
   synchronized protected ID _createNativePeer() {
 //    System.out.printf("_createNativePeer, button [%s]\n", myUid);
-    return NST.createButton(myUid, myLayoutBits, _validateFlags(), myText, myIcon, myNativeCallback);
+    final ID result = NST.createButton(myUid, myLayoutBits, _validateFlags(), myText, myIcon, myNativeCallback);
+    if (myHasArrowIcon)
+      NST.setArrowImage(result, AllIcons.General.ComboArrow);
+    return result;
   }
 
   private int _validateFlags() {

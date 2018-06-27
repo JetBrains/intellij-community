@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.mac.touchbar;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -11,6 +12,7 @@ import com.intellij.util.lang.UrlClassLoader;
 import com.sun.jna.Memory;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -156,6 +158,14 @@ public class NST {
     ourNSTLibrary.updateButton(buttonObj, updateOptions, buttWidth, buttonFlags, text, raster4ByteRGBA, w, h, action); // creates autorelease-pool internally
   }
 
+  public static void setArrowImage(ID buttObj, @Nullable Icon arrow) {
+    final BufferedImage img = _getImg4ByteRGBA(arrow);
+    final byte[] raster4ByteRGBA = _getRaster(img);
+    final int w = _getImgW(img);
+    final int h = _getImgH(img);
+    ourNSTLibrary.setArrowImage(buttObj, raster4ByteRGBA, w, h); // creates autorelease-pool internally
+  }
+
   public static void updatePopover(ID popoverObj,
                                    int itemWidth,
                                    String text,
@@ -250,14 +260,16 @@ public class NST {
   }
 
   private static BufferedImage _getImg4ByteRGBA(Icon icon) {
-    if (icon == null)
+    if (icon == null || icon.getIconHeight() == 0)
       return null;
 
     // according to https://developer.apple.com/macos/human-interface-guidelines/touch-bar/touch-bar-icons-and-images/
     // icons generally should not exceed 44px in height (36px for circular icons)
     // Ideal icon size	    36px × 36px (18pt × 18pt @2x)
     // Maximum icon size    44px × 44px (22pt × 22pt @2x)
-    final float fMulX = 40/16.f;
+
+    final UISettings settings = UISettings.getInstance();
+    final float fMulX = settings.getPresentationMode() ? 40/icon.getIconHeight() : 40/16.f;
     return _getImg4ByteRGBA(icon, fMulX);
   }
 

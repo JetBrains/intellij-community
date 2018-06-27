@@ -72,7 +72,6 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
   private final List<Runnable> myDisposeActions = new ArrayList<>();
   private Project myProject;
   private ActionCallback myTypeAheadCallback;
-  private List<JButton> myTouchBarButtons;
 
   protected DialogWrapperPeerImpl(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent, @NotNull DialogWrapper.IdeModalityType ideModalityType) {
     boolean headless = isHeadlessEnv();
@@ -423,7 +422,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(true);
 
-    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myTouchBarButtons, myDialog.getContentPane());
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
     if (tb != null)
       myDisposeActions.add(() -> Disposer.dispose(tb));
 
@@ -1001,12 +1000,5 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
   public void setAutoRequestFocus(boolean b) {
     UIUtil.setAutoRequestFocus((JDialog)myDialog, b);
-  }
-
-  @Override
-  public void setTouchBarButtons(List<JButton> buttons) {
-    if (!TouchBarsManager.isTouchBarAvailable())
-      return;
-    myTouchBarButtons = buttons;
   }
 }

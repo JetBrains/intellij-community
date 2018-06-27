@@ -269,7 +269,7 @@ public class WindowWrapperBuilder {
 
     @Override
     public void show() {
-      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(null, myComponent);
+      final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myComponent);
       if (tb != null)
         Disposer.register(myFrame, tb);
 

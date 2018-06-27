@@ -76,6 +76,8 @@ public interface NSTLibrary extends Library {
   void updatePopover(ID popoverObj, int itemWidth, String text, byte[] raster4ByteRGBA, int w, int h, ID tbObjExpand, ID tbObjTapAndHold);
   void updateScrubber(ID scrubObj, int itemWidth, ScrubberItemData[] items, int count);
 
+  void setArrowImage(ID buttObj, byte[] raster4ByteRGBA, int w, int h);
+
   static int priority2mask(byte prio) { return (prio + 128) << BUTTON_PRIORITY_SHIFT; }
   static int margin2mask(byte margin) { return ((int)margin & 0xFF) << LAYOUT_MARGIN_SHIFT; }
   static int border2mask(byte border) { return ((int)border & 0xFF) << LAYOUT_BORDER_SHIFT; }
