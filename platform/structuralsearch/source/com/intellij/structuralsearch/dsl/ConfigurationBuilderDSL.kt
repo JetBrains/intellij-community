@@ -10,6 +10,7 @@ class ConfigurationBuilder(val configuration: Configuration) {
   companion object {
     val anyRange = IntRange(0, Int.MAX_VALUE)
   }
+
   var name: String
     get() = configuration.name
     set(value) {
@@ -27,6 +28,8 @@ class ConfigurationBuilder(val configuration: Configuration) {
     constraint.apply(builder)
     configuration.matchOptions.addVariableConstraint(constraint)
   }
+
+  operator fun String.not() : InverseRegexp = InverseRegexp(this)
 
   val any: IntRange
     get() = anyRange
@@ -49,6 +52,34 @@ class ConfigurationBuilder(val configuration: Configuration) {
         }
       }
     }
+  var MatchVariableConstraint.text: Any
+    get() = TODO()
+    set(value) {
+      when (value) {
+        is InverseRegexp -> {
+          regExp = "^${value.regexp}$"
+          isInvertRegExp = true
+        }
+        is String -> {
+          regExp = "^$value$"
+        }
+      }
+    }
+
+  var MatchVariableConstraint.regexp: Any
+    get() = TODO()
+    set(value) {
+      when (value) {
+        is InverseRegexp -> {
+          regExp = value.regexp
+          isInvertRegExp = true
+        }
+        is String -> {
+          regExp = "^$value$"
+        }
+      }
+    }
+
   fun MatchVariableConstraint.atLeast(from: Int): IntRange = IntRange(from, Int.MAX_VALUE)
 
   var ConfigurationBuilder.fileType: String
@@ -69,3 +100,5 @@ fun pattern(builder: ConfigurationBuilder.() -> Unit): Configuration {
   configurationBuilder.apply(builder)
   return configuration;
 }
+
+data class InverseRegexp(val regexp: String)

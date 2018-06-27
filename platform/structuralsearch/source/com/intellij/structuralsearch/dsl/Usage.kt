@@ -8,11 +8,13 @@ fun main(args: Array<String>) {
     name = "SSR"
     pattern = "class \$className\$ extends \$anotherClassName\$ {}"
     "className" {
-      regExp = "MyClass"
+      regexp = "MyClass"
+      regexp = !"MyClass"
       target
     }
     "anotherClassName" {
-      regExp = "MatchOptions"
+      text = "MatchOptions"
+      text = !"MatchOptions"
       isInvertRegExp = true
     }
     "count" {
