@@ -1,10 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package chm
 
+import com.intellij.history.core.RevisionsCollector
+import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.LocalHistoryImpl
-import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
-import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
-import com.intellij.history.integration.ui.models.RevisionItem
+import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
@@ -20,12 +20,13 @@ import git4idea.checkin.GitCheckinEnvironment
 import git4idea.commands.Git
 import git4idea.commands.GitCommand.COMMIT
 import git4idea.commands.GitLineHandler
+import git4idea.util.GitVcsConsoleWriter
 import java.lang.IllegalStateException
 
 class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnvironment.OverridingCommitProcedure {
 
-  val gateway = LocalHistoryImpl.getInstanceImpl().gateway
-  val facade = LocalHistoryImpl.getInstanceImpl().facade
+  val gateway = LocalHistoryImpl.getInstanceImpl().gateway!!
+  val facade = LocalHistoryImpl.getInstanceImpl().facade!!
   private val git = Git.getInstance()
 
   override fun commit(ce: GitCheckinEnvironment, changes: List<Change>, message: String) {
@@ -43,19 +44,28 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     // remember the hash and reset the branch
     val stdHash = repo.last()
     repo.git("tag --force std-commit")
-    repo.git("reset --keep HEAD^")     // warning: hard reset
+    repo.git("reset --keep HEAD^")
     markDirtyAndRefresh(false, true, false, root)
 
     // -- here is where the magic starts
 
     // todo extract refactorings from them and apply them first
 
-    for (rev in historySinceLastCommit.reversed()) {
+    var comment : String? = null
+    val revs = historySinceLastCommit
+    for (i in revs.indices) {
       val file = ancestor
+      val rev = revs[i]
+
+      // name from prev entry, content from current
+      if (i == 0) {
+        comment = rev.changeSetName
+        continue
+      }
 
       invokeAndWaitIfNeed {
         runWriteAction {
-          val entry = rev.revision.findEntry()
+          val entry = rev.findEntry()
           val c = entry.content
           if (!c.isAvailable) throw IllegalStateException("$c is not available")
           file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
@@ -63,11 +73,17 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       }
 
       val h = GitLineHandler(project, root, COMMIT)
-      val msg = rev.revision.changeSetName ?: "unnamed"
-      h.addParameters("-m", "'$msg'")
+      h.setStdoutSuppressed(false)
+      h.setStderrSuppressed(false)
+      val msg = comment ?: "unnamed"
+      h.addParameters("-m", msg)
+      h.addParameters("--only")
       h.endOptions()
       h.addRelativeFiles(listOf(file))
-      git.runCommand(h)
+      val result = git.runCommand(h)
+      GitVcsConsoleWriter.getInstance(project).showMessage(result.outputAsJoinedString)
+
+      comment = rev.changeSetName
     }
 
     ce.myOverridingCommitProcedure = null // for safety
@@ -76,25 +92,34 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
   // get history for ancestor
   // find latest label "commit changes"
   // get all changes made after "commit changes"
-  fun getLocalHistorySinceLastCommit(f: VirtualFile): List<RevisionItem> {
-    val dirHistoryModel = if (f.isDirectory)
-      DirectoryHistoryDialogModel(project, gateway, facade, f)
-    else
-      EntireFileHistoryDialogModel(project, gateway, facade, f)
+  fun getLocalHistorySinceLastCommit(f: VirtualFile): List<Revision> {
+    val revisions = getLocalHistory(f) // (1) backwards: 0 is the latest (2) labels are included as revisions
 
-    val revs = dirHistoryModel.revisions // backwards: 0 is the latest
-
-    var indexOfLastCommit: Int = -1
-    for (i in revs.indices) {
-      val rev = revs[i]
-      if (rev.labels.any { it.label?.startsWith("Commit Changes: ") == true }) {
-        indexOfLastCommit = i - 1
-        break;
+    val historyAfterLastCommit = mutableListOf<Revision>()
+    var lastRev = false
+    for (rev in revisions) {
+      if (rev.isLabel) {
+        if (rev.label!!.startsWith("Commit Changes: ")) {
+          lastRev = true
+        }
+      }
+      else {
+        historyAfterLastCommit.add(rev)   // one more, the last one, because the name is written for previous revision
+        if (lastRev) break;
       }
     }
 
-    val revsSinceLastCommit = revs.subList(0, indexOfLastCommit)
-    return revsSinceLastCommit
+    return historyAfterLastCommit.reversed()
+  }
+
+  fun getLocalHistory(file: VirtualFile) : List<Revision> {
+    return ReadAction.compute<List<Revision>, RuntimeException> {
+      gateway.registerUnsavedDocuments(facade)
+      val path = file.path
+      val root = gateway.createTransientRootEntry()
+      val collector = RevisionsCollector(facade, root, path, project.getLocationHash(), null)
+      collector.result as List<Revision>
+    }
   }
 
 
