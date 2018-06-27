@@ -8,88 +8,88 @@ import java.util.Arrays;
 
 public class InternalPage extends BasePage {
 
-    public InternalPage(byte[] backingArray, BTree tree, long address, int size) {
-        super(backingArray, tree, address, size);
+  public InternalPage(byte[] backingArray, BTree tree, long address, int size) {
+    super(backingArray, tree, address, size);
+  }
+
+  @Override
+  @Nullable
+  protected byte[] get(@NotNull byte[] key) {
+    final int index = binarySearch(key, 0);
+    return index < 0 ? getChild(Math.max(-index - 2, 0)).get(key) : getKey(index);
+  }
+
+  @Override
+  @Nullable
+  protected BasePage put(@NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
+    int pos = binarySearch(key, 0);
+
+    if (pos >= 0 && !overwrite) {
+      // key found and overwrite is not possible - error
+      return null;
     }
 
-    @Override
-    @Nullable
-    protected byte[] get(@NotNull byte[] key) {
-        final int index = binarySearch(key, 0);
-        return index < 0 ? getChild(Math.max(-index - 2, 0)).get(key) : getKey(index);
+    if (pos < 0) {
+      pos = -pos - 2;
+      // if insert after last - set to last
+      if (pos < 0) pos = 0;
     }
 
-    @Override
-    @Nullable
-    protected BasePage put(@NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
-        int pos = binarySearch(key, 0);
-
-        if (pos >= 0 && !overwrite) {
-            // key found and overwrite is not possible - error
-            return null;
-        }
-
-        if (pos < 0) {
-            pos = -pos - 2;
-            // if insert after last - set to last
-            if (pos < 0) pos = 0;
-        }
-
-        final BasePage child = getChild(pos).getMutableCopy(tree);
-        final BasePage newChild = child.put(key, value, overwrite, result);
-        // change min key for child
-        if (result[0]) {
-            // TODO: tree.addExpired(childrenAddresses[pos]);
-            set(pos, child.getMinKey(), child.address);
-            if (newChild != null) {
-                return insertAt(pos + 1, newChild.getMinKey(), newChild.address);
-            }
-        }
-
-        return null;
+    final BasePage child = getChild(pos).getMutableCopy(tree);
+    final BasePage newChild = child.put(key, value, overwrite, result);
+    // change min key for child
+    if (result[0]) {
+      // TODO: tree.addExpired(childrenAddresses[pos]);
+      set(pos, child.getMinKey(), child.address);
+      if (newChild != null) {
+        return insertAt(pos + 1, newChild.getMinKey(), newChild.address);
+      }
     }
 
-    @Override
-    protected BasePage split(int from, int length) {
-        final InternalPage result = InternalPage.copyOf(this, from, length);
-        decrementSize(length);
-        return result;
+    return null;
+  }
+
+  @Override
+  protected BasePage split(int from, int length) {
+    final InternalPage result = InternalPage.copyOf(this, from, length);
+    decrementSize(length);
+    return result;
+  }
+
+  @Override
+  protected InternalPage getMutableCopy(BTree tree) {
+    if (address < 0) {
+      return this;
     }
+    byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
+    return new InternalPage(
+      bytes,
+      tree, tree.alloc(bytes), size
+    );
+  }
 
-    @Override
-    protected InternalPage getMutableCopy(BTree tree) {
-        if (address < 0) {
-            return this;
-        }
-        byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
-        return new InternalPage(
-                bytes,
-                tree, tree.alloc(bytes), size
-        );
-    }
+  @Override
+  @NotNull
+  public BasePage getChild(final int index) {
+    return tree.loadPage(getChildAddress(index));
+  }
 
-    @Override
-    @NotNull
-    public BasePage getChild(final int index) {
-        return tree.loadPage(getChildAddress(index));
-    }
+  private static InternalPage copyOf(InternalPage page, int from, int length) {
+    byte[] bytes = new byte[page.backingArray.length];
 
-    private static InternalPage copyOf(InternalPage page, int from, int length) {
-        byte[] bytes = new byte[page.backingArray.length];
+    final int bytesPerEntry = page.tree.getKeySize() + page.tree.getAddressSize();
 
-        final int bytesPerEntry = page.tree.getKeySize() + page.tree.getAddressSize();
+    System.arraycopy(
+      page.backingArray, from * bytesPerEntry,
+      bytes, 0,
+      length * bytesPerEntry
+    );
 
-        System.arraycopy(
-                page.backingArray, from * bytesPerEntry,
-                bytes, 0,
-                length * bytesPerEntry
-        );
+    final int metadataOffset = bytesPerEntry * page.tree.getBase();
 
-        final int metadataOffset = bytesPerEntry * page.tree.getBase();
+    bytes[metadataOffset] = BTree.INTERNAL;
+    bytes[metadataOffset + 1] = (byte)length;
 
-        bytes[metadataOffset] = BTree.INTERNAL;
-        bytes[metadataOffset + 1] = (byte) length;
-
-        return new InternalPage(bytes, page.tree, page.tree.alloc(bytes), length);
-    }
+    return new InternalPage(bytes, page.tree, page.tree.alloc(bytes), length);
+  }
 }
