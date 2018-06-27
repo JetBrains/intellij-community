@@ -193,13 +193,17 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
 
     GenericAttributeValue<String> name = extensionPoint.getName();
     if (!isValidEpName(name)) {
-      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.name", name.getValue()), null);
+      String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
+                                            DevKitBundle.message("inspections.plugin.xml.invalid.ep.name"),
+                                            name.getValue());
+      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING, message, null);
     }
     GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
     if (!isValidEpName(qualifiedName)) {
-      holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING,
-                           DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualified.name", qualifiedName.getValue()), null);
+      String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
+                                            DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualifiedName"),
+                                            name.getValue());
+      holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING, message, null);
     }
 
     Module module = extensionPoint.getModule();
@@ -213,11 +217,24 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return true;
     }
     @NonNls String name = nameAttrValue.getValue();
-    return StringUtil.isNotEmpty(name) &&
-           Character.isLowerCase(name.charAt(0)) && // also checks that name doesn't start with dot
-           !name.toUpperCase().equals(name) && // not all uppercase
-           StringUtil.isLatinAlphanumeric(name.replace(".", "")) &&
-           name.charAt(name.length() - 1) != '.';
+
+    if (StringUtil.isEmpty(name) ||
+        !Character.isLowerCase(name.charAt(0)) || // also checks that name doesn't start with dot
+        name.toUpperCase().equals(name) || // not all uppercase
+        !StringUtil.isLatinAlphanumeric(name.replace(".", "")) ||
+        name.charAt(name.length() - 1) == '.') {
+      return false;
+    }
+
+    List<String> fragments = StringUtil.split(name, ".");
+    if (fragments.stream().anyMatch(f -> Character.isUpperCase(f.charAt(0)))) {
+      return false;
+    }
+
+    String epName = fragments.get(fragments.size() - 1);
+    fragments.remove(fragments.size() - 1);
+    List<String> words = StringUtil.getWordsIn(epName);
+    return words.stream().noneMatch(w -> fragments.stream().anyMatch(f -> StringUtil.equalsIgnoreCase(w, f)));
   }
 
   private static void annotateExtensions(Extensions extensions, DomElementAnnotationHolder holder) {
