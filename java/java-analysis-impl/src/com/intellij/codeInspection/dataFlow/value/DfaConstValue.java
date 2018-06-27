@@ -113,7 +113,10 @@ public class DfaConstValue extends DfaValue {
 
       if (TypeConversionUtil.isNumericType(type) && !TypeConversionUtil.isFloatOrDoubleType(type)) {
         type = PsiType.LONG;
-        value = TypeConversionUtil.computeCastTo(value, type);
+        Object numeric = TypeConversionUtil.computeCastTo(value, type);
+        if (numeric != null) {
+          value = numeric;
+        }
       }
       if (value instanceof Double || value instanceof Float) {
         double doubleValue = ((Number)value).doubleValue();
@@ -201,15 +204,5 @@ public class DfaConstValue extends DfaValue {
   @Contract("null -> false")
   public static boolean isContractFail(DfaValue value) {
     return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == ourThrowable;
-  }
-
-  /**
-   * Checks whether given value is a special internal sentinel value returned by {@link Factory#getSentinel()}.
-   *
-   * @param value value to check
-   * @return true if specified value is a sentinel value
-   */
-  public static boolean isSentinel(DfaValue value) {
-    return value instanceof DfaConstValue && ((DfaConstValue)value).getValue() == SENTINEL;
   }
 }

@@ -196,9 +196,7 @@ public abstract class InstructionVisitor {
 
   public DfaInstructionState[] visitObjectOfInstruction(ObjectOfInstruction instruction, DataFlowRunner runner, DfaMemoryState state) {
     DfaValue value = state.pop();
-    DfaConstValue constant = value instanceof DfaConstValue ? (DfaConstValue)value :
-                             value instanceof DfaVariableValue ? state.getConstantValue((DfaVariableValue)value) :
-                             null;
+    DfaConstValue constant = state.getConstantValue(value);
     PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
     state.push(runner.getFactory().createTypeValue(type, Nullability.NOT_NULL));
     return nextInstruction(instruction, runner, state);

@@ -7,7 +7,7 @@ import java.lang.IllegalArgumentException;
 
 class AssertIsNotNull {
   void bar(String s, String s1) {
-    if (<warning descr="Condition 's == null && trimIfNotNull(s) != null' is always 'false'">s == null && <warning descr="Condition 'trimIfNotNull(s) != null' is always 'false' when reached">trimIfNotNull(s) != null</warning></warning>) {
+    if (<warning descr="Condition 's == null && trimIfNotNull(s) != null' is always 'false'">s == null && <warning descr="Condition 'trimIfNotNull(s) != null' is always 'false' when reached"><warning descr="Result of 'trimIfNotNull(s)' is always 'null'">trimIfNotNull(s)</warning> != null</warning></warning>) {
       throw new AssertionError();
     }
 

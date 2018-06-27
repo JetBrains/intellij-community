@@ -9,10 +9,8 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
-import com.siyeh.ig.psiutils.ExpressionUtils;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,12 +25,11 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   private final Map<NullabilityProblemKind.NullabilityProblem<?>, StateInfo> myStateInfos = new LinkedHashMap<>();
   private final Set<Instruction> myCCEInstructions = ContainerUtil.newHashSet();
   private final Map<PsiCallExpression, Boolean> myFailingCalls = new HashMap<>();
-  private final Map<PsiExpression, ThreeState> myBooleanExpressions = new HashMap<>();
+  private final Map<PsiExpression, ConstantResult> myConstantExpressions = new HashMap<>();
   private final Map<PsiElement, ThreeState> myOfNullableCalls = new HashMap<>();
   private final Map<PsiAssignmentExpression, Pair<PsiType, PsiType>> myArrayStoreProblems = new HashMap<>();
   private final Map<PsiMethodReferenceExpression, DfaValue> myMethodReferenceResults = new HashMap<>();
   private final Map<PsiArrayAccessExpression, ThreeState> myOutOfBoundsArrayAccesses = new HashMap<>();
-  private final Map<PsiReferenceExpression, DfaConstValue> myValues = new HashMap<>();
   private final Set<PsiElement> myReceiverMutabilityViolation = new HashSet<>();
   private final Set<PsiElement> myArgumentMutabilityViolation = new HashSet<>();
   private final Map<PsiExpression, Boolean> mySameValueAssigned = new HashMap<>();
@@ -128,8 +125,8 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return myOfNullableCalls;
   }
 
-  Map<PsiExpression, ThreeState> getBooleanExpressions() {
-    return myBooleanExpressions;
+  Map<PsiExpression, ConstantResult> getConstantExpressions() {
+    return myConstantExpressions;
   }
 
   Map<PsiMethodReferenceExpression, DfaValue> getMethodReferenceResults() {
@@ -167,7 +164,9 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
                                       @Nullable TextRange range,
                                       @NotNull DfaMemoryState memState) {
     expression.accept(new ExpressionVisitor(value, memState));
-    handleBooleanResults(value, memState, expression);
+    if (range == null) {
+      handleBooleanResults(value, memState, expression);
+    }
   }
 
   @Override
@@ -213,10 +212,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     return super.visitEndOfInitializer(instruction, runner, state);
   }
 
-  public Map<PsiReferenceExpression, DfaConstValue> getConstantReferenceValues() {
-    return myValues;
-  }
-
   private static boolean hasNonTrivialFailingContracts(PsiCallExpression call) {
     List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(call);
     return !contracts.isEmpty() &&
@@ -224,47 +219,18 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
   }
 
   private void handleBooleanResults(DfaValue value, DfaMemoryState memState, PsiExpression expression) {
-    ThreeState curState = myBooleanExpressions.get(expression);
-    if (curState == ThreeState.UNSURE) return;
-    ThreeState nextState = ThreeState.UNSURE;
-    value = value instanceof DfaVariableValue ? memState.getConstantValue((DfaVariableValue)value) : value;
-    if (value instanceof DfaConstValue) {
-      Object val = ((DfaConstValue)value).getValue();
-      if (val instanceof Boolean) {
-        nextState = ThreeState.fromBoolean((Boolean)val);
-        if (curState != null && curState != nextState) {
-          nextState = ThreeState.UNSURE;
-        }
+    if (expression instanceof PsiLiteralExpression) return;
+    ConstantResult curState = myConstantExpressions.get(expression);
+    if (curState == ConstantResult.UNKNOWN) return;
+    ConstantResult nextState = ConstantResult.UNKNOWN;
+    DfaConstValue dfaConst = memState.getConstantValue(value);
+    if (dfaConst != null) {
+      nextState = ConstantResult.fromConstValue(dfaConst);
+      if (curState != null && curState != nextState) {
+        nextState = ConstantResult.UNKNOWN;
       }
     }
-    if (curState != null || shouldCollectBooleanResult(expression)) {
-      myBooleanExpressions.put(expression, nextState);
-    }
-  }
-
-  private static boolean shouldCollectBooleanResult(PsiExpression expression) {
-    if (expression instanceof PsiLiteralExpression) return false;
-    PsiType type = expression.getType();
-    if (type == null || !PsiType.BOOLEAN.isAssignableFrom(type)) return false;
-    if (expression instanceof PsiPrefixExpression || expression instanceof PsiPolyadicExpression) {
-      return !DataFlowInspectionBase.isFlagCheck(expression);
-    }
-    PsiPolyadicExpression polyadic = tryCast(PsiUtil.skipParenthesizedExprUp(expression.getParent()), PsiPolyadicExpression.class);
-    if (polyadic != null) {
-      if ((polyadic.getOperationTokenType().equals(JavaTokenType.ANDAND) || polyadic.getOperationTokenType().equals(JavaTokenType.OROR)) &&
-          !DataFlowInspectionBase.isFlagCheck(expression)) return true;
-    }
-    if (expression instanceof PsiMethodCallExpression) {
-      PsiMethodCallExpression call = (PsiMethodCallExpression)expression;
-      if (ExpressionUtils.isVoidContext(call)) return false;
-      PsiMethod method = call.resolveMethod();
-      if (method == null || !JavaMethodContractUtil.isPure(method)) return false;
-      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts(method, call);
-      return CustomMethodHandlers.find(method) != null ||
-             !contracts.isEmpty() &&
-             contracts.stream().anyMatch(contract -> contract.getReturnValue().isBoolean() && !contract.isTrivial());
-    }
-    return false;
+    myConstantExpressions.put(expression, nextState);
   }
 
   @Override
@@ -302,10 +268,6 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
     }
   }
 
-  private static boolean shouldReportConstValue(Object value) {
-    return value == null || value instanceof Boolean;
-  }
-
   private static class StateInfo {
     boolean ephemeralNpe;
     boolean normalNpe;
@@ -337,23 +299,37 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
         myFailingCalls.put(call, DfaConstValue.isContractFail(myValue) && !Boolean.FALSE.equals(isFailing));
       }
     }
+  }
 
+  enum ConstantResult {
+    TRUE, FALSE, NULL, UNKNOWN;
+
+    @NotNull
     @Override
-    public void visitReferenceExpression(PsiReferenceExpression expression) {
-      super.visitReferenceExpression(expression);
-      DfaConstValue oldValue = myValues.get(expression);
-      if (DfaConstValue.isSentinel(oldValue)) return;
-      if (myValue instanceof DfaVariableValue) {
-        DfaConstValue constValue = myMemState.getConstantValue((DfaVariableValue)myValue);
-        boolean report = constValue != null && shouldReportConstValue(constValue.getValue());
-        if (!report) {
-          constValue = null;
-        }
-        DfaConstValue newValue = constValue != null && (oldValue == null || oldValue == constValue)
-                                 ? constValue
-                                 : myValue.getFactory().getConstFactory().getSentinel();
-        myValues.put(expression, newValue);
+    public String toString() {
+      return name().toLowerCase(Locale.ENGLISH);
+    }
+
+    public Object value() {
+      switch (this) {
+        case TRUE:
+          return Boolean.TRUE;
+        case FALSE:
+          return Boolean.FALSE;
+        case NULL:
+          return null;
+        default:
+          throw new UnsupportedOperationException();
       }
+    }
+
+    @NotNull
+    static ConstantResult fromConstValue(@NotNull DfaConstValue constant) {
+      Object value = constant.getValue();
+      if (value == null) return NULL;
+      if (Boolean.TRUE.equals(value)) return TRUE;
+      if (Boolean.FALSE.equals(value)) return FALSE;
+      return UNKNOWN;
     }
   }
 }

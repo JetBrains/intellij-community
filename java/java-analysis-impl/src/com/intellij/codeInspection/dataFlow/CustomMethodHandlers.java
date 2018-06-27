@@ -19,7 +19,6 @@ import com.intellij.codeInspection.dataFlow.rangeSet.LongRangeSet;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.codeInspection.dataFlow.value.DfaValueFactory;
-import com.intellij.codeInspection.dataFlow.value.DfaVariableValue;
 import com.intellij.psi.*;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
@@ -223,11 +222,9 @@ class CustomMethodHandlers {
         return fact.min();
       }
     }
-    if (value instanceof DfaVariableValue) {
-      value = memoryState.getConstantValue((DfaVariableValue)value);
-    }
-    if (value instanceof DfaConstValue) {
-      Object constant = ((DfaConstValue)value).getValue();
+    DfaConstValue dfaConst = memoryState.getConstantValue(value);
+    if (dfaConst != null) {
+      Object constant = dfaConst.getValue();
       if (constant instanceof String && ((String)constant).length() > MAX_STRING_CONSTANT_LENGTH_TO_TRACK) return null;
       return constant;
     }

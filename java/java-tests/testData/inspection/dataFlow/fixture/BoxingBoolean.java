@@ -29,7 +29,7 @@ class S {
 
   public void te3(boolean b){
     Boolean c = Boolean.FALSE;
-    boolean o = !c;
+    boolean o = <warning descr="Condition '!c' is always 'true'">!c</warning>;
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }
   }
@@ -41,13 +41,13 @@ class S {
   }
   public void te5(boolean b){
     Boolean c = Boolean.TRUE;
-    boolean o = b||<warning descr="Condition 'c' is always 'true' when reached">c</warning>;
+    boolean o = <warning descr="Condition 'b||c' is always 'true'">b||<warning descr="Condition 'c' is always 'true' when reached">c</warning></warning>;
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }
   }
   public void te6(boolean b){
     Boolean c = Boolean.TRUE;
-    boolean o = !c;
+    boolean o = <warning descr="Condition '!c' is always 'false'">!c</warning>;
     <warning descr="Condition 'o' at the left side of assignment expression is always 'false'. Can be simplified">o</warning> |= c&b;
     if (o) {
     }
@@ -57,7 +57,7 @@ class S {
     boolean o;
     {
       Boolean c = Boolean.FALSE;
-      o = !c;
+      o = <warning descr="Condition '!c' is always 'true'">!c</warning>;
     }
     if (<warning descr="Condition 'o' is always 'true'">o</warning>) {
     }

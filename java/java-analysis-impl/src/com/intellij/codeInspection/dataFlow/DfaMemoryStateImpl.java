@@ -36,6 +36,7 @@ import com.intellij.util.containers.Stack;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -581,7 +582,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     if (dfaVar instanceof DfaVariableValue) {
       if (getVariableState((DfaVariableValue)dfaVar).isNotNull()) return true;
 
-      DfaConstValue constantValue = getConstantValue((DfaVariableValue)dfaVar);
+      DfaConstValue constantValue = getConstantValue(dfaVar);
       if (constantValue != null && constantValue.getValue() != null) return true;
     }
 
@@ -597,10 +598,17 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
 
   @Override
   @Nullable
-  public DfaConstValue getConstantValue(@NotNull DfaVariableValue value) {
-    int index = getEqClassIndex(value);
-    EqClass ec = index == -1 ? null : myEqClasses.get(index);
-    return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
+  @Contract("null -> null")
+  public DfaConstValue getConstantValue(@Nullable DfaValue value) {
+    if (value instanceof DfaConstValue) {
+      return (DfaConstValue)value;
+    }
+    if (value instanceof DfaUnboxedValue || value instanceof DfaVariableValue) {
+      int index = getEqClassIndex(value);
+      EqClass ec = index == -1 ? null : myEqClasses.get(index);
+      return ec == null ? null : (DfaConstValue)unwrap(ec.findConstant(true));
+    }
+    return null;
   }
 
   @Override

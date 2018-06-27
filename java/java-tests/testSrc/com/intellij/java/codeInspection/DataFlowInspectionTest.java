@@ -625,6 +625,12 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testBoxingBoolean() { doTest(); }
   public void testOrWithAssignment() { doTest(); }
   public void testAndAndLastOperand() { doTest(); }
+  public void testReportAlwaysNull() {
+    DataFlowInspection inspection = new DataFlowInspection();
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
+    myFixture.enableInspections(inspection);
+    myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
+  }
   public void testAndAndWithOr() { doTest(); }
   public void testBoxUnboxArrayElement() { doTest(); }
   public void testExactInstanceOf() { doTest(); }

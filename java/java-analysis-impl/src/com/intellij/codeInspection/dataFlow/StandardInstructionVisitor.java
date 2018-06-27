@@ -702,9 +702,7 @@ public class StandardInstructionVisitor extends InstructionVisitor {
     boolean unknownTargetType = false;
     DfaValue condition = null;
     if (instruction.isClassObjectCheck()) {
-      DfaConstValue constant = dfaRight instanceof DfaConstValue ? (DfaConstValue)dfaRight :
-                               dfaRight instanceof DfaVariableValue ? memState.getConstantValue((DfaVariableValue)dfaRight) :
-                               null;
+      DfaConstValue constant = memState.getConstantValue(dfaRight);
       PsiType type = constant == null ? null : ObjectUtils.tryCast(constant.getValue(), PsiType.class);
       if (type == null || type instanceof PsiPrimitiveType) {
         // Unknown/primitive class: just execute contract "null -> false"
