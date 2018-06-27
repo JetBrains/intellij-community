@@ -29,6 +29,14 @@ class ConfigurationBuilder(val configuration: Configuration) {
     get() {
       isPartOfSearchResults = true
     }
+
+  var ConfigurationBuilder.context: String
+    get() {
+      return configuration.matchOptions.patternContext
+    }
+    set(value) {
+      configuration.matchOptions.patternContext = value
+    }
 }
 
 fun pattern(builder: ConfigurationBuilder.() -> Unit): Configuration {

@@ -15,5 +15,6 @@ fun main(args: Array<String>) {
       regExp = "MatchOptions"
       isInvertRegExp = true
     }
+    context = "Java"
   }
 }
