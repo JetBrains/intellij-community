@@ -49,9 +49,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     markDirtyAndRefresh(false, true, false, root)
 
     // -- here is where the magic starts
-
     // todo extract refactorings from them and apply them first
-
     for (rev in historySinceLastCommit) {
       val file = ancestor
 
@@ -64,19 +62,23 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
         }
       }
 
-      val h = GitLineHandler(project, root, COMMIT)
-      h.setStdoutSuppressed(false)
-      h.setStderrSuppressed(false)
       val msg = rev.comment ?: "unnamed"
-      h.addParameters("-m", msg)
-      h.addParameters("--only")
-      h.endOptions()
-      h.addRelativeFiles(listOf(file))
-      val result = git.runCommand(h)
-      GitVcsConsoleWriter.getInstance(project).showMessage(result.outputAsJoinedString)
+      commit(root, file, msg)
     }
 
     ce.myOverridingCommitProcedure = null // for safety
+  }
+
+  private fun commit(root: VirtualFile, file: VirtualFile, msg: String) {
+    val h = GitLineHandler(project, root, COMMIT)
+    h.setStdoutSuppressed(false)
+    h.setStderrSuppressed(false)
+    h.addParameters("-m", msg)
+    h.addParameters("--only")
+    h.endOptions()
+    h.addRelativeFiles(listOf(file))
+    val result = git.runCommand(h)
+    GitVcsConsoleWriter.getInstance(project).showMessage(result.outputAsJoinedString)
   }
 
   fun getLocalHistorySinceLastCommit(f: VirtualFile): List<Revision> {
