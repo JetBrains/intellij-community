@@ -91,12 +91,12 @@ public class BottomPage extends BasePage {
 
   @Override
   protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
-    indent(out, level);
-    out.println(this);
+    indent(out, level + 1);
+    out.println(getClass().getSimpleName());
     for (int i = 0; i < size; i++) {
-      indent(out, level);
-      out.print("+");
-      indent(out, level);
+      indent(out, level + 1);
+      out.print("｜");
+      indent(out, 3);
       out.println(
         renderer == null
         ? getClass().getSimpleName()

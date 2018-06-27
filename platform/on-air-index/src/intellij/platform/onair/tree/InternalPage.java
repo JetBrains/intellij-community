@@ -102,13 +102,13 @@ public class InternalPage extends BasePage {
   @Override
   protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
     indent(out, level);
-    out.println(this);
+    out.println(getClass().getSimpleName());
     for (int i = 0; i < size; i++) {
       indent(out, level);
-      out.print("+");
-      indent(out, level);
-      out.println(renderer == null ? getClass().getSimpleName() : (renderer.renderKey(getKey(i)) + ":"));
-      getChild(novelty, i).dump(novelty, out, level + 3, renderer);
+      out.print("• ");
+      indent(out, 1);
+      out.println(renderer == null ? getClass().getSimpleName() : (renderer.renderKey(getKey(i)) + " \\"));
+      getChild(novelty, i).dump(novelty, out, level + 5, renderer);
     }
   }
 
