@@ -2,7 +2,6 @@
 package chm
 
 import com.intellij.openapi.vcs.CheckinProjectPanel
-import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.CommitExecutor
 import com.intellij.openapi.vcs.checkin.CheckinHandler
 import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory
@@ -56,10 +55,3 @@ class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
   }
 }
 
-class MyCommitProcess : GitCheckinEnvironment.OverridingCommitProcedure {
-
-  override fun commit(changes: List<Change>, message: String) {
-  }
-
-
-}
