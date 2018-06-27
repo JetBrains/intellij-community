@@ -6,6 +6,7 @@ import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessListener;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -128,5 +129,25 @@ public class WSLUtil {
 
   public static boolean isSystemCompatible() {
     return SystemInfo.isWin10OrNewer;
+  }
+
+  /**
+   * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
+   *         For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "C:\Users\file.txt"}
+   */
+  @Nullable
+  public static String getWindowsPath(@NotNull String wslPath) {
+    if (!wslPath.startsWith(WSLDistribution.WSL_MNT_ROOT) || wslPath.length() <= WSLDistribution.WSL_MNT_ROOT.length()) {
+      return null;
+    }
+    int driveIndex = WSLDistribution.WSL_MNT_ROOT.length();
+    if (!Character.isLetter(wslPath.charAt(driveIndex))) {
+      return null;
+    }
+    int slashIndex = driveIndex + 1;
+    if (slashIndex < wslPath.length() && wslPath.charAt(slashIndex) != '/') {
+      return null;
+    }
+    return FileUtil.toSystemDependentName(wslPath.charAt(driveIndex) + ":" + wslPath.substring(slashIndex));
   }
 }
