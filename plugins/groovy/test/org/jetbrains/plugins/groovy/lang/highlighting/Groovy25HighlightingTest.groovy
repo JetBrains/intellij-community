@@ -25,6 +25,8 @@ class Groovy25HighlightingTest extends LightGroovyTestCase implements Highlighti
 
   void 'test named delegate without properties'() { highlightingTest() }
 
+  void 'test immutable fields'() { highlightingTest() }
+
   void 'test immutable constructor'() {
     highlightingTest '''
 import groovy.transform.Immutable
