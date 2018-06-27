@@ -50,6 +50,9 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
 
     // -- here is where the magic starts
     // todo extract refactorings from them and apply them first
+
+    var revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
+
     for (rev in historySinceLastCommit) {
       val file = ancestor
 
@@ -60,6 +63,10 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     }
 
     ce.myOverridingCommitProcedure = null // for safety
+  }
+
+  private fun moveRefactoringsToStart(origHistory: List<Item>): List<Item> {
+    return origHistory; // todo
   }
 
   private fun applyRevision(rev: Item, file: VirtualFile) {
@@ -98,7 +105,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       }
       else {
         historyAfterLastCommit.add(rev)   // one more, the last one, because the name is written for previous revision
-        if (lastRev) break;
+        if (lastRev) break
       }
     }
 
@@ -121,8 +128,6 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     return res
   }
 
-  data class Item(val revision: Revision, val comment: String?)
-
   fun getLocalHistory(file: VirtualFile) : List<Revision> {
     return ReadAction.compute<List<Revision>, RuntimeException> {
       gateway.registerUnsavedDocuments(facade)
@@ -132,4 +137,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       collector.result as List<Revision>
     }
   }
+
+  data class Item(val revision: Revision, val comment: String?)
+
 }
