@@ -302,7 +302,7 @@ public class MinusculeMatcher implements Matcher {
    */
   @Nullable
   private FList<TextRange> matchSkippingWords(@NotNull String name,
-                                              final int patternIndex,
+                                              int patternIndex,
                                               int nameIndex,
                                               boolean allowSpecialChars,
                                               boolean isAsciiName) {
