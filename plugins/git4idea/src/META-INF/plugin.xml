@@ -236,7 +236,16 @@
     <vcs.taskHandler implementation="git4idea.GitTaskHandler"/>
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
+
   </extensions>
+
+  <!-- HACKATHON -->
+  <project-components>
+    <component>
+      <implementation-class>git4idea.editorConflicts.ConflictsHighlightingPassFactory</implementation-class>
+    </component>
+  </project-components>
+  <!-- /HACKATHON -->
 
   <extensionPoints>
     <extensionPoint qualifiedName="Git4Idea.GitHttpAuthDataProvider" interface="git4idea.remote.GitHttpAuthDataProvider"/>
