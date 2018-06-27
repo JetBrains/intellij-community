@@ -29,18 +29,14 @@ class ConfigurationBuilder(val configuration: Configuration) {
   }
 
   val any: IntRange
-    get() {
-      return anyRange
-    }
+    get() = anyRange
   val MatchVariableConstraint.target: Unit
   //todo definitely hack
     get() {
       isPartOfSearchResults = true
     }
   var MatchVariableConstraint.count: Any
-    get() {
-      return minCount..maxCount
-    }
+    get() = minCount..maxCount
     set(value) {
       when (value) {
         is IntRange -> {
@@ -53,21 +49,15 @@ class ConfigurationBuilder(val configuration: Configuration) {
         }
       }
     }
-  fun MatchVariableConstraint.atLeast(from: Int): IntRange {
-    return IntRange(from, Int.MAX_VALUE)
-  }
+  fun MatchVariableConstraint.atLeast(from: Int): IntRange = IntRange(from, Int.MAX_VALUE)
 
   var ConfigurationBuilder.fileType: String
-    get() {
-      return configuration.matchOptions.fileType.name
-    }
+    get() = configuration.matchOptions.fileType.name
     set(value) {
       configuration.matchOptions.fileType = FileTypeManager.getInstance().findFileTypeByName(value.toUpperCase())
     }
   var ConfigurationBuilder.context: String
-    get() {
-      return configuration.matchOptions.patternContext
-    }
+    get() = configuration.matchOptions.patternContext
     set(value) {
       configuration.matchOptions.patternContext = value
     }
