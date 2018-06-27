@@ -126,7 +126,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
     return nameEnumerator.enumerate(name);
   }
 
-  private static boolean isRebuildInAllJavaModules(CompileContext context) {
+  public static boolean isRebuildInAllJavaModules(CompileContext context) {
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
         if (!context.getScope().isBuildForced(target)) {
@@ -137,7 +137,7 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
     return true;
   }
 
-  private static boolean areAllJavaModulesAffected(CompileContext context) {
+  public static boolean areAllJavaModulesAffected(CompileContext context) {
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       for (ModuleBuildTarget target : context.getProjectDescriptor().getBuildTargetIndex().getAllTargets(type)) {
         if (!context.getScope().isWholeTargetAffected(target)) {

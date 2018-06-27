@@ -3,6 +3,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.backwardRefs.JavaBackwardReferenceIndexBuilder;
+import org.jetbrains.jps.backwardRefs.pwa.PwaBuilder;
 import org.jetbrains.jps.builders.BuildTargetType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.ResourcesTargetType;
@@ -40,7 +41,8 @@ public class JavaBuilderService extends BuilderService {
       new NotNullInstrumentingBuilder(),
       new RmiStubsGenerator(),
       new DependencyResolvingBuilder(),
-      new JavaBackwardReferenceIndexBuilder()
+      new JavaBackwardReferenceIndexBuilder(),
+      new PwaBuilder()
     );
   }
 

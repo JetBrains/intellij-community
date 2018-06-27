@@ -24,6 +24,14 @@ public class CompilerReferenceWriter<Input> {
   public synchronized int enumeratePath(String file) throws IOException {
     return myIndex.getFilePathEnumerator().enumerate(file);
   }
+  public synchronized int enumerateName(String name) {
+    try {
+      return myIndex.getByteSeqEum().enumerate(name);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
 
   public Throwable getRebuildRequestCause() {
     return myIndex.getRebuildRequestCause();
