@@ -49,4 +49,6 @@ public interface TokenType {
 
   IElementType CODE_FRAGMENT = new IFileElementType("CODE_FRAGMENT", Language.ANY);
   IElementType DUMMY_HOLDER = new IFileElementType("DUMMY_HOLDER", Language.ANY);
+
+  IElementType CONFLICT_MARKER = new IFileElementType("CONFLICT_MARKER", Language.ANY);
 }
