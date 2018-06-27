@@ -90,7 +90,7 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  public void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
+  protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
     indent(out, level);
     out.println(this);
     for (int i = 0; i < size; i++) {
