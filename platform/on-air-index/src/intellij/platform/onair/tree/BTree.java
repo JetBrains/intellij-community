@@ -1,7 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
-import intellij.platform.onair.storage.Storage;
+import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,12 +19,12 @@ public class BTree {
   private final int keySize;
   private final int addressSize;
 
-  private long address;
+  private Address address;
   private final ConcurrentHashMap<Long, byte[]> novelty = new ConcurrentHashMap<>();
 
   private final AtomicLong addressGenerator = new AtomicLong(-2);
 
-  public BTree(Storage storage, int keySize, int addressSize, long address) {
+  public BTree(Storage storage, int keySize, int addressSize, Address address) {
     this.storage = storage;
     this.keySize = keySize;
     this.addressSize = addressSize;
@@ -70,8 +71,8 @@ public class BTree {
     return result[0];
   }
 
-  public BasePage loadPage(long address) {
-    byte[] bytes = address < 0 ? novelty.get(address) : storage.lookup(address);
+  public BasePage loadPage(Address address) {
+    byte[] bytes = address.isNovelty() ? novelty.get(address.getLowBytes()) : storage.lookup(address);
     int metadataOffset = (keySize + addressSize) * base;
     byte type = bytes[metadataOffset];
     byte size = bytes[metadataOffset + 1];
@@ -89,8 +90,8 @@ public class BTree {
     return result;
   }
 
-  public byte[] loadLeaf(long childAddress) {
-    return address < 0 ? novelty.get(childAddress) : storage.lookup(childAddress);
+  public byte[] loadLeaf(Address childAddress) {
+    return childAddress.isNovelty() ? novelty.get(childAddress.getLowBytes()) : storage.lookup(childAddress);
   }
 
   public static BTree createEmpty(Storage storage, int keySize, int addressSize) {

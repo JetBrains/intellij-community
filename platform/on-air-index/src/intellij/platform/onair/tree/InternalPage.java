@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
+import intellij.platform.onair.storage.api.Address;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,7 +9,7 @@ import java.util.Arrays;
 
 public class InternalPage extends BasePage {
 
-  public InternalPage(byte[] backingArray, BTree tree, long address, int size) {
+  public InternalPage(byte[] backingArray, BTree tree, Address address, int size) {
     super(backingArray, tree, address, size);
   }
 
@@ -51,20 +52,20 @@ public class InternalPage extends BasePage {
 
   @Override
   protected BasePage split(int from, int length) {
-    final InternalPage result = InternalPage.copyOf(this, from, length);
+    final InternalPage result = copyOf(this, from, length);
     decrementSize(length);
     return result;
   }
 
   @Override
   protected InternalPage getMutableCopy(BTree tree) {
-    if (address < 0) {
+    if (address.isNovelty()) {
       return this;
     }
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
     return new InternalPage(
       bytes,
-      tree, tree.alloc(bytes), size
+      tree, new Address(0, tree.alloc(bytes)), size
     );
   }
 
@@ -90,6 +91,6 @@ public class InternalPage extends BasePage {
     bytes[metadataOffset] = BTree.INTERNAL;
     bytes[metadataOffset + 1] = (byte)length;
 
-    return new InternalPage(bytes, page.tree, page.tree.alloc(bytes), length);
+    return new InternalPage(bytes, page.tree, new Address(0, page.tree.alloc(bytes)), length);
   }
 }
