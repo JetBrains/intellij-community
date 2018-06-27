@@ -141,7 +141,6 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
           if (font == null) font = g.getFont();
           LineMetrics metrics = font.getLineMetrics("", g.getFontRenderContext());
           double offset = PaintUtil.alignToInt(-metrics.getStrikethroughOffset(), g, RoundingMode.FLOOR);
-          @SuppressWarnings("TestOnlyProblems")
           double thickness = PaintUtil.alignToInt(maybeScaleFontMetricsThickness(metrics.getStrikethroughThickness(), font), g, RoundingMode.FLOOR);
           drawLine(g, x, y - offset, width, thickness, this);
         }
