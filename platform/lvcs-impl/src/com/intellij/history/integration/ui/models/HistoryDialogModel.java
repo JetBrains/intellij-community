@@ -115,8 +115,11 @@ public abstract class HistoryDialogModel {
   }
 
   public Revision getRightRevision() {
-    if (isCurrentRevisionSelected() || getRevisions().isEmpty()) {
-      return getCurrentRevision();
+    if (isCurrentRevisionSelected()) {
+      if (myLeftRevisionIndex == 0) {
+        return getCurrentRevision();
+      }
+      return getRevisions().get(myLeftRevisionIndex - 1).revision;
     }
     return getRevisions().get(myRightRevisionIndex).revision;
   }

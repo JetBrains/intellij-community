@@ -14,6 +14,6 @@ public class EntireFileHistoryDialogModel extends FileHistoryDialogModel {
 
   @Override
   public FileDifferenceModel getDifferenceModel() {
-    return new EntireFileDifferenceModel(myProject, myGateway, getLeftEntry(), getRightEntry(), isCurrentRevisionSelected());
+    return new EntireFileDifferenceModel(myProject, myGateway, getLeftEntry(), getRightEntry(), false);
   }
 }
