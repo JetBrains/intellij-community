@@ -64,6 +64,11 @@ public class RetinaImage { // [tav] todo: create HiDPIImage class
   }
 
   @NotNull
+  public static BufferedImage create(Graphics2D g, double width, double height, int type, RoundingMode rm) {
+    return new JBHiDPIScaledImage(g, width, height, type, rm);
+  }
+
+  @NotNull
   public static BufferedImage create(GraphicsConfiguration gc, int width, int height, int type) {
     return new JBHiDPIScaledImage(gc, width, height, type);
   }
