@@ -5,6 +5,8 @@ import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.history.integration.ui.models.DirectoryHistoryDialogModel
 import com.intellij.history.integration.ui.models.EntireFileHistoryDialogModel
 import com.intellij.history.integration.ui.models.RevisionItem
+import com.intellij.openapi.application.invokeAndWaitIfNeed
+import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
@@ -18,6 +20,7 @@ import git4idea.checkin.GitCheckinEnvironment
 import git4idea.commands.Git
 import git4idea.commands.GitCommand.COMMIT
 import git4idea.commands.GitLineHandler
+import java.lang.IllegalStateException
 
 class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnvironment.OverridingCommitProcedure {
 
@@ -39,7 +42,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     ce.commit(changes, message)
     // remember the hash and reset the branch
     val stdHash = repo.last()
-    repo.git("tag std-commit")
+    repo.git("tag --force std-commit")
     repo.git("reset --keep HEAD^")     // warning: hard reset
     markDirtyAndRefresh(false, true, false, root)
 
@@ -48,20 +51,26 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     // todo extract refactorings from them and apply them first
 
     for (rev in historySinceLastCommit.reversed()) {
+      val file = ancestor
 
-
+      invokeAndWaitIfNeed {
+        runWriteAction {
+          val entry = rev.revision.findEntry()
+          val c = entry.content
+          if (!c.isAvailable) throw IllegalStateException("$c is not available")
+          file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
+        }
+      }
 
       val h = GitLineHandler(project, root, COMMIT)
       val msg = rev.revision.changeSetName ?: "unnamed"
-      h.addParameters("-m", msg)
+      h.addParameters("-m", "'$msg'")
       h.endOptions()
-      h.addRelativePaths(ChangesUtil.getPaths(changes))
+      h.addRelativeFiles(listOf(file))
       git.runCommand(h)
     }
 
-    // proceed with standard commit
-    ce.myOverridingCommitProcedure = null
-    ce.commit(changes, message)
+    ce.myOverridingCommitProcedure = null // for safety
   }
 
   // get history for ancestor
