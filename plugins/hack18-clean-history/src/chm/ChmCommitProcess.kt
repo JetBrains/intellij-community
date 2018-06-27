@@ -2,11 +2,14 @@
 package chm
 
 import com.intellij.history.core.RevisionsCollector
+import com.intellij.history.core.revisions.Difference
 import com.intellij.history.core.revisions.Revision
 import com.intellij.history.integration.LocalHistoryImpl
 import com.intellij.openapi.application.ReadAction
 import com.intellij.openapi.application.invokeAndWaitIfNeed
-import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diff.impl.patch.FilePatch
+import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
+import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
@@ -21,17 +24,17 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand.COMMIT
 import git4idea.commands.GitLineHandler
 import git4idea.util.GitVcsConsoleWriter
-import java.lang.IllegalStateException
 
 class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnvironment.OverridingCommitProcedure {
 
   val gateway = LocalHistoryImpl.getInstanceImpl().gateway!!
   val facade = LocalHistoryImpl.getInstanceImpl().facade!!
   private val git = Git.getInstance()
+  lateinit var root: VirtualFile
 
   override fun commit(ce: GitCheckinEnvironment, changes: List<Change>, message: String) {
     // only a single root is supported
-    val root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(changes[0].virtualFile)!!
+    root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(changes[0].virtualFile)!!
     val repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)!!
 
     // remember actions
@@ -56,7 +59,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     for (rev in historySinceLastCommit) {
       val file = ancestor
 
-      applyRevision(rev, file)
+      applyRevision(rev, root, file)
 
       val msg = rev.comment ?: "unnamed"
       commit(root, file, msg)
@@ -69,14 +72,19 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     return origHistory; // todo
   }
 
-  private fun applyRevision(rev: Item, file: VirtualFile) {
+  private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
     invokeAndWaitIfNeed {
-      runWriteAction {
-        val entry = rev.revision.findEntry()
-        val c = entry.content
-        if (!c.isAvailable) throw IllegalStateException("$c is not available")
-        file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
-      }
+      //      runWriteAction {
+      // as content:
+      //        val entry = rev.revision.findEntry()
+      //        val c = entry.content
+      //        if (!c.isAvailable) throw IllegalStateException("$c is not available")
+      //        file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
+      //      }
+
+      // as patches
+      val patchApplier = PatchApplier<Any>(project, root, rev.patches, null, null) // todo no dialogs, fail on conflicts
+      patchApplier.execute(false, true)
     }
   }
 
@@ -112,20 +120,40 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     return historyAfterLastCommit.reversed()
   }
 
-  fun getLocalHistoryItems(revisions: List<Revision>) : List<Item> {
+  fun getLocalHistoryItems(revisions: List<Revision>): List<Item> {
     val res = mutableListOf<Item>()
     var comment : String? = null
+    var prevRev: Revision? = null
     for (i in revisions.indices) {
       val rev = revisions[i]
       // name from prev entry, content from current
       if (i == 0) {
         comment = rev.changeSetName
+        prevRev = rev
         continue
       }
-      res.add(Item(rev, comment))
+
+      val diffs = prevRev!!.getDifferencesWith(rev)
+      val changes = getChanges(diffs)
+      val patches = IdeaTextPatchBuilder.buildPatch(project, changes, root.path, false)
+
+      res.add(Item(rev, comment, patches))
       comment = rev.changeSetName
+      prevRev = rev
     }
     return res
+  }
+
+  fun getChanges(diffs: List<Difference>): List<Change> {
+    val result = mutableListOf<Change>()
+    for (d in diffs) {
+      result.add(createChange(d))
+    }
+    return result
+  }
+
+  private fun createChange(d: Difference): Change {
+    return Change(d.getLeftContentRevision(gateway), d.getRightContentRevision(gateway))
   }
 
   fun getLocalHistory(file: VirtualFile) : List<Revision> {
@@ -133,11 +161,13 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       gateway.registerUnsavedDocuments(facade)
       val path = file.path
       val root = gateway.createTransientRootEntry()
-      val collector = RevisionsCollector(facade, root, path, project.getLocationHash(), null)
+      val collector = RevisionsCollector(facade, root, path, project.locationHash, null)
       collector.result as List<Revision>
     }
   }
 
-  data class Item(val revision: Revision, val comment: String?)
+  data class Item(val revision: Revision,
+                  val comment: String?,
+                  val patches: List<FilePatch>)
 
 }
