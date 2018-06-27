@@ -23,8 +23,6 @@ import java.io.OutputStream;
 import java.io.PrintWriter;
 import java.nio.file.Path;
 import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 import java.util.stream.Collectors;
 
 /**
@@ -33,8 +31,7 @@ import java.util.stream.Collectors;
  * @see WSLUtil
  */
 public class WSLDistribution {
-  private static final String WSL_MNT_ROOT = "/mnt";
-  private static final Pattern WIN_IN_WSL_PATH_PATTERN = Pattern.compile(WSL_MNT_ROOT + "/(\\S)(.*)?");
+  static final String WSL_MNT_ROOT = "/mnt/";
   private static final int RESOLVE_SYMLINK_TIMEOUT = 10000;
   private static final String RUN_PARAMETER = "run";
   private static final Logger LOG = Logger.getInstance(WSLDistribution.class);
@@ -354,13 +351,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWindowsPath(@NotNull String wslPath) {
-    Matcher matcher = WIN_IN_WSL_PATH_PATTERN.matcher(wslPath);
-    if (!matcher.matches()) {
-      return null;
-    }
-
-    String path = matcher.group(2);
-    return FileUtil.toSystemDependentName(matcher.group(1) + ":" + (StringUtil.isEmpty(path) ? "/" : path));
+    return WSLUtil.getWindowsPath(wslPath);
   }
 
   /**
@@ -370,7 +361,6 @@ public class WSLDistribution {
   public String getWslPath(@NotNull String windowsPath) {
     if (StringUtil.isChar(windowsPath, 1, ':')) { // normal windows path => /mnt/disk_letter/path
       return WSL_MNT_ROOT +
-             "/" +
              Character.toLowerCase(windowsPath.charAt(0)) +
              FileUtil.toSystemIndependentName(windowsPath.substring(2));
     }
