@@ -8,6 +8,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
 import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.application.runWriteAction
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.HighlighterColors
@@ -18,20 +19,25 @@ import com.intellij.psi.*
 import com.intellij.util.FileContentUtil
 
 class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project, document) {
-
   private val highlightInfos: MutableList<HighlightInfo> = mutableListOf()
 
   override fun doCollectInformation(progress: ProgressIndicator) {
-    highlightInfos.addAll(
-      SyntaxTraverser.psiTraverser(file)
-        .filter { it.node?.elementType == TokenType.CONFLICT_MARKER }
-        .map {
-          createInfo(it)
-        }
-    )
+    val conflicts = SyntaxTraverser.psiTraverser(file).filter { it.node?.elementType == TokenType.CONFLICT_MARKER }.toList()
+    highlightInfos.addAll(conflicts.map { createMarkerInfo(it) })
+    highlightInfos.addAll(conflicts.zipWithNext { begin, end -> createRangeInfo(begin, end) })
+
+
+    highlightInfos.add(HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION).range(file).needsUpdateOnTyping(false).textAttributes(DiffColors.DIFF_INSERTED).createUnconditionally())
   }
 
-  private fun createInfo(element: PsiElement): HighlightInfo {
+  private fun createRangeInfo(begin: PsiElement, end: PsiElement): HighlightInfo {
+    val beginType = begin.text
+    val endType = end.text.substring(0, 8)
+  }
+
+  private fun getMarkerTextAttributesKey() = HighlighterColors.BAD_CHARACTER
+
+  private fun createMarkerInfo(element: PsiElement): HighlightInfo {
     val info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR)
       .range(element)
       .needsUpdateOnTyping(false)
