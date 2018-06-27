@@ -80,7 +80,7 @@ public class GitCommand {
    */
   public static final String GIT_EDITOR_ENV = "GIT_EDITOR";
 
-  enum LockingPolicy {
+  public enum LockingPolicy {
     READ,
     READ_OPTIONAL_LOCKING,
     WRITE
