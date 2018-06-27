@@ -87,7 +87,7 @@ public class StorageTest {
       keys.add(result);
     }
 
-    final int pollsCount = 10000;
+    final int pollsCount = 100000;
     int total = 0;
 
     for (int i = 0; i < pollsCount; i++) {
@@ -104,7 +104,7 @@ public class StorageTest {
       Assert.assertArrayEquals(result, entries.get(randomIndex));
     }
 
-    System.out.println(String.format("Average write time: %f ms", total / 10000.0));
+    System.out.println(String.format("Average write time: %f ms", total / (float) pollsCount));
 
   }
 

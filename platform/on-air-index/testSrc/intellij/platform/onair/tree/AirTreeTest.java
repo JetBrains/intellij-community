@@ -4,12 +4,18 @@ package intellij.platform.onair.tree;
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.storage.api.Tree;
+import org.jetbrains.annotations.NotNull;
+import org.junit.After;
 import org.junit.Assert;
+import org.junit.Before;
 import org.junit.Test;
 
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+
+import static intellij.platform.onair.tree.ByteUtils.writeUnsignedInt;
 
 public class AirTreeTest {
   private static final DecimalFormat FORMATTER;
@@ -19,32 +25,64 @@ public class AirTreeTest {
     FORMATTER.applyPattern("00000");
   }
 
+  Storage storage = null;
+  Novelty novelty = null;
+
+  @Before
+  public void setUp() {
+    storage = new MockStorage();
+    novelty = new MockNovelty();
+  }
+
   @Test
   public void testSplitRight2() {
-    final Storage storage = new MockStorage();
-    Novelty novelty = new MockNovelty();
-
+    int s = 1000;
     BTree tree = BTree.create(novelty, storage, 4);
 
-    Assert.assertTrue(tree.put(novelty, k(1), v(1)));
+    for (int i = 0; i < s; i++) {
+      if (i == 42) {
+        tree.dump(novelty, System.out, ValueDumper.INSTANCE);
+      }
 
-    Assert.assertArrayEquals(v(1), tree.get(novelty, k(1)));
-    Assert.assertNull(tree.get(novelty, k(2)));
+      Assert.assertTrue(tree.put(novelty, k(i), v(i)));
+    }
 
-    Address address = tree.store(novelty, storage);
+    // tree.dump(novelty, System.out, ValueDumper.INSTANCE);
+    checkTree(tree, s);
+
+    tree = reopen(tree);
+
+    checkTree(tree, s);
+  }
+
+  @After
+  public void tearDown() {
+    storage = null;
+    novelty = null;
+  }
+
+  @NotNull
+  private BTree reopen(BTree tree) {
+    Address address = tree.store(novelty);
     novelty = new MockNovelty(); // cleanup
     tree = BTree.load(storage, 4, address);
+    return tree;
+  }
 
-    Assert.assertArrayEquals(v(1), tree.get(novelty, k(1)));
-    Assert.assertNull(tree.get(novelty, k(2)));
+  private void checkTree(Tree tree, final int s) {
+    Assert.assertArrayEquals(v(28), tree.get(novelty, k(28)));
+
+    for (int i = 0; i < s; i++) {
+      Assert.assertArrayEquals(v(i), tree.get(novelty, k(i)));
+      if (i > 0) {
+        Assert.assertNull(tree.get(novelty, k(-i)));
+      }
+    }
   }
 
   public static byte[] k(int key) {
     byte[] result = new byte[4];
-    result[0] = (byte)(key >>> 24);
-    result[1] = (byte)(key >>> 16);
-    result[2] = (byte)(key >>> 8);
-    result[3] = (byte)key;
+    writeUnsignedInt(key ^ 0x80000000, result);
     return result;
   }
 

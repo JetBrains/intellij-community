@@ -7,6 +7,7 @@ import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 
 import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
@@ -21,7 +22,7 @@ public class InternalPage extends BasePage {
   @Nullable
   protected byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
     final int index = binarySearch(key, 0);
-    return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getKey(novelty, index);
+    return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getChild(novelty, index).get(novelty, key);
   }
 
   @Override
@@ -48,12 +49,12 @@ public class InternalPage extends BasePage {
       if (!child.address.isNovelty()) {
         throw new IllegalStateException("child must be novelty");
       }
-      set(pos, child.getMinKey(novelty), child.address.getLowBytes());
+      set(pos, child.getMinKey(), child.address.getLowBytes());
       if (newChild != null) {
         if (!newChild.address.isNovelty()) {
           throw new IllegalStateException("child must be novelty");
         }
-        return insertAt(novelty, +1, newChild.getMinKey(novelty), newChild.address.getLowBytes());
+        return insertAt(novelty, pos + 1, newChild.getMinKey(), newChild.address.getLowBytes());
       }
     }
 
@@ -80,7 +81,7 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  public Address save(@NotNull Novelty novelty, @NotNull Storage storage) {
+  protected Address save(@NotNull Novelty novelty, @NotNull Storage storage) {
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
@@ -94,8 +95,21 @@ public class InternalPage extends BasePage {
 
   @Override
   @NotNull
-  public BasePage getChild(@NotNull Novelty novelty, final int index) {
+  protected BasePage getChild(@NotNull Novelty novelty, final int index) {
     return tree.loadPage(novelty, getChildAddress(index));
+  }
+
+  @Override
+  protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
+    indent(out, level);
+    out.println(this);
+    for (int i = 0; i < size; i++) {
+      indent(out, level);
+      out.print("+");
+      indent(out, level);
+      out.println(renderer == null ? getClass().getSimpleName() : (renderer.renderKey(getKey(i)) + ":"));
+      getChild(novelty, i).dump(novelty, out, level + 3, renderer);
+    }
   }
 
   private static InternalPage copyOf(@NotNull Novelty novelty, InternalPage page, int from, int length) {

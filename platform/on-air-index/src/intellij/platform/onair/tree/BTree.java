@@ -8,6 +8,8 @@ import intellij.platform.onair.storage.api.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintStream;
+
 public class BTree implements Tree {
   public static final byte DEFAULT_BASE = 32;
 
@@ -57,15 +59,28 @@ public class BTree implements Tree {
   @Override
   public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
     final boolean[] result = new boolean[1];
-    final BasePage rootPage = loadPage(novelty, address).getMutableCopy(novelty, this);
-    final BasePage page = rootPage.put(novelty, key, value, overwrite, result);
-    address = (page == null ? rootPage : page).address;
+    final BasePage root = loadPage(novelty, address).getMutableCopy(novelty, this);
+    final BasePage newSibling = root.put(novelty, key, value, overwrite, result);
+    if (newSibling != null) {
+      final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
+      final byte[] bytes = new byte[metadataOffset + 2];
+      bytes[metadataOffset] = INTERNAL;
+      bytes[metadataOffset + 1] = 2;
+      InternalPage page = new InternalPage(bytes, this, new Address(novelty.alloc(bytes)), 2);
+      page.set(0, root.getMinKey(), root.address.getLowBytes());
+      page.set(1, newSibling.getMinKey(), newSibling.address.getLowBytes());
+      this.address = page.address;
+    }
     return result[0];
   }
 
   @Override
-  public Address store(@NotNull Novelty novelty, @NotNull Storage storage) {
+  public Address store(@NotNull Novelty novelty) {
     return loadPage(novelty, address).save(novelty, storage);
+  }
+
+  public void dump(@NotNull Novelty novelty, @NotNull PrintStream out, BTree.ToString renderer) {
+    loadPage(novelty, address).dump(novelty, out, 0, renderer);
   }
 
   /* package */ BasePage loadPage(@NotNull Novelty novelty, Address address) {
@@ -101,5 +116,12 @@ public class BTree implements Tree {
     bytes[metadataOffset] = BOTTOM;
     bytes[metadataOffset + 1] = 0;
     return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
+  }
+
+  public interface ToString {
+
+    String renderKey(byte[] key);
+
+    String renderValue(byte[] value);
   }
 }

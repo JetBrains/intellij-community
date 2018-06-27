@@ -7,6 +7,7 @@ import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.PrintStream;
 import java.util.Arrays;
 
 import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
@@ -25,11 +26,6 @@ public class BottomPage extends BasePage {
       return tree.loadLeaf(novelty, getChildAddress(index));
     }
     return null;
-  }
-
-  @Override
-  protected BasePage getChild(@NotNull Novelty novelty, int index) {
-    throw new UnsupportedOperationException();
   }
 
   @Nullable
@@ -76,7 +72,7 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  public Address save(@NotNull Novelty novelty, @NotNull Storage storage) {
+  protected Address save(@NotNull Novelty novelty, @NotNull Storage storage) {
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
@@ -86,6 +82,27 @@ public class BottomPage extends BasePage {
       }
     }
     return storage.store(backingArray);
+  }
+
+  @Override
+  protected BasePage getChild(@NotNull Novelty novelty, int index) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
+    indent(out, level);
+    out.println(this);
+    for (int i = 0; i < size; i++) {
+      indent(out, level);
+      out.print("+");
+      indent(out, level);
+      out.println(
+        renderer == null
+        ? getClass().getSimpleName()
+        : (renderer.renderKey(getKey(i)) + " → " + renderer.renderValue(getValue(novelty, i)))
+      );
+    }
   }
 
   private static BottomPage copyOf(@NotNull Novelty novelty, BottomPage page, int from, int length) {

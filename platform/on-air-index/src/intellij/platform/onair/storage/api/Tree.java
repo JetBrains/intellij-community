@@ -16,5 +16,5 @@ public interface Tree {
 
   boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite);
 
-  Address store(@NotNull Novelty novelty, @NotNull Storage storage);
+  Address store(@NotNull Novelty novelty);
 }
