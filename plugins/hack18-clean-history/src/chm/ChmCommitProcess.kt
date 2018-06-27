@@ -36,7 +36,8 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
 
     // remember actions
     val ancestor = LocalFileSystem.getInstance().findFileByIoFile(ChangesUtil.findCommonAncestor(changes)!!)!!
-    val historySinceLastCommit = getLocalHistorySinceLastCommit(ancestor)   // todo checked only for files yet
+    // todo checked only for files yet
+    val historySinceLastCommit = getLocalHistoryItems(getLocalHistorySinceLastCommit(ancestor))
 
     // make a standard commit
     ce.myOverridingCommitProcedure = null
@@ -51,21 +52,12 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
 
     // todo extract refactorings from them and apply them first
 
-    var comment : String? = null
-    val revs = historySinceLastCommit
-    for (i in revs.indices) {
+    for (rev in historySinceLastCommit) {
       val file = ancestor
-      val rev = revs[i]
-
-      // name from prev entry, content from current
-      if (i == 0) {
-        comment = rev.changeSetName
-        continue
-      }
 
       invokeAndWaitIfNeed {
         runWriteAction {
-          val entry = rev.findEntry()
+          val entry = rev.revision.findEntry()
           val c = entry.content
           if (!c.isAvailable) throw IllegalStateException("$c is not available")
           file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
@@ -75,23 +67,18 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       val h = GitLineHandler(project, root, COMMIT)
       h.setStdoutSuppressed(false)
       h.setStderrSuppressed(false)
-      val msg = comment ?: "unnamed"
+      val msg = rev.comment ?: "unnamed"
       h.addParameters("-m", msg)
       h.addParameters("--only")
       h.endOptions()
       h.addRelativeFiles(listOf(file))
       val result = git.runCommand(h)
       GitVcsConsoleWriter.getInstance(project).showMessage(result.outputAsJoinedString)
-
-      comment = rev.changeSetName
     }
 
     ce.myOverridingCommitProcedure = null // for safety
   }
 
-  // get history for ancestor
-  // find latest label "commit changes"
-  // get all changes made after "commit changes"
   fun getLocalHistorySinceLastCommit(f: VirtualFile): List<Revision> {
     val revisions = getLocalHistory(f) // (1) backwards: 0 is the latest (2) labels are included as revisions
 
@@ -112,6 +99,24 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     return historyAfterLastCommit.reversed()
   }
 
+  fun getLocalHistoryItems(revisions: List<Revision>) : List<Item> {
+    val res = mutableListOf<Item>()
+    var comment : String? = null
+    for (i in revisions.indices) {
+      val rev = revisions[i]
+      // name from prev entry, content from current
+      if (i == 0) {
+        comment = rev.changeSetName
+        continue
+      }
+      res.add(Item(rev, comment))
+      comment = rev.changeSetName
+    }
+    return res
+  }
+
+  data class Item(val revision: Revision, val comment: String?)
+
   fun getLocalHistory(file: VirtualFile) : List<Revision> {
     return ReadAction.compute<List<Revision>, RuntimeException> {
       gateway.registerUnsavedDocuments(facade)
@@ -121,6 +126,4 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       collector.result as List<Revision>
     }
   }
-
-
 }
