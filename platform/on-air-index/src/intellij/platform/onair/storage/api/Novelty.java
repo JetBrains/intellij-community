@@ -3,6 +3,7 @@ package intellij.platform.onair.storage.api;
 
 public interface Novelty {
 
+  // result must be less than 0
   long alloc(byte[] bytes);
 
   void update(long id, byte[] bytes);

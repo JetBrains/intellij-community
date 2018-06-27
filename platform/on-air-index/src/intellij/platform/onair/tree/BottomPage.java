@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
+import intellij.platform.onair.storage.api.Address;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -8,7 +9,7 @@ import java.util.Arrays;
 
 public class BottomPage extends BasePage {
 
-  public BottomPage(byte[] backingArray, BTree tree, long address, int size) {
+  public BottomPage(byte[] backingArray, BTree tree, Address address, int size) {
     super(backingArray, tree, address, size);
   }
 
@@ -35,7 +36,7 @@ public class BottomPage extends BasePage {
       if (overwrite) {
         // key found
         // TODO: tree.addExpired(keysAddresses[pos]);
-        set(pos, key, tree.alloc(Arrays.copyOf(value, value.length)));
+        set(pos, key, new Address(0, tree.alloc(Arrays.copyOf(value, value.length))));
         // this should be always true in order to keep up with keysAddresses[pos] expiration
         result[0] = true;
       }
@@ -45,7 +46,7 @@ public class BottomPage extends BasePage {
     // if found - insert at this position, else insert after found
     pos = -pos - 1;
 
-    final BasePage page = insertAt(pos, key, tree.alloc(Arrays.copyOf(value, value.length)));
+    final BasePage page = insertAt(pos, key, new Address(0, tree.alloc(Arrays.copyOf(value, value.length))));
     result[0] = true;
     tree.incrementSize();
     return page;
@@ -53,20 +54,20 @@ public class BottomPage extends BasePage {
 
   @Override
   protected BottomPage split(int from, int length) {
-    final BottomPage result = BottomPage.copyOf(this, from, length);
+    final BottomPage result = copyOf(this, from, length);
     decrementSize(length);
     return result;
   }
 
   @Override
   protected BottomPage getMutableCopy(BTree tree) {
-    if (address < 0) {
+    if (address.isNovelty()) {
       return this;
     }
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
     return new BottomPage(
       bytes,
-      tree, tree.alloc(bytes), size
+      tree, new Address(0, tree.alloc(bytes)), size
     );
   }
 
@@ -86,6 +87,6 @@ public class BottomPage extends BasePage {
     bytes[metadataOffset] = BTree.BOTTOM;
     bytes[metadataOffset + 1] = (byte)length;
 
-    return new BottomPage(bytes, page.tree, page.tree.alloc(bytes), length);
+    return new BottomPage(bytes, page.tree, new Address(0, page.tree.alloc(bytes)), length);
   }
 }

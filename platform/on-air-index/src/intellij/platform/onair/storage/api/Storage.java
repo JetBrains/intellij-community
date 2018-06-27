@@ -3,7 +3,7 @@ package intellij.platform.onair.storage.api;
 
 public interface Storage {
 
-  byte[] lookup(long hash);
+  byte[] lookup(Address address);
 
-  long store(byte[] what);
+  Address store(byte[] what);
 }
