@@ -7,6 +7,9 @@ import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
 
 class ConfigurationBuilder(val configuration: Configuration) {
+  companion object {
+    val anyRange = IntRange(0, Int.MAX_VALUE)
+  }
   var name: String
     get() = configuration.name
     set(value) {
@@ -25,11 +28,34 @@ class ConfigurationBuilder(val configuration: Configuration) {
     configuration.matchOptions.addVariableConstraint(constraint)
   }
 
+  val any: IntRange
+    get() {
+      return anyRange
+    }
   val MatchVariableConstraint.target: Unit
   //todo definitely hack
     get() {
       isPartOfSearchResults = true
     }
+  var MatchVariableConstraint.count: Any
+    get() {
+      return minCount..maxCount
+    }
+    set(value) {
+      when (value) {
+        is IntRange -> {
+          minCount = value.start
+          maxCount = value.endInclusive
+        }
+        is Int -> {
+          minCount = value
+          maxCount = value
+        }
+      }
+    }
+  fun MatchVariableConstraint.atLeast(from: Int): IntRange {
+    return IntRange(from, Int.MAX_VALUE)
+  }
 
   var ConfigurationBuilder.fileType: String
     get() {

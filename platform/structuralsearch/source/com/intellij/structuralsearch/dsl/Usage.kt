@@ -15,6 +15,12 @@ fun main(args: Array<String>) {
       regExp = "MatchOptions"
       isInvertRegExp = true
     }
+    "count" {
+      count = 0
+      count = atLeast(1)
+      count = any
+      count = 1..10
+    }
     fileType = "Java"
     context = "File"
   }
