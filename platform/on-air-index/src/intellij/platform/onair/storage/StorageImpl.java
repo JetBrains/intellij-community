@@ -55,7 +55,9 @@ public class StorageImpl implements Storage {
     byte[] result = myLocalCache.get(address);
     if (result == null) {
       result = myClient.get(address.toString(), myTranscoder);
-      myLocalCache.put(address, result);
+      if (result != null) {
+        myLocalCache.put(address, result);
+      }
     }
     return result;
   }
