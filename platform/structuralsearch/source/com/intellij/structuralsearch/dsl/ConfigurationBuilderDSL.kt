@@ -23,6 +23,12 @@ class ConfigurationBuilder(val configuration: Configuration) {
     constraint.apply(builder)
     configuration.matchOptions.addVariableConstraint(constraint)
   }
+
+  val MatchVariableConstraint.target: Unit
+    //todo definitely hack
+    get() {
+      isPartOfSearchResults = true
+    }
 }
 
 fun pattern(builder: ConfigurationBuilder.() -> Unit): Configuration {

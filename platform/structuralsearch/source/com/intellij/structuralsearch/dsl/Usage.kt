@@ -9,6 +9,7 @@ fun main(args: Array<String>) {
     pattern = "class \$className\$ extends \$anotherClassName\$ {}"
     "className" {
       regExp = "MyClass"
+      target
     }
     "anotherClassName" {
       regExp = "MatchOptions"
