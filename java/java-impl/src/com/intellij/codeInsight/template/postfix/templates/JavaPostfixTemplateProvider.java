@@ -37,6 +37,8 @@ public class JavaPostfixTemplateProvider implements PostfixTemplateProvider {
     new ForDescendingPostfixTemplate(this),
     new WhileStatementPostfixTemplate(this),
     new SoutPostfixTemplate(this),
+    new SerrPostfixTemplate(this),
+    new SoufPostfixTemplate(this),
     new SoutvPostfixTemplate(this),
     new ReturnStatementPostfixTemplate(this),
     new OptionalPostfixTemplate(this),
