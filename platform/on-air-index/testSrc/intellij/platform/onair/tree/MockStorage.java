@@ -37,11 +37,6 @@ public class MockStorage implements Storage {
     for (final byte element : what) {
       result = 31 * result + (element & 0xff);
     }
-
-    if (result < 0) {
-      throw new IllegalStateException();
-    }
-
     return result;
   }
 }
