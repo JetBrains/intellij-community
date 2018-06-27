@@ -16,6 +16,7 @@
 package com.intellij.history.integration.ui.models;
 
 import com.intellij.history.core.revisions.Revision;
+import com.intellij.history.core.tree.Entry;
 
 import java.util.LinkedList;
 
@@ -25,5 +26,12 @@ public class RevisionItem {
 
   public RevisionItem(Revision revision) {
     this.revision = revision;
+  }
+
+  @Override
+  public String toString() {
+    Entry entry = revision.findEntry();
+    String content = entry == null ? null : entry.getContent().toString();
+    return revision.getChangeSetName() + "\n" + content;
   }
 }
