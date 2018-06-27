@@ -65,7 +65,7 @@ public class InternalPage extends BasePage {
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
     return new InternalPage(
       bytes,
-      tree, new Address(0, tree.alloc(bytes)), size
+      tree, tree.alloc(bytes), size
     );
   }
 
@@ -91,6 +91,6 @@ public class InternalPage extends BasePage {
     bytes[metadataOffset] = BTree.INTERNAL;
     bytes[metadataOffset + 1] = (byte)length;
 
-    return new InternalPage(bytes, page.tree, new Address(0, page.tree.alloc(bytes)), length);
+    return new InternalPage(bytes, page.tree, page.tree.alloc(bytes), length);
   }
 }

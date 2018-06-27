@@ -36,7 +36,7 @@ public class BottomPage extends BasePage {
       if (overwrite) {
         // key found
         // TODO: tree.addExpired(keysAddresses[pos]);
-        set(pos, key, new Address(0, tree.alloc(Arrays.copyOf(value, value.length))));
+        set(pos, key, tree.alloc(Arrays.copyOf(value, value.length)));
         // this should be always true in order to keep up with keysAddresses[pos] expiration
         result[0] = true;
       }
@@ -46,7 +46,7 @@ public class BottomPage extends BasePage {
     // if found - insert at this position, else insert after found
     pos = -pos - 1;
 
-    final BasePage page = insertAt(pos, key, new Address(0, tree.alloc(Arrays.copyOf(value, value.length))));
+    final BasePage page = insertAt(pos, key, tree.alloc(Arrays.copyOf(value, value.length)));
     result[0] = true;
     tree.incrementSize();
     return page;
@@ -67,7 +67,7 @@ public class BottomPage extends BasePage {
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
     return new BottomPage(
       bytes,
-      tree, new Address(0, tree.alloc(bytes)), size
+      tree, tree.alloc(bytes), size
     );
   }
 
@@ -87,6 +87,6 @@ public class BottomPage extends BasePage {
     bytes[metadataOffset] = BTree.BOTTOM;
     bytes[metadataOffset + 1] = (byte)length;
 
-    return new BottomPage(bytes, page.tree, new Address(0, page.tree.alloc(bytes)), length);
+    return new BottomPage(bytes, page.tree, page.tree.alloc(bytes), length);
   }
 }

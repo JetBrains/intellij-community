@@ -44,10 +44,10 @@ public class BTree {
   }
 
   // TODO: move to novelty
-  public long alloc(byte[] bytes) {
-    long result = addressGenerator.getAndDecrement();
+  public Address alloc(byte[] bytes) {
+    final long result = addressGenerator.getAndDecrement();
     novelty.put(result, bytes);
-    return result;
+    return new Address(result);
   }
 
   protected void incrementSize() {
