@@ -28,6 +28,9 @@
   </xi:include>
 
   <actions>
+    <!-- HACKATHON -->
+    <action id="Debug.Editor.Conflict" class="git4idea.editorConflicts.DebugEditorConflictAction" text="Debug Editor Conflict"/>
+    <!-- /HACKATHON -->
 
     <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">
       <add-to-group group-id="Vcs.Import"/>
