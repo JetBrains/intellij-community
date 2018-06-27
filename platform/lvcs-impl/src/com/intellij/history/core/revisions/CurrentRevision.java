@@ -37,4 +37,9 @@ public class CurrentRevision extends Revision {
   public Entry findEntry() {
     return myRoot.getEntry(myPath);
   }
+
+  @Override
+  public boolean isLabel() {
+    return false;
+  }
 }
