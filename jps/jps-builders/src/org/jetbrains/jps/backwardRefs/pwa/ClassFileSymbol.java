@@ -23,26 +23,26 @@ public abstract class ClassFileSymbol {
   }
 
   //TODO
-  static class Lambda extends ClassFileSymbol {
+  public static class Lambda extends ClassFileSymbol {
     protected Lambda(int name) {
       super(name);
     }
   }
-  static class Clazz extends ClassFileSymbol {
-    protected Clazz(int name) {
+  public static class Clazz extends ClassFileSymbol {
+    public Clazz(int name) {
       super(name);
     }
   }
-  static class Method extends FieldOrMethod {
+  public static class Method extends FieldOrMethod {
     public final int parameterCount;
 
-    protected Method(int name, int containingClass, int parameterCount) {
+    public Method(int name, int containingClass, int parameterCount) {
       super(name, containingClass);
       this.parameterCount = parameterCount;
     }
   }
-  static class Field extends FieldOrMethod {
-    protected Field(int name, int containingClass) {
+  public static class Field extends FieldOrMethod {
+    public Field(int name, int containingClass) {
       super(name, containingClass);
     }
   }

@@ -5,7 +5,11 @@ import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.PwaService;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
+import com.intellij.lang.jvm.JvmClass;
 import com.intellij.lang.jvm.JvmElement;
+import com.intellij.lang.jvm.JvmField;
+import com.intellij.lang.jvm.JvmMethod;
+import com.intellij.lang.jvm.util.JvmClassUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilationStatusListener;
@@ -14,13 +18,14 @@ import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.util.indexing.StorageException;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.jps.backwardRefs.pwa.ClassFileSymbol;
 import org.jetbrains.jps.backwardRefs.pwa.PwaIndex;
+import org.jetbrains.jps.backwardRefs.pwa.PwaIndices;
 
-import java.util.Set;
+import java.io.IOException;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -133,11 +138,42 @@ public class PwaServiceImpl extends PwaService {
 
   @Override
   public void projectClosed() {
-
+    closeReaderIfNeed(CompilerReferenceServiceBase.IndexCloseReason.PROJECT_CLOSED);
   }
 
   @Override
   public boolean isBytecodeUsed(JvmElement element) {
-    return false;
+    try {
+      return myIndex.get(PwaIndices.BACK_USAGES).getData(asSymbol(element)).forEach((id, value) -> true);
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  private ClassFileSymbol asSymbol(JvmElement element) throws IOException {
+    if (element instanceof JvmClass) {
+      String name = JvmClassUtil.getJvmClassName((JvmClass)element);
+      int id = myIndex.getByteSeqEum().tryEnumerate(name);
+      return new ClassFileSymbol.Clazz(id);
+    }
+    else if (element instanceof JvmField) {
+      String className = JvmClassUtil.getJvmClassName(((JvmField)element).getContainingClass());
+      String name = ((JvmField)element).getName();
+      int id = myIndex.getByteSeqEum().tryEnumerate(name);
+      int classId = myIndex.getByteSeqEum().tryEnumerate(className);
+      return new ClassFileSymbol.Field(id, classId);
+    }
+    else if (element instanceof JvmMethod) {
+      String className = JvmClassUtil.getJvmClassName(((JvmField)element).getContainingClass());
+      String name = ((JvmField)element).getName();
+      int id = myIndex.getByteSeqEum().tryEnumerate(name);
+      int classId = myIndex.getByteSeqEum().tryEnumerate(className);
+      return new ClassFileSymbol.Method(id, classId, ((JvmMethod)element).getParameters().length);
+    }
+    throw new AssertionError(element.getClass());
   }
 }
