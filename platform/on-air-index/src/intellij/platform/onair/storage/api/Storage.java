@@ -2,6 +2,7 @@
 package intellij.platform.onair.storage.api;
 
 public interface Storage {
+
   byte[] lookup(long hash);
 
   long store(byte[] what);
