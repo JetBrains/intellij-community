@@ -42,6 +42,6 @@ public class AirTreeTest {
     }
 
     public static byte[] key(String key) {
-        return key == null ? null : key.getBytes();
+        return key == null ? null : key.getBytes(Charset.forName("UTF-8"));
     }
 }
