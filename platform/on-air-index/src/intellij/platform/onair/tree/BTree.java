@@ -4,10 +4,11 @@ package intellij.platform.onair.tree;
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.storage.api.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class BTree {
+public class BTree implements Tree {
   public static final byte DEFAULT_BASE = 32;
 
   public static final byte BOTTOM = 4;
@@ -28,10 +29,12 @@ public class BTree {
     this.address = address;
   }
 
+  @Override
   public int getKeySize() {
     return keySize;
   }
 
+  @Override
   public int getBase() {
     return DEFAULT_BASE;
   }
@@ -40,15 +43,18 @@ public class BTree {
     // TODO
   }
 
+  @Override
   @Nullable
-  protected byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
+  public byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
     return loadPage(novelty, address).get(novelty, key);
   }
 
+  @Override
   public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value) {
     return put(novelty, key, value, true);
   }
 
+  @Override
   public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
     final boolean[] result = new boolean[1];
     final BasePage rootPage = loadPage(novelty, address).getMutableCopy(novelty, this);
@@ -57,6 +63,7 @@ public class BTree {
     return result[0];
   }
 
+  @Override
   public Address store(@NotNull Novelty novelty, @NotNull Storage storage) {
     return loadPage(novelty, address).save(novelty, storage);
   }
