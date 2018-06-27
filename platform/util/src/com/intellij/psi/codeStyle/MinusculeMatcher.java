@@ -435,15 +435,13 @@ public class MinusculeMatcher implements Matcher {
 
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
-    int i = fragmentLength;
-    while (i >= minFragment || isWildcard(patternIndex + i)) {
+    for (int i = fragmentLength; i >= minFragment || isWildcard(patternIndex + i); i--) {
       FList<TextRange> ranges = isWildcard(patternIndex + i) ?
                                 matchWildcards(name, patternIndex + i, nameIndex + i, isAsciiName) :
                                 matchSkippingWords(name, patternIndex + i, nameIndex + i, false, isAsciiName);
       if (ranges != null) {
         return prependRange(ranges, nameIndex, i);
       }
-      i--;
     }
     return null;
   }
