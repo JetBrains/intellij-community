@@ -2,78 +2,75 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.storage.api.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.concurrent.ConcurrentHashMap;
-import java.util.concurrent.atomic.AtomicLong;
+public class BTree implements Tree {
+  public static final byte DEFAULT_BASE = 32;
 
-public class BTree {
   public static final byte BOTTOM = 4;
   public static final byte INTERNAL = 5;
-  public static final byte LEAF = 6;
+  // public static final byte LEAF = 6;
+
+  public static final int BYTES_PER_ADDRESS = 16;
 
   private final Storage storage;
-  private final int base = 32;
+  // private final int base = 32;
   private final int keySize;
-  private final int addressSize;
 
   private Address address;
-  private final ConcurrentHashMap<Long, byte[]> novelty = new ConcurrentHashMap<>();
 
-  private final AtomicLong addressGenerator = new AtomicLong(-2);
-
-  public BTree(Storage storage, int keySize, int addressSize, Address address) {
+  private BTree(Storage storage, int keySize, Address address) {
     this.storage = storage;
     this.keySize = keySize;
-    this.addressSize = addressSize;
     this.address = address;
   }
 
+  @Override
   public int getKeySize() {
     return keySize;
   }
 
-  public int getAddressSize() {
-    return addressSize;
-  }
-
+  @Override
   public int getBase() {
-    return base;
-  }
-
-  // TODO: move to novelty
-  public long alloc(byte[] bytes) {
-    long result = addressGenerator.getAndDecrement();
-    novelty.put(result, bytes);
-    return result;
+    return DEFAULT_BASE;
   }
 
   protected void incrementSize() {
     // TODO
   }
 
+  @Override
   @Nullable
-  protected byte[] get(@NotNull byte[] key) {
-    return loadPage(address).get(key);
+  public byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
+    return loadPage(novelty, address).get(novelty, key);
   }
 
-  public boolean put(@NotNull byte[] key, @NotNull byte[] value) {
-    return put(key, value, true);
+  @Override
+  public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value) {
+    return put(novelty, key, value, true);
   }
 
-  public boolean put(@NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
+  @Override
+  public boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite) {
     final boolean[] result = new boolean[1];
-    final BasePage rootPage = loadPage(address).getMutableCopy(this);
-    final BasePage page = rootPage.put(key, value, overwrite, result);
+    final BasePage rootPage = loadPage(novelty, address).getMutableCopy(novelty, this);
+    final BasePage page = rootPage.put(novelty, key, value, overwrite, result);
     address = (page == null ? rootPage : page).address;
     return result[0];
   }
 
-  public BasePage loadPage(Address address) {
-    byte[] bytes = address.isNovelty() ? novelty.get(address.getLowBytes()) : storage.lookup(address);
-    int metadataOffset = (keySize + addressSize) * base;
+  @Override
+  public Address store(@NotNull Novelty novelty, @NotNull Storage storage) {
+    return loadPage(novelty, address).save(novelty, storage);
+  }
+
+  /* package */ BasePage loadPage(@NotNull Novelty novelty, Address address) {
+    byte[] bytes = address.isNovelty() ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
+    int metadataOffset = (keySize + BYTES_PER_ADDRESS) * getBase();
     byte type = bytes[metadataOffset];
     byte size = bytes[metadataOffset + 1];
     final BasePage result;
@@ -90,16 +87,19 @@ public class BTree {
     return result;
   }
 
-  public byte[] loadLeaf(Address childAddress) {
-    return childAddress.isNovelty() ? novelty.get(childAddress.getLowBytes()) : storage.lookup(childAddress);
+  /* package */ byte[] loadLeaf(@NotNull Novelty novelty, Address childAddress) {
+    return childAddress.isNovelty() ? novelty.lookup(childAddress.getLowBytes()) : storage.lookup(childAddress);
   }
 
-  public static BTree createEmpty(Storage storage, int keySize, int addressSize) {
-    final int metadataOffset = (keySize + addressSize) * 32;
+  public static BTree load(@NotNull Storage storage, int keySize, Address address) {
+    return new BTree(storage, keySize, address);
+  }
+
+  public static BTree create(@NotNull Novelty novelty, @NotNull Storage storage, int keySize) {
+    final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
     final byte[] bytes = new byte[metadataOffset + 2];
     bytes[metadataOffset] = BOTTOM;
     bytes[metadataOffset + 1] = 0;
-    // TODO: use novelty
-    return new BTree(storage, keySize, addressSize, storage.store(bytes));
+    return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
   }
 }

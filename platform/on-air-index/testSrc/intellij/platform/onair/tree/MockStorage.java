@@ -5,9 +5,12 @@ import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
 public class MockStorage implements Storage {
+  private static final long MOCK_HIGH_BYTES = 0xCAFEBABE;
+
   public final ConcurrentHashMap<Address, byte[]> data = new ConcurrentHashMap<>();
 
   public byte[] lookup(Address address) {
@@ -18,10 +21,13 @@ public class MockStorage implements Storage {
     return result;
   }
 
-  public Address store(byte[] what) {
-    final Address result = new Address(0, getHash(what));
-    if (data.putIfAbsent(result, what) != null) {
-      throw new IllegalStateException();
+  public Address store(byte[] bytes) {
+    final Address result = new Address(MOCK_HIGH_BYTES, getHash(bytes));
+    final byte[] existing = data.putIfAbsent(result, bytes);
+    if (existing != null) {
+      if (!Arrays.equals(bytes, existing)) {
+        throw new IllegalStateException("hash collision");
+      }
     }
     return result;
   }
@@ -31,11 +37,6 @@ public class MockStorage implements Storage {
     for (final byte element : what) {
       result = 31 * result + (element & 0xff);
     }
-
-    if (result < 0) {
-      throw new IllegalStateException();
-    }
-
     return result;
   }
 }

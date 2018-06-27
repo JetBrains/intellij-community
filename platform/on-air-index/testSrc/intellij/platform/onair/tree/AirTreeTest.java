@@ -1,13 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
+import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
-import intellij.platform.onair.storage.StorageImpl;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
-import java.net.InetSocketAddress;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -21,16 +20,23 @@ public class AirTreeTest {
   }
 
   @Test
-  public void testSplitRight2() throws IOException {
+  public void testSplitRight2() {
     final Storage storage = new MockStorage();
-    //final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    Novelty novelty = new MockNovelty();
 
-    BTree tree = BTree.createEmpty(storage, 4, 8);
+    BTree tree = BTree.create(novelty, storage, 4);
 
-    tree.put(k(1), v(1));
+    Assert.assertTrue(tree.put(novelty, k(1), v(1)));
 
-    Assert.assertArrayEquals(v(1), tree.get(k(1)));
-    Assert.assertNull(tree.get(k(2)));
+    Assert.assertArrayEquals(v(1), tree.get(novelty, k(1)));
+    Assert.assertNull(tree.get(novelty, k(2)));
+
+    Address address = tree.store(novelty, storage);
+    novelty = new MockNovelty(); // cleanup
+    tree = BTree.load(storage, 4, address);
+
+    Assert.assertArrayEquals(v(1), tree.get(novelty, k(1)));
+    Assert.assertNull(tree.get(novelty, k(2)));
   }
 
   public static byte[] k(int key) {

@@ -3,8 +3,12 @@ package intellij.platform.onair.tree;
 
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Novelty;
+import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
 
 public abstract class BasePage {
   protected final byte[] backingArray;
@@ -21,36 +25,34 @@ public abstract class BasePage {
   }
 
   @Nullable
-  protected abstract byte[] get(@NotNull final byte[] key);
+  protected abstract byte[] get(@NotNull Novelty novelty, @NotNull final byte[] key);
 
-  protected abstract BasePage getChild(int index);
+  protected abstract BasePage getChild(@NotNull Novelty novelty, int index);
 
   @Nullable
-  protected abstract BasePage put(@NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result);
+  protected abstract BasePage put(@NotNull Novelty novelty,
+                                  @NotNull byte[] key,
+                                  @NotNull byte[] value,
+                                  boolean overwrite,
+                                  boolean[] result);
 
-  protected abstract BasePage getMutableCopy(BTree tree);
+  protected abstract BasePage getMutableCopy(@NotNull Novelty novelty, BTree tree);
+
+  protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
+
+  public abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage);
 
   protected Address getChildAddress(int index) {
     final int bytesPerKey = tree.getKeySize();
-    int bytesPerValue = tree.getAddressSize();
-    final int offset = (bytesPerKey + bytesPerValue) * index + bytesPerKey;
-    final long lowBytes = readUnsignedLong(backingArray, offset, Math.min(bytesPerValue, 8));
-    final long highBytes;
-    if (bytesPerValue > 8) {
-      bytesPerValue -= 8;
-      highBytes = readUnsignedLong(backingArray, offset + 8, bytesPerValue);
-    }
-    else {
-      highBytes = 0;
-    }
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * index + bytesPerKey;
+    final long lowBytes = readUnsignedLong(backingArray, offset, 8);
+    final long highBytes = readUnsignedLong(backingArray, offset + 8, 8);
     return new Address(highBytes, lowBytes);
   }
 
-  protected byte[] getKey(int index) {
-    return tree.loadLeaf(getChildAddress(index));
+  protected byte[] getKey(@NotNull Novelty novelty, int index) {
+    return tree.loadLeaf(novelty, getChildAddress(index));
   }
-
-  protected abstract BasePage split(int from, int length);
 
   protected void incrementSize() {
     if (size >= tree.getBase()) {
@@ -67,17 +69,17 @@ public abstract class BasePage {
   }
 
   // TODO: consider caching minKey like xodus BasePageImmutable does
-  @NotNull byte[] getMinKey() {
+  @NotNull byte[] getMinKey(@NotNull Novelty novelty) {
     if (size <= 0) {
       throw new ArrayIndexOutOfBoundsException("Page is empty.");
     }
 
-    return getKey(0);
+    return getKey(novelty, 0);
   }
 
   protected int binarySearch(byte[] key, int low) {
     final int bytesPerKey = tree.getKeySize();
-    final int bytesPerEntry = bytesPerKey + tree.getAddressSize();
+    final int bytesPerEntry = bytesPerKey + BYTES_PER_ADDRESS;
 
     int high = size - 1;
 
@@ -101,26 +103,32 @@ public abstract class BasePage {
     return -(low + 1);
   }
 
-  protected void set(int pos, byte[] key, Address childAddress) {
+  protected void set(int pos, byte[] key, long lowAddressBytes) {
     final int bytesPerKey = tree.getKeySize();
-    final int bytesPerValue = tree.getAddressSize();
 
     if (key.length != bytesPerKey) {
       throw new IllegalArgumentException("Invalid key length: need " + bytesPerKey + ", got: " + key.length);
     }
 
-    final int offset = (bytesPerKey + bytesPerValue) * pos;
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
 
     // write key
     System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
     // write address
-    writeUnsignedLong(childAddress.getLowBytes(), Math.min(bytesPerValue, 8), backingArray, offset + bytesPerKey);
-    if (bytesPerValue > 8) {
-      writeUnsignedLong(childAddress.getHighBytes(), bytesPerValue - 8, backingArray, offset + bytesPerKey + 8);
-    }
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
+    writeUnsignedLong(0, 8, backingArray, offset + bytesPerKey + 8);
   }
 
-  protected BasePage insertAt(int pos, byte[] key, Address childAddress) {
+  protected void setChildAddress(int pos, long lowAddressBytes, long highAddressBytes) {
+    final int bytesPerKey = tree.getKeySize();
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
+
+    // write address
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
+    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + bytesPerKey + 8);
+  }
+
+  protected BasePage insertAt(@NotNull Novelty novelty, int pos, byte[] key, long childAddress) {
     if (!needSplit(this)) {
       insertDirectly(pos, key, childAddress);
       return null;
@@ -128,20 +136,20 @@ public abstract class BasePage {
     else {
       int splitPos = getSplitPos(this, pos);
 
-      final BasePage sibling = split(splitPos, size - splitPos);
+      final BasePage sibling = split(novelty, splitPos, size - splitPos);
       if (pos >= splitPos) {
         // insert into right sibling
-        sibling.insertAt(pos - splitPos, key, childAddress);
+        sibling.insertAt(novelty, pos - splitPos, key, childAddress);
       }
       else {
         // insert into self
-        insertAt(pos, key, childAddress);
+        insertAt(novelty, pos, key, childAddress);
       }
       return sibling;
     }
   }
 
-  protected void insertDirectly(final int pos, @NotNull byte[] key, Address childAddress) {
+  protected void insertDirectly(final int pos, @NotNull byte[] key, long childAddress) {
     if (pos < size) {
       copyChildren(pos, pos + 1);
     }
@@ -152,7 +160,7 @@ public abstract class BasePage {
   protected void copyChildren(final int from, final int to) {
     if (from >= size) return;
 
-    final int bytesPerEntry = tree.getKeySize() + tree.getAddressSize();
+    final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
 
     System.arraycopy(
       backingArray, from * bytesPerEntry,
@@ -162,7 +170,7 @@ public abstract class BasePage {
   }
 
   private void setSize(int updatedSize) {
-    final int sizeOffset = ((tree.getKeySize() + tree.getAddressSize()) * tree.getBase()) + 1;
+    final int sizeOffset = ((tree.getKeySize() + BYTES_PER_ADDRESS) * tree.getBase()) + 1;
     backingArray[sizeOffset] = (byte)updatedSize;
     this.size = updatedSize;
   }
