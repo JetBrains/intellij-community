@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.actions;
 
 import com.intellij.ide.util.gotoByName.*;
@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
@@ -20,6 +19,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.codeStyle.FixingLayoutMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -147,7 +147,7 @@ public class GotoFileItemProvider extends DefaultChooseByNameItemProvider {
         String fullName = myModel.getFullName(o);
         if (o instanceof PsiFileSystemItem && fullName != null) {
           fullName = FileUtilRt.toSystemIndependentName(fullName);
-          FList<TextRange> fragments = fullMatcher.matchingFragments(fullName);
+          FList<Range> fragments = fullMatcher.matchingFragments(fullName);
           if (fragments != null && !fragments.isEmpty()) {
             group.add((PsiFileSystemItem)o);
 

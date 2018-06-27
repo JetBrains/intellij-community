@@ -7,7 +7,6 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressIndicatorProvider;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiElement;
@@ -15,6 +14,7 @@ import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.proximity.PsiProximityComparator;
 import com.intellij.util.*;
@@ -366,7 +366,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
 
   @Nullable
   private static MatchResult matchName(@NotNull MinusculeMatcher matcher, @NotNull String name) {
-    FList<TextRange> fragments = matcher.matchingFragments(name);
+    FList<Range> fragments = matcher.matchingFragments(name);
     return fragments != null ? new MatchResult(name, matcher.matchingDegree(name, false, fragments), MinusculeMatcher.isStartMatch(fragments)) : null;
   }
 

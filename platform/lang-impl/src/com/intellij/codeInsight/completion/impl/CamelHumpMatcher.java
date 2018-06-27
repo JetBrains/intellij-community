@@ -7,11 +7,11 @@ import com.intellij.codeInsight.completion.PrefixMatcher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.util.containers.FList;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +47,7 @@ public class CamelHumpMatcher extends PrefixMatcher {
   @Override
   public boolean isStartMatch(LookupElement element) {
     for (String s : CompletionUtil.iterateLookupStrings(element)) {
-      FList<TextRange> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
+      FList<Range> ranges = myCaseInsensitiveMatcher.matchingFragments(s);
       if (ranges == null) continue;
       if (ranges.isEmpty() || skipUnderscores(s) >= ranges.get(0).getStartOffset()) {
         return true;
@@ -166,14 +166,14 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Nullable
-  public FList<TextRange> matchingFragments(@NotNull String string) {
+  public FList<Range> matchingFragments(@NotNull String string) {
     return myMatcher.matchingFragments(string);
   }
 
-  public int matchingDegree(@NotNull String string, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String string, @Nullable FList<Range> fragments) {
     int underscoreEnd = skipUnderscores(string);
     if (underscoreEnd > 0) {
-      FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
+      FList<Range> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
       if (ciRanges != null && !ciRanges.isEmpty()) {
         int matchStart = ciRanges.get(0).getStartOffset();
         if (matchStart > 0 && matchStart <= underscoreEnd) {

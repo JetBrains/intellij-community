@@ -6,9 +6,9 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.ui.ColoredTableCellRenderer;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
@@ -566,7 +566,7 @@ public class ClassesTable extends JBTable implements DataProvider, Disposable {
       String presentation = ((TypeInfo)value).name();
       append(" ");
       if (isSelected) {
-        FList<TextRange> textRanges = myMatcher.matchingFragments(presentation);
+        FList<Range> textRanges = myMatcher.matchingFragments(presentation);
         if (textRanges != null) {
           SimpleTextAttributes attributes = new SimpleTextAttributes(getBackground(), getForeground(), null,
                                                                      SimpleTextAttributes.STYLE_SEARCH_MATCH);

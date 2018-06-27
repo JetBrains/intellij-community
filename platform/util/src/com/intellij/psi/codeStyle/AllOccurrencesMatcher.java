@@ -1,21 +1,6 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
-import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.FList;
 import org.jetbrains.annotations.NotNull;
@@ -35,14 +20,14 @@ public class AllOccurrencesMatcher extends FixingLayoutMatcher {
 
   @Nullable
   @Override
-  public FList<TextRange> matchingFragments(@NotNull String name) {
-    FList<TextRange> match = super.matchingFragments(name);
+  public FList<Range> matchingFragments(@NotNull String name) {
+    FList<Range> match = super.matchingFragments(name);
     if (!ContainerUtil.isEmpty(match)) {
-      List<FList<TextRange>> allMatchesReversed = new ArrayList<FList<TextRange>>();
+      List<FList<Range>> allMatchesReversed = new ArrayList<FList<Range>>();
       int lastOffset = 0;
       while (!ContainerUtil.isEmpty(match)) {
-        FList<TextRange> reversedWithAbsoluteOffsets = FList.emptyList();
-        for (TextRange r : match) {
+        FList<Range> reversedWithAbsoluteOffsets = FList.emptyList();
+        for (Range r : match) {
           reversedWithAbsoluteOffsets = reversedWithAbsoluteOffsets.prepend(r.shiftRight(lastOffset));
         }
         allMatchesReversed.add(reversedWithAbsoluteOffsets);
@@ -52,7 +37,7 @@ public class AllOccurrencesMatcher extends FixingLayoutMatcher {
       }
       match = FList.emptyList();
       for (int i = allMatchesReversed.size() - 1; i >= 0; i--) {
-        for (TextRange range : allMatchesReversed.get(i)) {
+        for (Range range : allMatchesReversed.get(i)) {
           match = match.prepend(range);
         }
       }

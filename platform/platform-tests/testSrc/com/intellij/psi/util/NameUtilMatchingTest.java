@@ -1,26 +1,12 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.psi.util;
 
 import com.intellij.ide.util.FileStructureDialog;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.SpeedSearchComparator;
 import com.intellij.util.text.Matcher;
@@ -471,34 +457,34 @@ public class NameUtilMatchingTest extends TestCase {
     @NonNls String sample = "NoClassDefFoundException";
     //                       0 2    7  10   15    21
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("ncldfou*ion", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                                       TextRange.from(0, 1), TextRange.from(2, 2), TextRange.from(7, 1), TextRange.from(10, 3), TextRange.from(21, 3));
+                                       Range.from(0, 1), Range.from(2, 2), Range.from(7, 1), Range.from(10, 3), Range.from(21, 3));
 
     sample = "doGet(HttpServletRequest, HttpServletResponse):void";
     //        0                     22
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("d*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 1), TextRange.from(22, 2));
+                        Range.from(0, 1), Range.from(22, 2));
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("doge*st", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 4), TextRange.from(22, 2));
+                        Range.from(0, 4), Range.from(22, 2));
 
     sample = "_test";
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("_", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 1));
+                        Range.from(0, 1));
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("_t", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 2));
+                        Range.from(0, 2));
   }
 
   public void testMatchingFragmentsSorted() {
     @NonNls String sample = "SWUPGRADEHDLRFSPR7TEST";
     //                       0        9  12
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("SWU*H*R", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 3), TextRange.from(9, 1), TextRange.from(12, 1));
+                        Range.from(0, 3), Range.from(9, 1), Range.from(12, 1));
   }
 
   public void testPreferCapsMatching() {
     String sample = "getCurrentUser";
     //               0   4     10
     UsefulTestCase.assertOrderedEquals(NameUtil.buildMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
-                        TextRange.from(0, 4), TextRange.from(10, 1));
+                        Range.from(0, 4), Range.from(10, 1));
   }
 
   public void testPlusOrMinusInThePatternShouldAllowToBeSpaceSurrounded() {
@@ -667,7 +653,7 @@ public class NameUtilMatchingTest extends TestCase {
     String text = "some text";
     MinusculeMatcher matcher = new AllOccurrencesMatcher("*e", NameUtil.MatchingCaseSensitivity.NONE, "");
     UsefulTestCase.assertOrderedEquals(matcher.matchingFragments(text),
-                        new TextRange(3, 4), new TextRange(6, 7));
+                        new Range(3, 4, 0), new Range(6, 7, 0));
   }
 
   public void testCamelHumpWinsOverConsecutiveCaseMismatch() {

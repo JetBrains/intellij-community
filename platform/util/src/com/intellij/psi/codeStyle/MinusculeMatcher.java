@@ -103,12 +103,12 @@ public class MinusculeMatcher implements Matcher {
   }
 
   @NotNull
-  private static FList<TextRange> prependRange(@NotNull FList<TextRange> ranges, int from, int length) {
-    TextRange head = ranges.getHead();
-    if (head != null && head.getStartOffset() == from + length) {
-      return ranges.getTail().prepend(new TextRange(from, head.getEndOffset()));
+  private static FList<Range> prependRange(@NotNull FList<Range> ranges, @NotNull Range range) {
+    Range head = ranges.getHead();
+    if (head != null && head.getStartOffset() == range.getEndOffset()) {
+      return ranges.getTail().prepend(new Range(range.getStartOffset(), head.getEndOffset(), range.getErrorCount() + head.getErrorCount()));
     }
-    return ranges.prepend(TextRange.from(from, length));
+    return ranges.prepend(range);
   }
 
   public int matchingDegree(@NotNull String name) {
@@ -119,7 +119,7 @@ public class MinusculeMatcher implements Matcher {
     return matchingDegree(name, valueStartCaseMatch, matchingFragments(name));
   }
 
-  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String name, boolean valueStartCaseMatch, @Nullable FList<Range> fragments) {
     if (fragments == null) return Integer.MIN_VALUE;
     if (fragments.isEmpty()) return 0;
 
@@ -200,12 +200,12 @@ public class MinusculeMatcher implements Matcher {
   }
 
   public boolean isStartMatch(@NotNull String name) {
-    FList<TextRange> fragments = matchingFragments(name);
+    FList<Range> fragments = matchingFragments(name);
     return fragments != null && isStartMatch(fragments);
   }
 
-  public static boolean isStartMatch(@NotNull Iterable<TextRange> fragments) {
-    Iterator<TextRange> iterator = fragments.iterator();
+  public static boolean isStartMatch(@NotNull Iterable<Range> fragments) {
+    Iterator<Range> iterator = fragments.iterator();
     return !iterator.hasNext() || iterator.next().getStartOffset() == 0;
   }
 
@@ -220,7 +220,7 @@ public class MinusculeMatcher implements Matcher {
   }
 
   @Nullable
-  public FList<TextRange> matchingFragments(@NotNull String name) {
+  public FList<Range> matchingFragments(@NotNull String name) {
     return new Session(name).matchingFragments();
   }
 
@@ -244,7 +244,7 @@ public class MinusculeMatcher implements Matcher {
     }
 
     @Nullable
-    public FList<TextRange> matchingFragments() {
+    public FList<Range> matchingFragments() {
       if (myName.length() < myMinNameLength) {
         return null;
       }
@@ -270,7 +270,7 @@ public class MinusculeMatcher implements Matcher {
      * and try to {@link #matchFragment} for it.
      */
     @Nullable
-    private FList<TextRange> matchWildcards(int patternIndex,
+    private FList<Range> matchWildcards(int patternIndex,
                                         int nameIndex) {
       if (nameIndex < 0) {
         return null;
@@ -291,14 +291,14 @@ public class MinusculeMatcher implements Matcher {
         if (isTrailingSpacePattern() && nameIndex != myName.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
-            return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
+            return FList.<Range>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0)); //todo looks like it's okay here
           }
           return null;
         }
         return FList.emptyList();
       }
 
-      FList<TextRange> ranges = matchFragment(patternIndex, nameIndex);
+      FList<Range> ranges = matchFragment(patternIndex, nameIndex);
       if (ranges != null) {
         return ranges;
       }
@@ -319,9 +319,9 @@ public class MinusculeMatcher implements Matcher {
      * and invokes {@link #matchFragment} at those candidate positions
      */
     @Nullable
-    private FList<TextRange> matchSkippingWords(int patternIndex,
-                                                int nameIndex,
-                                                boolean allowSpecialChars) {
+    private FList<Range> matchSkippingWords(int patternIndex,
+                                            int nameIndex,
+                                            boolean allowSpecialChars) {
       boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex];
 
       int maxFoundLength = 0;
@@ -339,7 +339,7 @@ public class MinusculeMatcher implements Matcher {
           if (!isMiddleMatch(patternIndex, nameIndex)) {
             maxFoundLength = fragmentLength;
           }
-          FList<TextRange> ranges = matchInsideFragment(patternIndex, nameIndex, fragmentLength);
+          FList<Range> ranges = matchInsideFragment(patternIndex, nameIndex, fragmentLength);
           if (ranges != null) {
             return ranges;
           }
@@ -382,8 +382,8 @@ public class MinusculeMatcher implements Matcher {
     }
 
     @Nullable
-    private FList<TextRange> matchFragment(int patternIndex,
-                                           int nameIndex) {
+    private FList<Range> matchFragment(int patternIndex,
+                                       int nameIndex) {
       int fragmentLength = maxMatchingFragment(patternIndex, nameIndex);
       return fragmentLength == 0 ? null : matchInsideFragment(patternIndex, nameIndex, fragmentLength);
     }
@@ -413,14 +413,14 @@ public class MinusculeMatcher implements Matcher {
 
     // we've found the longest fragment matching pattern and name
     @Nullable
-    private FList<TextRange> matchInsideFragment(int patternIndex,
-                                                 int nameIndex,
-                                                 int fragmentLength) {
+    private FList<Range> matchInsideFragment(int patternIndex,
+                                             int nameIndex,
+                                             int fragmentLength) {
       // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
       int minFragment = isMiddleMatch(patternIndex, nameIndex)
                         ? 3 : 1;
 
-      FList<TextRange> camelHumpRanges = improveCamelHumps(patternIndex, nameIndex, fragmentLength, minFragment);
+      FList<Range> camelHumpRanges = improveCamelHumps(patternIndex, nameIndex, fragmentLength, minFragment);
       if (camelHumpRanges != null) {
         return camelHumpRanges;
       }
@@ -434,21 +434,21 @@ public class MinusculeMatcher implements Matcher {
     }
 
     @Nullable
-    private FList<TextRange> findLongestMatchingPrefix(int patternIndex,
-                                                       int nameIndex,
-                                                       int fragmentLength, int minFragment) {
+    private FList<Range> findLongestMatchingPrefix(int patternIndex,
+                                                   int nameIndex,
+                                                   int fragmentLength, int minFragment) {
       if (patternIndex + fragmentLength >= myPattern.length) {
-        return FList.<TextRange>emptyList().prepend(TextRange.from(nameIndex, fragmentLength));
+        return FList.<Range>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, 0)); //todo we need to add errors here!!!
       }
 
       // try to match the remainder of pattern with the remainder of name
       // it may not succeed with the longest matching fragment, then try shorter matches
       for (int i = fragmentLength; i >= minFragment || isWildcard(patternIndex + i); i--) {
-        FList<TextRange> ranges = isWildcard(patternIndex + i) ?
+        FList<Range> ranges = isWildcard(patternIndex + i) ?
                               matchWildcards(patternIndex + i, nameIndex + i) :
                               matchSkippingWords(patternIndex + i, nameIndex + i, false);
         if (ranges != null) {
-          return prependRange(ranges, nameIndex, i);
+          return prependRange(ranges, new Range(nameIndex, nameIndex + i, 0)); //todo check errors???
         }
       }
       return null;
@@ -459,15 +459,15 @@ public class MinusculeMatcher implements Matcher {
      * but we try to find uppercase "U" later in name for better matching degree
      */
     @Nullable
-    private FList<TextRange> improveCamelHumps(int patternIndex,
-                                               int nameIndex,
-                                               int maxFragment,
-                                               int minFragment) {
+    private FList<Range> improveCamelHumps(int patternIndex,
+                                           int nameIndex,
+                                           int maxFragment,
+                                           int minFragment) {
       for (int i = minFragment; i < maxFragment; i++) {
         if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i)) {
-          FList<TextRange> ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i);
+          FList<Range> ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i);
           if (ranges != null) {
-            return prependRange(ranges, nameIndex, i);
+            return prependRange(ranges, new Range(nameIndex, nameIndex + i, 0)); //todo we need to add error info here!!!
           }
         }
       }
@@ -479,8 +479,8 @@ public class MinusculeMatcher implements Matcher {
     }
 
     @Nullable
-    private FList<TextRange> findUppercaseMatchFurther(int patternIndex,
-                                                       int nameIndex) {
+    private FList<Range> findUppercaseMatchFurther(int patternIndex,
+                                                   int nameIndex) {
       int nextWordStart = indexOfWordStart(patternIndex, nameIndex);
       return matchWildcards(patternIndex, nextWordStart);
     }

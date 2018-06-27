@@ -16,10 +16,10 @@ import com.intellij.openapi.editor.ex.util.EditorUIUtil;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.impl.ComplementaryFontsRegistry;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.NameUtil;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.speedSearch.SpeedSearchUtil;
@@ -371,7 +371,7 @@ public class LookupCellRenderer implements ListCellRenderer {
 
     final String prefix = item instanceof EmptyLookupItem ? "" : myLookup.itemPattern(item);
     if (prefix.length() > 0) {
-      Iterable<TextRange> ranges = getMatchingFragments(prefix, name);
+      Iterable<Range> ranges = getMatchingFragments(prefix, name);
       if (ranges != null) {
         SimpleTextAttributes highlighted =
           new SimpleTextAttributes(style, selected ? SELECTED_PREFIX_FOREGROUND_COLOR : PREFIX_FOREGROUND_COLOR);
@@ -382,7 +382,7 @@ public class LookupCellRenderer implements ListCellRenderer {
     nameComponent.append(name, base);
   }
 
-  public static FList<TextRange> getMatchingFragments(String prefix, String name) {
+  public static FList<Range> getMatchingFragments(String prefix, String name) {
     return NameUtil.buildMatcher("*" + prefix).build().matchingFragments(name);
   }
 

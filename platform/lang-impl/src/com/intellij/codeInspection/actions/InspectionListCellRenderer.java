@@ -1,28 +1,14 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.lang.Language;
 import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.fileTypes.UnknownFileType;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
+import com.intellij.psi.codeStyle.Range;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -79,8 +65,8 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
       final String groupName = StringUtil.join(toolWrapper.getGroupPath(), " | ");
       final String matchingText = inspectionName + "|" + groupName;
       Matcher matcher = MatcherHolder.getAssociatedMatcher(list);
-      List<TextRange> fragments = matcher == null ? null : ((MinusculeMatcher)matcher).matchingFragments(matchingText);
-      List<TextRange> adjustedFragments = new ArrayList<>();
+      List<Range> fragments = matcher == null ? null : ((MinusculeMatcher)matcher).matchingFragments(matchingText);
+      List<Range> adjustedFragments = new ArrayList<>();
       if (fragments != null) {
         adjustedFragments.addAll(fragments);
       }
@@ -91,7 +77,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
         c.append(inspectionName, myPlain);
       }
       else {
-        final List<TextRange> ranges = adjustedFragments.subList(0, splitPoint);
+        final List<Range> ranges = adjustedFragments.subList(0, splitPoint);
         SpeedSearchUtil.appendColoredFragments(c, inspectionName, ranges, sel ? mySelected : myPlain, myHighlighted);
       }
       panel.add(c, BorderLayout.WEST);
@@ -102,7 +88,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
       }
       else {
         final SimpleTextAttributes attributes = sel ? mySelected : SimpleTextAttributes.GRAYED_ATTRIBUTES;
-        final List<TextRange> ranges = adjustedFragments.subList(splitPoint, adjustedFragments.size());
+        final List<Range> ranges = adjustedFragments.subList(splitPoint, adjustedFragments.size());
         SpeedSearchUtil.appendColoredFragments(group, groupName, ranges, attributes, myHighlighted);
       }
       final JPanel right = new JPanel(new BorderLayout());
@@ -123,16 +109,16 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer {
     return panel;
   }
 
-  private static int adjustRanges(List<TextRange> ranges, int offset) {
+  private static int adjustRanges(List<Range> ranges, int offset) {
     int result = 0;
     for (int i = 0; i < ranges.size(); i++) {
-      final TextRange range = ranges.get(i);
+      final Range range = ranges.get(i);
       final int startOffset = range.getStartOffset();
       if (startOffset < offset) {
         result = i + 1;
       }
       else {
-        ranges.set(i, new TextRange(startOffset - offset, range.getEndOffset() - offset));
+        ranges.set(i, new Range(startOffset - offset, range.getEndOffset() - offset, range.getErrorCount()));
       }
     }
     return result;
