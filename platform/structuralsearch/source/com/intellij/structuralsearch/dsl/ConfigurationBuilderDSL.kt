@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.dsl
 
+import com.intellij.openapi.fileTypes.FileTypeManager
 import com.intellij.structuralsearch.MatchVariableConstraint
 import com.intellij.structuralsearch.plugin.ui.Configuration
 import com.intellij.structuralsearch.plugin.ui.SearchConfiguration
@@ -30,12 +31,12 @@ class ConfigurationBuilder(val configuration: Configuration) {
       isPartOfSearchResults = true
     }
 
-  var ConfigurationBuilder.context: String
+  var ConfigurationBuilder.fileType: String
     get() {
-      return configuration.matchOptions.patternContext
+      return configuration.matchOptions.fileType.name
     }
     set(value) {
-      configuration.matchOptions.patternContext = value
+      configuration.matchOptions.fileType = FileTypeManager.getInstance().findFileTypeByName(value.toUpperCase())
     }
 }
 
