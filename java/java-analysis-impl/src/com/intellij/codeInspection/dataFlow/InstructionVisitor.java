@@ -35,6 +35,15 @@ import java.util.Objects;
  */
 public abstract class InstructionVisitor {
 
+  /**
+   * Called before a PsiExpression result is being pushed to the memory state stack during symbolic interpretation.
+   * The result of single expression can be pushed many times to the different memory states.
+   *
+   * @param value a value being pushed
+   * @param expression a physical PsiExpression which evaluates to given value.
+   * @param range if not-null, specifies a part of expression which corresponds to the value (like "a ^ b" range in "a ^ b ^ c" expression).
+   * @param state a memory state where expression is about to be pushed
+   */
   protected void beforeExpressionPush(@NotNull DfaValue value,
                                       @NotNull PsiExpression expression,
                                       @Nullable TextRange range,
@@ -42,12 +51,30 @@ public abstract class InstructionVisitor {
 
   }
 
+  /**
+   * Called before a result of method reference execution is being pushed to the memory state stack during symbolic interpretation.
+   * It's not guaranteed that this method is called for every reachable non-void method reference. However if it's called for some method
+   * reference, then all possible values will be passed here.
+   *
+   * @param value result of method reference execution
+   * @param methodRef a method reference
+   * @param state a memory state
+   */
   protected void beforeMethodReferenceResultPush(@NotNull DfaValue value,
                                                  @NotNull PsiMethodReferenceExpression methodRef,
                                                  @NotNull DfaMemoryState state) {
 
   }
 
+  /**
+   * Called for every expression which corresponds to the method or lambda result.
+   *
+   * @param value expression value
+   * @param expression an expression which produces given value. For conditional return like {@code return cond ? ifTrue : ifFalse;}
+   *                   this method will be called for {@code ifTrue} and {@code ifFalse} separately.
+   * @param context a method or lambda which result is being returned
+   * @param state a memory state
+   */
   protected void checkReturnValue(@NotNull DfaValue value,
                                   @NotNull PsiExpression expression,
                                   @NotNull PsiParameterListOwner context,
