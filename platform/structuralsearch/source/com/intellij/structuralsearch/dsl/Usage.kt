@@ -16,5 +16,6 @@ fun main(args: Array<String>) {
       isInvertRegExp = true
     }
     fileType = "Java"
+    context = "File"
   }
 }

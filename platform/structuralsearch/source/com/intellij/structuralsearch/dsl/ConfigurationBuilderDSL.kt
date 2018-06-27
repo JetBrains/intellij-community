@@ -26,7 +26,7 @@ class ConfigurationBuilder(val configuration: Configuration) {
   }
 
   val MatchVariableConstraint.target: Unit
-    //todo definitely hack
+  //todo definitely hack
     get() {
       isPartOfSearchResults = true
     }
@@ -37,6 +37,13 @@ class ConfigurationBuilder(val configuration: Configuration) {
     }
     set(value) {
       configuration.matchOptions.fileType = FileTypeManager.getInstance().findFileTypeByName(value.toUpperCase())
+    }
+  var ConfigurationBuilder.context: String
+    get() {
+      return configuration.matchOptions.patternContext
+    }
+    set(value) {
+      configuration.matchOptions.patternContext = value
     }
 }
 
