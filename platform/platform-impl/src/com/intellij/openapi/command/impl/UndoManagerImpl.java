@@ -159,7 +159,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   public boolean isActive() {
-    return Comparing.equal(myProject, myCurrentActionProject);
+    return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
   }
 
   private boolean isInsideCommand() {
