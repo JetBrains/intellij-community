@@ -34,7 +34,7 @@ class C(object):
     def delx(self):
         del self._x
 
-    x = property(getx, None, fdel = delx, doc = "I'm the 'x' property.")
+    x = property(getx, <weak_warning descr="Argument equals to default parameter value">None</weak_warning>, fdel = delx, doc = "I'm the 'x' property.")
 
 
 # PY-3455
@@ -86,3 +86,6 @@ def decorator(arg='baz'):
 @decorator(<weak_warning descr="Argument equals to default parameter value">arg='baz'</weak_warning>)
 def f<error descr="'(' expected">:</error>
   pass
+
+with open('file', <weak_warning descr="Argument equals to default parameter value">None</weak_warning>) as file:
+    pass

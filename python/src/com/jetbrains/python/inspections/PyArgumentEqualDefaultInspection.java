@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.types.PyCallableParameter;
 import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.pyi.PyiUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,7 +104,7 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (mapping == null) return;
       final Set<PyExpression> problemElements = new HashSet<>();
       for (Map.Entry<PyExpression, PyCallableParameter> e : mapping.getMappedParameters().entrySet()) {
-        final PyExpression defaultValue = e.getValue().getDefaultValue();
+        final PyExpression defaultValue = findDefaultValue(mapping, e.getValue());
         if (defaultValue != null) {
           PyExpression key = e.getKey();
           if (key instanceof PyKeywordArgument && ((PyKeywordArgument)key).getValueExpression() != null) {
@@ -126,6 +127,30 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
         }
         else if (!(arguments[i] instanceof PyKeywordArgument)) canDelete = false;
       }
+    }
+
+    @Nullable
+    private static PyExpression findDefaultValue(@NotNull PyCallExpression.PyArgumentsMapping mapping,
+                                                 @NotNull PyCallableParameter parameter) {
+      final String name = parameter.getName();
+      final PyExpression value = parameter.getDefaultValue();
+
+      if (name == null || !(value instanceof PyNoneLiteralExpression) || !((PyNoneLiteralExpression)value).isEllipsis()) return value;
+
+      final PyCallExpression.PyMarkedCallee markedCallee = mapping.getMarkedCallee();
+      if (markedCallee == null) return value;
+
+      final PyCallable callable = markedCallee.getElement();
+      if (callable == null) return value;
+
+      if (PyiUtil.isInsideStub(callable)) {
+        final PyCallable originalCallable = PyiUtil.stubToOriginal(callable, PyCallable.class);
+
+        final PyNamedParameter originalParameter = originalCallable.getParameterList().findParameterByName(name);
+        if (originalParameter != null) return originalParameter.getDefaultValue();
+      }
+
+      return value;
     }
 
     private boolean isEqual(PyExpression key, PyExpression defaultValue) {
