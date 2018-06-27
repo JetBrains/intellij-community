@@ -18,6 +18,7 @@ import com.intellij.openapi.compiler.CompilerTopics;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.messages.MessageBusConnection;
@@ -26,6 +27,7 @@ import org.jetbrains.jps.backwardRefs.pwa.PwaIndex;
 import org.jetbrains.jps.backwardRefs.pwa.PwaIndices;
 
 import java.io.IOException;
+import java.util.Collections;
 import java.util.UUID;
 import java.util.concurrent.atomic.LongAdder;
 import java.util.concurrent.locks.Lock;
@@ -43,7 +45,9 @@ public class PwaServiceImpl extends PwaService {
   public PwaServiceImpl(Project project, FileDocumentManager fileDocumentManager,
                                       PsiDocumentManager psiDocumentManager) {
     super(project);
-    myDirtyScopeHolder = null; //new DirtyScopeHolder(this, fileDocumentManager, psiDocumentManager, (connection, strings) -> {});
+    myDirtyScopeHolder = new DirtyScopeHolder(
+      ProjectFileIndex.getInstance(project), project,  fileDocumentManager,psiDocumentManager,this,  Collections
+      .emptySet(), (connection, strings) -> {});
   }
 
 

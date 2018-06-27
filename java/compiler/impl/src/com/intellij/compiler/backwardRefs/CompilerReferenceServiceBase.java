@@ -91,7 +91,7 @@ public abstract class CompilerReferenceServiceBase<Reader extends CompilerRefere
     myReaderFactory = readerFactory;
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     myFileTypes = Stream.of(LanguageCompilerRefAdapter.INSTANCES).flatMap(a -> a.getFileTypes().stream()).collect(Collectors.toSet());
-    myDirtyScopeHolder = new DirtyScopeHolder(this, fileDocumentManager, psiDocumentManager, compilationAffectedModulesSubscription);
+    myDirtyScopeHolder = new DirtyScopeHolder(myProjectFileIndex, project, fileDocumentManager, psiDocumentManager, null, myFileTypes, compilationAffectedModulesSubscription);
   }
 
    @Override
