@@ -53,20 +53,24 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     for (rev in historySinceLastCommit) {
       val file = ancestor
 
-      invokeAndWaitIfNeed {
-        runWriteAction {
-          val entry = rev.revision.findEntry()
-          val c = entry.content
-          if (!c.isAvailable) throw IllegalStateException("$c is not available")
-          file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
-        }
-      }
+      applyRevision(rev, file)
 
       val msg = rev.comment ?: "unnamed"
       commit(root, file, msg)
     }
 
     ce.myOverridingCommitProcedure = null // for safety
+  }
+
+  private fun applyRevision(rev: Item, file: VirtualFile) {
+    invokeAndWaitIfNeed {
+      runWriteAction {
+        val entry = rev.revision.findEntry()
+        val c = entry.content
+        if (!c.isAvailable) throw IllegalStateException("$c is not available")
+        file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
+      }
+    }
   }
 
   private fun commit(root: VirtualFile, file: VirtualFile, msg: String) {
