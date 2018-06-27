@@ -93,11 +93,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   public UndoManagerImpl(@Nullable ProjectEx project, CommandProcessor commandProcessor) {
     myProject = project;
     myCommandProcessor = commandProcessor;
-
-    if (myProject == null || !myProject.isDefault()) {
-      runStartupActivity();
-    }
-
+    runStartupActivity();
     myMerger = new CommandMerger(this);
   }
 
@@ -159,7 +155,7 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   public boolean isActive() {
-    return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
+    return Comparing.equal(myProject, myCurrentActionProject);
   }
 
   private boolean isInsideCommand() {
