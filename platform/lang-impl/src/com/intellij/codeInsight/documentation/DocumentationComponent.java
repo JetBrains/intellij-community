@@ -126,7 +126,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   private JSlider myFontSizeSlider;
   private final JComponent mySettingsPanel;
   private boolean myIgnoreFontSizeSliderChange;
-  private String myEffectiveExternalUrl;
+  private String myExternalUrl;
+  private DocumentationProvider myProvider;
+
   private final MyDictionary<String, Image> myImageProvider = new MyDictionary<String, Image>() {
     @Override
     public Image get(Object key) {
@@ -178,18 +180,30 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   private static class Context {
-    private final SmartPsiElementPointer element;
-    private final String text;
-    private final String externalUrl;
-    private final Rectangle viewRect;
-    private final int highlightedLink;
+    final SmartPsiElementPointer element;
+    final String text;
+    final String externalUrl;
+    final DocumentationProvider provider;
+    final Rectangle viewRect;
+    final int highlightedLink;
 
-    public Context(SmartPsiElementPointer element, String text, String externalUrl, Rectangle viewRect, int highlightedLink) {
+    Context(SmartPsiElementPointer element,
+            String text,
+            String externalUrl,
+            DocumentationProvider provider,
+            Rectangle viewRect,
+            int highlightedLink) {
       this.element = element;
       this.text = text;
       this.externalUrl = externalUrl;
+      this.provider = provider;
       this.viewRect = viewRect;
       this.highlightedLink = highlightedLink;
+    }
+
+    @NotNull
+    Context withText(@NotNull String text) {
+      return new Context(element, text, externalUrl, provider, viewRect, highlightedLink);
     }
   }
 
@@ -209,10 +223,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   public boolean requestFocusInWindow() {
     // With a screen reader active, set the focus directly to the editor because
     // it makes it easier for users to read/navigate the documentation contents.
-    if (ScreenReader.isActive())
+    if (ScreenReader.isActive()) {
       return myEditorPane.requestFocusInWindow();
-    else
+    }
+    else {
       return myScrollPane.requestFocusInWindow();
+    }
   }
 
 
@@ -716,61 +732,49 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return myElement != null ? PsiModificationTracker.SERVICE.getInstance(myElement.getProject()).getModificationCount() : -1;
   }
 
-  public void setText(String text, @Nullable PsiElement element, boolean clearHistory) {
-    setText(text, element, false, clearHistory);
+  public void setText(@NotNull String text, @Nullable PsiElement element, @Nullable DocumentationProvider provider) {
+    setData(element, text, null, null, provider);
   }
 
-  public void setText(String text, PsiElement element, boolean clean, boolean clearHistory) {
-    if (clean && myElement != null) {
-      myBackStack.push(saveContext());
-      myForwardStack.clear();
-    }
-    setData(element, text, clearHistory, null);
-    if (clean) {
-      myIsEmpty = false;
-    }
-
-    if (clearHistory) clearHistory();
-  }
-
-  public void replaceText(String text, PsiElement element) {
+  public void replaceText(@NotNull String text, @Nullable PsiElement element) {
     PsiElement current = getElement();
     if (current == null || !current.getManager().areElementsEquivalent(current, element)) return;
-    setText(text, element, false);
-    if (!myBackStack.empty()) myBackStack.pop();
+    restoreContext(saveContext().withText(text));
   }
 
-  private void clearHistory() {
+  public void clearHistory() {
     myForwardStack.clear();
     myBackStack.clear();
   }
 
-  public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl) {
-    setData(_element, text, clearHistory, effectiveExternalUrl, null);
-  }
-  
-  public void setData(PsiElement _element, String text, final boolean clearHistory, String effectiveExternalUrl, String ref) {
+  private void pushHistory() {
     if (myElement != null) {
       myBackStack.push(saveContext());
       myForwardStack.clear();
     }
-    myEffectiveExternalUrl = effectiveExternalUrl;
-
-    final SmartPsiElementPointer element = _element != null && _element.isValid()
-                                           ? SmartPointerManager.getInstance(_element.getProject()).createSmartPsiElementPointer(_element)
-                                           : null;
-
-    if (element != null) {
-      setElement(element);
-    }
-
-    myIsEmpty = false;
-    setDataInternal(element, text, new Rectangle(0, 0), ref);
-
-    if (clearHistory) clearHistory();
   }
 
-  private void setDataInternal(SmartPsiElementPointer element, String text, final Rectangle viewRect, final String ref) {
+  public void setData(@Nullable PsiElement element,
+                      @NotNull String text,
+                      @Nullable String effectiveExternalUrl,
+                      @Nullable String ref,
+                      @Nullable DocumentationProvider provider) {
+    pushHistory();
+    myExternalUrl = effectiveExternalUrl;
+    myProvider = provider;
+
+    SmartPsiElementPointer pointer = null;
+    if (element != null && element.isValid()) {
+      pointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    }
+    setDataInternal(pointer, text, new Rectangle(0, 0), ref);
+}
+
+  private void setDataInternal(@Nullable SmartPsiElementPointer element,
+                               @NotNull String text,
+                               @NotNull Rectangle viewRect,
+                               @Nullable String ref) {
+    myIsEmpty = false;
     if (myManager == null) return;
     updateControlState();
 
@@ -995,7 +999,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     if (location != null) {
       text = text + getBottom(hasContent) + location + "</div>";
     }
-    String links = getExternalText();
+    String links = getExternalText(myManager, getElement(), myExternalUrl, myProvider);
     if (links != null) {
       text = text + getBottom(location != null) + links;
     }
@@ -1005,18 +1009,19 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
   }
 
   @Nullable
-  private String getExternalText() {
-    final PsiElement element = getElement();
-    if (element == null) return null;
+  private static String getExternalText(@NotNull DocumentationManager manager,
+                                        @Nullable PsiElement element,
+                                        @Nullable String externalUrl,
+                                        @Nullable DocumentationProvider provider) {
+    if (element == null || provider == null) return null;
 
-    final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+    PsiElement originalElement = DocumentationManager.getOriginalElement(element);
     if (!shouldShowExternalDocumentationLink(provider, element, originalElement)) {
       return null;
     }
 
-    final String title = myManager.getTitle(element);
-    if (myEffectiveExternalUrl == null) {
+    final String title = manager.getTitle(element);
+    if (externalUrl == null) {
       List<String> urls = provider.getUrlFor(element, originalElement);
       if (urls != null) {
         boolean hasBadUrl = false;
@@ -1036,8 +1041,9 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       else {
         return null;
       }
-    } else {
-      String link = getLink(title, myEffectiveExternalUrl);
+    }
+    else {
+      String link = getLink(title, externalUrl);
       if (link != null) return link;
     }
 
@@ -1059,16 +1065,18 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
     return result.toString();
   }
 
-  private static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
-                                                             PsiElement element,
-                                                             PsiElement originalElement) {
+  static boolean shouldShowExternalDocumentationLink(DocumentationProvider provider,
+                                                     PsiElement element,
+                                                     PsiElement originalElement) {
     if (provider instanceof CompositeDocumentationProvider) {
-      for (DocumentationProvider documentationProvider : ((CompositeDocumentationProvider)provider).getProviders()) {
-        if (documentationProvider instanceof ExternalDocumentationHandler) {
-          return ((ExternalDocumentationHandler)documentationProvider).canHandleExternal(element, originalElement);
+      List<DocumentationProvider> providers = ((CompositeDocumentationProvider)provider).getProviders();
+      for (DocumentationProvider p : providers) {
+        if (p instanceof ExternalDocumentationHandler) {
+          return ((ExternalDocumentationHandler)p).canHandleExternal(element, originalElement);
         }
       }
-    } else if (provider instanceof ExternalDocumentationHandler) {
+    }
+    else if (provider instanceof ExternalDocumentationHandler) {
       return ((ExternalDocumentationHandler)provider).canHandleExternal(element, originalElement);
     }
     return true;
@@ -1161,11 +1169,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private Context saveContext() {
     Rectangle rect = myScrollPane.getViewport().getViewRect();
-    return new Context(myElement, myText, myEffectiveExternalUrl, rect, myHighlightedLink);
+    return new Context(myElement, myText, myExternalUrl, myProvider, rect, myHighlightedLink);
   }
 
-  private void restoreContext(Context context) {
-    myEffectiveExternalUrl = context.externalUrl;
+  private void restoreContext(@NotNull Context context) {
+    myExternalUrl = context.externalUrl;
+    myProvider = context.provider;
     setDataInternal(context.element, context.text, context.viewRect, null);
     highlightLink(context.highlightedLink);
   }
@@ -1175,7 +1184,8 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       myToolBar.updateActionsImmediately(); // update faster
       setControlPanelVisible();
       removeCornerMenu();
-    } else {
+    }
+    else {
       myControlPanelVisible = false;
       remove(myControlPanel);
       if (myManager.myToolWindow != null) return;
@@ -1283,7 +1293,7 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       final PsiElement element = myElement.getElement();
       final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
       
-      ExternalJavaDocAction.showExternalJavadoc(element, originalElement, myEffectiveExternalUrl, e.getDataContext());
+      ExternalJavaDocAction.showExternalJavadoc(element, originalElement, myExternalUrl, e.getDataContext());
     }
 
     @Override
@@ -1295,11 +1305,10 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
 
   private boolean hasExternalDoc() {
     boolean enabled = false;
-    if (myElement != null) {
-      final PsiElement element = myElement.getElement();
-      final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-      final PsiElement originalElement = DocumentationManager.getOriginalElement(element);
-      enabled = element != null && CompositeDocumentationProvider.hasUrlsFor(provider, element, originalElement);
+    if (myElement != null && myProvider != null) {
+      PsiElement element = myElement.getElement();
+      PsiElement originalElement = DocumentationManager.getOriginalElement(element);
+      enabled = element != null && CompositeDocumentationProvider.hasUrlsFor(myProvider, element, originalElement);
     }
     return enabled;
   }
