@@ -161,16 +161,16 @@ public class CamelHumpMatcher extends PrefixMatcher {
   }
 
   @Override
-  public int matchingDegree(String string) {
+  public int matchingDegree(@NotNull String string) {
     return matchingDegree(string, matchingFragments(string));
   }
 
   @Nullable
-  public FList<TextRange> matchingFragments(String string) {
+  public FList<TextRange> matchingFragments(@NotNull String string) {
     return myMatcher.matchingFragments(string);
   }
 
-  public int matchingDegree(String string, @Nullable FList<TextRange> fragments) {
+  public int matchingDegree(@NotNull String string, @Nullable FList<TextRange> fragments) {
     int underscoreEnd = skipUnderscores(string);
     if (underscoreEnd > 0) {
       FList<TextRange> ciRanges = myCaseInsensitiveMatcher.matchingFragments(string);
