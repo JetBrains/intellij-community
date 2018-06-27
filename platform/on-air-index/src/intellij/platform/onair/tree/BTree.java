@@ -8,19 +8,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class BTree {
+  public static final byte DEFAULT_BASE = 32;
+
   public static final byte BOTTOM = 4;
   public static final byte INTERNAL = 5;
-  public static final byte LEAF = 6;
+  // public static final byte LEAF = 6;
 
   public static final int BYTES_PER_ADDRESS = 16;
 
   private final Storage storage;
-  private final int base = 32;
+  // private final int base = 32;
   private final int keySize;
 
   private Address address;
 
-  public BTree(Storage storage, int keySize, Address address) {
+  private BTree(Storage storage, int keySize, Address address) {
     this.storage = storage;
     this.keySize = keySize;
     this.address = address;
@@ -31,7 +33,7 @@ public class BTree {
   }
 
   public int getBase() {
-    return base;
+    return DEFAULT_BASE;
   }
 
   protected void incrementSize() {
@@ -55,9 +57,13 @@ public class BTree {
     return result[0];
   }
 
-  public BasePage loadPage(@NotNull Novelty novelty, Address address) {
+  public Address store(@NotNull Novelty novelty, @NotNull Storage storage) {
+    return loadPage(novelty, address).save(novelty, storage);
+  }
+
+  /* package */ BasePage loadPage(@NotNull Novelty novelty, Address address) {
     byte[] bytes = address.isNovelty() ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
-    int metadataOffset = (keySize + BYTES_PER_ADDRESS) * base;
+    int metadataOffset = (keySize + BYTES_PER_ADDRESS) * getBase();
     byte type = bytes[metadataOffset];
     byte size = bytes[metadataOffset + 1];
     final BasePage result;
@@ -74,15 +80,19 @@ public class BTree {
     return result;
   }
 
-  public byte[] loadLeaf(@NotNull Novelty novelty, Address childAddress) {
+  /* package */ byte[] loadLeaf(@NotNull Novelty novelty, Address childAddress) {
     return childAddress.isNovelty() ? novelty.lookup(childAddress.getLowBytes()) : storage.lookup(childAddress);
   }
 
-  public static BTree createEmpty(Storage storage, int keySize) {
-    final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * 32;
+  public static BTree load(@NotNull Storage storage, int keySize, Address address) {
+    return new BTree(storage, keySize, address);
+  }
+
+  public static BTree create(@NotNull Novelty novelty, @NotNull Storage storage, int keySize) {
+    final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * DEFAULT_BASE;
     final byte[] bytes = new byte[metadataOffset + 2];
     bytes[metadataOffset] = BOTTOM;
     bytes[metadataOffset + 1] = 0;
-    return new BTree(storage, keySize, storage.store(bytes));
+    return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
   }
 }

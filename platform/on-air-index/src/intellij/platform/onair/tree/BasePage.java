@@ -4,6 +4,7 @@ package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Novelty;
+import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,6 +38,10 @@ public abstract class BasePage {
 
   protected abstract BasePage getMutableCopy(@NotNull Novelty novelty, BTree tree);
 
+  protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
+
+  public abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage);
+
   protected Address getChildAddress(int index) {
     final int bytesPerKey = tree.getKeySize();
     final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * index + bytesPerKey;
@@ -48,8 +53,6 @@ public abstract class BasePage {
   protected byte[] getKey(@NotNull Novelty novelty, int index) {
     return tree.loadLeaf(novelty, getChildAddress(index));
   }
-
-  protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
 
   protected void incrementSize() {
     if (size >= tree.getBase()) {
@@ -100,7 +103,7 @@ public abstract class BasePage {
     return -(low + 1);
   }
 
-  protected void set(int pos, byte[] key, long childAddress) {
+  protected void set(int pos, byte[] key, long lowAddressBytes) {
     final int bytesPerKey = tree.getKeySize();
 
     if (key.length != bytesPerKey) {
@@ -112,8 +115,17 @@ public abstract class BasePage {
     // write key
     System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
     // write address
-    writeUnsignedLong(childAddress, 8, backingArray, offset + bytesPerKey);
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
     writeUnsignedLong(0, 8, backingArray, offset + bytesPerKey + 8);
+  }
+
+  protected void setChildAddress(int pos, long lowAddressBytes, long highAddressBytes) {
+    final int bytesPerKey = tree.getKeySize();
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
+
+    // write address
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
+    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + bytesPerKey + 8);
   }
 
   protected BasePage insertAt(@NotNull Novelty novelty, int pos, byte[] key, long childAddress) {

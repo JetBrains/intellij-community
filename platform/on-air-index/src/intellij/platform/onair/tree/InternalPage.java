@@ -3,6 +3,7 @@ package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Novelty;
+import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -76,6 +77,19 @@ public class InternalPage extends BasePage {
       bytes,
       tree, new Address(novelty.alloc(bytes)), size
     );
+  }
+
+  @Override
+  public Address save(@NotNull Novelty novelty, @NotNull Storage storage) {
+    for (int i = 0; i < size; i++) {
+      Address childAddress = getChildAddress(i);
+      if (childAddress.isNovelty()) {
+        BasePage child = tree.loadPage(novelty, childAddress);
+        childAddress = child.save(novelty, storage);
+        setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
+      }
+    }
+    return storage.store(backingArray);
   }
 
   @Override
