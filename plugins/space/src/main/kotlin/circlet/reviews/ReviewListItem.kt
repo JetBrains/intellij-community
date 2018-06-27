@@ -6,11 +6,17 @@ import circlet.ui.*
 import com.intellij.ui.components.*
 import com.intellij.uiDesigner.core.*
 import com.intellij.util.ui.*
-import java.awt.*
 import javax.swing.*
 
-class ReviewListItem(review: Review, preferredLanguage: TID?) : ComponentBasedList.Item {
-    override val component: Component get() = panel
+class ReviewListItem(review: Review, preferredLanguage: TID?) : JComponentBasedList.Item {
+    override val component: JComponent get() = panel
+
+    override var selected: Boolean = false
+        set(value) {
+            field = value
+
+            updateSelected(value)
+        }
 
     private val panel = JPanel(GridLayoutManager(1, 4))
     private val id = JBLabel("#${review.id}")
@@ -20,17 +26,12 @@ class ReviewListItem(review: Review, preferredLanguage: TID?) : ComponentBasedLi
 
     init {
         panel.border = JBUI.Borders.empty(4)
-        panel.background = UIUtil.getListBackground()
 
-        val foreground = UIUtil.getListForeground()
-
-        id.foreground = foreground
         panel.add(
             id,
             createFixedSizeGridConstraints(0, JBUI.size(80, -1))
         )
 
-        title.foreground = foreground
         title.toolTipText = title.text
         panel.add(
             title,
@@ -43,19 +44,30 @@ class ReviewListItem(review: Review, preferredLanguage: TID?) : ComponentBasedLi
             }
         )
 
-        timestamp.foreground = foreground
         timestamp.toolTipText = timestamp.text // TODO
         panel.add(
             timestamp,
             createFixedSizeGridConstraints(2, JBUI.size(160, -1))
         )
 
-        createdBy.foreground = foreground
         createdBy.toolTipText = createdBy.text
         panel.add(
             createdBy,
             createFixedSizeGridConstraints(3, JBUI.size(320, -1))
         )
+
+        updateSelected(selected)
+    }
+
+    private fun updateSelected(newSelected: Boolean) {
+        panel.background = UIUtil.getListBackground(newSelected)
+
+        val foreground = UIUtil.getListForeground(newSelected)
+
+        id.foreground = foreground
+        title.foreground = foreground
+        timestamp.foreground = foreground
+        createdBy.foreground = foreground
     }
 }
 
