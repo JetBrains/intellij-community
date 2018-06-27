@@ -5,5 +5,5 @@ public interface Storage {
 
   byte[] lookup(Address address);
 
-  Address store(byte[] what);
+  Address store(byte[] bytes);
 }
