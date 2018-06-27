@@ -361,6 +361,7 @@
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" filepath="$PROJECT_DIR$/android/tools-base/sdk-common/android.sdktools.sdk-common.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/sdklib/android.sdktools.sdklib.iml" filepath="$PROJECT_DIR$/android/tools-base/sdklib/android.sdktools.sdklib.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/tools-base/usb-devices/android.sdktools.usb-devices.iml" filepath="$PROJECT_DIR$/android/tools-base/usb-devices/android.sdktools.usb-devices.iml" />
+      <module fileurl="file://$PROJECT_DIR$/plugins/hack18-clean-history/hack18-clean-history.iml" filepath="$PROJECT_DIR$/plugins/hack18-clean-history/hack18-clean-history.iml" group="intellij/vcs" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" filepath="$PROJECT_DIR$/android/android-adb/intellij.android.adb.tests.iml" />
       <module fileurl="file://$PROJECT_DIR$/android/adt-branding/intellij.android.adt.branding.iml" filepath="$PROJECT_DIR$/android/adt-branding/intellij.android.adt.branding.iml" />

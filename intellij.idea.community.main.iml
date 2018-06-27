@@ -84,6 +84,7 @@
     <orderEntry type="module" module-name="intellij.tasks.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.vcs.github" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.vcs.hg" scope="RUNTIME" />
+    <orderEntry type="module" module-name="hack18-clean-history" />
     <orderEntry type="module" module-name="intellij.relaxng" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.gradle.java" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.platform.remoteServers.impl" scope="RUNTIME" />
