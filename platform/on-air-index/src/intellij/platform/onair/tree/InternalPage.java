@@ -2,6 +2,7 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Novelty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,14 +16,14 @@ public class InternalPage extends BasePage {
 
   @Override
   @Nullable
-  protected byte[] get(@NotNull byte[] key) {
+  protected byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
     final int index = binarySearch(key, 0);
-    return index < 0 ? getChild(Math.max(-index - 2, 0)).get(key) : getKey(index);
+    return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getKey(novelty, index);
   }
 
   @Override
   @Nullable
-  protected BasePage put(@NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
+  protected BasePage put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
     int pos = binarySearch(key, 0);
 
     if (pos >= 0 && !overwrite) {
@@ -36,14 +37,20 @@ public class InternalPage extends BasePage {
       if (pos < 0) pos = 0;
     }
 
-    final BasePage child = getChild(pos).getMutableCopy(tree);
-    final BasePage newChild = child.put(key, value, overwrite, result);
+    final BasePage child = getChild(novelty, pos).getMutableCopy(novelty, tree);
+    final BasePage newChild = child.put(novelty, key, value, overwrite, result);
     // change min key for child
     if (result[0]) {
       // TODO: tree.addExpired(childrenAddresses[pos]);
-      set(pos, child.getMinKey(), child.address);
+      if (!child.address.isNovelty()) {
+        throw new IllegalStateException("child must be novelty");
+      }
+      set(pos, child.getMinKey(novelty), child.address.getLowBytes());
       if (newChild != null) {
-        return insertAt(pos + 1, newChild.getMinKey(), newChild.address);
+        if (!newChild.address.isNovelty()) {
+          throw new IllegalStateException("child must be novelty");
+        }
+        return insertAt(novelty, +1, newChild.getMinKey(novelty), newChild.address.getLowBytes());
       }
     }
 
@@ -51,31 +58,31 @@ public class InternalPage extends BasePage {
   }
 
   @Override
-  protected BasePage split(int from, int length) {
-    final InternalPage result = copyOf(this, from, length);
+  protected BasePage split(@NotNull Novelty novelty, int from, int length) {
+    final InternalPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
     return result;
   }
 
   @Override
-  protected InternalPage getMutableCopy(BTree tree) {
+  protected InternalPage getMutableCopy(@NotNull Novelty novelty, BTree tree) {
     if (address.isNovelty()) {
       return this;
     }
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
     return new InternalPage(
       bytes,
-      tree, tree.alloc(bytes), size
+      tree, new Address(novelty.alloc(bytes)), size
     );
   }
 
   @Override
   @NotNull
-  public BasePage getChild(final int index) {
-    return tree.loadPage(getChildAddress(index));
+  public BasePage getChild(@NotNull Novelty novelty, final int index) {
+    return tree.loadPage(novelty, getChildAddress(index));
   }
 
-  private static InternalPage copyOf(InternalPage page, int from, int length) {
+  private static InternalPage copyOf(@NotNull Novelty novelty, InternalPage page, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
     final int bytesPerEntry = page.tree.getKeySize() + page.tree.getAddressSize();
@@ -91,6 +98,6 @@ public class InternalPage extends BasePage {
     bytes[metadataOffset] = BTree.INTERNAL;
     bytes[metadataOffset + 1] = (byte)length;
 
-    return new InternalPage(bytes, page.tree, page.tree.alloc(bytes), length);
+    return new InternalPage(bytes, page.tree, new Address(novelty.alloc(bytes)), length);
   }
 }

@@ -1,11 +1,11 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
+import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
 import org.junit.Assert;
 import org.junit.Test;
 
-import java.io.IOException;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
@@ -21,13 +21,14 @@ public class AirTreeTest {
   @Test
   public void testSplitRight2() {
     final Storage storage = new MockStorage();
+    final Novelty novelty = new MockNovelty();
 
     BTree tree = BTree.createEmpty(storage, 4, 8);
 
-    tree.put(k(1), v(1));
+    tree.put(novelty, k(1), v(1));
 
-    Assert.assertArrayEquals(v(1), tree.get(k(1)));
-    Assert.assertNull(tree.get(k(2)));
+    Assert.assertArrayEquals(v(1), tree.get(novelty, k(1)));
+    Assert.assertNull(tree.get(novelty, k(2)));
   }
 
   public static byte[] k(int key) {

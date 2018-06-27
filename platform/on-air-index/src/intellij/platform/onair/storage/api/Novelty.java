@@ -6,5 +6,7 @@ public interface Novelty {
   // result must be less than 0
   long alloc(byte[] bytes);
 
+  byte[] lookup(long address);
+
   void update(long id, byte[] bytes);
 }

@@ -2,6 +2,7 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Novelty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -15,28 +16,28 @@ public class BottomPage extends BasePage {
 
   @Nullable
   @Override
-  protected byte[] get(@NotNull byte[] key) {
+  protected byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
     final int index = binarySearch(key, 0);
     if (index >= 0) {
-      return tree.loadLeaf(getChildAddress(index));
+      return tree.loadLeaf(novelty, getChildAddress(index));
     }
     return null;
   }
 
   @Override
-  protected BasePage getChild(int index) {
+  protected BasePage getChild(@NotNull Novelty novelty, int index) {
     throw new UnsupportedOperationException();
   }
 
   @Nullable
   @Override
-  protected BasePage put(@NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
+  protected BasePage put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite, boolean[] result) {
     int pos = binarySearch(key, 0);
     if (pos >= 0) {
       if (overwrite) {
         // key found
         // TODO: tree.addExpired(keysAddresses[pos]);
-        set(pos, key, tree.alloc(Arrays.copyOf(value, value.length)));
+        set(pos, key, novelty.alloc(Arrays.copyOf(value, value.length)));
         // this should be always true in order to keep up with keysAddresses[pos] expiration
         result[0] = true;
       }
@@ -46,32 +47,32 @@ public class BottomPage extends BasePage {
     // if found - insert at this position, else insert after found
     pos = -pos - 1;
 
-    final BasePage page = insertAt(pos, key, tree.alloc(Arrays.copyOf(value, value.length)));
+    final BasePage page = insertAt(novelty, pos, key, novelty.alloc(Arrays.copyOf(value, value.length)));
     result[0] = true;
     tree.incrementSize();
     return page;
   }
 
   @Override
-  protected BottomPage split(int from, int length) {
-    final BottomPage result = copyOf(this, from, length);
+  protected BottomPage split(@NotNull Novelty novelty, int from, int length) {
+    final BottomPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
     return result;
   }
 
   @Override
-  protected BottomPage getMutableCopy(BTree tree) {
+  protected BottomPage getMutableCopy(@NotNull Novelty novelty, BTree tree) {
     if (address.isNovelty()) {
       return this;
     }
     byte[] bytes = Arrays.copyOf(this.backingArray, backingArray.length);
     return new BottomPage(
       bytes,
-      tree, tree.alloc(bytes), size
+      tree, new Address(novelty.alloc(bytes)), size
     );
   }
 
-  private static BottomPage copyOf(BottomPage page, int from, int length) {
+  private static BottomPage copyOf(@NotNull Novelty novelty, BottomPage page, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
     final int bytesPerEntry = page.tree.getKeySize() + page.tree.getAddressSize();
@@ -87,6 +88,6 @@ public class BottomPage extends BasePage {
     bytes[metadataOffset] = BTree.BOTTOM;
     bytes[metadataOffset + 1] = (byte)length;
 
-    return new BottomPage(bytes, page.tree, page.tree.alloc(bytes), length);
+    return new BottomPage(bytes, page.tree, new Address(novelty.alloc(bytes)), length);
   }
 }
