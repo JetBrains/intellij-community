@@ -25,7 +25,6 @@ class StyleManager {
       val disposable = style.applyStyle(component)
       component.putClientProperty(STYLE_PROPERTY, disposable)
     }
-
     fun <T : JComponent> removeStyle(component: T) {
       val disposable = component.getClientProperty(STYLE_PROPERTY)
       if (disposable != null && disposable is Disposable) {
@@ -34,37 +33,50 @@ class StyleManager {
     }
   }
 }
-
-class ComponentStyle<T : JComponent>(private val default: Properties, private val styleMap: Map<States, Properties> = HashMap()) :
+class ComponentStyle<T : JComponent>(init: Properties.() -> Unit) :
   Disposable {
+  private val styleMap: HashMap<States, Properties> = HashMap()
+  init {
+    style(States.DEFAULT, init)
+  }
   private class ComponentState(val base: Properties) {
     var hovered = false
     var pressed = false
   }
-
   private fun createListener(component: T, componentState: ComponentState) = object : MouseAdapter() {
     override fun mouseReleased(e: MouseEvent) {
       componentState.pressed = false
       updateStyle()
     }
-
     override fun mouseEntered(e: MouseEvent) {
       componentState.hovered = true
       updateStyle()
     }
-
     override fun mouseExited(e: MouseEvent) {
       componentState.hovered = false
       updateStyle()
     }
-
     override fun mousePressed(e: MouseEvent) {
       componentState.pressed = true
       updateStyle()
     }
-
     private fun updateStyle() {
       updateStyle(component, componentState)
+    }
+  }
+
+  fun style(state : States, init: Properties.() -> Unit) {
+    val prop = Properties()
+    prop.init()
+    styleMap[state] = prop
+  }
+
+  fun updateState(state : States, init: Properties.() -> Unit) {
+    val prop = Properties()
+    prop.init()
+    styleMap[state]?.updateBy(prop)
+    if(styleMap[state] == null) {
+      styleMap[state] = prop
     }
   }
 
@@ -76,16 +88,13 @@ class ComponentStyle<T : JComponent>(private val default: Properties, private va
     }
     return false
   }
-
   internal fun applyStyle(component: T): Disposable? {
     val styleDisposable = Disposer.newDisposable()
-    default.applyTo(component)
-
+    styleMap[States.DEFAULT]?.applyTo(component)
     val base = StyleProperty.getPropertiesSnapshot(component)
     Disposer.register(styleDisposable, Disposable {
       base.applyTo(component)
     })
-
     val componentState = ComponentState(base).apply {
       hovered = isMouseOver(component)
       pressed = false
@@ -104,7 +113,6 @@ class ComponentStyle<T : JComponent>(private val default: Properties, private va
     checkMouse(component, componentState, mouseListener)
     return styleDisposable
   }
-
   private fun checkMouse(
     component: T,
     componentState: ComponentState,
@@ -122,7 +130,6 @@ class ComponentStyle<T : JComponent>(private val default: Properties, private va
     }
     updateStyle(component, componentState)
   }
-
   private fun updateStyle(component: T, componentState: ComponentState) {
     val properties = componentState.base.clone()
     if (!component.isEnabled) {
@@ -134,15 +141,12 @@ class ComponentStyle<T : JComponent>(private val default: Properties, private va
     if (componentState.pressed && styleMap.containsKey(States.PRESSED)) properties.updateBy(styleMap[States.PRESSED]!!)
     properties.applyTo(component)
   }
-
   override fun dispose() {
   }
 }
-
 enum class States {
-  HOVERED, PRESSED, DISABLED
+  DEFAULT, HOVERED, PRESSED, DISABLED
 }
-
 sealed class StyleProperty(
   private val setProperty: (JComponent, Any?) -> Unit,
   val getProperty: (JComponent) -> Any?,
@@ -159,63 +163,53 @@ sealed class StyleProperty(
       return base
     }
   }
-
   object OPAQUE : StyleProperty(
     { component, isOpaque -> component.isOpaque = if (isOpaque == null) true else isOpaque as Boolean },
     { component -> component.isOpaque },
     Boolean::class.java
   )
-
   object BACKGROUND : StyleProperty(
     { component, background -> component.background = if (background == null) null else background as Color },
     { component -> component.background },
     Color::class.java
   )
-
   object FOREGROUND : StyleProperty(
     { component, foreground -> component.foreground = if (foreground == null) null else foreground as Color },
     { component -> component.foreground },
     Color::class.java
   )
-
   object BORDER : StyleProperty(
     { component, border -> component.border = if (border == null) null else border as Border },
     { component -> component.border },
     Border::class.java
   )
-
   object ICON : StyleProperty(
     { component, icon -> (component as AbstractButton).icon = if (icon == null) null else icon as Icon },
     { component -> (component as AbstractButton).icon },
     Icon::class.java,
     AbstractButton::class.java
   )
-
   object MARGIN : StyleProperty(
     { component, margin -> (component as AbstractButton).margin = if (margin == null) null else margin as Insets },
     { component -> (component as AbstractButton).margin },
     Insets::class.java,
     AbstractButton::class.java
   )
-
   protected val log = Logger.getInstance(StyleProperty::class.java)
-  protected fun checkTypes(component: JComponent, value: Any?): Boolean {
+  private fun checkTypes(component: JComponent, value: Any?): Boolean {
     if(!componentType.isInstance(component)) {
       log.warn(javaClass.canonicalName+" Incorrect class type: "+component.javaClass.canonicalName+" instead of "+componentType.canonicalName)
       return false
     }
-
     if(valueType == Boolean::class.java) {
       return (value == true || value == false)
     }
-
     if(!(value == null || valueType.isInstance(value))) {
       log.warn(javaClass.canonicalName+" Incorrect value type: "+value.javaClass.canonicalName+" instead of "+valueType.canonicalName)
       return false
     }
     return true
   }
-
   fun apply(component: JComponent, value: Any?) {
     if (!checkTypes(component, value)) {
       return
@@ -223,7 +217,6 @@ sealed class StyleProperty(
     setProperty(component, value)
   }
 }
-
 class Properties {
   private val map = HashMap<StyleProperty, Any?>()
   var background: Color?
@@ -250,6 +243,7 @@ class Properties {
   }
 
   fun getValue(prop: StyleProperty): Any? = map[prop]
+
   fun clone(): Properties {
     val new = Properties()
     for ((k, v) in map) {
@@ -263,14 +257,12 @@ class Properties {
       setValue(k, v)
     }
   }
-
   fun <T : JComponent> applyTo(component: T) {
     for ((k, v) in map) {
       k.apply(component, v)
     }
   }
-
-  public class BasicButton : JButton() {
+  class BasicButton : JButton() {
     init {
       setUI(BasicButtonUI())
     }

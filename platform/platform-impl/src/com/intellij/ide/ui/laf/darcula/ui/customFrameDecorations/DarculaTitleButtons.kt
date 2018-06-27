@@ -10,14 +10,16 @@ import com.intellij.ui.JBColor
 import com.intellij.util.ui.JBUI
 import net.miginfocom.swing.MigLayout
 import java.awt.Color
+import java.awt.Component
+import java.awt.Graphics
 import javax.accessibility.AccessibleContext
 import javax.security.auth.Destroyable
 import javax.swing.*
 
 open class DarculaTitleButtons constructor(private val myCloseAction: Action,
-                                 private val myHelpAction: HelpAction) : Destroyable {
+                                           private val myHelpAction: HelpAction) : Destroyable {
   companion object {
-    fun create(myCloseAction: Action, myHelpAction: HelpAction) : DarculaTitleButtons {
+    fun create(myCloseAction: Action, myHelpAction: HelpAction): DarculaTitleButtons {
       val darculaTitleButtons = DarculaTitleButtons(myCloseAction, myHelpAction)
       darculaTitleButtons.createChildren()
       return darculaTitleButtons
@@ -51,7 +53,7 @@ open class DarculaTitleButtons constructor(private val myCloseAction: Action,
     addComponent(myCloseButton)
   }
 
-  protected fun addComponent(component : JComponent) {
+  protected fun addComponent(component: JComponent) {
     panel.add(component, "growy, wmin ${JBUI.scale(20)}")
   }
 
@@ -64,44 +66,43 @@ open class DarculaTitleButtons constructor(private val myCloseAction: Action,
     return button
   }
 
-  protected fun getStyle(icon: Icon): ComponentStyle<JButton> {
-    return ComponentStyle<JButton>(Properties().apply {
-      isOpaque = false
-      border = JBUI.Borders.empty()
-      this.icon = icon
-    }, HashMap<States, Properties>().apply {
-      this[States.HOVERED] = Properties().apply {
-        isOpaque = true
-        background = JBColor(0xd1d1d1, 0x54585a)
-      }
-      this[States.PRESSED] = Properties().apply {
-        isOpaque = true
-        background = JBColor(0xb5b5b5, 0x686e70)
-      }
-    })
+  protected fun getStyle(icon: Icon): ComponentStyle<JButton> = ComponentStyle<JButton> {
+    isOpaque = false
+    border = JBUI.Borders.empty()
+    this.icon = icon
+  }.apply {
+    style(States.HOVERED) {
+      isOpaque = true
+      background = JBColor(0xd1d1d1, 0x54585a)
+    }
+    style(States.PRESSED) {
+      isOpaque = true
+      background = JBColor(0xb5b5b5, 0x686e70)
+    }
   }
+
 
   private fun createCloseButton(): JButton {
     val button = Properties.BasicButton()
     button.action = myCloseAction
     button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, "Close")
 
-    val style = ComponentStyle<JButton>(Properties().apply {
+    val style = ComponentStyle<JButton> {
       isOpaque = false
       border = JBUI.Borders.empty()
       icon = AllIcons.Windows.CloseActive
-    }, HashMap<States, Properties>().apply {
-      this[States.HOVERED] = Properties().apply {
+    }.apply {
+      style(States.HOVERED) {
         isOpaque = true
         background = Color(0xe81123)
         icon = AllIcons.Windows.CloseHover
       }
-      this[States.PRESSED] = Properties().apply {
+      style(States.PRESSED) {
         isOpaque = true
         background = Color(0xf1707a)
         icon = AllIcons.Windows.CloseHover
       }
-    })
+    }
 
     StyleManager.applyStyle(button, style)
     return button
