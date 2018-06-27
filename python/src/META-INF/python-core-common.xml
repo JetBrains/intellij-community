@@ -525,6 +525,7 @@
                              implementationClass="com.jetbrains.python.psi.impl.PyKeywordArgumentManipulator"/>
 
     <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PythonTracebackFilter"/>
+    <analyzeStacktraceFilter implementation="com.jetbrains.python.run.PyRemoteAnalyzeStacktraceFilter"/>
 
     <internalFileTemplate name="Python Script"/>
     <internalFileTemplate name="Python Unit Test"/>
