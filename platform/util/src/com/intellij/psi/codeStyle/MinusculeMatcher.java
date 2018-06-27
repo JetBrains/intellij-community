@@ -243,6 +243,30 @@ public class MinusculeMatcher implements Matcher {
       isAsciiName = isAscii;
     }
 
+    private char charAt(int i) {
+      return myPattern[i];
+    }
+
+    private char toLowerCase(int i) {
+      return toLowerCase[i];
+    }
+
+    private char toUpperCase(int i) {
+      return toUpperCase[i];
+    }
+
+    private boolean isLowerCase(int i) {
+      return isLowerCase[i];
+    }
+
+    private boolean isUpperCase(int i) {
+      return isUpperCase[i];
+    }
+
+    private boolean isWordSeparator(int i) {
+      return isWordSeparator[i];
+    }
+
     @Nullable
     public FList<Range> matchingFragments() {
       if (myName.length() < myMinNameLength) {
@@ -288,7 +312,7 @@ public class MinusculeMatcher implements Matcher {
 
       if (patternIndex == myPattern.length) {
         // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-        if (isTrailingSpacePattern() && nameIndex != myName.length() && (patternIndex < 2 || !isUpperCaseOrDigit(myPattern[patternIndex - 2]))) {
+        if (isTrailingSpacePattern() && nameIndex != myName.length() && (patternIndex < 2 || !isUpperCaseOrDigit(charAt(patternIndex - 2)))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
             return FList.<Range>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0)); //todo looks like it's okay here
@@ -322,7 +346,7 @@ public class MinusculeMatcher implements Matcher {
     private FList<Range> matchSkippingWords(int patternIndex,
                                             int nameIndex,
                                             boolean allowSpecialChars) {
-      boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator[patternIndex];
+      boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator(patternIndex);
 
       int maxFoundLength = 0;
       while (true) {
@@ -352,7 +376,7 @@ public class MinusculeMatcher implements Matcher {
                                               boolean allowSpecialChars, boolean wordStartsOnly) {
       int next = wordStartsOnly
                  ? indexOfWordStart(patternIndex, startAt)
-                 : indexOfIgnoreCase(startAt + 1, myPattern[patternIndex], patternIndex);
+                 : indexOfIgnoreCase(startAt + 1, charAt(patternIndex), patternIndex);
 
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
       if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(myName, myHardSeparators, startAt, next)) {
@@ -369,7 +393,7 @@ public class MinusculeMatcher implements Matcher {
 
     private boolean seemsLikeFragmentStart(int patternIndex, int nextOccurrence) {
       // uppercase should match either uppercase or a word start
-      return !isUpperCase[patternIndex] ||
+      return !isUpperCase(patternIndex) ||
              Character.isUpperCase(myName.charAt(nextOccurrence)) ||
              NameUtil.isWordStart(myName, nextOccurrence) ||
              // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
@@ -378,7 +402,7 @@ public class MinusculeMatcher implements Matcher {
 
     private boolean charEquals(char patternChar, int patternIndex, char c, boolean isIgnoreCase) {
       return patternChar == c ||
-             isIgnoreCase && (toLowerCase[patternIndex] == c || toUpperCase[patternIndex] == c);
+             isIgnoreCase && (toLowerCase(patternIndex) == c || toUpperCase(patternIndex) == c);
     }
 
     @Nullable
@@ -396,8 +420,8 @@ public class MinusculeMatcher implements Matcher {
       int i = 1;
       boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
       while (nameIndex + i < myName.length() && patternIndex + i < myPattern.length) {
-        if (!charEquals(myPattern[patternIndex + i], patternIndex + i, myName.charAt(nameIndex + i), ignoreCase)) {
-          if (Character.isDigit(myPattern[patternIndex + i]) && Character.isDigit(myPattern[patternIndex + i - 1])) {
+        if (!charEquals(charAt(patternIndex + i), patternIndex + i, myName.charAt(nameIndex + i), ignoreCase)) {
+          if (Character.isDigit(charAt(patternIndex + i)) && Character.isDigit(charAt(patternIndex + i - 1))) {
             return 0;
           }
           break;
@@ -475,7 +499,7 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private boolean isUppercasePatternVsLowercaseNameChar(int patternIndex, int nameIndex) {
-      return isUpperCase[patternIndex] && myPattern[patternIndex] != myName.charAt(nameIndex);
+      return isUpperCase(patternIndex) && charAt(patternIndex) != myName.charAt(nameIndex);
     }
 
     @Nullable
@@ -487,10 +511,10 @@ public class MinusculeMatcher implements Matcher {
 
     private boolean shouldProhibitCaseMismatch(int patternIndex, int nameIndex) {
       // at least three consecutive uppercase letters shouldn't match lowercase
-      if (myHasHumps && patternIndex >= 2 && isUpperCase[patternIndex - 1] && isUpperCase[patternIndex - 2]) {
+      if (myHasHumps && patternIndex >= 2 && isUpperCase(patternIndex - 1) && isUpperCase(patternIndex - 2)) {
         // but if there's a lowercase after them, it can match (in case shift was released a bit later)
         if (nameIndex + 1 == myName.length() ||
-            patternIndex + 1 < myPattern.length && !isLowerCase[patternIndex + 1]) {
+            patternIndex + 1 < myPattern.length && !isLowerCase(patternIndex + 1)) {
           return true;
         }
       }
@@ -501,7 +525,7 @@ public class MinusculeMatcher implements Matcher {
       if (nameIndex >= myName.length()) return false;
 
       boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
-      char patternChar = myPattern[patternIndex];
+      char patternChar = charAt(patternIndex);
       if (!charEquals(patternChar, patternIndex, myName.charAt(nameIndex), ignoreCase)) return false;
 
       if (myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER &&
@@ -518,13 +542,13 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private boolean isPatternChar(int patternIndex, char c) {
-      return patternIndex >= 0 && patternIndex < myPattern.length && myPattern[patternIndex] == c;
+      return patternIndex >= 0 && patternIndex < myPattern.length && charAt(patternIndex) == c;
     }
 
     private int indexOfWordStart(int patternIndex, int startFrom) {
-      final char p = myPattern[patternIndex];
+      final char p = charAt(patternIndex);
       if (startFrom >= myName.length() ||
-          myHasHumps && isLowerCase[patternIndex] && !(patternIndex > 0 && isWordSeparator[patternIndex - 1])) {
+          myHasHumps && isLowerCase(patternIndex) && !(patternIndex > 0 && isWordSeparator(patternIndex - 1))) {
         return -1;
       }
       int nextWordStart = startFrom;
@@ -541,8 +565,8 @@ public class MinusculeMatcher implements Matcher {
 
     private int indexOfIgnoreCase(int fromIndex, char p, int patternIndex) {
       if (isAsciiName && IOUtil.isAscii(p)) {
-        char pUpper = toUpperCase[patternIndex];
-        char pLower = toLowerCase[patternIndex];
+        char pUpper = toUpperCase(patternIndex);
+        char pLower = toLowerCase(patternIndex);
         for (int i = fromIndex; i < myName.length(); i++) {
           char c = myName.charAt(i);
           if (c == p || toUpperAscii(c) == pUpper || toLowerAscii(c) == pLower) {
