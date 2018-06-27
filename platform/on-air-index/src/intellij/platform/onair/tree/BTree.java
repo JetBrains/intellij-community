@@ -12,28 +12,22 @@ public class BTree {
   public static final byte INTERNAL = 5;
   public static final byte LEAF = 6;
 
-  public static final int BYTES_PER_VALUE = 16;
+  public static final int BYTES_PER_ADDRESS = 16;
 
   private final Storage storage;
   private final int base = 32;
   private final int keySize;
-  private final int addressSize;
 
   private Address address;
 
-  public BTree(Storage storage, int keySize, int addressSize, Address address) {
+  public BTree(Storage storage, int keySize, Address address) {
     this.storage = storage;
     this.keySize = keySize;
-    this.addressSize = addressSize;
     this.address = address;
   }
 
   public int getKeySize() {
     return keySize;
-  }
-
-  public int getAddressSize() {
-    return addressSize;
   }
 
   public int getBase() {
@@ -63,7 +57,7 @@ public class BTree {
 
   public BasePage loadPage(@NotNull Novelty novelty, Address address) {
     byte[] bytes = address.isNovelty() ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
-    int metadataOffset = (keySize + addressSize) * base;
+    int metadataOffset = (keySize + BYTES_PER_ADDRESS) * base;
     byte type = bytes[metadataOffset];
     byte size = bytes[metadataOffset + 1];
     final BasePage result;
@@ -84,12 +78,11 @@ public class BTree {
     return childAddress.isNovelty() ? novelty.lookup(childAddress.getLowBytes()) : storage.lookup(childAddress);
   }
 
-  public static BTree createEmpty(Storage storage, int keySize, int addressSize) {
-    final int metadataOffset = (keySize + addressSize) * 32;
+  public static BTree createEmpty(Storage storage, int keySize) {
+    final int metadataOffset = (keySize + BYTES_PER_ADDRESS) * 32;
     final byte[] bytes = new byte[metadataOffset + 2];
     bytes[metadataOffset] = BOTTOM;
     bytes[metadataOffset + 1] = 0;
-    // TODO: use novelty
-    return new BTree(storage, keySize, addressSize, storage.store(bytes));
+    return new BTree(storage, keySize, storage.store(bytes));
   }
 }

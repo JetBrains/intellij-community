@@ -8,6 +8,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 
+import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
+
 public class BottomPage extends BasePage {
 
   public BottomPage(byte[] backingArray, BTree tree, Address address, int size) {
@@ -75,7 +77,7 @@ public class BottomPage extends BasePage {
   private static BottomPage copyOf(@NotNull Novelty novelty, BottomPage page, int from, int length) {
     byte[] bytes = new byte[page.backingArray.length];
 
-    final int bytesPerEntry = page.tree.getKeySize() + page.tree.getAddressSize();
+    final int bytesPerEntry = page.tree.getKeySize() + BYTES_PER_ADDRESS;
 
     System.arraycopy(
       page.backingArray, from * bytesPerEntry,

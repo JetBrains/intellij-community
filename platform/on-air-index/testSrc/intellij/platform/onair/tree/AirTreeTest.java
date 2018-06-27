@@ -23,7 +23,7 @@ public class AirTreeTest {
     final Storage storage = new MockStorage();
     final Novelty novelty = new MockNovelty();
 
-    BTree tree = BTree.createEmpty(storage, 4, 8);
+    BTree tree = BTree.createEmpty(storage, 4);
 
     tree.put(novelty, k(1), v(1));
 

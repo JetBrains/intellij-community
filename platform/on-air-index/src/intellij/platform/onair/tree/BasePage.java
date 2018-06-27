@@ -7,7 +7,7 @@ import intellij.platform.onair.storage.api.Novelty;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static intellij.platform.onair.tree.BTree.BYTES_PER_VALUE;
+import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
 
 public abstract class BasePage {
   protected final byte[] backingArray;
@@ -39,7 +39,7 @@ public abstract class BasePage {
 
   protected Address getChildAddress(int index) {
     final int bytesPerKey = tree.getKeySize();
-    final int offset = (bytesPerKey + BYTES_PER_VALUE) * index + bytesPerKey;
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * index + bytesPerKey;
     final long lowBytes = readUnsignedLong(backingArray, offset, 8);
     final long highBytes = readUnsignedLong(backingArray, offset + 8, 8);
     return new Address(highBytes, lowBytes);
@@ -76,7 +76,7 @@ public abstract class BasePage {
 
   protected int binarySearch(byte[] key, int low) {
     final int bytesPerKey = tree.getKeySize();
-    final int bytesPerEntry = bytesPerKey + tree.getAddressSize();
+    final int bytesPerEntry = bytesPerKey + BYTES_PER_ADDRESS;
 
     int high = size - 1;
 
@@ -107,7 +107,7 @@ public abstract class BasePage {
       throw new IllegalArgumentException("Invalid key length: need " + bytesPerKey + ", got: " + key.length);
     }
 
-    final int offset = (bytesPerKey + BYTES_PER_VALUE) * pos;
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
 
     // write key
     System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
@@ -148,7 +148,7 @@ public abstract class BasePage {
   protected void copyChildren(final int from, final int to) {
     if (from >= size) return;
 
-    final int bytesPerEntry = tree.getKeySize() + tree.getAddressSize();
+    final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
 
     System.arraycopy(
       backingArray, from * bytesPerEntry,
@@ -158,7 +158,7 @@ public abstract class BasePage {
   }
 
   private void setSize(int updatedSize) {
-    final int sizeOffset = ((tree.getKeySize() + tree.getAddressSize()) * tree.getBase()) + 1;
+    final int sizeOffset = ((tree.getKeySize() + BYTES_PER_ADDRESS) * tree.getBase()) + 1;
     backingArray[sizeOffset] = (byte)updatedSize;
     this.size = updatedSize;
   }
