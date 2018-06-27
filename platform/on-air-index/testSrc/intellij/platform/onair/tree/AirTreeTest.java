@@ -19,7 +19,7 @@ public class AirTreeTest {
   }
 
   @Test
-  public void testSplitRight2() throws IOException {
+  public void testSplitRight2() {
     final Storage storage = new MockStorage();
 
     BTree tree = BTree.createEmpty(storage, 4, 8);
