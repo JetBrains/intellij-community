@@ -1,10 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package jetbrains.onair.tree;import org.junit.Assert;
+package intellij.platform.onair.tree;import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.Locale;
 
 public class AirTreeTest {
     private static final DecimalFormat FORMATTER;

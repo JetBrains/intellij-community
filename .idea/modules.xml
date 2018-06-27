@@ -585,6 +585,7 @@
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-api/intellij.platform.lvcs.iml" filepath="$PROJECT_DIR$/platform/lvcs-api/intellij.platform.lvcs.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" filepath="$PROJECT_DIR$/platform/lvcs-impl/intellij.platform.lvcs.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/platform-main/intellij.platform.main.iml" filepath="$PROJECT_DIR$/platform/platform-main/intellij.platform.main.iml" />
+      <module fileurl="file://$PROJECT_DIR$/platform/on-air-index/intellij.platform.onair.tree.iml" filepath="$PROJECT_DIR$/platform/on-air-index/intellij.platform.onair.tree.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-api/intellij.platform.projectModel.iml" filepath="$PROJECT_DIR$/platform/projectModel-api/intellij.platform.projectModel.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/projectModel-impl/intellij.platform.projectModel.impl.iml" filepath="$PROJECT_DIR$/platform/projectModel-impl/intellij.platform.projectModel.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/platform/remote-servers/api/intellij.platform.remoteServers.iml" filepath="$PROJECT_DIR$/platform/remote-servers/api/intellij.platform.remoteServers.iml" />
@@ -711,7 +712,6 @@
       <module fileurl="file://$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/intellij.xslt.debugger.engine.impl.iml" filepath="$PROJECT_DIR$/plugins/xslt-debugger/engine/impl/intellij.xslt.debugger.engine.impl.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/xpath/xslt-rt/intellij.xslt.debugger.rt.iml" filepath="$PROJECT_DIR$/plugins/xpath/xslt-rt/intellij.xslt.debugger.rt.iml" />
       <module fileurl="file://$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" filepath="$PROJECT_DIR$/plugins/yaml/intellij.yaml.iml" />
-      <module fileurl="file://$PROJECT_DIR$/platform/on-air-index/on-air-index.iml" filepath="$PROJECT_DIR$/platform/on-air-index/on-air-index.iml" />
     </modules>
   </component>
 </project>
