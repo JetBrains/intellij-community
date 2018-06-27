@@ -161,7 +161,6 @@
     <component>
       <interface-class>com.intellij.openapi.command.undo.UndoManager</interface-class>
       <implementation-class>com.intellij.openapi.command.impl.UndoManagerImpl</implementation-class>
-      <loadForDefaultProject/>
     </component>
 
     <component>
