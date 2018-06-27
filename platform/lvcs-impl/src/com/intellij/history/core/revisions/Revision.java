@@ -58,4 +58,10 @@ public abstract class Revision {
   public List<Difference> getDifferencesWith(Revision right) {
     return Entry.getDifferencesBetween(findEntry(), right.findEntry(), right instanceof CurrentRevision);
   }
+
+  public String toString() {
+    Entry entry = findEntry();
+    String content = entry == null ? null : entry.getContent().toString();
+    return getChangeSetName() + "\n" + content;
+  }
 }
