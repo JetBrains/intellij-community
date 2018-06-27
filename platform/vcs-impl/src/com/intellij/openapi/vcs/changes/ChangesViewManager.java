@@ -153,6 +153,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager.addToolWindowTitleAction(expandAll);
     myContentManager.addToolWindowTitleAction(collapseAll);
 
+    myView.setTreeExpander(expander);
+
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
                                                   () -> ApplicationManager.getApplication().invokeLater(() -> refreshView(), ModalityState.NON_MODAL, myProject.getDisposed()));
