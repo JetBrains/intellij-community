@@ -115,7 +115,7 @@ public class PwaBuilder extends BaseInstrumentingBuilder {
 
   @Override
   protected boolean isEnabled(CompileContext context, ModuleChunk chunk) {
-    return System.getProperty("class.file.pwa") != null;
+    return true;
   }
 
   @Override
