@@ -15,7 +15,6 @@
  */
 package com.intellij.ide;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
 import com.intellij.application.options.JavaIndentOptionsEditor;
@@ -278,29 +277,39 @@ public class JavaLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSett
 
   @Override
   @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
-    if (file.isValid()) {
-      return new DocCommentSettings() {
-        private final JavaCodeStyleSettings mySettings =
-          CodeStyle.getCustomSettings(file, JavaCodeStyleSettings.class);
+  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
+    return new DocCommentSettings() {
+      private final JavaCodeStyleSettings mySettings =
+        rootSettings.getCustomSettings(JavaCodeStyleSettings.class);
 
-        @Override
-        public boolean isDocFormattingEnabled() {
-          return mySettings.ENABLE_JAVADOC_FORMATTING;
-        }
+      @Override
+      public boolean isDocFormattingEnabled() {
+        return mySettings.ENABLE_JAVADOC_FORMATTING;
+      }
 
-        @Override
-        public void setDocFormattingEnabled(boolean formattingEnabled) {
-          mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
-        }
+      @Override
+      public void setDocFormattingEnabled(boolean formattingEnabled) {
+        mySettings.ENABLE_JAVADOC_FORMATTING = formattingEnabled;
+      }
 
-        @Override
-        public boolean isLeadingAsteriskEnabled() {
-          return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
-        }
-      };
-    }
-    return super.getDocCommentSettings(file);
+      @Override
+      public boolean isLeadingAsteriskEnabled() {
+        return mySettings.JD_LEADING_ASTERISKS_ARE_ENABLED;
+      }
+
+      @Override
+      public boolean isRemoveEmptyTags() {
+        return mySettings.JD_KEEP_EMPTY_EXCEPTION || mySettings.JD_KEEP_EMPTY_PARAMETER || mySettings.JD_KEEP_EMPTY_RETURN;
+      }
+
+      @Override
+      public void setRemoveEmptyTags(boolean removeEmptyTags) {
+        mySettings.JD_KEEP_EMPTY_RETURN = !removeEmptyTags;
+        mySettings.JD_KEEP_EMPTY_PARAMETER = !removeEmptyTags;
+        mySettings.JD_KEEP_EMPTY_EXCEPTION = !removeEmptyTags;
+      }
+    };
+
   }
 
   @Nullable
