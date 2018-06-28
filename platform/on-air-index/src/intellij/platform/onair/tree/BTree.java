@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
-import intellij.platform.onair.storage.api.Address;
-import intellij.platform.onair.storage.api.Novelty;
-import intellij.platform.onair.storage.api.Storage;
-import intellij.platform.onair.storage.api.Tree;
+import intellij.platform.onair.storage.api.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,6 +46,11 @@ public class BTree implements Tree {
   @Nullable
   public byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
     return loadPage(novelty, address).get(novelty, key);
+  }
+
+  @Override
+  public boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer) {
+    return loadPage(novelty, address).forEach(novelty, consumer);
   }
 
   @Override

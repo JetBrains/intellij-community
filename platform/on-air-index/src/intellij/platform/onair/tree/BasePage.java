@@ -3,6 +3,7 @@ package intellij.platform.onair.tree;
 
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.KeyValueConsumer;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -50,7 +51,9 @@ public abstract class BasePage {
 
   protected abstract void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer);
 
-  // WARNING: this method allocates an array and must be used for debugging only
+  protected abstract boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
+
+  // WARNING: this method allocates an array
   protected byte[] getKey(int index) {
     final int bytesPerKey = tree.getKeySize();
     byte[] result = new byte[bytesPerKey];

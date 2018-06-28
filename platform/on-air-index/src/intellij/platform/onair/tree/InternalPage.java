@@ -2,6 +2,7 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.KeyValueConsumer;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,18 @@ public class InternalPage extends BasePage {
   protected byte[] get(@NotNull Novelty novelty, @NotNull byte[] key) {
     final int index = binarySearch(key, 0);
     return index < 0 ? getChild(novelty, Math.max(-index - 2, 0)).get(novelty, key) : getChild(novelty, index).get(novelty, key);
+  }
+
+  @Override
+  protected boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer) {
+    for (int i = 0; i < size; i++) {
+      Address childAddress = getChildAddress(i);
+      BasePage child = tree.loadPage(novelty, childAddress);
+      if (!child.forEach(novelty, consumer)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Override

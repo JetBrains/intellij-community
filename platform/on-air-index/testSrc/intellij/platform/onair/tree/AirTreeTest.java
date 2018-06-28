@@ -13,6 +13,8 @@ import org.junit.Test;
 import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 import static intellij.platform.onair.tree.TestByteUtils.writeUnsignedInt;
 
@@ -41,6 +43,13 @@ public class AirTreeTest {
     for (int i = 0; i < total; i++) {
       if (i == 42) {
         tree.dump(novelty, System.out, ValueDumper.INSTANCE);
+
+        AtomicLong size = new AtomicLong();
+        Assert.assertFalse(tree.forEach(novelty, (key, value) -> size.incrementAndGet() < 10));
+        Assert.assertEquals(10, size.get());
+        size.set(0);
+        Assert.assertTrue(tree.forEach(novelty, (key, value) -> size.incrementAndGet() < 50));
+        Assert.assertEquals(42, size.get());
       }
 
       Assert.assertTrue(tree.put(novelty, k(i), v(i)));
@@ -93,6 +102,15 @@ public class AirTreeTest {
         Assert.assertNull(tree.get(novelty, k(-i)));
       }
     }
+
+    final AtomicInteger size = new AtomicInteger();
+    tree.forEach(novelty, (key, value) -> {
+      int i = size.getAndIncrement();
+      Assert.assertArrayEquals(k(i), key);
+      Assert.assertArrayEquals(v(i), value);
+      return true;
+    });
+    Assert.assertEquals(size.get(), total);
   }
 
   private void checkTree(Tree tree, final int total, final int multiplier) {

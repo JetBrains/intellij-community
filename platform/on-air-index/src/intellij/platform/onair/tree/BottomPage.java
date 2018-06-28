@@ -2,6 +2,7 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.KeyValueConsumer;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,18 @@ public class BottomPage extends BasePage {
       return tree.loadLeaf(novelty, getChildAddress(index));
     }
     return null;
+  }
+
+  @Override
+  protected boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer) {
+    for (int i = 0; i < size; i++) {
+      byte[] key = getKey(i);
+      byte[] value = tree.loadLeaf(novelty, getChildAddress(i));
+      if (!consumer.consume(key, value)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
