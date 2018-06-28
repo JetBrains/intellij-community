@@ -3,7 +3,7 @@
 [+] Jump to next/prev
 [+] Fold whole conflict
 [ ] Compare changes
-[ ] Hyperlinks to log
+[+] Hyperlinks to log
 [ ] Revert conflict
 [ ] Lighter font on markers
 [ ] Java support
