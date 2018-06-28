@@ -64,7 +64,8 @@ public class InternalPage extends BasePage {
       set(pos, child.getMinKey(), child.address.getLowBytes());
       if (newChild == null) {
         flush(novelty);
-      } else {
+      }
+      else {
         if (!newChild.address.isNovelty()) {
           throw new IllegalStateException("child must be novelty");
         }
@@ -73,6 +74,45 @@ public class InternalPage extends BasePage {
     }
 
     return null;
+  }
+
+  @Override
+  protected boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value) {
+    int pos = binarySearchGuess(key);
+    final BasePage child = getChild(novelty, pos).getMutableCopy(novelty, tree);
+    if (!child.delete(novelty, key, value)) {
+      return false;
+    }
+    // if first element was removed in child, then update min key
+    final int childSize = child.size;
+    if (childSize > 0) {
+      set(pos, child.getMinKey(), child.address.getLowBytes());
+    }
+    if (pos > 0) {
+      final BasePage left = getChild(novelty, pos - 1);
+      if (needMerge(left, child)) {
+        // merge child into left sibling
+        // re-get mutable left
+        getChild(novelty, pos - 1).getMutableCopy(novelty, tree).mergeWith(child);
+        removeChild(pos);
+      }
+    }
+    else if (pos + 1 < size) {
+      final BasePage right = getChild(novelty, pos + 1);
+      if (needMerge(child, right)) {
+        // merge child with right sibling
+        final BasePage mutableChild = child.getMutableCopy(novelty, tree);
+        mutableChild.mergeWith(getChild(novelty, pos + 1));
+        removeChild(pos);
+        // change key for link to right
+        set(pos, mutableChild.getMinKey(), mutableChild.address.getLowBytes());
+      }
+    }
+    else if (childSize == 0) {
+      removeChild(pos);
+    }
+    novelty.update(address.getLowBytes(), backingArray);
+    return true;
   }
 
   @Override
@@ -111,6 +151,25 @@ public class InternalPage extends BasePage {
   @NotNull
   protected BasePage getChild(@NotNull Novelty novelty, final int index) {
     return tree.loadPage(novelty, getChildAddress(index));
+  }
+
+  @Override
+  protected BasePage mergeWithChildren(@NotNull Novelty novelty) {
+    BasePage result = this;
+    while (!result.isBottom() && result.size == 1) {
+      result = result.getChild(novelty, 0);
+    }
+    return result;
+  }
+
+  protected void removeChild(int pos) {
+    copyChildren(pos + 1, pos);
+    decrementSize(1);
+  }
+
+  @Override
+  protected boolean isBottom() {
+    return false;
   }
 
   @Override

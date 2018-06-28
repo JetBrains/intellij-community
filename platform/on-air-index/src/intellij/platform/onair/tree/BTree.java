@@ -39,7 +39,9 @@ public class BTree implements Tree {
   }
 
   protected void incrementSize() {
-    // TODO
+  }
+
+  protected void decrementSize() {
   }
 
   @Override
@@ -71,10 +73,23 @@ public class BTree implements Tree {
       BasePage.set(0, root.getMinKey(), getKeySize(), bytes, root.address.getLowBytes());
       BasePage.set(1, newSibling.getMinKey(), getKeySize(), bytes, newSibling.address.getLowBytes());
       this.address = new Address(novelty.alloc(bytes));
-    } else {
+    }
+    else {
       this.address = root.address;
     }
     return result[0];
+  }
+
+  @Override
+  public boolean delete(@NotNull Novelty novelty, @NotNull byte[] key) {
+    return delete(novelty, key, null);
+  }
+
+  @Override
+  public boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value) {
+    final boolean[] res = new boolean[1];
+    address = delete(novelty, loadPage(novelty, address).getMutableCopy(novelty, this), key, value, res).address;
+    return res[0];
   }
 
   @Override
@@ -119,6 +134,21 @@ public class BTree implements Tree {
     bytes[metadataOffset] = BOTTOM;
     bytes[metadataOffset + 1] = 0;
     return new BTree(storage, keySize, new Address(novelty.alloc(bytes)));
+  }
+
+  private static BasePage delete(@NotNull Novelty novelty,
+                                 @NotNull BasePage root,
+                                 @NotNull byte[] key,
+                                 @Nullable byte[] value,
+                                 boolean[] res) {
+    if (root.delete(novelty, key, value)) {
+      root = root.mergeWithChildren(novelty);
+      res[0] = true;
+      return root;
+    }
+
+    res[0] = false;
+    return root;
   }
 
   public interface ToString {
