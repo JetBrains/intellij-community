@@ -27,10 +27,12 @@ import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.messages.MessageBusConnection;
+import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 import org.jetbrains.jps.backwardRefs.pwa.ClassFileSymbol;
 import org.jetbrains.jps.backwardRefs.pwa.PwaIndex;
 import org.jetbrains.jps.backwardRefs.pwa.PwaIndices;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.Collections;
 import java.util.UUID;
@@ -63,43 +65,41 @@ public class PwaServiceImpl extends PwaService {
 
   @Override
   public void projectOpened() {
-    if (CompilerReferenceService.isEnabled()) {
-      MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
-      connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
-        @Override
-        public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
-          if (project == myProject) {
-            closeReaderIfNeed(CompilerReferenceServiceBase.IndexCloseReason.COMPILATION_STARTED);
-          }
+    MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
+    connection.subscribe(BuildManagerListener.TOPIC, new BuildManagerListener() {
+      @Override
+      public void buildStarted(Project project, UUID sessionId, boolean isAutomake) {
+        if (project == myProject) {
+          closeReaderIfNeed(CompilerReferenceServiceBase.IndexCloseReason.COMPILATION_STARTED);
         }
-      });
+      }
+    });
 
-      connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
-        @Override
-        public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-          compilationFinished(compileContext);
-        }
+    connection.subscribe(CompilerTopics.COMPILATION_STATUS, new CompilationStatusListener() {
+      @Override
+      public void compilationFinished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+        compilationFinished(compileContext);
+      }
 
-        @Override
-        public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
-          compilationFinished(compileContext);
-        }
+      @Override
+      public void automakeCompilationFinished(int errors, int warnings, CompileContext compileContext) {
+        compilationFinished(compileContext);
+      }
 
-        private void compilationFinished(CompileContext context) {
-          if (context.getProject() == myProject) {
-            Runnable compilationFinished = () -> {
-              final Module[] compilationModules = ReadAction.compute(() -> {
-                if (myProject.isDisposed()) return null;
-                return context.getCompileScope().getAffectedModules();
-              });
-              if (compilationModules == null) return;
-              openReaderIfNeed(CompilerReferenceServiceBase.IndexOpenReason.COMPILATION_FINISHED);
-            };
-            executeOnBuildThread(compilationFinished);
-          }
+      private void compilationFinished(CompileContext context) {
+        if (context.getProject() == myProject) {
+          Runnable compilationFinished = () -> {
+            final Module[] compilationModules = ReadAction.compute(() -> {
+              if (myProject.isDisposed()) return null;
+              return context.getCompileScope().getAffectedModules();
+            });
+            if (compilationModules == null) return;
+            openReaderIfNeed(CompilerReferenceServiceBase.IndexOpenReason.COMPILATION_FINISHED);
+          };
+          executeOnBuildThread(compilationFinished);
         }
-      });
-    }
+      }
+    });
   }
 
 
@@ -131,6 +131,16 @@ public class PwaServiceImpl extends PwaService {
           case COMPILATION_FINISHED:
             myDirtyScopeHolder.compilerActivityFinished();
         }
+
+        File buildDir = BuildManager.getInstance().getProjectSystemDirectory(myProject);
+
+        if (buildDir == null
+            || !CompilerReferenceIndex.exists(buildDir)
+            || CompilerReferenceIndex.versionDiffers(buildDir, PwaIndices.VERSION)) {
+          return;
+        }
+        myIndex = new PwaIndex(buildDir, true);
+        resetGraph();
       }
       catch (RuntimeException e) {
         --myActiveBuilds;
@@ -157,6 +167,7 @@ public class PwaServiceImpl extends PwaService {
 
   @Override
   public boolean isBytecodeUsed(JvmElement element) {
+    if (myIndex == null) return true;
     try {
       return myIndex.get(PwaIndices.BACK_USAGES).getData(asSymbol(element)).forEach((id, value) -> true);
     }
@@ -207,12 +218,16 @@ public class PwaServiceImpl extends PwaService {
         if (node != null) {
           try {
             myIndex.get(PwaIndices.BACK_USAGES).getData(symbol).forEach((id, value) -> {
-              JvmNode usagePlace = myGraph.getNodeFromSources(value);
-              if (usagePlace != null) {
-                node.usedIn(usagePlace);
-              } else {
-                throw new IllegalStateException();
+              for (ClassFileSymbol v : value) {
+                JvmNode usagePlace = myGraph.getNodeFromSources(v);
+                if (usagePlace != null) {
+                  node.usedIn(usagePlace);
+                }
+                else {
+                  throw new IllegalStateException();
+                }
               }
+
               return true;
             });
           }
@@ -227,7 +242,6 @@ public class PwaServiceImpl extends PwaService {
       throw new RuntimeException(e);
     }
     myGraph.graphBuilt();
-
   }
 
 }

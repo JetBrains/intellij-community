@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.jps.backwardRefs.pwa;
 
+import org.jetbrains.annotations.NotNull;
+
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
@@ -12,12 +14,14 @@ class ClassFileData {
 
   ClassFileData(int[] ids) {sourceIds = ids;}
 
-  public Map<ClassFileSymbol, ClassFileSymbol> getUsageMap() {
-    return null;
+  @NotNull
+  public Map<ClassFileSymbol, Collection<ClassFileSymbol>> getUsageMap() {
+    return usagesMap;
   }
 
+  @NotNull
   public Map<ClassFileSymbol, Collection<ClassFileSymbol>> getHierarchy() {
-    return null;
+    return hierarchyMap;
   }
 
   public void write(PwaIndexWriter writer) {

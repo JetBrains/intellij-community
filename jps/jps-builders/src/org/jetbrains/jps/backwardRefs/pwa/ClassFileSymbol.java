@@ -25,7 +25,7 @@ public abstract class ClassFileSymbol {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof FieldOrMethod)) return false;
       FieldOrMethod method = (FieldOrMethod)o;
       return containingClass == method.containingClass;
     }
@@ -68,14 +68,15 @@ public abstract class ClassFileSymbol {
     @Override
     public boolean equals(Object o) {
       if (this == o) return true;
-      if (o == null || getClass() != o.getClass()) return false;
+      if (!(o instanceof Method)) return false;
+      if (!super.equals(o)) return false;
       Method method = (Method)o;
       return parameterCount == method.parameterCount;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(parameterCount);
+      return Objects.hash(super.hashCode(), parameterCount);
     }
   }
   public static class Field extends FieldOrMethod {
@@ -94,6 +95,18 @@ public abstract class ClassFileSymbol {
     }
   }
 
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (!(o instanceof ClassFileSymbol)) return false;
+    ClassFileSymbol symbol = (ClassFileSymbol)o;
+    return name == symbol.name;
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(name);
+  }
 
   static KeyDescriptor<ClassFileSymbol> EXTERNALIZER = createExternalizer();
 
@@ -128,9 +141,8 @@ public abstract class ClassFileSymbol {
           out.writeInt(FIELD_TYPE);
           out.writeInt(((Field)symbol).containingClass);
         } else if (symbol instanceof Lambda) {
-          out.writeInt(LAMBDA_TYPE);
+          throw new RuntimeException();
         }
-        throw new RuntimeException();
       }
 
       @Override

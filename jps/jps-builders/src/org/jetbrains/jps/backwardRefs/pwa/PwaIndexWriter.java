@@ -30,7 +30,7 @@ public class PwaIndexWriter extends CompilerReferenceWriter<ClassFileData> {
   }
 
   public static boolean isEnabled() {
-    return SystemProperties.getBooleanProperty("pwa.indices", false);
+    return true;
   }
 
   static void initialize(@NotNull final CompileContext context) {

@@ -50,6 +50,9 @@ public class JavaBackwardReferenceIndexWriter extends CompilerReferenceWriter<Co
   }
 
   static void initialize(@NotNull final CompileContext context, int attempt) {
+    if (true) {
+      return;
+    }
     final BuildDataManager dataManager = context.getProjectDescriptor().dataManager;
     final File buildDir = dataManager.getDataPaths().getDataStorageRoot();
     if (isEnabled()) {
