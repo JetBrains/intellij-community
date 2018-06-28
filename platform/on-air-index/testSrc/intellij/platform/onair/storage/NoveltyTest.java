@@ -26,18 +26,22 @@ public class NoveltyTest {
     byte[] bytes2 = new byte[100];
     generator.nextBytes(bytes2);
     long addr1 = novelty.alloc(bytes1);
-    Assert.assertTrue(addr1 < 0);
+    Assert.assertTrue(addr1 >= 0);
     long addr2 = novelty.alloc(bytes2);
-    Assert.assertTrue(addr2 < 0);
+    Assert.assertTrue(addr2 >= 0);
     Assert.assertArrayEquals(bytes1, novelty.lookup(addr1));
     Assert.assertArrayEquals(bytes2, novelty.lookup(addr2));
     novelty.update(addr1, bytes2);
     Assert.assertArrayEquals(bytes2, novelty.lookup(addr1));
     ((NoveltyImpl)novelty).close();
 
-    //novelty = new NoveltyImpl(path.toFile());
-    //Assert.assertArrayEquals(bytes1, novelty.lookup(addr1));
-    //Assert.assertArrayEquals(bytes2, novelty.lookup(addr1));
-    //((NoveltyImpl)novelty).close();
+    novelty = new NoveltyImpl(path.toFile());
+
+    byte[] bytes1_ = novelty.lookup(addr1);
+    byte[] bytes2_ = novelty.lookup(addr2);
+
+    Assert.assertArrayEquals(bytes2, bytes1_);
+    Assert.assertArrayEquals(bytes2, bytes2_);
+    ((NoveltyImpl)novelty).close();
   }
 }
