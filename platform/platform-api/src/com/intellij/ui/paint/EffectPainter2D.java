@@ -301,8 +301,8 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     };
 
     // we should not recalculate caches when IDEA is on Retina and non-Retina
-    private final ConcurrentHashMap<Long, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
-    private final ConcurrentHashMap<Long, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, BufferedImage> myNormalCache = new ConcurrentHashMap<>();
+    private final ConcurrentHashMap<Integer, BufferedImage> myHiDPICache = new ConcurrentHashMap<>();
 
     abstract double getPeriod(double height);
 
@@ -319,9 +319,11 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
 
     BufferedImage getImage(Graphics2D g, Color color, double height) {
-      float sysScale = JBUI.sysScale(g);
-      Long key = color.getRGB() ^ ((long)(sysScale * height + sysScale * 100) << 32);
-      ConcurrentHashMap<Long, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
+      int key = 17;
+      key = key * 31 + color.getRGB();
+      key = key * 31 + Double.valueOf(JBUI.sysScale(g)).hashCode();
+      key = key * 31 + Double.valueOf(height).hashCode();
+      ConcurrentHashMap<Integer, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
       return cache.computeIfAbsent(key, k -> createImage(g, color, height));
     }
 
