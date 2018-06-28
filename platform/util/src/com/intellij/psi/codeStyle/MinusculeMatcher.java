@@ -273,6 +273,7 @@ public class MinusculeMatcher implements Matcher {
         return null;
       }
 
+      /*
       int length = myName.length();
       int patternIndex = 0;
       for (int i = 0; i < length; ++i) {
@@ -285,6 +286,7 @@ public class MinusculeMatcher implements Matcher {
       if (patternIndex < myMinNameLength * 2) {
         return null;
       }
+      */
 
       return matchWildcards(0, 0);
     }
