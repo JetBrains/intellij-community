@@ -64,8 +64,9 @@ internal val builtinImmutables = setOf(
 internal const val immutableCopyWithKind = "@Immutable#copyWith"
 internal const val immutableOrigin = "by @Immutable"
 internal const val immutableCopyWith = "copyWith"
-internal const val KNOWN_IMMUTABLES_OPTION = "knownImmutables"
-internal const val KNOWN_IMMUTABLE_CLASSES_OPTION = "knownImmutableClasses"
+
+const val KNOWN_IMMUTABLES_OPTION = "knownImmutables"
+const val KNOWN_IMMUTABLE_CLASSES_OPTION = "knownImmutableClasses"
 
 const val GROOVY_TRANSFORM_IMMUTABLE_BASE = "groovy.transform.ImmutableBase"
 const val GROOVY_TRANSFORM_IMMUTABLE_OPTIONS = "groovy.transform.ImmutableOptions"
