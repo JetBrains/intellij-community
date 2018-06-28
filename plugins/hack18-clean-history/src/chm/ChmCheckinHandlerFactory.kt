@@ -29,7 +29,7 @@ class MyCheckinHandler(panel: CheckinProjectPanel) : CheckinHandler() {
 
     if (configurationPanel.isSelected()) {
       val ce = vcs.checkinEnvironment as GitCheckinEnvironment
-      ce.myOverridingCommitProcedure = MyCommitProcess(project, vcs)
+      ce.myOverridingCommitProcedure = ChmCommitProcess(project, vcs)
     }
 
     return ReturnResult.COMMIT

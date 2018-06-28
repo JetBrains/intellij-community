@@ -27,7 +27,7 @@ import git4idea.commands.GitCommand.COMMIT
 import git4idea.commands.GitLineHandler
 import git4idea.util.GitVcsConsoleWriter
 
-class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnvironment.OverridingCommitProcedure {
+class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnvironment.OverridingCommitProcedure {
 
   val gateway = LocalHistoryImpl.getInstanceImpl().gateway!!
   val facade = LocalHistoryImpl.getInstanceImpl().facade!!
