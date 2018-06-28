@@ -174,7 +174,7 @@ public class SideEffectChecker {
 
     @Override
     public void visitNewExpression(@NotNull PsiNewExpression expression) {
-      if(!isSideEffectFreeConstructor(expression)) {
+      if (!ExpressionUtils.isArrayCreationExpression(expression) && !isSideEffectFreeConstructor(expression)) {
         if (addSideEffect(expression)) return;
       }
       super.visitNewExpression(expression);
