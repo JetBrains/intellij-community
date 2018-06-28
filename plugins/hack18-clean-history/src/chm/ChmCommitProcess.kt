@@ -1,4 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("MemberVisibilityCanBePrivate")
+
 package chm
 
 import com.intellij.history.core.RevisionsCollector
@@ -66,18 +68,17 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     // -- here is where the magic starts
     val revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
 
-    val file = ancestor
     var refactorings = true
     for (rev in revisionsToApply) {
 
       if (refactorings && rev.comment == null) {
         refactorings = false
-        commit(root, file, "Perform automated refactorings")
+        commit(root, "Perform automated refactorings")
       }
 
-      applyRevision(rev, root, file)
+      applyRevision(rev, root)
     }
-    commit(root, file, message)
+    commit(root, message)
 
     invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().resumeRecording() }
     ce.myOverridingCommitProcedure = null // for safety
@@ -92,10 +93,10 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
       else refactorings.add(rev)
     }
 
-    return refactorings + manuals;
+    return refactorings + manuals
   }
 
-  private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
+  private fun applyRevision(rev: Item, root: VirtualFile) {
     invokeAndWaitIfNeed {
       // as patches
       val patchApplier = PatchApplier<Any>(project, root, rev.patches, null, null) // todo no dialogs, fail on conflicts
@@ -103,14 +104,12 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     }
   }
 
-  private fun commit(root: VirtualFile, file: VirtualFile, msg: String) {
+  private fun commit(root: VirtualFile, msg: String) {
     val h = GitLineHandler(project, root, COMMIT)
     h.setStdoutSuppressed(false)
     h.setStderrSuppressed(false)
-    h.addParameters("-m", msg)
+    h.addParameters("-a", "-m", msg)
     h.addParameters("--only")
-    h.endOptions()
-    h.addRelativeFiles(listOf(file))
     val result = git.runCommand(h)
     GitVcsConsoleWriter.getInstance(project).showMessage(result.outputAsJoinedString)
   }
