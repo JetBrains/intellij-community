@@ -56,8 +56,6 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     markDirtyAndRefresh(false, true, false, root)
 
     // -- here is where the magic starts
-    // todo extract refactorings from them and apply them first
-
     val revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
 
     val file = ancestor
