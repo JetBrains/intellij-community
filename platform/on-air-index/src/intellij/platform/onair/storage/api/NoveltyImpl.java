@@ -15,7 +15,7 @@ public class NoveltyImpl implements Novelty, Closeable {
   private int myFreeOffset;
 
   public NoveltyImpl(File backedFile) throws IOException {
-    myFreeOffset = 0;
+    myFreeOffset = 4 * 1024;
     try (RandomAccessFile file = new RandomAccessFile(backedFile, "rw")) {
       myByteBuffer = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, INITIAL_SIZE);
     }
@@ -29,7 +29,7 @@ public class NoveltyImpl implements Novelty, Closeable {
       myByteBuffer.putInt(bytes.length);
       myByteBuffer.put(bytes);
       myFreeOffset = myByteBuffer.position();
-      return result;
+      return -result;
     } else {
       return 0;
     }
@@ -42,7 +42,7 @@ public class NoveltyImpl implements Novelty, Closeable {
 
   @Override
   public byte[] lookup(long address) {
-    myByteBuffer.position((int)address);
+    myByteBuffer.position((int)-address);
     int count = myByteBuffer.getInt();
     byte[] result = new byte[count];
     myByteBuffer.get(result);
@@ -51,7 +51,7 @@ public class NoveltyImpl implements Novelty, Closeable {
 
   @Override
   public void update(long address, byte[] bytes) {
-    myByteBuffer.position((int)address);
+    myByteBuffer.position((int)-address);
     final int count = myByteBuffer.getInt();
     assert bytes.length == count;
     myByteBuffer.put(bytes);

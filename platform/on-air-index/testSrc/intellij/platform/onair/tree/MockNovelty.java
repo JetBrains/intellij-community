@@ -23,11 +23,6 @@ public class MockNovelty implements Novelty {
   }
 
   @Override
-  public void free(long address) {
-
-  }
-
-  @Override
   public byte[] lookup(long address) {
     final byte[] result = novelty.get(address);
     if (result == null) {
