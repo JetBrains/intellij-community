@@ -156,6 +156,7 @@ public abstract class BasePage {
       final BasePage sibling = split(novelty, splitPos, size - splitPos);
       if (pos >= splitPos) {
         // insert into right sibling
+        flush(novelty);
         sibling.insertAt(novelty, pos - splitPos, key, childAddress);
       }
       else {
