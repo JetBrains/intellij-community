@@ -105,7 +105,7 @@ public abstract class BasePage {
   protected int binarySearchGuess(byte[] key) {
     int index = binarySearch(key, 0);
     if (index < 0) {
-      index = -index - 2;
+      index = Math.max(0, -index - 2);
     }
     return index;
   }
