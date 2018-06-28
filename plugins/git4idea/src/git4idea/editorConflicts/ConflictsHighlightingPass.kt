@@ -61,7 +61,8 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
     TakeThisIntentionAction(element),
     TakeBothIntentionAction(element),
     TakeNoneIntentionAction(element),
-    CompareChangesAction(element)
+    CompareChangesAction(element),
+    RestoreOriginalConflictsAction(element)
   )
 
   override fun doApplyInformationToEditor() {
