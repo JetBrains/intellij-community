@@ -26,6 +26,10 @@ public class MoveClassAndFileTest extends RefactoringTestCase {
     doTest("onlyPackageLocalClass", "t", "txt2move.txt", "s.MyLocal");
   }
 
+  public void testPackageInfo() throws Exception {
+    doTest("classAndPackageInfo", "t", "package-info.java", "s.MyClass");
+  }
+
   public void testLeavePackageLocalClass() throws Exception {
     doTest("leavePackageLocalClass", "t", "txt2move.txt", "s.MyClass");
   }
