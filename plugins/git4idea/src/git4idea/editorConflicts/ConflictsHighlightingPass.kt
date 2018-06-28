@@ -16,10 +16,7 @@ import com.intellij.openapi.vcs.getConflictMarkerType
 import com.intellij.openapi.vcs.getSectionInnerRange
 
 import com.intellij.psi.*
-import git4idea.editorConflicts.intentions.SetActiveIntentionAction
-import git4idea.editorConflicts.intentions.TakeBothIntentionAction
-import git4idea.editorConflicts.intentions.TakeNoneIntentionAction
-import git4idea.editorConflicts.intentions.TakeThisIntentionAction
+import git4idea.editorConflicts.intentions.*
 
 class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEditorHighlightingPass(file.project, document) {
   private val highlightInfos: MutableList<HighlightInfo> = mutableListOf()
@@ -63,7 +60,8 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
     SetActiveIntentionAction(element),
     TakeThisIntentionAction(element),
     TakeBothIntentionAction(element),
-    TakeNoneIntentionAction(element)
+    TakeNoneIntentionAction(element),
+    CompareChangesAction(element)
   )
 
   override fun doApplyInformationToEditor() {
