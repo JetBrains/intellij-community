@@ -43,6 +43,10 @@ public abstract class BasePage {
                                   boolean overwrite,
                                   boolean[] result);
 
+  protected abstract boolean delete(@NotNull Novelty novelty,
+                                    @NotNull byte[] key,
+                                    @Nullable byte[] value);
+
   protected abstract BasePage getMutableCopy(@NotNull Novelty novelty, BTree tree);
 
   protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
@@ -95,6 +99,14 @@ public abstract class BasePage {
     }
 
     return Arrays.copyOf(backingArray, tree.getKeySize()); // TODO: optimize
+  }
+
+  protected int binarySearchGuess(byte[] key) {
+    int index = binarySearch(key, 0);
+    if (index < 0) {
+      index = -index - 2;
+    }
+    return index;
   }
 
   protected int binarySearch(byte[] key, int low) {
@@ -189,6 +201,15 @@ public abstract class BasePage {
       backingArray, to * bytesPerEntry,
       (size - from) * bytesPerEntry
     );
+  }
+
+  protected void mergeWith(BasePage page) {
+    final int bytesPerEntry = tree.getKeySize() + BYTES_PER_ADDRESS;
+    System.arraycopy(page.backingArray, 0, backingArray, size * bytesPerEntry, page.size);
+    int length = page.size;
+    this.size += length;
+    final int metadataOffset = bytesPerEntry * page.tree.getBase();
+    backingArray[metadataOffset + 1] = (byte)length;
   }
 
   private void setSize(int updatedSize) {

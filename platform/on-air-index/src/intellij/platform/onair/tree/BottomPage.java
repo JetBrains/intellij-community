@@ -71,6 +71,20 @@ public class BottomPage extends BasePage {
   }
 
   @Override
+  protected boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value) {
+    final int pos = binarySearch(key, 0);
+    if (pos < 0) return false;
+
+    // tree.addExpiredLoggable(keysAddresses[pos]);
+    copyChildren(pos + 1, pos);
+    tree.decrementSize();
+    decrementSize(1);
+
+    novelty.update(address.getLowBytes(), backingArray);
+    return true;
+  }
+
+  @Override
   protected BottomPage split(@NotNull Novelty novelty, int from, int length) {
     final BottomPage result = copyOf(novelty, this, from, length);
     decrementSize(length);

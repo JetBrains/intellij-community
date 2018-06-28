@@ -39,7 +39,9 @@ public class BTree implements Tree {
   }
 
   protected void incrementSize() {
-    // TODO
+  }
+
+  protected void decrementSize() {
   }
 
   @Override
