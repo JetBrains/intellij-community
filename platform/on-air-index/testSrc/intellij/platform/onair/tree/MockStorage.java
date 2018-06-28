@@ -9,6 +9,8 @@ import intellij.platform.onair.storage.api.Storage;
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
 
+import static intellij.platform.onair.tree.ByteUtils.normalizeLowBytes;
+
 public class MockStorage implements Storage {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
 
@@ -34,15 +36,5 @@ public class MockStorage implements Storage {
       }
     }
     return result;
-  }
-
-  private static long normalizeLowBytes(long address) {
-    if (address < 0) {
-      return address;
-    }
-    if (address == 0) {
-      return Long.MIN_VALUE;
-    }
-    return -address;
   }
 }

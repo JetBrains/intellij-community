@@ -1,9 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.storage;
 
+import com.google.common.hash.HashFunction;
+import com.google.common.hash.Hashing;
 import com.intellij.util.containers.SLRUMap;
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.tree.ByteUtils;
 import net.spy.memcached.BinaryConnectionFactory;
 import net.spy.memcached.CachedData;
 import net.spy.memcached.ClientMode;
@@ -12,10 +15,12 @@ import net.spy.memcached.transcoders.Transcoder;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
-import java.util.Arrays;
 import java.util.Collections;
 
+import static intellij.platform.onair.tree.ByteUtils.normalizeLowBytes;
+
 public class StorageImpl implements Storage {
+  private static final HashFunction HASH = Hashing.goodFastHash(128);
   private static final int MAX_VALUE_SIZE = 1024 * 1024 * 10;
   private static final int LOCAL_CACHE_SIZE = 1000;
   private final MemcachedClient myClient;
@@ -64,7 +69,10 @@ public class StorageImpl implements Storage {
 
   @Override
   public Address store(byte[] what) {
-    final Address address = new Address(0, Arrays.hashCode(what));
+    byte[] hashCode = HASH.hashBytes(what).asBytes();
+    long lowBytes = ByteUtils.readUnsignedLong(hashCode, 0, 8);
+    long highBytes = ByteUtils.readUnsignedLong(hashCode, 0, 8);
+    final Address address = new Address(highBytes, normalizeLowBytes(lowBytes));
     myClient.set(address.toString(), 0, what, myTranscoder);
     return address;
   }

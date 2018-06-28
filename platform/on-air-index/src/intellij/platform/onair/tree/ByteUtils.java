@@ -37,4 +37,14 @@ public class ByteUtils {
       output[offset++] = ((byte)(l >> (bits -= 8) & 0xff));
     }
   }
+
+  public static long normalizeLowBytes(long address) {
+    if (address < 0) {
+      return address;
+    }
+    if (address == 0) {
+      return Long.MIN_VALUE;
+    }
+    return -address;
+  }
 }
