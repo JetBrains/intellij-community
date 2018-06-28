@@ -7,10 +7,17 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
+import com.intellij.openapi.vcs.actions.TabbedShowHistoryAction
+import com.intellij.openapi.vcs.actions.TabbedShowHistoryForRevisionAction
+import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiElement
 import com.intellij.psi.impl.FakePsiElement
 import com.intellij.vcs.log.impl.VcsLogContentUtil
+import com.intellij.vcsUtil.VcsUtil
 import git4idea.GitUtil
+import git4idea.commands.Git
+import git4idea.commands.GitCommand
+import git4idea.commands.GitLineHandler
 import git4idea.history.GitHistoryUtils
 
 class GotoConflictCommitHandler : GotoDeclarationHandler {
@@ -20,7 +27,7 @@ class GotoConflictCommitHandler : GotoDeclarationHandler {
     val markerText = getMarkerText(sourceElement, document) ?: return emptyArray()
     val commitishText = getCommitishByText(markerText, sourceElement, document) ?: return emptyArray()
 
-    return arrayOf(DummyPsiElementForCommit(commitishText, sourceElement.project))
+    return arrayOf(DummyPsiElementForCommit(commitishText, sourceElement.project, sourceElement.containingFile.virtualFile))
   }
 
   private fun getCommitishByText(text: String, marker: PsiElement, document: Document): String? {
@@ -44,12 +51,20 @@ class GotoConflictCommitHandler : GotoDeclarationHandler {
   override fun getActionText(context: DataContext) = "Goto Conflict Commit"
 }
 
-class DummyPsiElementForCommit(private val commitIshText: String, private val proj: Project) : FakePsiElement() {
+class DummyPsiElementForCommit(private val commitIshText: String,
+                               private val proj: Project,
+                               private val vFile: VirtualFile) : FakePsiElement() {
   override fun getParent() = null
   override fun getContainingFile() = null
 
   override fun navigate(requestFocus: Boolean) {
-    VcsLogContentUtil.openMainLogAndExecute(proj) { it.vcsLog.jumpToReference(commitIshText) }
+    val repo = GitUtil.getRepositoryManager(proj).getRepositoryForFile(vFile) ?: return
+    val h = GitLineHandler(proj, repo.root, GitCommand.REV_PARSE)
+    h.setSilent(true)
+    h.addParameters(commitIshText)
+    val output = Git.getInstance().runCommand(h).getOutputOrThrow().trim { it <= ' ' }
+    TabbedShowHistoryForRevisionAction.showNewFileHistory(proj, VcsUtil.getFilePath(vFile), output)
+//    VcsLogContentUtil.openMainLogAndExecute(proj) { it.vcsLog.jumpToReference(commitIshText) }
   }
 
   override fun canNavigate() = true

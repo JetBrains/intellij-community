@@ -62,7 +62,7 @@ public class TabbedShowHistoryForRevisionAction extends DumbAwareAction {
     }
   }
 
-  private static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
+  public static void showNewFileHistory(@NotNull Project project, @NotNull FilePath path, @NotNull String revisionNumber) {
     VcsLogFileHistoryProvider historyProvider = ServiceManager.getService(VcsLogFileHistoryProvider.class);
     historyProvider.showFileHistory(project, path, revisionNumber);
   }
