@@ -27,7 +27,7 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
     }
 
     override fun dispatch(delay: Int, r: () -> Unit): Cancellable {
-        val invoke = Runnable {
+        val invoke = java.lang.Runnable {
             application.invokeLater(r)
         }
         val disposable = executor.schedule(invoke, delay.toLong(), TimeUnit.MILLISECONDS)
@@ -36,7 +36,7 @@ class ApplicationDispatcher(private val application: Application) : Dispatcher {
     }
 
     override fun dispatchInterval(delay: Int, interval: Int, r: () -> Unit): Cancellable {
-        val invoke = Runnable {
+        val invoke = java.lang.Runnable {
             application.invokeLater(r)
         }
         val disposable = executor.scheduleAtFixedRate(invoke, delay.toLong(), interval.toLong(), TimeUnit.MILLISECONDS)
@@ -55,7 +55,7 @@ private class ApplicationCoroutineContext(
     }
 
     override fun scheduleResumeAfterDelay(time: Long, unit: TimeUnit, continuation: CancellableContinuation<Unit>) {
-        val toResume = Runnable {
+        val toResume = java.lang.Runnable {
             application.invokeLater {
                 with(continuation) { this@ApplicationCoroutineContext.resumeUndispatched(Unit) }
             }
@@ -65,7 +65,7 @@ private class ApplicationCoroutineContext(
     }
 
     override fun invokeOnTimeout(time: Long, unit: TimeUnit, block: Runnable): DisposableHandle {
-        val toResume = Runnable {
+        val toResume = java.lang.Runnable {
             application.invokeLater {
                 block.run()
             }
