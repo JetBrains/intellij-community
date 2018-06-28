@@ -5,7 +5,8 @@
 [+] Compare changes
    [ ] proper diff names
 [+] Hyperlinks to log
-[ ] Revert conflict
+[+] Revert conflicts
+   [ ] revert single conflict
 [ ] Lighter font on markers
 [ ] Java support
 [ ] "What happens" diagram
