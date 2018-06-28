@@ -14,6 +14,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.SmartList;
@@ -117,9 +118,19 @@ public class AddVariableInitializerFix implements IntentionAction {
         result.add(new ExpressionLookupItem(elementFactory.createExpressionFromText("\"\"", variable)));
       }
       final PsiClass aClass = PsiTypesUtil.getPsiClass(type);
-      if (aClass != null && PsiUtil.hasDefaultConstructor(aClass)) {
-        final String expressionText = PsiKeyword.NEW + " " + type.getCanonicalText(false) + "()";
-        ExpressionLookupItem newExpression = new ExpressionLookupItem(elementFactory.createExpressionFromText(expressionText, variable));
+      if (aClass != null && !aClass.hasModifierProperty(PsiModifier.ABSTRACT) && PsiUtil.hasDefaultConstructor(aClass)) {
+        String typeText = type.getCanonicalText(false);
+        if (aClass.getTypeParameters().length > 0 && PsiUtil.isLanguageLevel7OrHigher(variable)) {
+          if (!PsiDiamondTypeImpl.haveConstructorsGenericsParameters(aClass)) {
+            typeText = TypeConversionUtil.erasure(type).getCanonicalText(false) + "<>";
+          }
+        }
+        final String expressionText = PsiKeyword.NEW + " " + typeText + "()";
+        PsiExpression initializer = elementFactory.createExpressionFromText(expressionText, variable);
+        String variableName = variable.getName();
+        LOG.assertTrue(variableName != null);
+        PsiDeclarationStatement statement = elementFactory.createVariableDeclarationStatement(variableName, variable.getType(), initializer, variable);
+        ExpressionLookupItem newExpression = new ExpressionLookupItem(((PsiLocalVariable)statement.getDeclaredElements()[0]).getInitializer());
         result.add(newExpression);
       }
     }
