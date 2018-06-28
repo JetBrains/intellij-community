@@ -41,7 +41,7 @@ public class Difference {
     this(isFile, left, right, false);
   }
 
-  public Difference(boolean isFile, Entry left, Entry right, boolean isRightContentCurrent) {
+  public Difference(boolean isFile, @Nullable Entry left, @Nullable Entry right, boolean isRightContentCurrent) {
     myIsFile = isFile;
     myLeft = left;
     myRight = right;
@@ -65,14 +65,15 @@ public class Difference {
   }
 
   public ContentRevision getRightContentRevision(IdeaGateway gw) {
-    if (myRightContentCurrent) {
-      VirtualFile file = gw.findVirtualFile(getRight().getPath());
+    Entry entry = getRight();
+    if (myRightContentCurrent && entry != null) {
+      VirtualFile file = gw.findVirtualFile(entry.getPath());
       if (file != null) return new CurrentContentRevision(VcsUtil.getFilePath(file));
     }
-    return createContentRevision(getRight(), gw);
+    return createContentRevision(entry, gw);
   }
 
-  private static ContentRevision createContentRevision(final Entry e, final IdeaGateway gw) {
+  private static ContentRevision createContentRevision(@Nullable Entry e, final IdeaGateway gw) {
     if (e == null) return null;
 
     return new ByteBackedContentRevision() {
