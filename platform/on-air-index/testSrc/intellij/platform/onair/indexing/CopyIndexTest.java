@@ -38,7 +38,7 @@ import static com.intellij.util.io.PagedFileStorage.MB;
 public class CopyIndexTest {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
   private static final int ITERATIONS = 1;
-  private static final String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
+  private static final String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/home/morj/index-sandbox");
   private static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
   private static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
 
@@ -66,7 +66,7 @@ public class CopyIndexTest {
           return false;
         }
       });
-      System.out.println("Data set size: " + size.get());
+      System.out.println("Data set size: " + size.get() / MB + "MB");
     }
     finally {
       phm.close();
