@@ -10,7 +10,7 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class AirTreeTest extends AirTreeTestBase {
   @Test
-  public void testSplitRight2() {
+  public void testPutSmoke() {
     int total = 1000;
     BTree tree = createTree();
 

@@ -140,9 +140,7 @@ public abstract class BasePage {
   }
 
   protected void flush(@NotNull Novelty novelty) {
-    if (address.isNovelty()) {
-      novelty.update(address.getLowBytes(), backingArray);
-    }
+    novelty.update(address.getLowBytes(), backingArray);
   }
 
   protected void set(int pos, byte[] key, long lowAddressBytes) {
