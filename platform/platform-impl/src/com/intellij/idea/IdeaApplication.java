@@ -65,8 +65,17 @@ public class IdeaApplication {
     return ourInstance != null && ourInstance.myLoaded;
   }
 
-  @NotNull
-  private final String[] myArgs;
+  @SuppressWarnings("SSBasedInspection")
+  public static void initApplication(String[] args) {
+    IdeaApplication app = new IdeaApplication(args);
+    // this invokeLater() call is needed to place the app starting code on a freshly minted IdeEventQueue instance
+    SwingUtilities.invokeLater(() -> {
+      PluginManager.installExceptionHandler();
+      app.run();
+    });
+  }
+
+  private final @NotNull String[] myArgs;
   private static boolean myPerformProjectLoad = true;
   private ApplicationStarter myStarter;
   private volatile boolean myLoaded;
@@ -144,7 +153,8 @@ public class IdeaApplication {
 
     System.setProperty("sun.awt.noerasebackground", "true");
 
-    IdeEventQueue.getInstance(); // replace system event queue
+    //noinspection ResultOfMethodCallIgnored
+    IdeEventQueue.getInstance();  // replaces system event queue
 
     if (headless) return;
 
