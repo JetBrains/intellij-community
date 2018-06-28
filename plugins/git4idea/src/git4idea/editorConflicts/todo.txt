@@ -2,7 +2,8 @@
 [+] Take none
 [+] Jump to next/prev
 [+] Fold whole conflict
-[ ] Compare changes
+[+] Compare changes
+   [ ] proper diff names
 [+] Hyperlinks to log
 [ ] Revert conflict
 [ ] Lighter font on markers
