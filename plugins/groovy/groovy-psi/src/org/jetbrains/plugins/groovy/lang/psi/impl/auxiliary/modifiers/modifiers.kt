@@ -79,6 +79,7 @@ private fun GrModifierList.isFinal(): Boolean {
   return when (owner) {
     is GrTypeDefinition -> owner.isFinalClass()
     is GrVariableDeclaration -> owner.isFinalField(this)
+    is GrEnumConstant -> true
     else -> false
   }
 }
@@ -99,6 +100,7 @@ private fun GrModifierList.isStatic(): Boolean {
   val containingClass = when (owner) {
     is GrTypeDefinition -> owner.containingClass
     is GrVariableDeclaration -> owner.containingClass
+    is GrEnumConstant -> return true
     else -> null
   }
   return containingClass != null && (owner is GrEnumTypeDefinition || isInterface(containingClass))
@@ -120,6 +122,7 @@ private fun GrModifierList.getImplicitVisiblity(): String? {
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
       return if (hasPackageScope(containingClass, "FIELDS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PRIVATE
     }
+    is GrEnumConstant -> return PsiModifier.PUBLIC
     else -> return null
   }
 }
