@@ -37,6 +37,12 @@ public class MockStorage implements Storage {
     for (final byte element : what) {
       result = 31 * result + (element & 0xff);
     }
-    return Math.abs(result);
+    if (result == 0) {
+      return Long.MIN_VALUE;
+    }
+    if (result > 0) {
+      return -result;
+    }
+    return result;
   }
 }
