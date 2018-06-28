@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.server.impl;
 
 import com.intellij.compiler.server.BuildProcessParametersProvider;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
+import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
@@ -64,27 +51,35 @@ public class BuildProcessClasspathManager {
 
   private static List<String> computeCompileServerPluginsClasspath() {
     final List<String> classpath = ContainerUtil.newArrayList();
+
     for (CompileServerPlugin serverPlugin : CompileServerPlugin.EP_NAME.getExtensions()) {
       final PluginId pluginId = serverPlugin.getPluginDescriptor().getPluginId();
       final IdeaPluginDescriptor plugin = PluginManager.getPlugin(pluginId);
       LOG.assertTrue(plugin != null, pluginId);
+
       final File baseFile = plugin.getPath();
       if (baseFile.isFile()) {
         classpath.add(baseFile.getPath());
       }
       else if (baseFile.isDirectory()) {
+        outer:
         for (String relativePath : StringUtil.split(serverPlugin.getClasspath(), ";")) {
-          final File jarFile = new File(new File(baseFile, "lib"), relativePath);
-          File classesDir = new File(baseFile, "classes");
+          File jarFile = new File(baseFile, "lib/" + relativePath);
           if (jarFile.exists()) {
             classpath.add(jarFile.getPath());
+            continue;
           }
-          else if (classesDir.isDirectory()) {
-            //'plugin run configuration': all module output are copied to 'classes' folder
+
+          // ... 'plugin run configuration': all module output are copied to 'classes' folder
+          File classesDir = new File(baseFile, "classes");
+          if (classesDir.isDirectory()) {
             classpath.add(classesDir.getPath());
+            continue;
           }
-          else {
-            //development mode: add directory out/classes/production/<jar-name> to classpath, assuming that jar-name is equal to module name
+
+          // development mode
+          if (PluginManagerCore.isRunningFromSources()) {
+            // ... try "out/classes/production/<jar-name>", assuming that <jar-name> means module name
             String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(relativePath));
             if (OLD_TO_NEW_MODULE_NAME.containsKey(moduleName)) {
               moduleName = OLD_TO_NEW_MODULE_NAME.get(moduleName);
@@ -93,32 +88,37 @@ public class BuildProcessClasspathManager {
             if (baseOutputDir.getName().equals("test")) {
               baseOutputDir = new File(baseOutputDir.getParentFile(), "production");
             }
-            final File dir = new File(baseOutputDir, moduleName);
-            if (dir.exists()) {
-              classpath.add(dir.getPath());
+            File moduleDir = new File(baseOutputDir, moduleName);
+            if (moduleDir.isDirectory()) {
+              classpath.add(moduleDir.getPath());
+              continue;
             }
-            else {
-              //looks like <jar-name> refers to a library, try to find it under <plugin-dir>/lib
-              File pluginDir = getPluginDir(plugin);
-              if (pluginDir != null) {
-                File libraryFile = new File(pluginDir, "lib" + File.separator + PathUtil.getFileName(relativePath));
-                if (libraryFile.exists()) {
-                  classpath.add(libraryFile.getPath());
-                }
-                else {
-                  LOG.error("Cannot add " + relativePath + " from '" + plugin.getName() + ' ' + plugin.getVersion() + "'" +
-                            " to external compiler classpath: library " + libraryFile.getAbsolutePath() + " not found");
-                }
+            // ... try "<plugin-dir>/lib/<jar-name>", assuming that <jar-name> is a module library committed to VCS
+            File pluginDir = getPluginDir(plugin);
+            if (pluginDir != null) {
+              File libraryFile = new File(pluginDir, "lib/" + PathUtil.getFileName(relativePath));
+              if (libraryFile.exists()) {
+                classpath.add(libraryFile.getPath());
+                continue;
               }
-              else {
-                LOG.error("Cannot add " + relativePath + " from '" + plugin.getName() + ' ' + plugin.getVersion() + "'" +
-                          " to external compiler classpath: home directory of plugin not found");
+            }
+            // ... look for <jar-name> on the classpath, assuming that <jar-name> is an external (read: Maven) library
+            String classPath = System.getProperty("java.class.path");
+            if (!StringUtil.isEmpty(classPath)) {
+              for (String pathElement : StringUtil.split(classPath, File.pathSeparator)) {
+                if (relativePath.equals(PathUtil.getFileName(pathElement))) {
+                  classpath.add(pathElement);
+                  continue outer;
+                }
               }
             }
           }
+
+          LOG.error("Cannot add '" + relativePath + "' from '" + plugin.getName() + ' ' + plugin.getVersion() + "'" + " to compiler classpath");
         }
       }
     }
+
     return classpath;
   }
 
