@@ -13,11 +13,17 @@ import java.util.List;
 import java.util.Random;
 
 public class StorageTest {
+
+  public static String host = "localhost";
+  public static int port = 11211;
+  public int insertionCount = 1024 * 128; // 2.5GB total
+  int valueSize = 1024; // 20KB
+
   // setup:
   // memcached --memory-limit=4096 --max-item-size=5242880
   @Test
   public void simpleTest() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    final Storage storage = new StorageImpl(new InetSocketAddress(host, port));
     final byte[] bytes = "Hello".getBytes();
     final Address hash = storage.store(bytes);
     Assert.assertArrayEquals(bytes, storage.lookup(hash));
@@ -26,16 +32,14 @@ public class StorageTest {
 
   @Test
   public void notFoundTest() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    final Storage storage = new StorageImpl(new InetSocketAddress(host, port));
     Assert.assertNull(storage.lookup(new Address(-42, -42)));
   }
 
   @Test
   public void performanceTest() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    final Storage storage = new StorageImpl(new InetSocketAddress(host, port));
     long start = System.currentTimeMillis();
-    final int insertionCount = 1024 * 128; // 2.5GB total
-    final int valueSize = 1024; // 20KB
     Address[] addresses = new Address[insertionCount];
     for (int i = 0; i < insertionCount; i ++) {
       final byte[] bytes = new byte[valueSize];
@@ -56,7 +60,7 @@ public class StorageTest {
   @Test
   public void latencyTest() throws IOException {
 
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    final Storage storage = new StorageImpl(new InetSocketAddress(host, port));
     int valueSize = 1024 * 20;
 
     final byte[] bytes = new byte[valueSize];
@@ -78,7 +82,7 @@ public class StorageTest {
 
   @Test
   public void cacheTest() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    final Storage storage = new StorageImpl(new InetSocketAddress(host, port));
 
     final List<byte[]> entries = new ArrayList<>();
     final List<Address> keys = new ArrayList<>();

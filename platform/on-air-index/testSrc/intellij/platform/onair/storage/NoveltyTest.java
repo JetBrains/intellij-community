@@ -54,7 +54,7 @@ public class NoveltyTest {
     Novelty novelty = new NoveltyImpl(path.toFile());
 
     final int times = 4;
-    final int size = ((NoveltyImpl) novelty).getSize();
+    final int size = ((NoveltyImpl) novelty).getFreeSpace();
 
     for (int i = 1; i < times; i++) {
       final int partitions = (int) Math.pow(8, i);
@@ -71,7 +71,7 @@ public class NoveltyTest {
       for (int j = 0; j < partitions; j++) {
         novelty.free(addrs[j]);
       }
-      Assert.assertEquals(((NoveltyImpl)novelty).getSize(), size);
+      Assert.assertEquals(((NoveltyImpl)novelty).getFreeSpace(), size);
     }
   }
 }

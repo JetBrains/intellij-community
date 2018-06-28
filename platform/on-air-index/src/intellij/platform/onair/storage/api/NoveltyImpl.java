@@ -95,4 +95,8 @@ public class NoveltyImpl implements Novelty, Closeable {
   public int getSize() {
     return INITIAL_SIZE - myFreeMemorySize;
   }
+
+  public int getFreeSpace() {
+    return myFreeMemorySize;
+  }
 }

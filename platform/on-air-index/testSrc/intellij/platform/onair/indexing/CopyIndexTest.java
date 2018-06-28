@@ -9,12 +9,9 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import intellij.platform.onair.storage.DummyStorageImpl;
 import intellij.platform.onair.storage.StorageImpl;
-import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.NoveltyImpl;
 import intellij.platform.onair.storage.api.Storage;
-import intellij.platform.onair.storage.api.Tree;
 import intellij.platform.onair.tree.BTree;
 import intellij.platform.onair.tree.MockNovelty;
 import org.jetbrains.annotations.NotNull;
@@ -37,14 +34,16 @@ import static com.intellij.util.io.PagedFileStorage.MB;
 
 public class CopyIndexTest {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
-  private static final int ITERATIONS = 1;
-  private static final String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
+  static int ITERATIONS = 1;
+  static String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
+  static String host = "localhost";
+  static int port = 11211;
   private static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
   private static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
 
   @Test
   public void testAll() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211)); // DummyStorageImpl.INSTANCE;
+    final Storage storage = new StorageImpl(new InetSocketAddress(host, port)); // DummyStorageImpl.INSTANCE;
     final Map<String, StubIdList> content = new HashMap<>();
     final Map<byte[], byte[]> rawContent = new HashMap<>();
     final PersistentHashMap<String, StubIdList> phm = makePHM(PHM);
