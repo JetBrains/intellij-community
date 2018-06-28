@@ -5,7 +5,10 @@ import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiInvalidElementAccessException;
@@ -738,9 +741,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     final boolean withinOurClass = containingClass == PyiUtil.stubToOriginal(getPyClass(), PyClass.class) || isInSuperCall(expressionHook);
 
-    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(
-      expressionHook, new FilterNotInstance(myClass), null, false, suppressParentheses
-    );
+    final CompletionVariantsProcessor processor = new CompletionVariantsProcessor(expressionHook, null, null, false, suppressParentheses);
     myClass.processClassLevelDeclarations(processor);
 
     // We are here because of completion (see call stack), so we use code complete here
@@ -845,13 +846,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     return result;
   }
 
-  public static boolean is(@NotNull String qName, PyType type) {
-    if (type instanceof PyClassType) {
-      return qName.equals(((PyClassType)type).getClassQName());
-    }
-    return false;
-  }
-
   @Override
   public String toString() {
     return (isValid() ? "" : "[INVALID] ") + "PyClassType: " + getClassQName();
@@ -896,22 +890,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     public boolean process(final T t) {
       myProcessor.process(t);
       return true;
-    }
-  }
-
-  /**
-   * Accepts only targets that are not the given object.
-   */
-  public static class FilterNotInstance implements Condition<PsiElement> {
-    Object instance;
-
-    public FilterNotInstance(Object instance) {
-      this.instance = instance;
-    }
-
-    @Override
-    public boolean value(final PsiElement target) {
-      return (instance != target);
     }
   }
 }
