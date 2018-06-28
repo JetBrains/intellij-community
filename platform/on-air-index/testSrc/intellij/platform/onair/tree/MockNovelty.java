@@ -10,12 +10,12 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public class MockNovelty implements Novelty {
   private final ConcurrentHashMap<Long, byte[]> novelty = new ConcurrentHashMap<>();
-  private final AtomicLong addressGenerator = new AtomicLong(-1);
+  private final AtomicLong addressGenerator = new AtomicLong(1);
   private final AtomicLong size = new AtomicLong(0);
 
   @Override
   public long alloc(byte[] bytes) {
-    final long result = addressGenerator.getAndDecrement();
+    final long result = addressGenerator.getAndIncrement();
     final int length = bytes.length;
     novelty.put(result, Arrays.copyOf(bytes, length));
     size.addAndGet(length);

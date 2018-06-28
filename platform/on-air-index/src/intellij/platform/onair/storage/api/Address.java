@@ -10,7 +10,7 @@ public class Address {
   private final long lowBytes;
 
   public Address(long lowBytes) {
-    if (lowBytes >= 0) {
+    if (lowBytes < 0) {
       throw new IllegalArgumentException("novelty address expected");
     }
     this.highBytes = 0;
@@ -18,7 +18,7 @@ public class Address {
   }
 
   public Address(long highBytes, long lowBytes) {
-    if (lowBytes < 0 && highBytes != 0) {
+    if (lowBytes >= 0 && highBytes != 0) {
       throw new IllegalArgumentException("non-novelty address expected");
     }
     this.highBytes = highBytes;
@@ -34,7 +34,7 @@ public class Address {
   }
 
   public boolean isNovelty() {
-    return lowBytes < 0;
+    return lowBytes >= 0;
   }
 
   @Override
