@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.psi.PsiModifier
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
@@ -32,7 +33,7 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
 
   private fun immutableCheck(field: GrField) {
     val containingClass = field.containingClass ?: return
-    if (field.isProperty && hasImmutableAnnotation(containingClass) && !isImmutable(field)) {
+    if (!field.hasModifierProperty(PsiModifier.STATIC) && hasImmutableAnnotation(containingClass) && !isImmutable(field)) {
       holder.createErrorAnnotation(field.nameIdentifierGroovy, GroovyBundle.message("field.should.be.immutable", field.name))
     }
   }

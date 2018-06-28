@@ -6,13 +6,14 @@ import groovy.transform.KnownImmutable
 @Immutable
 class A {
   int a
-  private Iterator b
-  Iterator <error descr="Parameter 'c' should have immutable type or be declared so with @ImmutableOptions">c</error>
+  private Iterator <error descr="Field 'b' should have immutable type or be declared so with @ImmutableOptions">b</error>
+  private static Iterator b2
+  Iterator <error descr="Field 'c' should have immutable type or be declared so with @ImmutableOptions">c</error>
   String d
   E e
   URI f
   Thread g
-  MuttableClass <error descr="Parameter 'h' should have immutable type or be declared so with @ImmutableOptions">h</error>
+  MuttableClass <error descr="Field 'h' should have immutable type or be declared so with @ImmutableOptions">h</error>
   MuttableClass h2
   ImmuttableClass i
   Object[] j = new Object[1]
