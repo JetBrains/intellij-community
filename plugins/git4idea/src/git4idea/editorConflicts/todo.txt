@@ -12,6 +12,7 @@
 [ ] Presentation
 [ ] Highlight taken chunk
 [ ] Fold contents
+[ ] annotate inside conflicts
 
 
 
