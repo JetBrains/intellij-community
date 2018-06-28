@@ -60,14 +60,18 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
 
     val revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
 
+    val file = ancestor
+    var refactorings = true
     for (rev in revisionsToApply) {
-      val file = ancestor
+
+      if (refactorings && rev.comment == null) {
+        refactorings = false
+        commit(root, file, "Perform automated refactorings")
+      }
 
       applyRevision(rev, root, file)
-
-      val msg = rev.comment ?: "unnamed"
-      commit(root, file, msg)
     }
+    commit(root, file, message)
 
     invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().resumeRecording() }
     ce.myOverridingCommitProcedure = null // for safety
@@ -87,18 +91,11 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
 
   private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
     invokeAndWaitIfNeed {
+      // Don't let veto
       val doc = FileDocumentManager.getInstance().getDocument(file)
       if (doc != null) {
         doc.putUserData<Any>(DOCUMENT_BEING_COMMITTED_KEY, null)
       }
-
-      //      runWriteAction {
-      // as content:
-      //        val entry = rev.revision.findEntry()
-      //        val c = entry.content
-      //        if (!c.isAvailable) throw IllegalStateException("$c is not available")
-      //        file.setBinaryContent(c.bytes, -1, entry.timestamp)   // todo only one file yet
-      //      }
 
       // as patches
       val patchApplier = PatchApplier<Any>(project, root, rev.patches, null, null) // todo no dialogs, fail on conflicts
@@ -157,7 +154,7 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
       val patches = IdeaTextPatchBuilder.buildPatch(project, changes, root.path, false)
 
       if (!patches.isEmpty()) {
-        res.add(Item(rev, comment, patches))
+        res.add(Item(comment, patches))
       }
       comment = rev.changeSetName
       prevRev = rev
@@ -187,8 +184,7 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     }
   }
 
-  data class Item(val revision: Revision,
-                  val comment: String?,
+  data class Item(val comment: String?,
                   val patches: List<FilePatch>)
 
 }
