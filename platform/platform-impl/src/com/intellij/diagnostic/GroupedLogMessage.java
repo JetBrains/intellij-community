@@ -2,14 +2,22 @@
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.Attachment;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
+import java.util.ArrayList;
 import java.util.List;
 
 public class GroupedLogMessage extends AbstractMessage {
+  private static final String INDUCED_STACKTRACES_ATTACHMENT = "induced.txt";
+  private static final DateFormat TIMESTAMP_FORMAT = new SimpleDateFormat("yyyy-MM-dd'T'HH:mm:ss.SSS");
+
   private final List<AbstractMessage> myMessages;
+  private AbstractMessage myProxy;
 
   public GroupedLogMessage(List<AbstractMessage> messages) {
     myMessages = messages;
@@ -57,6 +65,45 @@ public class GroupedLogMessage extends AbstractMessage {
     super.setAssigneeId(assigneeId);
     for (AbstractMessage message : myMessages) {
       message.setAssigneeId(assigneeId);
+    }
+  }
+
+  /**
+   * Proxies this message for IdeErrorsDialog.
+   */
+  AbstractMessage getProxyMessage() {
+    if (myProxy == null) {
+      AbstractMessage mainCause = myMessages.get(0);
+
+      List<Attachment> attachments = new ArrayList<>(mainCause.getAllAttachments());
+      StringBuilder stacktraces = new StringBuilder("Following exceptions happened soon after this one, most probably they are induced.");
+      for (AbstractMessage each : myMessages) {
+        if (each != mainCause) {
+          stacktraces.append("\n\n\n").append(TIMESTAMP_FORMAT.format(each.getDate())).append('\n');
+          if (!StringUtil.isEmptyOrSpaces(each.getMessage())) stacktraces.append(each.getMessage()).append('\n');
+          stacktraces.append(each.getThrowableText());
+        }
+      }
+      attachments.add(new Attachment(INDUCED_STACKTRACES_ATTACHMENT, stacktraces.toString()));
+
+      myProxy = new ProxyLogMessage(mainCause.getThrowable(), mainCause.getMessage(), attachments, this);
+    }
+
+    return myProxy;
+  }
+
+  private static class ProxyLogMessage extends LogMessage {
+    private final GroupedLogMessage myOriginal;
+
+    private ProxyLogMessage(Throwable throwable, String message, List<Attachment> attachments, GroupedLogMessage original) {
+      super(throwable, message, attachments);
+      myOriginal = original;
+    }
+
+    @Override
+    public void setRead(boolean isRead) {
+      super.setRead(isRead);
+      myOriginal.setRead(isRead);
     }
   }
 }
