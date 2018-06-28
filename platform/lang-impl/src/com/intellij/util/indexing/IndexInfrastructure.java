@@ -19,10 +19,11 @@
  */
 package com.intellij.util.indexing;
 
+import com.intellij.onair.index.BTreeIndexStorage;
+import com.intellij.onair.index.BTreeIntPersistentMap;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -34,11 +35,19 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.PersistentMap;
+import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.Novelty;
+import intellij.platform.onair.storage.api.NoveltyImpl;
+import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
@@ -59,6 +68,45 @@ public class IndexInfrastructure {
     "IndexInfrastructure Pool");
 
   private IndexInfrastructure() {
+  }
+
+  public static final Storage indexStorage = new Storage() {
+    @Override
+    public byte[] lookup(@NotNull Address address) {
+      return null;
+    }
+
+    @Override
+    public Address alloc(@NotNull byte[] what) {
+      throw new UnsupportedOperationException();
+    }
+
+    @Override
+    public void store(@NotNull Address address, @NotNull byte[] bytes) {
+    }
+  };
+
+  public static final Novelty indexNovelty;
+
+  static {
+    try {
+      indexNovelty = new NoveltyImpl(new File("/Users/jetzajac/stopship"));
+    }
+    catch (IOException e) {
+      throw new RuntimeException();
+    }
+  }
+
+  public static <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
+                                                                     KeyDescriptor<K> keyDescriptor,
+                                                                     DataExternalizer<V> valueExternalizer,
+                                                                     int cacheSize) {
+    return new BTreeIndexStorage<>(keyDescriptor, valueExternalizer, indexStorage, indexNovelty, null, cacheSize, 15, -1);
+  }
+
+  public static <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId,
+                                                                        DataExternalizer<V> valueExternalizer) {
+    return new BTreeIntPersistentMap<>(valueExternalizer, indexStorage, indexNovelty, null);
   }
 
   @NotNull

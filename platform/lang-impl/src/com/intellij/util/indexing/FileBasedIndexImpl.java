@@ -378,14 +378,18 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           contentHashesEnumeratorOk = true;
         }
 
-        storage = new VfsAwareMapIndexStorage<>(
-          IndexInfrastructure.getStorageFile(name),
-          extension.getKeyDescriptor(),
-          extension.getValueExternalizer(),
-          extension.getCacheSize(),
-          extension.keyIsUniqueForIndexedFile(),
-          extension.traceKeyHashToVirtualFileMapping()
-        );
+        storage = IndexInfrastructure.createIndexStorage(name,
+                                                         extension.getKeyDescriptor(),
+                                                         extension.getValueExternalizer(), extension.getCacheSize());
+
+      //new VfsAwareMapIndexStorage<>(
+      //    IndexInfrastructure.getStorageFile(name),
+      //    extension.getKeyDescriptor(),
+      //    extension.getValueExternalizer(),
+      //    extension.getCacheSize(),
+      //    extension.keyIsUniqueForIndexedFile(),
+      //    extension.traceKeyHashToVirtualFileMapping()
+      //  );
 
         final InputFilter inputFilter = extension.getInputFilter();
         final Set<FileType> addedTypes = new THashSet<>();
