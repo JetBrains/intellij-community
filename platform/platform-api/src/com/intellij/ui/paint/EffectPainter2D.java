@@ -15,6 +15,7 @@ import java.awt.*;
 import java.awt.font.LineMetrics;
 import java.awt.geom.*;
 import java.awt.image.BufferedImage;
+import java.util.Objects;
 import java.util.concurrent.ConcurrentHashMap;
 
 /**
@@ -319,12 +320,8 @@ public enum EffectPainter2D implements RegionPainter2D<Font> {
     }
 
     BufferedImage getImage(Graphics2D g, Color color, double height) {
-      int key = 17;
-      key = key * 31 + color.getRGB();
-      key = key * 31 + Double.valueOf(JBUI.sysScale(g)).hashCode();
-      key = key * 31 + Double.valueOf(height).hashCode();
       ConcurrentHashMap<Integer, BufferedImage> cache = UIUtil.isJreHiDPI(g) ? myHiDPICache : myNormalCache;
-      return cache.computeIfAbsent(key, k -> createImage(g, color, height));
+      return cache.computeIfAbsent(Objects.hash(color.getRGB(), JBUI.sysScale(g), height), k -> createImage(g, color, height));
     }
 
     BufferedImage createImage(Graphics2D g, Paint paint, double height) {
