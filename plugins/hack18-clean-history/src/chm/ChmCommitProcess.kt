@@ -74,10 +74,13 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
       if (refactorings && rev.comment == null) {
         refactorings = false
         commit(root, "Perform automated refactorings")
+        break;
       }
 
       applyRevision(rev, root)
     }
+
+    repo.git("checkout $stdHash -- ${root.path}")
     commit(root, message)
 
     invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().resumeRecording() }
@@ -109,7 +112,6 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     h.setStdoutSuppressed(false)
     h.setStderrSuppressed(false)
     h.addParameters("-a", "-m", msg)
-    h.addParameters("--only")
     val result = git.runCommand(h)
     GitVcsConsoleWriter.getInstance(project).showMessage(result.outputAsJoinedString)
   }
