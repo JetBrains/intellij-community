@@ -660,6 +660,13 @@ public class XDebugSessionImpl implements XDebugSession {
 
       presentation.setErrorMessage(errorMessage);
       presentation.setIcon(icon);
+
+      long timestamp = presentation.getTimestamp();
+      if (timestamp != 0 && XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(icon)) {
+        long delay = System.currentTimeMillis() - timestamp;
+        presentation.setTimestamp(0);
+        BreakpointsUsageCollector.reportUsage(myProject, "verified." + (int)Math.pow(10,(int)Math.log10(delay)) + "+");
+      }
     }
     myDebuggerManager.getBreakpointManager().getLineBreakpointManager().queueBreakpointUpdate((XLineBreakpointImpl<?>)breakpoint);
   }
@@ -955,8 +962,16 @@ public class XDebugSessionImpl implements XDebugSession {
   private final class MyBreakpointListener implements XBreakpointListener<XBreakpoint<?>> {
     @Override
     public void breakpointAdded(@NotNull final XBreakpoint<?> breakpoint) {
-      if (!myBreakpointsDisabled) {
-        processAllHandlers(breakpoint, true);
+      if (processAdd(breakpoint)) {
+        CustomizedBreakpointPresentation presentation = getBreakpointPresentation(breakpoint);
+        if (presentation != null) {
+          if (XDebuggerUtilImpl.getVerifiedIcon(breakpoint).equals(presentation.getIcon())) {
+            BreakpointsUsageCollector.reportUsage(myProject, "verified.0");
+          }
+          else {
+            presentation.setTimestamp(System.currentTimeMillis());
+          }
+        }
       }
     }
 
@@ -972,10 +987,18 @@ public class XDebugSessionImpl implements XDebugSession {
       processAllHandlers(breakpoint, false);
     }
 
+    boolean processAdd(@NotNull final XBreakpoint<?> breakpoint) {
+      if (!myBreakpointsDisabled) {
+        processAllHandlers(breakpoint, true);
+        return true;
+      }
+      return false;
+    }
+
     @Override
     public void breakpointChanged(@NotNull final XBreakpoint<?> breakpoint) {
       processRemove(breakpoint);
-      breakpointAdded(breakpoint);
+      processAdd(breakpoint);
     }
   }
 
