@@ -38,29 +38,15 @@ public class WSLDistribution {
 
   private static final Key<ProcessListener> SUDO_LISTENER_KEY = Key.create("WSL sudo listener");
 
-  static class Description {
-    @NotNull final String id;
-    @NotNull final String msId;
-    @NotNull final String exeName;
-    @NotNull final String presentableName;
-
-    public Description(@NotNull String id, @NotNull String msId, @NotNull String exeName, @NotNull String presentableName) {
-      this.id = id;
-      this.msId = msId;
-      this.exeName = exeName;
-      this.presentableName = presentableName;
-    }
-  }
-
-  @NotNull private final Description myDescription;
+  @NotNull private final WslDistributionDescriptor myDescriptor;
   @NotNull private final Path myExecutablePath;
 
   protected WSLDistribution(@NotNull WSLDistribution dist) {
-    this(dist.myDescription, dist.myExecutablePath);
+    this(dist.myDescriptor, dist.myExecutablePath);
   }
 
-  WSLDistribution(@NotNull Description description, @NotNull Path executablePath) {
-    myDescription = description;
+  WSLDistribution(@NotNull WslDistributionDescriptor descriptor, @NotNull Path executablePath) {
+    myDescriptor = descriptor;
     myExecutablePath = executablePath;
   }
 
@@ -369,17 +355,17 @@ public class WSLDistribution {
 
   @NotNull
   public String getId() {
-    return myDescription.id;
+    return myDescriptor.getId();
   }
 
   @NotNull
   public String getMsId() {
-    return myDescription.msId;
+    return myDescriptor.getMsId();
   }
 
   @NotNull
   public String getPresentableName() {
-    return myDescription.presentableName;
+    return myDescriptor.getPresentableName();
   }
 
   @Override
