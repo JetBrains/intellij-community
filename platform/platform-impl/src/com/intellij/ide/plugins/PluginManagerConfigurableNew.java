@@ -4060,7 +4060,32 @@ public class PluginManagerConfigurableNew
 
     private void createErrorPanel() {
       if (myPluginsModel.hasErrors(myPlugin)) {
-        JPanel errorPanel = new NonOpaquePanel(new HorizontalLayout(JBUI.scale(8)));
+        int offset = JBUI.scale(8);
+        JPanel errorPanel = new NonOpaquePanel(new HorizontalLayout(offset) {
+          @Override
+          public void layoutContainer(Container parent) {
+            super.layoutContainer(parent);
+            if (parent.getComponentCount() != 2) {
+              return;
+            }
+
+            Component message = parent.getComponent(0);
+            Component action = parent.getComponent(1);
+            int actionWidth = action.getPreferredSize().width;
+            int width = message.getPreferredSize().width + offset + actionWidth;
+            Insets insets = parent.getInsets();
+            int parentWidth = parent.getWidth() - insets.left - insets.right;
+
+            if (width <= parentWidth) {
+              return;
+            }
+
+            int right = parent.getWidth() - insets.right;
+            action.setLocation(right - actionWidth, action.getY());
+            right -= actionWidth + offset;
+            message.setBounds(insets.left, message.getY(), right - insets.left, message.getHeight());
+          }
+        });
         errorPanel.setBorder(JBUI.Borders.emptyTop(15));
         myCenterPanel.add(errorPanel);
 
