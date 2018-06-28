@@ -16,5 +16,11 @@ public interface Tree {
 
   boolean put(@NotNull Novelty novelty, @NotNull byte[] key, @NotNull byte[] value, boolean overwrite);
 
+  boolean delete(@NotNull Novelty novelty, @NotNull byte[] key);
+
+  boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value);
+
+  boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
+
   Address store(@NotNull Novelty novelty);
 }

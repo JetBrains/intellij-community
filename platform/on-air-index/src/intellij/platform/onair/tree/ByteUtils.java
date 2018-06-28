@@ -56,4 +56,13 @@ public class ByteUtils {
     result[offset + 2] = (byte)(val >>> 8);
     result[offset + 3] = (byte)val;
   }
+  public static long normalizeLowBytes(long address) {
+    if (address < 0) {
+      return address;
+    }
+    if (address == 0) {
+      return Long.MIN_VALUE;
+    }
+    return -address;
+  }
 }

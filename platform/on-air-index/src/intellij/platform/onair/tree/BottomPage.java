@@ -2,6 +2,7 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
+import intellij.platform.onair.storage.api.KeyValueConsumer;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
@@ -26,6 +27,18 @@ public class BottomPage extends BasePage {
       return tree.loadLeaf(novelty, getChildAddress(index));
     }
     return null;
+  }
+
+  @Override
+  protected boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer) {
+    for (int i = 0; i < size; i++) {
+      byte[] key = getKey(i);
+      byte[] value = tree.loadLeaf(novelty, getChildAddress(i));
+      if (!consumer.consume(key, value)) {
+        return false;
+      }
+    }
+    return true;
   }
 
   @Nullable
@@ -58,6 +71,20 @@ public class BottomPage extends BasePage {
   }
 
   @Override
+  protected boolean delete(@NotNull Novelty novelty, @NotNull byte[] key, @Nullable byte[] value) {
+    final int pos = binarySearch(key, 0);
+    if (pos < 0) return false;
+
+    // tree.addExpiredLoggable(keysAddresses[pos]);
+    copyChildren(pos + 1, pos);
+    tree.decrementSize();
+    decrementSize(1);
+
+    novelty.update(address.getLowBytes(), backingArray);
+    return true;
+  }
+
+  @Override
   protected BottomPage split(@NotNull Novelty novelty, int from, int length) {
     final BottomPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
@@ -83,16 +110,29 @@ public class BottomPage extends BasePage {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
         byte[] leaf = tree.loadLeaf(novelty, childAddress);
-        childAddress = storage.store(leaf);
+        childAddress = storage.alloc(leaf);
+        storage.store(childAddress, leaf);
         setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
       }
     }
-    return storage.store(backingArray);
+    Address result = storage.alloc(backingArray);
+    storage.store(result, backingArray);
+    return result;
   }
 
   @Override
   protected BasePage getChild(@NotNull Novelty novelty, int index) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  protected BasePage mergeWithChildren(@NotNull Novelty novelty) {
+    return this;
+  }
+
+  @Override
+  protected boolean isBottom() {
+    return true;
   }
 
   @Override
