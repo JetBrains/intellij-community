@@ -1,8 +1,7 @@
 [+] Take both
-[ ] Take none
-[ ] Fold contents
+[+] Take none
 [ ] Jump to next/prev
-[ ] Fold whole conflict
+[+] Fold whole conflict
 [ ] Compare changes
 [ ] Hyperlinks to log
 [ ] Revert conflict
@@ -12,6 +11,7 @@
 [ ] Real-world examples
 [ ] Presentation
 [ ] Highlight taken chunk
+[ ] Fold contents
 
 
 
