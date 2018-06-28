@@ -13,7 +13,7 @@ import java.util.LinkedList;
 import java.util.List;
 
 public class NoveltyImpl implements Novelty, Closeable {
-  private static int INITIAL_SIZE = 1024 * 1024 * 2047; // almost 2GB
+  private static final int INITIAL_SIZE = 1024 * 1024 * 2047; // almost 2GB
 
   private final MappedByteBuffer myByteBuffer;
   private final List<Pair<Integer, Integer>> myFreeList;
