@@ -15,7 +15,7 @@ import java.nio.charset.Charset;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 
-import static intellij.platform.onair.tree.ByteUtils.writeUnsignedInt;
+import static intellij.platform.onair.tree.TestByteUtils.writeUnsignedInt;
 
 public class AirTreeTest {
   private static final DecimalFormat FORMATTER;
@@ -26,7 +26,7 @@ public class AirTreeTest {
   }
 
   Storage storage = null;
-  Novelty novelty = null;
+  MockNovelty novelty = null;
 
   @Before
   public void setUp() {
@@ -36,10 +36,10 @@ public class AirTreeTest {
 
   @Test
   public void testSplitRight2() {
-    int s = 1000;
+    int total = 1000;
     BTree tree = BTree.create(novelty, storage, 4);
 
-    for (int i = 0; i < s; i++) {
+    for (int i = 0; i < total; i++) {
       if (i == 42) {
         tree.dump(novelty, System.out, ValueDumper.INSTANCE);
       }
@@ -48,11 +48,29 @@ public class AirTreeTest {
     }
 
     // tree.dump(novelty, System.out, ValueDumper.INSTANCE);
-    checkTree(tree, s);
+    checkTree(tree, total);
 
     tree = reopen(tree);
 
-    checkTree(tree, s);
+    checkTree(tree, total);
+
+    for (int i = 0; i < total; i++) {
+      Assert.assertTrue(tree.put(novelty, k(i), v(2 * i)));
+    }
+
+    long size = novelty.getSize();
+
+    checkTree(tree, total, 2);
+
+    // overwrite some novelty leafs, check for memory leaks
+
+    for (int i = 0; i < total; i++) {
+      Assert.assertTrue(tree.put(novelty, k(i), v(3 * i)));
+    }
+
+    checkTree(tree, total, 3);
+
+    Assert.assertEquals(size, novelty.getSize());
   }
 
   @After
@@ -69,14 +87,18 @@ public class AirTreeTest {
     return tree;
   }
 
-  private void checkTree(Tree tree, final int s) {
-    Assert.assertArrayEquals(v(28), tree.get(novelty, k(28)));
-
-    for (int i = 0; i < s; i++) {
+  private void checkTree(Tree tree, final int total) {
+    for (int i = 0; i < total; i++) {
       Assert.assertArrayEquals(v(i), tree.get(novelty, k(i)));
-      if (i > 0) {
+      if (i != 0) {
         Assert.assertNull(tree.get(novelty, k(-i)));
       }
+    }
+  }
+
+  private void checkTree(Tree tree, final int total, final int multiplier) {
+    for (int i = 0; i < total; i++) {
+      Assert.assertArrayEquals(v(multiplier * i), tree.get(novelty, k(i)));
     }
   }
 

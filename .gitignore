@@ -14,3 +14,4 @@ build/dependencies/build
 .idea/gradle_extensions.xml
 edu/dependencies/build
 edu/dependencies/.gradle
+platform/on-air-index/resources

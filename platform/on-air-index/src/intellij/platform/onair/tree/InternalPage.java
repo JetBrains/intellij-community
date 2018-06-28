@@ -45,12 +45,13 @@ public class InternalPage extends BasePage {
     final BasePage newChild = child.put(novelty, key, value, overwrite, result);
     // change min key for child
     if (result[0]) {
-      // TODO: tree.addExpired(childrenAddresses[pos]);
       if (!child.address.isNovelty()) {
         throw new IllegalStateException("child must be novelty");
       }
       set(pos, child.getMinKey(), child.address.getLowBytes());
-      if (newChild != null) {
+      if (newChild == null) {
+        flush(novelty);
+      } else {
         if (!newChild.address.isNovelty()) {
           throw new IllegalStateException("child must be novelty");
         }
@@ -102,13 +103,13 @@ public class InternalPage extends BasePage {
   @Override
   protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
     indent(out, level);
-    out.println(this);
+    out.println(getClass().getSimpleName());
     for (int i = 0; i < size; i++) {
       indent(out, level);
-      out.print("+");
-      indent(out, level);
-      out.println(renderer == null ? getClass().getSimpleName() : (renderer.renderKey(getKey(i)) + ":"));
-      getChild(novelty, i).dump(novelty, out, level + 3, renderer);
+      out.print("• ");
+      indent(out, 1);
+      out.println(renderer == null ? getClass().getSimpleName() : (renderer.renderKey(getKey(i)) + " \\"));
+      getChild(novelty, i).dump(novelty, out, level + 5, renderer);
     }
   }
 

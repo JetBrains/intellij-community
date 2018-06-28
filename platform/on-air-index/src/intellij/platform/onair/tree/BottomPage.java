@@ -35,8 +35,13 @@ public class BottomPage extends BasePage {
     if (pos >= 0) {
       if (overwrite) {
         // key found
-        // TODO: tree.addExpired(keysAddresses[pos]);
-        set(pos, key, novelty.alloc(Arrays.copyOf(value, value.length)));
+        final Address childAddress = getChildAddress(pos);
+        if (childAddress.isNovelty()) {
+          novelty.free(childAddress.getLowBytes());
+        }
+        setChildAddress(pos, novelty.alloc(Arrays.copyOf(value, value.length)), 0);
+        flush(novelty);
+
         // this should be always true in order to keep up with keysAddresses[pos] expiration
         result[0] = true;
       }
@@ -56,6 +61,7 @@ public class BottomPage extends BasePage {
   protected BottomPage split(@NotNull Novelty novelty, int from, int length) {
     final BottomPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
+    flush(novelty);
     return result;
   }
 
@@ -91,12 +97,12 @@ public class BottomPage extends BasePage {
 
   @Override
   protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
-    indent(out, level);
-    out.println(this);
+    indent(out, level + 1);
+    out.println(getClass().getSimpleName());
     for (int i = 0; i < size; i++) {
-      indent(out, level);
-      out.print("+");
-      indent(out, level);
+      indent(out, level + 1);
+      out.print("｜");
+      indent(out, 3);
       out.println(
         renderer == null
         ? getClass().getSimpleName()

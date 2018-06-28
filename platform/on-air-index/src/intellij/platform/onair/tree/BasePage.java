@@ -12,6 +12,9 @@ import java.io.PrintStream;
 import java.util.Arrays;
 
 import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
+import static intellij.platform.onair.tree.ByteUtils.compare;
+import static intellij.platform.onair.tree.ByteUtils.readUnsignedLong;
+import static intellij.platform.onair.tree.ByteUtils.writeUnsignedLong;
 
 public abstract class BasePage {
   protected final byte[] backingArray;
@@ -117,6 +120,12 @@ public abstract class BasePage {
     return -(low + 1);
   }
 
+  protected void flush(@NotNull Novelty novelty) {
+    if (address.isNovelty()) {
+      novelty.update(address.getLowBytes(), backingArray);
+    }
+  }
+
   protected void set(int pos, byte[] key, long lowAddressBytes) {
     final int bytesPerKey = tree.getKeySize();
 
@@ -124,27 +133,21 @@ public abstract class BasePage {
       throw new IllegalArgumentException("Invalid key length: need " + bytesPerKey + ", got: " + key.length);
     }
 
-    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
-
-    // write key
-    System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
-    // write address
-    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
-    writeUnsignedLong(0, 8, backingArray, offset + bytesPerKey + 8);
+    set(pos, key, bytesPerKey, backingArray, lowAddressBytes);
   }
 
   protected void setChildAddress(int pos, long lowAddressBytes, long highAddressBytes) {
     final int bytesPerKey = tree.getKeySize();
-    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos + bytesPerKey;
 
     // write address
-    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
-    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + bytesPerKey + 8);
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset);
+    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + 8);
   }
 
   protected BasePage insertAt(@NotNull Novelty novelty, int pos, byte[] key, long childAddress) {
     if (!needSplit(this)) {
-      insertDirectly(pos, key, childAddress);
+      insertDirectly(novelty, pos, key, childAddress);
       return null;
     }
     else {
@@ -163,12 +166,13 @@ public abstract class BasePage {
     }
   }
 
-  protected void insertDirectly(final int pos, @NotNull byte[] key, long childAddress) {
+  protected void insertDirectly(@NotNull Novelty novelty, final int pos, @NotNull byte[] key, long childAddress) {
     if (pos < size) {
       copyChildren(pos, pos + 1);
     }
-    incrementSize();
     set(pos, key, childAddress);
+    incrementSize();
+    flush(novelty);
   }
 
   protected void copyChildren(final int from, final int to) {
@@ -189,41 +193,6 @@ public abstract class BasePage {
     this.size = updatedSize;
   }
 
-  public static int compare(@NotNull final byte[] key1, final int len1, final int offset1,
-                            @NotNull final byte[] key2, final int len2, final int offset2) {
-    final int min = Math.min(len1, len2);
-
-    for (int i = 0; i < min; i++) {
-      final byte b1 = key1[i + offset1];
-      final byte b2 = key2[i + offset2];
-      if (b1 != b2) {
-        return (b1 & 0xff) - (b2 & 0xff);
-      }
-    }
-
-    return len1 - len2;
-  }
-
-  // TODO: extract ByteUtils class
-  public static long readUnsignedLong(@NotNull final byte[] bytes, final int offset, final int length) {
-    long result = 0;
-    for (int i = 0; i < length; ++i) {
-      result = (result << 8) + ((int)bytes[offset + i] & 0xff);
-    }
-    return result;
-  }
-
-  // TODO: extract ByteUtils class
-  public static void writeUnsignedLong(final long l,
-                                       final int bytesPerLong,
-                                       @NotNull final byte[] output,
-                                       int offset) {
-    int bits = bytesPerLong << 3;
-    while (bits > 0) {
-      output[offset++] = ((byte)(l >> (bits -= 8) & 0xff));
-    }
-  }
-
   // TODO: extract Policy class
   public boolean needSplit(@NotNull final BasePage page) {
     return page.size >= tree.getBase();
@@ -241,6 +210,16 @@ public abstract class BasePage {
     final int leftSize = left.size;
     final int rightSize = right.size;
     return leftSize == 0 || rightSize == 0 || leftSize + rightSize <= ((tree.getBase() * 7) >> 3);
+  }
+
+  static void set(int pos, byte[] key, int bytesPerKey, byte[] backingArray, long lowAddressBytes) {
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
+
+    // write key
+    System.arraycopy(key, 0, backingArray, offset, bytesPerKey);
+    // write address
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
+    writeUnsignedLong(0, 8, backingArray, offset + bytesPerKey + 8);
   }
 
   static void indent(PrintStream out, int level) {

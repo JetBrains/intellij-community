@@ -130,7 +130,9 @@ public class RefreshWorker {
         long currentLength = persistence.getLastRecordedLength(file);
         long upToDateLength = attributes.length;
 
-        if (currentTimestamp != upToDateTimestamp || currentLength != upToDateLength) {
+        boolean timestampsDiffer = currentTimestamp != upToDateTimestamp;
+        boolean lengthsDiffer = currentLength != upToDateLength;
+        if (lengthsDiffer) {
           scheduleUpdateContent(file);
         }
       }
@@ -372,22 +374,26 @@ public class RefreshWorker {
 
   private void scheduleAttributeChange(@NotNull VirtualFile file, @VirtualFile.PropName @NotNull String property, Object current, Object upToDate) {
     if (LOG.isTraceEnabled()) LOG.trace("update '" + property + "' file=" + file);
+    System.out.println("update '" + property + "' file=" + file);
     myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
 
   private void scheduleUpdateContent(@NotNull VirtualFile file) {
     if (LOG.isTraceEnabled()) LOG.trace("update file=" + file);
+    System.out.println("update file=" + file);
     myEvents.add(new VFileContentChangeEvent(null, file, file.getModificationStamp(), -1, true));
   }
 
   private void scheduleCreation(@NotNull VirtualFile parent, @NotNull String childName, boolean isDirectory) {
     if (LOG.isTraceEnabled()) LOG.trace("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
+    System.out.println("create parent=" + parent + " name=" + childName + " dir=" + isDirectory);
     myEvents.add(new VFileCreateEvent(null, parent, childName, isDirectory, true));
   }
 
   private void scheduleDeletion(@Nullable VirtualFile file) {
     if (file != null) {
       if (LOG.isTraceEnabled()) LOG.trace("delete file=" + file);
+      System.out.println("delete file=" + file);
       myEvents.add(new VFileDeleteEvent(null, file, true));
     }
   }

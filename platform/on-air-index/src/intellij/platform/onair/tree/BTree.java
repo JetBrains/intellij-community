@@ -66,10 +66,11 @@ public class BTree implements Tree {
       final byte[] bytes = new byte[metadataOffset + 2];
       bytes[metadataOffset] = INTERNAL;
       bytes[metadataOffset + 1] = 2;
-      InternalPage page = new InternalPage(bytes, this, new Address(novelty.alloc(bytes)), 2);
-      page.set(0, root.getMinKey(), root.address.getLowBytes());
-      page.set(1, newSibling.getMinKey(), newSibling.address.getLowBytes());
-      this.address = page.address;
+      BasePage.set(0, root.getMinKey(), getKeySize(), bytes, root.address.getLowBytes());
+      BasePage.set(1, newSibling.getMinKey(), getKeySize(), bytes, newSibling.address.getLowBytes());
+      this.address = new Address(novelty.alloc(bytes));
+    } else {
+      this.address = root.address;
     }
     return result[0];
   }

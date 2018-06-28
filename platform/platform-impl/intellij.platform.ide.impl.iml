@@ -52,5 +52,6 @@
     <orderEntry type="library" name="kotlinx-coroutines-core" level="project" />
     <orderEntry type="library" name="kotlinx-coroutines-jdk8" level="project" />
     <orderEntry type="library" name="org.apache.httpcomponents:fluent-hc" level="project" />
+    <orderEntry type="library" name="com.amazonaws:aws-java-sdk:1.11.347" level="project" />
   </component>
 </module>
