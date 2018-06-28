@@ -32,7 +32,6 @@ import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
-import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -79,7 +78,6 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
         );
       }
     }, null);
-    ((JButton)additionalAttributesPanel.getComponent(1)).setIcon(PlatformIcons.OPEN_EDIT_DIALOG_ICON);
     panelRef.set(additionalAttributesPanel);
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
