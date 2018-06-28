@@ -61,4 +61,8 @@ public class NoveltyImpl implements Novelty, Closeable {
   public void close() {
     myByteBuffer.force();
   }
+
+  public int getSize() {
+    return myFreeOffset;
+  }
 }
