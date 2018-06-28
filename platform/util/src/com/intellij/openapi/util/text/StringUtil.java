@@ -1835,6 +1835,7 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
+    if (startIndex < 0) return false;
     int l1 = text.length() - startIndex;
     int l2 = prefix.length();
     if (l1 < l2) return false;
