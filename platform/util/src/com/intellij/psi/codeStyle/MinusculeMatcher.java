@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
 import com.intellij.util.text.Matcher;
@@ -12,6 +14,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
 import java.util.Iterator;
+import java.util.List;
 
 /**
  * Tells whether a string matches a specific pattern. Allows for lowercase camel-hump matching.
@@ -130,13 +133,14 @@ public class MinusculeMatcher implements Matcher {
     boolean startMatch = first.getStartOffset() == 0;
     boolean valuedStartMatch = startMatch && valueStartCaseMatch;
 
+    int errors = 0;
     int matchingCase = 0;
     int p = -1;
 
     int skippedHumps = 0;
     int nextHumpStart = 0;
     boolean humpStartMatchedUpperCase = false;
-    for (TextRange range : fragments) {
+    for (Range range : fragments) {
       for (int i = range.getStartOffset(); i < range.getEndOffset(); i++) {
         boolean afterGap = i == range.getStartOffset() && first != range;
         boolean isHumpStart = false;
@@ -162,6 +166,8 @@ public class MinusculeMatcher implements Matcher {
 
         matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c);
       }
+
+      errors += 100.0 * range.getErrorCount() / range.getLength();
     }
 
     int startIndex = first.getStartOffset();
@@ -173,6 +179,7 @@ public class MinusculeMatcher implements Matcher {
            matchingCase +
            -fragments.size() +
            -skippedHumps * 10 +
+           -errors +
            (afterSeparator ? 0 : 2) +
            (startMatch ? 1 : 0) +
            (finalMatch ? 1 : 0);
@@ -235,7 +242,6 @@ public class MinusculeMatcher implements Matcher {
 
     private final boolean myTypoAware;
     private final boolean myAllowTypos;
-    @Nullable private final char[] myFixedPattern;
 
     public Session(@NotNull String name, boolean typoAware) {
       myName = name;
@@ -252,32 +258,34 @@ public class MinusculeMatcher implements Matcher {
       isAsciiName = isAscii;
       myTypoAware = typoAware;
       myAllowTypos = typoAware && isAscii;
-      myFixedPattern = myAllowTypos ? Arrays.copyOf(myPattern, myPattern.length) : null;
     }
 
-    private char charAt(int i) {
-      return myFixedPattern != null ? myFixedPattern[i] : myPattern[i];
+    private char charAt(int i, @NotNull ErrorState errorState) {
+      return errorState.hasErrors(i) ? errorState.getPattern(myPattern)[i] : myPattern[i];
     }
 
-    private char toLowerCase(int i) {
-      return myFixedPattern == null ? toLowerCase[i] : toLowerAscii(myFixedPattern[i]);
+    private char toLowerCase(int i, @NotNull ErrorState errorState) {
+      return errorState.hasErrors(i) ? toLowerAscii(errorState.getPattern(myPattern)[i]) : toLowerCase[i];
     }
 
-    private char toUpperCase(int i) {
-      return myFixedPattern == null ? toLowerCase[i] : toUpperAscii(myFixedPattern[i]);
+    private char toUpperCase(int i, @NotNull ErrorState errorState) {
+      return errorState.hasErrors(i) ? toUpperAscii(errorState.getPattern(myPattern)[i]) : toUpperCase[i];
     }
 
-    private boolean isLowerCase(int i) {
-      return myFixedPattern == null ? isLowerCase[i] : isLowerAscii(myFixedPattern[i]);
+    private boolean isLowerCase(int i, @NotNull ErrorState errorState) {
+      return errorState.hasErrors(i) ? isLowerAscii(errorState.getPattern(myPattern)[i]) : isLowerCase[i];
     }
 
-    private boolean isUpperCase(int i) {
-      return myFixedPattern == null ? isUpperCase[i] : isUpperAscii(myFixedPattern[i]);
+    private boolean isUpperCase(int i, @NotNull ErrorState errorState) {
+      return errorState.hasErrors(i) ? isUpperAscii(errorState.getPattern(myPattern)[i]) : isUpperCase[i];
     }
 
-    private boolean isWordSeparator(int i) {
-      //todo improve
-      return isWordSeparator[i];
+    private boolean isWordSeparator(int i, @NotNull ErrorState errorState) {
+      return errorState.hasErrors(i) ? MinusculeMatcher.isWordSeparator(errorState.getPattern(myPattern)[i]) : isWordSeparator[i];
+    }
+
+    private int patternLength(@NotNull ErrorState errorState) {
+      return myPattern.length;
     }
 
     @Nullable
@@ -304,7 +312,7 @@ public class MinusculeMatcher implements Matcher {
         }
       }
 
-      return matchWildcards(0, 0);
+      return matchWildcards(0, 0, new ErrorState());
     }
 
     /**
@@ -313,43 +321,45 @@ public class MinusculeMatcher implements Matcher {
      */
     @Nullable
     private FList<Range> matchWildcards(int patternIndex,
-                                        int nameIndex) {
+                                        int nameIndex,
+                                        @NotNull ErrorState errorState) {
       if (nameIndex < 0) {
         return null;
       }
       if (!isWildcard(patternIndex)) {
-        if (patternIndex == myPattern.length) {
+        if (patternIndex == patternLength(errorState)) {
           return FList.emptyList();
         }
-        return matchFragment(patternIndex, nameIndex);
+        return matchFragment(patternIndex, nameIndex, errorState);
       }
 
       do {
         patternIndex++;
       } while (isWildcard(patternIndex));
 
-      if (patternIndex == myPattern.length) {
+      if (patternIndex == patternLength(errorState)) {
         // the trailing space should match if the pattern ends with the last word part, or only its first hump character
-        if (isTrailingSpacePattern() && nameIndex != myName.length() && (patternIndex < 2 || !isUpperCaseOrDigit(charAt(patternIndex - 2)))) {
+        if (isTrailingSpacePattern(errorState) && nameIndex != myName.length() && (patternIndex < 2 || !isUpperCaseOrDigit(charAt(
+          patternIndex - 2, errorState)))) {
           int spaceIndex = myName.indexOf(' ', nameIndex);
           if (spaceIndex >= 0) {
-            return FList.<Range>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0)); //todo looks like it's okay here
+            return FList.<Range>emptyList().prepend(new Range(spaceIndex, spaceIndex + 1, 0));
           }
           return null;
         }
         return FList.emptyList();
       }
 
-      FList<Range> ranges = matchFragment(patternIndex, nameIndex);
+      FList<Range> ranges = matchFragment(patternIndex, nameIndex, errorState);
       if (ranges != null) {
         return ranges;
       }
 
-      return matchSkippingWords(patternIndex, nameIndex, true);
+      return matchSkippingWords(patternIndex, nameIndex, true, errorState);
     }
 
-    private boolean isTrailingSpacePattern() {
-      return isPatternChar(myPattern.length - 1, ' ');
+    private boolean isTrailingSpacePattern(@NotNull ErrorState errorState) {
+      return isPatternChar(patternLength(errorState) - 1, ' ', errorState);
     }
 
     private boolean isUpperCaseOrDigit(char p) {
@@ -363,25 +373,27 @@ public class MinusculeMatcher implements Matcher {
     @Nullable
     private FList<Range> matchSkippingWords(int patternIndex,
                                             int nameIndex,
-                                            boolean allowSpecialChars) {
-      boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*') && !isWordSeparator(patternIndex);
+                                            boolean allowSpecialChars,
+                                            @NotNull ErrorState errorState) {
+      boolean wordStartsOnly = !isPatternChar(patternIndex - 1, '*', errorState) && !isWordSeparator(patternIndex, errorState);
 
       int maxFoundLength = 0;
       while (true) {
-        nameIndex = findNextPatternCharOccurrence(nameIndex, patternIndex, allowSpecialChars, wordStartsOnly);
+        nameIndex = findNextPatternCharOccurrence(nameIndex, patternIndex, allowSpecialChars, wordStartsOnly, errorState);
         if (nameIndex < 0) {
           return null;
         }
-        int fragmentLength = seemsLikeFragmentStart(patternIndex, nameIndex) ? maxMatchingFragment(patternIndex, nameIndex) : 0;
+        Fragment fragment = seemsLikeFragmentStart(patternIndex, nameIndex, errorState) ? maxMatchingFragment(patternIndex, nameIndex, errorState) : null;
 
         // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
         // because otherwise it means that we already tried to match remaining pattern letters after it with the remaining name and failed
         // but now we have the same remaining pattern letters and even less remaining name letters, and so will fail as well
-        if (fragmentLength > maxFoundLength || nameIndex + fragmentLength == myName.length() && isTrailingSpacePattern()) {
-          if (!isMiddleMatch(patternIndex, nameIndex)) {
+        int fragmentLength = fragment.getLength();
+        if (fragmentLength > maxFoundLength || nameIndex + fragmentLength == myName.length() && isTrailingSpacePattern(errorState)) {
+          if (!isMiddleMatch(patternIndex, nameIndex, errorState)) {
             maxFoundLength = fragmentLength;
           }
-          FList<Range> ranges = matchInsideFragment(patternIndex, nameIndex, fragmentLength);
+          FList<Range> ranges = matchInsideFragment(patternIndex, nameIndex, fragment);
           if (ranges != null) {
             return ranges;
           }
@@ -391,10 +403,12 @@ public class MinusculeMatcher implements Matcher {
 
     private int findNextPatternCharOccurrence(int startAt,
                                               int patternIndex,
-                                              boolean allowSpecialChars, boolean wordStartsOnly) {
+                                              boolean allowSpecialChars,
+                                              boolean wordStartsOnly,
+                                              @NotNull ErrorState errorState) {
       int next = wordStartsOnly
-                 ? indexOfWordStart(patternIndex, startAt)
-                 : indexOfIgnoreCase(startAt + 1, patternIndex);
+                 ? indexOfWordStart(patternIndex, startAt, errorState)
+                 : indexOfIgnoreCase(startAt + 1, patternIndex, errorState);
 
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
       if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(myName, myHardSeparators, startAt, next)) {
@@ -402,23 +416,23 @@ public class MinusculeMatcher implements Matcher {
       }
       // if the user has typed a dot, don't skip other dots between humps
       // but one pattern dot may match several name dots
-      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.') && StringUtil.contains(myName, startAt, next, '.')) {
+      if (!allowSpecialChars && myHasDots && !isPatternChar(patternIndex - 1, '.', errorState) && StringUtil.contains(myName, startAt, next, '.')) {
         return -1;
       }
 
       return next;
     }
 
-    private boolean seemsLikeFragmentStart(int patternIndex, int nextOccurrence) {
+    private boolean seemsLikeFragmentStart(int patternIndex, int nextOccurrence, @NotNull ErrorState errorState) {
       // uppercase should match either uppercase or a word start
-      return !isUpperCase(patternIndex) ||
+      return !isUpperCase(patternIndex, errorState) ||
              Character.isUpperCase(myName.charAt(nextOccurrence)) ||
              NameUtil.isWordStart(myName, nextOccurrence) ||
              // accept uppercase matching lowercase if the whole prefix is uppercase and case sensitivity allows that
              !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     }
 
-    private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos) {
+    private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos, @NotNull ErrorState errorState) {
       char patternChar = myPattern[patternIndex];
       char nameChar = myName.charAt(nameIndex);
 
@@ -433,7 +447,7 @@ public class MinusculeMatcher implements Matcher {
       if (leftMiss != 0) {
         if (leftMiss == nameChar ||
             isIgnoreCase && (toLowerAscii(leftMiss) == nameChar || toUpperAscii(leftMiss) == nameChar)) {
-            myFixedPattern[patternIndex] = leftMiss;
+          errorState.addError(patternIndex, new TypoError(leftMiss));
           return true;
         }
       }
@@ -442,7 +456,7 @@ public class MinusculeMatcher implements Matcher {
       if (rightMiss != 0) {
         if (rightMiss == nameChar ||
             isIgnoreCase && (toLowerAscii(rightMiss) == nameChar || toUpperAscii(rightMiss) == nameChar)) {
-          myFixedPattern[patternIndex] = rightMiss;
+          errorState.addError(patternIndex, new TypoError(rightMiss));
           return true;
         }
       }
@@ -452,72 +466,80 @@ public class MinusculeMatcher implements Matcher {
 
     @Nullable
     private FList<Range> matchFragment(int patternIndex,
-                                       int nameIndex) {
-      int fragmentLength = maxMatchingFragment(patternIndex, nameIndex);
-      return fragmentLength == 0 ? null : matchInsideFragment(patternIndex, nameIndex, fragmentLength);
+                                       int nameIndex,
+                                       @NotNull ErrorState errorState) {
+      Fragment fragment = maxMatchingFragment(patternIndex, nameIndex, errorState);
+      return fragment == null ? null : matchInsideFragment(patternIndex, nameIndex, fragment);
     }
 
-    private int maxMatchingFragment(int patternIndex, int nameIndex) {
-      if (!isFirstCharMatching(nameIndex, patternIndex)) {
-        return 0;
+    @Nullable
+    private Fragment maxMatchingFragment(int patternIndex, int nameIndex, @NotNull ErrorState baseErrorState) {
+      ErrorState errorState = baseErrorState.deriveFrom(patternIndex);
+
+      if (!isFirstCharMatching(nameIndex, patternIndex, errorState)) {
+        return null;
       }
 
       int i = 1;
       boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
-      while (nameIndex + i < myName.length() && patternIndex + i < myPattern.length) {
-        if (!charEquals(patternIndex + i, nameIndex + i, ignoreCase, true)) {
-          if (Character.isDigit(charAt(patternIndex + i)) && Character.isDigit(charAt(patternIndex + i - 1))) {
-            return 0;
+      while (nameIndex + i < myName.length() && patternIndex + i < patternLength(errorState)) {
+        if (!charEquals(patternIndex + i, nameIndex + i, ignoreCase, true, errorState)) {
+          if (Character.isDigit(charAt(patternIndex + i, errorState)) && Character.isDigit(charAt(patternIndex + i - 1, errorState))) {
+            return null;
           }
           break;
         }
-        if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i) &&
-            shouldProhibitCaseMismatch(patternIndex + i, nameIndex + i)) {
+        if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i, errorState) &&
+            shouldProhibitCaseMismatch(patternIndex + i, nameIndex + i, errorState)) {
           break;
         }
         i++;
       }
-      return i;
+      return new Fragment(i, errorState);
     }
 
     // we've found the longest fragment matching pattern and name
     @Nullable
     private FList<Range> matchInsideFragment(int patternIndex,
                                              int nameIndex,
-                                             int fragmentLength) {
+                                             @NotNull Fragment fragment) {
       // exact middle matches have to be at least of length 3, to prevent too many irrelevant matches
-      int minFragment = isMiddleMatch(patternIndex, nameIndex)
+      int minFragment = isMiddleMatch(patternIndex, nameIndex, fragment.getErrorState())
                         ? 3 : 1;
 
-      FList<Range> camelHumpRanges = improveCamelHumps(patternIndex, nameIndex, fragmentLength, minFragment);
+      FList<Range> camelHumpRanges = improveCamelHumps(patternIndex, nameIndex, fragment.getLength(), minFragment, fragment.getErrorState());
       if (camelHumpRanges != null) {
         return camelHumpRanges;
       }
 
-      return findLongestMatchingPrefix(patternIndex, nameIndex, fragmentLength, minFragment);
+      return findLongestMatchingPrefix(patternIndex, nameIndex, fragment.getLength(), minFragment, fragment.getErrorState());
     }
 
-    private boolean isMiddleMatch(int patternIndex, int nameIndex) {
-      return isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
+    private boolean isMiddleMatch(int patternIndex, int nameIndex, @NotNull ErrorState errorState) {
+      return isPatternChar(patternIndex - 1, '*', errorState) && !isWildcard(patternIndex + 1) &&
              Character.isLetterOrDigit(myName.charAt(nameIndex)) && !NameUtil.isWordStart(myName, nameIndex);
     }
 
     @Nullable
     private FList<Range> findLongestMatchingPrefix(int patternIndex,
                                                    int nameIndex,
-                                                   int fragmentLength, int minFragment) {
-      if (patternIndex + fragmentLength >= myPattern.length) {
-        return FList.<Range>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, 0)); //todo we need to add errors here!!!
+                                                   int fragmentLength, int minFragment,
+                                                   @NotNull ErrorState errorState) {
+      if (patternIndex + fragmentLength >= patternLength(errorState)) {
+        int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
+        return FList.<Range>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, errors));
       }
 
       // try to match the remainder of pattern with the remainder of name
       // it may not succeed with the longest matching fragment, then try shorter matches
       for (int i = fragmentLength; i >= minFragment || isWildcard(patternIndex + i); i--) {
+        ErrorState derivedErrorState = errorState.deriveFrom(patternIndex + i);
         FList<Range> ranges = isWildcard(patternIndex + i) ?
-                              matchWildcards(patternIndex + i, nameIndex + i) :
-                              matchSkippingWords(patternIndex + i, nameIndex + i, false);
+                              matchWildcards(patternIndex + i, nameIndex + i, derivedErrorState) :
+                              matchSkippingWords(patternIndex + i, nameIndex + i, false, derivedErrorState);
         if (ranges != null) {
-          return prependRange(ranges, new Range(nameIndex, nameIndex + i, 0)); //todo check errors???
+          int errors = errorState.countErrors(patternIndex, patternIndex + i);
+          return prependRange(ranges, new Range(nameIndex, nameIndex + i, errors));
         }
       }
       return null;
@@ -531,48 +553,50 @@ public class MinusculeMatcher implements Matcher {
     private FList<Range> improveCamelHumps(int patternIndex,
                                            int nameIndex,
                                            int maxFragment,
-                                           int minFragment) {
+                                           int minFragment,
+                                           @NotNull ErrorState errorState) {
       for (int i = minFragment; i < maxFragment; i++) {
-        if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i)) {
-          FList<Range> ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i);
+        if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i, errorState)) {
+          FList<Range> ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i, errorState.deriveFrom(patternIndex + i));
           if (ranges != null) {
-            return prependRange(ranges, new Range(nameIndex, nameIndex + i, 0)); //todo we need to add error info here!!!
+            return prependRange(ranges, new Range(nameIndex, nameIndex + i, errorState.countErrors(patternIndex, patternIndex + i)));
           }
         }
       }
       return null;
     }
 
-    private boolean isUppercasePatternVsLowercaseNameChar(int patternIndex, int nameIndex) {
-      return isUpperCase(patternIndex) && !charEquals(patternIndex, nameIndex, false, true);
+    private boolean isUppercasePatternVsLowercaseNameChar(int patternIndex, int nameIndex, @NotNull ErrorState errorState) {
+      return isUpperCase(patternIndex, errorState) && !charEquals(patternIndex, nameIndex, false, false, errorState);
     }
 
     @Nullable
     private FList<Range> findUppercaseMatchFurther(int patternIndex,
-                                                   int nameIndex) {
-      int nextWordStart = indexOfWordStart(patternIndex, nameIndex);
-      return matchWildcards(patternIndex, nextWordStart);
+                                                   int nameIndex,
+                                                   @NotNull ErrorState errorState) {
+      int nextWordStart = indexOfWordStart(patternIndex, nameIndex, errorState);
+      return matchWildcards(patternIndex, nextWordStart, errorState.deriveFrom(patternIndex));
     }
 
-    private boolean shouldProhibitCaseMismatch(int patternIndex, int nameIndex) {
+    private boolean shouldProhibitCaseMismatch(int patternIndex, int nameIndex, @NotNull ErrorState errorState) {
       // at least three consecutive uppercase letters shouldn't match lowercase
-      if (myHasHumps && patternIndex >= 2 && isUpperCase(patternIndex - 1) && isUpperCase(patternIndex - 2)) {
+      if (myHasHumps && patternIndex >= 2 && isUpperCase(patternIndex - 1, errorState) && isUpperCase(patternIndex - 2, errorState)) {
         // but if there's a lowercase after them, it can match (in case shift was released a bit later)
         if (nameIndex + 1 == myName.length() ||
-            patternIndex + 1 < myPattern.length && !isLowerCase(patternIndex + 1)) {
+            patternIndex + 1 < patternLength(errorState) && !isLowerCase(patternIndex + 1, errorState)) {
           return true;
         }
       }
       return false;
     }
 
-    private boolean isFirstCharMatching(int nameIndex, int patternIndex) {
+    private boolean isFirstCharMatching(int nameIndex, int patternIndex, @NotNull ErrorState errorState) {
       if (nameIndex >= myName.length()) return false;
 
       boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
-      if (!charEquals(patternIndex, nameIndex, ignoreCase, true)) return false;
+      if (!charEquals(patternIndex, nameIndex, ignoreCase, true, errorState)) return false;
 
-      char patternChar = charAt(patternIndex);
+      char patternChar = charAt(patternIndex, errorState);
 
       if (myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER &&
           (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
@@ -587,13 +611,13 @@ public class MinusculeMatcher implements Matcher {
       return Character.isUpperCase(patternChar) || Character.isLowerCase(patternChar);
     }
 
-    private boolean isPatternChar(int patternIndex, char c) {
-      return patternIndex >= 0 && patternIndex < myPattern.length && charAt(patternIndex) == c;
+    private boolean isPatternChar(int patternIndex, char c, @NotNull ErrorState errorState) {
+      return patternIndex >= 0 && patternIndex < patternLength(errorState) && charAt(patternIndex, errorState) == c;
     }
 
-    private int indexOfWordStart(int patternIndex, int startFrom) {
+    private int indexOfWordStart(int patternIndex, int startFrom, @NotNull ErrorState errorState) {
       if (startFrom >= myName.length() ||
-          myHasHumps && isLowerCase(patternIndex) && !(patternIndex > 0 && isWordSeparator(patternIndex - 1))) {
+          myHasHumps && isLowerCase(patternIndex, errorState) && !(patternIndex > 0 && isWordSeparator(patternIndex - 1, errorState))) {
         return -1;
       }
       int nextWordStart = startFrom;
@@ -602,14 +626,14 @@ public class MinusculeMatcher implements Matcher {
         if (nextWordStart >= myName.length()) {
           return -1;
         }
-        if (charEquals(patternIndex, nextWordStart, true, true)) {
+        if (charEquals(patternIndex, nextWordStart, true, true, errorState)) {
           return nextWordStart;
         }
       }
     }
 
-    private int indexOfIgnoreCase(int fromIndex, int patternIndex) {
-      char p = charAt(patternIndex);
+    private int indexOfIgnoreCase(int fromIndex, int patternIndex, @NotNull ErrorState errorState) {
+      char p = charAt(patternIndex, errorState);
       if (isAsciiName && IOUtil.isAscii(p)) {
         int i = indexIgnoringCaseAscii(fromIndex, patternIndex, p);
         if (i != -1) return i;
@@ -677,4 +701,134 @@ public class MinusculeMatcher implements Matcher {
     return "MinusculeMatcher{myPattern=" + new String(myPattern) + ", myOptions=" + myOptions + '}';
   }
 
+
+  private static class ErrorState {
+    @Nullable private final ErrorState myBase;
+    private final int myDeriveIndex;
+
+    private List<Pair<Integer, Error>> myErrors;
+
+    private char[] myPattern;
+
+    ErrorState(@Nullable ErrorState base, int deriveIndex) {
+      myBase = base;
+      myDeriveIndex = deriveIndex;
+    }
+
+    public ErrorState() {
+      this(null, 0);
+    }
+
+    @NotNull
+    ErrorState deriveFrom(int index) {
+      return new ErrorState(this, index);
+    }
+
+    void addError(int index, @NotNull Error error) {
+      if (myErrors == null) myErrors = new SmartList<Pair<Integer, Error>>();
+      Pair<Integer, Error> pair = Pair.create(index, error);
+      myErrors.add(pair);
+
+      if (myPattern != null) {
+        applyError(myPattern, pair);
+      }
+    }
+
+    int countErrors(int start, int end) {
+      int errors = 0;
+      if (myBase != null && start < myDeriveIndex) {
+        errors += myBase.countErrors(start, myDeriveIndex);
+      }
+
+      if (myErrors != null) {
+        for (Pair<Integer, Error> error : myErrors) {
+          if (start <= error.first && error.first <= end) {
+            errors++;
+          }
+        }
+      }
+
+      return errors;
+    }
+
+    public char[] getPattern(char[] pattern) {
+      if (myPattern == null) {
+        myPattern = applyErrors(Arrays.copyOf(pattern, pattern.length), pattern.length);
+      }
+      return myPattern;
+    }
+
+    private char[] applyErrors(char[] pattern, int upToIndex) {
+      if (myBase != null) {
+        myBase.applyErrors(pattern, Math.min(myDeriveIndex, upToIndex));
+      }
+
+      if (myErrors != null) {
+        for (Pair<Integer, Error> error : myErrors) {
+          if (error.first < upToIndex) {
+            applyError(pattern, error);
+          }
+        }
+      }
+
+      return pattern;
+    }
+
+    private void applyError(char[] pattern, Pair<Integer, Error> error) {
+      if (error.second instanceof TypoError) {
+        pattern[error.first] = ((TypoError)error.second).myCorrectChar;
+      }
+    }
+
+    public boolean hasErrors(int index) {
+      //todo optimize
+      if (myErrors != null) {
+        for (Pair<Integer, Error> error : myErrors) {
+          if (error.first == index) return true;
+          if (error.first < index) {
+            //todo support miss/extra
+          }
+        }
+      }
+
+      if (myBase != null && myDeriveIndex > index) {
+        return myBase.hasErrors(index);
+      }
+
+      return false;
+    }
+  }
+
+  private static abstract interface Error {
+    enum ErrorKind {
+      typo, //there must be a typo
+      swap,     //actual symbols are swapped
+      miss,     //actual char is missing
+      extra
+    }
+  }
+
+  private static class TypoError implements Error {
+    private final char myCorrectChar;
+
+    public TypoError(char correctChar) {
+      myCorrectChar = correctChar;
+    }
+  }
+
+
+  private static class Fragment {
+    private final int myLength;
+    private final ErrorState myErrorState;
+
+    public Fragment(int length, @NotNull ErrorState errorState) {
+      myLength = length;
+      myErrorState = errorState;
+    }
+
+    int getLength() {return myLength;}
+
+    @NotNull
+    ErrorState getErrorState() {return myErrorState;}
+  }
 }

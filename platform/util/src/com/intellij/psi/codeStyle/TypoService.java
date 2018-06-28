@@ -22,37 +22,6 @@ public class TypoService {
     return RefHolder.INSTANCE;
   }
 
-  public enum Equality {
-    equals, //chars are equal
-    typo,   //there must be a typo
-    swap,   //actual symbols are swapped
-    miss,   //actual char is missing
-    no      //chars are NOT equal
-  }
-
-  @NotNull
-  public Equality check(@NotNull CharSequence expected,
-                        @NotNull CharSequence actual,
-                        int expectedIndex,
-                        int actualIndex,
-                        @NotNull CharComparator comparator) {
-    char expectedChar = expected.charAt(expectedIndex);
-    char actualChar = actual.charAt(actualIndex);
-    if (comparator.equals(expectedChar, actualChar)) {
-      return Equality.equals;
-    }
-
-    char left = leftMiss(actualChar);
-    char right = rightMiss(actualChar);
-
-    if (comparator.equals(expectedChar, left) || comparator.equals(expectedChar, right)) {
-      return Equality.typo;
-    }
-
-    //todo implement swap
-    return Equality.no;
-  }
-
   public char leftMiss(char aChar) {
     boolean isUpperCase = isUpperAscii(aChar);
     char lc = isUpperCase ? toLowerAscii(aChar) : aChar;
