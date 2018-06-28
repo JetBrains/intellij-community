@@ -40,7 +40,7 @@ import java.util.Map;
 /**
  * @author Eugene Zhuravlev
  */
-class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
+public class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implements Cloneable{
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.indexing.impl.ValueContainerImpl");
   private final static Object myNullValue = new Object();
 
@@ -128,7 +128,7 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
     }
   }
 
-  void removeValue(int inputId, Value value) {
+  protected void removeValue(int inputId, Value value) {
     removeValue(inputId, getFileSetObject(value), value);
   }
 
@@ -491,8 +491,12 @@ class ValueContainerImpl<Value> extends UpdatableValueContainer<Value> implement
 
             for (int i = 0; i < idCountOrSingleValue; i++) {
               final int id = DataInputOutputUtil.readINT(stream);
-              if (changeBufferingList != null)  changeBufferingList.add(prev + id);
-              else addValue(prev + id, value);
+              if (changeBufferingList != null) {
+                changeBufferingList.add(prev + id);
+              }
+              else {
+                addValue(prev + id, value);
+              }
               if (mapping != null) mapping.associateFileIdToValue(prev + id, value);
               prev += id;
             }

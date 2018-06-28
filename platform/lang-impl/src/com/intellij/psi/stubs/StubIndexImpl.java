@@ -117,7 +117,7 @@ public class StubIndexImpl extends StubIndex implements PersistentStateComponent
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final VfsAwareMapIndexStorage<K, StubIdList> storage = new VfsAwareMapIndexStorage<>(
+        final VfsAwareIndexStorage<K, StubIdList> storage = new VfsAwareMapIndexStorage<>(
           IndexInfrastructure.getStorageFile(indexKey),
           extension.getKeyDescriptor(),
           StubIdExternalizer.INSTANCE,

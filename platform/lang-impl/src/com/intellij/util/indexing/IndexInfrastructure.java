@@ -22,6 +22,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.vfs.VirtualFile;

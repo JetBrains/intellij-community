@@ -38,6 +38,24 @@ public class ByteUtils {
     }
   }
 
+
+  public static long readUnsignedInt(@NotNull final byte[] key, int offset) {
+    final long c1 = key[offset + 0] & 0xff;
+    final long c2 = key[offset + 1] & 0xff;
+    final long c3 = key[offset + 2] & 0xff;
+    final long c4 = key[offset + 3] & 0xff;
+    if ((c1 | c2 | c3 | c4) < 0) {
+      throw new IllegalArgumentException();
+    }
+    return ((c1 << 24) | (c2 << 16) | (c3 << 8) | c4);
+  }
+
+  public static void writeUnsignedInt(long val, byte[] result, int offset) {
+    result[offset + 0] = (byte)(val >>> 24);
+    result[offset + 1] = (byte)(val >>> 16);
+    result[offset + 2] = (byte)(val >>> 8);
+    result[offset + 3] = (byte)val;
+  }
   public static long normalizeLowBytes(long address) {
     if (address < 0) {
       return address;
@@ -46,5 +64,11 @@ public class ByteUtils {
       return Long.MIN_VALUE;
     }
     return -address;
+  }
+
+  public static byte[] toBytes(int x) {
+    byte[] bytes = new byte[4];
+    writeUnsignedInt(x, bytes, 0);
+    return bytes;
   }
 }

@@ -642,6 +642,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
     }
   }
 
+  @Override
   public final void remove(Key key) throws IOException {
     if (myIsReadOnly) throw new IncorrectOperationException();
     synchronized (myEnumerator) {
@@ -984,5 +985,13 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   @TestOnly
   public boolean getReadOnly() {
     return myIsReadOnly;
+  }
+
+  @Override
+  public void clear() {
+    final File baseFile = getBaseFile();
+    if (baseFile != null) {
+      IOUtil.deleteAllFilesStartingWith(baseFile);
+    }
   }
 }

@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
+    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

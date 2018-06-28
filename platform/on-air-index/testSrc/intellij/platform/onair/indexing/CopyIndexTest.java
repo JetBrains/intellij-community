@@ -9,9 +9,12 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
+import intellij.platform.onair.storage.DummyStorageImpl;
 import intellij.platform.onair.storage.StorageImpl;
+import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.NoveltyImpl;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.storage.api.Tree;
 import intellij.platform.onair.tree.BTree;
 import intellij.platform.onair.tree.MockNovelty;
 import org.jetbrains.annotations.NotNull;
@@ -28,18 +31,19 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.util.io.PagedFileStorage.MB;
 
 public class CopyIndexTest {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
-  static int ITERATIONS = 1;
-  static String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
-  static String host = "localhost";
-  static int port = 11211;
-  private static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
-  private static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
+  public static int ITERATIONS = 1;
+  public static String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
+  public static String host = "localhost";
+  public static int port = 11211;
+  public static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
+  public static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
 
   @Test
   public void testAll() throws IOException {
@@ -65,7 +69,7 @@ public class CopyIndexTest {
           return false;
         }
       });
-      System.out.println("Data set size: " + size.get());
+      System.out.println("Data set size: " + size.get() / MB + "MB");
     }
     finally {
       phm.close();
@@ -93,17 +97,28 @@ public class CopyIndexTest {
         trees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(novelty, key))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
-        System.out.println("Check storage reads...");
-        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), tree.store(novelty))));
+        System.out.println("Check write...");
         start = System.currentTimeMillis();
-        remoteTrees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(new MockNovelty(), key))));
+        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), ((StorageImpl)storage).bulkStore(tree, novelty))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        System.out.println("Check storage reads...");
+        start = System.currentTimeMillis();
+        AtomicInteger step = new AtomicInteger();
+        remoteTrees.forEach(tree -> rawContent.forEach((key, value) -> {
+          step.incrementAndGet();
+          Assert.assertArrayEquals(value, tree.get(new MockNovelty(), key));
+        }));
+        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+      }
+      catch (RuntimeException e) {
+        ((StorageImpl)storage).close();
+        throw e;
       }
       finally {
         novelty.close();
       }
     }
-    boolean buildPHM = true;
+    boolean buildPHM = false;
     if (buildPHM) {
       final List<PersistentHashMap<String, StubIdList>> pHMs = new ArrayList<>();
       try {

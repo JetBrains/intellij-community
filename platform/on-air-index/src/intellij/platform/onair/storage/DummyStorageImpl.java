@@ -3,6 +3,7 @@ package intellij.platform.onair.storage;
 
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Storage;
+import org.jetbrains.annotations.NotNull;
 
 public class DummyStorageImpl implements Storage {
   public static final Storage INSTANCE = new DummyStorageImpl();
@@ -11,12 +12,17 @@ public class DummyStorageImpl implements Storage {
   }
 
   @Override
-  public byte[] lookup(Address address) {
+  public byte[] lookup(@NotNull Address address) {
     throw new UnsupportedOperationException();
   }
 
   @Override
-  public Address store(byte[] bytes) {
+  public Address alloc(@NotNull byte[] what) {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void store(@NotNull Address address, @NotNull byte[] bytes) {
     throw new UnsupportedOperationException();
   }
 }

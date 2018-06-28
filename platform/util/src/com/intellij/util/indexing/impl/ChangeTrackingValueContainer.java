@@ -33,7 +33,7 @@ import java.io.IOException;
 public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer<Value>{
   // there is no volatile as we modify under write lock and read under read lock
   private ValueContainerImpl<Value> myAdded;
-  private TIntHashSet myInvalidated;
+  private TIntHashSet myRemoved;
   private volatile ValueContainerImpl<Value> myMerged;
   private final Initializer<Value> myInitializer;
   
@@ -65,8 +65,8 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
     if (myAdded != null) myAdded.removeAssociatedValue(inputId);
 
-    if (myInvalidated == null) myInvalidated = new TIntHashSet(1);
-    myInvalidated.add(inputId);
+    if (myRemoved == null) myRemoved = new TIntHashSet(1);
+    myRemoved.add(inputId);
   }
 
   // Resets diff of index value for particular fileId
@@ -77,7 +77,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     }
 
     if (myAdded != null) myAdded.removeAssociatedValue(inputId);
-    if (myInvalidated != null) myInvalidated.remove(inputId); // todo removal from list
+    if (myRemoved != null) myRemoved.remove(inputId); // todo removal from list
   }
 
   @Override
@@ -118,15 +118,15 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
         newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().clone();
       }
 
-      if ((myAdded != null || myInvalidated != null) &&
+      if ((myAdded != null || myRemoved != null) &&
           (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
            (myAdded != null && myAdded.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD))) {
         // Calculate file ids that have Value mapped to avoid O(NumberOfValuesInMerged) during removal
         fileId2ValueMapping = new FileId2ValueMapping<Value>(newMerged);
       }
       final FileId2ValueMapping<Value> finalFileId2ValueMapping = fileId2ValueMapping;
-      if (myInvalidated != null) {
-        myInvalidated.forEach(new TIntProcedure() {
+      if (myRemoved != null) {
+        myRemoved.forEach(new TIntProcedure() {
           @Override
           public boolean execute(int inputId) {
             if (finalFileId2ValueMapping != null) finalFileId2ValueMapping.removeFileId(inputId);
@@ -164,7 +164,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
 
   public boolean isDirty() {
     return (myAdded != null && myAdded.size() > 0) ||
-           (myInvalidated != null && !myInvalidated.isEmpty()) ||
+           (myRemoved != null && !myRemoved.isEmpty()) ||
            needsCompacting();
   }
   
@@ -173,7 +173,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     if (needsCompacting()) {
       getMergedData().saveTo(out, externalizer);
     } else {
-      final TIntHashSet set = myInvalidated;
+      final TIntHashSet set = myRemoved;
       if (set != null && set.size() > 0) {
         for (int inputId : set.toArray()) {
           DataInputOutputUtil.writeINT(out, -inputId); // mark inputId as invalid, to be processed on load in ValueContainerImpl.readFrom

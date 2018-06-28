@@ -367,7 +367,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
                                               int version,
                                               IndexConfiguration state)
     throws IOException {
-    VfsAwareMapIndexStorage<K, V> storage = null;
+    VfsAwareIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
     boolean contentHashesEnumeratorOk = false;
 

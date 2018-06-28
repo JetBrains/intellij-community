@@ -37,7 +37,7 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
     return myNeedsCompacting;
   }
 
-  void setNeedsCompacting(boolean value) {
+  public void setNeedsCompacting(boolean value) {
     myNeedsCompacting = value;
   }
 
