@@ -37,7 +37,7 @@ public class StorageTest {
     final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
     long start = System.currentTimeMillis();
     final int valueSize = 1024 * 20;
-    final int insertionCount = (int)(5L * 1024 * 1024 * 1024 / 20 / valueSize); // 2.5GB total
+    final int insertionCount = (int)(5L * 1024 * 1024 * 1024 / 2 / valueSize); // 2.5GB total
     Address[] addresses = new Address[insertionCount];
     for (int i = 0; i < insertionCount; i++) {
       final byte[] bytes = new byte[valueSize];
