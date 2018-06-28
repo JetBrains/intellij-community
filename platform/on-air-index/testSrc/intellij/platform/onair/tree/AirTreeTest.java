@@ -2,7 +2,6 @@
 package intellij.platform.onair.tree;
 
 import intellij.platform.onair.storage.api.Address;
-import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.Storage;
 import intellij.platform.onair.storage.api.Tree;
 import org.jetbrains.annotations.NotNull;
