@@ -14,6 +14,7 @@ import intellij.platform.onair.storage.api.NoveltyImpl;
 import intellij.platform.onair.storage.api.Storage;
 import intellij.platform.onair.tree.BTree;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.DataInput;
@@ -67,51 +68,74 @@ public class CopyIndexTest {
     }
     boolean buildNovelty = true;
     if (buildNovelty) {
+      final List<BTree> trees = new ArrayList<>();
       System.out.println("Building novelty...");
-      final NoveltyImpl novelty = new NoveltyImpl(new File(FOLDER +"/novelty/novelty.dat"));
+      long start = System.currentTimeMillis();
+      final NoveltyImpl novelty = new NoveltyImpl(new File(FOLDER + "/novelty/novelty.dat"));
       try {
-        final long start = System.currentTimeMillis();
         for (int i = 0; i < ITERATIONS; i++) {
           final BTree tree = BTree.create(novelty, storage, 16);
-          rawContent.forEach((key, value) -> tree.put(novelty, key, value));
+          rawContent.forEach((key, value) -> Assert.assertTrue(tree.put(novelty, key, value)));
+          trees.add(tree);
         }
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
         int total = novelty.getSize();
         System.out.println("Written total: " + total / MB + "MB");
         System.out.println("Written per tree: " + total / ITERATIONS / MB + "MB");
+
+        System.out.println("Check novelty reads...");
+        start = System.currentTimeMillis();
+        trees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(novelty, key))));
+        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
       }
       finally {
         novelty.close();
       }
     }
-    System.out.println("Building PHMs...");
-    final long start = System.currentTimeMillis();
-    final List<PersistentHashMap<String, StubIdList>> toClose = new ArrayList<>();
-    try {
-      for (int i = 0; i < ITERATIONS; i++) {
-        final PersistentHashMap<String, StubIdList> phmCopy = makePHM(PHM_I + i);
-        toClose.add(phmCopy);
-        content.forEach((key, value) -> {
+    boolean buildPHM = true;
+    if (buildPHM) {
+      final List<PersistentHashMap<String, StubIdList>> pHMs = new ArrayList<>();
+      try {
+        System.out.println("Building PHMs...");
+        long start = System.currentTimeMillis();
+        for (int i = 0; i < ITERATIONS; i++) {
+          final PersistentHashMap<String, StubIdList> phmCopy = makePHM(PHM_I + i);
+          pHMs.add(phmCopy);
+          content.forEach((key, value) -> {
+            try {
+              phmCopy.put(key, value);
+            }
+            catch (IOException e) {
+              throw new RuntimeException(e);
+            }
+          });
+        }
+
+        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+
+        System.out.println("Check PHM reads...");
+        start = System.currentTimeMillis();
+        pHMs.forEach(pHM -> content.forEach((key, value) -> {
           try {
-            phmCopy.put(key, value);
+            Assert.assertEquals(value, pHM.get(key));
           }
           catch (IOException e) {
             throw new RuntimeException(e);
           }
+        }));
+        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+      }
+      finally {
+        pHMs.forEach(phmCopy -> {
+          try {
+            phmCopy.close();
+          }
+          catch (IOException e) {
+            e.printStackTrace(); // don't fail
+          }
         });
       }
     }
-    finally {
-      toClose.forEach(phmCopy -> {
-        try {
-          phmCopy.close();
-        }
-        catch (IOException e) {
-          e.printStackTrace(); // don't fail
-        }
-      });
-    }
-    System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
   }
 
   @NotNull
