@@ -202,6 +202,8 @@ STRING_LITERAL = \" ([^\\\"\r\n] | {ESCAPE_SEQUENCE})* (\"|\\)?
 
   "::" { return JavaTokenType.DOUBLE_COLON; }
   "->" { return JavaTokenType.ARROW; }
+
+  "<<<<<<<" | "|||||||" | "=======" | ">>>>>>>" { return JavaTokenType.CONFLICT_MARKER; }
 }
 
 [^]  { return JavaTokenType.BAD_CHARACTER; }

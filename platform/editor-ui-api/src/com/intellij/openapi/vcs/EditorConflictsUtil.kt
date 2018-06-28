@@ -3,24 +3,14 @@ package com.intellij.openapi.vcs
 
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
-import com.intellij.openapi.vcs.EditorConflictSupport.*
-import com.intellij.openapi.vcs.EditorConflictSupport.ConflictMarkerType.*
+import com.intellij.lang.EditorConflictSupport.*
+import com.intellij.lang.EditorConflictSupport.ConflictMarkerType.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.TokenType
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.util.DocumentUtil
 import kotlin.coroutines.experimental.buildSequence
 
-fun getConflictMarkerType(text: String?): ConflictMarkerType? {
-  if (text == null || text.isEmpty()) return null
-  return when (text[0]) {
-    '<' -> BeforeFirst
-    '|' -> BeforeMerged
-    '=' -> BeforeLast
-    '>' -> AfterLast
-    else -> null
-  }
-}
 
 fun getConflictMarkerType(marker: PsiElement?) = when {
   marker?.node?.elementType != TokenType.CONFLICT_MARKER -> null

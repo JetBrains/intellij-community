@@ -5,13 +5,12 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPass
 import com.intellij.codeInsight.daemon.impl.HighlightInfo
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType
 import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil
-import com.intellij.codeInsight.intention.IntentionAction
 import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.progress.ProgressIndicator
-import com.intellij.openapi.vcs.EditorConflictSupport.*
-import com.intellij.openapi.vcs.EditorConflictSupport.ConflictMarkerType.*
+import com.intellij.lang.EditorConflictSupport.*
+import com.intellij.lang.EditorConflictSupport.ConflictMarkerType.*
 import com.intellij.openapi.vcs.getConflictMarkerType
 import com.intellij.openapi.vcs.getSectionInnerRange
 

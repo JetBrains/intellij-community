@@ -7,7 +7,7 @@ import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.*
-import com.intellij.openapi.vcs.EditorConflictSupport.ConflictMarkerType.*
+import com.intellij.lang.EditorConflictSupport.ConflictMarkerType.*
 import com.intellij.psi.PsiElement
 
 

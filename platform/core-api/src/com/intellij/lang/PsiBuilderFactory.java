@@ -42,4 +42,8 @@ public abstract class PsiBuilderFactory {
 
   @NotNull
   public abstract PsiBuilder createBuilder(@NotNull ParserDefinition parserDefinition, @NotNull Lexer lexer, @NotNull CharSequence seq);
+
+  // fixme
+  @NotNull
+  public abstract PsiBuilder createBuilder(@NotNull Project project, @NotNull ParserDefinition parserDefinition, @NotNull Lexer lexer, @NotNull CharSequence seq);
 }

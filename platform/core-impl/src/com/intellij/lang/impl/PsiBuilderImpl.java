@@ -765,8 +765,41 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   }
 
   private void skipWhitespace() {
-    while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(remapCurrentToken())) {
-      onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
+    do {
+      handleConflictMarkers();
+
+      while (myCurrentLexeme < myLexemeCount && whitespaceOrComment(remapCurrentToken())) {
+        onSkip(myLexTypes[myCurrentLexeme], myLexStarts[myCurrentLexeme], myCurrentLexeme + 1 < myLexemeCount ? myLexStarts[myCurrentLexeme + 1] : myText.length());
+        myCurrentLexeme++;
+        clearCachedTokenType();
+      }
+    }
+    while (myCurrentLexeme < myLexemeCount && myLexTypes[myCurrentLexeme] == TokenType.CONFLICT_MARKER);
+  }
+
+  private void handleConflictMarkers() {
+    // fixme: should avoid remapCurrentToken() probably
+    if (myLexTypes[myCurrentLexeme] != TokenType.CONFLICT_MARKER) return;
+
+    EditorConflictSupport.ConflictMarkerType type = EditorConflictSupport.getConflictMarkerType(getTokenText());
+    skipLine();
+
+    if (type != EditorConflictSupport.getActiveMarkerType(myProject) && type != EditorConflictSupport.ConflictMarkerType.AfterLast) {
+      skipConflictsSection();
+    }
+  }
+
+  private void skipConflictsSection() {
+    while (myCurrentLexeme < myLexemeCount && getTokenType() != TokenType.CONFLICT_MARKER) {
+      skipLine();
+    }
+  }
+
+  private void skipLine() {
+    boolean wasNewLine = false;
+    while (!wasNewLine && myCurrentLexeme < myLexemeCount ) {
+      String prev = getTokenText();
+      wasNewLine = prev != null && prev.contains("\n");
       myCurrentLexeme++;
       clearCachedTokenType();
     }

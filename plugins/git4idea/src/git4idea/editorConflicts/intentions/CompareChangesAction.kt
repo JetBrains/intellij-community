@@ -8,6 +8,7 @@ import com.intellij.diff.chains.SimpleDiffRequestChain
 import com.intellij.diff.requests.SimpleDiffRequest
 import com.intellij.diff.tools.simple.SimpleDiffTool
 import com.intellij.diff.util.DiffUserDataKeysEx
+import com.intellij.lang.EditorConflictSupport
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors

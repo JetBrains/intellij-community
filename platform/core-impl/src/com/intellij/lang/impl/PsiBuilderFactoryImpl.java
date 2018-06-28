@@ -62,4 +62,13 @@ public class PsiBuilderFactoryImpl extends PsiBuilderFactory {
                                   @NotNull final CharSequence seq) {
     return new PsiBuilderImpl(null, null, parserDefinition, lexer, null, seq, null, null);
   }
+
+  @NotNull
+  @Override
+  public PsiBuilder createBuilder(@NotNull Project project,
+                                  @NotNull final ParserDefinition parserDefinition,
+                                  @NotNull final Lexer lexer,
+                                  @NotNull final CharSequence seq) {
+    return new PsiBuilderImpl(project, null, parserDefinition, lexer, null, seq, null, null);
+  }
 }
