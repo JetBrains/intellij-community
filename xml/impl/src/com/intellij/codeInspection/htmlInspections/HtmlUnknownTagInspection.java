@@ -20,8 +20,6 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.lang.LangBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
@@ -31,7 +29,7 @@ import com.intellij.psi.templateLanguages.ConfigurableTemplateLanguageFileViewPr
 import com.intellij.psi.templateLanguages.TemplateLanguageFileViewProvider;
 import com.intellij.psi.templateLanguages.TemplateLanguageUtil;
 import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.FieldPanel;
+import com.intellij.ui.components.fields.ExpandableTextField;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -68,18 +66,9 @@ public class HtmlUnknownTagInspection extends HtmlUnknownTagInspectionBase {
     final JPanel internalPanel = new JPanel(new BorderLayout());
     result.add(internalPanel, BorderLayout.NORTH);
 
-    final Ref<FieldPanel> panelRef = new Ref<>();
-    final FieldPanel additionalAttributesPanel = new FieldPanel(null, null, new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        Messages.showTextAreaDialog(panelRef.get().getTextField(), StringUtil.wordsToBeginFromUpperCase(inspection.getPanelTitle()),
-                                    inspection.getClass().getSimpleName(),
-                                    s -> reparseProperties(s), strings -> StringUtil.join(strings, ",")
-        );
-      }
-    }, null);
-    panelRef.set(additionalAttributesPanel);
-    additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+    final ExpandableTextField additionalAttributesPanel = new ExpandableTextField(s -> reparseProperties(s),
+                                                                                  strings -> StringUtil.join(strings, ","));
+    additionalAttributesPanel.getDocument().addDocumentListener(new DocumentAdapter() {
       @Override
       protected void textChanged(DocumentEvent e) {
         final Document document = e.getDocument();
