@@ -30,6 +30,8 @@
   <actions>
     <!-- HACKATHON -->
     <action id="Debug.Editor.Conflict" class="git4idea.editorConflicts.DebugEditorConflictAction" text="Debug Editor Conflict"/>
+    <action id="Next.Conflict.Marker" class="git4idea.editorConflicts.PrevConflictMarkerAction" text="Prev Conflict Marker"/>
+    <action id="Prev.Conflict.Marker" class="git4idea.editorConflicts.NextConflictMarkerAction" text="Next Conflict Marker"/>
     <!-- /HACKATHON -->
 
     <action id="Git.Init" class="git4idea.actions.GitInit" text="Create Git Repository...">

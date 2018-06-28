@@ -1,6 +1,6 @@
 [+] Take both
 [+] Take none
-[ ] Jump to next/prev
+[+] Jump to next/prev
 [+] Fold whole conflict
 [ ] Compare changes
 [ ] Hyperlinks to log
