@@ -6,6 +6,7 @@ import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.util.ExecUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.SystemInfo;
@@ -490,6 +491,9 @@ public abstract class GitHandler {
       // start process
       myProcess = startProcess();
       startHandlingStreams();
+    }
+    catch (ProcessCanceledException pce) {
+      throw pce;
     }
     catch (Throwable t) {
       if (!ApplicationManager.getApplication().isUnitTestMode()) {
