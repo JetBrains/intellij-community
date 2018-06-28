@@ -23,7 +23,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     val panel = JPanel(GridLayoutManager(1, 1))
 
-    private val list = JComponentBasedList()
+    private val list = JComponentBasedList(lifetime)
 
     private val reloader = updater<Unit>("Reviews Reloader") {
         reloadImpl()

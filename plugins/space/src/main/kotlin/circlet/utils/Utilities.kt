@@ -8,14 +8,6 @@ import com.intellij.openapi.project.*
 import com.intellij.openapi.util.*
 import runtime.reactive.*
 
-inline fun <reified T : Any> ComponentManager.getComponent(): T =
-    getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
-
-inline fun <reified T : Any> Project.getService(): T = service<T>().checkService(this)
-
-inline fun <reified T : Any> T?.checkService(container: Any): T =
-    this ?: throw Error("Service ${T::class.java} not found in container $container")
-
 val application: Application
     get() = ApplicationManager.getApplication()
 
@@ -38,13 +30,31 @@ class SimpleLifetimedDisposable : SimpleLifetimed(), LifetimedDisposable {
 open class SimpleLifetimed : Lifetimed {
     private val lifetimeSource = LifetimeSource()
 
-    final override val lifetime: Lifetime
-        get() = lifetimeSource
+    final override val lifetime: Lifetime get() = lifetimeSource
 
     protected fun terminateLifetimeSource() {
         lifetimeSource.terminate()
     }
 }
+
+class DisposableOnLifetime(lifetime: Lifetime) : Disposable {
+    init {
+        lifetime.add {
+            Disposer.dispose(this)
+        }
+    }
+
+    override fun dispose() {
+    }
+}
+
+inline fun <reified T : Any> ComponentManager.getComponent(): T =
+    getComponent(T::class.java) ?: throw Error("Component ${T::class.java} not found in container $this")
+
+inline fun <reified T : Any> Project.getService(): T = service<T>().checkService(this)
+
+inline fun <reified T : Any> T?.checkService(container: Any): T =
+    this ?: throw Error("Service ${T::class.java} not found in container $container")
 
 fun Notification.notify(lifetime: Lifetime, project: Project?) {
     lifetime.add { expire() }
@@ -56,4 +66,3 @@ inline fun <T : Any, C : ComponentManager> C.computeSafe(crossinline compute: C.
     application.runReadAction(Computable {
         if (isDisposed) null else compute()
     })
-

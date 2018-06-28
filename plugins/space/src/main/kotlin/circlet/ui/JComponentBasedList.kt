@@ -1,17 +1,23 @@
 package circlet.ui
 
+import circlet.utils.*
+import com.intellij.ide.ui.*
 import com.intellij.openapi.ui.*
 import com.intellij.ui.*
 import com.intellij.util.ui.*
+import runtime.reactive.*
+import runtime.utils.*
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
 
-class JComponentBasedList {
+class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetimed(parentLifetime) {
     interface Item {
         val component: JComponent
 
         var selected: Boolean
+
+        fun onLookAndFeelChanged()
     }
 
     private val panel = JPanel(VerticalFlowLayout(0, 0))
@@ -26,6 +32,20 @@ class JComponentBasedList {
     private val focusAdapter = MyFocusAdapter()
 
     init {
+        LafManager.getInstance().addLafManagerListener(
+            LafManagerListener { onLookAndFeelChanged() }, DisposableOnLifetime(lifetime)
+        )
+
+        updateOwnLookAndFeel()
+    }
+
+    private fun onLookAndFeelChanged() {
+        updateOwnLookAndFeel()
+
+        panel.components.forEach { it.item?.onLookAndFeelChanged() }
+    }
+
+    private fun updateOwnLookAndFeel() {
         panel.background = UIUtil.getListBackground()
     }
 

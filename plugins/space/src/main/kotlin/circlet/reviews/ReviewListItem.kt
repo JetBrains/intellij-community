@@ -56,6 +56,10 @@ class ReviewListItem(review: Review, preferredLanguage: TID?) : JComponentBasedL
             createFixedSizeGridConstraints(3, JBUI.size(320, -1))
         )
 
+        updateSelected()
+    }
+
+    private fun updateSelected() {
         updateSelected(selected)
     }
 
@@ -68,6 +72,10 @@ class ReviewListItem(review: Review, preferredLanguage: TID?) : JComponentBasedL
         title.foreground = foreground
         timestamp.foreground = foreground
         createdBy.foreground = foreground
+    }
+
+    override fun onLookAndFeelChanged() {
+        updateSelected()
     }
 }
 
