@@ -11,6 +11,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -34,6 +35,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -514,15 +516,16 @@ public abstract class DialogWrapper {
     List<JButton> leftSideButtons = createButtons(leftSideActions);
     List<JButton> rightSideButtons = createButtons(actions);
 
+    int index = 0;
     myButtonMap.clear();
     for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
       myButtonMap.put(button.getAction(), button);
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
+      final boolean isLeft = index < leftSideButtons.size();
+      TouchbarDataKeys.putClientPropertyDialogButton(button, !isLeft, false, index++);
     }
-
-    myPeer.setTouchBarButtons(rightSideButtons);
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
@@ -1963,12 +1966,21 @@ public abstract class DialogWrapper {
   protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
+    Application application = ApplicationManager.getApplication();
+    boolean headless = application != null && application.isHeadlessEnvironment();
+
     myErrorTextAlarm.cancelAllRequests();
-    SwingUtilities.invokeLater(() -> {
+    Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
         myErrorText.clearError();
       }
-    });
+    };
+    if (headless) {
+      clearErrorRunnable.run();
+    }
+    else {
+      SwingUtilities.invokeLater(clearErrorRunnable);
+    }
 
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
@@ -2042,11 +2054,17 @@ public abstract class DialogWrapper {
         }
       }
     } else if (!myInfo.isEmpty()) {
-      myErrorTextAlarm.addRequest(() -> {
-        for (ValidationInfo vi : myInfo) {
+      Runnable updateErrorTextRunnable = () -> {
+        for (ValidationInfo vi: myInfo) {
           myErrorText.appendError(vi.message);
         }
-      }, 300, null);
+      };
+      if (headless) {
+        updateErrorTextRunnable.run();
+      }
+      else {
+        myErrorTextAlarm.addRequest(updateErrorTextRunnable, 300, null);
+      }
     }
   }
 

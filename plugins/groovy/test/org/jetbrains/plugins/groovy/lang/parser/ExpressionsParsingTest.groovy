@@ -462,6 +462,18 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testregex$afterNewLine() { doTest() }
 
+  void testregex$afterDollarSlashyString() { doTest() }
+
+  void testregex$afterDoubleQuotedString() { doTest() }
+
+  void testregex$afterSingleQuotedString() { doTest() }
+
+  void testregex$afterSlashyString() { doTest() }
+
+  void testregex$afterTripleSingleQuotedString() { doTest() }
+
+  void testregex$afterTripleDoubleQuotedString() { doTest() }
+
   void testrelational$eq1() throws Throwable { doTest() }
 
   void testrelational$inst0() throws Throwable { doTest() }
@@ -529,6 +541,16 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
   void testtypecast$parenthesized() { doTest() }
 
   void testtypecast$noExpression() { doTest() }
+
+  void testtypecast$parenthesizedOperand() { doTest() }
+
+  void testtypecast$parenthesizedQualifier() { doTest() }
+
+  void testtypecast$parenthesizedOperandError() { doTest() }
+
+  void testtypecast$nested() { doTest() }
+
+  void testtypecast$vsMethodCall() { doTest() }
 
   void testtypecast$conditional() throws Throwable { doTest() }
 

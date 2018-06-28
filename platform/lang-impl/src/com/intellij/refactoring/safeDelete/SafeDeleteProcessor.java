@@ -38,7 +38,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -383,14 +382,14 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   @Override
   protected void performRefactoring(@NotNull UsageInfo[] usages) {
     try {
+      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
+      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
+
       for (UsageInfo usage : usages) {
         if (usage instanceof SafeDeleteCustomUsageInfo) {
           ((SafeDeleteCustomUsageInfo) usage).performRefactoring();
         }
       }
-
-      SmartPointerManager pointerManager = SmartPointerManager.getInstance(myProject);
-      List<SmartPsiElementPointer<PsiElement>> pointers = ContainerUtil.map(myElements, pointerManager::createSmartPsiElementPointer);
 
       for (PsiElement element : myElements) {
         for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {

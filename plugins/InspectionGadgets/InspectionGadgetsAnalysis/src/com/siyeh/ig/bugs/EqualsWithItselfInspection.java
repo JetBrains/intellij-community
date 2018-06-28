@@ -53,31 +53,31 @@ public class EqualsWithItselfInspection extends BaseInspection {
     @Override
     public void visitMethodCallExpression(PsiMethodCallExpression expression) {
       super.visitMethodCallExpression(expression);
-      if (isEqualsWithItself(expression)) {
-        registerMethodCallError(expression);
+      if (!MethodCallUtils.isEqualsCall(expression) &&
+          !MethodCallUtils.isEqualsIgnoreCaseCall(expression) &&
+          !MethodCallUtils.isCompareToCall(expression) &&
+          !MethodCallUtils.isCompareToIgnoreCaseCall(expression)) {
+        return;
       }
+      final PsiReferenceExpression methodExpression = expression.getMethodExpression();
+      final PsiExpressionList argumentList = expression.getArgumentList();
+      final PsiExpression[] arguments = argumentList.getExpressions();
+      if (arguments.length != 1) {
+        return;
+      }
+      final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
+      final PsiExpression qualifier = methodExpression.getQualifierExpression();
+      if (qualifier == null) {
+        if (!(argument instanceof PsiThisExpression)) {
+          return;
+        }
+      } else {
+        if (!EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument) ||
+            SideEffectChecker.mayHaveSideEffects(qualifier)) {
+          return;
+        }
+      }
+      registerMethodCallError(expression);
     }
-  }
-
-  public static boolean isEqualsWithItself(PsiMethodCallExpression expression) {
-    if (!MethodCallUtils.isEqualsCall(expression) &&
-        !MethodCallUtils.isEqualsIgnoreCaseCall(expression) &&
-        !MethodCallUtils.isCompareToCall(expression) &&
-        !MethodCallUtils.isCompareToIgnoreCaseCall(expression)) {
-      return false;
-    }
-    final PsiReferenceExpression methodExpression = expression.getMethodExpression();
-    final PsiExpressionList argumentList = expression.getArgumentList();
-    final PsiExpression[] arguments = argumentList.getExpressions();
-    if (arguments.length != 1) {
-      return false;
-    }
-    final PsiExpression argument = ParenthesesUtils.stripParentheses(arguments[0]);
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    if (qualifier != null) {
-      return EquivalenceChecker.getCanonicalPsiEquivalence().expressionsAreEquivalent(qualifier, argument) &&
-             !SideEffectChecker.mayHaveSideEffects(qualifier);
-    }
-    return argument instanceof PsiThisExpression;
   }
 }

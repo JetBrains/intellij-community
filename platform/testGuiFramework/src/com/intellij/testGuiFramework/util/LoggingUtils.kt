@@ -3,6 +3,7 @@ package com.intellij.testGuiFramework.util
 
 import com.intellij.openapi.diagnostic.Logger
 import com.intellij.testGuiFramework.impl.GuiTestCase
+import java.text.SimpleDateFormat
 
 val GuiTestCase.logger: Logger
   get() = Logger.getInstance(this::class.java)
@@ -12,20 +13,22 @@ fun GuiTestCase.logInfo(message: String) {
   logger.info(message)
 }
 
+private val currentTimeInHumanString get() = SimpleDateFormat("yyyy.MM.dd_HH.mm.ss.SSS").format(System.currentTimeMillis())!!
+
 fun GuiTestCase.logStartTest(testName: String) {
-  logInfo("----------------->>> Test `$testName` started")
+  logInfo("----------------->>> ${currentTimeInHumanString}: Test `$testName` started")
 }
 
 fun GuiTestCase.logEndTest(testName: String) {
-  logInfo("<<<----------------- Test `$testName` finished")
+  logInfo("<<<----------------- ${currentTimeInHumanString}: Test `$testName` finished")
 }
 
 fun GuiTestCase.logTestStep(step: String) {
-  logInfo("Test step`$step` going to execute")
+  logInfo("${currentTimeInHumanString}: Test step`$step` going to execute")
 }
 
 fun GuiTestCase.logUIStep(step: String) {
-  logInfo("UI step`$step` going to execute")
+  logInfo("${currentTimeInHumanString}: UI step`$step` going to execute")
 }
 
 fun GuiTestCase.logError(error: String) {

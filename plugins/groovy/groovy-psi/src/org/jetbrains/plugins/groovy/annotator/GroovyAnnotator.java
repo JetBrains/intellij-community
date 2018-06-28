@@ -81,6 +81,7 @@ import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.InheritConstructorContributor;
+import org.jetbrains.plugins.groovy.transformations.immutable.GrImmutableUtils;
 
 import java.util.*;
 
@@ -657,11 +658,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return;
 
-    PsiModifierList aClassModifierList = aClass.getModifierList();
-    if (aClassModifierList == null) return;
-
-    if (!PsiImplUtil.hasImmutableAnnotation(aClassModifierList)) return;
-
+    if (!GrImmutableUtils.hasImmutableAnnotation(aClass)) return;
 
     PsiField field = GroovyPropertyUtils.findFieldForAccessor(method, false);
     if (!(field instanceof GrField)) return;
@@ -680,10 +677,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     PsiClass aClass = method.getContainingClass();
     if (aClass == null) return;
 
-    PsiModifierList modifierList = aClass.getModifierList();
-    if (modifierList == null) return;
-
-    if (!PsiImplUtil.hasImmutableAnnotation(modifierList)) return;
+    if (!GrImmutableUtils.hasImmutableAnnotation(aClass)) return;
 
     holder.createErrorAnnotation(method.getNameIdentifierGroovy(), GroovyBundle.message("explicit.constructors.are.not.allowed.in.immutable.class"));
   }

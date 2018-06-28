@@ -31,16 +31,21 @@ public class WSLUtilTest {
   public void testWslToWinPath() {
     assumeTrue(myLegacyWSL != null);
 
-    assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include");
-    assertWslPath("/usr/something/bin/gcc", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc");
+    assertWslPath("/usr/something/include", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", true);
+    assertWslPath("/usr/something/bin/gcc", "%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", true);
 
-    assertWslPath("/mnt/c", "c:\\");
-    assertWslPath("/mnt/x/", "x:\\");
+    assertWslPath("/mnt/cd", null, false);
+    assertWslPath("/mnt", null, false);
+    assertWslPath("", null, false);
+    assertWslPath("/mnt//test", null, false);
+    assertWslPath("/mnt/1/test", null, false);
+    assertWslPath("/mnt/c", "c:", false);
+    assertWslPath("/mnt/x/", "x:\\", false);
 
-    assertWslPath("/mnt/c/temp/foo", "c:\\temp\\foo");
-    assertWslPath("/mnt/c/temp/KeepCase", "c:\\temp\\KeepCase");
-    assertWslPath("/mnt/c/name with spaces/another name with spaces", "c:\\name with spaces\\another name with spaces");
-    assertWslPath("/mnt/c/юникод", "c:\\юникод");
+    assertWslPath("/mnt/c/temp/foo", "c:\\temp\\foo", false);
+    assertWslPath("/mnt/c/temp/KeepCase", "c:\\temp\\KeepCase", false);
+    assertWslPath("/mnt/c/name with spaces/another name with spaces", "c:\\name with spaces\\another name with spaces", false);
+    assertWslPath("/mnt/c/юникод", "c:\\юникод", false);
   }
 
   @Test
@@ -93,12 +98,14 @@ public class WSLUtilTest {
     assertEquals(wslPath, myLegacyWSL.getWslPath(prepare(winPath)));
   }
 
-  private void assertWslPath(@NotNull String wslPath, @NotNull String winPath) {
-    assertEquals(prepare(winPath), myLegacyWSL.getWindowsPath(wslPath));
+  private void assertWslPath(@NotNull String wslPath, @Nullable String winPath, boolean forLegacyWSL) {
+    String windowsPath = forLegacyWSL ? myLegacyWSL.getWindowsPath(wslPath) : WSLUtil.getWindowsPath(wslPath);
+    assertEquals(prepare(winPath), windowsPath);
   }
 
-  private static String prepare(@NotNull String path) {
-    if (path.startsWith("%LOCALAPPDATA%")) {
+  @Nullable
+  private static String prepare(@Nullable String path) {
+    if (path != null && path.startsWith("%LOCALAPPDATA%")) {
       final String localappdata = System.getenv().get("LOCALAPPDATA");
       path = localappdata + path.substring("%LOCALAPPDATA%".length());
     }

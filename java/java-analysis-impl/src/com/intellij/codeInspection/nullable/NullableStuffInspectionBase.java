@@ -810,9 +810,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,
                                                            PsiParameter parameter,
                                                            List<PsiParameter> superParameters) {
-    return REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED 
-           && isNotNullNotInferred(parameter, false, false) 
-           && ContainerUtil.exists(superParameters, sp -> !nullableManager.hasNullability(sp));
+    if (!REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) return false;
+    NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
+    return info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred() &&
+           ContainerUtil.exists(superParameters, sp -> !nullableManager.hasNullability(sp));
   }
 
   private void checkNullLiteralArgumentOfNotNullParameterUsages(PsiMethod method,

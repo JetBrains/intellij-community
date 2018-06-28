@@ -108,10 +108,10 @@ class PyAddPipEnvPanel(private val project: Project?,
   }
 
   override fun getOrCreateSdk(): Sdk? {
+    PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
     return setupPipEnvSdkUnderProgress(project, selectedModule, existingSdks, newProjectPath,
                                        baseSdkField.selectedSdk?.homePath, installPackagesCheckBox.isSelected)?.apply {
       PySdkSettings.instance.preferredVirtualEnvBaseSdk = baseSdkField.selectedSdk?.homePath
-      PropertiesComponent.getInstance().pipEnvPath = pipEnvPathField.text.nullize()
     }
   }
 

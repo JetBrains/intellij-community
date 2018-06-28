@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
 import com.intellij.util.*;
 import com.intellij.util.containers.WeakList;
@@ -975,6 +976,10 @@ public class AbstractPopup implements JBPopup {
 
     myWindow = window;
     setMinimumSize(myMinSize);
+
+    final Disposable tb = TouchBarsManager.showPopupBar(this, myContent);
+    if (tb != null)
+      Disposer.register(this, tb);
 
     myPopup.show();
 

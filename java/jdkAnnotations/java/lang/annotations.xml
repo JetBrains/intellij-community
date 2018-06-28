@@ -55,8 +55,14 @@
   <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.lang.ClassLoader java.io.InputStream getSystemResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Nullable" />

@@ -176,18 +176,13 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
-    try{
+    JavaCodeStyleSettings.getInstance(getProject()).PREFER_LONGER_NAMES = false
       configureByFile("PreferLongerNamesOption.java")
 
       assertEquals(3, myItems.length)
       assertEquals("ijk", myItems[0].getLookupString())
       assertEquals("efghIjk", myItems[1].getLookupString())
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
-    }
-    finally{
-      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
-    }
   }
 
   void testSCR7208() throws Exception {

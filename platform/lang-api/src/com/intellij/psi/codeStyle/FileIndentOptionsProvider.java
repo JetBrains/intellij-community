@@ -16,12 +16,13 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 /**
  * @author Rustam Vishnyakov
@@ -37,7 +38,7 @@ public abstract class FileIndentOptionsProvider {
    * @return Indent options or {@code null} if the provider can't retrieve them.
    */
   @Nullable
-  public abstract CommonCodeStyleSettings.IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
+  public abstract IndentOptions getIndentOptions(@NotNull CodeStyleSettings settings, @NotNull PsiFile file);
 
   /**
    * Tells if the provider can be used when a complete file is reformatted.
@@ -54,9 +55,26 @@ public abstract class FileIndentOptionsProvider {
    */
   public void setAccepted(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {}
 
+  public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
+    return false;
+  }
+
   @Nullable
-  public AnAction[] getActions(@NotNull PsiFile file) {
+  public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
     return null;
+  }
+
+  public String getTooltip(@NotNull IndentOptions indentOptions) {
+    return getDefaultTooltip(indentOptions);
+  }
+
+  public static String getDefaultTooltip(@NotNull IndentOptions indentOptions) {
+    if (indentOptions.USE_TAB_CHARACTER) {
+      return "Tab";
+    }
+    else {
+      return Integer.toString(indentOptions.INDENT_SIZE) + " spaces";
+    }
   }
 
 }

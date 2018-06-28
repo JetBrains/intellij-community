@@ -76,4 +76,8 @@ public class PythonTracebackFilter implements Filter {
     }
     return vFile;
   }
+
+  protected Project getProject() {
+    return myProject;
+  }
 }

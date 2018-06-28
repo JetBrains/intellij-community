@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.highlighting;
 
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
@@ -36,7 +23,7 @@ import java.util.Collection;
  */
 public abstract class HighlightManager {
   public static HighlightManager getInstance(Project project) {
-    return project.getComponent(HighlightManager.class);
+    return ServiceManager.getService(project, HighlightManager.class);
   }
 
   /**
@@ -150,7 +137,7 @@ public abstract class HighlightManager {
    * @param flags            the flags specifying when the highlighting is removed (a combination of
    *                         {@link #HIDE_BY_ESCAPE}, {@link #HIDE_BY_ANY_KEY} and {@link #HIDE_BY_TEXT_CHANGE}).
    * @param outHighlighters  if not null, the created {@link RangeHighlighter} object is added to this collection.
-   * @param scrollmarkColor  if not null, a gutter mark with the specified color is added in addition to the editor highlight.
+   * @param scrollMarkColor  if not null, a gutter mark with the specified color is added in addition to the editor highlight.
    */
   public abstract void addOccurrenceHighlight(@NotNull Editor editor,
                                               int start,
@@ -158,5 +145,5 @@ public abstract class HighlightManager {
                                               TextAttributes attributes,
                                               @HideFlags int flags,
                                               @Nullable Collection<RangeHighlighter> outHighlighters,
-                                              @Nullable Color scrollmarkColor);
+                                              @Nullable Color scrollMarkColor);
 }

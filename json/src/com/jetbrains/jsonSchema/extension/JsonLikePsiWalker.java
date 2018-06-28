@@ -2,6 +2,7 @@
 package com.jetbrains.jsonSchema.extension;
 
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ThreeState;
 import com.jetbrains.jsonSchema.extension.adapters.JsonPropertyAdapter;
@@ -63,4 +64,14 @@ public interface JsonLikePsiWalker {
   default boolean invokeEnterBeforeObjectAndArray() { return false; }
 
   default String getNodeTextForValidation(PsiElement element) { return element.getText(); }
+
+  default QuickFixAdapter getQuickFixAdapter(Project project) { return null; }
+  interface QuickFixAdapter {
+    @Nullable PsiElement getPropertyValue(PsiElement property);
+    @Nullable String getPropertyName(PsiElement property);
+    @NotNull PsiElement createProperty(@NotNull final String name, @NotNull final String value);
+    boolean ensureComma(PsiElement backward, PsiElement self, PsiElement newElement);
+    void removeIfComma(PsiElement forward);
+    boolean fixWhitespaceBefore();
+  }
 }

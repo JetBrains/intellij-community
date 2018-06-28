@@ -61,7 +61,7 @@ class CreateSdksGuiTest : KotlinGuiTestCase() {
           jTree(kotlinSdk, timeout = 1L)
         }
         finally {
-          logUIStep("Close `Default Project Structure` dialog with OK")
+          logUIStep("Close `$dialogName` dialog with OK")
           button("OK").click()
         }
       }

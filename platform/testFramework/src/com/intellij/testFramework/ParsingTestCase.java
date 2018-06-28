@@ -350,10 +350,12 @@ public abstract class ParsingTestCase extends PlatformLiteFixture {
   public static void ensureCorrectReparse(@NotNull final PsiFile file) {
     final String psiToStringDefault = DebugUtil.psiToString(file, false, false);
 
-    final String fileText = file.getText();
-    final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
-      file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
-    diffLog.performActualPsiChange(file);
+    DebugUtil.performPsiModification("ensureCorrectReparse", () -> {
+                                       final String fileText = file.getText();
+                                       final DiffLog diffLog = new BlockSupportImpl(file.getProject()).reparseRange(
+                                         file, file.getNode(), TextRange.allOf(fileText), fileText, new EmptyProgressIndicator(), fileText);
+                                       diffLog.performActualPsiChange(file);
+                                     });
 
     TestCase.assertEquals(psiToStringDefault, DebugUtil.psiToString(file, false, false));
   }

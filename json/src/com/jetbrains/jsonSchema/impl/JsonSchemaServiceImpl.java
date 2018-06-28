@@ -243,7 +243,17 @@ public class JsonSchemaServiceImpl implements JsonSchemaService {
 
   private boolean isSchemaByProvider(@NotNull VirtualFile file) {
     JsonSchemaFileProvider provider = myState.getProvider(file);
-    if (provider == null) return false;
+    if (provider == null) {
+      for (JsonSchemaFileProvider stateProvider: myState.getProviders()) {
+        if (isSchemaProvider(stateProvider) && stateProvider.isAvailable(file))
+          return true;
+      }
+      return false;
+    }
+    return isSchemaProvider(provider);
+  }
+
+  private static boolean isSchemaProvider(JsonSchemaFileProvider provider) {
     VirtualFile schemaFile = provider.getSchemaFile();
     if (schemaFile == null) return false;
     String url = schemaFile.getUrl();

@@ -118,6 +118,7 @@ public class ThreadTracker {
 
   @TestOnly
   public void checkLeak() throws AssertionError {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     NettyUtil.awaitQuiescenceOfGlobalEventExecutor(100, TimeUnit.SECONDS);
     ShutDownTracker.getInstance().waitFor(100, TimeUnit.SECONDS);
     try {

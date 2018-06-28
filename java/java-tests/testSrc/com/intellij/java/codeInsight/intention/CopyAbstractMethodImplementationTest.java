@@ -17,8 +17,6 @@ package com.intellij.java.codeInsight.intention;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 
 /**
@@ -33,15 +31,7 @@ public class CopyAbstractMethodImplementationTest extends LightIntentionActionTe
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.getCustomSettings(JavaCodeStyleSettings.class).INSERT_OVERRIDE_ANNOTATION = false;
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    super.tearDown();
+    JavaCodeStyleSettings.getInstance(getProject()).INSERT_OVERRIDE_ANNOTATION = false;
   }
 
   public void test() {

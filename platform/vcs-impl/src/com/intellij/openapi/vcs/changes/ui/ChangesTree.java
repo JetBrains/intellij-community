@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes.ui;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -82,6 +83,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
+  @NotNull private TreeExpander myTreeExpander = new MyTreeExpander();
 
   private boolean myModelUpdateInProgress;
 
@@ -495,6 +497,10 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
 
+  public void setTreeExpander(@NotNull TreeExpander expander) {
+    myTreeExpander = expander;
+  }
+
   /**
    * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
    */
@@ -510,20 +516,20 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull
   public AnAction createExpandAllAction(boolean headerAction) {
     if (headerAction) {
-      return CommonActionsManager.getInstance().createExpandAllHeaderAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, this);
     }
     else {
-      return CommonActionsManager.getInstance().createExpandAllAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
     }
   }
 
   @NotNull
   public AnAction createCollapseAllAction(boolean headerAction) {
     if (headerAction) {
-      return CommonActionsManager.getInstance().createCollapseAllHeaderAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createCollapseAllHeaderAction(myTreeExpander, this);
     }
     else {
-      return CommonActionsManager.getInstance().createCollapseAllAction(new MyTreeExpander(), this);
+      return CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
     }
   }
 
@@ -663,6 +669,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
     if (ChangesGroupingSupport.KEY.is(dataId)) {
       return myGroupingSupport;
+    }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      return myTreeExpander;
     }
     return null;
   }

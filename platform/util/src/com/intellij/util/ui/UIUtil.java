@@ -2148,15 +2148,24 @@ public class UIUtil {
    */
   @NotNull
   public static BufferedImage createImage(Graphics g, int width, int height, int type) {
+    return createImage(g, width, height, type, RoundingMode.FLOOR);
+  }
+
+  /**
+   * @see #createImage(GraphicsConfiguration, double, double, int, RoundingMode)
+   */
+  @NotNull
+  public static BufferedImage createImage(Graphics g, double width, double height, int type, @NotNull RoundingMode rm) {
     if (g instanceof Graphics2D) {
       Graphics2D g2d = (Graphics2D)g;
       if (isJreHiDPI(g2d)) {
-        return RetinaImage.create(g2d, width, height, type);
+        return RetinaImage.create(g2d, width, height, type, rm);
       }
       //noinspection UndesirableClassUsage
-      return new BufferedImage(width, height, type);
+      return new BufferedImage(rm.round(width), rm.round(height), type);
     }
-    return createImage(width, height, type);  }
+    return createImage(rm.round(width), rm.round(height), type);
+  }
 
   /**
    * Creates a HiDPI-aware BufferedImage in the component scale.

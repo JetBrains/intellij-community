@@ -205,33 +205,28 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @Nullable
   protected Icon getElementIcon(@Iconable.IconFlags int flags) {
-    final PsiElement element = (PsiElement)this;
-
+    PsiElement element = (PsiElement)this;
     if (!element.isValid()) return null;
 
-    RowIcon baseIcon;
-    final boolean isLocked = BitUtil.isSet(flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
+    boolean isLocked = BitUtil.isSet(flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
-    if (element instanceof ItemPresentation && ((ItemPresentation)element).getIcon(false) != null) {
-        baseIcon = createLayeredIcon(this, ((ItemPresentation)element).getIcon(false), elementFlags);
-    }
-    else if (element instanceof PsiFile) {
-      PsiFile file = (PsiFile)element;
 
-      VirtualFile virtualFile = file.getVirtualFile();
-      final Icon fileTypeIcon;
-      if (virtualFile == null) {
-        fileTypeIcon = file.getFileType().getIcon();
+    if (element instanceof ItemPresentation) {
+      Icon baseIcon = ((ItemPresentation)element).getIcon(false);
+      if (baseIcon != null) {
+        return createLayeredIcon(this, baseIcon, elementFlags);
       }
-      else {
-        fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
-      }
-      return createLayeredIcon(this, fileTypeIcon, elementFlags);
     }
-    else {
-      return null;
+
+    if (element instanceof PsiFile) {
+      PsiFile psiFile = (PsiFile)element;
+      VirtualFile vFile = psiFile.getVirtualFile();
+      Icon baseIcon = vFile != null ? IconUtil.getIcon(vFile, vFile.getFileType(), flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject())
+                                    : psiFile.getFileType().getIcon();
+      return createLayeredIcon(this, baseIcon, elementFlags);
     }
-    return baseIcon;
+
+    return null;
   }
 
   @NotNull

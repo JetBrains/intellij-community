@@ -8,6 +8,6 @@ final class Example<J, T>  {
     void m(I<T, J> i) {}
     
     void m(Example<? super String, Integer> e) {
-        e.m((var a, v<caret>ar b) -> {});
+        e.m((v<caret>ar a, var b) -> {});
     }
 }

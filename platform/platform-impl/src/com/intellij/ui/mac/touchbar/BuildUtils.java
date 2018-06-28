@@ -19,16 +19,17 @@ import com.intellij.openapi.ui.popup.MnemonicNavigationFilter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
+import com.intellij.openapi.wm.impl.welcomeScreen.WelcomePopupAction;
 import com.intellij.ui.components.JBOptionButton;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionEvent;
-import java.util.HashMap;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 class BuildUtils {
   private static final Logger LOG = Logger.getInstance(Utils.class);
@@ -104,16 +105,20 @@ class BuildUtils {
         final String actId = getActionId(act);
         // if (actId == null || actId.isEmpty())   System.out.println("unregistered action: " + act);
 
-        final boolean isRunConfigPopover = actId != null && actId.contains("RunConfiguration");
-        final int mode = isRunConfigPopover ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
+        final boolean isRunConfigPopover = "RunConfiguration".equals(actId); // TODO: make more intelligence customizing...
+        final boolean isOpenInTerminalAction = "Terminal.OpenInTerminal".equals(actId);
+        final int mode = isRunConfigPopover || isOpenInTerminalAction ? TBItemAnActionButton.SHOWMODE_IMAGE_TEXT : showMode;
         final TBItemAnActionButton butt = out.addAnActionButton(act, mode, modality);
         if (_isCompactParent())
           butt.setHiddenWhenDisabled(true);
         if (forceUpdateOptionCtx || _isOptionalParent())
           butt.myOptionalContextName = optionalCtxName;
 
-        if (isRunConfigPopover)
+        if (isRunConfigPopover) {
           butt.setWidth(ourRunConfigurationPopoverWidth);
+          butt.setHasArrowIcon(true);
+        } else if (act instanceof WelcomePopupAction)
+          butt.setHasArrowIcon(true);
       }
 
       @Override
@@ -174,7 +179,7 @@ class BuildUtils {
   }
 
   static TouchBar createMessageDlgBar(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
-    final TouchBar result = new TouchBar("message_dlg_bar", false, true, false);
+    final TouchBar result = new TouchBar("message_dlg_bar", false, false, false);
     final TBItemGroup gr = result.addGroup();
     final ItemsContainer group = gr.getContainer();
 
@@ -204,14 +209,14 @@ class BuildUtils {
     return result;
   }
 
-  // creates releaseOnClose touchbar
-  static TouchBar createButtonsBar(List<JButton> jbuttons) {
-    final TouchBar result = new TouchBar("dialog_buttons", false, true, false);
+  static TouchBar createButtonsBar(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons) {
+    final TouchBar result = new TouchBar("dialog_buttons", false, false, false);
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
 
     // 1. add option buttons (at left)
     byte prio = -1;
-    for (JButton jb : jbuttons) {
+    for (JButton jb: unorderedButtons.values()) {
+      TBItemButton tbb = null;
       if (jb instanceof JBOptionButton) {
         final JBOptionButton ob = (JBOptionButton)jb;
         final Action[] opts = ob.getOptions();
@@ -223,36 +228,37 @@ class BuildUtils {
             continue;
 
           // NOTE: must set different priorities for items, otherwise system can hide all items with the same priority (but some of them is able to be placed)
-          final TBItemButton tbb = result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
-          _setDialogLayout(tbb);
+          tbb = result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(ob).setPriority(--prio);
         }
       }
+
+      if (tbb != null)
+        _setDialogLayout(tbb);
     }
 
-    // 2. add main buttons and make principal
+    // 2. add left and main buttons (and make main principal)
     final TBItemGroup gr = result.addGroup();
     final ItemsContainer group = gr.getContainer();
-    JButton jbdef = null;
-    for (JButton jb : jbuttons) {
+    final List<TouchbarDataKeys.DlgButtonDesc> ordered = _extractOrderedButtons(unorderedButtons);
+    for (TouchbarDataKeys.DlgButtonDesc desc: ordered) {
+      final JButton jb = unorderedButtons.get(desc);
+
       // NOTE: can be true: jb.getAction().isEnabled() && !jb.isEnabled()
-      final boolean isDefault = jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null;
-      if (isDefault) {
-        jbdef = jb;
-        continue;
-      }
       final AnAction anAct = _createAnAction(jb.getAction(), jb, false);
       if (anAct == null)
         continue;
-      final TBItemButton tbb = group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb);
-      _setDialogLayout(tbb);
-    }
+      final TBItemButton tbb = desc.isMainGroup ?
+                               group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jb) :
+                               result.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms, gr).setComponent(jb).setPriority(--prio);
 
-    if (jbdef != null) {
-      final AnAction anAct = _createAnAction(jbdef.getAction(), jbdef, false);
-      if (anAct != null) {
-        final TBItemButton tbb = group.addAnActionButton(anAct, TBItemAnActionButton.SHOWMODE_TEXT_ONLY, ms).setComponent(jbdef).setColored(true);
-        _setDialogLayout(tbb);
+      boolean isDefault = desc.isDefalut;
+      if (!isDefault) {
+        // check other properties
+        isDefault = jb.getAction() != null ? jb.getAction().getValue(DialogWrapper.DEFAULT_ACTION) != null : jb.isDefaultButton();
       }
+      if (isDefault)
+        tbb.setColored(true);
+      _setDialogLayout(tbb);
     }
 
     result.selectVisibleItemsToShow();
@@ -262,7 +268,7 @@ class BuildUtils {
 
   // creates releaseOnClose touchbar
   static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
-    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, false, true, false);
+    final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, true, false, true);
 
     final TBItemScrubber scrub = result.addScrubber();
     final ModalityState ms = LaterInvocator.getCurrentModalityState();
@@ -350,26 +356,30 @@ class BuildUtils {
     }
   }
 
-  private static AnAction _createAnAction(@NotNull Action action, JButton fromButton, boolean useTextFromAction /*for optional buttons*/) {
-    final Object anAct = action.getValue(OptionAction.AN_ACTION);
+  private static AnAction _createAnAction(@Nullable Action action, @NotNull JButton fromButton, boolean useTextFromAction /*for optional buttons*/) {
+    final Object anAct = action == null ? null : action.getValue(OptionAction.AN_ACTION);
     if (anAct == null) {
       // LOG.warn("null AnAction in action: '" + action + "', use wrapper");
       return new DumbAwareAction() {
         {
           setEnabledInModalContext(true);
           if (useTextFromAction) {
-            final Object name = action.getValue(Action.NAME);
+            final Object name = action == null ? fromButton.getText() : action.getValue(Action.NAME);
             getTemplatePresentation().setText(name != null && name instanceof String ? (String)name : "");
           }
         }
         @Override
         public void actionPerformed(AnActionEvent e) {
+          if (action == null) {
+            fromButton.doClick();
+            return;
+          }
           // also can be used something like: ApplicationManager.getApplication().invokeLater(() -> jb.doClick(), ms)
           action.actionPerformed(new ActionEvent(fromButton, ActionEvent.ACTION_PERFORMED, null));
         }
         @Override
         public void update(AnActionEvent e) {
-          e.getPresentation().setEnabled(action.isEnabled());
+          e.getPresentation().setEnabled(action == null ? fromButton.isEnabled() : action.isEnabled());
           if (!useTextFromAction)
             e.getPresentation().setText(DialogWrapper.extractMnemonic(fromButton.getText()).second);
         }
@@ -380,6 +390,29 @@ class BuildUtils {
       return null;
     }
     return (AnAction)anAct;
+  }
+
+  private static @Nullable List<TouchbarDataKeys.DlgButtonDesc> _extractOrderedButtons(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons) {
+    if (unorderedButtons.isEmpty())
+      return null;
+
+    final List<TouchbarDataKeys.DlgButtonDesc> main = new ArrayList<>();
+    final List<TouchbarDataKeys.DlgButtonDesc> secondary = new ArrayList<>();
+    for (Map.Entry<TouchbarDataKeys.DlgButtonDesc, JButton> entry: unorderedButtons.entrySet()) {
+      final TouchbarDataKeys.DlgButtonDesc jbdesc = entry.getKey();
+      if (jbdesc == null)
+        continue;
+
+      if (jbdesc.isMainGroup)
+        main.add(jbdesc);
+      else
+        secondary.add(jbdesc);
+    }
+
+    final Comparator<TouchbarDataKeys.DlgButtonDesc> cmp = (desc1, desc2) -> Integer.compare(desc1.orderIndex, desc2.orderIndex);
+    main.sort(cmp);
+    secondary.sort(cmp);
+    return ContainerUtil.concat(secondary, main);
   }
 
   private static void _initExecutorsGroup() {

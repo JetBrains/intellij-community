@@ -2,9 +2,9 @@
 package com.intellij.xml.propertyBased;
 
 import com.intellij.ide.highlighter.XmlFileType;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.SkipSlowTestLocally;
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.testFramework.propertyBased.CheckHighlighterConsistency;
@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jetCheck.Generator;
 import org.jetbrains.jetCheck.PropertyChecker;
 
-import java.io.File;
 import java.util.function.Function;
 import java.util.function.Supplier;
 
@@ -41,8 +40,7 @@ public class XmlCodeInsightSanityTest extends LightCodeInsightFixtureTestCase {
     String[] extensions = FileTypeManager.getInstance().getAssociatedExtensions(XmlFileType.INSTANCE);
 
     return MadTestingUtil.actionsOnFileContents(myFixture,
-                                                PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') +
-                                                "/xml/tests/testData", // PathManager.getHomePath()
+                                                PathManager.getHomePath(),
                                                 f -> {
                                                   String name = f.getName();
                                                   for (String extension: extensions) {

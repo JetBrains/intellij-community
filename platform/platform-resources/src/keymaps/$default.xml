@@ -713,6 +713,9 @@
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="INSERT"/>
   </action>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt F5"/>
+  </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
   </action>

@@ -111,6 +111,15 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
   }
 
   private void runStartupActivity() {
+    myUndoProviders = myProject == null
+                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
+                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
+    for (UndoProvider undoProvider : myUndoProviders) {
+      if (undoProvider instanceof Disposable) {
+        Disposer.register(this, (Disposable)undoProvider);
+      }
+    }
+
     myEditorProvider = new FocusBasedCurrentEditorProvider();
     myCommandProcessor.addCommandListener(new CommandListener() {
       private boolean myStarted;
@@ -147,19 +156,10 @@ public class UndoManagerImpl extends UndoManager implements Disposable {
     }, this);
 
     Disposer.register(this, new DocumentUndoProvider(myProject));
-
-    myUndoProviders = myProject == null
-                      ? Extensions.getExtensions(UndoProvider.EP_NAME)
-                      : Extensions.getExtensions(UndoProvider.PROJECT_EP_NAME, myProject);
-    for (UndoProvider undoProvider : myUndoProviders) {
-      if (undoProvider instanceof Disposable) {
-        Disposer.register(this, (Disposable)undoProvider);
-      }
-    }
   }
 
   public boolean isActive() {
-    return Comparing.equal(myProject, myCurrentActionProject);
+    return Comparing.equal(myProject, myCurrentActionProject) || myProject == null && myCurrentActionProject.isDefault();
   }
 
   private boolean isInsideCommand() {

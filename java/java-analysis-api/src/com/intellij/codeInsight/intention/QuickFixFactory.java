@@ -321,4 +321,7 @@ public abstract class QuickFixFactory {
 
   @Nullable
   public abstract IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName);
+  
+  public abstract IntentionAction createPushDownMethodFix();
+  
 }

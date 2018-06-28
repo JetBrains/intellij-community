@@ -86,16 +86,18 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       if (!match.isPartialMatch()) {
         return;
       }
-      CommentTracker commentTracker = new CommentTracker();
       final PsiElement leftDiff = match.getLeftDiff();
       final PsiElement rightDiff = match.getRightDiff();
-      final String expression = "(" + commentTracker.text(conditionalExpression.getCondition()) + " ? " +
-                                commentTracker.text(leftDiff) + " : " + commentTracker.text(rightDiff) + ")";
+      final String expression = "(" + conditionalExpression.getCondition().getText() + " ? " +
+                                leftDiff.getText() + " : " + rightDiff.getText() + ")";
       final PsiExpression newConditionalExpression =
         JavaPsiFacade.getElementFactory(project).createExpressionFromText(expression, conditionalExpression);
-      final PsiElement replacedConditionalExpression = commentTracker.replaceAndRestoreComments(leftDiff, newConditionalExpression);
+      final PsiElement replacedConditionalExpression = leftDiff.replace(newConditionalExpression);
       ParenthesesUtils.removeParentheses((PsiExpression)replacedConditionalExpression, false);
-      new CommentTracker().replaceAndRestoreComments(conditionalExpression, thenExpression);
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(conditionalExpression.getCondition());
+      commentTracker.markUnchanged(thenExpression);
+      commentTracker.replaceAndRestoreComments(conditionalExpression, thenExpression);
     }
   }
 

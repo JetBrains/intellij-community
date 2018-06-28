@@ -15,7 +15,10 @@
  */
 package com.siyeh.ig.psiutils;
 
-import com.intellij.codeInsight.*;
+import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.CodeInsightUtilCore;
+import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -1337,5 +1340,15 @@ public class ExpressionUtils {
       return PsiUtil.skipParenthesizedExprDown(ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()));
     }
     return null;
+  }
+
+  /**
+   * Returns true if given new-expression creates an array rather than an object.
+   *
+   * @param expression expression to check
+   * @return true if given new-expression creates an array
+   */
+  public static boolean isArrayCreationExpression(@NotNull PsiNewExpression expression) {
+    return expression.getArrayInitializer() != null || expression.getArrayDimensions().length > 0;
   }
 }

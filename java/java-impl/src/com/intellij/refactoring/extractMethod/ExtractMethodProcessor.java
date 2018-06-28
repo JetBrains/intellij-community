@@ -11,8 +11,8 @@ import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.instructions.BranchingInstruction;
+import com.intellij.codeInspection.dataFlow.instructions.CheckReturnValueInstruction;
 import com.intellij.codeInspection.dataFlow.instructions.Instruction;
-import com.intellij.codeInspection.dataFlow.value.DfaValue;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.PsiClassListCellRenderer;
@@ -399,8 +399,11 @@ public class ExtractMethodProcessor implements MatchProvider {
    */
   private boolean getReturnsNullability(boolean nullsExpected) {
     PsiElement body = null;
-    if (myCodeFragmentMember instanceof PsiParameterListOwner) {
-      body = ((PsiParameterListOwner)myCodeFragmentMember).getBody();
+    if (myCodeFragmentMember instanceof PsiMethod) {
+      body = ((PsiMethod)myCodeFragmentMember).getBody();
+    }
+    else if (myCodeFragmentMember instanceof PsiLambdaExpression) {
+      body = ((PsiLambdaExpression)myCodeFragmentMember).getBody();
     }
     if (body == null) return false;
 
@@ -431,23 +434,25 @@ public class ExtractMethodProcessor implements MatchProvider {
     }
     if (returnedExpressions.isEmpty()) return true;
 
-    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
-    final StandardInstructionVisitor returnChecker = new StandardInstructionVisitor() {
+    class ReturnChecker extends StandardInstructionVisitor {
+      boolean myResult = true;
+
       @Override
-      protected void checkReturnValue(@NotNull DfaValue value,
-                                      @NotNull PsiExpression expression,
-                                      @NotNull PsiParameterListOwner context,
-                                      @NotNull DfaMemoryState state) {
-        if (context == myCodeFragmentMember &&
-            returnedExpressions.stream().anyMatch(ret -> PsiTreeUtil.isAncestor(ret, expression, false))) {
-          boolean result = nullsExpected ? state.isNull(value) : state.isNotNull(value);
-          if (!result) {
-            dfaRunner.cancel();
-          }
+      public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
+                                                         DataFlowRunner runner,
+                                                         DfaMemoryState memState) {
+        if (returnedExpressions.contains(instruction.getReturn())) {
+          myResult &= nullsExpected ? memState.isNull(memState.peek()) : memState.isNotNull(memState.peek());
         }
+        return super.visitCheckReturnValue(instruction, runner, memState);
       }
-    };
-    return dfaRunner.analyzeMethod(body, returnChecker) == RunnerResult.OK;
+    }
+    final StandardDataFlowRunner dfaRunner = new StandardDataFlowRunner();
+    final ReturnChecker returnChecker = new ReturnChecker();
+    if (dfaRunner.analyzeMethod(body, returnChecker) == RunnerResult.OK) {
+      return returnChecker.myResult;
+    }
+    return false;
   }
 
   protected boolean insertNotNullCheckIfPossible() {
@@ -1350,7 +1355,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       }
     }
     List<String> reusedVariables = findReusedVariables(match, myInputVariables, myOutputVariable);
-    PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable);
+    PsiElement replacedMatch = match.replace(myExtractedMethod, methodCallExpression, myOutputVariable, myReturnType);
 
     PsiElement appendLocation = addNotNullConditionalCheck(match, replacedMatch);
     declareReusedVariables(appendLocation, reusedVariables);

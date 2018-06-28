@@ -116,14 +116,13 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * The method creates psi tree without template tokens. The result PsiFile can contain additional elements.
+   * Creates psi tree without template tokens. The result PsiFile can contain additional elements.
    * Ranges of the removed tokens/additional elements should be stored in the rangeCollector
    *
-   * @param psiFile              chameleon's psi file
-   * @param templateLanguage     template language to parse
-   * @param sourceCode           source code: base language with template language
-   * @param viewProvider         multi-tree view provider
-   * @param rangeCollector collector for ranges with non-template/additional elements   
+   * @param psiFile          chameleon's psi file
+   * @param templateLanguage template language to parse
+   * @param sourceCode       source code: base language with template language
+   * @param rangeCollector   collector for ranges with non-template/additional elements
    * @return template psiFile
    */
   protected PsiFile createTemplateFile(final PsiFile psiFile,
@@ -136,12 +135,12 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * The method creates source code without template tokens. The source code can contain additional symbols.
-   * Ranges of the removed tokens/additional symbols should be stored in the rangeCollector
+   * Creates source code without template tokens. May add additional pieces of code.
+   * Ranges of such additions should be added in rangeCollector using {@link RangeCollector#addRangeToRemove(TextRange)}for later removal from the resulting tree
    *
-   * @param sourceCode           source code with base and template languages
-   * @param baseLexer            base language lexer
-   * @param rangeCollector collector for ranges with non-template/additional symbols   
+   * @param sourceCode     source code with base and template languages
+   * @param baseLexer      base language lexer
+   * @param rangeCollector collector for ranges with non-template/additional symbols
    * @return template source code
    */
   protected CharSequence createTemplateText(@NotNull CharSequence sourceCode,
@@ -183,10 +182,11 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
 
   /**
-   * 
+   * Builds the merged tree with inserting outer language elements and removing additional elements according to the ranges from rangeCollector
+   *
    * @param templateFileElement parsed template data language file without outer elements and with possible custom additions
-   * @param sourceCode original source code (include template data language and template language)
-   * @param rangeCollector collector for ranges with non-template/additional elements
+   * @param sourceCode          original source code (include template data language and template language)
+   * @param rangeCollector      collector for ranges with non-template/additional elements
    */
   private void insertOuterElementsAndRemoveRanges(@NotNull TreeElement templateFileElement,
                                                   @NotNull CharSequence sourceCode,
@@ -290,7 +290,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Method removes part the nextLeaf that intersects rangeToRemove.
+   * Removes part the nextLeaf that intersects rangeToRemove.
    * If nextLeaf doesn't intersect rangeToRemove the method returns the nextLeaf without changes
    *
    * @return new leaf after removing the range or original nextLeaf if nothing changed
@@ -314,6 +314,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   /**
    * Splits the node according to the offsetToSplit and remove left leaf
+   *
    * @return right part of the split node
    */
   @NotNull
@@ -393,15 +394,14 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
 
   /**
    * This collector is used for storing ranges of outer elements and ranges of artificial elements, that should be stripped from the resulting tree
-   * At the time of creating source code for the data language we need to memorize positions with template language elements. 
+   * At the time of creating source code for the data language we need to memorize positions with template language elements.
    * For such positions we use {@link RangeCollector#addOuterRange}
-   * <br>
-   * Sometimes to build a correct tree we need to insert additional symbols into resulting source: 
-   * e.g. put an identifier instead of the base language fragment: {@code something={% $var %}} => {@code something=dummyidentifier} 
-   * that must be removed after building the tree. 
+   * Sometimes to build a correct tree we need to insert additional symbols into resulting source:
+   * e.g. put an identifier instead of the base language fragment: {@code something={% $var %}} => {@code something=dummyidentifier}
+   * that must be removed after building the tree.
    * For such additional symbols {@link RangeCollector#addRangeToRemove} must be used
+   *
    * @apiNote Please note that all start offsets for the ranges must be in terms of "original source code"
-   * 
    */
   protected static class RangeCollector {
     private final List<TextRange> myOuterAndRemoveRanges = new ArrayList<>();

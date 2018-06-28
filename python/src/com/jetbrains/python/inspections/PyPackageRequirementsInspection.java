@@ -409,7 +409,14 @@ public class PyPackageRequirementsInspection extends PyInspection {
       if (chosen.isEmpty()) {
         return;
       }
-      if (!PyPackageUtil.hasManagement(packages)) {
+      boolean hasManagement;
+      try {
+        hasManagement = manager.hasManagement();
+      }
+      catch (ExecutionException e) {
+        hasManagement = false;
+      }
+      if (!hasManagement) {
         final PyPackageManagerUI ui = new PyPackageManagerUI(project, mySdk, new RunningPackagingTasksListener(myModule) {
           @Override
           public void finished(List<ExecutionException> exceptions) {

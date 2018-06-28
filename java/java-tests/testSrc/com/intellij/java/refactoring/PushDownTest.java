@@ -82,6 +82,7 @@ public class PushDownTest extends LightRefactoringTestCase {
   public void testThisSuperExpressions() {doTest();}
   public void testMethodsInheritedFromSuper() {doTest();}
   public void testCopyAnnotationsFromSuper() {doTest();}
+  public void testKeepBodyFromInterfaceMethod() {doTest();}
 
   public void testInterfaceMethodToClass() { doTest();}
 

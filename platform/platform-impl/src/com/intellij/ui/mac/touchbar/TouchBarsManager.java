@@ -6,9 +6,12 @@ import com.intellij.execution.ExecutionManager;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.RunContentDescriptor;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -16,12 +19,13 @@ import com.intellij.openapi.editor.ex.FocusChangeListener;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ProjectManagerListener;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
+import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.popup.list.ListPopupImpl;
+import com.intellij.util.containers.Predicate;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -30,16 +34,17 @@ import java.awt.*;
 import java.awt.event.FocusEvent;
 import java.awt.event.InputEvent;
 import java.awt.event.MouseWheelEvent;
-import java.util.Arrays;
-import java.util.HashMap;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
+import java.util.*;
 import java.util.List;
-import java.util.Map;
 
 public class TouchBarsManager {
   private static final Logger LOG = Logger.getInstance(TouchBarsManager.class);
   private static final StackTouchBars ourStack = new StackTouchBars();
 
   private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
+  private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
   public static void initialize() {
     if (!isTouchBarAvailable())
@@ -120,31 +125,77 @@ public class TouchBarsManager {
     if (e instanceof MouseWheelEvent)
       return;
 
-    ourStack.updateKeyMask(e.getModifiersEx());
+    ourStack.updateKeyMask(e.getModifiersEx() & ProjectData.getUsedKeyMask());
   }
 
   public static void onFocusEvent(AWTEvent e) {
     if (!isTouchBarAvailable())
       return;
 
+    if (!(e.getSource() instanceof Container))
+      return;
+
+    final Container src = (Container)e.getSource();
+
     // NOTE: WindowEvent.WINDOW_GAINED_FOCUS can be fired when frame focused
     if (e.getID() == FocusEvent.FOCUS_GAINED) {
-      if (!(e.getSource() instanceof Component))
+      if (_hasPopup()) {
+        // System.out.println("skip focus event processing because popup exists: " + e);
         return;
+      }
+
+      if (_hasNonModalDialog()) {
+        final BarContainer barForParent = _findByParentComponent(src, ourTemporaryBars.values(), null);
+        if (barForParent != null) {
+          // StackTouchBars.changeReason = "non-modal dialog gained focus";
+          barForParent.show();
+          return;
+        }
+      }
 
       for (ProjectData pd: ourProjectData.values()) {
         if (pd.isDisposed())
           continue;
 
-        if (pd.checkToolWindowContents((Component)e.getSource())) {
+        if (pd.checkToolWindowContents(src)) {
           // System.out.println("tool window gained focus: " + e);
           return;
         }
 
-        final BarContainer parent = pd.findByComponent((Component)e.getSource());
-        if (parent != null) {
-          // System.out.println("component gained focus: " + e);
-          ourStack.showContainer(parent);
+        final ProjectData.EditorData ed = pd.findEditorDataByComponent(src);
+        if (ed != null && ed.containerSearch != null) {
+          // System.out.println("editor-component gained focus: " + e);
+          // StackTouchBars.changeReason = "editor-search gained focus";
+          ourStack.showContainer(ed.containerSearch);
+          return;
+        }
+
+        final BarContainer twbc = pd.findDebugToolWindowByComponent(src);
+        if (twbc != null) {
+          // System.out.println("debugger component gained focus: " + e);
+          // StackTouchBars.changeReason = "tool-window gained focus";
+          ourStack.showContainer(twbc);
+          return;
+        }
+      }
+    } else if (e.getID() == FocusEvent.FOCUS_LOST) {
+      final BarContainer nonModalDialogParent = _findByParentComponent(src, ourTemporaryBars.values(), bc -> bc.isNonModalDialog());
+      if (nonModalDialogParent != null) {
+        // System.out.println("non-modal dialog window '" + nonModalDialogParent.getParentComponent() + "' lost focus: " + e);
+        // StackTouchBars.changeReason = "non-modal dialog lost focus";
+        nonModalDialogParent.hide();
+        return;
+      }
+
+      for (ProjectData pd: ourProjectData.values()) {
+        if (pd.isDisposed())
+          continue;
+
+        final ProjectData.EditorData ed = pd.findEditorDataByComponent(src);
+        if (ed != null && ed.containerSearch != null) {
+          // System.out.println("editor-component lost focus: " + e);
+          // StackTouchBars.changeReason = "editor-component lost focus";
+          ourStack.removeContainer(ed.containerSearch);
           return;
         }
       }
@@ -163,7 +214,7 @@ public class TouchBarsManager {
 
     final ProjectData pd = ourProjectData.get(proj);
     if (pd == null) {
-      LOG.error("can't find project data to register editor: " + editor + ", project: " + proj);
+      // System.out.println("can't find project data to register editor: " + editor + ", project: " + proj);
       return;
     }
 
@@ -179,6 +230,7 @@ public class TouchBarsManager {
         final boolean hasDebugSession = pd.getDbgSessions() > 0;
         if (!hasDebugSession) {
           // System.out.println("elevate default because editor window gained focus: " + editor);
+          // StackTouchBars.changeReason = "elevate default because editor gained focus";
           ourStack.elevateContainer(pd.get(BarType.DEFAULT));
         }
       }
@@ -226,6 +278,8 @@ public class TouchBarsManager {
       return;
     }
 
+    // System.out.printf("onUpdateEditorHeader: editor='%s', header='%s'\n", editor, header);
+
     final ActionGroup actions = header instanceof DataProvider ? TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)header) : null;
     if (header == null) {
       // System.out.println("set null header");
@@ -243,71 +297,159 @@ public class TouchBarsManager {
           ed.containerSearch.release();
         }
 
-        ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, false), null);
+        ed.containerSearch = new BarContainer(BarType.EDITOR_SEARCH, TouchBar.buildFromGroup("editor_search_" + header, actions, true, true), null, header);
         ourStack.showContainer(ed.containerSearch);
       }
     }
   }
 
-  public static void attachPopupBar(@NotNull ListPopupImpl listPopup) {
-    if (!isTouchBarAvailable())
-      return;
-
-    listPopup.addPopupListener(new JBPopupListener() {
-        private TouchBar myPopupBar = BuildUtils.createScrubberBarFromPopup(listPopup);
-        @Override
-        public void beforeShown(LightweightWindowEvent event) {
-          _showTempTouchBar(myPopupBar, BarType.POPUP);
-        }
-        @Override
-        public void onClosed(LightweightWindowEvent event) {
-          ourStack.removeTouchBar(myPopupBar);
-          myPopupBar = null;
-        }
-      }
-    );
-  }
-
-  public static @Nullable Runnable showDlgButtonsBar(List<JButton> jbuttons) {
+  public static @Nullable Disposable showPopupBar(@NotNull JBPopup popup, @NotNull JComponent popupComponent) {
     if (!isTouchBarAvailable())
       return null;
 
-    final TouchBar tb = BuildUtils.createButtonsBar(jbuttons);
-    _showTempTouchBar(tb, BarType.DIALOG);
-    return ()->{ourStack.removeTouchBar(tb);};
+    if (!(popup instanceof ListPopupImpl))
+      return null;
+
+    @NotNull ListPopupImpl listPopup = (ListPopupImpl)popup;
+    final TouchBar tb = BuildUtils.createScrubberBarFromPopup(listPopup);
+    BarContainer container = new BarContainer(BarType.POPUP, tb, null, popupComponent);
+    ourTemporaryBars.put(popupComponent, container);
+    ourStack.showContainer(container);
+
+    return () -> {
+      ourStack.removeContainer(container);
+      ourTemporaryBars.remove(popupComponent);
+      container.release();
+    };
   }
 
-  public static Runnable showMessageDlgBar(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
+  public static @Nullable Disposable showDialogWrapperButtons(@NotNull Container contentPane) {
+    if (!isTouchBarAvailable())
+      return null;
+
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
+    BarContainer bc = null;
+
+    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> jbuttons = _findAllDialogButtons(contentPane);
+    if (jbuttons != null && !jbuttons.isEmpty()) {
+      // 1. if 'south-panel buttons' presented => show them
+      final TouchBar tb = BuildUtils.createButtonsBar(jbuttons);
+      bc = new BarContainer(btype, tb, null, contentPane);
+    } else {
+      // 2. otherwise show actions collected from content children
+      Map<Component, ActionGroup> actions = new HashMap<>();
+      _findAllTouchbarProviders(actions, contentPane);
+      if (!actions.isEmpty()) {
+        final ActionGroup ag = actions.values().iterator().next();
+        final TouchBar tb = TouchBar.buildFromGroup("dialog_with_actions", ag, true, true);
+        bc = new BarContainer(btype, tb, null, contentPane);
+        final BarContainer fbc = bc;
+        ag.addPropertyChangeListener(new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            tb.clear();
+            TouchBar.addActionGroup(tb, ag);
+            ourStack.showContainer(fbc);
+          }
+        });
+      }
+    }
+
+    if (bc == null)
+      return null;
+
+    ourTemporaryBars.put(contentPane, bc);
+    ourStack.showContainer(bc);
+
+    final BarContainer fbc = bc;
+    return ()->{
+      ourTemporaryBars.remove(contentPane);
+      ourStack.removeContainer(fbc);
+      fbc.release();
+    };
+  }
+
+  public static @Nullable Disposable showSheetMessageButtons(@NotNull String[] buttons, @NotNull Runnable[] actions, String defaultButton) {
     if (!isTouchBarAvailable())
       return null;
 
     final TouchBar tb = BuildUtils.createMessageDlgBar(buttons, actions, defaultButton);
-    _showTempTouchBar(tb, BarType.DIALOG);
-    return ()->{ourStack.removeTouchBar(tb);};
+    BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
+    ourStack.showContainer(container);
+    return ()->{
+      ourStack.removeContainer(container);
+      container.release();
+    };
   }
 
   public static void showStopRunningBar(List<Pair<RunContentDescriptor, Runnable>> stoppableDescriptors) {
     final TouchBar tb = BuildUtils.createStopRunningBar(stoppableDescriptors);
-    _showTempTouchBar(tb, BarType.DIALOG);
-  }
-
-  static void removeTouchBar(TouchBar tb) {
-    if (tb != null)
-      ourStack.removeTouchBar(tb);
+    BarContainer container = new BarContainer(BarType.DIALOG, tb, null, null);
+    container.setOnHideCallback(() -> { container.release(); });
+    ourStack.showContainer(container);
   }
 
   static void showContainer(@NotNull BarContainer container) { ourStack.showContainer(container); }
-
-  private static void _showTempTouchBar(TouchBar tb, BarType type) {
-    if (tb == null)
-      return;
-    BarContainer container = new BarContainer(type, tb, null);
-    ourStack.showContainer(container);
-  }
+  static void hideContainer(@NotNull BarContainer container) { ourStack.removeContainer(container); }
 
   private static boolean _hasAnyActiveSession(Project proj, ProcessHandler handler/*already terminated*/) {
     final ProcessHandler[] processes = ExecutionManager.getInstance(proj).getRunningProcesses();
     return Arrays.stream(processes).anyMatch(h -> h != null && h != handler && (!h.isProcessTerminated() && !h.isProcessTerminating()));
+  }
+
+  private static boolean _hasPopup() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isPopup()); }
+  private static boolean _hasNonModalDialog() { return ourTemporaryBars.values().stream().anyMatch(bc -> bc.isNonModalDialog()); }
+
+  private static BarContainer _findByParentComponent(Container child, Collection<BarContainer> candidates, Predicate<BarContainer> filter) {
+    for (BarContainer bc: candidates) {
+      if (filter != null && !filter.apply(bc))
+        continue;
+      if (bc.getParentComponent() == null)
+        continue;
+      if (SwingUtilities.isDescendingFrom(child, bc.getParentComponent()))
+        return bc;
+    }
+    return null;
+  }
+
+  private static void _findAllTouchbarProviders(@NotNull Map<Component, ActionGroup> out, @NotNull Container root) {
+    final Component[] children = root.getComponents();
+    for (Component component : children) {
+      if (out.containsKey(component)) {
+        // just extra protection
+        LOG.error("the component '" + component + "' was already visited");
+        continue;
+      }
+
+      if (component instanceof DataProvider) {
+        final ActionGroup actions = TouchbarDataKeys.ACTIONS_KEY.getData((DataProvider)component);
+        if (actions != null) {
+          out.put(component, actions);
+        }
+      }
+      if (component instanceof Container)
+        _findAllTouchbarProviders(out, (Container)component);
+    }
+  }
+
+  private static Map<TouchbarDataKeys.DlgButtonDesc, JButton> _findAllDialogButtons(@NotNull Container root) {
+    final Map<TouchbarDataKeys.DlgButtonDesc, JButton> out = new HashMap<>();
+    _findAllDialogButtons(out, root);
+    return out;
+  }
+
+  private static void _findAllDialogButtons(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> out, @NotNull Container root) {
+    final Component[] children = root.getComponents();
+    for (Component component : children) {
+      if (component instanceof JButton) {
+        final TouchbarDataKeys.DlgButtonDesc desc = UIUtil.getClientProperty(component, TouchbarDataKeys.DIALOG_BUTTON_DESCRIPTOR_KEY);
+        if (desc != null)
+          out.put(desc, (JButton)component);
+      }
+      if (component instanceof Container)
+        _findAllDialogButtons(out, (Container)component);
+    }
   }
 
   private static void _updateCurrentTouchbar() {

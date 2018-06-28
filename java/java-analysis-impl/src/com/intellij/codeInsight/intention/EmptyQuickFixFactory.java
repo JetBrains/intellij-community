@@ -717,4 +717,9 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
   public IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName) {
     return QuickFixes.EMPTY_FIX;
   }
+
+  @Override
+  public IntentionAction createPushDownMethodFix() {
+    return QuickFixes.EMPTY_FIX;
+  }
 }

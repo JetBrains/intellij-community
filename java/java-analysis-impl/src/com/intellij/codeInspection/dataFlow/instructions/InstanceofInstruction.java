@@ -19,10 +19,7 @@ import com.intellij.codeInspection.dataFlow.DataFlowRunner;
 import com.intellij.codeInspection.dataFlow.DfaInstructionState;
 import com.intellij.codeInspection.dataFlow.DfaMemoryState;
 import com.intellij.codeInspection.dataFlow.InstructionVisitor;
-import com.intellij.psi.JavaTokenType;
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +30,7 @@ public class InstanceofInstruction extends BinopInstruction {
   @Nullable private final PsiExpression myLeft;
   @Nullable private final PsiType myCastType;
 
-  public InstanceofInstruction(PsiExpression psiAnchor, @Nullable PsiExpression left, @NotNull PsiType castType) {
+  public InstanceofInstruction(PsiElement psiAnchor, @Nullable PsiExpression left, @NotNull PsiType castType) {
     super(JavaTokenType.INSTANCEOF_KEYWORD, psiAnchor, PsiType.BOOLEAN);
     myLeft = left;
     myCastType = castType;

@@ -1759,6 +1759,44 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // priority1_4 <<noParenthesized>> | clear_variants_and_fail | cast_parenthesized_expression
+  static boolean cast_operand(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cast_operand")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = cast_operand_0(b, l + 1);
+    if (!r) r = clear_variants_and_fail(b, l + 1);
+    if (!r) r = cast_parenthesized_expression(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  // priority1_4 <<noParenthesized>>
+  private static boolean cast_operand_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cast_operand_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = expression(b, l + 1, 13);
+    r = r && noParenthesized(b, l + 1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
+  // '(' expression ')'
+  public static boolean cast_parenthesized_expression(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "cast_parenthesized_expression")) return false;
+    if (!nextTokenIsFast(b, T_LPAREN)) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeTokenFast(b, T_LPAREN);
+    r = r && expression(b, l + 1, -1);
+    r = r && consumeToken(b, T_RPAREN);
+    exit_section_(b, m, PARENTHESIZED_EXPRESSION, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // 'catch' '(' parse_catch_parameter ')' lazy_block
   public static boolean catch_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "catch_clause")) return false;
@@ -7256,14 +7294,17 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // &cast_expression_start ('(' type_element ')' priority1_4)
+  // &cast_expression_start '(' type_element ')' cast_operand
   public static boolean cast_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "cast_expression")) return false;
     if (!nextTokenIsSmart(b, T_LPAREN)) return false;
     boolean r;
     Marker m = enter_section_(b);
     r = cast_expression_0(b, l + 1);
-    r = r && cast_expression_1(b, l + 1);
+    r = r && consumeTokenSmart(b, T_LPAREN);
+    r = r && type_element(b, l + 1);
+    r = r && consumeToken(b, T_RPAREN);
+    r = r && cast_operand(b, l + 1);
     exit_section_(b, m, CAST_EXPRESSION, r);
     return r;
   }
@@ -7275,19 +7316,6 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     Marker m = enter_section_(b, l, _AND_);
     r = cast_expression_start(b, l + 1);
     exit_section_(b, l, m, r, false, null);
-    return r;
-  }
-
-  // '(' type_element ')' priority1_4
-  private static boolean cast_expression_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "cast_expression_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = consumeTokenSmart(b, T_LPAREN);
-    r = r && type_element(b, l + 1);
-    r = r && consumeToken(b, T_RPAREN);
-    r = r && expression(b, l + 1, 13);
-    exit_section_(b, m, null, r);
     return r;
   }
 

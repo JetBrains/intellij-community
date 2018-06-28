@@ -33,7 +33,6 @@ public abstract class GenerationInfoBase implements GenerationInfo {
   @Override
   public abstract void insert(@NotNull PsiClass aClass, PsiElement anchor, boolean before) throws IncorrectOperationException;
 
-  @NotNull
   @Override
   public abstract PsiMember getPsiMember();
 
@@ -62,8 +61,9 @@ public abstract class GenerationInfoBase implements GenerationInfo {
 
   @Override
   public void positionCaret(@NotNull Editor editor, boolean toEditMethodBody) {
-    if (isMemberValid()) {
-      GenerateMembersUtil.positionCaret(editor, getPsiMember(), toEditMethodBody);
+    PsiMember member = getPsiMember();
+    if (member != null) {
+      GenerateMembersUtil.positionCaret(editor, member, toEditMethodBody);
     }
   }
 }

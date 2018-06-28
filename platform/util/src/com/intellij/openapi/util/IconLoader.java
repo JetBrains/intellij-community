@@ -490,12 +490,6 @@ public final class IconLoader {
     if (icon instanceof MenuBarIconProvider) {
       return ((MenuBarIconProvider)icon).getMenuBarIcon(dark);
     }
-    if (icon instanceof CachedImageIcon) {
-      Image img = ((CachedImageIcon)icon).loadFromUrl(ScaleContext.createIdentity(), dark);
-      if (img != null) {
-        icon = new ImageIcon(img);
-      }
-    }
     return icon;
   }
 
@@ -507,14 +501,13 @@ public final class IconLoader {
     if (icon instanceof RetrievableIcon) {
       icon = getOrigin((RetrievableIcon)icon);
     }
-    if (icon instanceof CachedImageIcon) {
-      icon = ((CachedImageIcon)icon).copy();
-      ((CachedImageIcon)icon).setDark(dark);
+    if (icon instanceof DarkIconProvider) {
+      return ((DarkIconProvider)icon).getDarkIcon(dark);
     }
     return icon;
   }
 
-  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon {
+  public static final class CachedImageIcon extends RasterJBIcon implements ScalableIcon, DarkIconProvider, MenuBarIconProvider {
     private volatile Object myRealIcon;
     private String myOriginalPath;
     private ClassLoader myClassLoader;
@@ -682,6 +675,22 @@ public final class IconLoader {
       }
     }
 
+    @Override
+    public Icon getDarkIcon(boolean isDark) {
+      CachedImageIcon newIcon = copy();
+      newIcon.setDark(isDark);
+      return newIcon;
+    }
+
+    @Override
+    public Icon getMenuBarIcon(boolean isDark) {
+      Image img = loadFromUrl(ScaleContext.createIdentity(), isDark);
+      if (img != null) {
+        return new ImageIcon(img);
+      }
+      return this;
+    }
+
     @NotNull
     @Override
     public CachedImageIcon copy() {
@@ -806,8 +815,13 @@ public final class IconLoader {
     }
   }
 
+  // todo: remove and use DarkIconProvider when JBSDK supports scalable icons in menu
   public interface MenuBarIconProvider {
     Icon getMenuBarIcon(boolean isDark);
+  }
+
+  public interface DarkIconProvider {
+    Icon getDarkIcon(boolean isDark);
   }
 
   private static Icon getOrigin(RetrievableIcon icon) {

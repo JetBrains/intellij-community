@@ -70,6 +70,11 @@ public class CaptureSettingsProvider {
     addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
     addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
 
+    // JavaFX
+    addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);
+    addInsert("com/sun/glass/ui/InvokeLaterDispatcher$Future", "run",
+              new FieldKeyProvider("com/sun/glass/ui/InvokeLaterDispatcher$Future", "runnable"));
+
     IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
   }
 

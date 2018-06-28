@@ -15,10 +15,13 @@ public class StackTouchBars {
 
   private long myCurrentKeyMask;
 
+  // static String changeReason;  // for debugging only
+
   void updateKeyMask(long newMask) {
     if (myCurrentKeyMask != newMask) {
       synchronized (this) {
         // System.out.printf("change current mask: 0x%X -> 0x%X\n", myCurrentKeyMask, e.getModifiersEx());
+        // changeReason = String.format("change current mask: 0x%X -> 0x%X", myCurrentKeyMask, newMask);
         myCurrentKeyMask = newMask;
         _setTouchBarFromTopContainer();
       }
@@ -40,6 +43,7 @@ public class StackTouchBars {
     if (condition != null && !condition.value(top))
       return;
 
+    // System.out.println("removeContainer [POP]: " + top);
     myContainersStack.pop();
     _setTouchBarFromTopContainer();
   }
@@ -54,23 +58,6 @@ public class StackTouchBars {
   void setTouchBarFromTopContainer() { _setTouchBarFromTopContainer(); }
 
   synchronized
-  void removeTouchBar(TouchBar tb) {
-    if (tb == null)
-      return;
-
-    tb.onClose();
-    if (myContainersStack.isEmpty())
-      return;
-
-    BarContainer top = myContainersStack.peek();
-    if (top.get() == tb) {
-      myContainersStack.pop();
-      _setTouchBarFromTopContainer();
-    } else
-      myContainersStack.removeIf(bc -> bc.isTemporary() && bc.get() == tb);
-  }
-
-  synchronized
   void showContainer(BarContainer bar) {
     if (bar == null)
       return;
@@ -79,6 +66,7 @@ public class StackTouchBars {
     if (top == bar)
       return;
 
+    // System.out.println("showContainer: " + bar);
     myContainersStack.remove(bar);
     myContainersStack.push(bar);
     _setTouchBarFromTopContainer();
@@ -88,6 +76,9 @@ public class StackTouchBars {
   void removeContainer(BarContainer tb) {
     if (tb == null || myContainersStack.isEmpty())
       return;
+
+    // System.out.println("removeContainer: " + tb);
+    tb.onHide();
 
     BarContainer top = myContainersStack.peek();
     if (top == tb) {
@@ -107,7 +98,7 @@ public class StackTouchBars {
     if (top == bar)
       return;
 
-    final boolean preserveTop = top != null && (top.isTemporary() || top.get().isManualClose());
+    final boolean preserveTop = top != null && (top.isPopup() || top.isDialog() || top.get().isManualClose());
     if (preserveTop) {
       myContainersStack.remove(bar);
       myContainersStack.remove(top);
@@ -138,8 +129,11 @@ public class StackTouchBars {
     synchronized void setTouchBar(TouchBar bar) {
       // the usual event sequence "focus lost -> show underlay bar -> focus gained" produces annoying flicker
       // use slightly deferred update to skip "showing underlay bar"
+      // System.out.printf("schedule next TouchBar: %s | reason '%s'\n", bar, changeReason);
+      // changeReason = null;
+
       myNextBar = bar;
-      final Timer timer = new Timer(50, (event)->{
+      final Timer timer = new Timer(100, (event)->{
         _setNextTouchBar();
       });
       timer.setRepeats(false);
@@ -156,6 +150,7 @@ public class StackTouchBars {
         return;
       }
 
+      // System.out.println("set next: " + myNextBar);
       if (myCurrentBar != null)
         myCurrentBar.onHide();
       myCurrentBar = myNextBar;

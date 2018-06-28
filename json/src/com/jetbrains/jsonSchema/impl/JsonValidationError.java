@@ -3,6 +3,7 @@ package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.util.containers.ContainerUtil;
+import com.jetbrains.jsonSchema.extension.JsonLikePsiWalker;
 import com.jetbrains.jsonSchema.impl.fixes.AddMissingPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.RemoveProhibitedPropertyFix;
 import com.jetbrains.jsonSchema.impl.fixes.SuggestEnumValuesFix;
@@ -108,14 +109,15 @@ public class JsonValidationError {
   }
 
   @Nullable
-  public LocalQuickFix createFix() {
+  public LocalQuickFix createFix(@Nullable JsonLikePsiWalker.QuickFixAdapter quickFixAdapter) {
+    if (quickFixAdapter == null) return null;
     switch (myFixableIssueKind) {
       case MissingProperty:
-        return new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData);
+        return new AddMissingPropertyFix((MissingMultiplePropsIssueData)myIssueData, quickFixAdapter);
       case ProhibitedProperty:
-        return new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData);
+        return new RemoveProhibitedPropertyFix((ProhibitedPropertyIssueData)myIssueData, quickFixAdapter);
       case NonEnumValue:
-        return new SuggestEnumValuesFix();
+        return new SuggestEnumValuesFix(quickFixAdapter);
       default:
         return null;
     }

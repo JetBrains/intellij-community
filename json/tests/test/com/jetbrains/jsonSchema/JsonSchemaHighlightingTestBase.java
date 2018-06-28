@@ -26,9 +26,16 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
   protected abstract Predicate<VirtualFile> getAvailabilityPredicate();
 
   protected void doTest(@Language("JSON") @NotNull final String schema, @NotNull final String text) throws Exception {
+    final PsiFile file = configureInitially(schema, text);
+    doTest(file.getVirtualFile(), true, false);
+  }
+
+  @NotNull
+  protected PsiFile configureInitially(@NotNull @Language("JSON") String schema,
+                                       @NotNull String text) throws Exception {
     enableInspectionTool(getInspectionProfile());
 
-    final PsiFile file = createFile(myModule, getTestFileName(), text);
+    final PsiFile file = doCreateFile(text);
 
     registerProvider(getProject(), schema);
     Disposer.register(getTestRootDisposable(), new Disposable() {
@@ -38,7 +45,12 @@ public abstract class JsonSchemaHighlightingTestBase extends DaemonAnalyzerTestC
       }
     });
     configureByFile(file.getVirtualFile());
-    doTest(file.getVirtualFile(), true, false);
+    return file;
+  }
+
+  @NotNull
+  protected PsiFile doCreateFile(@NotNull String text) throws Exception {
+    return createFile(myModule, getTestFileName(), text);
   }
 
   private void registerProvider(Project project, @NotNull String schema) throws IOException {

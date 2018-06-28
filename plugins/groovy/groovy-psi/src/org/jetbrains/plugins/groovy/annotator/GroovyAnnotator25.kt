@@ -2,9 +2,13 @@
 package org.jetbrains.plugins.groovy.annotator
 
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.psi.PsiModifier
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
+import org.jetbrains.plugins.groovy.transformations.immutable.isImmutable
 import org.jetbrains.plugins.groovy.transformations.impl.namedVariant.collectAllParamsFromNamedVariantMethod
 
 /**
@@ -20,5 +24,17 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
       }
     }
     super.visitMethod(method)
+  }
+
+  override fun visitField(field: GrField) {
+    super.visitField(field)
+    immutableCheck(field)
+  }
+
+  private fun immutableCheck(field: GrField) {
+    val containingClass = field.containingClass ?: return
+    if (!field.hasModifierProperty(PsiModifier.STATIC) && hasImmutableAnnotation(containingClass) && !isImmutable(field)) {
+      holder.createErrorAnnotation(field.nameIdentifierGroovy, GroovyBundle.message("field.should.be.immutable", field.name))
+    }
   }
 }

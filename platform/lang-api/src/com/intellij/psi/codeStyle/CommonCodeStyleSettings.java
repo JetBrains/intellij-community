@@ -1050,11 +1050,6 @@ public class CommonCodeStyleSettings {
     public void setOverrideLanguageOptions(boolean overrideLanguageOptions) {
       myOverrideLanguageOptions = overrideLanguageOptions;
     }
-
-    @Nullable
-    public String getHint() {
-      return null;
-    }
   }
 
   @Override

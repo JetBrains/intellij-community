@@ -26,7 +26,7 @@ import com.intellij.psi.PsiExpression;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class PushInstruction extends Instruction implements ExpressionPushingInstruction {
+public class PushInstruction extends Instruction {
   private final DfaValue myValue;
   private final PsiExpression myPlace;
   private final boolean myReferenceWrite;
@@ -50,8 +50,7 @@ public class PushInstruction extends Instruction implements ExpressionPushingIns
     return myValue;
   }
 
-  @Override
-  public PsiExpression getExpression() {
+  public PsiExpression getPlace() {
     return myPlace;
   }
 

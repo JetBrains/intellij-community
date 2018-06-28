@@ -1,8 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiType;
+import com.intellij.openapi.util.NullUtils;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.Contract;
@@ -54,10 +54,10 @@ public interface UastCallMatcher {
 
 
 
-
-
   //TODO support primitive types for receiver/return types and arguments
   //TODO support static methods
+  //TODO support inheritors for classFqn
+  //TODO support generics
   class SimpleUastCallMatcher implements UastCallMatcher {
     // for all fields 'null' = doesn't matter
 
@@ -96,7 +96,7 @@ public interface UastCallMatcher {
     public boolean testCallExpression(@Nullable UCallExpression expression) {
       if (expression == null || expression.getMethodName() == null) return false; // null method name for constructor calls
       return methodNameMatches(expression) &&
-             receiverTypeMatches(expression) &&
+             classMatches(expression) &&
              returnTypeMatches(expression) &&
              argumentsMatch(expression);
     }
@@ -121,14 +121,14 @@ public interface UastCallMatcher {
              myMethodName.equals(expression.getCallableName());
     }
 
-    private boolean receiverTypeMatches(@NotNull UCallExpression expression) {
+    private boolean classMatches(@NotNull UCallExpression expression) {
       return myClassFqn == null ||
              myClassFqn.equals(AnalysisUastUtil.getExpressionReceiverTypeClassFqn(expression));
     }
 
     private boolean classMatches(@NotNull UCallableReferenceExpression expression) {
-      if (myClassFqn == null) return true;
-      return false; //TODO implement
+      return myClassFqn == null ||
+             myClassFqn.equals(AnalysisUastUtil.getCallableReferenceClassFqn(expression));
     }
 
     private boolean returnTypeMatches(@NotNull UCallExpression expression) {
@@ -138,7 +138,10 @@ public interface UastCallMatcher {
 
     private boolean returnTypeMatches(@NotNull UCallableReferenceExpression expression) {
       if (myReturnTypeClassFqn == null) return true;
-      return false; //TODO implement
+      PsiElement resolved = expression.resolve();
+      if (!(resolved instanceof PsiMethod)) return false;
+      //TODO doesn't work for generics
+      return myReturnTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(((PsiMethod)resolved).getReturnType()));
     }
 
     private boolean argumentsMatch(@NotNull UCallExpression expression) {
@@ -157,33 +160,42 @@ public interface UastCallMatcher {
 
         UExpression argumentExpression = argumentExpressions.get(i);
         PsiType argumentExpressionType = argumentExpression.getExpressionType();
+        if (requiredArgumentTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(argumentExpressionType))) {
+          continue;
+        }
         if (!myMatchArgumentTypeInheritors) {
-          if (!requiredArgumentTypeClassFqn.equals(AnalysisUastUtil.getTypeClassFqn(argumentExpressionType))) {
-            return false;
-          }
+          return false;
         }
-        else {
-          PsiClass argumentExpressionTypeClass = AnalysisUastUtil.getTypePsiClass(argumentExpressionType);
-          if (argumentExpressionTypeClass == null) return false;
 
-          //TODO probably this can be optimized using BFS
-          LinkedHashSet<PsiClass> expressionTypeSupers = InheritanceUtil.getSuperClasses(argumentExpressionTypeClass);
-          boolean argumentMatches = false;
-          for (PsiClass expressionTypeSuper : expressionTypeSupers) {
-            if (requiredArgumentTypeClassFqn.equals(expressionTypeSuper.getQualifiedName())) {
-              argumentMatches = true;
-              break;
-            }
+        PsiClass argumentExpressionTypeClass = AnalysisUastUtil.getTypePsiClass(argumentExpressionType);
+        if (argumentExpressionTypeClass == null) return false;
+
+        //TODO probably this can be optimized using BFS
+        LinkedHashSet<PsiClass> expressionTypeSupers = InheritanceUtil.getSuperClasses(argumentExpressionTypeClass);
+        boolean argumentMatches = false;
+        for (PsiClass expressionTypeSuper : expressionTypeSupers) {
+          if (requiredArgumentTypeClassFqn.equals(expressionTypeSuper.getQualifiedName())) {
+            argumentMatches = true;
+            break;
           }
-          if (!argumentMatches) return false;
         }
+        if (!argumentMatches) return false;
       }
       return true;
     }
 
     private boolean argumentsMatch(@NotNull UCallableReferenceExpression expression) {
       if (myArguments == null) return true;
-      return true; //TODO implement (seems like it only has meaning for static method references)
+      PsiElement resolved = expression.resolve();
+      if (!(resolved instanceof PsiMethod)) return false;
+
+      PsiMethod method = (PsiMethod)resolved;
+      PsiParameterList parameterList = method.getParameterList();
+      if (myArguments.length != parameterList.getParametersCount()) {
+        return false;
+      }
+      //TODO implement argument types matching
+      return true;
     }
   }
 
@@ -197,8 +209,8 @@ public interface UastCallMatcher {
   class Builder {
     private String myMethodName;
     private String[] myArguments;
-    private boolean myMatchArgumentTypeInheritors;
-    private String myReceiverTypeClassFqn;
+    private boolean myMatchArgumentTypeInheritors = true;
+    private String myClassFqn;
     private String myReturnTypeClassFqn;
 
     @NotNull
@@ -208,8 +220,8 @@ public interface UastCallMatcher {
     }
 
     @NotNull
-    public Builder withReceiverType(@NotNull String receiverTypeClassFqn) {
-      myReceiverTypeClassFqn = receiverTypeClassFqn;
+    public Builder withClassFqn(@NotNull String classFqn) {
+      myClassFqn = classFqn;
       return this;
     }
 
@@ -239,10 +251,14 @@ public interface UastCallMatcher {
 
     @NotNull
     public UastCallMatcher build() {
+      if (!NullUtils.hasNotNull(myMethodName, myArguments, myClassFqn, myReturnTypeClassFqn)) {
+        throw new IllegalStateException("At least one qualifier must be specified");
+      }
+
       return new SimpleUastCallMatcher(myMethodName,
                                        myArguments,
                                        myMatchArgumentTypeInheritors,
-                                       myReceiverTypeClassFqn,
+                                       myClassFqn,
                                        myReturnTypeClassFqn);
     }
   }

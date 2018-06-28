@@ -2,10 +2,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,9 +50,35 @@ public final class AnalysisUastUtil {
 
   @Nullable
   public static String getTypeClassFqn(@Nullable PsiType type) {
-    PsiClass psiClass = getTypePsiClass(type);
-    if (psiClass == null) return null;
-    return psiClass.getQualifiedName();
+    if (type == null) return null;
+    return type.getCanonicalText().replaceAll("<.*?>", ""); // workaround
+    //TODO https://youtrack.jetbrains.com/issue/KT-25024
+    //PsiClass psiClass = getTypePsiClass(type);
+    //if (psiClass == null) return null;
+    //return psiClass.getQualifiedName();
+  }
+
+  @Nullable
+  public static String getCallableReferenceClassFqn(@NotNull UCallableReferenceExpression expression) {
+    //TODO why getQualifierType() -> null for Java?
+    String classFqn = getTypeClassFqn(expression.getQualifierType());
+    if (classFqn != null) return classFqn;
+
+    UExpression qualifierExpression = expression.getQualifierExpression();
+    if (qualifierExpression == null) return null;
+    if (qualifierExpression instanceof UReferenceExpression) {
+      PsiElement resolved = ((UReferenceExpression)qualifierExpression).resolve();
+      if (resolved instanceof PsiClass) {
+        return ((PsiClass)resolved).getQualifiedName();
+      }
+      else if (resolved instanceof PsiVariable) {
+        return getTypeClassFqn(((PsiVariable)resolved).getType());
+      }
+    }
+    else if (qualifierExpression instanceof UThisExpression) {
+      return getTypeClassFqn(qualifierExpression.getExpressionType());
+    }
+    return null;
   }
 
   //TODO use UastContext#isExpressionValueUsed ?

@@ -233,7 +233,7 @@ public class UnnecessaryFullyQualifiedNameInspection extends BaseInspection impl
       if (!(target instanceof PsiClass)) {
         return;
       }
-      final CodeStyleSettings styleSettings = CodeStyle.getSettings(reference.getContainingFile());
+      final CodeStyleSettings styleSettings = CodeStyle.getSettings(containingFile);
       final PsiDocComment containingComment = PsiTreeUtil.getParentOfType(reference, PsiDocComment.class);
       boolean reportAsInformationInsideJavadoc = false;
       if (containingComment != null) {

@@ -686,7 +686,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacingAroundVarKeyword() {
-    doMethodTest("for (  var  path:  paths) ;", "for (var path: paths) ;");
+    doMethodTest("for (  var  path :  paths) ;", "for (var path : paths) ;");
     doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
   }
 
@@ -695,5 +695,11 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
     doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
     getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
     doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
+  }
+
+  public void testOneLineEnumSpacing() {
+    getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
+    doTextTest("enum E {E1, E2}",
+               "enum E { E1, E2 }");
   }
 }

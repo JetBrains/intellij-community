@@ -81,10 +81,11 @@ public class OptionalChainInliner implements CallInliner {
           .ifNotNull()
           .swap() // stack: .. optValue, elseValue
           .end()
-          .pop()
-          .resultOf(call);
+          .pop();
       })
-      .register(OPTIONAL_OR_NULL, CFGBuilder::resultOf)
+      .register(OPTIONAL_OR_NULL, (builder, call) -> {
+        // no op!
+      })
       .register(OPTIONAL_OR_ELSE_GET, (builder, call) -> {
         PsiExpression fn = call.getArgumentList().getExpressions()[0];
         builder
@@ -93,8 +94,7 @@ public class OptionalChainInliner implements CallInliner {
           .ifNull()
           .pop()
           .invokeFunction(0, fn)
-          .end()
-          .resultOf(call);
+          .end();
       })
       .register(OPTIONAL_IF_PRESENT, (builder, call) -> {
         PsiExpression fn = call.getArgumentList().getExpressions()[0];
@@ -106,8 +106,7 @@ public class OptionalChainInliner implements CallInliner {
           .elseBranch()
           .pop()
           .pushUnknown()
-          .end()
-          .resultOf(call);
+          .end();
       });
 
   private static final CallMapper<BiConsumer<CFGBuilder, PsiExpression>> INTERMEDIATE_MAPPER =
@@ -257,23 +256,14 @@ public class OptionalChainInliner implements CallInliner {
 
   private static void inlineOf(CFGBuilder builder, PsiType optionalElementType, PsiMethodCallExpression qualifierCall) {
     PsiExpression argument = qualifierCall.getArgumentList().getExpressions()[0];
-    builder
-      .pushExpression(argument)
-      .boxUnbox(argument, optionalElementType);
+    builder.pushExpression(argument)
+      .boxUnbox(argument, optionalElementType)
+      .pushUnknown() // ... arg, ?
+      .splice(2, 1, 0, 1) // ... arg, ?, arg
+      .invoke(qualifierCall) // ... arg, opt -- keep original call in CFG so some warnings like "ofNullable for null" can work
+      .pop(); // ... arg
     if ("of".equals(qualifierCall.getMethodExpression().getReferenceName())) {
-      builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter)
-        .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), qualifierCall)
-        .pop();
-    }
-    else {
-      builder
-        .dup()
-        .ifNull()
-          .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), qualifierCall)
-          .elseBranch()
-          .push(builder.getFactory().getFactValue(DfaFactType.OPTIONAL_PRESENCE, true), qualifierCall)
-        .end()
-        .pop();
+      builder.checkNotNull(argument, NullabilityProblemKind.passingNullableToNotNullParameter);
     }
   }
 

@@ -58,6 +58,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -924,7 +925,9 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
               if (lastChild instanceof PsiComment) { // keep trailing comment
                 declaration.addBefore(lastChild, null);
               }
-              statement.delete();
+              CommentTracker commentTracker = new CommentTracker();
+              commentTracker.markUnchanged(initializer);
+              commentTracker.deleteAndRestoreComments(statement);
               if (editor != null) {
                 LogicalPosition pos = new LogicalPosition(line, col);
                 editor.getCaretModel().moveToLogicalPosition(pos);

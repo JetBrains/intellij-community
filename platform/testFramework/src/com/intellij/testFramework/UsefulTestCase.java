@@ -6,10 +6,7 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.concurrency.IdeaForkJoinWorkerThreadFactory;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.lang.Language;
-import com.intellij.mock.MockApplication;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -85,7 +82,6 @@ public abstract class UsefulTestCase extends TestCase {
   static String ourPathToKeep;
   private final List<String> myPathsToKeep = new ArrayList<>();
 
-  private CodeStyleSettings myOldCodeStyleSettings;
   private String myTempDir;
 
   static final Key<String> CREATION_PLACE = Key.create("CREATION_PLACE");
@@ -229,24 +225,7 @@ public abstract class UsefulTestCase extends TestCase {
     containerMap.clear();
   }
 
-  protected void checkForSettingsDamage() {
-    Application app = ApplicationManager.getApplication();
-    if (isStressTest() || app == null || app instanceof MockApplication) {
-      return;
-    }
-
-    CodeStyleSettings oldCodeStyleSettings = myOldCodeStyleSettings;
-    if (oldCodeStyleSettings == null) {
-      return;
-    }
-
-    myOldCodeStyleSettings = null;
-
-    doCheckForSettingsDamage(oldCodeStyleSettings, CodeStyle.getDefaultSettings());
-  }
-
-  public static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings,
-                                              @NotNull CodeStyleSettings currentCodeStyleSettings) {
+  static void doCheckForSettingsDamage(@NotNull CodeStyleSettings oldCodeStyleSettings, @NotNull CodeStyleSettings currentCodeStyleSettings) {
     final CodeInsightSettings settings = CodeInsightSettings.getInstance();
     // don't use method references here to make stack trace reading easier
     //noinspection Convert2MethodRef
@@ -281,13 +260,6 @@ public abstract class UsefulTestCase extends TestCase {
       .append(() -> InplaceRefactoring.checkCleared())
       .append(() -> StartMarkAction.checkCleared())
       .run();
-  }
-
-  void storeSettings() {
-    if (!isStressTest() && ApplicationManager.getApplication() != null) {
-      myOldCodeStyleSettings = CodeStyle.getDefaultSettings().clone();
-      myOldCodeStyleSettings.getIndentOptions(StdFileTypes.JAVA);
-    }
   }
 
   @NotNull

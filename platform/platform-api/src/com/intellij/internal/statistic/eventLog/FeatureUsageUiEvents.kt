@@ -1,15 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.internal.statistic.eventLog
 
+import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.components.ServiceManager
 
 fun getUiEventLogger(): FeatureUsageUiEvents {
-  return try {
-    ServiceManager.getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
+  if (ApplicationManager.getApplication() != null) {
+    return ServiceManager.getService(FeatureUsageUiEvents::class.java) ?: EmptyFeatureUsageUiEvents
   }
-  catch (e : Exception) {
-    EmptyFeatureUsageUiEvents
-  }
+  // cannot load service if application is not initialized
+  return EmptyFeatureUsageUiEvents
 }
 
 interface FeatureUsageUiEvents {

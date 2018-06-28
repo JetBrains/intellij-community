@@ -13,7 +13,7 @@ public class Test {
 
   public static void main(String[] args) {
       List<String> list = new ArrayList<>();
-      for (String s: Arrays.asList("a", "b", "c")) {
+      for (String s : Arrays.asList("a", "b", "c")) {
           String doProcess = doProcess(s);
           list.add(doProcess);
       }

@@ -6,8 +6,10 @@ import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.PathUtil;
+import kotlin.KotlinVersion;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.uast.ULiteralExpression;
+import org.junit.Assume;
 
 import java.util.Set;
 
@@ -16,6 +18,12 @@ import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 
 @TestDataPath("$CONTENT_ROOT/testData/codeInspection/nonNls")
 public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
+  @Override
+  protected void setUp() throws Exception {
+    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
+    super.setUp();
+  }
+
   @Override
   protected String getBasePath() {
     return JvmAnalysisKtTestsUtil.TEST_DATA_PROJECT_RELATIVE_BASE_PATH + "/codeInspection/nonNls";

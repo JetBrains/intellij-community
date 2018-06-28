@@ -7,6 +7,7 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -210,7 +211,7 @@ public class FilterPanel implements FilterTable {
     myProfile = profile;
   }
 
-  public void setCompiledPattern(CompiledPattern compiledPattern) {
+  public void setCompiledPattern(@NotNull CompiledPattern compiledPattern) {
     myCompiledPattern = compiledPattern;
   }
 
@@ -225,7 +226,11 @@ public class FilterPanel implements FilterTable {
     final boolean completePattern = Configuration.CONTEXT_VAR_NAME.equals(varName);
     final boolean target = myConstraint.isPartOfSearchResults();
     myTableModel.setItems(new SmartList<>());
-    myFilters.forEach(f -> initFilter(f, nodes, completePattern, target));
+    ReadAction.run(() -> {
+      for (FilterAction filter : myFilters) {
+        initFilter(filter, nodes, completePattern, target);
+      }
+    });
 
     final String message = Configuration.CONTEXT_VAR_NAME.equals(varName)
                            ? "No filters added for the complete match."

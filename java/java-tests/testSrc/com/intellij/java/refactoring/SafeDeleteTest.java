@@ -98,6 +98,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doSingleFileTest();
   }
 
+  public void testDeleteParameterOfASiblingMethod() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testDeleteMethodCascade() throws Exception {
     doSingleFileTest();
   }

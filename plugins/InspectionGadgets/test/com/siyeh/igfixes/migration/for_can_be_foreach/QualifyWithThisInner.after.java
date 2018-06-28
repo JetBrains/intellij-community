@@ -24,7 +24,7 @@ public class Test {
       public void run() {
         int size = values.size();
         int values = 5;
-          for (String value: Test.this.values) {
+          for (String value : Test.this.values) {
               System.out.println(value);
           }
       }

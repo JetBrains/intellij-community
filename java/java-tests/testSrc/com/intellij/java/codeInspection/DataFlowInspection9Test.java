@@ -30,4 +30,5 @@ public class DataFlowInspection9Test extends DataFlowInspectionTestCase {
 
   public void testNullabilityJdk9() { doTest();}
   public void testMutabilityJdk9() { doTest();}
+  public void testMutabilityInferred() { doTest(); }
 }

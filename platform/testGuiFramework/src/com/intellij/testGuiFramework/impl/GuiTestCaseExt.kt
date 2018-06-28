@@ -58,8 +58,6 @@ open class GuiTestCaseExt : GuiTestCase() {
 
   @After
   fun tearDown() {
-    if (isIdeFrameRun())
-      closeProject()
     logEndTest(testMethod.methodName)
     guiTestRule.IdeHandling().tearDown()
   }
@@ -209,7 +207,7 @@ fun JDialogFixture.checkOneValue(guiTestCase: GuiTestCase, expectedField: String
   }
 }
 
-fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
+fun GuiTestCase.checkProjectIsRun(configuration: String, message: String) {
   val buttonRun = "Run"
   logTestStep("Going to run configuration `$configuration`")
   ideFrame {
@@ -220,11 +218,11 @@ fun GuiTestCase.checkProjectIsRun(configuration: String, message: String){
     toolwindow(id = buttonRun) {
       content(tabName = configuration) {
         editor {
-          val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
-          assert(output.firstOrNull { it.contains(message) } != null){
-            "Run output:\n" +
-            "\t${output.joinToString("\n\t")}\n" +
-            "doesn't contain expected message `$message`"
+          GuiTestUtilKt.waitUntil("Wait for '$message' appears") {
+            val output = this.getCurrentFileContents(false)?.lines()?.filter { it.trim().isNotEmpty() } ?: listOf()
+            logInfo("output: ${output.map { "\n\t$it" }}")
+            logInfo("expected message = '$message'")
+            output.firstOrNull { it.contains(message) } != null
           }
         }
       }
@@ -238,13 +236,8 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
     editor {
       waitUntilFileIsLoaded()
       waitUntilErrorAnalysisFinishes()
-      assert(gutter.isGutterIconPresent(GutterFixture.GutterIcon.RUN_SCRIPT)) {
-        "No `Run` icons found on gutter panel"
-      }
+      gutter.waitUntilIconsShown(mapOf(GutterFixture.GutterIcon.RUN_SCRIPT to expectedNumberOfRunIcons))
       val gutterRunLines = gutter.linesWithGutterIcon(GutterFixture.GutterIcon.RUN_SCRIPT)
-      assert(gutterRunLines.size == expectedNumberOfRunIcons) {
-        "Found ${gutterRunLines.size} gutter icons `Run`, but expected $expectedNumberOfRunIcons"
-      }
       val contents = this@editor.getCurrentFileContents(false)?.lines() ?: listOf()
       for ((index, line) in gutterRunLines.withIndex()) {
         // line numbers start with 1, but index in the contents list starts with 0

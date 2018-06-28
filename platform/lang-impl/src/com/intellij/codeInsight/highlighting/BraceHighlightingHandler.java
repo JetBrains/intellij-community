@@ -92,7 +92,7 @@ public class BraceHighlightingHandler {
 
   static void lookForInjectedAndMatchBracesInOtherThread(@NotNull final Editor editor,
                                                          @NotNull final Alarm alarm,
-                                                         @NotNull final Processor<BraceHighlightingHandler> processor) {
+                                                         @NotNull final Processor<? super BraceHighlightingHandler> processor) {
     ApplicationManagerEx.getApplicationEx().assertIsDispatchThread();
     if (!isValidEditor(editor)) return;
     if (!PROCESSED_EDITORS.add(editor)) {
@@ -249,13 +249,6 @@ public class BraceHighlightingHandler {
     int offset = myEditor.getCaretModel().getOffset();
     final CharSequence chars = myEditor.getDocument().getCharsSequence();
 
-    //if (myEditor.offsetToLogicalPosition(offset).column != myEditor.getCaretModel().getLogicalPosition().column) {
-    //  // we are in virtual space
-    //  final int caretLineNumber = myEditor.getCaretModel().getLogicalPosition().line;
-    //  if (caretLineNumber >= myDocument.getLineCount()) return;
-    //  offset = myDocument.getLineEndOffset(caretLineNumber) + myDocument.getLineSeparatorLength(caretLineNumber);
-    //}
-
     final int originalOffset = offset;
 
     EditorHighlighter highlighter = getEditorHighlighter();
@@ -336,13 +329,7 @@ public class BraceHighlightingHandler {
       return;
     }
 
-    final int _offset = offset;
-    final FileType _fileType = fileType;
-    myAlarm.addRequest(() -> {
-      if (!myProject.isDisposed() && !myEditor.isDisposed()) {
-        highlightScope(_offset, _fileType);
-      }
-    }, 300);
+    highlightScope(offset, fileType);
   }
 
   @NotNull
@@ -374,12 +361,10 @@ public class BraceHighlightingHandler {
     HighlighterIterator iterator = getEditorHighlighter().createIterator(offset);
     final CharSequence chars = myDocument.getCharsSequence();
 
-    if (!BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars)) {
-//      if (BraceMatchingUtil.isRBraceTokenToHighlight(myFileType, iterator) || BraceMatchingUtil.isLBraceTokenToHighlight(myFileType, iterator)) return;
-    }
-    else {
-      if (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
-          BraceMatchingUtil.isLBraceToken(iterator, chars, fileType)) return;
+    if (BraceMatchingUtil.isStructuralBraceToken(fileType, iterator, chars) &&
+        (BraceMatchingUtil.isRBraceToken(iterator, chars, fileType) ||
+         BraceMatchingUtil.isLBraceToken(iterator, chars, fileType))) {
+      return;
     }
 
     if (!BraceMatchingUtil.findStructuralLeftBrace(fileType, iterator, chars)) {
@@ -461,17 +446,7 @@ public class BraceHighlightingHandler {
       final int startLine = myEditor.offsetToLogicalPosition(lBrace.getStartOffset()).line;
       final int endLine = myEditor.offsetToLogicalPosition(rBrace.getEndOffset()).line;
       if (endLine - startLine > 0) {
-        final Runnable runnable = () -> {
-          if (myProject.isDisposed() || myEditor.isDisposed()) return;
-          lineMarkFragment(startLine, endLine, matched);
-        };
-
-        if (!scopeHighlighting) {
-          myAlarm.addRequest(runnable, 300);
-        }
-        else {
-          runnable.run();
-        }
+        lineMarkFragment(startLine, endLine, matched);
       }
       else {
         removeLineMarkers();

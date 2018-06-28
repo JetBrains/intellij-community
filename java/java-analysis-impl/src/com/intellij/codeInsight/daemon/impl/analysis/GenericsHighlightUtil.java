@@ -28,6 +28,7 @@ import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.containers.ContainerUtil;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -645,13 +646,8 @@ public class GenericsHighlightUtil {
     final PsiType retErasure2 = TypeConversionUtil.erasure(superMethod.getReturnType());
 
     boolean differentReturnTypeErasure = !Comparing.equal(retErasure1, retErasure2);
-    if (checkEqualsSuper && atLeast17) {
-      if (retErasure1 != null && retErasure2 != null) {
-        differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
-      }
-      else {
-        differentReturnTypeErasure = !(retErasure1 == null && retErasure2 == null);
-      }
+    if (checkEqualsSuper && atLeast17 && retErasure1 != null && retErasure2 != null) {
+      differentReturnTypeErasure = !TypeConversionUtil.isAssignable(retErasure1, retErasure2);
     }
 
     if (differentReturnTypeErasure &&
@@ -838,8 +834,7 @@ public class GenericsHighlightUtil {
   @Nullable
   static HighlightInfo checkEnumInstantiation(@NotNull PsiElement expression, @Nullable PsiClass aClass) {
     if (aClass != null && aClass.isEnum() &&
-        (!(expression instanceof PsiNewExpression) ||
-         ((PsiNewExpression)expression).getArrayDimensions().length == 0 && ((PsiNewExpression)expression).getArrayInitializer() == null)) {
+        !(expression instanceof PsiNewExpression && ExpressionUtils.isArrayCreationExpression((PsiNewExpression)expression))) {
       String description = JavaErrorMessages.message("enum.types.cannot.be.instantiated");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     }
@@ -1011,7 +1006,7 @@ public class GenericsHighlightUtil {
         return highlightInfo;
       }
       PsiClass superClass = superMethod.getMethod().getContainingClass();
-      if (languageLevel.equals(LanguageLevel.JDK_1_5) &&
+      if (languageLevel == LanguageLevel.JDK_1_5 &&
           superClass != null &&
           superClass.isInterface()) {
         String description = JavaErrorMessages.message("override.not.allowed.in.interfaces");
