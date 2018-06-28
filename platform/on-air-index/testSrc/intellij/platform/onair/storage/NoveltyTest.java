@@ -19,7 +19,7 @@ public class NoveltyTest {
     if (Files.exists(path)) {
       Files.delete(path);
     }
-    Novelty novelty = new NoveltyImpl(path.toFile());
+    NoveltyImpl novelty = new NoveltyImpl(path.toFile());
     final Random generator = new Random();
     byte[] bytes1 = new byte[100];
     generator.nextBytes(bytes1);
@@ -33,7 +33,7 @@ public class NoveltyTest {
     Assert.assertArrayEquals(bytes2, novelty.lookup(addr2));
     novelty.update(addr1, bytes2);
     Assert.assertArrayEquals(bytes2, novelty.lookup(addr1));
-    ((NoveltyImpl)novelty).close();
+    novelty.close();
 
     novelty = new NoveltyImpl(path.toFile());
 
@@ -42,6 +42,36 @@ public class NoveltyTest {
 
     Assert.assertArrayEquals(bytes2, bytes1_);
     Assert.assertArrayEquals(bytes2, bytes2_);
-    ((NoveltyImpl)novelty).close();
+    novelty.close();
+  }
+
+  @Test
+  public void freeTest() throws IOException {
+    // [ ] -alloc-> [ | ] -free-> [ ] -alloc-> [ | | | ] -free-> [ } -alloc-> [ | | | | | | | ] -etc-> ...
+    final Random generator = new Random();
+
+    final Path path = Paths.get("./resources/index.tmp");
+    Novelty novelty = new NoveltyImpl(path.toFile());
+
+    final int times = 4;
+    final int size = ((NoveltyImpl) novelty).getSize();
+
+    for (int i = 1; i < times; i++) {
+      final int partitions = (int) Math.pow(8, i);
+      final int partitionLength = (size / partitions) - 5;
+
+      byte[] randomData = new byte[partitionLength];
+      long[] addrs = new long[partitions];
+
+      for (int j = 0; j < partitions; j++) {
+        generator.nextBytes(randomData);
+        addrs[j] = novelty.alloc(randomData);
+      }
+
+      for (int j = 0; j < partitions; j++) {
+        novelty.free(addrs[j]);
+      }
+      Assert.assertEquals(((NoveltyImpl)novelty).getSize(), size);
+    }
   }
 }
