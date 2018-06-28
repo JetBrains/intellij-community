@@ -128,6 +128,10 @@ public class CodeStyleMainPanel extends JPanel implements TabbedLanguageCodeStyl
     onCurrentSchemeChanged();
 
   }
+  
+  public CodeStyleSchemesModel getModel() {
+    return myModel;
+  }
 
   @NotNull
   private JComponent createLinkComponent() {

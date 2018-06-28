@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.extractor.Utils;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
@@ -110,7 +111,7 @@ public abstract class CodeStyleDeriveProcessor {
       Utils.logError("IndentOptions from common settings are null; using indent options from settings.");
       indentOptions = settings.getIndentOptions();
     }
-    final Object languageSettings = Utils.getLanguageSettings(settings, language);
+    final CustomCodeStyleSettings languageSettings = Utils.getLanguageSettings(settings, language);
 
     List<Value> values = readAll("commonSettings", commonSettings);
     if (languageSettings != null) {
