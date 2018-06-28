@@ -129,7 +129,6 @@ public class JavaArrangementParseInfo {
         }
         JavaElementArrangementEntry dependentEntry = myMethodEntriesMap.get(dependentMethod);
         if (dependentEntry == null) {
-          methodToStatus.put(currentMethod, PASSED);
           continue;
         }
         ArrangementEntryDependencyInfo dependentMethodInfo = cache.get(dependentMethod);
