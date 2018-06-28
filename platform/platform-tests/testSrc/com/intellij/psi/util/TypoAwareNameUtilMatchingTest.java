@@ -6,4 +6,9 @@ public class TypoAwareNameUtilMatchingTest extends NameUtilMatchingTestCase {
     assertMatches("doba", "fooBar");
     assertMatches("dobs", "fooBar");
   }
+
+  public void testFragmentWithBrokenFirstLetter() {
+    assertMatches("dova", "fooBar");
+    assertMatches("dova", "fooBqBar");
+  }
 }

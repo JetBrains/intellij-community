@@ -394,7 +394,7 @@ public class MinusculeMatcher implements Matcher {
                                               boolean allowSpecialChars, boolean wordStartsOnly) {
       int next = wordStartsOnly
                  ? indexOfWordStart(patternIndex, startAt)
-                 : indexOfIgnoreCase(startAt + 1, charAt(patternIndex), patternIndex);
+                 : indexOfIgnoreCase(startAt + 1, patternIndex);
 
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
       if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(myName, myHardSeparators, startAt, next)) {
@@ -602,25 +602,42 @@ public class MinusculeMatcher implements Matcher {
         if (nextWordStart >= myName.length()) {
           return -1;
         }
-        if (charEquals(patternIndex, nextWordStart, true, false)) {
+        if (charEquals(patternIndex, nextWordStart, true, true)) {
           return nextWordStart;
         }
       }
     }
 
-    private int indexOfIgnoreCase(int fromIndex, char p, int patternIndex) {
+    private int indexOfIgnoreCase(int fromIndex, int patternIndex) {
+      char p = charAt(patternIndex);
       if (isAsciiName && IOUtil.isAscii(p)) {
-        char pUpper = toUpperCase(patternIndex);
-        char pLower = toLowerCase(patternIndex);
-        for (int i = fromIndex; i < myName.length(); i++) {
-          char c = myName.charAt(i);
-          if (c == p || toUpperAscii(c) == pUpper || toLowerAscii(c) == pLower) {
-            return i;
-          }
+        int i = indexIgnoringCaseAscii(fromIndex, patternIndex, p);
+        if (i != -1) return i;
+
+        if (myAllowTypos) {
+          int leftMiss = indexIgnoringCaseAscii(fromIndex, patternIndex, myTypoService.leftMiss(p));
+          if (leftMiss != -1) return leftMiss;
+
+          int rightMiss = indexIgnoringCaseAscii(fromIndex, patternIndex, myTypoService.rightMiss(p));
+          if (rightMiss != -1) return rightMiss;
         }
+
         return -1;
       }
       return StringUtil.indexOfIgnoreCase(myName, p, fromIndex);
+    }
+
+    @Nullable
+    private int indexIgnoringCaseAscii(int fromIndex, int patternIndex, char p) {
+      char pUpper = toUpperAscii(p);
+      char pLower = toLowerAscii(p);
+      for (int i = fromIndex; i < myName.length(); i++) {
+        char c = myName.charAt(i);
+        if (c == p || toUpperAscii(c) == pUpper || toLowerAscii(c) == pLower) {
+          return i;
+        }
+      }
+      return -1;
     }
   }
 
