@@ -9,6 +9,7 @@ import com.intellij.util.indexing.IndexExtension;
 import com.intellij.util.indexing.IndexId;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.io.VoidDataExternalizer;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.DataInput;
@@ -34,13 +35,7 @@ public class PwaIndices {
       @NotNull
       @Override
       public DataIndexer<ClassFileSymbol, Collection<ClassFileSymbol>, ClassFileData> getIndexer() {
-        return new DataIndexer<ClassFileSymbol, Collection<ClassFileSymbol>, ClassFileData>() {
-          @NotNull
-          @Override
-          public Map<ClassFileSymbol, Collection<ClassFileSymbol>> map(@NotNull ClassFileData inputData) {
-            return inputData.getUsageMap();
-          }
-        };
+        return ClassFileData::getUsageMap;
       }
 
       @NotNull
@@ -73,13 +68,7 @@ public class PwaIndices {
       @NotNull
       @Override
       public DataIndexer<ClassFileSymbol, Collection<ClassFileSymbol>, ClassFileData> getIndexer() {
-        return new DataIndexer<ClassFileSymbol, Collection<ClassFileSymbol>, ClassFileData>() {
-          @NotNull
-          @Override
-          public Map<ClassFileSymbol, Collection<ClassFileSymbol>> map(@NotNull ClassFileData inputData) {
-            return inputData.getHierarchy();
-          }
-        };
+        return ClassFileData::getHierarchy;
       }
 
       @NotNull
@@ -104,7 +93,40 @@ public class PwaIndices {
   }
 
   public static Collection<IndexExtension<?, ?, ClassFileData>> getIndices() {
-    return ContainerUtil.list(createBackUsagesIndex(), createBackHierarchyIndex());
+    return ContainerUtil.list(createBackUsagesIndex(), createBackHierarchyIndex(), createDefsIndex());
+  }
+
+  private static IndexExtension<ClassFileSymbol, Void, ClassFileData> createDefsIndex() {
+    return new IndexExtension<ClassFileSymbol, Void, ClassFileData>() {
+      @NotNull
+      @Override
+      public IndexId<ClassFileSymbol, Void> getName() {
+        return DEF;
+      }
+
+      @NotNull
+      @Override
+      public DataIndexer<ClassFileSymbol, Void, ClassFileData> getIndexer() {
+        return ClassFileData::getDefs;
+      }
+
+      @NotNull
+      @Override
+      public KeyDescriptor<ClassFileSymbol> getKeyDescriptor() {
+        return ClassFileSymbol.EXTERNALIZER;
+      }
+
+      @NotNull
+      @Override
+      public DataExternalizer<Void> getValueExternalizer() {
+        return VoidDataExternalizer.INSTANCE;
+      }
+
+      @Override
+      public int getVersion() {
+        return 0;
+      }
+    };
   }
 
   @NotNull

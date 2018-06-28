@@ -67,6 +67,7 @@ public class PwaBuilder extends BaseInstrumentingBuilder {
       public void visit(int version, int access, String name, String signature, String superName, String[] interfaces) {
         myCurrentClassId = new ClassFileSymbol.Clazz(indexWriter.enumerateName(name));
 
+        classFileData.defs.put(myCurrentClassId, null);
         ArrayList<ClassFileSymbol.Clazz> clazzes = new ArrayList<>();
         ClassFileSymbol.Clazz superId = new ClassFileSymbol.Clazz(indexWriter.enumerateName(superName));
         clazzes.add(superId);
@@ -80,9 +81,18 @@ public class PwaBuilder extends BaseInstrumentingBuilder {
         }
       }
 
+
+      @Override
+      public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
+        classFileData.defs.put(new ClassFileSymbol.Field(indexWriter.enumerateName(name), myCurrentClassId.name), null);
+        return super.visitField(access, name, desc, signature, value);
+      }
+
       @Override
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         ClassFileSymbol.Method myMethod = new ClassFileSymbol.Method(indexWriter.enumerateName(name), myCurrentClassId.name, Type.getArgumentTypes(desc).length);
+        classFileData.defs.put(myMethod, null);
+
         return new MethodVisitor(Opcodes.API_VERSION) {
           // todo local variable etc
 
@@ -93,7 +103,7 @@ public class PwaBuilder extends BaseInstrumentingBuilder {
 
           @Override
           public void visitFieldInsn(int opcode, String owner, String name, String desc) {
-            sink(new ClassFileSymbol.Field(indexWriter.enumerateName(name), indexWriter.enumerateName(name)));
+            sink(new ClassFileSymbol.Field(indexWriter.enumerateName(name), myCurrentClassId.name));
           }
 
           private void sink(ClassFileSymbol symbol) {
