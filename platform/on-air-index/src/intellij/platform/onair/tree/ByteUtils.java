@@ -65,4 +65,10 @@ public class ByteUtils {
     }
     return -address;
   }
+
+  public static byte[] toBytes(int x) {
+    byte[] bytes = new byte[4];
+    writeUnsignedInt(x, bytes, 0);
+    return bytes;
+  }
 }

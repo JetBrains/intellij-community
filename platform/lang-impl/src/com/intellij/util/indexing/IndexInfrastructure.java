@@ -22,6 +22,7 @@ package com.intellij.util.indexing;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,6 +57,21 @@ public class IndexInfrastructure {
   public static final boolean ourDoAsyncIndicesInitialization = SystemProperties.getBooleanProperty("idea.async.indices.initialization", true);
   private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "IndexInfrastructure Pool");
+
+
+
+  static {
+
+    base-revision
+
+    revision;
+
+    storage {host
+             port}
+
+    indexid {:forward-head
+             :inverted-head }
+  }
 
   private IndexInfrastructure() {
   }

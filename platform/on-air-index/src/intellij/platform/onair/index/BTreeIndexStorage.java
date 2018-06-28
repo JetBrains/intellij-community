@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.util.Arrays;
 
 public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, Value> {
 
@@ -36,6 +37,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final DataExternalizer<Value> myValueExternalizer;
+  private final Novelty myNovelty;
   private BTree myTree;
   private BTree myKeysInternary;
 
@@ -183,6 +185,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
                            int cacheSize,
                            int R,
                            int baseR) {
+    myNovelty = novelty;
     myKeyDescriptor = keyDescriptor;
     myValueExternalizer = valueExternalizer;
     int keySize = (keyDescriptor instanceof InlineKeyDescriptor ? 4 : 16) + 4;
@@ -242,17 +245,39 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
       protected void onDropFromCache(final Key key, @NotNull final CompositeValueContainer<Value> valueContainer) {
         if (valueContainer.myDelta.dirty) {
           synchronized (lockObject) {
-            BufferExposingByteArrayOutputStream baos = new BufferExposingByteArrayOutputStream();
-            DataOutputStream dos = new DataOutputStream(baos);
+            BufferExposingByteArrayOutputStream valueBytes = new BufferExposingByteArrayOutputStream();
+            DataOutputStream dos = new DataOutputStream(valueBytes);
             try {
               valueContainer.myDelta.saveTo(dos, myValueExternalizer);
             }
             catch (IOException e) {
               throw new RuntimeException(e);
             }
-            byte[] treeKey = toTreeKey(key);
-            setR(treeKey, R);
-            myTree.put(novelty, treeKey, baos.toByteArray(), true);
+
+            if (myKeyDescriptor instanceof InlineKeyDescriptor<?>) {
+              int keyInt = ((InlineKeyDescriptor<Key>)myKeyDescriptor).toInt(key);
+              byte[] resKey = new byte[4 + 4];
+              ByteUtils.writeUnsignedInt(keyInt, resKey, 4);
+              setR(resKey, R);
+              myTree.put(novelty, resKey, valueBytes.toByteArray(), true);
+            }
+            else {
+              BufferExposingByteArrayOutputStream stream = new BufferExposingByteArrayOutputStream();
+              try {
+                myKeyDescriptor.save(new DataOutputStream(stream), key);
+              }
+              catch (IOException e) {
+                throw new RuntimeException(e);
+              }
+              byte[] keyBytes = stream.toByteArray();
+              byte[] res = new byte[16 + 4];
+              byte[] keyHashBytes = HASH.hashBytes(keyBytes).asBytes();
+              System.arraycopy(keyHashBytes, 0, res, 4, 16);
+              setR(res, R);
+
+              myTree.put(novelty, res, valueBytes.toByteArray(), true);
+              myKeysInternary.put(novelty, keyHashBytes, keyBytes, false);
+            }
           }
         }
       }
@@ -262,8 +287,22 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   @Override
   public boolean processKeys(@NotNull Processor<Key> processor, GlobalSearchScope scope, @Nullable IdFilter idFilter)
     throws StorageException {
+    return myTree.forEach(myNovelty, (key, value) -> processor.process(extractKey(key)));
+  }
 
-    return false;
+  private Key extractKey(byte[] key) {
+    if (myKeyDescriptor instanceof InlineKeyDescriptor) {
+      return ((InlineKeyDescriptor<Key>)myKeyDescriptor).fromInt((int)ByteUtils.readUnsignedInt(key, 4));
+    } else {
+      byte[] keyBytes = myKeysInternary.get(myNovelty, Arrays.copyOfRange(key, 4, 20));
+      try {
+        assert keyBytes != null;
+        return myKeyDescriptor.read(new DataInputStream(new ByteArrayInputStream(keyBytes)));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
   }
 
   @Override

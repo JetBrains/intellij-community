@@ -24,10 +24,7 @@ import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.impl.IndexStorage;
 import com.intellij.util.indexing.impl.KeyCollectionBasedForwardIndex;
 import com.intellij.util.indexing.impl.MapReduceIndex;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.Assert;
@@ -46,7 +43,7 @@ public class StringIndex {
   private volatile Throwable myRebuildThrowable;
   public StringIndex(String testName,
                      final IndexStorage<String, String> storage,
-                     final PersistentHashMap<Integer, Collection<String>> inputIndex,
+                     final PersistentMap<Integer, Collection<String>> inputIndex,
                      boolean failOnRebuildRequest)
     throws IOException {
     IndexId<String, String> id = IndexId.create(testName + "string_index");
@@ -83,7 +80,7 @@ public class StringIndex {
     myIndex = new MapReduceIndex<String, String, PathContentPair>(extension, storage, new KeyCollectionBasedForwardIndex<String, String>(extension) {
       @NotNull
       @Override
-      public PersistentHashMap<Integer, Collection<String>> createMap() {
+      public PersistentMap<Integer, Collection<String>> createMap() {
         return inputIndex;
       }
     }) {
