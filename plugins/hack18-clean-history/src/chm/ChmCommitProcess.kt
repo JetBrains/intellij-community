@@ -92,10 +92,7 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
   private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
     invokeAndWaitIfNeed {
       // Don't let veto
-      val doc = FileDocumentManager.getInstance().getDocument(file)
-      if (doc != null) {
-        doc.putUserData<Any>(DOCUMENT_BEING_COMMITTED_KEY, null)
-      }
+      FileDocumentManager.getInstance().getDocument(file)?.putUserData<Any>(DOCUMENT_BEING_COMMITTED_KEY, null)
 
       // as patches
       val patchApplier = PatchApplier<Any>(project, root, rev.patches, null, null) // todo no dialogs, fail on conflicts
@@ -119,17 +116,14 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     val revisions = getLocalHistory(f) // (1) backwards: 0 is the latest (2) labels are included as revisions
 
     val historyAfterLastCommit = mutableListOf<Revision>()
-    var lastRev = false
     for (rev in revisions) {
       if (rev.isLabel) {
         if (rev.label!!.startsWith("Commit Changes: ")) {
-          lastRev = true
           break
         }
       }
       else {
-        historyAfterLastCommit.add(rev)   // one more, the last one, because the name is written for previous revision
-        if (lastRev) break
+        historyAfterLastCommit.add(rev)
       }
     }
 
