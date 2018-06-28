@@ -1428,6 +1428,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
+    System.out.println("rebuild requested for index " + indexId);
+    throwable.printStackTrace();
     cleanupProcessedFlag();
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;

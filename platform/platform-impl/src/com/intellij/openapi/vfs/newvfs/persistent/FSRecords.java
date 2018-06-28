@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -37,6 +38,7 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
+import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,6 +47,10 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -53,6 +59,7 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
+import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -111,9 +118,9 @@ public class FSRecords {
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
 
-  private static final ReentrantReadWriteLock lock;
-  private static final ReentrantReadWriteLock.ReadLock r;
-  private static final ReentrantReadWriteLock.WriteLock w;
+  public static final ReentrantReadWriteLock lock;
+  public static final ReentrantReadWriteLock.ReadLock r;
+  public static final ReentrantReadWriteLock.WriteLock w;
 
   private static volatile int ourLocalModificationCount;
   private static volatile boolean ourIsDisposed;
@@ -152,7 +159,7 @@ public class FSRecords {
   }
 
   @NotNull
-  static File basePath() {
+  public static File basePath() {
     return new File(DbConnection.getCachesDir());
   }
 
@@ -175,7 +182,6 @@ public class FSRecords {
     private static boolean myCorrupted;
 
     private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
-
 
     public static void connect() {
       writeAndHandleErrors(()->{
@@ -282,6 +288,19 @@ public class FSRecords {
           cleanRecord(1); // Create root record
           setCurrentVersion();
         }
+
+        final int filelength = (int)myRecords.length();
+        LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
+        myContents.setVersion(myRecords.getInt(HEADER_VERSION_OFFSET));
+
+        int count = filelength / RECORD_SIZE;
+        for (int n = 2; n < count; n++) {
+          if (!BitUtil.isSet(getFlags(n), PersistentFS.IS_DIRECTORY_FLAG)) {
+            setContentRecordId(n, 0);
+          }
+        }
+
+
 
         if (getVersion() != VERSION) {
           throw new IOException("FS repository version mismatch");
@@ -531,8 +550,45 @@ public class FSRecords {
   private FSRecords() {
   }
 
+  public static void download(String revision) {
+    String bucket = "onair-index-data";
+    String region = "eu-central-1";
+    try {
+      InputStream stream = new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision).openStream();
+      Element element = JDOMUtil.load(stream);
+
+      List<String> files = element.getChildren().stream()
+                                    .filter(e -> e.getName().equals("Contents"))
+                                    .flatMap(e -> e.getChildren().stream())
+                                    .filter(o -> o.getName().equals("Key"))
+                                    .map(e -> e.getText())
+                                    .map(s -> s.split("/")[1])
+                                    .collect(Collectors.toList());
+
+
+      for (String file : files) {
+        String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/" + file;
+        ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
+        basePath().mkdirs();
+        FileChannel dest = new FileOutputStream(new File(basePath(), file)).getChannel();
+        dest.transferFrom(source, 0, Long.MAX_VALUE);
+      }
+    }
+    catch (Exception e) {
+      throw new RuntimeException("exception downloading vfs data for revision " + revision, e);
+    }
+  }
+
+
   static void connect() {
+    String revision = System.getProperty("onair.revision");
+
+    if (revision != null && !revision.trim().isEmpty()) {
+      download(revision);
+    }
+
     DbConnection.connect();
+
   }
 
   public static long getCreationTimestamp() {
