@@ -554,6 +554,12 @@ public class DocumentationComponent extends JPanel implements Disposable, DataPr
       }
     });
 
+    if (myHint != null) {
+      Disposer.register(myHint, this);
+    } else if (myManager.myToolWindow != null) {
+      Disposer.register(myManager.myToolWindow.getContentManager(), this);
+    }
+
     registerActions();
 
     updateControlState();
