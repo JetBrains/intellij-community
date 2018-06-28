@@ -3,6 +3,7 @@ package circlet.ui
 import circlet.utils.*
 import com.intellij.ide.ui.*
 import com.intellij.openapi.ui.*
+import com.intellij.openapi.wm.*
 import com.intellij.ui.*
 import com.intellij.util.ui.*
 import runtime.reactive.*
@@ -30,6 +31,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
 
     private val mouseAdapter = MyMouseAdapter()
     private val focusAdapter = MyFocusAdapter()
+    private val keyAdapter = MyKeyAdapter()
 
     init {
         LafManager.getInstance().addLafManagerListener(
@@ -61,6 +63,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
     private fun Component.addListeners() {
         addMouseListener(mouseAdapter)
         addFocusListener(focusAdapter)
+        addKeyListener(keyAdapter)
 
         UIUtil.uiChildren(this).forEach { it.addListeners() }
     }
@@ -76,19 +79,73 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
     }
 
     private fun select(event: ComponentEvent) {
-        event.item?.let { newSelectedItem ->
+        select(event.component)
+    }
+
+    private fun select(newSelectedComponent: Component?) {
+        newSelectedComponent?.item?.let { newSelectedItem ->
             if (newSelectedItem !== selectedItem) {
                 selectedItem?.selected = false
                 newSelectedItem.selected = true
                 selectedItem = newSelectedItem
 
-                val bounds = newSelectedItem.component.bounds
+                val bounds = newSelectedComponent.bounds
 
                 if (!panel.visibleRect.contains(bounds)) {
                     panel.scrollRectToVisible(bounds)
                 }
+
+                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+                    IdeFocusManager.getGlobalInstance().requestFocus(newSelectedComponent, true)
+                }
             }
         }
+    }
+
+    private fun selectPrevious() {
+        select(getPrevious())
+    }
+
+    private fun getPrevious(): Component? = getAdjacent(-1)
+
+    private fun getAdjacent(shift: Int): Component? {
+        val components = panel.components
+
+        if (components.isEmpty()) {
+            return null
+        }
+
+        if (selectedItem == null) {
+            return components[0]
+        }
+
+        val index = components.indexOfFirst { it.item === selectedItem }
+
+        if (index < 0) {
+            return null
+        }
+
+        val newIndex = index + shift
+
+        if (newIndex !in 0 until components.size) {
+            return null
+        }
+
+        return components[newIndex]
+    }
+
+    private fun selectNext() {
+        select(getNext())
+    }
+
+    private fun getNext(): Component? = getAdjacent(1)
+
+    private fun selectFirst() {
+        select(panel.components.firstOrNull())
+    }
+
+    private fun selectLast() {
+        select(panel.components.lastOrNull())
     }
 
     private inner class MyMouseAdapter : MouseAdapter() {
@@ -105,10 +162,25 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         }
     }
 
+    private inner class MyKeyAdapter : KeyAdapter() {
+        override fun keyPressed(e: KeyEvent) {
+            when (e.keyCode) {
+                KeyEvent.VK_UP -> handle(e, ::selectPrevious)
+                KeyEvent.VK_DOWN -> handle(e, ::selectNext)
+                KeyEvent.VK_HOME -> handle(e, ::selectFirst)
+                KeyEvent.VK_END -> handle(e, ::selectLast)
+            }
+        }
+
+        private fun handle(e: KeyEvent, handler: () -> Unit) {
+            e.consume()
+
+            handler()
+        }
+    }
+
     private companion object {
         private val ITEM_KEY = "${JComponentBasedList::class.qualifiedName}.ITEM_KEY"
-
-        private val ComponentEvent.item: Item? get() = component?.item
 
         private val Component.item: Item?
             get() = ((this as? JComponent)?.getClientProperty(ITEM_KEY) as Item?) ?: parent?.item
