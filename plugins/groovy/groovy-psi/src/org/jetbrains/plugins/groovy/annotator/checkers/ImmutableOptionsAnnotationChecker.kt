@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.annotator.checkers
 
 import com.intellij.codeInsight.AnnotationUtil
 import com.intellij.lang.annotation.AnnotationHolder
+import com.intellij.psi.PsiModifier
 import com.intellij.psi.util.PsiTreeUtil
 import org.jetbrains.plugins.groovy.GroovyBundle
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
@@ -23,8 +24,8 @@ class ImmutableOptionsAnnotationChecker : CustomAnnotationChecker() {
     for (literal in fields.filterIsInstance<GrLiteral>()) {
       val value = literal.value as? String ?: continue
       val field = containingClass.findCodeFieldByName(value, false) as? GrField
-      if (field == null || !field.isProperty) {
-        holder.createErrorAnnotation(literal, GroovyBundle.message("immutable.options.field.not.exist", value))
+      if (field == null || !field.isProperty || field.hasModifierProperty(PsiModifier.STATIC)) {
+        holder.createErrorAnnotation(literal, GroovyBundle.message("immutable.options.property.not.exist", value))
       }
     }
     return false
