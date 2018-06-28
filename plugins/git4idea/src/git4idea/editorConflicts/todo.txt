@@ -1,0 +1,15 @@
+[ ] Take both
+[ ] Take none
+[ ] Fold contents
+[ ] Jump to next/prev
+[ ] Fold whole conflict
+[ ] Compare changes
+[ ] Hyperlinks to log
+[ ] Revert conflict
+[ ] Lighter font on markers
+[ ] Java support
+[ ] "What happens" diagram
+[ ] Real-world examples
+[ ] Presentation
+
+
