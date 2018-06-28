@@ -50,6 +50,10 @@ public abstract class ContractValue {
   }
 
   public OptionalInt getNullCheckedArgument(boolean equalToNull) {
+    return getArgumentComparedTo(nullValue(), equalToNull);
+  }
+
+  public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
     return OptionalInt.empty();
   }
 
@@ -150,10 +154,10 @@ public abstract class ContractValue {
       new IndependentValue(factory -> factory.getFactValue(DfaFactType.OPTIONAL_PRESENCE, false), "empty");
     static final IndependentValue ZERO = new IndependentValue(factory -> factory.getInt(0), "0");
 
-    private final Function<DfaValueFactory, DfaValue> mySupplier;
+    private final Function<? super DfaValueFactory, ? extends DfaValue> mySupplier;
     private final String myPresentation;
 
-    IndependentValue(Function<DfaValueFactory, DfaValue> supplier, String presentation) {
+    IndependentValue(Function<? super DfaValueFactory, ? extends DfaValue> supplier, String presentation) {
       mySupplier = supplier;
       myPresentation = presentation;
     }
@@ -255,21 +259,24 @@ public abstract class ContractValue {
     }
 
     @Override
-    public OptionalInt getNullCheckedArgument(boolean equalToNull) {
-      if (myRelationType == DfaRelationValue.RelationType.equivalence(equalToNull)) {
-        ContractValue notNull;
-        if (myLeft == IndependentValue.NULL) {
-          notNull = myRight;
+    public OptionalInt getArgumentComparedTo(ContractValue value, boolean equal) {
+      if (myRelationType == DfaRelationValue.RelationType.equivalence(equal)) {
+        ContractValue other;
+        if (myLeft == value) {
+          other = myRight;
         }
-        else if (myRight == IndependentValue.NULL) {
-          notNull = myLeft;
+        else if (myRight == value) {
+          other = myLeft;
         }
         else {
           return OptionalInt.empty();
         }
-        if (notNull instanceof Argument) {
-          return OptionalInt.of(((Argument)notNull).myIndex);
+        if (other instanceof Argument) {
+          return OptionalInt.of(((Argument)other).myIndex);
         }
+      }
+      if (value == IndependentValue.FALSE) {
+        return getArgumentComparedTo(IndependentValue.TRUE, !equal);
       }
       return OptionalInt.empty();
     }

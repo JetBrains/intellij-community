@@ -150,6 +150,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
   public void testSkipAssertions() {
     final DataFlowInspection inspection = new DataFlowInspection();
     inspection.DONT_REPORT_TRUE_ASSERT_STATEMENTS = true;
+    inspection.REPORT_CONSTANT_REFERENCE_VALUES = true;
     myFixture.enableInspections(inspection);
     myFixture.testHighlighting(true, false, true, getTestName(false) + ".java");
   }

@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind.NullabilityProblem;
-import com.intellij.codeInspection.dataFlow.StandardMethodContract.ValueConstraint;
 import com.intellij.codeInspection.dataFlow.fix.RedundantInstanceofFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithConstantValueFix;
 import com.intellij.codeInspection.dataFlow.fix.ReplaceWithObjectsEqualsFix;
@@ -32,7 +31,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.siyeh.ig.bugs.EqualsWithItselfInspection;
 import com.siyeh.ig.fixes.EqualsToEqualityFix;
 import com.siyeh.ig.psiutils.*;
-import one.util.streamex.IntStreamEx;
 import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
@@ -335,7 +333,7 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     String presentableName = constant.toString();
     fixes.add(new ReplaceWithConstantValueFix(presentableName, presentableName));
     Object value = constant.value();
-    boolean isAssertion = value instanceof Boolean && isAssertionEffectively(ref, (Boolean)value);
+    boolean isAssertion = isAssertionEffectively(ref, constant);
     if (isAssertion && DONT_REPORT_TRUE_ASSERT_STATEMENTS) return;
     if (value instanceof Boolean) {
       ContainerUtil.addIfNotNull(fixes, createReplaceWithNullCheckFix(ref, (Boolean)value));
@@ -743,15 +741,37 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
   @Contract("null -> false")
   private static boolean shouldBeSuppressed(PsiElement anchor) {
     if (!(anchor instanceof PsiExpression)) return false;
-    // Don't report System.out.println(b = false)
-    if (anchor instanceof PsiAssignmentExpression) return true;
+    // Don't report System.out.println(b = false) or doSomething((Type)null)
+    if (anchor instanceof PsiAssignmentExpression || anchor instanceof PsiTypeCastExpression) return true;
+    // For conditional the root cause (constant condition or both branches constant) should be already reported for branches
+    if (anchor instanceof PsiConditionalExpression) return true;
     PsiExpression expression = (PsiExpression)anchor;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
+    // Don't report "x" in "x == null" as will be anyways reported as "always true"
+    if (parent instanceof PsiBinaryExpression && ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)parent) != null) return true;
     // Dereference of null will be covered by other warning
     if (ExpressionUtils.isVoidContext(expression) || isDereferenceContext(expression)) return true;
     if (isFlagCheck(anchor)) return true;
-    if (expression instanceof PsiReferenceExpression) {
-      PsiField field = tryCast(((PsiReferenceExpression)expression).resolve(), PsiField.class);
-      return field != null && field.hasModifierProperty(PsiModifier.STATIC) && ExpressionUtils.isNullLiteral(field.getInitializer());
+    boolean condition = isCondition(expression);
+    if (!condition && expression instanceof PsiReferenceExpression) {
+      PsiVariable variable = tryCast(((PsiReferenceExpression)expression).resolve(), PsiVariable.class);
+      if (variable instanceof PsiField &&
+          variable.hasModifierProperty(PsiModifier.STATIC) &&
+          ExpressionUtils.isNullLiteral(variable.getInitializer())) {
+        return true;
+      }
+      return variable instanceof PsiLocalVariable && variable.hasModifierProperty(PsiModifier.FINAL) &&
+             PsiUtil.isCompileTimeConstant(variable);
+    }
+    if (!condition && expression instanceof PsiMethodCallExpression) {
+      List<? extends MethodContract> contracts = JavaMethodContractUtil.getMethodCallContracts((PsiCallExpression)expression);
+      ContractReturnValue value = JavaMethodContractUtil.getNonFailingReturnValue(contracts);
+      if (value != null) return true;
+      if (!(parent instanceof PsiAssignmentExpression) && !(parent instanceof PsiVariable) &&
+          !(parent instanceof PsiReturnStatement)) {
+        PsiMethod method = ((PsiMethodCallExpression)expression).resolveMethod();
+        if (method == null || !JavaMethodContractUtil.isPure(method)) return true;
+      }
     }
     while (expression != null && BoolUtils.isNegation(expression)) {
       expression = BoolUtils.getNegated(expression);
@@ -855,6 +875,15 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
     }
   }
 
+  private static boolean isAssertionEffectively(@NotNull PsiElement anchor, DataFlowInstructionVisitor.ConstantResult result) {
+    Object value = result.value();
+    if (value instanceof Boolean) {
+      return isAssertionEffectively(anchor, (Boolean)value);
+    }
+    if (value != null) return false;
+    return isAssertCallArgument(anchor, ContractValue.nullValue());
+  }
+
   private static boolean isAssertionEffectively(@NotNull PsiElement anchor, boolean evaluatesToTrue) {
     PsiElement parent;
     while (true) {
@@ -896,19 +925,22 @@ public class DataFlowInspectionBase extends AbstractBaseJavaLocalInspectionTool 
         return !evaluatesToTrue;
       }
     }
+    return isAssertCallArgument(anchor, ContractValue.booleanValue(evaluatesToTrue));
+  }
+
+  private static boolean isAssertCallArgument(@NotNull PsiElement anchor, @NotNull ContractValue wantedConstraint) {
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
     if (parent instanceof PsiExpressionList) {
       int index = ArrayUtil.indexOf(((PsiExpressionList)parent).getExpressions(), anchor);
       if (index >= 0) {
-        ValueConstraint wantedConstraint = evaluatesToTrue ? ValueConstraint.FALSE_VALUE : ValueConstraint.TRUE_VALUE;
         PsiMethodCallExpression call = tryCast(parent.getParent(), PsiMethodCallExpression.class);
         if (call != null) {
-          PsiMethod method = call.resolveMethod();
-          if (method != null) {
-            List<StandardMethodContract> contracts = JavaMethodContractUtil.getMethodContracts(method);
-            return contracts.stream().anyMatch(
-              smc -> smc.getReturnValue().isFail() &&
-                     IntStreamEx.range(smc.getParameterCount())
-                                .allMatch(idx -> smc.getParameterConstraint(idx) == (idx == index ? wantedConstraint : ValueConstraint.ANY_VALUE)));
+          MethodContract contract = ContainerUtil.getOnlyItem(JavaMethodContractUtil.getMethodCallContracts(call));
+          if (contract != null && contract.getReturnValue().isFail()) {
+            ContractValue condition = ContainerUtil.getOnlyItem(contract.getConditions());
+            if (condition != null) {
+              return condition.getArgumentComparedTo(wantedConstraint, false).orElse(-1) == index;
+            }
           }
         }
       }

@@ -165,7 +165,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
                                       @NotNull DfaMemoryState memState) {
     expression.accept(new ExpressionVisitor(value, memState));
     if (range == null) {
-      handleBooleanResults(value, memState, expression);
+      reportConstantExpressionValue(value, memState, expression);
     }
   }
 
@@ -218,7 +218,7 @@ final class DataFlowInstructionVisitor extends StandardInstructionVisitor {
            contracts.stream().anyMatch(contract -> contract.getReturnValue().isFail() && !contract.isTrivial());
   }
 
-  private void handleBooleanResults(DfaValue value, DfaMemoryState memState, PsiExpression expression) {
+  private void reportConstantExpressionValue(DfaValue value, DfaMemoryState memState, PsiExpression expression) {
     if (expression instanceof PsiLiteralExpression) return;
     ConstantResult curState = myConstantExpressions.get(expression);
     if (curState == ConstantResult.UNKNOWN) return;

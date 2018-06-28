@@ -1,5 +1,6 @@
 import org.jetbrains.annotations.*;
 import java.util.List;
+import java.util.Collections;
 
 class Test {
   static final Object RES = null;
@@ -13,7 +14,16 @@ class Test {
     Integer x = TEST;
     System.out.println(TEST);
     System.out.println(x);
+    System.out.println((String)null);
+    boolean[] f = new boolean[1];
+    f[0] = true;
+    Object smth = getSmth();
+    Object[] smths = smth == null ? null : new Object[] {smth};
+    List<?> list = smth == null ? null : Collections.singletonList(smth);
   }
+
+  @Nullable
+  native Object getSmth();
 
   @Contract("null -> null")
   native Object process(@Nullable Object obj);
