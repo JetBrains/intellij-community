@@ -3,9 +3,7 @@ package intellij.platform.onair.storage.api;
 
 import org.jetbrains.annotations.NotNull;
 
-public interface Storage extends StorageConsumer {
+public interface StorageConsumer {
 
-  byte[] lookup(@NotNull Address address);
-
-  Address alloc(@NotNull byte[] what);
+  void store(@NotNull Address address, @NotNull byte[] bytes);
 }

@@ -31,20 +31,21 @@ import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 import static com.intellij.util.io.PagedFileStorage.MB;
 
 public class CopyIndexTest {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
-  private static final int ITERATIONS = 1;
+  private static final int ITERATIONS = 50;
   private static final String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/home/morj/index-sandbox");
   private static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
   private static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
 
   @Test
   public void testAll() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211)); // DummyStorageImpl.INSTANCE;
+    final StorageImpl storage = new StorageImpl(new InetSocketAddress("localhost", 11211)); // DummyStorageImpl.INSTANCE;
     final Map<String, StubIdList> content = new HashMap<>();
     final Map<byte[], byte[]> rawContent = new HashMap<>();
     final PersistentHashMap<String, StubIdList> phm = makePHM(PHM);
@@ -94,17 +95,28 @@ public class CopyIndexTest {
         trees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(novelty, key))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
 
-        System.out.println("Check storage reads...");
-        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), tree.store(novelty))));
+        System.out.println("Check write...");
         start = System.currentTimeMillis();
-        remoteTrees.forEach(tree -> rawContent.forEach((key, value) -> Assert.assertArrayEquals(value, tree.get(new MockNovelty(), key))));
+        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), storage.bulkStore(tree, novelty))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+        System.out.println("Check storage reads...");
+        start = System.currentTimeMillis();
+        AtomicInteger step = new AtomicInteger();
+        remoteTrees.forEach(tree -> rawContent.forEach((key, value) -> {
+          step.incrementAndGet();
+          Assert.assertArrayEquals(value, tree.get(new MockNovelty(), key));
+        }));
+        System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
+      }
+      catch (RuntimeException e) {
+        storage.close();
+        throw e;
       }
       finally {
         novelty.close();
       }
     }
-    boolean buildPHM = true;
+    boolean buildPHM = false;
     if (buildPHM) {
       final List<PersistentHashMap<String, StubIdList>> pHMs = new ArrayList<>();
       try {
