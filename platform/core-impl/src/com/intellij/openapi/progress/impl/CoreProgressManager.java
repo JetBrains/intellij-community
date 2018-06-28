@@ -117,7 +117,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
     final ProgressIndicator progress = getProgressIndicator();
     if (progress != null && ENABLED) {
-      progress.checkCanceled();
+      //progress.checkCanceled();
     }
     else {
       runCheckCanceledHooks(progress);
