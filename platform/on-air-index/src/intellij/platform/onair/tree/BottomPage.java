@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package intellij.platform.onair.tree;
 
-import intellij.platform.onair.storage.api.Address;
-import intellij.platform.onair.storage.api.KeyValueConsumer;
-import intellij.platform.onair.storage.api.Novelty;
-import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.storage.api.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -105,18 +102,18 @@ public class BottomPage extends BasePage {
   }
 
   @Override
-  protected Address save(@NotNull Novelty novelty, @NotNull Storage storage) {
+  protected Address save(@NotNull Novelty novelty, @NotNull Storage storage, @NotNull StorageConsumer consumer) {
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
         byte[] leaf = tree.loadLeaf(novelty, childAddress);
         childAddress = storage.alloc(leaf);
-        storage.store(childAddress, leaf);
+        consumer.store(childAddress, leaf);
         setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
       }
     }
     Address result = storage.alloc(backingArray);
-    storage.store(result, backingArray);
+    consumer.store(result, backingArray);
     return result;
   }
 

@@ -94,7 +94,12 @@ public class BTree implements Tree {
 
   @Override
   public Address store(@NotNull Novelty novelty) {
-    return loadPage(novelty, address).save(novelty, storage);
+    return store(novelty, storage);
+  }
+
+  @Override
+  public Address store(@NotNull Novelty novelty, @NotNull StorageConsumer consumer) {
+    return loadPage(novelty, address).save(novelty, storage, consumer);
   }
 
   public void dump(@NotNull Novelty novelty, @NotNull PrintStream out, BTree.ToString renderer) {
@@ -103,6 +108,9 @@ public class BTree implements Tree {
 
   /* package */ BasePage loadPage(@NotNull Novelty novelty, Address address) {
     byte[] bytes = address.isNovelty() ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
+    if (bytes == null) {
+      throw new IllegalStateException("page not found at " + address);
+    }
     int metadataOffset = (keySize + BYTES_PER_ADDRESS) * getBase();
     byte type = bytes[metadataOffset];
     byte size = bytes[metadataOffset + 1];

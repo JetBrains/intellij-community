@@ -2,10 +2,7 @@
 package intellij.platform.onair.tree;
 
 
-import intellij.platform.onair.storage.api.Address;
-import intellij.platform.onair.storage.api.KeyValueConsumer;
-import intellij.platform.onair.storage.api.Novelty;
-import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.storage.api.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +48,7 @@ public abstract class BasePage {
 
   protected abstract BasePage split(@NotNull Novelty novelty, int from, int length);
 
-  protected abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage);
+  protected abstract Address save(@NotNull final Novelty novelty, @NotNull final Storage storage, @NotNull StorageConsumer consumer);
 
   protected abstract void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer);
 
