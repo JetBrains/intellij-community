@@ -25,6 +25,12 @@ public class StorageTest {
   }
 
   @Test
+  public void notFoundTest() throws IOException {
+    final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
+    Assert.assertNull(storage.lookup(new Address(-42, -42)));
+  }
+
+  @Test
   public void performanceTest() throws IOException {
     final Storage storage = new StorageImpl(new InetSocketAddress("localhost", 11211));
     long start = System.currentTimeMillis();
