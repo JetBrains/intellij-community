@@ -58,21 +58,6 @@ public class IndexInfrastructure {
   private static final ExecutorService ourGenesisExecutor = SequentialTaskExecutor.createSequentialApplicationPoolExecutor(
     "IndexInfrastructure Pool");
 
-
-
-  static {
-
-    base-revision
-
-    revision;
-
-    storage {host
-             port}
-
-    indexid {:forward-head
-             :inverted-head }
-  }
-
   private IndexInfrastructure() {
   }
 
