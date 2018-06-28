@@ -9,9 +9,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolderBase;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiInvalidElementAccessException;
+import com.intellij.psi.*;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.util.ArrayUtil;
@@ -35,7 +34,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.function.Consumer;
+import java.util.function.Function;
 import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 import static com.jetbrains.python.psi.PyUtil.as;
 import static com.jetbrains.python.psi.resolve.PyResolveImportUtil.fromFoothold;
@@ -621,45 +623,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Override
-  public void visitMembers(@NotNull final Processor<PsiElement> processor,
-                           final boolean inherited,
-                           @NotNull final TypeEvalContext context) {
-    myClass.visitMethods(new MyProcessorWrapper<>(processor), false, context);
-    myClass.visitClassAttributes(new MyProcessorWrapper<>(processor), false, context);
+  public void visitMembers(@NotNull Processor<PsiElement> processor, boolean inherited, @NotNull TypeEvalContext context) {
+    processMembers(processor);
 
-    for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
-      processor.process(expression);
-    }
-
-    if (!inherited) {
-      return;
-    }
-
-    for (final PyClassLikeType type : getAncestorTypes(context)) {
-      if (type != null) {
-        // "false" because getAncestorTypes returns ALL ancestors, not only direct parents
-        type.visitMembers(processor, false, context);
-      }
-    }
-
-    visitMetaClassMembers(processor, context);
-  }
-
-  private void visitMetaClassMembers(@NotNull Processor<PsiElement> processor, @NotNull TypeEvalContext context) {
-    if (!myClass.isNewStyleClass(context)) {
-      return;
-    }
-
-    final PyClassLikeType typeType = getMetaClassType(context, true);
-    if (typeType == null) {
-      return;
-    }
-
-    if (isDefinition()) {
-      typeType.visitMembers(processor, true, context);
-    }
-    else if (typeType instanceof PyClassType) {
-      ((PyClassType)typeType).getPyClass().getInstanceAttributes().forEach(processor::process);
+    if (inherited) {
+      prepareAncestorsForProcessingMembers(Function.identity(), context).forEach(type -> type.visitMembers(processor, false, context));
+      processMetaClassMembers(typeType -> typeType.visitMembers(processor, true, context), processor, context);
     }
   }
 
@@ -671,17 +640,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
 
     final Set<String> result = new LinkedHashSet<>();
 
-    for (PyFunction function : myClass.getMethods()) {
-      result.add(function.getName());
-    }
-
-    for (PyTargetExpression expression : myClass.getClassAttributes()) {
-      result.add(expression.getName());
-    }
-
-    for (PyTargetExpression expression : myClass.getInstanceAttributes()) {
-      result.add(expression.getName());
-    }
+    processMembers(
+      element -> {
+        if (element instanceof PsiNamedElement) ContainerUtil.addIfNotNull(result, ((PsiNamedElement)element).getName());
+        return true;
+      }
+    );
 
     if (myClass.isNewStyleClass(context)) {
       result.addAll(ContainerUtil.notNullize(myClass.getOwnSlots()));
@@ -694,40 +658,55 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
 
     if (inherited) {
-      for (PyClassLikeType type : getAncestorTypes(context)) {
-        if (type != null) {
-          final PyClassLikeType ancestorType = isDefinition() ? type : type.toInstance();
+      prepareAncestorsForProcessingMembers(type -> type.getMemberNames(false, context), context).forEach(result::addAll);
 
-          result.addAll(ancestorType.getMemberNames(false, context));
-        }
-      }
-
-      result.addAll(getMetaClassMemberNames(context));
+      processMetaClassMembers(
+        typeType -> result.addAll(typeType.getMemberNames(true, context)),
+        instanceTypeAttribute -> {
+          ContainerUtil.addIfNotNull(result, instanceTypeAttribute.getName());
+          return true;
+        },
+        context
+      );
     }
 
     return result;
   }
 
+  private void processMembers(@NotNull Processor<PsiElement> processor) {
+    final PsiScopeProcessor scopeProcessor = new PsiScopeProcessor() {
+      @Override
+      public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
+        return processor.process(element);
+      }
+    };
+
+    myClass.processClassLevelDeclarations(scopeProcessor);
+    myClass.processInstanceLevelDeclarations(scopeProcessor, null);
+  }
+
   @NotNull
-  private Set<String> getMetaClassMemberNames(@NotNull TypeEvalContext context) {
-    if (!myClass.isNewStyleClass(context)) {
-      return Collections.emptySet();
-    }
+  private <T> Stream<T> prepareAncestorsForProcessingMembers(@NotNull Function<PyClassLikeType, T> ancestorMapper,
+                                                             @NotNull TypeEvalContext context) {
+    return StreamEx.of(getAncestorTypes(context)).nonNull().map(type -> isDefinition() ? type : type.toInstance()).map(ancestorMapper);
+  }
+
+  private void processMetaClassMembers(@NotNull Consumer<PyClassLikeType> typeTypeConsumer,
+                                       @NotNull Processor<? super PyTargetExpression> instanceTypeAttributesProcessor,
+                                       @NotNull TypeEvalContext context) {
+    if (!myClass.isNewStyleClass(context)) return;
 
     final PyClassLikeType typeType = getMetaClassType(context, true);
-    if (typeType == null) {
-      return Collections.emptySet();
-    }
+    if (typeType == null) return;
 
     if (isDefinition()) {
-      return typeType.getMemberNames(true, context);
+      typeTypeConsumer.accept(typeType);
     }
     else if (typeType instanceof PyClassType) {
-      final List<PyTargetExpression> typeInstanceAttributes = ((PyClassType)typeType).getPyClass().getInstanceAttributes();
-      return ContainerUtil.map2SetNotNull(typeInstanceAttributes, PyTargetExpression::getName);
+      for (PyTargetExpression attribute : ((PyClassType)typeType).getPyClass().getInstanceAttributes()) {
+        if (!instanceTypeAttributesProcessor.process(attribute)) return;
+      }
     }
-
-    return Collections.emptySet();
   }
 
   private void addOwnClassMembers(PsiElement expressionHook,
@@ -877,19 +856,5 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return null;
     }
     return new PyClassTypeImpl(pyClass, isDefinition);
-  }
-
-  private static final class MyProcessorWrapper<T extends PsiElement> implements Processor<T> {
-    private final Processor<PsiElement> myProcessor;
-
-    private MyProcessorWrapper(@NotNull final Processor<PsiElement> processor) {
-      myProcessor = processor;
-    }
-
-    @Override
-    public boolean process(final T t) {
-      myProcessor.process(t);
-      return true;
-    }
   }
 }
