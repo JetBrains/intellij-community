@@ -20,7 +20,6 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -37,12 +36,14 @@ import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.codeStyle.*;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSchemes;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.processor.CodeStyleDeriveProcessor;
 import com.intellij.psi.codeStyle.extractor.processor.GenProcessor;
-import com.intellij.psi.codeStyle.extractor.ui.CodeStyleSettingsNameProvider;
-import com.intellij.psi.codeStyle.extractor.ui.ExtractedSettingsDialog;
+import com.intellij.psi.codeStyle.extractor.ui.ExtractPreviewDialog;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 import com.intellij.psi.impl.source.codeStyle.CodeStyleSchemesImpl;
@@ -56,7 +57,6 @@ import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.*;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.codeStyle.extractor.Utils.updateState;
@@ -98,9 +98,8 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
-          indicator.setIndeterminate(false);
-          indicator.setFraction(0.0);
           updateState(indicator, getTitle(), true);
+          indicator.setIndeterminate(false);
           
           CodeStyleSettings cloneSettings = settings.clone();
           Map<Value, Object> backup = genProcessor.backupValues(cloneSettings, language);
@@ -128,46 +127,24 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       final Balloon balloon = JBPopupFactory
         .getInstance()
         .createHtmlTextBalloonBuilder(
-          "<html><b>Formatting Options were extracted for " + file.getName() + "</b>"
-          + (!htmlReport.isEmpty() ? ("<br/>" + htmlReport) : "")
-          + "<br/><a href=\"apply\">Apply</a> <a href=\"details\">Details...</a></html>",
+          "<html>Code style was extracted from <b>" + file.getName() + "</b><br>"
+          + htmlReport
+          + "<br><a href=\"apply\">Apply...</a>",
           MessageType.INFO,
           new HyperlinkListener() {
             @Override
             public void hyperlinkUpdate(HyperlinkEvent e) {
-              if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
-                boolean apply = "apply".equals(e.getDescription());
-                ExtractedSettingsDialog myDialog = null;
-                if (!apply) {
-                  final List<Value> values = calculatedValues.getValues();
-                  final LanguageCodeStyleSettingsProvider[] providers = Extensions.getExtensions(
-                    LanguageCodeStyleSettingsProvider.EP_NAME);
-                  Language language = file.getLanguage();
-                  CodeStyleSettingsNameProvider nameProvider = new CodeStyleSettingsNameProvider();
-                  for (final LanguageCodeStyleSettingsProvider provider : providers) {
-                    Language target = provider.getLanguage();
-                    if (target.equals(language)) {
-                      //this is our language
-                      nameProvider.addSettings(provider);
-                      myDialog = new ExtractedSettingsDialog(project, nameProvider, values);
-                      apply = myDialog.showAndGet();
-                      break;
-                    }
-                  }
-                }
-                if (apply /*&& myDialog != null*/) {
-                  //create new settings named after the file
-                  //final ExtractedSettingsDialog finalMyDialog = myDialog;
-                  //calculatedValues.applyConditioned(value -> finalMyDialog.valueIsSelectedInTree(value), backup);
-                  calculatedValues.applySelected();
-                  CodeStyleScheme derivedScheme = CodeStyleSchemes
-                    .getInstance()
-                    .createNewScheme("Derived from " + file.getName(), null);
-                  derivedScheme.getCodeStyleSettings().copyFrom(cloneSettings);
-                  CodeStyleSchemes.getInstance().addScheme(derivedScheme);
-                  CodeStyleSchemesImpl.getSchemeManager().setCurrent(derivedScheme);
-                  CodeStyleSettingsManager.getInstance(project).PREFERRED_PROJECT_CODE_STYLE = derivedScheme.getName();
-                }
+              if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED
+                  && "apply".equals(e.getDescription())
+                  && new ExtractPreviewDialog(file, calculatedValues, htmlReport).showAndGet()) {
+                calculatedValues.applySelected();
+                CodeStyleScheme derivedScheme = CodeStyleSchemes
+                  .getInstance()
+                  .createNewScheme("Derived from " + file.getName(), null);
+                derivedScheme.getCodeStyleSettings().copyFrom(cloneSettings);
+                CodeStyleSchemes.getInstance().addScheme(derivedScheme);
+                CodeStyleSchemesImpl.getSchemeManager().setCurrent(derivedScheme);
+                CodeStyleSettingsManager.getInstance(project).PREFERRED_PROJECT_CODE_STYLE = derivedScheme.getName();
               }
             }
           }

@@ -15,10 +15,40 @@
  */
 package com.intellij.psi.codeStyle.extractor.differ;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
+import com.intellij.psi.codeStyle.extractor.Utils;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
+import org.jetbrains.annotations.NotNull;
 
-public interface Differ {
-  int UGLY_FORMATTING = Integer.MAX_VALUE / 4;
+public abstract class Differ {
+  public static final int UGLY_FORMATTING = Integer.MAX_VALUE;
+  
+  protected final Project myProject;
+  protected final String myOrigText;
+  protected final CodeStyleSettings mySettings;
+  protected final PsiFile myFile;
 
-  int getDifference(ValuesExtractionResult values);
+  public Differ(@NotNull Project project, @NotNull PsiFile file, @NotNull CodeStyleSettings settings) {
+    myProject = project;
+    myFile = file;
+    myOrigText = myFile.getText();
+    mySettings = settings;
+  }
+
+  @NotNull
+  public abstract String reformattedText();
+
+  public int getDifference(@NotNull ValuesExtractionResult container) {
+    final CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getCommonSettings(myFile.getLanguage()).getIndentOptions();
+    final int origTabSize = Utils.getTabSize(indentOptions);
+    final ValuesExtractionResult orig = container.apply(true);
+    final int newTabSize = Utils.getTabSize(indentOptions);
+    String newText = reformattedText();
+    int result = Utils.getDiff(origTabSize, myOrigText, newTabSize, newText);
+    orig.apply(false);
+    return result;
+  }
 }
