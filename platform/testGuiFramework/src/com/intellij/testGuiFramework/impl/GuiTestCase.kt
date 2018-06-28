@@ -364,13 +364,6 @@ open class GuiTestCase {
     return "@${uiScaleVal}x"
   }
 
-
-  fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
-    Pause.pause(object : Condition(condition) {
-      override fun test() = testFunction()
-    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
-  }
-
   fun tableRowValues(table: JTableFixture, rowIndex: Int): List<String> {
     val fixture = ExtendedTableFixture(robot(), table.target())
     return RowFixture(robot(), rowIndex, fixture).values()
