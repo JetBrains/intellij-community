@@ -14,6 +14,8 @@ public interface PersistentMap<K, V> extends Closeable {
 
   void put(K key, V value) throws IOException;
 
+  void remove(K key) throws IOException;
+
   boolean processKeys(Processor<K> processor) throws IOException;
 
   boolean isClosed();
@@ -23,6 +25,8 @@ public interface PersistentMap<K, V> extends Closeable {
   void force();
 
   void close() throws IOException;
+
+  void clear() throws IOException;
 
   void markDirty() throws IOException;
 }
