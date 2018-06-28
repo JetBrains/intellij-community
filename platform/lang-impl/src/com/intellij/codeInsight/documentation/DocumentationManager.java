@@ -89,7 +89,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   private static final Logger LOG = Logger.getInstance(DocumentationManager.class);
   private static final String SHOW_DOCUMENTATION_IN_TOOL_WINDOW = "ShowDocumentationInToolWindow";
   private static final String DOCUMENTATION_AUTO_UPDATE_ENABLED = "DocumentationAutoUpdateEnabled";
-  
+
   private static final long DOC_GENERATION_TIMEOUT_MILLISECONDS = 60000;
   private static final long DOC_GENERATION_PAUSE_MILLISECONDS = 100;
 
@@ -105,10 +105,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private boolean myCloseOnSneeze;
   private String myPrecalculatedDocumentation;
-  
+
   private ActionCallback myLastAction;
   private DocumentationComponent myTestDocumentationComponent;
-  
+
   private AnAction myRestorePopupAction;
 
   @Override
@@ -173,9 +173,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   /**
-   * @return    {@code true} if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
-   *            the user presses a key);
-   *            {@code false} otherwise
+   * @return {@code true} if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
+   * the user presses a key);
+   * {@code false} otherwise
    */
   public boolean isCloseOnSneeze() {
     return myCloseOnSneeze;
@@ -203,13 +203,13 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return ServiceManager.getService(project, DocumentationManager.class);
   }
 
-  public DocumentationManager(final Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
+  public DocumentationManager(Project project, ActionManager manager, TargetElementUtil targetElementUtil) {
     super(project);
     myActionManager = manager;
-    final AnActionListener actionListener = new AnActionListener() {
+    AnActionListener actionListener = new AnActionListener() {
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        final JBPopup hint = getDocInfoHint();
+        JBPopup hint = getDocInfoHint();
         if (hint != null) {
           if (action instanceof ShowQuickDocInfoAction) {
             ((AbstractPopup)hint).focusPreferredComponent();
@@ -230,14 +230,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       @Override
       public void beforeEditorTyping(char c, DataContext dataContext) {
-        final JBPopup hint = getDocInfoHint();
+        JBPopup hint = getDocInfoHint();
         if (hint != null && LookupManager.getActiveLookup(myEditor) == null) {
           hint.cancel();
         }
       }
     };
     myActionManager.addAnActionListener(actionListener, project);
-    myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD,myProject);
+    myUpdateDocAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, myProject);
     myTargetElementUtil = targetElementUtil;
   }
 
@@ -276,53 +276,52 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .doWhenDone(() -> component.clearHistory());
   }
 
-  public void showJavaDocInfo(@NotNull final PsiElement element, final PsiElement original) {
+  public void showJavaDocInfo(@NotNull PsiElement element, PsiElement original) {
     showJavaDocInfo(element, original, null);
   }
 
   /**
    * Asks to show quick doc for the target element.
    *
-   * @param editor         editor with an element for which quick do should be shown
-   * @param element        target element which documentation should be shown
-   * @param original       element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
-   *                       A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
-   *                       declaration but {@code 'element'} argument is a {@code Runnable} descriptor
-   * @param closeCallback  callback to be notified on target hint close (if any)
-   * @param documentation  precalculated documentation
-   * @param closeOnSneeze  flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
-   *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
-   *                       on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
-   *                       at the first situation but don't want to do that at the second
+   * @param editor        editor with an element for which quick do should be shown
+   * @param element       target element which documentation should be shown
+   * @param original      element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
+   *                      A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
+   *                      declaration but {@code 'element'} argument is a {@code Runnable} descriptor
+   * @param closeCallback callback to be notified on target hint close (if any)
+   * @param documentation precalculated documentation
+   * @param closeOnSneeze flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
+   *                      two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
+   *                      on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
+   *                      at the first situation but don't want to do that at the second
    */
   public void showJavaDocInfo(@NotNull Editor editor,
-                              @NotNull final PsiElement element,
-                              @NotNull final PsiElement original,
+                              @NotNull PsiElement element,
+                              @NotNull PsiElement original,
                               @Nullable Runnable closeCallback,
                               @Nullable String documentation,
-                              boolean closeOnSneeze)
-  {
+                              boolean closeOnSneeze) {
     myEditor = editor;
     myCloseOnSneeze = closeOnSneeze;
     showJavaDocInfo(element, original, false, closeCallback, documentation);
   }
 
-  public void showJavaDocInfo(@NotNull final PsiElement element,
-                              final PsiElement original,
+  public void showJavaDocInfo(@NotNull PsiElement element,
+                              PsiElement original,
                               @Nullable Runnable closeCallback) {
     showJavaDocInfo(element, original, false, closeCallback);
   }
 
-  public void showJavaDocInfo(@NotNull final PsiElement element,
-                              final PsiElement original,
-                              final boolean requestFocus,
+  public void showJavaDocInfo(@NotNull PsiElement element,
+                              PsiElement original,
+                              boolean requestFocus,
                               @Nullable Runnable closeCallback) {
     showJavaDocInfo(element, original, requestFocus, closeCallback, null);
   }
 
-  public void showJavaDocInfo(@NotNull final PsiElement element,
-                              final PsiElement original,
-                              final boolean requestFocus,
+  public void showJavaDocInfo(@NotNull PsiElement element,
+                              PsiElement original,
+                              boolean requestFocus,
                               @Nullable Runnable closeCallback,
                               @Nullable String documentation) {
     if (!element.isValid()) {
@@ -341,31 +340,31 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     doShowJavaDocInfo(element, requestFocus, updateProcessor, original, closeCallback, documentation);
   }
 
-  public void showJavaDocInfo(final Editor editor, @Nullable final PsiFile file, boolean requestFocus) {
+  public void showJavaDocInfo(Editor editor, @Nullable PsiFile file, boolean requestFocus) {
     showJavaDocInfo(editor, file, requestFocus, null);
   }
 
-  public void showJavaDocInfo(final Editor editor,
-                              @Nullable final PsiFile file,
+  public void showJavaDocInfo(Editor editor,
+                              @Nullable PsiFile file,
                               boolean requestFocus,
-                              @Nullable final Runnable closeCallback) {
+                              @Nullable Runnable closeCallback) {
     myEditor = editor;
-    final Project project = getProject(file);
+    Project project = getProject(file);
     PsiDocumentManager.getInstance(project).commitAllDocuments();
 
-    final PsiElement list =
-      ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
+    PsiElement list = ParameterInfoController.findArgumentList(file, editor.getCaretModel().getOffset(), -1);
     PsiElement expressionList = null;
     if (list != null) {
       LookupEx lookup = LookupManager.getInstance(myProject).getActiveLookup();
       if (lookup != null) {
         expressionList = null; // take completion variants for documentation then
-      } else {
+      }
+      else {
         expressionList = list;
       }
     }
 
-    final PsiElement originalElement = getContextElement(editor, file);
+    PsiElement originalElement = getContextElement(editor, file);
     PsiElement element = assertSameProject(findTargetElement(editor, file));
 
     if (element == null && expressionList != null) {
@@ -387,7 +386,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     PsiElement finalElement = element;
-    final PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
+    PopupUpdateProcessor updateProcessor = new PopupUpdateProcessor(project) {
       @Override
       public void updatePopup(Object lookupIteObject) {
         if (lookupIteObject == null) {
@@ -413,7 +412,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
 
         if (myEditor != null) {
-          final PsiFile file = element.getContainingFile();
+          PsiFile file = element.getContainingFile();
           if (file != null) {
             Editor editor = myEditor;
             showJavaDocInfo(myEditor, file, false);
@@ -437,11 +436,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return file != null ? file.findElementAt(editor.getCaretModel().getOffset()) : null;
   }
 
-  private void doShowJavaDocInfo(@NotNull final PsiElement element,
+  private void doShowJavaDocInfo(@NotNull PsiElement element,
                                  boolean requestFocus,
                                  PopupUpdateProcessor updateProcessor,
-                                 final PsiElement originalElement,
-                                 @Nullable final Runnable closeCallback,
+                                 PsiElement originalElement,
+                                 @Nullable Runnable closeCallback,
                                  @Nullable String documentation) {
     Project project = getProject(element);
     if (!project.isOpen()) return;
@@ -493,18 +492,18 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
   }
 
-  private void showInPopup(@NotNull final PsiElement element,
+  private void showInPopup(@NotNull PsiElement element,
                            boolean requestFocus,
                            PopupUpdateProcessor updateProcessor,
-                           final PsiElement originalElement,
-                           @Nullable final Runnable closeCallback) {
-    final DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) : 
-                                             myTestDocumentationComponent;
+                           PsiElement originalElement,
+                           @Nullable Runnable closeCallback) {
+    DocumentationComponent component = myTestDocumentationComponent == null ? new DocumentationComponent(this) :
+                                       myTestDocumentationComponent;
     ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
         createToolWindow(element, originalElement);
-        final JBPopup hint = getDocInfoHint();
+        JBPopup hint = getDocInfoHint();
         if (hint != null && hint.isVisible()) hint.cancel();
       }
     };
@@ -516,7 +515,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     boolean hasLookup = LookupManager.getActiveLookup(myEditor) != null;
-    AbstractPopup hint = (AbstractPopup)JBPopupFactory.getInstance().createComponentPopupBuilder(component, component)
+    AbstractPopup hint = (AbstractPopup)JBPopupFactory
+      .getInstance().createComponentPopupBuilder(component, component)
       .setProject(element.getProject())
       .addListener(updateProcessor)
       .addUserData(updateProcessor)
@@ -579,30 +579,32 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch -> quickSearch.registerHint(hint));
   }
 
-  static String getTitle(@NotNull final PsiElement element, final boolean _short) {
-    final String title = SymbolPresentationUtil.getSymbolPresentableText(element);
-    return _short ? title != null ? title : element.getText() : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
+  static String getTitle(@NotNull PsiElement element, boolean isShort) {
+    String title = SymbolPresentationUtil.getSymbolPresentableText(element);
+    return isShort ? title != null ? title : element.getText()
+                   : CodeInsightBundle.message("javadoc.info.title", title != null ? title : element.getText());
   }
 
-  public static void storeOriginalElement(final Project project, final PsiElement originalElement, final PsiElement element) {
+  public static void storeOriginalElement(Project project, PsiElement originalElement, PsiElement element) {
     if (element == null) return;
     try {
       element.putUserData(
         ORIGINAL_ELEMENT_KEY,
         SmartPointerManager.getInstance(project).createSmartPsiElementPointer(originalElement)
       );
-    } catch (RuntimeException ex) {
+    }
+    catch (RuntimeException ex) {
       // PsiPackage does not allow putUserData
     }
   }
 
   @Nullable
-  public PsiElement findTargetElement(@NotNull final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
+  public PsiElement findTargetElement(@NotNull Editor editor, @Nullable PsiFile file, PsiElement contextElement) {
     return findTargetElement(editor, editor.getCaretModel().getOffset(), file, contextElement);
   }
-  
+
   @Nullable
-  public PsiElement findTargetElement(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+  public PsiElement findTargetElement(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     try {
       return findTargetElementUnsafe(editor, offset, file, contextElement);
     }
@@ -617,7 +619,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
    * in case index is not ready will throw IndexNotReadyException
    */
   @Nullable
-  private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+  private PsiElement findTargetElementUnsafe(Editor editor, int offset, @Nullable PsiFile file, PsiElement contextElement) {
     if (LookupManager.getInstance(myProject).getActiveLookup() != null) {
       return assertSameProject(getElementFromLookup(editor, file));
     }
@@ -625,7 +627,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     TargetElementUtil util = TargetElementUtil.getInstance();
     PsiElement element = null;
     if (file != null) {
-      final DocumentationProvider documentationProvider = getProviderFromElement(file);
+      DocumentationProvider documentationProvider = getProviderFromElement(file);
       if (documentationProvider instanceof DocumentationProviderEx) {
         element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
       }
@@ -636,7 +638,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       // Allow context doc over xml tag content
       if (element != null || contextElement != null) {
-        final PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtil.getAllAccepted(), element, contextElement));
+        PsiElement adjusted = assertSameProject(util.adjustElement(editor, myTargetElementUtil.getAllAccepted(), element, contextElement));
         if (adjusted != null) {
           element = adjusted;
         }
@@ -644,7 +646,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     }
 
     if (element == null) {
-      final PsiReference ref = TargetElementUtil.findReference(editor, offset);
+      PsiReference ref = TargetElementUtil.findReference(editor, offset);
       if (ref != null) {
         element = assertSameProject(util.adjustReference(ref));
         if (ref instanceof PsiPolyVariantReference) {
@@ -668,7 +670,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         int offset = editor.getCaretModel().getOffset();
         if (offset > 0 && offset == editor.getDocument().getTextLength()) offset--;
         PsiReference ref = TargetElementUtil.findReference(editor, offset);
-        PsiElement contextElement = file == null? null : file.findElementAt(offset);
+        PsiElement contextElement = file == null ? null : file.findElementAt(offset);
         PsiElement targetElement = ref != null ? ref.getElement() : contextElement;
         if (targetElement != null) {
           PsiUtilCore.ensureValid(targetElement);
@@ -698,15 +700,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return hint;
   }
 
-  public void fetchDocInfo(PsiElement element, DocumentationComponent component) {
+  public void fetchDocInfo(@NotNull PsiElement element, @NotNull DocumentationComponent component) {
     cancelAndFetchDocInfo(component, new MyCollector(myProject, element, null, null));
   }
 
-  public ActionCallback queueFetchDocInfo(PsiElement element, DocumentationComponent component) {
+  public ActionCallback queueFetchDocInfo(@NotNull PsiElement element, @NotNull DocumentationComponent component) {
     return doFetchDocInfo(component, new MyCollector(myProject, element, null, null));
   }
 
-  private void cancelAndFetchDocInfo(DocumentationComponent component, DocumentationCollector provider) {
+  private void cancelAndFetchDocInfo(@NotNull DocumentationComponent component, @NotNull DocumentationCollector provider) {
     myUpdateDocAlarm.cancelAllRequests();
     doFetchDocInfo(component, provider);
   }
@@ -728,7 +730,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     component.startWait();
     if (wasEmpty) {
       component.setText(CodeInsightBundle.message("javadoc.fetching.progress"), collector.element, collector.provider);
-      final AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
+      AbstractPopup jbPopup = (AbstractPopup)getDocInfoHint();
       if (jbPopup != null) {
         jbPopup.setDimensionServiceKey(null);
       }
@@ -760,8 +762,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         Throwable finalFail = fail;
         GuiUtils.invokeLaterIfNeeded(() -> {
           String message = finalFail instanceof IndexNotReadyException
-                         ? "Documentation is not available until indices are built."
-                         : CodeInsightBundle.message("javadoc.external.fetch.error.message");
+                           ? "Documentation is not available until indices are built."
+                           : CodeInsightBundle.message("javadoc.external.fetch.error.message");
           component.setText(message, null, collector.provider);
           component.clearHistory();
           callback.setDone();
@@ -771,7 +773,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
       LOG.debug("Documentation fetched successfully:\n", text);
 
-      final String finalText = text;
+      String finalText = text;
       PsiDocumentManager.getInstance(myProject).performLaterWhenAllCommitted(() -> {
         if (!element.isValid()) {
           LOG.debug("Element for which documentation was requested is not valid");
@@ -809,8 +811,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return callback;
   }
 
-  @NotNull 
-  public static DocumentationProvider getProviderFromElement(final PsiElement element) {
+  @NotNull
+  public static DocumentationProvider getProviderFromElement(PsiElement element) {
     return getProviderFromElement(element, null);
   }
 
@@ -863,33 +865,33 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   @Nullable
-  public static PsiElement getOriginalElement(final PsiElement element) {
-    SmartPsiElementPointer originalElementPointer = element!=null ? element.getUserData(ORIGINAL_ELEMENT_KEY):null;
+  public static PsiElement getOriginalElement(PsiElement element) {
+    SmartPsiElementPointer originalElementPointer = element != null ? element.getUserData(ORIGINAL_ELEMENT_KEY) : null;
     return originalElementPointer != null ? originalElementPointer.getElement() : null;
   }
 
-  void navigateByLink(final DocumentationComponent component, final String url) {
+  void navigateByLink(DocumentationComponent component, String url) {
     component.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
-    final PsiElement psiElement = component.getElement();
+    PsiElement psiElement = component.getElement();
     if (psiElement == null) {
       return;
     }
-    final PsiManager manager = PsiManager.getInstance(getProject(psiElement));
+    PsiManager manager = PsiManager.getInstance(getProject(psiElement));
     if (url.equals("external_doc")) {
       component.showExternalDoc();
       return;
     }
     if (url.startsWith("open")) {
-      final PsiFile containingFile = psiElement.getContainingFile();
+      PsiFile containingFile = psiElement.getContainingFile();
       OrderEntry libraryEntry = null;
       if (containingFile != null) {
-        final VirtualFile virtualFile = containingFile.getVirtualFile();
+        VirtualFile virtualFile = containingFile.getVirtualFile();
         libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
       }
       else if (psiElement instanceof PsiDirectoryContainer) {
         PsiDirectory[] directories = ((PsiDirectoryContainer)psiElement).getDirectories();
         for (PsiDirectory directory : directories) {
-          final VirtualFile virtualFile = directory.getVirtualFile();
+          VirtualFile virtualFile = directory.getVirtualFile();
           libraryEntry = LibraryUtil.findLibraryEntry(virtualFile, myProject);
           if (libraryEntry != null) {
             break;
@@ -977,12 +979,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   }
 
   public void requestFocus() {
-    findQuickSearchComponent(myPreviouslyFocused).ifPresent(quickSearch ->
-      getGlobalInstance().doWhenFocusSettlesDown(() -> getGlobalInstance().requestFocus(quickSearch.asComponent(), true))
+    findQuickSearchComponent(myPreviouslyFocused).ifPresent(
+      quickSearch ->
+        getGlobalInstance().doWhenFocusSettlesDown(
+          () -> getGlobalInstance().requestFocus(quickSearch.asComponent(), true))
     );
   }
 
-  public Project getProject(@Nullable final PsiElement element) {
+  public Project getProject(@Nullable PsiElement element) {
     assertSameProject(element);
     return myProject;
   }
@@ -994,7 +998,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return element;
   }
 
-  public static void createHyperlink(StringBuilder buffer, String refText,String label,boolean plainLink) {
+  public static void createHyperlink(StringBuilder buffer, String refText, String label, boolean plainLink) {
     DocumentationManagerUtil.createHyperlink(buffer, refText, label, plainLink);
   }
 
@@ -1012,7 +1016,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   protected void doUpdateComponent(PsiElement element, PsiElement originalElement, DocumentationComponent component) {
     cancelAndFetchDocInfo(component, new MyCollector(myProject, element, originalElement, null));
   }
-  
+
   @Override
   protected void doUpdateComponent(Editor editor, PsiFile psiFile, boolean requestFocus) {
     showJavaDocInfo(editor, psiFile, requestFocus, null);
@@ -1055,7 +1059,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   public ActionCallback getLastAction() {
     return myLastAction;
   }
-  
+
   @TestOnly
   public void setDocumentationComponent(DocumentationComponent documentationComponent) {
     myTestDocumentationComponent = documentationComponent;
@@ -1107,7 +1111,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         LOG.debug("External documentation URLs: ", urls);
         if (urls != null) {
           for (String url : urls) {
-            String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(project, element, Collections.singletonList(url));
+            String doc = ((ExternalDocumentationProvider)provider).fetchExternalDocumentation(
+              project, element, Collections.singletonList(url));
             if (doc != null) {
               LOG.debug("Fetched documentation from ", url);
               effectiveUrl = url;
@@ -1151,18 +1156,20 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
                       type == ArchiveFileType.INSTANCE ? "Archive" :
                       type.getName();
     String languageName = type.isBinary() ? "" : psiFile.getLanguage().getDisplayName();
-    return (withUrl ? DocumentationMarkup.DEFINITION_START + file.getPresentableUrl() + DocumentationMarkup.DEFINITION_END + DocumentationMarkup.CONTENT_START : "") +
-         "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
-         "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
-         "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
-         "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) +
-         (withUrl ? DocumentationMarkup.CONTENT_END : "");
+    return (withUrl ? DocumentationMarkup.DEFINITION_START +
+                      file.getPresentableUrl() +
+                      DocumentationMarkup.DEFINITION_END +
+                      DocumentationMarkup.CONTENT_START : "") +
+           "<p><span class='grayed'>Size:</span> " + StringUtil.formatFileSize(attr.size()) +
+           "<p><span class='grayed'>Type:</span> " + typeName + (type.isBinary() || typeName.equals(languageName) ? "" : " (" + languageName + ")") +
+           "<p><span class='grayed'>Modified:</span> " + DateFormatUtil.formatDateTime(attr.lastModifiedTime().toMillis()) +
+           "<p><span class='grayed'>Created:</span> " + DateFormatUtil.formatDateTime(attr.creationTime().toMillis()) + (withUrl ? DocumentationMarkup.CONTENT_END : "");
   }
 
   private static Optional<QuickSearchComponent> findQuickSearchComponent(Component c) {
     while (c != null) {
       if (c instanceof QuickSearchComponent) {
-        return Optional.of((QuickSearchComponent) c);
+        return Optional.of((QuickSearchComponent)c);
       }
       c = c.getParent();
     }
