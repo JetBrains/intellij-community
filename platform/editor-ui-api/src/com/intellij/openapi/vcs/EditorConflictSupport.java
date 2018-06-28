@@ -7,28 +7,11 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EditorConflictUtils {
+public class EditorConflictSupport {
   public static final Key<ConflictMarkerType> ACTIVE_CONFLICT_MARKER = Key.create("EditorConflict.ACTIVE_CONFLICT_MARKER");
 
   public enum ConflictMarkerType {
     BeforeFirst, BeforeMerged, BeforeLast, AfterLast
-  }
-
-  @Nullable
-  public static ConflictMarkerType getConflictMarkerType(@Nullable String text) {
-    if (text == null || text.isEmpty()) return null;
-    switch (text.charAt(0)) {
-      case '<':
-        return ConflictMarkerType.BeforeFirst;
-      case '|':
-        return ConflictMarkerType.BeforeMerged;
-      case '=':
-        return ConflictMarkerType.BeforeLast;
-      case '>':
-        return ConflictMarkerType.AfterLast;
-      default:
-        return null;
-    }
   }
 
   @NotNull

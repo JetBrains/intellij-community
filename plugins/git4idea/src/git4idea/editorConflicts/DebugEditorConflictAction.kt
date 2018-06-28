@@ -7,7 +7,6 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.DumbAwareAction
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.vcs.EditorConflictUtils
 import com.intellij.vcs.log.impl.VcsLogContentUtil
 import git4idea.history.GitHistoryUtils
 
@@ -19,7 +18,7 @@ class DebugEditorConflictAction : DumbAwareAction() {
     val project = e.getData(CommonDataKeys.PROJECT) ?: return
     val selection = editor.selectionModel.selectedText ?: return
     val commitish = commitishBySelection(selection, editor, project)
-//    project.putUserData(EditorConflictUtils.ACTIVE_CONFLICT_MARKER, commitish)
+//    project.putUserData(EditorConflictSupport.ACTIVE_CONFLICT_MARKER, commitish)
     if (commitish == null) {
       LOG.warn("Cant find commit by \"${selection}\"")
       return

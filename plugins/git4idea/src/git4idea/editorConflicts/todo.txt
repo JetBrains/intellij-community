@@ -1,4 +1,4 @@
-[ ] Take both
+[+] Take both
 [ ] Take none
 [ ] Fold contents
 [ ] Jump to next/prev
@@ -11,5 +11,7 @@
 [ ] "What happens" diagram
 [ ] Real-world examples
 [ ] Presentation
+[ ] Highlight taken chunk
+
 
 

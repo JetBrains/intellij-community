@@ -237,6 +237,10 @@
 
     <logHighlighterFactory implementation="git4idea.branch.DeepComparator$Factory"/>
 
+    <!-- HACKATHON -->
+    <customFoldingProvider implementation="git4idea.editorConflicts.ConflictsFoldingProvider"/>
+    <!-- /HACKATHON -->
+
   </extensions>
 
   <!-- HACKATHON -->

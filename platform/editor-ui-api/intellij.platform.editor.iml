@@ -14,5 +14,6 @@
     <orderEntry type="module" module-name="intellij.platform.indexing" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="JDOM" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.core.impl" />
   </component>
 </module>

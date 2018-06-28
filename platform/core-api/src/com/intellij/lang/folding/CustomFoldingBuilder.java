@@ -23,6 +23,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.TokenType;
 import com.intellij.util.containers.Stack;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -207,7 +208,7 @@ public abstract class CustomFoldingBuilder extends FoldingBuilderEx implements P
    * @return True if the node may contain custom folding tags.
    */
   protected boolean isCustomFoldingCandidate(@NotNull ASTNode node) {
-    return node.getPsi() instanceof PsiComment;
+    return node.getPsi() instanceof PsiComment || node.getElementType() == TokenType.CONFLICT_MARKER;
   }
 
   public final boolean isCustomFoldingCandidate(@NotNull PsiElement element) {
