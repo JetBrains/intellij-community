@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.ui.laf.darcula.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.DarculaTitleButtons;
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.HelpAction;
@@ -23,29 +24,24 @@ import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.wm.impl.IdeMenuBar;
 import com.intellij.openapi.wm.impl.IdeRootPane;
 import com.intellij.ui.JBColor;
-import com.intellij.util.ui.ImageUtil;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
 import net.miginfocom.swing.MigLayout;
-import org.imgscalr.Scalr;
 
 import javax.swing.*;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
 import java.awt.event.ActionEvent;
+import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.awt.event.WindowListener;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
-import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class DarculaTitlePane extends JPanel {
-  private static final int IMAGE_HEIGHT = 16;
-  private static final int IMAGE_WIDTH = 16;
+  private static final Icon mySystemIcon = AllIcons.Icon_small;
 
   private PropertyChangeListener myPropertyChangeListener;
   private JMenuBar myMenuBar;
@@ -55,7 +51,6 @@ public class DarculaTitlePane extends JPanel {
   private Action myRestoreAction;
   private Action myMaximizeAction;
   private HelpAction myHelpAction;
-  private Image mySystemIcon;
   private WindowListener myWindowListener;
   private Window myWindow;
   private final JRootPane myRootPane;
@@ -63,7 +58,7 @@ public class DarculaTitlePane extends JPanel {
   private final DarculaRootPaneUI rootPaneUI;
 
   private DarculaTitleButtons buttonPanes;
-
+  private final JLabel titleLabel = new JLabel();
 
   private final Color myInactiveBackground = UIManager.getColor("inactiveCaption");
   private final Color myInactiveForeground = UIManager.getColor("inactiveCaptionText");
@@ -77,8 +72,6 @@ public class DarculaTitlePane extends JPanel {
     rootPaneUI = ui;
 
     myState = -1;
-
-    setLayout(new MigLayout("fill, ins 0, gap 0", "[pref!][pref!]push[pref!]"));
 
     installSubcomponents();
     determineColors();
@@ -97,6 +90,8 @@ public class DarculaTitlePane extends JPanel {
 
   private void installListeners() {
     if (myWindow != null) {
+      myWindowListener = createWindowListener();
+
       myWindow.addWindowListener(myWindowListener);
       myPropertyChangeListener = createWindowPropertyChangeListener();
       myWindow.addPropertyChangeListener(myPropertyChangeListener);
@@ -108,6 +103,10 @@ public class DarculaTitlePane extends JPanel {
       myWindow.removeWindowListener(myWindowListener);
       myWindow.removePropertyChangeListener(myPropertyChangeListener);
     }
+  }
+
+  private WindowListener createWindowListener() {
+    return new WindowHandler();
   }
 
   private PropertyChangeListener createWindowPropertyChangeListener() {
@@ -136,7 +135,6 @@ public class DarculaTitlePane extends JPanel {
         setState(0);
       }
       installListeners();
-      updateSystemIcon();
     }
   }
 
@@ -150,6 +148,8 @@ public class DarculaTitlePane extends JPanel {
   private void installSubcomponents() {
     int decorationStyle = getWindowDecorationStyle();
     if (decorationStyle == JRootPane.FRAME) {
+      setLayout(new MigLayout("fill, ins 0, gap 0", JBUI.scale(7)+"[pref!]"+JBUI.scale(9)+"[pref!]push[pref!]"));
+
       createActions();
       buttonPanes = ResizableDarculaTitleButtons.Companion.create(myCloseAction,
                                                                   myRestoreAction, myIconifyAction,
@@ -159,8 +159,10 @@ public class DarculaTitlePane extends JPanel {
       if (myRootPane instanceof IdeRootPane) {
         myIdeMenu = new IdeMenuBar(ActionManagerEx.getInstanceEx(), DataManager.getInstance());
         add(myIdeMenu);
+      } else {
+        add(titleLabel, "growx");
       }
-      add(buttonPanes.getView(), "growy");
+      add(buttonPanes.getView());
     }
     else if (decorationStyle == JRootPane.PLAIN_DIALOG ||
              decorationStyle == JRootPane.INFORMATION_DIALOG ||
@@ -169,9 +171,13 @@ public class DarculaTitlePane extends JPanel {
              decorationStyle == JRootPane.FILE_CHOOSER_DIALOG ||
              decorationStyle == JRootPane.QUESTION_DIALOG ||
              decorationStyle == JRootPane.WARNING_DIALOG) {
+      setLayout(new MigLayout("fill, ins 0, gap 0", JBUI.scale(7)+"[pref!]push[pref!]"));
+
       createActions();
+     // titleLabel.setIcon(mySystemIcon);
+      add(titleLabel, "growx");
       buttonPanes = DarculaTitleButtons.Companion.create(myCloseAction, myHelpAction);
-      add(buttonPanes.getView(), "growy");
+      add(buttonPanes.getView());
     }
   }
 
@@ -219,11 +225,28 @@ public class DarculaTitlePane extends JPanel {
 
 
   protected JMenuBar createMenuBar() {
-    myMenuBar = new SystemMenuBar();
+    myMenuBar = new JMenuBar(){
+      @Override
+      public Dimension getPreferredSize() {
+        return new Dimension(mySystemIcon.getIconWidth(), mySystemIcon.getIconHeight());
+      }
+
+      @Override
+      public void paint(Graphics g) {
+          mySystemIcon.paintIcon(this, g, 0, 0);
+      }
+    };
+
+    JMenu menu = new JMenu();
+    myMenuBar.add(menu);
+
     myMenuBar.setOpaque(false);
-    myMenuBar.setFocusable(false);
-    myMenuBar.setBorderPainted(true);
-    myMenuBar.add(createMenu());
+    menu.setFocusable(false);
+    menu.setBorderPainted(true);
+
+    if (getWindowDecorationStyle() == JRootPane.FRAME) {
+      addMenuItems(menu);
+    }
     return myMenuBar;
   }
 
@@ -278,6 +301,7 @@ public class DarculaTitlePane extends JPanel {
 
   private JMenu createMenu() {
     JMenu menu = new JMenu("");
+
     if (getWindowDecorationStyle() == JRootPane.FRAME) {
       addMenuItems(menu);
     }
@@ -309,6 +333,7 @@ public class DarculaTitlePane extends JPanel {
 
   private void setState(int state, boolean updateRegardless) {
     Window wnd = getWindow();
+    titleLabel.setText(getTitle());
 
     if (wnd != null && getWindowDecorationStyle() == JRootPane.FRAME) {
       if (myState == state && !updateRegardless) {
@@ -358,6 +383,11 @@ public class DarculaTitlePane extends JPanel {
     if (buttonPanes != null) buttonPanes.updateVisibility();
   }
 
+  private void setActive(boolean isSelected) {
+    buttonPanes.setSelected(isSelected);
+    titleLabel.setForeground(isSelected ? myActiveForeground : myInactiveForeground);
+  }
+
   private Frame getFrame() {
     Window window = getWindow();
 
@@ -385,7 +415,7 @@ public class DarculaTitlePane extends JPanel {
 
   private class CloseAction extends AbstractAction {
     public CloseAction() {
-      super(UIManager.getString("DarculaTitlePane.closeTitle", getLocale()));
+      super("Close", AllIcons.Windows.CloseActive);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -396,7 +426,7 @@ public class DarculaTitlePane extends JPanel {
 
   private class IconifyAction extends AbstractAction {
     public IconifyAction() {
-      super(UIManager.getString("DarculaTitlePane.iconifyTitle", getLocale()));
+      super("Minimize", AllIcons.Windows.Minimize);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -407,8 +437,7 @@ public class DarculaTitlePane extends JPanel {
 
   private class RestoreAction extends AbstractAction {
     public RestoreAction() {
-      super(UIManager.getString
-        ("DarculaTitlePane.restoreTitle", getLocale()));
+      super("Restore", AllIcons.Windows.Restore);
     }
 
     public void actionPerformed(ActionEvent e) {
@@ -419,44 +448,11 @@ public class DarculaTitlePane extends JPanel {
 
   private class MaximizeAction extends AbstractAction {
     public MaximizeAction() {
-      super(UIManager.getString("DarculaTitlePane.maximizeTitle", getLocale()));
+      super("Maximize", AllIcons.Windows.Maximize);
     }
 
     public void actionPerformed(ActionEvent e) {
       maximize();
-    }
-  }
-
-
-  private class SystemMenuBar extends JMenuBar {
-    public void paint(Graphics g) {
-      if (isOpaque()) {
-        g.setColor(getBackground());
-        g.fillRect(0, 0, getWidth(), getHeight());
-      }
-
-      if (mySystemIcon != null) {
-        final int offset = (getHeight() - mySystemIcon.getHeight(null)) / 2;
-        g.drawImage(mySystemIcon, offset, offset, null);
-      }
-      else {
-        Icon icon = UIManager.getIcon("InternalFrame.icon");
-
-        if (icon != null) {
-          icon.paintIcon(this, g, 0, 0);
-        }
-      }
-    }
-
-    public Dimension getMinimumSize() {
-      return getPreferredSize();
-    }
-
-    public Dimension getPreferredSize() {
-      Dimension size = super.getPreferredSize();
-
-      return new Dimension(Math.max(IMAGE_WIDTH, size.width),
-                           Math.max(size.height, IMAGE_HEIGHT));
     }
   }
 
@@ -481,34 +477,16 @@ public class DarculaTitlePane extends JPanel {
         revalidate();
         repaint();
       }
-      else if ("iconImage" == name) {
-        updateSystemIcon();
-        revalidate();
-        repaint();
-      }
     }
   }
 
-  private void updateSystemIcon() {
-    Window window = getWindow();
-    if (window == null) {
-      mySystemIcon = null;
-      return;
+  private class WindowHandler extends WindowAdapter {
+    public void windowActivated(WindowEvent ev) {
+      setActive(true);
     }
 
-    List<Image> icons = window.getIconImages();
-    assert icons != null;
-
-    if (icons.size() == 0) {
-      mySystemIcon = null;
-    }
-    else if (icons.size() == 1) {
-      mySystemIcon = icons.get(0);
-    }
-    else {
-      final JBDimension size = JBUI.size(16);
-      final Image image = icons.get(0);
-      mySystemIcon = Scalr.resize(ImageUtil.toBufferedImage(image), Scalr.Method.ULTRA_QUALITY, size.width, size.height);
+    public void windowDeactivated(WindowEvent ev) {
+      setActive(false);
     }
   }
 }

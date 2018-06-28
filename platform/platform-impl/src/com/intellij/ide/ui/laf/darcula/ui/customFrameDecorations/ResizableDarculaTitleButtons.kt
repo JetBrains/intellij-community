@@ -2,11 +2,8 @@
 package com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations
 
 import com.intellij.icons.AllIcons
-import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.Properties
 import com.intellij.ide.ui.laf.darcula.ui.customFrameDecorations.style.StyleManager
-import javax.accessibility.AccessibleContext
 import javax.swing.Action
-import javax.swing.Icon
 import javax.swing.JButton
 
 class ResizableDarculaTitleButtons(private val myCloseAction: Action,
@@ -23,9 +20,9 @@ class ResizableDarculaTitleButtons(private val myCloseAction: Action,
     }
   }
 
-  private val myRestoreButton: JButton = createButton("Restore", myRestoreAction, AllIcons.Windows.Restore)
-  private val myMaximizeButton: JButton = createButton("Maximize", myMaximizeAction, AllIcons.Windows.Maximize)
-  private val myMinimizeButton: JButton = createButton("Iconify", myIconifyAction, AllIcons.Windows.Minimize)
+  private val myRestoreButton: JButton = createButton("Restore", myRestoreAction)
+  private val myMaximizeButton: JButton = createButton("Maximize", myMaximizeAction)
+  private val myMinimizeButton: JButton = createButton("Iconify", myIconifyAction)
 
   override fun fillButtonPane() {
     super.fillButtonPane()
@@ -41,12 +38,12 @@ class ResizableDarculaTitleButtons(private val myCloseAction: Action,
     myMaximizeButton.isVisible = myMaximizeAction.isEnabled
   }
 
-  private fun createButton(accessibleName : String, action : Action, icon : Icon) : JButton {
-    val button = Properties.BasicButton()
-    button.action = action
-    button.putClientProperty(AccessibleContext.ACCESSIBLE_NAME_PROPERTY, accessibleName)
-
-    StyleManager.applyStyle(button, getStyle(icon))
-    return button
+  override fun updateStyles() {
+    super.updateStyles()
+    StyleManager.applyStyle(myRestoreButton, getStyle(if(isSelected) AllIcons.Windows.Restore else AllIcons.Windows.RestoreInactive, AllIcons.Windows.Restore))
+    StyleManager.applyStyle(myMaximizeButton, getStyle(if(isSelected) AllIcons.Windows.Maximize else AllIcons.Windows.MaximizeInactive, AllIcons.Windows.Maximize))
+    StyleManager.applyStyle(myMinimizeButton, getStyle(if(isSelected) AllIcons.Windows.Minimize else AllIcons.Windows.MinimizeInactive, AllIcons.Windows.Minimize))
   }
+
+
 }
