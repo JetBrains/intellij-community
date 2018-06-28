@@ -74,7 +74,15 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
   }
 
   private fun moveRefactoringsToStart(origHistory: List<Item>): List<Item> {
-    return origHistory; // todo
+    val refactorings = mutableListOf<Item>()
+    val manuals = mutableListOf<Item>()
+
+    for (rev in origHistory) {
+      if (rev.comment == null) manuals.add(rev)
+      else refactorings.add(rev)
+    }
+
+    return refactorings + manuals;
   }
 
   private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
