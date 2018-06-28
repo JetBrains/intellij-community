@@ -86,11 +86,7 @@ public abstract class InstructionVisitor {
                             @NotNull ExpressionPushingInstruction instruction,
                             @NotNull DfaMemoryState state) {
     PsiExpression anchor = instruction.getExpression();
-    if (anchor != null
-        && !(instruction instanceof MethodCallInstruction &&
-             (((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.BOXING ||
-              ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.UNBOXING))
-        && !(instruction instanceof PushInstruction && ((PushInstruction)instruction).isReferenceWrite())) {
+    if (isExpressionPush(instruction, anchor)) {
       if (anchor instanceof PsiMethodReferenceExpression && !(instruction instanceof PushInstruction)) {
         beforeMethodReferenceResultPush(value, (PsiMethodReferenceExpression)anchor, state);
       }
@@ -99,6 +95,27 @@ public abstract class InstructionVisitor {
       }
     }
     state.push(value);
+  }
+
+  private static boolean isExpressionPush(@NotNull ExpressionPushingInstruction instruction, PsiExpression anchor) {
+    if (anchor == null) return false;
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(anchor.getParent());
+    if (parent instanceof PsiAssignmentExpression) {
+      PsiAssignmentExpression assignment = (PsiAssignmentExpression)parent;
+      if (assignment.getOperationTokenType().equals(JavaTokenType.EQ) &&
+          PsiTreeUtil.isAncestor(assignment.getLExpression(), anchor, false)) {
+        return false;
+      }
+    }
+    if (instruction instanceof MethodCallInstruction) {
+      MethodCallInstruction.MethodType type = ((MethodCallInstruction)instruction).getMethodType();
+      return type != MethodCallInstruction.MethodType.BOXING &&
+             type != MethodCallInstruction.MethodType.UNBOXING;
+    }
+    if (instruction instanceof PushInstruction) {
+      return !((PushInstruction)instruction).isReferenceWrite();
+    }
+    return true;
   }
 
   private void callBeforeExpressionPush(@NotNull DfaValue value,
@@ -114,6 +131,9 @@ public abstract class InstructionVisitor {
       if (context != null) {
         checkReturnValue(value, Objects.requireNonNull(instruction.getExpression()), context, state);
       }
+    }
+    else if (anchor instanceof PsiArrayInitializerExpression && parent instanceof PsiNewExpression) {
+      callBeforeExpressionPush(value, instruction, state, (PsiExpression)parent);
     }
     else if (parent instanceof PsiConditionalExpression &&
         !PsiTreeUtil.isAncestor(((PsiConditionalExpression)parent).getCondition(), anchor, false)) {
