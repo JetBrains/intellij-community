@@ -144,7 +144,9 @@ public class InternalPage extends BasePage {
         setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
       }
     }
-    return storage.store(backingArray);
+    Address result = storage.alloc(backingArray);
+    storage.store(result, backingArray);
+    return result;
   }
 
   @Override

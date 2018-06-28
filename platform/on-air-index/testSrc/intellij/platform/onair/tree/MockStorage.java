@@ -5,6 +5,7 @@ import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Storage;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
 import java.util.concurrent.ConcurrentHashMap;
@@ -16,7 +17,8 @@ public class MockStorage implements Storage {
 
   public final ConcurrentHashMap<Address, byte[]> data = new ConcurrentHashMap<>();
 
-  public byte[] lookup(Address address) {
+  @Override
+  public byte[] lookup(@NotNull Address address) {
     byte[] result = data.get(address);
     if (result == null) {
       throw new IllegalArgumentException("data missing");
@@ -24,17 +26,23 @@ public class MockStorage implements Storage {
     return result;
   }
 
-  public Address store(byte[] bytes) {
+  @NotNull
+  @Override
+  public Address alloc(@NotNull byte[] bytes) {
     byte[] hashCode = HASH.hashBytes(bytes).asBytes();
     long lowBytes = ByteUtils.readUnsignedLong(hashCode, 0, 8);
-    long highBytes = ByteUtils.readUnsignedLong(hashCode, 0, 8);
-    final Address result = new Address(highBytes, normalizeLowBytes(lowBytes));
+    long highBytes = ByteUtils.readUnsignedLong(hashCode, 8, 8);
+    return new Address(highBytes, normalizeLowBytes(lowBytes));
+  }
+
+  @Override
+  public void store(@NotNull Address address, @NotNull byte[] bytes) {
+    final Address result = alloc(bytes);
     final byte[] existing = data.putIfAbsent(result, bytes);
     if (existing != null) {
       if (!Arrays.equals(bytes, existing)) {
         throw new IllegalStateException("hash collision");
       }
     }
-    return result;
   }
 }

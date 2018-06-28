@@ -110,11 +110,14 @@ public class BottomPage extends BasePage {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
         byte[] leaf = tree.loadLeaf(novelty, childAddress);
-        childAddress = storage.store(leaf);
+        childAddress = storage.alloc(leaf);
+        storage.store(childAddress, leaf);
         setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
       }
     }
-    return storage.store(backingArray);
+    Address result = storage.alloc(backingArray);
+    storage.store(result, backingArray);
+    return result;
   }
 
   @Override

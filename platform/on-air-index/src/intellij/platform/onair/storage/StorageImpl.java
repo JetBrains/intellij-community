@@ -12,6 +12,7 @@ import net.spy.memcached.CachedData;
 import net.spy.memcached.ClientMode;
 import net.spy.memcached.MemcachedClient;
 import net.spy.memcached.transcoders.Transcoder;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.InetSocketAddress;
@@ -21,7 +22,7 @@ import static intellij.platform.onair.tree.ByteUtils.normalizeLowBytes;
 
 public class StorageImpl implements Storage {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
-  private static final int MAX_VALUE_SIZE = 1024 * 1024 * 10;
+  private static final int MAX_VALUE_SIZE = 1024 * 100;
   private static final int LOCAL_CACHE_SIZE = 1000;
   private final MemcachedClient myClient;
   private final SLRUMap<Address, byte[]> myLocalCache;
@@ -56,7 +57,7 @@ public class StorageImpl implements Storage {
   }
 
   @Override
-  public byte[] lookup(Address address) {
+  public byte[] lookup(@NotNull Address address) {
     byte[] result = myLocalCache.get(address);
     if (result == null) {
       result = myClient.get(address.toString(), myTranscoder);
@@ -67,13 +68,25 @@ public class StorageImpl implements Storage {
     return result;
   }
 
-  @Override
-  public Address store(byte[] what) {
-    byte[] hashCode = HASH.hashBytes(what).asBytes();
+  @NotNull
+  public Address alloc(@NotNull byte[] bytes) {
+    byte[] hashCode = HASH.hashBytes(bytes).asBytes();
     long lowBytes = ByteUtils.readUnsignedLong(hashCode, 0, 8);
-    long highBytes = ByteUtils.readUnsignedLong(hashCode, 0, 8);
-    final Address address = new Address(highBytes, normalizeLowBytes(lowBytes));
-    myClient.set(address.toString(), 0, what, myTranscoder);
-    return address;
+    long highBytes = ByteUtils.readUnsignedLong(hashCode, 8, 8);
+    return new Address(highBytes, normalizeLowBytes(lowBytes));
+  }
+
+  @Override
+  public void store(@NotNull Address address, @NotNull byte[] bytes) {
+    myClient.set(address.toString(), 0, bytes, myTranscoder);
+    /*try {
+      myClient.set(address.toString(), 0, what, myTranscoder).get();
+    }
+    catch (InterruptedException e) {
+      e.printStackTrace();
+    }
+    catch (ExecutionException e) {
+      e.printStackTrace();
+    }*/
   }
 }
