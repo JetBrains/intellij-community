@@ -33,6 +33,7 @@ class TrafficProgressPanel extends JPanel {
 
   private final JLabel statusLabel = new JLabel();
   private final JLabel statusExtraLineLabel = new JLabel();
+  private final JLabel pwaLabel = new JLabel();
   @NotNull private final TrafficLightRenderer myTrafficLightRenderer;
 
   private final JPanel myPassStatuses = new JPanel();
@@ -50,10 +51,12 @@ class TrafficProgressPanel extends JPanel {
     VerticalBox center = new VerticalBox();
 
     add(center, BorderLayout.NORTH);
+    center.add(pwaLabel);
     center.add(statusLabel);
     center.add(statusExtraLineLabel);
     center.add(new Separator());
     center.add(Box.createVerticalStrut(6));
+    pwaLabel.setText("");
 
     TrafficLightRenderer.DaemonCodeAnalyzerStatus fakeStatusLargeEnough = new TrafficLightRenderer.DaemonCodeAnalyzerStatus();
     fakeStatusLargeEnough.errorCount = new int[]{1, 1, 1, 1};
@@ -142,6 +145,7 @@ class TrafficProgressPanel extends JPanel {
   void updatePanel(@NotNull TrafficLightRenderer.DaemonCodeAnalyzerStatus status, boolean isFake) {
     try {
       boolean needRebuild = myTrafficLightRenderer.updatePanel(status);
+      pwaLabel.setText(status.pwaText);
       statusLabel.setText(myTrafficLightRenderer.statusLabel);
       if (myTrafficLightRenderer.statusExtraLine == null) {
         statusExtraLineLabel.setVisible(false);

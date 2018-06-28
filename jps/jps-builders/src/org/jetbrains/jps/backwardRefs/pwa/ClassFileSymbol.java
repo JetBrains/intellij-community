@@ -130,15 +130,15 @@ public abstract class ClassFileSymbol {
       public void save(@NotNull DataOutput out, ClassFileSymbol symbol) throws IOException {
         out.writeInt(symbol.name);
         if (symbol instanceof Clazz) {
-          out.writeInt(CLASS_TYPE);
+          out.writeByte(CLASS_TYPE);
         }
         else if (symbol instanceof Method) {
-          out.writeInt(METHOD_TYPE);
+          out.writeByte(METHOD_TYPE);
           out.writeInt(((Method)symbol).containingClass);
           out.writeInt(((Method)symbol).parameterCount);
         }
         else if (symbol instanceof Field) {
-          out.writeInt(FIELD_TYPE);
+          out.writeByte(FIELD_TYPE);
           out.writeInt(((Field)symbol).containingClass);
         } else if (symbol instanceof Lambda) {
           throw new RuntimeException();

@@ -1,23 +1,25 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
-import com.intellij.openapi.util.ClearableLazyValue;
 import com.intellij.psi.PsiElement;
-import com.intellij.util.SmartList;
 import org.jetbrains.jps.backwardRefs.pwa.ClassFileSymbol;
 
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.*;
 
 public class BytecodeGraph {
 
   private final Map<ClassFileSymbol, JvmNode> myNodes = new HashMap<>();
-  private final ClearableLazyValue<List<JvmNode>> myUnusedNodes =
-    ClearableLazyValue.create(() -> myNodes.values().stream().filter(JvmNode::isUsed).collect(Collectors.toList()));
+  private final Set<JvmNode> myUnusedNodes = new HashSet<>();
+  private final int myMainMethodName;
+
+  public BytecodeGraph(int mainMethodName) {
+    myMainMethodName = mainMethodName;
+  }
 
   public void addNode(JvmNode node) {
+    if (node.getSymbol() instanceof ClassFileSymbol.Method && node.getSymbol().name == myMainMethodName) {
+      node.setImplicitlyUsed();
+    }
     myNodes.put(node.getSymbol(), node);
   }
 
@@ -26,8 +28,31 @@ public class BytecodeGraph {
   }
 
   public void graphBuilt() {
-    myNodes.values().forEach(n -> n.isUsed());
+    myUnusedNodes.clear();
+    myNodes.values().forEach(n -> isUsed(n));
+    System.out.println("---");
+    myNodes.values().forEach(n -> {
+      System.out.println(isUsed(n));
+    });
+
   }
+
+  public boolean isSomeCodeUnused() {
+    return !myUnusedNodes.isEmpty();
+  }
+
+  public Set<JvmNode> getUnusedNodes() {
+    return myUnusedNodes;
+  }
+
+  private boolean isUsed(JvmNode n) {
+    boolean used = n.isUsed();
+    if (!used) {
+      myUnusedNodes.add(n);
+    }
+    return used;
+  }
+
 
   public JvmNode findFor(PsiElement element) {
     return null;

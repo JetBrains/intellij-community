@@ -98,7 +98,7 @@ public class PwaBuilder extends BaseInstrumentingBuilder {
 
           @Override
           public void visitMethodInsn(int opcode, String owner, String name, String desc, boolean itf) {
-            sink(new ClassFileSymbol.Method(indexWriter.enumerateName(name), indexWriter.enumerateName(name), Type.getArgumentTypes(desc).length));
+            sink(new ClassFileSymbol.Method(indexWriter.enumerateName(name), indexWriter.enumerateName(owner), Type.getArgumentTypes(desc).length));
           }
 
           @Override

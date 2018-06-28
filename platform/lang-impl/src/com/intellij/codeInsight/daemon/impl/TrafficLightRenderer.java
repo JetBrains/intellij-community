@@ -2,6 +2,7 @@
 
 package com.intellij.codeInsight.daemon.impl;
 
+import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
 import com.intellij.codeInsight.daemon.DaemonBundle;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -32,6 +33,8 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
+import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.TwoColorsIcon;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.TIntArrayList;
@@ -50,8 +53,9 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final PsiFile myFile;
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
-  private Icon icon;
-  private Icon pwaIcon;
+  public Icon icon;
+  public volatile Icon pwaIcon;
+  public volatile String pwaText = "";
   String statistics;
   String statusLabel;
   String statusExtraLine;
@@ -129,6 +133,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   protected static class DaemonCodeAnalyzerStatus {
     public boolean errorAnalyzingFinished; // all passes done
+    public String pwaText = "";
     List<ProgressableTextEditorHighlightingPass> passStati = Collections.emptyList();
     public int[] errorCount = ArrayUtil.EMPTY_INT_ARRAY;
     // Used in Rider
@@ -154,6 +159,8 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   @NotNull
   protected DaemonCodeAnalyzerStatus getDaemonCodeAnalyzerStatus(@NotNull SeverityRegistrar severityRegistrar) {
     DaemonCodeAnalyzerStatus status = new DaemonCodeAnalyzerStatus();
+    status.pwaText = pwaIcon == null ? "" : pwaText;
+
     if (myFile == null) {
       status.reasonWhyDisabled = "No file";
       status.errorAnalyzingFinished = true;
@@ -247,11 +254,22 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
 
   @NotNull
   private Icon getIcon(@NotNull DaemonCodeAnalyzerStatus status) {
+    if (pwaIcon != null) {
+        status.pwaText = "Unused declaration inspection results:";
+    }
+
+
     updatePanel(status);
 
     Icon localInspectionIcon = getLocalInspectionIcon(status);
 
     if (pwaIcon != null) {
+      if (localInspectionIcon instanceof HighlightDisplayLevel.ColoredIcon) {
+        TwoColorsIcon icon =
+          new TwoColorsIcon(14, ((HighlightDisplayLevel.ColoredIcon)localInspectionIcon).getColor(), ((ColorIcon)pwaIcon).getIconColor());
+        status.pwaText = "Unused declaration inspection results:";
+        return icon;
+      }
       //TODO
     }
 

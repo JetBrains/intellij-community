@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.backwardRefs;
 
+import com.intellij.codeInsight.daemon.impl.TrafficLightRenderer;
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.PwaService;
 import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase;
@@ -17,16 +18,28 @@ import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.compiler.CompilationStatusListener;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerTopics;
+import com.intellij.openapi.editor.ex.EditorMarkupModel;
+import com.intellij.openapi.editor.markup.ErrorStripeRenderer;
+import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.ui.JBColor;
+import com.intellij.util.IconUtil;
 import com.intellij.util.indexing.StorageException;
 import com.intellij.util.indexing.ValueContainer;
 import com.intellij.util.indexing.impl.MapIndexStorage;
 import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.ColorIcon;
+import com.intellij.util.ui.UIUtil;
+import org.jetbrains.jps.backwardRefs.NameEnumerator;
 import org.jetbrains.jps.backwardRefs.index.CompilerReferenceIndex;
 import org.jetbrains.jps.backwardRefs.pwa.ClassFileSymbol;
 import org.jetbrains.jps.backwardRefs.pwa.PwaIndex;
@@ -193,8 +206,8 @@ public class PwaServiceImpl extends PwaService {
       return new ClassFileSymbol.Field(id, classId);
     }
     else if (element instanceof JvmMethod) {
-      String className = JvmClassUtil.getJvmClassName(((JvmField)element).getContainingClass());
-      String name = ((JvmField)element).getName();
+      String className = JvmClassUtil.getJvmClassName(((JvmMethod)element).getContainingClass());
+      String name = ((JvmMethod)element).getName();
       int id = myIndex.getByteSeqEum().tryEnumerate(name);
       int classId = myIndex.getByteSeqEum().tryEnumerate(className);
       return new ClassFileSymbol.Method(id, classId, ((JvmMethod)element).getParameters().length);
@@ -203,7 +216,16 @@ public class PwaServiceImpl extends PwaService {
   }
 
   private void resetGraph() {
-    myGraph = new BytecodeGraph();
+    int mainMethodName;
+    NameEnumerator eum = myIndex.getByteSeqEum();
+    try {
+      mainMethodName = eum.enumerate("main");
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
+
+    myGraph = new BytecodeGraph(mainMethodName);
 
     try {
       ((MapIndexStorage<ClassFileSymbol, Void>)((MapReduceIndex)myIndex.get(PwaIndices.DEF)).getStorage()).processKeys(symbol -> {
@@ -237,11 +259,70 @@ public class PwaServiceImpl extends PwaService {
         }
         return true;
       });
+      myGraph.graphBuilt();
+      if (myGraph.isSomeCodeUnused()) {
+        String text = "<html><b>Unused declaration problems:</b><br>";
+        for (JvmNode node : myGraph.getUnusedNodes()) {
+          ClassFileSymbol symbol = node.getSymbol();
+          String name = eum.getName(symbol.name);
+          if (symbol instanceof ClassFileSymbol.Method) {
+            String ccName = eum.getName(((ClassFileSymbol.Method)symbol).containingClass);
+            text += StringUtil.getShortName(ccName) + "." + name ;
+          }
+          else if (symbol instanceof ClassFileSymbol.Clazz) {
+            text += StringUtil.getShortName(name);
+          }
+          else if (symbol instanceof ClassFileSymbol.Field) {
+            String ccName = eum.getName(((ClassFileSymbol.Field)symbol).containingClass);
+            text += StringUtil.getShortName(ccName) + "." + name;
+          }
+          text += "<br>";
+        }
+
+
+        String finalText = text;
+        ReadAction.run(() -> {
+
+          for (FileEditor editor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+            if (editor instanceof TextEditor) {
+              MarkupModel model = ((TextEditor)editor).getEditor().getMarkupModel();
+              if (model instanceof EditorMarkupModel) {
+                ErrorStripeRenderer renderer = ((EditorMarkupModel)model).getErrorStripeRenderer();
+                if (renderer instanceof TrafficLightRenderer) {
+                  ((TrafficLightRenderer)renderer).pwaIcon = new ColorIcon(14, JBColor.lightGray);
+                  ((TrafficLightRenderer)renderer).pwaText = finalText;
+                  UIUtil.invokeLaterIfNeeded(() -> {
+                    editor.getComponent().repaint();
+                  });
+                }
+              }
+            }
+          }
+        });
+      } else {
+        ReadAction.run(() -> {
+          for (FileEditor editor : FileEditorManager.getInstance(myProject).getAllEditors()) {
+            if (editor instanceof TextEditor) {
+              MarkupModel model = ((TextEditor)editor).getEditor().getMarkupModel();
+              if (model instanceof EditorMarkupModel) {
+                ErrorStripeRenderer renderer = ((EditorMarkupModel)model).getErrorStripeRenderer();
+                if (renderer instanceof TrafficLightRenderer) {
+                  ((TrafficLightRenderer)renderer).pwaIcon = null;
+                  ((TrafficLightRenderer)renderer).pwaText = "";
+                  UIUtil.invokeLaterIfNeeded(() -> {
+                    editor.getComponent().repaint();
+                  });
+                }
+              }
+            }
+          }
+        });
+      }
+
     }
-    catch (StorageException e) {
+    catch (Throwable e) {
       throw new RuntimeException(e);
     }
-    myGraph.graphBuilt();
   }
 
 }
