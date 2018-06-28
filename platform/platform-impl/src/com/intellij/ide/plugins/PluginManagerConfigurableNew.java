@@ -2682,8 +2682,14 @@ public class PluginManagerConfigurableNew
     }
 
     protected void addNameComponent(@NotNull JPanel parent) {
-      myName = new LinkComponent();
+      myName = new LinkComponent() {
+        @Override
+        public String getToolTipText() {
+          return getPreferredSize().width > getWidth() ? super.getToolTipText() : null;
+        }
+      };
       myName.setText(myPlugin.getName());
+      myName.setToolTipText(myPlugin.getName());
       parent.add(RelativeFont.BOLD.install(myName));
     }
 
@@ -3827,8 +3833,51 @@ public class PluginManagerConfigurableNew
 
     @NotNull
     private JPanel createCenterPanel(boolean update) {
-      JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset5()));
-      JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset5(), 0));
+      int offset = offset5();
+      JPanel centerPanel = new NonOpaquePanel(new VerticalLayout(offset));
+      JPanel nameButtons = new NonOpaquePanel(new BorderLayout(offset, 0) {
+        Component myVersion;
+
+        @Override
+        public void addLayoutComponent(Component comp, Object constraints) {
+          super.addLayoutComponent(comp, constraints);
+          if (comp != myNameComponent && comp != myButtonsPanel) {
+            myVersion = comp;
+          }
+        }
+
+        @Override
+        public void layoutContainer(Container target) {
+          super.layoutContainer(target);
+          Insets insets = target.getInsets();
+          int left = insets.left;
+          int right = myButtonsPanel.getX() - offset;
+          int parentWidth = right - left;
+          int versionWidth = myVersion == null ? 0 : myVersion.getPreferredSize().width;
+          int nameWidth = myNameComponent.getPreferredSize().width;
+          int nameWithVersionWidth = nameWidth + versionWidth;
+          if (versionWidth > 0) {
+            nameWithVersionWidth += offset;
+          }
+
+          if (nameWithVersionWidth <= parentWidth) {
+            myNameComponent.setToolTipText(null);
+            return;
+          }
+
+          myNameComponent.setToolTipText(myNameComponent.getText());
+
+          int top = insets.top;
+          int bottom = target.getHeight() - insets.bottom;
+
+          if (myVersion != null) {
+            myVersion.setBounds(right - versionWidth, top, versionWidth, bottom - top);
+            parentWidth -= versionWidth + offset;
+          }
+
+          myNameComponent.setBounds(left, top, parentWidth, bottom - top);
+        }
+      });
 
       myNameComponent = new JLabel(myPlugin.getName());
       myNameComponent.setOpaque(false);
