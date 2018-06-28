@@ -4,7 +4,6 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -109,6 +108,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myView = new ChangesListView(project);
+    myView.setTreeExpander(new MyTreeExpander());
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myTsl = new TreeSelectionListener() {
       @Override
@@ -146,14 +146,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
 
-
-    MyTreeExpander expander = new MyTreeExpander();
-    AnAction expandAll = CommonActionsManager.getInstance().createExpandAllHeaderAction(expander, myView);
-    AnAction collapseAll = CommonActionsManager.getInstance().createCollapseAllHeaderAction(expander, myView);
-    myContentManager.addToolWindowTitleAction(expandAll);
-    myContentManager.addToolWindowTitleAction(collapseAll);
-
-    myView.setTreeExpander(expander);
+    myContentManager.addToolWindowTitleAction(myView.createExpandAllAction(true));
+    myContentManager.addToolWindowTitleAction(myView.createCollapseAllAction(true));
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,

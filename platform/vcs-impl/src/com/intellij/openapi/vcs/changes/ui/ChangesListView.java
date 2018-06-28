@@ -51,8 +51,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
   @NonNls public static final DataKey<List<FilePath>> MISSING_FILES_DATA_KEY = DataKey.create("ChangeListView.MissingFiles");
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
-  private TreeExpander myTreeExpander;
-
   public ChangesListView(@NotNull Project project) {
     super(project, false, true);
     setDragEnabled(true);
@@ -181,9 +179,6 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     }
     if (PlatformDataKeys.HELP_ID.is(dataId)) {
       return HELP_ID;
-    }
-    if (PlatformDataKeys.TREE_EXPANDER.is(dataId) && myTreeExpander != null) {
-      return myTreeExpander;
     }
     return super.getData(dataId);
   }
@@ -404,9 +399,5 @@ public class ChangesListView extends ChangesTree implements DataProvider, DnDAwa
     public boolean test(Change change) {
       return seen.add(change);
     }
-  }
-
-  public void setTreeExpander(TreeExpander expander) {
-    myTreeExpander = expander;
   }
 }
