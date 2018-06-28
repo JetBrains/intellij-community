@@ -7,6 +7,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.DataInput;
 import java.io.DataOutput;
 import java.io.IOException;
+import java.util.Objects;
 
 public abstract class ClassFileSymbol {
   public final int name;
@@ -20,6 +21,19 @@ public abstract class ClassFileSymbol {
       super(name);
       this.containingClass = containingClass;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      FieldOrMethod method = (FieldOrMethod)o;
+      return containingClass == method.containingClass;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(containingClass);
+    }
   }
 
   //TODO
@@ -27,10 +41,20 @@ public abstract class ClassFileSymbol {
     protected Lambda(int name) {
       super(name);
     }
+
+    @Override
+    public int hashCode() {
+      return name;
+    }
   }
   public static class Clazz extends ClassFileSymbol {
     public Clazz(int name) {
       super(name);
+    }
+
+    @Override
+    public int hashCode() {
+      return name;
     }
   }
   public static class Method extends FieldOrMethod {
@@ -40,10 +64,33 @@ public abstract class ClassFileSymbol {
       super(name, containingClass);
       this.parameterCount = parameterCount;
     }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      Method method = (Method)o;
+      return parameterCount == method.parameterCount;
+    }
+
+    @Override
+    public int hashCode() {
+      return Objects.hash(parameterCount);
+    }
   }
   public static class Field extends FieldOrMethod {
     public Field(int name, int containingClass) {
       super(name, containingClass);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      return super.equals(o);
+    }
+
+    @Override
+    public int hashCode() {
+      return super.hashCode();
     }
   }
 

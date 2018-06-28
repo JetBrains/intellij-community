@@ -29,6 +29,7 @@ import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiCompiledElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.ui.UIUtil;
@@ -50,6 +51,7 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   private final DaemonCodeAnalyzerImpl myDaemonCodeAnalyzer;
   private final SeverityRegistrar mySeverityRegistrar;
   private Icon icon;
+  private Icon pwaIcon;
   String statistics;
   String statusLabel;
   String statusExtraLine;
@@ -246,6 +248,17 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
   @NotNull
   private Icon getIcon(@NotNull DaemonCodeAnalyzerStatus status) {
     updatePanel(status);
+
+    Icon localInspectionIcon = getLocalInspectionIcon(status);
+
+    if (pwaIcon != null) {
+      //TODO
+    }
+
+    return localInspectionIcon;
+  }
+
+  private Icon getLocalInspectionIcon(@NotNull DaemonCodeAnalyzerStatus status) {
     Icon icon = this.icon;
     if (PowerSaveMode.isEnabled() || status.reasonWhySuspended != null || status.reasonWhyDisabled != null || status.errorAnalyzingFinished) {
       return icon;

@@ -283,7 +283,7 @@ public abstract class MapIndexStorage<Key, Value> implements IndexStorage<Key, V
     throw e;
   }
 
-  @TestOnly
+  //@TestOnly
   public boolean processKeys(@NotNull Processor<Key> processor) throws StorageException {
     l.lock();
     try {

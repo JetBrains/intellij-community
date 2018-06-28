@@ -21,6 +21,7 @@ public class PwaIndices {
   public final static int VERSION = 0;
   public final static IndexId<ClassFileSymbol, ClassFileSymbol> BACK_USAGES = IndexId.create("symbol.refs");
   public final static IndexId<ClassFileSymbol, Collection<ClassFileSymbol>> BACK_HIERARCHY = IndexId.create("symbol.hierarchy");
+  public final static IndexId<ClassFileSymbol, Void> DEF = IndexId.create("symbol.defs");
 
   private static IndexExtension<ClassFileSymbol, ClassFileSymbol, ClassFileData> createBackUsagesIndex() {
     return new IndexExtension<ClassFileSymbol, ClassFileSymbol, ClassFileData>() {

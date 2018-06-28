@@ -3,6 +3,8 @@ package com.intellij.compiler.backwardRefs;
 
 import com.intellij.compiler.CompilerReferenceService;
 import com.intellij.compiler.PwaService;
+import com.intellij.compiler.backwardRefs.CompilerReferenceServiceBase;
+import com.intellij.compiler.backwardRefs.DirtyScopeHolder;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.compiler.server.BuildManagerListener;
 import com.intellij.lang.jvm.JvmClass;
@@ -21,6 +23,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.util.indexing.StorageException;
+import com.intellij.util.indexing.ValueContainer;
+import com.intellij.util.indexing.impl.MapIndexStorage;
+import com.intellij.util.indexing.impl.MapReduceIndex;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.jps.backwardRefs.pwa.ClassFileSymbol;
 import org.jetbrains.jps.backwardRefs.pwa.PwaIndex;
@@ -34,7 +39,12 @@ import java.util.concurrent.locks.Lock;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 public class PwaServiceImpl extends PwaService {
+
+  enum IndexStatus { NOT_READY, NOT_EXIST, READY, COMPILING }
+
   private volatile PwaIndex myIndex;
+  private volatile BytecodeGraph myGraph;
+
   protected final LongAdder myCompilationCount = new LongAdder();
   protected final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   protected final Lock myReadDataLock = myLock.readLock();
@@ -180,4 +190,44 @@ public class PwaServiceImpl extends PwaService {
     }
     throw new AssertionError(element.getClass());
   }
+
+  private void resetGraph() {
+    myGraph = new BytecodeGraph();
+
+    try {
+      ((MapIndexStorage<ClassFileSymbol, Void>)((MapReduceIndex)myIndex.get(PwaIndices.DEF)).getStorage()).processKeys(symbol -> {
+        JvmNode node = new JvmNode(symbol);
+        myGraph.addNode(node);
+        return true;
+      });
+
+
+      ((MapIndexStorage<ClassFileSymbol, ClassFileSymbol>)((MapReduceIndex)myIndex.get(PwaIndices.BACK_USAGES)).getStorage()).processKeys(symbol -> {
+        JvmNode node = myGraph.getNodeFromSources(symbol);
+        if (node != null) {
+          try {
+            myIndex.get(PwaIndices.BACK_USAGES).getData(symbol).forEach((id, value) -> {
+              JvmNode usagePlace = myGraph.getNodeFromSources(value);
+              if (usagePlace != null) {
+                node.usedIn(usagePlace);
+              } else {
+                throw new IllegalStateException();
+              }
+              return true;
+            });
+          }
+          catch (StorageException e) {
+            throw new RuntimeException(e);
+          }
+        }
+        return true;
+      });
+    }
+    catch (StorageException e) {
+      throw new RuntimeException(e);
+    }
+    myGraph.graphBuilt();
+
+  }
+
 }
