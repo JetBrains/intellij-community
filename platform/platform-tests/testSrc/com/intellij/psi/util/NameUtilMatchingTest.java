@@ -2,18 +2,15 @@
 
 package com.intellij.psi.util;
 
-import com.intellij.ide.util.FileStructureDialog;
 import com.intellij.psi.codeStyle.AllOccurrencesMatcher;
 import com.intellij.psi.codeStyle.MinusculeMatcher;
 import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.Range;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.text.Matcher;
-import junit.framework.TestCase;
 import org.jetbrains.annotations.NonNls;
 
-public class NameUtilMatchingTest extends TestCase {
+public class NameUtilMatchingTest extends NameUtilMatchingTestCase {
   public void testSimpleCases() {
     assertMatches("N", "NameUtilTest");
     assertMatches("NU", "NameUtilTest");
@@ -122,10 +119,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("Google Test*.html", "Google Test Test.cc.html");
   }
 
-  private static MinusculeMatcher caseInsensitiveMatcher(String pattern) {
-    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.NONE);
-  }
-
   public void testStartDot() {
     assertMatches("A*.html", "A.html");
     assertMatches("A*.html", "Abc.html");
@@ -213,10 +206,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertMatches("abc", "aaa:bbb:ccc");
     assertMatches("textField:sh", "textField:shouldChangeCharactersInRange:replacementString:");
     assertMatches("text*:sh", "textField:shouldChangeCharactersInRange:replacementString:");
-  }
-
-  private static MinusculeMatcher fileStructureMatcher(String pattern) {
-    return FileStructureDialog.createFileStructureMatcher(pattern);
   }
 
   public void testFileStructure() {
@@ -332,10 +321,6 @@ public class NameUtilMatchingTest extends TestCase {
     assertPreference("ProVi", "PROVIDER", "ProjectView");
   }
 
-  private static Matcher firstLetterMatcher(String pattern) {
-    return NameUtil.buildMatcher(pattern, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
-  }
-
   public void testSpaceInCompletionPrefix() {
     assertTrue(caseInsensitiveMatcher("create ").matches("create module"));
   }
@@ -343,13 +328,6 @@ public class NameUtilMatchingTest extends TestCase {
   public void testLong() {
     assertMatches("Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqual",
                   "Product.findByDateAndNameGreaterThanEqualsAndQualityGreaterThanEqualsIntellijIdeaRulezzz");
-  }
-
-  static void assertMatches(@NonNls String pattern, @NonNls String name) {
-    assertTrue(pattern + " doesn't match " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
-  }
-  static void assertDoesntMatch(@NonNls String pattern, @NonNls String name) {
-    assertFalse(pattern + " matches " + name + "!!!", caseInsensitiveMatcher(pattern).matches(name));
   }
 
   public void testUpperCaseMatchesLowerCase() {
@@ -593,34 +571,7 @@ public class NameUtilMatchingTest extends TestCase {
     assertTrue(caseInsensitiveMatcher(" EUC-").matchingDegree("x-EUC-TW") > Integer.MIN_VALUE);
   }
 
-  private static void assertPreference(@NonNls String pattern,
-                                       @NonNls String less,
-                                       @NonNls String more) {
-    assertPreference(pattern, less, more, NameUtil.MatchingCaseSensitivity.FIRST_LETTER);
-  }
-
-  private static void assertPreference(@NonNls String pattern,
-                                       @NonNls String less,
-                                       @NonNls String more,
-                                       NameUtil.MatchingCaseSensitivity sensitivity) {
-    assertPreference(NameUtil.buildMatcher(pattern, sensitivity), less, more);
-  }
-
-  private static void assertPreference(MinusculeMatcher matcher, String less, String more) {
-    int iLess = matcher.matchingDegree(less);
-    int iMore = matcher.matchingDegree(more);
-    assertTrue(iLess + ">=" + iMore + "; " + less + ">=" + more, iLess < iMore);
-  }
-
-  private static void assertNoPreference(@NonNls String pattern,
-                                       @NonNls String name1,
-                                       @NonNls String name2,
-                                       NameUtil.MatchingCaseSensitivity sensitivity) {
-    MinusculeMatcher matcher = NameUtil.buildMatcher(pattern, sensitivity);
-    assertEquals(matcher.matchingDegree(name1), matcher.matchingDegree(name2));
-  }
-
- public void testSpeedSearchComparator() {
+  public void testSpeedSearchComparator() {
    final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
 
    assertNotNull(c.matchingFragments("a", "Ant"));

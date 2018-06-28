@@ -10,6 +10,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Arrays;
 import java.util.Iterator;
 
 /**
@@ -34,6 +35,8 @@ public class MinusculeMatcher implements Matcher {
   private final char[] toLowerCase;
   private final char[] myMeaningfulCharacters;
   private final int myMinNameLength;
+
+  private final TypoService myTypoService = TypoService.getInstance();
 
   /**
    * Constructs a matcher by a given pattern.
@@ -221,14 +224,20 @@ public class MinusculeMatcher implements Matcher {
 
   @Nullable
   public FList<Range> matchingFragments(@NotNull String name) {
-    return new Session(name).matchingFragments();
+    FList<Range> ranges = new Session(name, false).matchingFragments();
+    if (ranges != null) return ranges;
+    return new Session(name, true).matchingFragments();
   }
 
   private class Session {
     @NotNull private final String myName;
     private final boolean isAsciiName;
 
-    public Session(@NotNull String name) {
+    private final boolean myTypoAware;
+    private final boolean myAllowTypos;
+    @Nullable private final char[] myFixedPattern;
+
+    public Session(@NotNull String name, boolean typoAware) {
       myName = name;
 
       int length = name.length();
@@ -241,29 +250,33 @@ public class MinusculeMatcher implements Matcher {
       }
 
       isAsciiName = isAscii;
+      myTypoAware = typoAware;
+      myAllowTypos = typoAware && isAscii;
+      myFixedPattern = myAllowTypos ? Arrays.copyOf(myPattern, myPattern.length) : null;
     }
 
     private char charAt(int i) {
-      return myPattern[i];
+      return myFixedPattern != null ? myFixedPattern[i] : myPattern[i];
     }
 
     private char toLowerCase(int i) {
-      return toLowerCase[i];
+      return myFixedPattern == null ? toLowerCase[i] : toLowerAscii(myFixedPattern[i]);
     }
 
     private char toUpperCase(int i) {
-      return toUpperCase[i];
+      return myFixedPattern == null ? toLowerCase[i] : toUpperAscii(myFixedPattern[i]);
     }
 
     private boolean isLowerCase(int i) {
-      return isLowerCase[i];
+      return myFixedPattern == null ? isLowerCase[i] : isLowerAscii(myFixedPattern[i]);
     }
 
     private boolean isUpperCase(int i) {
-      return isUpperCase[i];
+      return myFixedPattern == null ? isUpperCase[i] : isUpperAscii(myFixedPattern[i]);
     }
 
     private boolean isWordSeparator(int i) {
+      //todo improve
       return isWordSeparator[i];
     }
 
@@ -273,20 +286,23 @@ public class MinusculeMatcher implements Matcher {
         return null;
       }
 
-      /*
-      int length = myName.length();
-      int patternIndex = 0;
-      for (int i = 0; i < length; ++i) {
-        char c = myName.charAt(i);
-        if (patternIndex < myMeaningfulCharacters.length &&
-            (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1])) {
-          patternIndex += 2;
+      //we're in typo mode, but non-ascii symbols are used. so aborting
+      if (myTypoAware && !isAsciiName) return null;
+
+      if (!myTypoAware) {
+        int length = myName.length();
+        int patternIndex = 0;
+        for (int i = 0; i < length; ++i) {
+          char c = myName.charAt(i);
+          if (patternIndex < myMeaningfulCharacters.length &&
+              (c == myMeaningfulCharacters[patternIndex] || c == myMeaningfulCharacters[patternIndex + 1])) {
+            patternIndex += 2;
+          }
+        }
+        if (patternIndex < myMinNameLength * 2) {
+          return null;
         }
       }
-      if (patternIndex < myMinNameLength * 2) {
-        return null;
-      }
-      */
 
       return matchWildcards(0, 0);
     }
@@ -402,9 +418,36 @@ public class MinusculeMatcher implements Matcher {
              !myHasHumps && myOptions != NameUtil.MatchingCaseSensitivity.ALL;
     }
 
-    private boolean charEquals(char patternChar, int patternIndex, char c, boolean isIgnoreCase) {
-      return patternChar == c ||
-             isIgnoreCase && (toLowerCase(patternIndex) == c || toUpperCase(patternIndex) == c);
+    private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos) {
+      char patternChar = myPattern[patternIndex];
+      char nameChar = myName.charAt(nameIndex);
+
+      if (patternChar == nameChar ||
+          isIgnoreCase && (toLowerCase[patternIndex] == nameChar || toUpperCase[patternIndex] == nameChar)) {
+        return true;
+      }
+
+      if (!myAllowTypos || !allowTypos) return false;
+
+      char leftMiss = myTypoService.leftMiss(patternChar);
+      if (leftMiss != 0) {
+        if (leftMiss == nameChar ||
+            isIgnoreCase && (toLowerAscii(leftMiss) == nameChar || toUpperAscii(leftMiss) == nameChar)) {
+            myFixedPattern[patternIndex] = leftMiss;
+          return true;
+        }
+      }
+
+      char rightMiss = myTypoService.rightMiss(patternChar);
+      if (rightMiss != 0) {
+        if (rightMiss == nameChar ||
+            isIgnoreCase && (toLowerAscii(rightMiss) == nameChar || toUpperAscii(rightMiss) == nameChar)) {
+          myFixedPattern[patternIndex] = rightMiss;
+          return true;
+        }
+      }
+
+      return false;
     }
 
     @Nullable
@@ -422,7 +465,7 @@ public class MinusculeMatcher implements Matcher {
       int i = 1;
       boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
       while (nameIndex + i < myName.length() && patternIndex + i < myPattern.length) {
-        if (!charEquals(charAt(patternIndex + i), patternIndex + i, myName.charAt(nameIndex + i), ignoreCase)) {
+        if (!charEquals(patternIndex + i, nameIndex + i, ignoreCase, true)) {
           if (Character.isDigit(charAt(patternIndex + i)) && Character.isDigit(charAt(patternIndex + i - 1))) {
             return 0;
           }
@@ -501,7 +544,7 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private boolean isUppercasePatternVsLowercaseNameChar(int patternIndex, int nameIndex) {
-      return isUpperCase(patternIndex) && charAt(patternIndex) != myName.charAt(nameIndex);
+      return isUpperCase(patternIndex) && !charEquals(patternIndex, nameIndex, false, true);
     }
 
     @Nullable
@@ -527,8 +570,9 @@ public class MinusculeMatcher implements Matcher {
       if (nameIndex >= myName.length()) return false;
 
       boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
+      if (!charEquals(patternIndex, nameIndex, ignoreCase, true)) return false;
+
       char patternChar = charAt(patternIndex);
-      if (!charEquals(patternChar, patternIndex, myName.charAt(nameIndex), ignoreCase)) return false;
 
       if (myOptions == NameUtil.MatchingCaseSensitivity.FIRST_LETTER &&
           (patternIndex == 0 || patternIndex == 1 && isWildcard(0)) &&
@@ -548,7 +592,6 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private int indexOfWordStart(int patternIndex, int startFrom) {
-      final char p = charAt(patternIndex);
       if (startFrom >= myName.length() ||
           myHasHumps && isLowerCase(patternIndex) && !(patternIndex > 0 && isWordSeparator(patternIndex - 1))) {
         return -1;
@@ -559,7 +602,7 @@ public class MinusculeMatcher implements Matcher {
         if (nextWordStart >= myName.length()) {
           return -1;
         }
-        if (charEquals(p, patternIndex, myName.charAt(nextWordStart), true)) {
+        if (charEquals(patternIndex, nextWordStart, true, false)) {
           return nextWordStart;
         }
       }
@@ -601,6 +644,14 @@ public class MinusculeMatcher implements Matcher {
       return (char)(c - ('A' - 'a'));
     }
     return c;
+  }
+
+  private static boolean isUpperAscii(char c) {
+    return 'A' <= c && c <= 'Z';
+  }
+
+  private static boolean isLowerAscii(char c) {
+    return 'a' <= c && c <= 'z';
   }
 
   @NonNls
