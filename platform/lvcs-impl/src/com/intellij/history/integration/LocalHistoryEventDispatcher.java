@@ -40,6 +40,7 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
   private final LocalHistoryFacade myVcs;
   private final IdeaGateway myGateway;
   private final EventDispatcher<VirtualFileListener> myVfsEventsDispatcher =  EventDispatcher.create(VirtualFileListener.class);
+  private boolean myStopped;
 
   LocalHistoryEventDispatcher(LocalHistoryFacade vcs, IdeaGateway gw) {
     myVcs = vcs;
@@ -68,21 +69,29 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
   }
 
   void startAction() {
-    myGateway.registerUnsavedDocuments(myVcs);
-    myVcs.forceBeginChangeSet();
+    if (!myStopped) {
+      myGateway.registerUnsavedDocuments(myVcs);
+      myVcs.forceBeginChangeSet();
+    }
   }
 
   void finishAction(String name) {
-    myGateway.registerUnsavedDocuments(myVcs);
-    endChangeSet(name);
+    if (!myStopped) {
+      myGateway.registerUnsavedDocuments(myVcs);
+      endChangeSet(name);
+    }
   }
 
   private void beginChangeSet() {
-    myVcs.beginChangeSet();
+    if (!myStopped) {
+      myVcs.beginChangeSet();
+    }
   }
 
   private void endChangeSet(String name) {
-    myVcs.endChangeSet(name);
+    if (!myStopped) {
+      myVcs.endChangeSet(name);
+    }
   }
 
   @Override
@@ -97,7 +106,9 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
       @Override
       public boolean visitFile(@NotNull VirtualFile f) {
         if (isVersioned(f)) {
-          myVcs.created(f.getPath(), f.isDirectory());
+          if (!myStopped) {
+            myVcs.created(f.getPath(), f.isDirectory());
+          }
         }
         return true;
       }
@@ -120,7 +131,9 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
 
     Pair<StoredContent, Long> content = myGateway.acquireAndUpdateActualContent(f, null);
     if (content != null) {
-      myVcs.contentChanged(f.getPath(), content.first, content.second);
+      if (!myStopped) {
+        myVcs.contentChanged(f.getPath(), content.first, content.second);
+      }
     }
   }
 
@@ -145,13 +158,17 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
       if (!wasVersioned && !isVersioned) return;
 
       String oldName = (String)e.getOldValue();
-      myVcs.renamed(f.getPath(), oldName);
+      if (!myStopped) {
+        myVcs.renamed(f.getPath(), oldName);
+      }
     }
     else if (VirtualFile.PROP_WRITABLE.equals(e.getPropertyName())) {
       if (!isVersioned(e.getFile())) return;
       VirtualFile f = e.getFile();
       if (!f.isDirectory()) {
-        myVcs.readOnlyStatusChanged(f.getPath(), !(Boolean)e.getOldValue());
+        if (!myStopped) {
+          myVcs.readOnlyStatusChanged(f.getPath(), !(Boolean)e.getOldValue());
+        }
       }
     }
   }
@@ -173,7 +190,9 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
 
     if (!wasVersioned && !isVersioned) return;
 
-    myVcs.moved(f.getPath(), e.getOldParent().getPath());
+    if (!myStopped) {
+      myVcs.moved(f.getPath(), e.getOldParent().getPath());
+    }
   }
 
   @Override
@@ -181,7 +200,9 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
     VirtualFile f = e.getFile();
     Entry entry = myGateway.createEntryForDeletion(f);
     if (entry != null) {
-      myVcs.deleted(f.getPath(), entry);
+      if (!myStopped) {
+        myVcs.deleted(f.getPath(), entry);
+      }
     }
   }
 
@@ -213,5 +234,13 @@ class LocalHistoryEventDispatcher implements VirtualFileManagerListener, Command
 
   void addVirtualFileListener(VirtualFileListener virtualFileListener, Disposable disposable) {
     myVfsEventsDispatcher.addListener(virtualFileListener, disposable);
+  }
+
+  public void stop() {
+    myStopped = true;
+  }
+
+  public void resume() {
+    myStopped = false;
   }
 }

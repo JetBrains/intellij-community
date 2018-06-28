@@ -86,6 +86,14 @@ public class LocalHistoryImpl extends LocalHistory implements BaseComponent, Dis
     fm.addVirtualFileManagerListener(myEventDispatcher, this);
   }
 
+  public void stopRecording() {
+    myEventDispatcher.stop();
+  }
+
+  public void resumeRecording() {
+    myEventDispatcher.resume();
+  }
+
   public File getStorageDir() {
     return new File(getSystemPath(), "LocalHistory");
   }

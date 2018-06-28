@@ -10,10 +10,12 @@ import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.diff.impl.patch.FilePatch
 import com.intellij.openapi.diff.impl.patch.IdeaTextPatchBuilder
 import com.intellij.openapi.diff.impl.patch.formove.PatchApplier
+import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.vcs.ProjectLevelVcsManager
 import com.intellij.openapi.vcs.changes.Change
 import com.intellij.openapi.vcs.changes.ChangesUtil
+import com.intellij.openapi.vcs.changes.ui.CommitHelper.DOCUMENT_BEING_COMMITTED_KEY
 import com.intellij.openapi.vfs.LocalFileSystem
 import com.intellij.openapi.vfs.VfsUtil.markDirtyAndRefresh
 import com.intellij.openapi.vfs.VirtualFile
@@ -54,9 +56,11 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
     // -- here is where the magic starts
     // todo extract refactorings from them and apply them first
 
-    var revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
+    val revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
 
-    for (rev in historySinceLastCommit) {
+    invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().stopRecording() }
+
+    for (rev in revisionsToApply) {
       val file = ancestor
 
       applyRevision(rev, root, file)
@@ -65,6 +69,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       commit(root, file, msg)
     }
 
+    invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().resumeRecording() }
     ce.myOverridingCommitProcedure = null // for safety
   }
 
@@ -74,6 +79,11 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
 
   private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
     invokeAndWaitIfNeed {
+      val doc = FileDocumentManager.getInstance().getDocument(file)
+      if (doc != null) {
+        doc.putUserData<Any>(DOCUMENT_BEING_COMMITTED_KEY, null)
+      }
+
       //      runWriteAction {
       // as content:
       //        val entry = rev.revision.findEntry()
@@ -109,6 +119,7 @@ class MyCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviron
       if (rev.isLabel) {
         if (rev.label!!.startsWith("Commit Changes: ")) {
           lastRev = true
+          break
         }
       }
       else {
