@@ -60,8 +60,13 @@ public abstract class Revision {
   }
 
   public String toString() {
-    Entry entry = findEntry();
-    String content = entry == null ? null : entry.getContent().toString();
+    String content;
+    try {
+      content = findEntry().getContent().toString();
+    }
+    catch (Exception e) {
+      content = null;
+    }
     return getChangeSetName() + "\n" + content;
   }
 }
