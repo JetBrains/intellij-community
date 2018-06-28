@@ -153,9 +153,23 @@ public class InternalPage extends BasePage {
     return tree.loadPage(novelty, getChildAddress(index));
   }
 
+  @Override
+  protected BasePage mergeWithChildren(@NotNull Novelty novelty) {
+    BasePage result = this;
+    while (!result.isBottom() && result.size == 1) {
+      result = result.getChild(novelty, 0);
+    }
+    return result;
+  }
+
   protected void removeChild(int pos) {
     copyChildren(pos + 1, pos);
     decrementSize(1);
+  }
+
+  @Override
+  protected boolean isBottom() {
+    return false;
   }
 
   @Override

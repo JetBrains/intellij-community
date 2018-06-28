@@ -57,6 +57,10 @@ public abstract class BasePage {
 
   protected abstract boolean forEach(@NotNull Novelty novelty, @NotNull KeyValueConsumer consumer);
 
+  protected abstract BasePage mergeWithChildren(@NotNull Novelty novelty);
+
+  protected abstract boolean isBottom();
+
   // WARNING: this method allocates an array
   protected byte[] getKey(int index) {
     final int bytesPerKey = tree.getKeySize();

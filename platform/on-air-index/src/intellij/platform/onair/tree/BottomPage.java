@@ -123,6 +123,16 @@ public class BottomPage extends BasePage {
   }
 
   @Override
+  protected BasePage mergeWithChildren(@NotNull Novelty novelty) {
+    return this;
+  }
+
+  @Override
+  protected boolean isBottom() {
+    return true;
+  }
+
+  @Override
   protected void dump(@NotNull Novelty novelty, @NotNull PrintStream out, int level, BTree.ToString renderer) {
     indent(out, level + 1);
     out.println(getClass().getSimpleName());
