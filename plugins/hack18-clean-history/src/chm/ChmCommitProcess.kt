@@ -39,6 +39,8 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(changes[0].virtualFile)!!
     val repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)!!
 
+    invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().stopRecording() }
+
     // remember actions
     val ancestor = LocalFileSystem.getInstance().findFileByIoFile(ChangesUtil.findCommonAncestor(changes)!!)!!
     // todo checked only for files yet
@@ -57,8 +59,6 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     // todo extract refactorings from them and apply them first
 
     val revisionsToApply = moveRefactoringsToStart(historySinceLastCommit)
-
-    invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().stopRecording() }
 
     for (rev in revisionsToApply) {
       val file = ancestor
