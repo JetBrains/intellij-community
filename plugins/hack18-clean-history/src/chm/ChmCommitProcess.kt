@@ -148,7 +148,9 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
       val changes = getChanges(diffs)
       val patches = IdeaTextPatchBuilder.buildPatch(project, changes, root.path, false)
 
-      res.add(Item(rev, comment, patches))
+      if (!patches.isEmpty()) {
+        res.add(Item(rev, comment, patches))
+      }
       comment = rev.changeSetName
       prevRev = rev
     }
