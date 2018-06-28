@@ -414,8 +414,8 @@ class GitBranchPopupActions {
                          @NotNull String branchName,
                          @NotNull GitRepository selectedRepository) {
       super(project, repositories, branchName, selectedRepository);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
-               AllIcons.Vcs.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+               AllIcons.Nodes.NotFavoriteOnHover);
     }
 
     @NotNull

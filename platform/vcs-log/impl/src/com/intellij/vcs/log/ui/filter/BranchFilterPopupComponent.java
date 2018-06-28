@@ -141,8 +141,8 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
         super(value, true);
         myReferences = references;
-        myIcon = new LayeredIcon(AllIcons.Vcs.Favorite, EmptyIcon.ICON_16);
-        myHoveredIcon = new LayeredIcon(AllIcons.Vcs.FavoriteOnHover, AllIcons.Vcs.NotFavoriteOnHover);
+        myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
+        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);
         getTemplatePresentation().setIcon(myIcon);
         getTemplatePresentation().setSelectedIcon(myHoveredIcon);
 

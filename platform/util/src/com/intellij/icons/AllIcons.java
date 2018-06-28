@@ -1318,6 +1318,8 @@ public class AllIcons {
     public static final Icon ExcludedFromCompile = IconLoader.getIcon("/nodes/excludedFromCompile.png"); // 16x16
     public static final Icon ExpandNode = IconLoader.getIcon("/nodes/expandNode.png"); // 9x9
     public static final Icon ExtractedFolder = IconLoader.getIcon("/nodes/extractedFolder.png"); // 16x16
+    public static final Icon Favorite = IconLoader.getIcon("/nodes/favorite.png"); // 16x16
+    public static final Icon FavoriteOnHover = IconLoader.getIcon("/nodes/favoriteOnHover.png"); // 16x16
     public static final Icon Field = IconLoader.getIcon("/nodes/field.svg"); // 16x16
     public static final Icon FieldPK = IconLoader.getIcon("/nodes/fieldPK.png"); // 16x16
     public static final Icon FinalMark = IconLoader.getIcon("/nodes/finalMark.png"); // 16x16
@@ -1364,6 +1366,7 @@ public class AllIcons {
     public static final Icon NewFolder = IconLoader.getIcon("/nodes/newFolder.png"); // 16x16
     public static final Icon NewParameter = IconLoader.getIcon("/nodes/newParameter.png"); // 16x16
     public static final Icon NodePlaceholder = IconLoader.getIcon("/nodes/nodePlaceholder.png"); // 16x16
+    public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/nodes/notFavoriteOnHover.png"); // 16x16
     public static final Icon Package = IconLoader.getIcon("/nodes/package.svg"); // 16x16
     public static final Icon Padlock = IconLoader.getIcon("/nodes/padlock.png"); // 16x16
     public static final Icon Parameter = IconLoader.getIcon("/nodes/parameter.svg"); // 16x16
@@ -1857,8 +1860,6 @@ public class AllIcons {
     public static final Icon Changelist = IconLoader.getIcon("/vcs/changelist.svg"); // 16x16
     public static final Icon CheckSpelling = IconLoader.getIcon("/vcs/checkSpelling.png"); // 16x16
     public static final Icon Equal = IconLoader.getIcon("/vcs/equal.png"); // 16x16
-    public static final Icon Favorite = IconLoader.getIcon("/vcs/favorite.png"); // 16x16
-    public static final Icon FavoriteOnHover = IconLoader.getIcon("/vcs/favoriteOnHover.png"); // 16x16
     public static final Icon History = IconLoader.getIcon("/vcs/history.svg"); // 16x16
     public static final Icon MapBase = IconLoader.getIcon("/vcs/mapBase.png"); // 16x16
     public static final Icon Merge = IconLoader.getIcon("/vcs/merge.png"); // 12x12
@@ -1868,7 +1869,6 @@ public class AllIcons {
     @Deprecated
     public static final Icon MergeSourcesTree = IconLoader.getIcon("/actions/showAsTree.svg"); // 16x16
     public static final Icon Not_equal = IconLoader.getIcon("/vcs/not_equal.png"); // 16x16
-    public static final Icon NotFavoriteOnHover = IconLoader.getIcon("/vcs/notFavoriteOnHover.png"); // 16x16
     public static final Icon Patch = IconLoader.getIcon("/vcs/patch.svg"); // 16x16
     public static final Icon Patch_applied = IconLoader.getIcon("/vcs/patch_applied.svg"); // 16x16
     public static final Icon Patch_file = IconLoader.getIcon("/vcs/patch_file.svg"); // 16x16
