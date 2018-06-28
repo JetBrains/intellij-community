@@ -39,7 +39,15 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
     root = ProjectLevelVcsManager.getInstance(project).getVcsRootFor(changes[0].virtualFile)!!
     val repo = GitUtil.getRepositoryManager(project).getRepositoryForRoot(root)!!
 
-    invokeAndWaitIfNeed { LocalHistoryImpl.getInstanceImpl().stopRecording() }
+    invokeAndWaitIfNeed {
+      // don't record our changes to the local history
+      LocalHistoryImpl.getInstanceImpl().stopRecording()
+
+      // Don't let veto
+      ChangesUtil.getFiles(changes.stream()).forEach { file ->
+        FileDocumentManager.getInstance().getDocument(file)?.putUserData<Any>(DOCUMENT_BEING_COMMITTED_KEY, null)
+      }
+    }
 
     // remember actions
     val ancestor = LocalFileSystem.getInstance().findFileByIoFile(ChangesUtil.findCommonAncestor(changes)!!)!!
@@ -89,9 +97,6 @@ class ChmCommitProcess(val project: Project, val vcs: GitVcs) : GitCheckinEnviro
 
   private fun applyRevision(rev: Item, root: VirtualFile, file: VirtualFile) {
     invokeAndWaitIfNeed {
-      // Don't let veto
-      FileDocumentManager.getInstance().getDocument(file)?.putUserData<Any>(DOCUMENT_BEING_COMMITTED_KEY, null)
-
       // as patches
       val patchApplier = PatchApplier<Any>(project, root, rev.patches, null, null) // todo no dialogs, fail on conflicts
       patchApplier.execute(false, true)
