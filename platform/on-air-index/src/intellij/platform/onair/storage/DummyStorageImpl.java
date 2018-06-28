@@ -22,7 +22,7 @@ public class DummyStorageImpl implements Storage {
   }
 
   @Override
-  public void store(@NotNull Address address, byte[] bytes) {
+  public void store(@NotNull Address address, @NotNull byte[] bytes) {
     throw new UnsupportedOperationException();
   }
 }
