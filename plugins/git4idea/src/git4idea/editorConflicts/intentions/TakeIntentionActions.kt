@@ -6,13 +6,10 @@ import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.*
 import com.intellij.openapi.vcs.EditorConflictSupport.ConflictMarkerType.*
 import com.intellij.psi.PsiElement
 
-private fun Document.substring(textRange: TextRange) =
-  immutableCharSequence.substring(textRange.startOffset, textRange.endOffset)
 
 class TakeThisIntentionAction(element: PsiElement) : ConflictsIntention(element, "Take this"), HighPriorityAction {
   override fun doInvoke(project: Project, editor: Editor, d: Document, marker: PsiElement) {

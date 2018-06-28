@@ -118,3 +118,6 @@ fun isPrevMarker(type: ConflictMarkerType, nextType: ConflictMarkerType?) = when
 
 fun PsiElement.rangeWithLine(d: Document) =
   TextRange(DocumentUtil.getLineStartOffset(textRange.startOffset, d), DocumentUtil.getLineEndOffset(textRange.endOffset, d))
+
+fun Document.substring(textRange: TextRange) =
+  immutableCharSequence.substring(textRange.startOffset, textRange.endOffset)

@@ -241,6 +241,7 @@
 
     <!-- HACKATHON -->
     <customFoldingProvider implementation="git4idea.editorConflicts.ConflictsFoldingProvider"/>
+    <gotoDeclarationHandler implementation="git4idea.editorConflicts.GotoConflictCommitHandler"/>
     <!-- /HACKATHON -->
 
   </extensions>
