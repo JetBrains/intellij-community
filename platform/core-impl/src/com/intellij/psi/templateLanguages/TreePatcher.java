@@ -28,13 +28,13 @@ public interface TreePatcher {
 
   /**
    * Inserts toInsert into tree
-   * <br>
+   *
    * @apiNote Inserting must not change the position (offset) of the new node in the tree (otherwise we will receive broken tree)
    */
   void insert(@NotNull CompositeElement parent, @Nullable TreeElement anchorBefore, @NotNull OuterLanguageElement toInsert);
 
   /**
-   * Method splits the leaf into two leaves with the same type as the original leaf  
+   * Splits the leaf into two leaves with the same type as the original leaf
    *
    * @return first part of the split
    */
@@ -50,7 +50,7 @@ public interface TreePatcher {
   }
 
   /**
-   * The method removes "middle" part of the leaf and returns the new leaf with content of the right and left parts
+   * Removes "middle" part of the leaf and returns the new leaf with content of the right and left parts
    * e.g. if we process whitespace leaf " \n " and range "1, 2" the result will be new leaf with content "  "
    */
   @NotNull

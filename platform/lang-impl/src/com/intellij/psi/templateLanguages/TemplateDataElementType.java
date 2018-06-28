@@ -116,7 +116,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * The method creates psi tree without template tokens. The result PsiFile can contain additional elements.
+   * Creates psi tree without template tokens. The result PsiFile can contain additional elements.
    * Ranges of the removed tokens/additional elements should be stored in the rangeCollector
    *
    * @param psiFile          chameleon's psi file
@@ -135,7 +135,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * The method creates source code without template tokens. May add additional pieces of code.
+   * Creates source code without template tokens. May add additional pieces of code.
    * Ranges of such additions should be added in rangeCollector using {@link RangeCollector#addRangeToRemove(TextRange)}for later removal from the resulting tree
    *
    * @param sourceCode     source code with base and template languages
@@ -290,7 +290,7 @@ public class TemplateDataElementType extends IFileElementType implements ITempla
   }
 
   /**
-   * Method removes part the nextLeaf that intersects rangeToRemove.
+   * Removes part the nextLeaf that intersects rangeToRemove.
    * If nextLeaf doesn't intersect rangeToRemove the method returns the nextLeaf without changes
    *
    * @return new leaf after removing the range or original nextLeaf if nothing changed
