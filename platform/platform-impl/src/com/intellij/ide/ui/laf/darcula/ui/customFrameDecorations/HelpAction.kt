@@ -7,10 +7,10 @@ import javax.swing.AbstractAction
 import javax.swing.Action
 import javax.swing.JComponent
 
-class HelpAction(val component : JComponent) : AbstractAction("Help") {
-  private val helpAction : Action? = getHelpAction()
-
-  val isAvailable = helpAction != null
+class HelpAction(val component : JComponent) : AbstractAction() {
+  fun isAvailable(): Boolean {
+    return getHelpAction() != null
+  }
 
   private fun getHelpAction(): Action? {
     val dialog = DialogWrapper.findInstance(component)
@@ -31,6 +31,6 @@ class HelpAction(val component : JComponent) : AbstractAction("Help") {
   }
 
   override fun actionPerformed(e: ActionEvent) {
-    helpAction?.actionPerformed(e)
+    getHelpAction()?.actionPerformed(e)
   }
 }
