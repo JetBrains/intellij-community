@@ -81,6 +81,12 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
                 selectedItem?.selected = false
                 newSelectedItem.selected = true
                 selectedItem = newSelectedItem
+
+                val bounds = newSelectedItem.component.bounds
+
+                if (!panel.visibleRect.contains(bounds)) {
+                    panel.scrollRectToVisible(bounds)
+                }
             }
         }
     }
