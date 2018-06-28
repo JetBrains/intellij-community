@@ -107,7 +107,7 @@ fun isImmutable(field: GrField): Boolean {
   }
 
   if (hasImmutableAnnotation(psiClass)) return true
-  psiClass.getAnnotation(GROOVY_TRANSFORM_KNOWN_IMMUTABLE)?.let { return true }
+  if (psiClass.hasAnnotation(GROOVY_TRANSFORM_KNOWN_IMMUTABLE)) return true
 
   return false
 }

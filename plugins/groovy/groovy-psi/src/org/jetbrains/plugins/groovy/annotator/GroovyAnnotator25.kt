@@ -26,8 +26,8 @@ class GroovyAnnotator25(private val holder: AnnotationHolder) : GroovyElementVis
   }
 
   override fun visitField(field: GrField) {
-    immutableCheck(field)
     super.visitField(field)
+    immutableCheck(field)
   }
 
   private fun immutableCheck(field: GrField) {
