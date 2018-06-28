@@ -5,7 +5,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
 
-import static intellij.platform.onair.tree.ByteUtils.readUnsignedInt;
+import static intellij.platform.onair.tree.TestByteUtils.readUnsignedInt;
 
 public class ValueDumper implements BTree.ToString {
   public static final ValueDumper INSTANCE = new ValueDumper();

@@ -36,7 +36,9 @@ public class BottomPage extends BasePage {
       if (overwrite) {
         // key found
         // TODO: tree.addExpired(keysAddresses[pos]);
-        set(pos, key, novelty.alloc(Arrays.copyOf(value, value.length)));
+        setChildAddress(pos, novelty.alloc(Arrays.copyOf(value, value.length)), 0);
+        flush(novelty);
+
         // this should be always true in order to keep up with keysAddresses[pos] expiration
         result[0] = true;
       }
@@ -56,6 +58,7 @@ public class BottomPage extends BasePage {
   protected BottomPage split(@NotNull Novelty novelty, int from, int length) {
     final BottomPage result = copyOf(novelty, this, from, length);
     decrementSize(length);
+    flush(novelty);
     return result;
   }
 

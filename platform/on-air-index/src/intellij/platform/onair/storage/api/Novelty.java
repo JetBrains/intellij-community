@@ -8,5 +8,5 @@ public interface Novelty {
 
   byte[] lookup(long address);
 
-  void update(long id, byte[] bytes);
+  void update(long address, byte[] bytes);
 }

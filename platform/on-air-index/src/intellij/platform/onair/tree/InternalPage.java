@@ -50,7 +50,9 @@ public class InternalPage extends BasePage {
         throw new IllegalStateException("child must be novelty");
       }
       set(pos, child.getMinKey(), child.address.getLowBytes());
-      if (newChild != null) {
+      if (newChild == null) {
+        flush(novelty);
+      } else {
         if (!newChild.address.isNovelty()) {
           throw new IllegalStateException("child must be novelty");
         }

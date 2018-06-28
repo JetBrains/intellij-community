@@ -3,7 +3,7 @@ package intellij.platform.onair.tree;
 
 import org.jetbrains.annotations.NotNull;
 
-public class ByteUtils {
+public class TestByteUtils {
 
   public static long readUnsignedInt(@NotNull final byte[] key) {
     final long c1 = key[0] & 0xff;
