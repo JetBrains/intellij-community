@@ -59,6 +59,8 @@ import java.awt.*;
 import java.util.List;
 import java.util.Map;
 
+import static com.intellij.psi.codeStyle.extractor.Utils.updateState;
+
 public class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
   @Override
@@ -91,10 +93,15 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
 
     final CodeStyleDeriveProcessor genProcessor = new GenProcessor(extractor);
     final PsiFile finalFile = file;
+    
     final Task.Backgroundable task = new Task.Backgroundable(project, "Code Style Extractor", true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         try {
+          indicator.setIndeterminate(false);
+          indicator.setFraction(0.0);
+          updateState(indicator, getTitle(), true);
+          
           CodeStyleSettings cloneSettings = settings.clone();
           Map<Value, Object> backup = genProcessor.backupValues(cloneSettings, language);
           ValuesExtractionResult res = genProcessor.runWithProgress(project, cloneSettings, finalFile, indicator);
@@ -121,7 +128,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
       final Balloon balloon = JBPopupFactory
         .getInstance()
         .createHtmlTextBalloonBuilder(
-          "<html>Formatting Options were extracted for " + file.getName()  
+          "<html><b>Formatting Options were extracted for " + file.getName() + "</b>"
           + (!htmlReport.isEmpty() ? ("<br/>" + htmlReport) : "")
           + "<br/><a href=\"apply\">Apply</a> <a href=\"details\">Details...</a></html>",
           MessageType.INFO,

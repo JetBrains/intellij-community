@@ -18,13 +18,10 @@ package com.intellij.psi.codeStyle.extractor.differ;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.extractor.Utils;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
 
-/**
- * @author Roman.Shein
- * @since 30.07.2015.
- */
 public abstract class DifferBase implements Differ {
   protected final Project myProject;
   protected final String myOrigText;
@@ -42,9 +39,12 @@ public abstract class DifferBase implements Differ {
 
   @Override
   public int getDifference(ValuesExtractionResult container) {
+    final CommonCodeStyleSettings.IndentOptions indentOptions = mySettings.getCommonSettings(myFile.getLanguage()).getIndentOptions();
+    final int origTabSize = Utils.getTabSize(indentOptions);
     final ValuesExtractionResult orig = container.apply(true);
+    final int newTabSize = Utils.getTabSize(indentOptions);
     String newText = reformattedText();
-    int result = Utils.getDiff(mySettings.getCommonSettings(myFile.getLanguage()).getIndentOptions(), myOrigText, newText);
+    int result = Utils.getDiff(origTabSize, myOrigText, newTabSize, newText);
     orig.apply(false);
     return result;
   }

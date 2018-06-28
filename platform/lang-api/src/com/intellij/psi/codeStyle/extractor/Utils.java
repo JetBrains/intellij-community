@@ -17,13 +17,12 @@ package com.intellij.psi.codeStyle.extractor;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.progress.ProgressIndicator;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
 import com.intellij.psi.codeStyle.extractor.differ.Differ;
-import com.intellij.psi.codeStyle.extractor.values.Generation;
+import com.intellij.psi.codeStyle.extractor.values.GenGeneration;
 import com.intellij.psi.codeStyle.extractor.values.Gens;
 import com.intellij.psi.codeStyle.extractor.values.Value;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
@@ -45,15 +44,22 @@ public class Utils {
     return options == null ? 4 : options.TAB_SIZE;
   }
 
-  public static int getNormalizedLength(@Nullable CommonCodeStyleSettings.IndentOptions options, @NotNull String text) {
-    return text
-      .replaceAll(
-        "\t",
-        StringUtil.repeatSymbol(' ', getTabSize(options)))
-      .replaceAll(
-        "\n",
-        StringUtil.repeatSymbol(' ', CRITICAL_SYMBOL_WEIGHT))
-      .length();
+  public static int getNormalizedLength(int tabSize, @NotNull String text) {
+    int scope = 0;
+    for (int i = 0; i < text.length(); ++i) {
+      final char at = text.charAt(i);
+      switch (at) {
+        case '\t': scope += tabSize; break;
+        case '\n': scope += CRITICAL_SYMBOL_WEIGHT; break;
+        default: ++scope; break;
+      }
+    }
+    return scope;
+  }
+
+  @Contract(pure = true)
+  public static boolean isWordSeparator(char c) {
+    return !Character.isJavaIdentifierPart(c);
   }
 
   @Contract(pure = true)
@@ -67,42 +73,52 @@ public class Utils {
     return "(){}[]<>".indexOf(c) >= 0;
   }
 
-  public static int getDiff(@Nullable CommonCodeStyleSettings.IndentOptions options, @NotNull String oldV, @NotNull String newV) {
+  public static int getDiff(int oldTabSize, @NotNull String oldV,
+                            int newTabSize, @NotNull String newV) {
     oldV = oldV.trim();
     newV = newV.trim();
     int diff = 0;
     int oPos = 0, nPos = 0;
     int oEnd = oldV.length(), nEnd = newV.length();
+    if (oldV.equals(newV)) {
+      return 0;
+    }
 
     StringBuilder oSp = new StringBuilder();
     StringBuilder nSp = new StringBuilder();
     char ch;
     while (oPos < oEnd || nPos < nEnd) {
+      int _oPos = oPos;
+      int _nPos = nPos;
       oSp.setLength(0);
       nSp.setLength(0);
-      while (oPos < oEnd && isSpace(ch = oldV.charAt(oPos))) {
-        oSp.append(ch);
+      while (oPos < oEnd && isWordSeparator(ch = oldV.charAt(oPos))) {
         ++oPos;
+        if (isSpace(ch)) oSp.append(ch);
+        else break;
       }
-      while (nPos < nEnd && isSpace(ch = newV.charAt(nPos))) {
-        nSp.append(ch);
+      while (nPos < nEnd && isWordSeparator(ch = newV.charAt(nPos))) {
         ++nPos;
+        if (isSpace(ch)) nSp.append(ch);
+        else break;
       }
-      diff += Math.abs(getNormalizedLength(options, oSp.toString())
-              - getNormalizedLength(options, nSp.toString())); //each time
+      diff += Math.abs(getNormalizedLength(oldTabSize, oSp.toString())
+              - getNormalizedLength(newTabSize, nSp.toString())); //each time
 
       while (oPos < oEnd && nPos < nEnd
              && (ch = oldV.charAt(oPos)) == newV.charAt(nPos)
-             && !isSpace(ch)) {
+             && !isWordSeparator(ch)) {
         ++oPos;
         ++nPos;
       }
 
-      if (oPos < oEnd && nPos < nEnd && !isSpace(oldV.charAt(oPos)) && !isSpace(newV.charAt(nPos))) {
+      if ( (_oPos == oPos && _nPos == nPos)
+           || (oPos < oEnd && nPos < nEnd && !isWordSeparator(oldV.charAt(oPos)) && !isWordSeparator(newV.charAt(nPos)))) {
         logError("AST changed!");
         return Differ.UGLY_FORMATTING;
       }
     }
+    logError("diff:" + diff);
     return diff;
   }
 
@@ -112,10 +128,7 @@ public class Utils {
       if (language.equals(provider.getLanguage())) {
         CustomCodeStyleSettings modelSettings = provider.createCustomSettings(settings);
         if (modelSettings == null) continue;
-        CustomCodeStyleSettings customSettings = settings.getCustomSettings(modelSettings.getClass());
-        if (customSettings != null) {
-          return customSettings;
-        }
+        return settings.getCustomSettings(modelSettings.getClass());
       }
     }
     logError("Failed to load CustomCodeStyleSettings for " + language);
@@ -133,13 +146,14 @@ public class Utils {
     for (Value value : values) {
       if (indicator != null) {
         indicator.checkCanceled();
-        indicator.setText2("Value:" + value.name);
         indicator.setFraction(0.5 + 0.5 * i / length);
       }
 
       Object bestValue = value.value;
       int bestScope = differ.getDifference(gens);
-      for (Object cnst : value.getPossibleValues()) {
+      int index = 0;
+      final Object[] possibleValues = value.getPossibleValues();
+      for (Object cnst : possibleValues) {
         if (cnst.equals(value.value)) {
           continue;
         }
@@ -153,7 +167,11 @@ public class Utils {
         else if (diff > bestScope) {
           value.state = Value.STATE.SELECTED;
         }
+        updateState(indicator, 
+                    String.format("Value: %s  Divergence: %d [%d/%d]", value.name, bestScope, index, possibleValues.length), 
+                    false);
       }
+      updateState(indicator, String.format("Value: %s  Divergence: %d", value.name, bestScope), true);
       value.value = bestValue;
       ++i;
     }
@@ -164,17 +182,16 @@ public class Utils {
     @NotNull Differ differ,
     @Nullable ProgressIndicator indicator) {
 
-    Generation generation = Generation.createZeroGeneration(gens);
+    GenGeneration generation = GenGeneration.createZeroGeneration(gens);
     while (generation.tryAgain()) {
-      if (indicator != null) {
-        indicator.checkCanceled();
-      }
       final int age = generation.getAge();
       if (indicator != null) {
-        indicator.setText2("Age:" + age + " Defects:" + generation.getParentKind());
-        indicator.setFraction(0.5 * age / Generation.GEN_COUNT);
+        indicator.setFraction(0.5 * age / GenGeneration.GENERATIONS_COUNT);
       }
-      generation = Generation.createNextGeneration(differ, generation);
+      generation = GenGeneration.createNextGeneration(differ, generation);
+      updateState(indicator,
+                  String.format("Generation: %d  Divergence: %d", age, generation.getParentKind()),
+                  true);
     }
     gens.copyFrom(generation.getBestGens(differ));
   }
@@ -198,5 +215,18 @@ public class Utils {
     if (ret >= count) return count - 1;
     if (ret < 0) return 0;
     return ret;
+  }
+
+  public static void updateState(@Nullable ProgressIndicator indicator, @NotNull String status, boolean primaryStatus) {
+    if (indicator != null) {
+      indicator.checkCanceled();
+      if (primaryStatus) {
+        indicator.setText(status);
+        indicator.setText2("");
+      }
+      else {
+        indicator.setText2(status);
+      }
+    }
   }
 }

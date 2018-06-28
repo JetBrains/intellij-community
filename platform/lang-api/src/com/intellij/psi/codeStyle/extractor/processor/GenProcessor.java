@@ -29,6 +29,8 @@ import java.text.DateFormat;
 import java.text.SimpleDateFormat;
 import java.util.*;
 
+import static com.intellij.psi.codeStyle.extractor.Utils.updateState;
+
 public class GenProcessor extends CodeStyleDeriveProcessor {
   private String myReport = "No result";
 
@@ -45,12 +47,18 @@ public class GenProcessor extends CodeStyleDeriveProcessor {
     forSelection.dropToInitial();
 
     long startTime = System.nanoTime();
+    updateState(indicator,
+                "Genetic phase",
+                true);
     Utils.adjustValuesGA(forSelection, differ, indicator);
-    myReport = "<br> Genetic phase: " + reportResult(forSelection, differ, startTime);
+    myReport = "<br><b>Genetic phase:</b> " + reportResult(forSelection, differ, startTime);
 
     startTime = System.nanoTime();
+    updateState(indicator,
+                "Linear phase",
+                true);
     Utils.adjustValuesMin(forSelection, differ, indicator);
-    myReport += "<br> Minimization Phase: " + reportResult(forSelection, differ, startTime);
+    myReport += "<br><b>Minimization Phase:</b> " + reportResult(forSelection, differ, startTime);
 
     return forSelection;
   }
@@ -65,6 +73,6 @@ public class GenProcessor extends CodeStyleDeriveProcessor {
   private static String reportResult(@NotNull Gens gens, @NotNull Differ differ, long startTime) {
     DateFormat formatter = new SimpleDateFormat("mm:ss");
     Date date = new Date((System.nanoTime() - startTime) / 1000000);
-    return "Difference in spaces with the original:" + differ.getDifference(gens) + " Execution Time:" + formatter.format(date);
+    return "Difference in spaces with the original:<b> " + differ.getDifference(gens) + "</b>  Execution Time: <b>" + formatter.format(date) + "</b>";
   }
 }
