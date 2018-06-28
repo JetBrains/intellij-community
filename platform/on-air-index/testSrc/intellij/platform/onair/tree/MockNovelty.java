@@ -18,6 +18,11 @@ public class MockNovelty implements Novelty {
   }
 
   @Override
+  public void free(long address) {
+
+  }
+
+  @Override
   public byte[] lookup(long address) {
     return novelty.get(address);
   }
