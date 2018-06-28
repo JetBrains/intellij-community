@@ -13,8 +13,8 @@ import java.io.File;
 public class KtUastCallMatcherTest extends UastCallMatcherTestBase {
   @Override
   protected void setUp() throws Exception {
-    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
     super.setUp();
+    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
   }
 
   @Override
