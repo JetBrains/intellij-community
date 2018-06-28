@@ -35,7 +35,10 @@ public class BottomPage extends BasePage {
     if (pos >= 0) {
       if (overwrite) {
         // key found
-        // TODO: tree.addExpired(keysAddresses[pos]);
+        final Address childAddress = getChildAddress(pos);
+        if (childAddress.isNovelty()) {
+          novelty.free(childAddress.getLowBytes());
+        }
         setChildAddress(pos, novelty.alloc(Arrays.copyOf(value, value.length)), 0);
         flush(novelty);
 

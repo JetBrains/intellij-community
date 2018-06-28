@@ -45,7 +45,6 @@ public class InternalPage extends BasePage {
     final BasePage newChild = child.put(novelty, key, value, overwrite, result);
     // change min key for child
     if (result[0]) {
-      // TODO: tree.addExpired(childrenAddresses[pos]);
       if (!child.address.isNovelty()) {
         throw new IllegalStateException("child must be novelty");
       }

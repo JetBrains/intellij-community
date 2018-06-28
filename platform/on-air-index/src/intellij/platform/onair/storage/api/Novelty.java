@@ -9,4 +9,6 @@ public interface Novelty {
   byte[] lookup(long address);
 
   void update(long address, byte[] bytes);
+
+  void free(long address);
 }

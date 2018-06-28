@@ -26,7 +26,7 @@ public class AirTreeTest {
   }
 
   Storage storage = null;
-  Novelty novelty = null;
+  MockNovelty novelty = null;
 
   @Before
   public void setUp() {
@@ -58,7 +58,19 @@ public class AirTreeTest {
       Assert.assertTrue(tree.put(novelty, k(i), v(2 * i)));
     }
 
-    checkTree2(tree, total);
+    long size = novelty.getSize();
+
+    checkTree(tree, total, 2);
+
+    // overwrite some novelty leafs, check for memory leaks
+
+    for (int i = 0; i < total; i++) {
+      Assert.assertTrue(tree.put(novelty, k(i), v(3 * i)));
+    }
+
+    checkTree(tree, total, 3);
+
+    Assert.assertEquals(size, novelty.getSize());
   }
 
   @After
@@ -84,9 +96,9 @@ public class AirTreeTest {
     }
   }
 
-  private void checkTree2(Tree tree, final int total) {
+  private void checkTree(Tree tree, final int total, final int multiplier) {
     for (int i = 0; i < total; i++) {
-      Assert.assertArrayEquals(v(2 * i), tree.get(novelty, k(i)));
+      Assert.assertArrayEquals(v(multiplier * i), tree.get(novelty, k(i)));
     }
   }
 
