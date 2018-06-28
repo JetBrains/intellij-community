@@ -543,7 +543,7 @@ public class PluginManagerConfigurableNew
       Entry<PluginId, Set<PluginId>> entry = I.next();
       boolean hasNonModuleDeps = false;
 
-      for (PluginId pluginId: entry.getValue()) {
+      for (PluginId pluginId : entry.getValue()) {
         if (!PluginManagerCore.isModuleDependency(pluginId)) {
           hasNonModuleDeps = true;
           break;
@@ -571,7 +571,7 @@ public class PluginManagerConfigurableNew
     }
 
     List<String> disableIds = new ArrayList<>();
-    for (Entry<PluginId, Boolean> entry: myPluginsModel.getEnabledMap().entrySet()) {
+    for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
       if (enabled != null && !enabled) {
         disableIds.add(entry.getKey().getIdString());
@@ -613,7 +613,7 @@ public class PluginManagerConfigurableNew
       }
     }
 
-    for (Entry<PluginId, Boolean> entry: myPluginsModel.getEnabledMap().entrySet()) {
+    for (Entry<PluginId, Boolean> entry : myPluginsModel.getEnabledMap().entrySet()) {
       Boolean enabled = entry.getValue();
       if (enabled != null && !enabled && !disabledPlugins.contains(entry.getKey().getIdString())) {
         return true;
@@ -657,7 +657,7 @@ public class PluginManagerConfigurableNew
         ApplicationManager.getApplication().invokeLater(() -> {
           panel.stopLoading();
 
-          for (PluginsGroup group: groups) {
+          for (PluginsGroup group : groups) {
             panel.addGroup(group);
           }
 
@@ -681,7 +681,7 @@ public class PluginManagerConfigurableNew
     List<IdeaPluginDescriptor> list = RepositoryHelper.loadPlugins(null);
     Map<String, IdeaPluginDescriptor> map = new HashMap<>();
 
-    for (IdeaPluginDescriptor plugin: list) {
+    for (IdeaPluginDescriptor plugin : list) {
       map.put(plugin.getPluginId().getIdString(), plugin);
     }
 
@@ -733,7 +733,7 @@ public class PluginManagerConfigurableNew
     int bundledEnabled = 0;
     int downloadedEnabled = 0;
 
-    for (IdeaPluginDescriptor descriptor: PluginManagerCore.getPlugins()) {
+    for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
       if (!appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString())) {
         if (descriptor.isBundled()) {
           bundled.descriptors.add(descriptor);
@@ -788,7 +788,7 @@ public class PluginManagerConfigurableNew
             @Override
             public void titleWithCount() {
               int count = 0;
-              for (CellPluginComponent component: ui.plugins) {
+              for (CellPluginComponent component : ui.plugins) {
                 if (((ListPluginComponent)component).myUpdateButton != null) {
                   count++;
                 }
@@ -805,13 +805,13 @@ public class PluginManagerConfigurableNew
           group.rightAction.setListener(new LinkListener<Object>() {
             @Override
             public void linkSelected(LinkLabel aSource, Object aLinkData) {
-              for (CellPluginComponent component: group.ui.plugins) {
+              for (CellPluginComponent component : group.ui.plugins) {
                 ((ListPluginComponent)component).updatePlugin();
               }
             }
           }, null);
 
-          for (PluginDownloader toUpdateDownloader: updates) {
+          for (PluginDownloader toUpdateDownloader : updates) {
             group.descriptors.add(toUpdateDownloader.getDescriptor());
           }
 
@@ -869,7 +869,7 @@ public class PluginManagerConfigurableNew
         return;
       }
 
-      for (String pluginId: pluginIds) {
+      for (String pluginId : pluginIds) {
         IdeaPluginDescriptor descriptor = allDescriptors.get(pluginId);
         if (descriptor != null && excludeDescriptors.add(pluginId) && PluginManager.getPlugin(descriptor.getPluginId()) == null) {
           descriptors.add(descriptor);
@@ -933,7 +933,7 @@ public class PluginManagerConfigurableNew
                        descriptor -> !appInfo.isEssentialPlugin(descriptor.getPluginId().getIdString()), query, search);
 
     Set<String> installedIds = new HashSet<>();
-    for (IdeaPluginDescriptor descriptor: installed.descriptors) {
+    for (IdeaPluginDescriptor descriptor : installed.descriptors) {
       installedIds.add(descriptor.getPluginId().getIdString());
     }
 
@@ -981,7 +981,7 @@ public class PluginManagerConfigurableNew
                                          @NotNull BooleanFunction<IdeaPluginDescriptor> accept,
                                          @NotNull String query,
                                          @NotNull Set<String> search) {
-    for (IdeaPluginDescriptor descriptor: source) {
+    for (IdeaPluginDescriptor descriptor : source) {
       if (accept.fun(descriptor) && PluginManagerMain.isAccepted(query, search, descriptor)) {
         result.add(descriptor);
       }
@@ -993,7 +993,7 @@ public class PluginManagerConfigurableNew
                                          @NotNull BooleanFunction<IdeaPluginDescriptor> accept,
                                          @NotNull String query,
                                          @NotNull Set<String> search) {
-    for (IdeaPluginDescriptor descriptor: source) {
+    for (IdeaPluginDescriptor descriptor : source) {
       if (accept.fun(descriptor) && PluginManagerMain.isAccepted(query, search, descriptor)) {
         result.add(descriptor);
       }
@@ -1050,7 +1050,7 @@ public class PluginManagerConfigurableNew
       String deps = StringUtil.join(requiredPlugins, id -> {
         IdeaPluginDescriptor plugin = PluginManager.getPlugin(id);
         if (plugin == null && PluginManagerCore.isModuleDependency(id)) {
-          for (IdeaPluginDescriptor descriptor: PluginManagerCore.getPlugins()) {
+          for (IdeaPluginDescriptor descriptor : PluginManagerCore.getPlugins()) {
             if (descriptor instanceof IdeaPluginDescriptorImpl) {
               List<String> modules = ((IdeaPluginDescriptorImpl)descriptor).getModules();
               if (modules != null && modules.contains(id.getIdString())) {
@@ -1467,7 +1467,7 @@ public class PluginManagerConfigurableNew
 
       uiGroup.panel = panel;
 
-      for (IdeaPluginDescriptor descriptor: group.descriptors) {
+      for (IdeaPluginDescriptor descriptor : group.descriptors) {
         CellPluginComponent pluginComponent = myFunction.fun(descriptor);
         uiGroup.plugins.add(pluginComponent);
         add(pluginComponent, index);
@@ -1508,7 +1508,7 @@ public class PluginManagerConfigurableNew
       myGroups.remove(group.ui);
       remove(group.ui.panel);
 
-      for (CellPluginComponent plugin: group.ui.plugins) {
+      for (CellPluginComponent plugin : group.ui.plugins) {
         remove(plugin);
         myEventHandler.removeCell(plugin);
       }
@@ -1906,7 +1906,7 @@ public class PluginManagerConfigurableNew
 
     private static boolean check(@NotNull KeyboardShortcut shortcut, @Nullable ShortcutSet set) {
       if (set != null) {
-        for (Shortcut test: set.getShortcuts()) {
+        for (Shortcut test : set.getShortcuts()) {
           if (test.isKeyboard() && shortcut.startsWith(test)) {
             return true;
           }
@@ -1957,7 +1957,7 @@ public class PluginManagerConfigurableNew
     private List<CellPluginComponent> getSelection() {
       List<CellPluginComponent> selection = new ArrayList<>();
 
-      for (CellPluginComponent component: myComponents) {
+      for (CellPluginComponent component : myComponents) {
         if (component.getSelection() == SelectionType.SELECTION) {
           selection.add(component);
         }
@@ -1985,7 +1985,7 @@ public class PluginManagerConfigurableNew
       myMixSelection = false;
       myHoverComponent = null;
 
-      for (CellPluginComponent component: myComponents) {
+      for (CellPluginComponent component : myComponents) {
         if (component.getSelection() != SelectionType.SELECTION) {
           component.setSelection(SelectionType.SELECTION, false);
         }
@@ -2166,7 +2166,7 @@ public class PluginManagerConfigurableNew
     @Override
     public void addAll(@NotNull Component component) {
       add(component);
-      for (Component child: uiChildren(component)) {
+      for (Component child : uiChildren(component)) {
         addAll(child);
       }
     }
@@ -2192,7 +2192,7 @@ public class PluginManagerConfigurableNew
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
       int height = 0;
 
-      for (UIPluginGroup group: groups) {
+      for (UIPluginGroup group : groups) {
         height += group.panel.getPreferredSize().height;
         height += group.plugins.size() * myLineHeight;
       }
@@ -2208,13 +2208,13 @@ public class PluginManagerConfigurableNew
       int width = parent.getWidth();
       int y = 0;
 
-      for (UIPluginGroup group: groups) {
+      for (UIPluginGroup group : groups) {
         Component component = group.panel;
         int height = component.getPreferredSize().height;
         component.setBounds(0, y, width, height);
         y += height;
 
-        for (CellPluginComponent plugin: group.plugins) {
+        for (CellPluginComponent plugin : group.plugins) {
           plugin.setBounds(0, y, width, myLineHeight);
           y += myLineHeight;
         }
@@ -2227,8 +2227,8 @@ public class PluginManagerConfigurableNew
 
       myLineHeight = 0;
 
-      for (UIPluginGroup group: groups) {
-        for (CellPluginComponent plugin: group.plugins) {
+      for (UIPluginGroup group : groups) {
+        for (CellPluginComponent plugin : group.plugins) {
           JEditorPane description = plugin.myDescription;
           if (description != null) {
             plugin.doLayout();
@@ -2270,7 +2270,7 @@ public class PluginManagerConfigurableNew
       int cellHeight = myCellSize.height;
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
 
-      for (UIPluginGroup group: groups) {
+      for (UIPluginGroup group : groups) {
         height += group.panel.getPreferredSize().height;
 
         int plugins = group.plugins.size();
@@ -2301,7 +2301,7 @@ public class PluginManagerConfigurableNew
       int y = 0;
       int columns = Math.max(1, width / (myCellSize.width + myMiddleHOffset));
 
-      for (UIPluginGroup group: groups) {
+      for (UIPluginGroup group : groups) {
         Component component = group.panel;
         int height = component.getPreferredSize().height;
         component.setBounds(0, y, width, height);
@@ -2316,8 +2316,8 @@ public class PluginManagerConfigurableNew
 
       List<UIPluginGroup> groups = ((PluginsGroupComponent)parent).myGroups;
 
-      for (UIPluginGroup group: groups) {
-        for (CellPluginComponent plugin: group.plugins) {
+      for (UIPluginGroup group : groups) {
+        for (CellPluginComponent plugin : group.plugins) {
           plugin.doLayout();
           Dimension size = plugin.getPreferredSize();
           myCellSize.width = Math.max(myCellSize.width, size.width);
@@ -2523,7 +2523,7 @@ public class PluginManagerConfigurableNew
           try {
             Map<String, IdeaPluginDescriptor> jbRepositoryMap = loadJBRepository();
 
-            for (String pluginId: requestToPluginRepository(createSearchUrl(serverQuery, 10000), forceHttps())) {
+            for (String pluginId : requestToPluginRepository(createSearchUrl(serverQuery, 10000), forceHttps())) {
               IdeaPluginDescriptor descriptor = jbRepositoryMap.get(pluginId);
               if (descriptor != null) {
                 group.descriptors.add(descriptor);
@@ -2583,7 +2583,7 @@ public class PluginManagerConfigurableNew
       if (group.ui == null) {
         return;
       }
-      for (CellPluginComponent component: group.ui.plugins) {
+      for (CellPluginComponent component : group.ui.plugins) {
         component.close();
       }
     }
@@ -2622,7 +2622,7 @@ public class PluginManagerConfigurableNew
 
     public void titleWithEnabled(@NotNull MyPluginModel pluginModel) {
       int enabled = 0;
-      for (IdeaPluginDescriptor descriptor: descriptors) {
+      for (IdeaPluginDescriptor descriptor : descriptors) {
         if (pluginModel.isEnabled(descriptor)) {
           enabled++;
         }
@@ -3138,14 +3138,14 @@ public class PluginManagerConfigurableNew
 
     @Override
     public void createPopupMenu(@NotNull DefaultActionGroup group, @NotNull List<CellPluginComponent> selection) {
-      for (CellPluginComponent component: selection) {
+      for (CellPluginComponent component : selection) {
         if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
           return;
         }
       }
 
       boolean restart = true;
-      for (CellPluginComponent component: selection) {
+      for (CellPluginComponent component : selection) {
         if (((ListPluginComponent)component).myRestartButton == null) {
           restart = false;
           break;
@@ -3180,7 +3180,7 @@ public class PluginManagerConfigurableNew
         }
       });
 
-      for (CellPluginComponent component: selection) {
+      for (CellPluginComponent component : selection) {
         if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
           return;
         }
@@ -3190,7 +3190,7 @@ public class PluginManagerConfigurableNew
       group.add(new MyAnAction("Uninstall", KeyEvent.VK_BACK_SPACE) {
         @Override
         public void actionPerformed(AnActionEvent e) {
-          for (CellPluginComponent component: selection) {
+          for (CellPluginComponent component : selection) {
             myPluginModel.doUninstall(component, component.myPlugin, null);
           }
         }
@@ -3199,7 +3199,7 @@ public class PluginManagerConfigurableNew
 
     @Override
     public void handleKeyAction(int keyCode, @NotNull List<CellPluginComponent> selection) {
-      for (CellPluginComponent component: selection) {
+      for (CellPluginComponent component : selection) {
         if (MyPluginModel.isInstallingOrUpdate(component.myPlugin)) {
           return;
         }
@@ -3216,7 +3216,7 @@ public class PluginManagerConfigurableNew
       }
       else if (keyCode == KeyEvent.VK_ENTER) {
         boolean restart = true;
-        for (CellPluginComponent component: selection) {
+        for (CellPluginComponent component : selection) {
           if (((ListPluginComponent)component).myRestartButton == null) {
             restart = false;
             break;
@@ -3227,22 +3227,22 @@ public class PluginManagerConfigurableNew
           return;
         }
 
-        for (CellPluginComponent component: selection) {
+        for (CellPluginComponent component : selection) {
           if (((ListPluginComponent)component).myUpdateButton == null) {
             return;
           }
         }
-        for (CellPluginComponent component: selection) {
+        for (CellPluginComponent component : selection) {
           ((ListPluginComponent)component).myUpdateButton.doClick();
         }
       }
       else if (keyCode == KeyEvent.VK_BACK_SPACE) {
-        for (CellPluginComponent component: selection) {
+        for (CellPluginComponent component : selection) {
           if (((ListPluginComponent)component).myUninstalled || component.myPlugin.isBundled()) {
             return;
           }
         }
-        for (CellPluginComponent component: selection) {
+        for (CellPluginComponent component : selection) {
           myPluginModel.doUninstall(this, component.myPlugin, null);
         }
       }
@@ -3290,7 +3290,7 @@ public class PluginManagerConfigurableNew
 
     @Override
     public void actionPerformed(AnActionEvent e) {
-      for (JButton button: myButtons) {
+      for (JButton button : myButtons) {
         button.doClick();
       }
     }
@@ -3328,7 +3328,7 @@ public class PluginManagerConfigurableNew
           int width = baseSize.width;
 
           if (myProgressComponent == null) {
-            for (Component component: myVersionComponents) {
+            for (Component component : myVersionComponents) {
               if (!component.isVisible()) {
                 break;
               }
@@ -3348,7 +3348,7 @@ public class PluginManagerConfigurableNew
               width += myBeforeButtonOffset.get();
               width += (size - 1) * myButtonOffset.get();
 
-              for (Component component: myButtonComponents) {
+              for (Component component : myButtonComponents) {
                 width += component.getPreferredSize().width;
               }
             }
@@ -3377,7 +3377,7 @@ public class PluginManagerConfigurableNew
             return;
           }
 
-          for (Component component: myVersionComponents) {
+          for (Component component : myVersionComponents) {
             if (!component.isVisible()) {
               break;
             }
@@ -3486,7 +3486,7 @@ public class PluginManagerConfigurableNew
         myErrorEnableComponent = null;
       }
 
-      for (Component component: myVersionComponents) {
+      for (Component component : myVersionComponents) {
         component.setVisible(false);
       }
       doLayout();
@@ -3502,7 +3502,7 @@ public class PluginManagerConfigurableNew
           myErrorEnableComponent = null;
         }
 
-        for (Component component: myVersionComponents) {
+        for (Component component : myVersionComponents) {
           component.setVisible(true);
         }
         doLayout();
@@ -3543,7 +3543,7 @@ public class PluginManagerConfigurableNew
     }
 
     private void setVisibleOther(boolean value) {
-      for (Component component: myVersionComponents) {
+      for (Component component : myVersionComponents) {
         component.setVisible(value);
       }
       if (myErrorComponent != null) {
@@ -3552,7 +3552,7 @@ public class PluginManagerConfigurableNew
       if (myErrorEnableComponent != null) {
         myErrorEnableComponent.setVisible(value);
       }
-      for (Component component: myButtonComponents) {
+      for (Component component : myButtonComponents) {
         component.setVisible(value);
       }
     }
@@ -3724,7 +3724,7 @@ public class PluginManagerConfigurableNew
 
       myTagComponents = new ArrayList<>();
 
-      for (String tag: tags) {
+      for (String tag : tags) {
         TagComponent component = tagBuilder.createTagComponent(tag);
         panel.add(component);
         myTagComponents.add(component);
@@ -3752,7 +3752,7 @@ public class PluginManagerConfigurableNew
       }
 
       if (myTagComponents != null) {
-        for (TagComponent component: myTagComponents) {
+        for (TagComponent component : myTagComponents) {
           //noinspection unchecked
           component.setListener(searchListener, "tag:" + component.getText());
         }
@@ -3851,9 +3851,20 @@ public class PluginManagerConfigurableNew
         if (!bundled) {
           version = "v" + version;
         }
-        JLabel versionComponent = new JLabel(version);
+        JTextField versionComponent = new JTextField(version);
+        versionComponent.setEditable(false);
+        versionComponent.setFont(UIUtil.getLabelFont());
+        versionComponent.setBorder(null);
         versionComponent.setOpaque(false);
         versionComponent.setForeground(new JBColor(Gray._130, Gray._120));
+        versionComponent.addFocusListener(new FocusAdapter() {
+          @Override
+          public void focusLost(FocusEvent e) {
+            int caretPosition = versionComponent.getCaretPosition();
+            versionComponent.setSelectionStart(caretPosition);
+            versionComponent.setSelectionEnd(caretPosition);
+          }
+        });
         nameButtons.add(versionComponent);
 
         int nameBaseline = myNameComponent.getBaseline(myNameComponent.getWidth(), myNameComponent.getHeight());
@@ -3912,7 +3923,7 @@ public class PluginManagerConfigurableNew
         }
       }
 
-      for (Component component: uiChildren(buttons)) {
+      for (Component component : uiChildren(buttons)) {
         component.setBackground(MAIN_BG_COLOR);
       }
 
@@ -3951,7 +3962,7 @@ public class PluginManagerConfigurableNew
         tagPanel.setBorder(JBUI.Borders.emptyTop(2));
         myCenterPanel.add(tagPanel);
 
-        for (String tag: tags) {
+        for (String tag : tags) {
           TagComponent component = myTagBuilder.createTagComponent(tag);
           //noinspection unchecked
           component.setListener(mySearchListener, "tag:" + tag);
@@ -4124,9 +4135,9 @@ public class PluginManagerConfigurableNew
           HTMLEditorKit kit = UIUtil.getHTMLEditorKit();
           StyleSheet sheet = kit.getStyleSheet();
           sheet.addRule("ul {margin-left: 16px}"); // list-style-type: none;
+          descriptionComponent.setContentType("text/html");
           descriptionComponent.setEditorKit(kit);
           descriptionComponent.setEditable(false);
-          descriptionComponent.setFocusable(false);
           descriptionComponent.setOpaque(false);
           descriptionComponent.setBorder(null);
           descriptionComponent.setText(XmlStringUtil.wrapInHtml(description));
@@ -4153,10 +4164,10 @@ public class PluginManagerConfigurableNew
 
           if (labels.size() > 1) {
             int width = 0;
-            for (JLabel label: labels) {
+            for (JLabel label : labels) {
               width = Math.max(width, label.getPreferredSize().width);
             }
-            for (JLabel label: labels) {
+            for (JLabel label : labels) {
               label.setPreferredSize(new Dimension(width, label.getPreferredSize().height));
             }
           }
@@ -4643,7 +4654,7 @@ public class PluginManagerConfigurableNew
     public void setTopController(@NotNull TopComponentController topController) {
       myTopController = topController;
 
-      for (InstallPluginInfo info: myInstallingInfos.values()) {
+      for (InstallPluginInfo info : myInstallingInfos.values()) {
         info.fromBackground(this);
       }
       if (!myInstallingInfos.isEmpty()) {
@@ -4708,7 +4719,7 @@ public class PluginManagerConfigurableNew
     }
 
     public void toBackground() {
-      for (InstallPluginInfo info: myInstallingInfos.values()) {
+      for (InstallPluginInfo info : myInstallingInfos.values()) {
         info.toBackground(myStatusBar);
       }
     }
@@ -4741,13 +4752,13 @@ public class PluginManagerConfigurableNew
 
       List<GridCellPluginComponent> gridComponents = myGridMap.get(descriptor);
       if (gridComponents != null) {
-        for (GridCellPluginComponent gridComponent: gridComponents) {
+        for (GridCellPluginComponent gridComponent : gridComponents) {
           gridComponent.showProgress();
         }
       }
       List<ListPluginComponent> listComponents = myListMap.get(descriptor);
       if (listComponents != null) {
-        for (ListPluginComponent listComponent: listComponents) {
+        for (ListPluginComponent listComponent : listComponents) {
           listComponent.showProgress();
         }
       }
@@ -4768,13 +4779,13 @@ public class PluginManagerConfigurableNew
 
       List<GridCellPluginComponent> gridComponents = myGridMap.get(descriptor);
       if (gridComponents != null) {
-        for (GridCellPluginComponent gridComponent: gridComponents) {
+        for (GridCellPluginComponent gridComponent : gridComponents) {
           gridComponent.hideProgress(success);
         }
       }
       List<ListPluginComponent> listComponents = myListMap.get(descriptor);
       if (listComponents != null) {
-        for (ListPluginComponent listComponent: listComponents) {
+        for (ListPluginComponent listComponent : listComponents) {
           listComponent.hideProgress(success);
         }
       }
@@ -4918,7 +4929,7 @@ public class PluginManagerConfigurableNew
       List<IdeaPluginDescriptor> allPlugins = getAllPlugins();
       Set<IdeaPluginDescriptor> requiredPlugins = new HashSet<>();
 
-      for (PluginId pluginId: requiredPluginIds) {
+      for (PluginId pluginId : requiredPluginIds) {
         IdeaPluginDescriptor result = ContainerUtil.find(allPlugins, d -> pluginId.equals(d.getPluginId()));
         if (result == null && PluginManagerCore.isModuleDependency(pluginId)) {
           result = ContainerUtil.find(allPlugins, d -> {
@@ -4943,10 +4954,10 @@ public class PluginManagerConfigurableNew
     }
 
     private void updateAfterEnableDisable() {
-      for (ListPluginComponent component: myListComponents) {
+      for (ListPluginComponent component : myListComponents) {
         component.updateEnabledState();
       }
-      for (PluginsGroup group: myEnabledGroups) {
+      for (PluginsGroup group : myEnabledGroups) {
         group.titleWithEnabled(this);
       }
     }
@@ -4975,12 +4986,12 @@ public class PluginManagerConfigurableNew
 
       List<ListPluginComponent> listComponents = myListMap.get(descriptor);
       if (listComponents != null) {
-        for (ListPluginComponent listComponent: listComponents) {
+        for (ListPluginComponent listComponent : listComponents) {
           listComponent.updateAfterUninstall();
         }
       }
 
-      for (ListPluginComponent component: myListComponents) {
+      for (ListPluginComponent component : myListComponents) {
         component.updateErrors();
       }
     }
@@ -5151,7 +5162,7 @@ public class PluginManagerConfigurableNew
       String stripped = stripTags(s);
 
       if (shortSize) {
-        for (String sep: new String[]{". ", ".\n", ": ", ":\n"}) {
+        for (String sep : new String[]{". ", ".\n", ": ", ":\n"}) {
           String by = substringBy(stripped, sep);
           if (by != null) return by;
         }
