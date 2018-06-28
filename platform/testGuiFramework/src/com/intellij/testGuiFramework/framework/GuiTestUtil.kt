@@ -717,14 +717,10 @@ object GuiTestUtil {
     GuiRobotHolder.robot.pressAndReleaseKey(keyStroke.keyCode, *intArrayOf(keyStroke.modifiers))
   }
 
-  fun pause(conditionString: String, producer: Producer<Boolean>, timeout: Timeout) {
-    Pause.pause(object : Condition(conditionString) {
-      override fun test(): Boolean {
-        val produce = producer.produce()
-        assertNotNull(produce)
-        return produce!!
-      }
-    }, timeout)
+  fun pause(condition: String = "Unspecified condition", timeoutSeconds: Long = 120, testFunction: () -> Boolean) {
+    Pause.pause(object : Condition(condition) {
+      override fun test() = testFunction()
+    }, Timeout.timeout(timeoutSeconds, TimeUnit.SECONDS))
   }
 
   fun getListCellRendererComponent(list: JList<*>, value: Any, index: Int): Component {
