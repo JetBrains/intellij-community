@@ -15,8 +15,8 @@ import com.intellij.util.FileContentUtil
 class SetActiveIntentionAction(element: PsiElement) : ConflictsIntention(element, "Set active"), HighPriorityAction {
   override fun doInvoke(project: Project, editor: Editor, d: Document, marker: PsiElement) {
     EditorConflictSupport.setActiveMarkerType(project, getConflictMarkerType(marker))
-    FileContentUtil.reparseOpenedFiles()
     PsiManager.getInstance(project).dropPsiCaches()
+    FileContentUtil.reparseOpenedFiles()
     DaemonCodeAnalyzer.getInstance(project).restart()
   }
 }
