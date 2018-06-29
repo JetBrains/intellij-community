@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.editorConflicts.intentions
 
+import com.intellij.openapi.diff.DiffColors
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.editor.colors.EditorColors
 import com.intellij.openapi.editor.colors.EditorColorsManager
@@ -22,7 +23,7 @@ class Highlighter(private val myEditor: Editor) {
   private fun addHighlighter(ranges: List<TextRange>) {
     for (r in ranges) {
       myActiveHighlighters.add(myEditor.markupModel.addRangeHighlighter(r.startOffset, r.endOffset,
-                                                                        HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                        HighlighterLayer.ELEMENT_UNDER_CARET,
                                                                         getAttributes(),
                                                                         HighlighterTargetArea.EXACT_RANGE))
     }
@@ -30,7 +31,7 @@ class Highlighter(private val myEditor: Editor) {
 
   private fun getAttributes(): TextAttributes? {
     val manager = EditorColorsManager.getInstance()
-    return manager.globalScheme.getAttributes(EditorColors.DELETED_TEXT_ATTRIBUTES)
+    return manager.globalScheme.getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES)
   }
 
   fun dropHighlight() {

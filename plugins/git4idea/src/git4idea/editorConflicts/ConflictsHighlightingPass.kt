@@ -11,8 +11,12 @@ import com.intellij.openapi.editor.HighlighterColors
 import com.intellij.openapi.progress.ProgressIndicator
 import com.intellij.lang.EditorConflictSupport.*
 import com.intellij.lang.EditorConflictSupport.ConflictMarkerType.*
+import com.intellij.openapi.editor.colors.CodeInsightColors
+import com.intellij.openapi.editor.colors.EditorColors
+import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.getConflictMarkerType
 import com.intellij.openapi.vcs.getSectionInnerRange
+import com.intellij.openapi.vcs.rangeWithLine
 
 import com.intellij.psi.*
 import git4idea.editorConflicts.intentions.*
@@ -23,6 +27,7 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
   override fun doCollectInformation(progress: ProgressIndicator) {
     val conflicts = SyntaxTraverser.psiTraverser(file).filter { it.node?.elementType == TokenType.CONFLICT_MARKER }.toList()
     highlightInfos.addAll(conflicts.map { createMarkerInfo(it) })
+    highlightInfos.addAll(conflicts.map { createMarkerLineInfo(it) })
     highlightInfos.addAll(conflicts.zipWithNext { begin, end -> createRangeInfo(begin, end) }.filterNotNull())
   }
 
@@ -41,6 +46,15 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
     if (textAttrKey != null)
       infoBuilder.textAttributes(textAttrKey)
     return infoBuilder.createUnconditionally()
+  }
+
+  private fun createMarkerLineInfo(element: PsiElement): HighlightInfo {
+    val rangeWithLine = element.rangeWithLine(document!!)
+    return HighlightInfo.newHighlightInfo(HighlightInfoType.INFORMATION)
+      .range(TextRange(rangeWithLine.startOffset, rangeWithLine.endOffset + 1))
+      .needsUpdateOnTyping(false)
+      .textAttributes(EditorColors.DELETED_TEXT_ATTRIBUTES)
+      .createUnconditionally()
   }
 
   private fun createMarkerInfo(element: PsiElement): HighlightInfo {
