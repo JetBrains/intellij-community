@@ -42,8 +42,8 @@ public class CopyIndexTest {
   public static String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
   public static String host = "localhost";
   public static int port = 11211;
-  public static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
-  public static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
+  public static String PHM = FOLDER + "/idea/java.class.shortname.storage";
+  public static String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
 
   @Test
   public void testAll() throws IOException {
