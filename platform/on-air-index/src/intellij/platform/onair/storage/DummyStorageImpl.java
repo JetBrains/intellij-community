@@ -3,6 +3,7 @@ package intellij.platform.onair.storage;
 
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.tree.BTree;
 import org.jetbrains.annotations.NotNull;
 
 public class DummyStorageImpl implements Storage {
@@ -24,5 +25,9 @@ public class DummyStorageImpl implements Storage {
   @Override
   public void store(@NotNull Address address, @NotNull byte[] bytes) {
     throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public void prefetch(@NotNull byte[] bytes, @NotNull BTree tree, int size) {
   }
 }

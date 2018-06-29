@@ -9,12 +9,8 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.DataInputOutputUtil;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.PersistentHashMap;
-import intellij.platform.onair.storage.DummyStorageImpl;
 import intellij.platform.onair.storage.StorageImpl;
-import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.NoveltyImpl;
-import intellij.platform.onair.storage.api.Storage;
-import intellij.platform.onair.storage.api.Tree;
 import intellij.platform.onair.tree.BTree;
 import intellij.platform.onair.tree.MockNovelty;
 import org.jetbrains.annotations.NotNull;
@@ -38,16 +34,18 @@ import static com.intellij.util.io.PagedFileStorage.MB;
 
 public class CopyIndexTest {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
-  public static int ITERATIONS = 1;
-  public static String FOLDER = System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
-  public static String host = "localhost";
-  public static int port = 11211;
-  public static String PHM = FOLDER + "/idea/java.class.shortname.storage";
-  public static String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
+
+  public static final int ITERATIONS = 5;
+  public static final String FOLDER =
+    System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
+  public static final String host = "localhost";
+  public static final int port = 11211;
+  public static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
+  public static final String PHM_I = FOLDER + "/trash/java.class.shortname.storage.smth.";
 
   @Test
   public void testAll() throws IOException {
-    final Storage storage = new StorageImpl(new InetSocketAddress(host, port)); // DummyStorageImpl.INSTANCE;
+    final StorageImpl storage = new StorageImpl(new InetSocketAddress(host, port)); // DummyStorageImpl.INSTANCE;
     final Map<String, StubIdList> content = new HashMap<>();
     final Map<byte[], byte[]> rawContent = new HashMap<>();
     final PersistentHashMap<String, StubIdList> phm = makePHM(PHM);
@@ -99,7 +97,7 @@ public class CopyIndexTest {
 
         System.out.println("Check write...");
         start = System.currentTimeMillis();
-        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), ((StorageImpl)storage).bulkStore(tree, novelty))));
+        trees.forEach(tree -> remoteTrees.add(BTree.load(storage, tree.getKeySize(), storage.bulkStore(tree, novelty))));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
         System.out.println("Check storage reads...");
         start = System.currentTimeMillis();
@@ -111,7 +109,7 @@ public class CopyIndexTest {
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
       }
       catch (RuntimeException e) {
-        ((StorageImpl)storage).close();
+        storage.close();
         throw e;
       }
       finally {
