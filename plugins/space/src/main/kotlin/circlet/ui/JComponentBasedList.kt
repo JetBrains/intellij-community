@@ -27,7 +27,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     )
 
-    private var selectedItem: Item? = null
+    private var selectedItem: MyItem? = null
 
     private val mouseAdapter = MyMouseAdapter()
     private val focusAdapter = MyFocusAdapter()
@@ -54,7 +54,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
     fun add(item: Item) {
         val itemComponent = item.component
 
-        itemComponent.putClientProperty(ITEM_KEY, item)
+        itemComponent.putClientProperty(ITEM_KEY, MyItem(item, panel.components.size))
         itemComponent.addListeners()
 
         panel.add(itemComponent)
@@ -89,7 +89,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
                 newSelectedItem.selected = true
                 selectedItem = newSelectedItem
 
-                val bounds = newSelectedComponent.bounds
+                val bounds = newSelectedItem.component.bounds
 
                 if (!panel.visibleRect.contains(bounds)) {
                     panel.scrollRectToVisible(bounds)
@@ -119,19 +119,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
             return components[0]
         }
 
-        val index = components.indexOfFirst { it.item === selectedItem }
-
-        if (index < 0) {
-            return null
-        }
-
-        val newIndex = index + shift
-
-        if (newIndex !in 0 until components.size) {
-            return null
-        }
-
-        return components[newIndex]
+        return (selectedItem!!.index + shift).takeIf { it in 0 until components.size  }?.let { components[it] }
     }
 
     private fun selectNext() {
@@ -147,6 +135,8 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
     private fun selectLast() {
         select(panel.components.lastOrNull())
     }
+
+    private class MyItem(item: Item, val index: Int) : Item by item
 
     private inner class MyMouseAdapter : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
@@ -182,7 +172,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
     private companion object {
         private val ITEM_KEY = "${JComponentBasedList::class.qualifiedName}.ITEM_KEY"
 
-        private val Component.item: Item?
-            get() = ((this as? JComponent)?.getClientProperty(ITEM_KEY) as Item?) ?: parent?.item
+        private val Component.item: MyItem?
+            get() = ((this as? JComponent)?.getClientProperty(ITEM_KEY) as MyItem?) ?: parent?.item
     }
 }
