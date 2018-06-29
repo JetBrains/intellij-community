@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
 
 import com.intellij.codeInsight.completion.*;
@@ -61,6 +47,8 @@ import org.jetbrains.plugins.groovy.refactoring.inline.InlineMethodConflictSolve
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil.canResolveToPackage;
 
 public class GrMainCompletionProvider extends CompletionProvider<CompletionParameters> {
   public static final ElementPattern<PsiElement> AFTER_AT = PlatformPatterns.psiElement().afterLeaf("@");
@@ -139,12 +127,9 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
     if (parent instanceof GrVariable) {
       final PsiElement pparent = parent.getParent();
       if (pparent instanceof GrVariableDeclaration) {
-        final PsiElement errorElement = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
-        if (errorElement instanceof PsiErrorElement) {
-          final PsiElement child = errorElement.getFirstChild();
-          if (child instanceof GrTypeParameterList) {
-            return (GrTypeParameterList)child;
-          }
+        PsiElement candidate = PsiUtil.skipWhitespacesAndComments(parent.getPrevSibling(), false);
+        if (candidate instanceof GrTypeParameterList) {
+          return (GrTypeParameterList)candidate;
         }
       }
     }
@@ -201,8 +186,7 @@ public class GrMainCompletionProvider extends CompletionProvider<CompletionParam
       for (String string : CompleteReferencesWithSameQualifier.getVariantsWithSameQualifier((GrReferenceExpression)reference, matcher, (GrExpression)qualifier)) {
         consumer.consume(LookupElementBuilder.create(string).withItemTextUnderlined(true));
       }
-      if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null &&
-          !(qualifier instanceof GrReferenceExpression && ((GrReferenceExpression)qualifier).resolve() instanceof PsiPackage)) {
+      if (parameters.getInvocationCount() < 2 && qualifier != null && qualifierType == null && !canResolveToPackage(qualifier)) {
         if (parameters.getInvocationCount() == 1) {
           showInfo();
         }

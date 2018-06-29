@@ -18,19 +18,11 @@ package com.intellij.internal.statistic.connect;
 
 public class StatServiceException extends RuntimeException {
 
-  public StatServiceException() {
-    super();
-  }
-
   public StatServiceException(String s) {
     super(s);
   }
 
   public StatServiceException(String s, Throwable throwable) {
     super(s, throwable);
-  }
-
-  public StatServiceException(Throwable throwable) {
-    super(throwable);
   }
 }

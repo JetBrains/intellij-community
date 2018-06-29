@@ -1,8 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.icons.AllIcons;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.CopyProvider;
+import com.intellij.ide.DefaultTreeExpander;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.projectView.impl.ProjectViewTree;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.TreeState;
@@ -13,21 +15,23 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.*;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
+import com.intellij.ui.DoubleClickListener;
+import com.intellij.ui.PopupHandler;
+import com.intellij.ui.SmartExpander;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.ui.treeStructure.actions.CollapseAllAction;
-import com.intellij.ui.treeStructure.actions.ExpandAllAction;
 import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.ThreeStateCheckBox;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.tree.WideSelectionTreeUI;
@@ -45,28 +49,43 @@ import javax.swing.plaf.basic.BasicTreeUI;
 import javax.swing.tree.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.beans.PropertyChangeListener;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.openapi.keymap.KeymapUtil.getActiveKeymapShortcuts;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.DIRECTORY_GROUPING;
+import static com.intellij.openapi.vcs.changes.ui.ChangesGroupingSupport.MODULE_GROUPING;
+import static com.intellij.util.ArrayUtil.EMPTY_STRING_ARRAY;
+import static com.intellij.util.ArrayUtil.toStringArray;
+import static com.intellij.util.ObjectUtils.notNull;
+import static com.intellij.util.containers.ContainerUtil.ar;
+import static com.intellij.util.containers.ContainerUtil.set;
 import static com.intellij.util.ui.ThreeStateCheckBox.State;
 
 public abstract class ChangesTree extends Tree implements DataProvider {
   @NotNull protected final Project myProject;
   private final boolean myShowCheckboxes;
   private final int myCheckboxWidth;
-  private boolean myShowFlatten;
+  @NotNull private final ChangesGroupingSupport myGroupingSupport;
   private boolean myIsModelFlat;
 
-  @NotNull private Set<Object> myIncludedChanges = new THashSet<>();
+  @NotNull private TObjectHashingStrategy<Object> myInclusionHashingStrategy = ContainerUtil.canonicalStrategy();
+  @NotNull private Set<Object> myIncludedChanges = new THashSet<>(myInclusionHashingStrategy);
   @NotNull private Runnable myDoubleClickHandler = EmptyRunnable.getInstance();
   private boolean myKeepTreeState = false;
 
-  @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
+  @Deprecated @NonNls private final static String FLATTEN_OPTION_KEY = "ChangesBrowser.SHOW_FLATTEN";
+  @NonNls private static final String GROUPING_KEYS = "ChangesTree.GroupingKeys";
+
+  public static final String[] DEFAULT_GROUPING_KEYS = ar(DIRECTORY_GROUPING, MODULE_GROUPING);
+
+  @NonNls public static final String GROUP_BY_ACTION_GROUP = "ChangesView.GroupBy";
 
   @Nullable private Runnable myInclusionListener;
   @NotNull private final CopyProvider myTreeCopyProvider;
-  private TreeState myNonFlatTreeState;
+  @NotNull private TreeExpander myTreeExpander = new MyTreeExpander();
+
+  private boolean myModelUpdateInProgress;
 
   public ChangesTree(@NotNull Project project,
                      boolean showCheckboxes,
@@ -76,16 +95,31 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     myShowCheckboxes = showCheckboxes;
     myCheckboxWidth = new JCheckBox().getPreferredSize().width;
 
-    setHorizontalAutoScrollingEnabled(false);
     setRootVisible(false);
     setShowsRootHandles(true);
     setOpaque(false);
     new TreeSpeedSearch(this, ChangesBrowserNode.TO_TEXT_CONVERTER);
 
-    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, () -> myShowFlatten, highlightProblems);
+    final ChangesBrowserNodeRenderer nodeRenderer = new ChangesBrowserNodeRenderer(myProject, this::isShowFlatten, highlightProblems);
     setCellRenderer(new MyTreeCellRenderer(nodeRenderer));
 
-    new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+    if (myShowCheckboxes) {
+      new MyToggleSelectionAction().registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0)), this);
+    }
+    installEnterKeyHandler();
+    installDoubleClickHandler();
+    installTreeLinkHandler(nodeRenderer);
+    SmartExpander.installOn(this);
+
+    myGroupingSupport = installGroupingSupport();
+
+    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
+    setEmptyText(emptyText);
+
+    myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  }
+
+  protected void installEnterKeyHandler() {
     registerKeyboardAction(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
@@ -112,7 +146,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
       }
     });
+  }
 
+  protected void installDoubleClickHandler() {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -133,7 +169,9 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         return true;
       }
     }.installOn(this);
+  }
 
+  protected void installTreeLinkHandler(@NotNull ChangesBrowserNodeRenderer nodeRenderer) {
     new TreeLinkMouseListener(nodeRenderer) {
       @Override
       protected int getRendererRelativeX(@NotNull MouseEvent e, @NotNull JTree tree, @NotNull TreePath path) {
@@ -149,14 +187,26 @@ public abstract class ChangesTree extends Tree implements DataProvider {
         }
       }
     }.installOn(this);
-    SmartExpander.installOn(this);
+  }
 
-    myShowFlatten = PropertiesComponent.getInstance(myProject).isTrueValue(FLATTEN_OPTION_KEY);
+  @NotNull
+  protected ChangesGroupingSupport installGroupingSupport() {
+    ChangesGroupingSupport result = new ChangesGroupingSupport(myProject, this, false);
 
-    String emptyText = StringUtil.capitalize(DiffBundle.message("diff.count.differences.status.text", 0));
-    setEmptyText(emptyText);
+    migrateShowFlattenSetting();
+    result.setGroupingKeysOrSkip(set(notNull(PropertiesComponent.getInstance(myProject).getValues(GROUPING_KEYS), DEFAULT_GROUPING_KEYS)));
+    result.addPropertyChangeListener(e -> changeGrouping());
 
-    myTreeCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+    return result;
+  }
+
+  private void migrateShowFlattenSetting() {
+    PropertiesComponent properties = PropertiesComponent.getInstance(myProject);
+
+    if (properties.isValueSet(FLATTEN_OPTION_KEY)) {
+      properties.setValues(GROUPING_KEYS, properties.isTrueValue(FLATTEN_OPTION_KEY) ? EMPTY_STRING_ARRAY : DEFAULT_GROUPING_KEYS);
+      properties.unsetValue(FLATTEN_OPTION_KEY);
+    }
   }
 
   public void setEmptyText(@NotNull String emptyText) {
@@ -188,28 +238,37 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return this;
   }
 
+  public void addGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.addPropertyChangeListener(listener);
+  }
+
+  public void removeGroupingChangeListener(@NotNull PropertyChangeListener listener) {
+    myGroupingSupport.removePropertyChangeListener(listener);
+  }
+
+  @NotNull
+  public ChangesGroupingSupport getGroupingSupport() {
+    return myGroupingSupport;
+  }
+
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
+    return getGroupingSupport().getGrouping();
+  }
+
   public boolean isShowFlatten() {
-    return myShowFlatten;
+    return !myGroupingSupport.isDirectory();
   }
 
   public boolean isShowCheckboxes() {
     return myShowCheckboxes;
   }
 
-  public void setShowFlatten(final boolean showFlatten) {
-    if (myShowFlatten == showFlatten) return;
+  private void changeGrouping() {
+    PropertiesComponent.getInstance(myProject).setValues(GROUPING_KEYS, toStringArray(getGroupingSupport().getGroupingKeys()));
 
-    final List<Object> oldSelection = getSelectedUserObjects();
-    if (myKeepTreeState && showFlatten) {
-      myNonFlatTreeState = TreeState.createOn(this, getRoot());
-    }
-
-    myShowFlatten = showFlatten;
+    List<Object> oldSelection = getSelectedUserObjects();
     rebuildTree();
-
-    if (myKeepTreeState && !showFlatten && myNonFlatTreeState != null) {
-      myNonFlatTreeState.applyTo(this, getRoot());
-    }
     setSelectedChanges(oldSelection);
   }
 
@@ -234,24 +293,34 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   public abstract void rebuildTree();
 
   protected void updateTreeModel(@NotNull DefaultTreeModel model) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
+    myModelUpdateInProgress = true;
+    try {
+      ApplicationManager.getApplication().assertIsDispatchThread();
 
-    TreeState state = null;
-    if (myKeepTreeState) {
-      state = TreeState.createOn(this, getRoot());
-    }
+      TreeState state = null;
+      if (myKeepTreeState) {
+        state = TreeState.createOn(this, getRoot());
+      }
 
-    setModel(model);
-    myIsModelFlat = isCurrentModelFlat();
-    setChildIndent(myShowFlatten && myIsModelFlat);
+      setModel(model);
+      myIsModelFlat = isCurrentModelFlat();
+      setChildIndent(myGroupingSupport.isNone() && myIsModelFlat);
 
-    if (myKeepTreeState) {
-      //noinspection ConstantConditions
-      state.applyTo(this, getRoot());
+      if (myKeepTreeState) {
+        //noinspection ConstantConditions
+        state.applyTo(this, getRoot());
+      }
+      else {
+        resetTreeState();
+      }
     }
-    else {
-      resetTreeState();
+    finally {
+      myModelUpdateInProgress = false;
     }
+  }
+
+  public boolean isModelUpdateInProgress() {
+    return myModelUpdateInProgress;
   }
 
   private void resetTreeState() {
@@ -260,7 +329,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     int selectedTreeRow = -1;
 
     if (myShowCheckboxes) {
-      if (myIncludedChanges.size() > 0) {
+      if (!getIncludedSet().isEmpty()) {
         ChangesBrowserNode root = getRoot();
         Enumeration enumeration = root.depthFirstEnumeration();
 
@@ -350,7 +419,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     return (ChangesBrowserNode<?>)getModel().getRoot();
   }
 
-  private void notifyInclusionListener() {
+  protected void notifyInclusionListener() {
     if (myInclusionListener != null) {
       myInclusionListener.run();
     }
@@ -358,6 +427,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
 
   public void setInclusionHashingStrategy(@NotNull TObjectHashingStrategy<Object> strategy) {
+    myInclusionHashingStrategy = strategy;
     Set<Object> oldInclusion = myIncludedChanges;
     myIncludedChanges = new THashSet<>(strategy);
     myIncludedChanges.addAll(oldInclusion);
@@ -370,7 +440,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
    * <p>
    * No listener supposed to be called
    */
-  public void setIncludedChanges(final Collection<?> changes) {
+  public void setIncludedChanges(@NotNull Collection<?> changes) {
     myIncludedChanges.clear();
     myIncludedChanges.addAll(changes);
     repaint();
@@ -419,35 +489,61 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   @NotNull
   public Set<Object> getIncludedSet() {
-    return Collections.unmodifiableSet(myIncludedChanges);
+    return new THashSet<>(myIncludedChanges, myInclusionHashingStrategy);
   }
 
   public void expandAll() {
     TreeUtil.expandAll(this);
   }
 
-  public AnAction[] getTreeActions() {
-    final ToggleShowDirectoriesAction directoriesAction = new ToggleShowDirectoriesAction();
-    final ExpandAllAction expandAllAction = new ExpandAllAction(this) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!myShowFlatten || !myIsModelFlat);
-      }
-    };
-    final CollapseAllAction collapseAllAction = new CollapseAllAction(this) {
-      @Override
-      public void update(AnActionEvent e) {
-        e.getPresentation().setEnabledAndVisible(!myShowFlatten || !myIsModelFlat);
-      }
-    };
-    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
-    directoriesAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? InputEvent.META_DOWN_MASK : InputEvent.CTRL_DOWN_MASK)),
-      this);
-    expandAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_EXPAND_ALL), this);
-    collapseAllAction.registerCustomShortcutSet(getActiveKeymapShortcuts(IdeActions.ACTION_COLLAPSE_ALL), this);
-    return actions;
+
+  public void setTreeExpander(@NotNull TreeExpander expander) {
+    myTreeExpander = expander;
   }
+
+  /**
+   * @deprecated See {@link ChangesTree#GROUP_BY_ACTION_GROUP}, {@link TreeActionsToolbarPanel}
+   */
+  @Deprecated
+  public AnAction[] getTreeActions() {
+    return new AnAction[]{
+      ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP),
+      createExpandAllAction(false),
+      createCollapseAllAction(false)
+    };
+  }
+
+  @NotNull
+  public AnAction createExpandAllAction(boolean headerAction) {
+    if (headerAction) {
+      return CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, this);
+    }
+    else {
+      return CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, this);
+    }
+  }
+
+  @NotNull
+  public AnAction createCollapseAllAction(boolean headerAction) {
+    if (headerAction) {
+      return CommonActionsManager.getInstance().createCollapseAllHeaderAction(myTreeExpander, this);
+    }
+    else {
+      return CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, this);
+    }
+  }
+
+  private class MyTreeExpander extends DefaultTreeExpander {
+    public MyTreeExpander() {
+      super(ChangesTree.this);
+    }
+
+    @Override
+    public boolean isVisible(AnActionEvent event) {
+      return !myGroupingSupport.isNone() || !myIsModelFlat;
+    }
+  }
+
 
   public void setSelectionMode(@JdkConstants.TreeSelectionMode int mode) {
     getSelectionModel().setSelectionMode(mode);
@@ -455,12 +551,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
 
   private class MyTreeCellRenderer extends JPanel implements TreeCellRenderer {
     private final ChangesBrowserNodeRenderer myTextRenderer;
-    private final JCheckBox myCheckBox;
+    private final ThreeStateCheckBox myCheckBox;
 
 
     public MyTreeCellRenderer(@NotNull ChangesBrowserNodeRenderer textRenderer) {
       super(new BorderLayout());
-      myCheckBox = new JCheckBox();
+      myCheckBox = new ThreeStateCheckBox();
       myTextRenderer = textRenderer;
 
       if (myShowCheckboxes) {
@@ -496,7 +592,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       if (myShowCheckboxes) {
         @SuppressWarnings("unchecked")
         State state = getNodeStatus((ChangesBrowserNode)value);
-        myCheckBox.setSelected(state != State.NOT_SELECTED);
+        myCheckBox.setState(state);
 
         myCheckBox.setEnabled(tree.isEnabled() && isNodeEnabled((ChangesBrowserNode)value));
         revalidate();
@@ -515,7 +611,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
 
-  private State getNodeStatus(ChangesBrowserNode<?> node) {
+  protected State getNodeStatus(@NotNull ChangesBrowserNode<?> node) {
     boolean hasIncluded = false;
     boolean hasExcluded = false;
 
@@ -534,7 +630,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   }
 
   protected boolean isNodeEnabled(ChangesBrowserNode<?> node) {
-    return getNodeStatus(node) != State.DONT_CARE;
+    return true;
   }
 
   private class MyToggleSelectionAction extends AnAction implements DumbAware {
@@ -543,25 +639,6 @@ public abstract class ChangesTree extends Tree implements DataProvider {
       List<Object> changes = getSelectedUserObjects();
       if (changes.isEmpty()) changes = getAllUserObjects();
       toggleChanges(changes);
-    }
-  }
-
-  public class ToggleShowDirectoriesAction extends ToggleAction implements DumbAware {
-    public ToggleShowDirectoriesAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            AllIcons.Actions.GroupByPackage);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return !isShowFlatten();
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      PropertiesComponent.getInstance(myProject).setValue(FLATTEN_OPTION_KEY, String.valueOf(!state));
-      setShowFlatten(!state);
     }
   }
 
@@ -590,6 +667,12 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
       return myTreeCopyProvider;
     }
+    if (ChangesGroupingSupport.KEY.is(dataId)) {
+      return myGroupingSupport;
+    }
+    if (PlatformDataKeys.TREE_EXPANDER.is(dataId)) {
+      return myTreeExpander;
+    }
     return null;
   }
 
@@ -612,7 +695,7 @@ public abstract class ChangesTree extends Tree implements DataProvider {
     }
 
     if (file != null) {
-      return FileColorManager.getInstance(myProject).getFileColor(file);
+      return VfsPresentationUtil.getFileBackgroundColor(myProject, file);
     }
     return super.getFileColorFor(object);
   }
@@ -620,14 +703,15 @@ public abstract class ChangesTree extends Tree implements DataProvider {
   @Override
   protected void processMouseEvent(MouseEvent e) {
     if (e.getID() == MouseEvent.MOUSE_PRESSED) {
-      if (!isEnabled()) return;
-      int row = getRowForLocation(e.getX(), e.getY());
-      if (row >= 0) {
-        final Rectangle baseRect = getRowBounds(row);
-        baseRect.setSize(myCheckboxWidth, baseRect.height);
-        if (baseRect.contains(e.getPoint())) {
-          setSelectionRow(row);
-          toggleChanges(getSelectedUserObjects());
+      if (myShowCheckboxes && isEnabled() && !e.isPopupTrigger()) {
+        int row = getRowForLocation(e.getX(), e.getY());
+        if (row >= 0) {
+          final Rectangle baseRect = getRowBounds(row);
+          baseRect.setSize(myCheckboxWidth, baseRect.height);
+          if (baseRect.contains(e.getPoint())) {
+            setSelectionRow(row);
+            toggleChanges(getSelectedUserObjects());
+          }
         }
       }
     }

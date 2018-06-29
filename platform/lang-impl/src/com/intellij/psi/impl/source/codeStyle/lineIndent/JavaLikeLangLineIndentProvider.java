@@ -15,17 +15,20 @@
  */
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
+import com.intellij.application.options.CodeStyle;
+import com.intellij.formatting.Indent;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.highlighter.HighlighterIterator;
 import com.intellij.openapi.project.Project;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition;
 import com.intellij.psi.impl.source.codeStyle.SemanticEditorPosition.SyntaxElement;
 import com.intellij.psi.impl.source.codeStyle.lineIndent.IndentCalculator.BaseLineOffsetCalculator;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -93,14 +96,14 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         if (position.hasEmptyLineAfter(offset) &&
             !position.after().matchesRule(
               p->p.isAtAnyOf(ArrayClosingBracket, BlockOpeningBrace, BlockClosingBrace, RightParenthesis) || p.isAtEnd()) &&
-            position.findLeftParenthesisBackwardsSkippingNested(LeftParenthesis, RightParenthesis,
-                                                                element -> element == BlockClosingBrace || element == BlockOpeningBrace ||
-                                                                           element == Semicolon)
-              .isAt(LeftParenthesis)) {
+            position.findLeftParenthesisBackwardsSkippingNestedWithPredicate(
+              LeftParenthesis,
+              RightParenthesis,
+              self -> self.isAtAnyOf(BlockClosingBrace, BlockOpeningBrace, Semicolon)).isAt(LeftParenthesis)) {
           return myFactory.createIndentCalculator(NONE, IndentCalculator.LINE_AFTER);
         }
       }
-      else if (getPosition(editor, offset + 1).matchesRule(
+      else if (afterOptionalWhitespaceOnSameLine(editor, offset).matchesRule(
         position -> position.isAt(BlockClosingBrace) && !position.after().afterOptional(Whitespace).isAt(Comma))) {
         return myFactory.createIndentCalculator(
           NONE,
@@ -113,40 +116,42 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
           });
       }
       else if (getPosition(editor, offset).beforeOptional(Whitespace).isAt(BlockClosingBrace)) {
-        return myFactory.createIndentCalculator(getBlockIndentType(project, language), IndentCalculator.LINE_BEFORE);
+        return myFactory.createIndentCalculator(getBlockIndentType(editor, language), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).before().isAt(Semicolon)) {
         SemanticEditorPosition beforeSemicolon = getPosition(editor, offset).before().beforeOptional(Semicolon);
         if (beforeSemicolon.isAt(BlockClosingBrace)) {
           beforeSemicolon.moveBeforeParentheses(BlockOpeningBrace, BlockClosingBrace);
         }
-        int statementStart = getStatementStartOffset(beforeSemicolon);
+        int statementStart = getStatementStartOffset(beforeSemicolon, dropIndentAfterReturnLike(beforeSemicolon));
         SemanticEditorPosition atStatementStart = getPosition(editor, statementStart);
+        if (atStatementStart.isAt(BlockOpeningBrace)) {
+          return myFactory.createIndentCalculator(getIndentInBlock(project, language, atStatementStart), this::getDeepBlockStatementStartOffset);
+        }
         if (!isInsideForLikeConstruction(atStatementStart)) {
           return myFactory.createIndentCalculator(NONE, position -> statementStart);
         }
       }
-      else if (getPosition(editor, offset).before().isAt(ArrayOpeningBracket)) {
-        return myFactory.createIndentCalculator(getIndentTypeInBrackets(), IndentCalculator.LINE_BEFORE);
+      else if (isInArray(editor, offset)) {
+        return myFactory.createIndentCalculator(getIndentInBrackets(), IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).before().isAt(LeftParenthesis)) {
         return myFactory.createIndentCalculator(CONTINUATION, IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
         position -> {
-          position.moveBefore();
+          moveBeforeEndLineComments(position);
           if (position.isAt(BlockOpeningBrace)) {
-            return !position.before().beforeOptional(Whitespace).isAt(LeftParenthesis);
+            return !position.before().beforeOptionalMix(LineComment, BlockComment, Whitespace).isAt(LeftParenthesis);
           }
           return false;
         }
       )) {
-        SemanticEditorPosition position = getPosition(editor, offset).before();
-        return myFactory.createIndentCalculator(getIndentTypeInBlock(project, language, position), this::getBlockStatementStartOffset);
+        SemanticEditorPosition position = getPosition(editor, offset).before().beforeOptionalMix(LineComment, BlockComment, Whitespace);
+        return myFactory.createIndentCalculator(getIndentInBlock(project, language, position), this::getBlockStatementStartOffset);
       }
       else if (getPosition(editor, offset).before().matchesRule(
-        position -> position.isAt(Colon) && position.isAfterOnSameLine(SwitchCase, SwitchDefault) ||
-                    position.isAtAnyOf(ElseKeyword, DoKeyword))) {
+        position -> isColonAfterLabelOrCase(position) || position.isAtAnyOf(ElseKeyword, DoKeyword))) {
         return myFactory.createIndentCalculator(NORMAL, IndentCalculator.LINE_BEFORE);
       }
       else if (getPosition(editor, offset).matchesRule(
@@ -186,29 +191,98 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     return null;
   }
 
+  private SemanticEditorPosition afterOptionalWhitespaceOnSameLine(@NotNull Editor editor, int offset) {
+    SemanticEditorPosition position = getPosition(editor, offset);
+    if (position.isAt(Whitespace)) {
+      if (position.hasLineBreaksAfter(offset)) return position;
+      position.moveAfter();
+    }
+    return position;
+  }
+
+  /**
+   * Checks that the current offset is inside array. By default it is assumed to be after opening array bracket
+   * but can be overridden for more complicated logic, for example, the following case in Java: []{&lt;caret&gt;}.
+   *
+   * @param editor The editor.
+   * @param offset The current offset in the editor.
+   * @return {@code true} if the position is inside array.
+   */
+  protected boolean isInArray(@NotNull Editor editor, int offset) {
+    return getPosition(editor, offset).before().isAt(ArrayOpeningBracket);
+  }
+
+  /**
+   * Checking the document context in position for return-like token (i.e. {@code return}, {@code break}, {@code continue}),
+   * after that we need to reduce the indent (for example after {@code break;} in {@code switch} statement).
+   *
+   * @param statementBeforeSemicolon position in the document context
+   * @return true, if need to reduce the indent
+   */
+  protected boolean dropIndentAfterReturnLike(@NotNull SemanticEditorPosition statementBeforeSemicolon) {
+    return false;
+  }
+
+  protected boolean isColonAfterLabelOrCase(@NotNull SemanticEditorPosition position) {
+    return position.isAt(Colon)
+           && getPosition(position.getEditor(), position.getStartOffset()).isAfterOnSameLine(SwitchCase, SwitchDefault);
+  }
+
   protected boolean isInsideForLikeConstruction(SemanticEditorPosition position) {
     return position.isAfterOnSameLine(ForKeyword);
   }
 
-  private int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
-    position = position.before().beforeOptional(BlockOpeningBrace);
+  /**
+   * Returns the start offset of the statement or new-line-'{' that owns the code block in {@code position}.
+   * 
+   * Custom implementation for language can overwrite the default behavior for multi-lines statements like
+   * <pre>{@code
+   *    template<class T>
+   *    class A {};
+   * }</pre>
+   * or check indentation after new-line-'{' vs the brace style.
+   * 
+   * @param position the position in the code block
+   */
+  protected int getBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
+    moveBeforeEndLineComments(position);
+    position.moveBeforeOptional(BlockOpeningBrace);
     if (position.isAt(Whitespace)) {
-      if (position.isAtMultiline()) return position.after().getStartOffset();
+      if (position.isAtMultiline()) {
+        return position.after().getStartOffset();
+      }
       position.moveBefore();
     }
-    return getStatementStartOffset(position);
+    return getStatementStartOffset(position, false);
   }
-  
-  private int getStatementStartOffset(@NotNull SemanticEditorPosition position) {
+
+  private static void moveBeforeEndLineComments(@NotNull SemanticEditorPosition position) {
+    position.moveBefore();
+    while (!position.isAtMultiline() && position.isAtAnyOf(LineComment, BlockComment, Whitespace)) {
+      position.moveBefore();
+    }
+  }
+
+  /**
+   * Returns the start offset of the statement that owns the code block in {@code position}  
+   * 
+   * @param position the position in the code block
+   */
+  protected int getDeepBlockStatementStartOffset(@NotNull SemanticEditorPosition position) {
+    position.moveToLeftParenthesisBackwardsSkippingNested(BlockOpeningBrace, BlockClosingBrace);
+    return getBlockStatementStartOffset(position);
+  }
+
+  private int getStatementStartOffset(@NotNull SemanticEditorPosition position, boolean ignoreLabels) {
     Language currLanguage = position.getLanguage();
     while (!position.isAtEnd()) {
       if (currLanguage == Language.ANY || currLanguage == null) currLanguage = position.getLanguage();
-      if (position.isAt(Colon)) {
+      if (!ignoreLabels && isColonAfterLabelOrCase(position)) {
         SemanticEditorPosition afterColon = getPosition(position.getEditor(), position.getStartOffset())
-          .after().afterOptionalMix(Whitespace, LineComment);
-        if (getPosition(position.getEditor(), position.getStartOffset()).isAfterOnSameLine(SwitchCase, SwitchDefault)) {
-          return afterColon.getStartOffset();
-        }
+          .afterOptionalMix(Whitespace, BlockComment)
+          .after()
+          .afterOptionalMix(Whitespace, LineComment);
+        return afterColon.getStartOffset();
       }
       else if (position.isAt(RightParenthesis)) {
         position.moveBeforeParentheses(LeftParenthesis, RightParenthesis);
@@ -222,6 +296,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
         position.moveBeforeParentheses(ArrayOpeningBracket, ArrayClosingBracket);
         continue;
       }
+      else if (isStartOfStatementWithOptionalBlock(position)) {
+        return position.getStartOffset();
+      }
       else if (position.isAtAnyOf(Semicolon,
                                   BlockOpeningBrace, 
                                   BlockComment, 
@@ -229,9 +306,19 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
                                   LeftParenthesis,
                                   LanguageStartDelimiter) ||
                (position.getLanguage() != Language.ANY) && !position.isAtLanguage(currLanguage)) {
-        SemanticEditorPosition statementStart = getPosition(position.getEditor(), position.getStartOffset());
+        SemanticEditorPosition statementStart = position.copy();
         statementStart = statementStart.after().afterOptionalMix(Whitespace, LineComment);
-        if (!statementStart.isAtEnd()) {
+        if (!isIndentProvider(statementStart, ignoreLabels)) {
+          final SemanticEditorPosition maybeColon = statementStart.afterOptionalMix(Whitespace, BlockComment).after();
+          final SemanticEditorPosition afterColonStatement = maybeColon.after().after();
+          if (atColonWithNewLineAfterColonStatement(maybeColon, afterColonStatement)) {
+            return afterColonStatement.getStartOffset();
+          }
+          if (atBlockStartAndNeedBlockIndent(position)) {
+            return position.getStartOffset();
+          }
+        }
+        else if (!statementStart.isAtEnd()) {
           return statementStart.getStartOffset();
         }
       }
@@ -239,41 +326,101 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
     }
     return 0;
   }
-  
 
-  protected SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
-    return new SemanticEditorPosition((EditorEx)editor, offset, tokenType -> mapType(tokenType));
+  /**
+   * Returns {@code true} if the {@code position} starts a statement that <i>can</i> have a code block and the statement
+   * is the first in the code line.
+   * In C-like languages it is one of {@code if, else, for, while, do, try}. 
+   * 
+   * @param position
+   */
+  protected boolean isStartOfStatementWithOptionalBlock(@NotNull SemanticEditorPosition position) {
+    return position.matchesRule(
+      self -> {
+        final SemanticEditorPosition before = self.before();
+        return before.isAt(Whitespace)
+               && before.isAtMultiline()
+               && self.isAtAnyOf(ElseKeyword,
+                                 IfKeyword,
+                                 ForKeyword,
+                                 TryKeyword,
+                                 DoKeyword);
+      });
   }
-  
+
+  private static boolean atBlockStartAndNeedBlockIndent(@NotNull SemanticEditorPosition position) {
+    return position.isAt(BlockOpeningBrace);
+  }
+
+  private static boolean atColonWithNewLineAfterColonStatement(@NotNull SemanticEditorPosition maybeColon,
+                                                               @NotNull SemanticEditorPosition afterColonStatement) {
+    return maybeColon.isAt(Colon)
+           && maybeColon.after().isAtMultiline(Whitespace)
+           && !afterColonStatement.isAtEnd();
+  }
+
+  /**
+   * Checking the document context in position as indent-provider.
+   *
+   * @param statementStartPosition position is the document
+   * @param ignoreLabels {@code true}, if labels cannot be used as indent-providers in the context.
+   * @return {@code true}, if statement is indent-provider (by default)
+   */
+  protected boolean isIndentProvider(@NotNull SemanticEditorPosition statementStartPosition, boolean ignoreLabels) {
+    return true;
+  }
+
+  /**
+   * Returns abstract semantic position in {@code editor} for indent calculation.  
+   * 
+   * @param editor the editor in action   
+   * @param offset the offset in the {@code editor}    
+   */
+  public SemanticEditorPosition getPosition(@NotNull Editor editor, int offset) {
+    return SemanticEditorPosition.createEditorPosition((EditorEx)editor, offset,
+                                                       (_editor, _offset) -> getIteratorAtPosition(_editor, _offset),
+                                                       tokenType -> mapType(tokenType));
+  }
+
+  @NotNull
+  protected HighlighterIterator getIteratorAtPosition(@NotNull EditorEx editor, int offset) {
+    return editor.getHighlighter().createIterator(offset);
+  }
+
   @Nullable
   protected abstract SyntaxElement mapType(@NotNull IElementType tokenType);
   
   
   @Nullable
-  protected Type getIndentTypeInBlock(@NotNull Project project,
-                                           @Nullable Language language,
-                                           @NotNull SemanticEditorPosition blockStartPosition) {
+  protected Indent getIndentInBlock(@NotNull Project project,
+                                    @Nullable Language language,
+                                    @NotNull SemanticEditorPosition blockStartPosition) {
     if (language != null) {
-      CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(blockStartPosition.getEditor()).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED) {
-        return settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null;
+        return getDefaultIndentFromType(settings.METHOD_BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE_SHIFTED ? NONE : null);
       }
     }
-    return NORMAL;
+    return getDefaultIndentFromType(NORMAL);
   }
   
-  @Nullable
-  private static Type getBlockIndentType(@NotNull Project project, @Nullable Language language) {
+  @Contract("_, null -> null")
+  private static Type getBlockIndentType(@NotNull Editor editor, @Nullable Language language) {
     if (language != null) {
-      CommonCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
+      CommonCodeStyleSettings settings = CodeStyle.getSettings(editor).getCommonSettings(language);
       if (settings.BRACE_STYLE == CommonCodeStyleSettings.NEXT_LINE || settings.BRACE_STYLE == CommonCodeStyleSettings.END_OF_LINE) {
         return NONE;
       }
     }
     return null;
   }
-  
-  
+
+  @Contract("null -> null")
+  protected static Indent getDefaultIndentFromType(@Nullable Type type) {
+    return type == null
+           ? null
+           : Indent.getIndent(type, 0, false, false);
+  }
   
   public static class IndentCalculatorFactory {
     private final Project myProject;
@@ -283,17 +430,27 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
       myProject = project;
       myEditor = editor;
     }
-    
+
     @Nullable
     public IndentCalculator createIndentCalculator(@Nullable Type indentType, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
-      return indentType != null ?
-             new IndentCalculator(myProject, myEditor,
-                                  baseLineOffsetCalculator != null ? baseLineOffsetCalculator : IndentCalculator.LINE_BEFORE, indentType) 
-                                : null;
+      return createIndentCalculator(getDefaultIndentFromType(indentType), baseLineOffsetCalculator);
+    }
+
+    @Nullable
+    public IndentCalculator createIndentCalculator(@Nullable Indent indent, @Nullable BaseLineOffsetCalculator baseLineOffsetCalculator) {
+      return indent != null ?
+             new IndentCalculator(myProject,
+                                  myEditor,
+                                  baseLineOffsetCalculator != null
+                                  ? baseLineOffsetCalculator
+                                  : IndentCalculator.LINE_BEFORE,
+                                  indent)
+                            : null;
     }
   }
 
   @Override
+  @Contract("null -> false")
   public final boolean isSuitableFor(@Nullable Language language) {
     return language != null && isSuitableForLanguage(language);
   }
@@ -302,5 +459,9 @@ public abstract class JavaLikeLangLineIndentProvider implements LineIndentProvid
 
   protected Type getIndentTypeInBrackets() {
     return CONTINUATION;
+  }
+
+  protected Indent getIndentInBrackets() {
+    return getDefaultIndentFromType(getIndentTypeInBrackets());
   }
 }

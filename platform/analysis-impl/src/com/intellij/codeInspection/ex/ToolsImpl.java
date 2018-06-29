@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInspection.ex;
 
@@ -55,11 +41,6 @@ public class ToolsImpl implements Tools {
     myDefaultState = new ScopeToolState(CustomScopesProviderEx.getAllScope(), toolWrapper, enabledByDefault, level);
     myTools = null;
     myEnabled = enabled;
-  }
-
-  @TestOnly
-  public ToolsImpl(@NotNull InspectionToolWrapper toolWrapper, @NotNull HighlightDisplayLevel level, boolean enabled) {
-    this(toolWrapper, level, enabled, enabled);
   }
 
   @NotNull
@@ -158,13 +139,13 @@ public class ToolsImpl implements Tools {
     inspectionElement.setAttribute(ENABLED_BY_DEFAULT_ATTRIBUTE, Boolean.toString(myDefaultState.isEnabled()));
     InspectionToolWrapper toolWrapper = myDefaultState.getTool();
     if (toolWrapper.isInitialized()) {
-      toolWrapper.getTool().writeSettings(inspectionElement);
+      ScopeToolState.tryWriteSettings(toolWrapper.getTool(), inspectionElement);
     }
   }
 
   void readExternal(@NotNull Element toolElement, @NotNull InspectionProfileManager profileManager, Map<String, List<String>> dependencies) {
     final String levelName = toolElement.getAttributeValue(LEVEL_ATTRIBUTE);
-    final SeverityRegistrar registrar = profileManager.getOwnSeverityRegistrar();
+    final SeverityRegistrar registrar = profileManager.getSeverityRegistrar();
     HighlightDisplayLevel level = levelName != null ? HighlightDisplayLevel.find(registrar.getSeverity(levelName)) : null;
     if (level == null) {
       level = HighlightDisplayLevel.WARNING;
@@ -223,12 +204,18 @@ public class ToolsImpl implements Tools {
 
     // check if unknown children exists
     if (toolElement.getAttributes().size() > 4 || toolElement.getChildren().size() > scopeElements.size()) {
-      toolWrapper.getTool().readSettings(toolElement);
+      ScopeToolState.tryReadSettings(toolWrapper.getTool(), toolElement);
     }
 
     myEnabled = isEnabled;
   }
 
+  /**
+   * Warning: Usage of this method is discouraged as if separate tool options are defined for different scopes, it just returns
+   * the options for the first scope which may lead to unexpected results. Consider using {@link #getInspectionTool(PsiElement)} instead.
+   *
+   * @return an InspectionToolWrapper associated with this tool.
+   */
   @NotNull
   @Override
   public InspectionToolWrapper getTool() {

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi;
 
 import com.intellij.lang.ASTNode;
@@ -112,7 +113,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
   }
 
   private UserDataHolder getUserDataHolder() {
-    return api instanceof LighterASTApi ? ((LighterASTApi)api).builder : (UserDataHolder)api.parents(getRoot()).last();
+    return api instanceof LighterASTApi ? ((LighterASTApi)api).userDataHolder : (UserDataHolder)api.parents(getRoot()).last();
   }
 
   @NotNull
@@ -423,6 +424,7 @@ public class SyntaxTraverser<T> extends FilteredTraverserBase<T, SyntaxTraverser
 
   private static class LighterASTApi extends FlyweightApi<LighterASTNode> {
     private final PsiBuilder builder;
+    private final UserDataHolder userDataHolder = new UserDataHolderBase();
     private final ThreadLocalCachedValue<FlyweightCapableTreeStructure<LighterASTNode>> structure =
       new ThreadLocalCachedValue<FlyweightCapableTreeStructure<LighterASTNode>>() {
         @Override

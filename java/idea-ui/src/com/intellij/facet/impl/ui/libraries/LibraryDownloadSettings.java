@@ -148,7 +148,7 @@ public class LibraryDownloadSettings {
     }
     libraryEditor.setName(myLibraryName);
     for (Pair<VirtualFile, DownloadableFileDescription> pair : downloaded) {
-      final OrderRootType rootType = rootTypes.containsKey(pair.getSecond()) ? rootTypes.get(pair.getSecond()) : OrderRootType.CLASSES;
+      final OrderRootType rootType = rootTypes.getOrDefault(pair.getSecond(), OrderRootType.CLASSES);
       libraryEditor.addRoot(pair.getFirst(), rootType);
     }
     return libraryEditor;

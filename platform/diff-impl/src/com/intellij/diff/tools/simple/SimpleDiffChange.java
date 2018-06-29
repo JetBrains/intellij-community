@@ -18,8 +18,8 @@ package com.intellij.diff.tools.simple;
 import com.intellij.diff.fragments.DiffFragment;
 import com.intellij.diff.fragments.LineFragment;
 import com.intellij.diff.util.*;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.diff.impl.DiffUsageTriggerCollector;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -36,30 +36,35 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class SimpleDiffChange {
-  @NotNull private final SimpleDiffViewer myViewer;
+  @NotNull protected final SimpleDiffViewer myViewer;
 
   @NotNull private final LineFragment myFragment;
   @Nullable private final List<DiffFragment> myInnerFragments;
+  private final boolean myIsExcluded;
   private final boolean myIsSkipped;
 
-  @NotNull private final List<RangeHighlighter> myHighlighters = new ArrayList<>();
-  @NotNull private final List<MyGutterOperation> myOperations = new ArrayList<>();
+  @NotNull protected final List<RangeHighlighter> myHighlighters = new ArrayList<>();
+  @NotNull protected final List<GutterOperation> myOperations = new ArrayList<>();
 
   private boolean myIsValid = true;
   private final int[] myLineStartShifts = new int[2];
   private final int[] myLineEndShifts = new int[2];
 
   public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
+                          @NotNull LineFragment fragment) {
+    this(viewer, fragment, false, false);
+  }
+
+  public SimpleDiffChange(@NotNull SimpleDiffViewer viewer,
                           @NotNull LineFragment fragment,
-                          @Nullable LineFragment previousFragment,
+                          boolean isExcluded,
                           boolean isSkipped) {
     myViewer = viewer;
 
     myFragment = fragment;
     myInnerFragments = fragment.getInnerFragments();
+    myIsExcluded = isExcluded;
     myIsSkipped = isSkipped;
-
-    installHighlighter(previousFragment);
   }
 
   public void installHighlighter(@Nullable LineFragment previousFragment) {
@@ -82,7 +87,7 @@ public class SimpleDiffChange {
     }
     myHighlighters.clear();
 
-    for (MyGutterOperation operation : myOperations) {
+    for (GutterOperation operation : myOperations) {
       operation.dispose();
     }
     myOperations.clear();
@@ -110,10 +115,11 @@ public class SimpleDiffChange {
     createNonSquashedChangesSeparator(previousFragment, Side.RIGHT);
   }
 
-  private void doInstallActionHighlighters() {
-    if (myIsSkipped) return;
-    myOperations.add(createOperation(Side.LEFT));
-    myOperations.add(createOperation(Side.RIGHT));
+  protected void doInstallActionHighlighters() {
+    if (myIsExcluded) return;
+    
+    myOperations.add(new AcceptGutterOperation(Side.LEFT));
+    myOperations.add(new AcceptGutterOperation(Side.RIGHT));
   }
 
   private void createHighlighter(@NotNull Side side, boolean ignored) {
@@ -123,11 +129,11 @@ public class SimpleDiffChange {
     int startLine = side.getStartLine(myFragment);
     int endLine = side.getEndLine(myFragment);
 
-    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsSkipped, false, false));
+    myHighlighters.addAll(DiffDrawUtil.createHighlighter(editor, startLine, endLine, type, ignored, false, myIsExcluded, false, false));
   }
 
   private void createInlineHighlighter(@NotNull DiffFragment fragment, @NotNull Side side) {
-    if (myIsSkipped) return;
+    if (myIsExcluded) return;
 
     int start = side.getStartOffset(fragment);
     int end = side.getEndOffset(fragment);
@@ -158,7 +164,7 @@ public class SimpleDiffChange {
   }
 
   public void updateGutterActions(boolean force) {
-    for (MyGutterOperation operation : myOperations) {
+    for (GutterOperation operation : myOperations) {
       operation.update(force);
     }
   }
@@ -180,12 +186,21 @@ public class SimpleDiffChange {
     return DiffUtil.getLineDiffType(myFragment);
   }
 
+  public boolean isExcluded() {
+    return myIsExcluded;
+  }
+
   public boolean isSkipped() {
     return myIsSkipped;
   }
 
   public boolean isValid() {
     return myIsValid;
+  }
+
+  @NotNull
+  public LineFragment getFragment() {
+    return myFragment;
   }
 
   //
@@ -202,7 +217,7 @@ public class SimpleDiffChange {
     myLineEndShifts[sideIndex] += newRange.endLine - line2;
 
     if (newRange.damaged) {
-      for (MyGutterOperation operation : myOperations) {
+      for (GutterOperation operation : myOperations) {
         operation.dispose();
       }
       myOperations.clear();
@@ -228,26 +243,21 @@ public class SimpleDiffChange {
   // Helpers
   //
 
-  @NotNull
-  private MyGutterOperation createOperation(@NotNull Side side) {
-    int offset = side.getStartOffset(myFragment);
-    EditorEx editor = myViewer.getEditor(side);
-    RangeHighlighter highlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
-                                                                               HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                               null,
-                                                                               HighlighterTargetArea.LINES_IN_RANGE);
-    return new MyGutterOperation(side, highlighter);
-  }
-
-  private class MyGutterOperation {
-    @NotNull private final Side mySide;
+  protected abstract class GutterOperation {
+    @NotNull protected final Side mySide;
     @NotNull private final RangeHighlighter myHighlighter;
 
-    private boolean myCtrlPressed;
+    protected boolean myCtrlPressed;
 
-    private MyGutterOperation(@NotNull Side side, @NotNull RangeHighlighter highlighter) {
+    public GutterOperation(@NotNull Side side) {
       mySide = side;
-      myHighlighter = highlighter;
+
+      int offset = side.getStartOffset(myFragment);
+      EditorEx editor = myViewer.getEditor(side);
+      myHighlighter = editor.getMarkupModel().addRangeHighlighter(offset, offset,
+                                                                  HighlighterLayer.ADDITIONAL_SYNTAX,
+                                                                  null,
+                                                                  HighlighterTargetArea.LINES_IN_RANGE);
 
       update(true);
     }
@@ -268,6 +278,16 @@ public class SimpleDiffChange {
     }
 
     @Nullable
+    public abstract GutterIconRenderer createRenderer();
+  }
+
+  private class AcceptGutterOperation extends GutterOperation {
+    public AcceptGutterOperation(@NotNull Side side) {
+      super(side);
+    }
+
+    @Nullable
+    @Override
     public GutterIconRenderer createRenderer() {
       myCtrlPressed = myViewer.getModifierProvider().isCtrlPressed();
 
@@ -297,7 +317,7 @@ public class SimpleDiffChange {
   @Nullable
   private GutterIconRenderer createAppendRenderer(@NotNull final Side side) {
     return createIconRenderer(side, "Append", DiffUtil.getArrowDownIcon(side), () -> {
-      UsageTrigger.trigger("diff.SimpleDiffChange.Append");
+      DiffUsageTriggerCollector.trigger("action.SimpleDiffChange.append");
       myViewer.appendChange(this, side);
     });
   }

@@ -35,6 +35,7 @@ import com.intellij.psi.PsiExpression;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.refactoring.introduceVariable.IntroduceVariableBase;
 import com.intellij.testFramework.LightCodeInsightTestCase;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -288,5 +289,10 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
     PsiElement[] elements =
       new JavaExpressionSurroundDescriptor().getElementsToSurround(myFile, model.getSelectionStart(), model.getSelectionEnd());
     assertEmpty(elements);
+  }
+
+  public void testPsiTextConsistentAfterSurround() {
+    doTest(new JavaWithParenthesesSurrounder());
+    PsiTestUtil.checkFileStructure(getFile());
   }
 }

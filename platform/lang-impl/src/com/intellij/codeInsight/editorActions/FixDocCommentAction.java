@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.documentation.DocCommentFixer;
 import com.intellij.lang.*;
@@ -25,9 +12,7 @@ import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.CaretModel;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.project.Project;
@@ -35,9 +20,13 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
+import com.intellij.psi.codeStyle.DocCommentSettings;
+import com.intellij.psi.codeStyle.LanguageCodeStyleSettingsProvider;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Creates documentation comment for the current context if it's not created yet (e.g. the caret is inside a method which
@@ -60,7 +49,7 @@ public class FixDocCommentAction extends EditorAction {
   private static final class MyHandler extends EditorActionHandler {
 
     @Override
-    public void execute(@NotNull Editor editor, DataContext dataContext) {
+    public void doExecute(@NotNull Editor editor, @Nullable Caret caret, DataContext dataContext) {
       Project project = CommonDataKeys.PROJECT.getData(dataContext);
       if (project == null) {
         return;
@@ -207,15 +196,6 @@ public class FixDocCommentAction extends EditorAction {
     CaretModel caretModel = editor.getCaretModel();
     if (stub != null) {
       int insertionOffset = commentStartOffset + commentBodyRelativeOffset;
-      //if (CodeStyleSettingsManager.getSettings(project).JD_ADD_BLANK_AFTER_DESCRIPTION) {
-      //  buffer.setLength(0);
-      //  if (linePrefix != null) {
-      //    buffer.append(linePrefix);
-      //  }
-      //  buffer.append("\n");
-      //  buffer.append(stub);
-      //  stub = buffer.toString();
-      //}
       document.insertString(insertionOffset, stub);
       docManager.commitDocument(document);
       pair = documentationProvider.parseContext(anchor);
@@ -223,6 +203,7 @@ public class FixDocCommentAction extends EditorAction {
 
     if (caretOffsetToSet >= 0) {
       caretModel.moveToOffset(caretOffsetToSet);
+      editor.getSelectionModel().removeSelection();
     }
 
     if (pair == null || pair.second == null) {
@@ -232,8 +213,9 @@ public class FixDocCommentAction extends EditorAction {
     int start = Math.min(calcStartReformatOffset(pair.first), calcStartReformatOffset(pair.second));
     int end = pair.second.getTextRange().getEndOffset();
 
-    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
-    codeStyleManager.reformatText(anchor.getContainingFile(), start, end);
+    int caretLine = document.getLineNumber(editor.getCaretModel().getOffset());
+    reformatCommentKeepingEmptyTags(anchor.getContainingFile(), project, start, end);
+    editor.getCaretModel().moveToOffset(document.getLineEndOffset(caretLine));
 
     int caretOffset = caretModel.getOffset();
     if (caretOffset > 0 && caretOffset <= document.getTextLength()) {
@@ -243,6 +225,17 @@ public class FixDocCommentAction extends EditorAction {
         caretModel.moveToOffset(caretOffset + 1);
       }
     }
+  }
+
+  private static void reformatCommentKeepingEmptyTags(@NotNull PsiFile file, @NotNull Project project, int start, int end) {
+    CodeStyleSettings tempSettings = CodeStyle.getSettings(file).clone();
+    LanguageCodeStyleSettingsProvider langProvider = LanguageCodeStyleSettingsProvider.forLanguage(file.getLanguage());
+    if (langProvider != null) {
+      DocCommentSettings docCommentSettings = langProvider.getDocCommentSettings(tempSettings);
+      docCommentSettings.setRemoveEmptyTags(false);
+    }
+    CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
+    CodeStyle.doWithTemporarySettings(project, tempSettings, () -> codeStyleManager.reformatText(file, start, end));
   }
 
   private static int calcStartReformatOffset(@NotNull PsiElement element) {

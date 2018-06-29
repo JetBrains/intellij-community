@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection.longLine;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleSchemesConfigurable;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -31,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.HyperlinkLabel;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public class LongLineInspection extends LocalInspectionTool {
   @Override
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     PsiFile file = holder.getFile();
-    final int codeStyleRightMargin = CodeStyleSettingsManager.getSettings(holder.getProject()).getRightMargin(file.getLanguage());
+    final int codeStyleRightMargin = CodeStyle.getSettings(file).getRightMargin(file.getLanguage());
 
     final VirtualFile vFile = file.getVirtualFile();
     if (vFile instanceof VirtualFileWindow) {

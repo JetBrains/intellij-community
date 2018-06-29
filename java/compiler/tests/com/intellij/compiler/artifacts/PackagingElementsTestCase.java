@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -16,7 +15,6 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.project.IntelliJProjectConfiguration;
 import com.intellij.testFramework.VfsTestUtil;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -82,21 +80,19 @@ public abstract class PackagingElementsTestCase extends ArtifactsTestCase {
 
   static Library addProjectLibrary(final Project project, final @Nullable Module module, final String name, final DependencyScope scope,
                                    final VirtualFile[] jars) {
-    return new WriteAction<Library>() {
-      @Override
-      protected void run(@NotNull final Result<Library> result) {
-        final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name);
-        final Library.ModifiableModel libraryModel = library.getModifiableModel();
-        for (VirtualFile jar : jars) {
-          libraryModel.addRoot(jar, OrderRootType.CLASSES);
-        }
-        libraryModel.commit();
-        if (module != null) {
-          ModuleRootModificationUtil.addDependency(module, library, scope, false);
-        }
-        result.setResult(library);
+    return WriteAction.computeAndWait(() -> {
+      final Library library = LibraryTablesRegistrar.getInstance().getLibraryTable(project).createLibrary(name);
+      final Library.ModifiableModel libraryModel = library.getModifiableModel();
+      for (VirtualFile jar : jars) {
+        libraryModel.addRoot(jar, OrderRootType.CLASSES);
       }
-    }.execute().getResultObject();
+      libraryModel.commit();
+      if (module != null) {
+        ModuleRootModificationUtil.addDependency(module, library, scope, false);
+      }
+      ;
+      return library;
+    });
   }
 
   protected static void addModuleLibrary(final Module module, final VirtualFile jar) {

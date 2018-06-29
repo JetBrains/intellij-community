@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij
 
 import com.intellij.ide.ui.laf.intellij.WinIntelliJButtonUI.DISABLED_ALPHA_LEVEL
@@ -10,12 +8,19 @@ import java.awt.*
 import javax.swing.AbstractButton
 import javax.swing.JComponent
 import javax.swing.UIManager
+import javax.swing.border.Border
+import javax.swing.event.ChangeListener
 
 class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
-  private val outerInsets get() = (mainButton.border as WinIntelliJButtonBorder).outerInsets
+  private val outerInsets get() = mainButton.insets
   private val lw get() = scale(1)
 
-  override fun createMainButton() = object : MainButton() {
+  private var mainButtonBorder: Border? = null
+  private var arrowButtonBorder: Border? = null
+  private var mainButtonChangeListener: ChangeListener? = null
+  private var arrowButtonChangeListener: ChangeListener? = null
+
+  override fun createMainButton(): MainButton = object : MainButton() {
     override fun paintNotSimple(g: Graphics2D) {
       g.clipRect(0, 0, width - outerInsets.right, height)
 //      background is painted in button ui
@@ -29,10 +34,23 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
     }
   }
 
-  override fun configureMainButton() = super.configureMainButton().also { mainButton.isOpaque = false }
-  override fun unconfigureMainButton() = super.unconfigureMainButton().also { mainButton.isOpaque = true }
+  override fun configureMainButton(): Unit = super.configureMainButton().also {
+    mainButton.isOpaque = false
+    mainButtonBorder = mainButton.border
 
-  override fun createArrowButton() = object : ArrowButton() {
+    mainButtonChangeListener = createInnerButtonChangeListener().apply(mainButton::addChangeListener)
+  }
+
+  override fun unconfigureMainButton(): Unit = super.unconfigureMainButton().also {
+    mainButton.removeChangeListener(mainButtonChangeListener)
+    mainButtonChangeListener = null
+
+    mainButton.isOpaque = true
+    mainButton.border = mainButtonBorder
+    mainButtonBorder = null
+  }
+
+  override fun createArrowButton(): ArrowButton = object : ArrowButton() {
     override fun paintNotSimple(g: Graphics2D) {
       val bw = scale(2)
       g.clipRect(outerInsets.left + bw, 0, width - (outerInsets.left + bw), height)
@@ -52,14 +70,27 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
     }
   }
 
-  override fun configureArrowButton() = super.configureArrowButton().also { arrowButton.isOpaque = false }
-  override fun unconfigureArrowButton() = super.unconfigureArrowButton().also { arrowButton.isOpaque = true }
+  override fun configureArrowButton(): Unit = super.configureArrowButton().also {
+    arrowButton.isOpaque = false
+    arrowButtonBorder = arrowButton.border
 
-  override val arrowButtonPreferredSize get() = Dimension(scale(23), optionButton.preferredSize.height)
+    arrowButtonChangeListener = createInnerButtonChangeListener().apply(arrowButton::addChangeListener)
+  }
 
-  override val showPopupXOffset get() = scale(4)
+  override fun unconfigureArrowButton(): Unit = super.unconfigureArrowButton().also {
+    arrowButton.removeChangeListener(arrowButtonChangeListener)
+    arrowButtonChangeListener = null
 
-  override fun createLayoutManager() = object : OptionButtonLayout() {
+    arrowButton.isOpaque = true
+    arrowButton.border = arrowButtonBorder
+    arrowButtonBorder = null
+  }
+
+  override val arrowButtonPreferredSize: Dimension get() = Dimension(scale(23), optionButton.preferredSize.height)
+
+  override val showPopupXOffset: Int get() = scale(4)
+
+  override fun createLayoutManager(): OptionButtonLayout = object : OptionButtonLayout() {
     override fun layoutContainer(parent: Container) {
       val mainButtonWidth = optionButton.width - if (arrowButton.isVisible) arrowButton.preferredSize.width else 0
       val offset = if (arrowButton.isVisible) scale(2) else 0
@@ -70,13 +101,13 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
   }
 
   fun paintSeparatorArea(g: Graphics2D, c: JComponent) {
-    val bw = scale(WinIntelliJButtonBorder.getBorderWidth(mainButton))
+    val bw = scale((mainButton.border as ButtonBorder).getBorderWidth(mainButton))
     val x = mainButton.width - outerInsets.right - lw
     val y = outerInsets.top + bw
     val height = mainButton.height - (outerInsets.top + outerInsets.bottom + 2 * bw)
 
     paintSeparator(g, c, x, y, height)
-    if (WinIntelliJButtonBorder.isWideBorder(mainButton)) {
+    if ((mainButton.border as ButtonBorder).isWideBorder(mainButton)) {
       paintMainButtonBackground(g, x - 2 * lw, y, height)
     }
   }
@@ -94,9 +125,23 @@ class WinIntelliJOptionButtonUI : BasicOptionButtonUI() {
     g.fill(Rectangle(x, y, 2 * lw, height))
   }
 
+  override fun updateOptions(): Unit = super.updateOptions().also {
+    mainButton.border = if (isSimpleButton) mainButtonBorder else ButtonBorder()
+    arrowButton.border = if (isSimpleButton) arrowButtonBorder else ButtonBorder()
+  }
+
+  private fun createInnerButtonChangeListener() = ChangeListener {
+    mainButton.repaint()
+    arrowButton.repaint()
+  }
+
+  private inner class ButtonBorder : WinIntelliJButtonBorder() {
+    public override fun isWideBorder(b: AbstractButton) = super.isWideBorder(arrowButton) && super.isWideBorder(mainButton)
+  }
+
   companion object {
     @Suppress("UNUSED_PARAMETER")
     @JvmStatic
-    fun createUI(c: JComponent) = WinIntelliJOptionButtonUI()
+    fun createUI(c: JComponent): WinIntelliJOptionButtonUI = WinIntelliJOptionButtonUI()
   }
 }

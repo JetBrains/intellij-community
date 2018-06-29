@@ -38,13 +38,10 @@ public class ProximityTest extends JavaCodeInsightFixtureTestCase {
     root2.setUp();
 
     try {
-      new WriteCommandAction(getProject()) {
-        @Override
-        protected void run(@NotNull Result result) {
-          PsiTestUtil.addSourceContentToRoots(myModule, root1.getFile(""));
-          PsiTestUtil.addSourceContentToRoots(myModule, root2.getFile(""));
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+        PsiTestUtil.addSourceContentToRoots(myModule, root1.getFile(""));
+        PsiTestUtil.addSourceContentToRoots(myModule, root2.getFile(""));
+      });
 
       final VirtualFile file1 = root1.createFile("buy.txt", "");
       final VirtualFile file2 = root2.createFile("buy.txt", "");

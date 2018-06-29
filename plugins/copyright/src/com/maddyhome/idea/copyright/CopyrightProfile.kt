@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.maddyhome.idea.copyright
 
 import com.intellij.configurationStore.SerializableScheme
@@ -22,15 +20,16 @@ val DEFAULT_COPYRIGHT_NOTICE: String = EntityUtil.encode(
 class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : ExternalizableScheme, BaseState(), SerializableScheme {
   // ugly name to preserve compatibility
   // must be not private because otherwise binding is not created for private accessor
+  @Suppress("MemberVisibilityCanBePrivate")
   @get:OptionTag("myName")
-  var profileName by string()
+  var profileName: String? by string()
 
-  var notice by property(DEFAULT_COPYRIGHT_NOTICE)
-  var keyword by property(EntityUtil.encode("Copyright"))
-  var allowReplaceRegexp by string()
+  var notice: String? by property(DEFAULT_COPYRIGHT_NOTICE)
+  var keyword: String? by property(EntityUtil.encode("Copyright"))
+  var allowReplaceRegexp: String? by string()
 
   @Deprecated("use allowReplaceRegexp instead", ReplaceWith(""))
-  var allowReplaceKeyword by string()
+  var allowReplaceKeyword: String? by string()
 
   init {
     // otherwise will be as default value and name will be not serialized
@@ -39,13 +38,13 @@ class CopyrightProfile @JvmOverloads constructor(profileName: String? = null) : 
 
   // ugly name to preserve compatibility
   @Transient
-  override fun getName() = profileName ?: ""
+  override fun getName(): String = profileName ?: ""
 
   override fun setName(value: String) {
     profileName = value
   }
 
-  override fun toString() = profileName ?: ""
+  override fun toString(): String = profileName ?: ""
 
   override fun writeScheme(): Element {
     val element = Element("copyright")

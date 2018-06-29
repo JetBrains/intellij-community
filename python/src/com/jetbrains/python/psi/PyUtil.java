@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Maps;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -42,7 +43,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.*;
 import com.intellij.ui.awt.RelativePoint;
@@ -206,8 +206,8 @@ public class PyUtil {
     final RelativePoint point = new RelativePoint(component, p);
 
     JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType.getDefaultIcon(), messageType.getPopupBackground(), null)
-      .setShowCallout(false).setCloseButtonEnabled(true)
-      .createBalloon().show(point, Balloon.Position.atLeft);
+                  .setShowCallout(false).setCloseButtonEnabled(true)
+                  .createBalloon().show(point, Balloon.Position.atLeft);
   }
 
   @NonNls
@@ -549,7 +549,7 @@ public class PyUtil {
         break;
       }
       final PsiElement resolve = reference.resolve();
-      if ((resolve == null) ||  checkedElements.contains(resolve) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
+      if (resolve == null || checkedElements.contains(resolve) || resolve.equals(currentElement) || !inSameFile(resolve, currentElement)) {
         break;
       }
       currentElement = resolve;
@@ -620,13 +620,13 @@ public class PyUtil {
    */
   @Nullable
   public static PyFunction getInitMethod(@NotNull final PyClass pyClass) {
-    return pyClass.findMethodByName(PyNames.INIT, false,  null);
+    return pyClass.findMethodByName(PyNames.INIT, false, null);
   }
 
   /**
    * Returns Python language level for a virtual file.
    *
-   * @see {@link LanguageLevel#forElement}
+   * @see LanguageLevel#forElement
    */
   @NotNull
   public static LanguageLevel getLanguageLevelForVirtualFile(@NotNull Project project,
@@ -780,9 +780,9 @@ public class PyUtil {
 
   /**
    * Calculates and caches value based on param. Think about it as about map with param as key which flushes on each psi modification.
-   *
+   * <p>
    * For nullable function see {@link #getNullableParameterizedCachedValue(PsiElement, Object, NullableFunction)}.
-   *
+   * <p>
    * This function is used instead of {@link CachedValuesManager#createParameterizedCachedValue(ParameterizedCachedValueProvider, boolean)}
    * because parameter is not used as key there but used only for first calculation. Hence this should have functional dependency on element.
    *
@@ -851,6 +851,7 @@ public class PyUtil {
 
   /**
    * Executes code only if <pre>_PYCHARM_VERBOSE_MODE</pre> is set in env (which should be done for debug purposes only)
+   *
    * @param runnable code to call
    */
   public static void verboseOnly(@NotNull final Runnable runnable) {
@@ -949,12 +950,12 @@ public class PyUtil {
    * @param expressionText text of the expression
    * @param context        context element used to resolve symbols in the expression
    * @return instance of {@link PyExpression} as described
-   *
    * @see PyExpressionCodeFragment
    */
   @Nullable
   public static PyExpression createExpressionFromFragment(@NotNull String expressionText, @NotNull PsiElement context) {
-    final PyExpressionCodeFragmentImpl codeFragment = new PyExpressionCodeFragmentImpl(context.getProject(), "dummy.py", expressionText, false);
+    final PyExpressionCodeFragmentImpl codeFragment =
+      new PyExpressionCodeFragmentImpl(context.getProject(), "dummy.py", expressionText, false);
     codeFragment.setContext(context);
     final PyExpressionStatement statement = as(codeFragment.getFirstChild(), PyExpressionStatement.class);
     return statement != null ? statement.getExpression() : null;
@@ -1005,7 +1006,7 @@ public class PyUtil {
    * accepts only PsiDirectories as target.
    *
    * @param directory directory to check
-   * @param anchor optional PSI element to determine language level as for {@link #isPackage(PsiDirectory, PsiElement)}
+   * @param anchor    optional PSI element to determine language level as for {@link #isPackage(PsiDirectory, PsiElement)}
    * @return PsiFile or PsiDirectory, if target is a Python package and {@code null} null otherwise
    */
   @Nullable
@@ -1022,10 +1023,11 @@ public class PyUtil {
 
   /**
    * If target is a Python module named __init__.py file, return its directory. Otherwise return target unchanged.
+   *
    * @param target PSI element to check
    * @return PsiDirectory or target unchanged
    */
-  @Contract("null -> null; !null -> !null")
+  @Contract("null -> null")
   @Nullable
   public static PsiElement turnInitIntoDir(@Nullable PsiElement target) {
     if (target instanceof PyFile && isPackage((PsiFile)target)) {
@@ -1048,11 +1050,10 @@ public class PyUtil {
    * Also note that this method does not check that directory itself and its parents have valid importable names,
    * use {@link PyNames#isIdentifier(String)} for this purpose.
    *
-   * @param directory PSI directory to check
+   * @param directory               PSI directory to check
    * @param checkSetupToolsPackages whether setuptools namespace packages should be considered as well
-   * @param anchor    optional anchor element to determine language level
+   * @param anchor                  optional anchor element to determine language level
    * @return whether given directory is Python package
-   *
    * @see PyNames#isIdentifier(String)
    */
   public static boolean isPackage(@NotNull PsiDirectory directory, boolean checkSetupToolsPackages, @Nullable PsiElement anchor) {
@@ -1082,6 +1083,11 @@ public class PyUtil {
     return PyNames.INIT_DOT_PY.equals(file.getName());
   }
 
+  public static boolean isPackage(@NotNull PsiFileSystemItem anchor, @Nullable PsiElement location) {
+    return anchor instanceof PsiFile ? isPackage((PsiFile)anchor) :
+           anchor instanceof PsiDirectory && isPackage((PsiDirectory)anchor, location);
+  }
+
   private static boolean isSetuptoolsNamespacePackage(@NotNull PsiDirectory directory) {
     final String packagePath = getPackagePath(directory);
     return packagePath != null && !PySetuptoolsNamespaceIndex.find(packagePath, directory.getProject()).isEmpty();
@@ -1097,18 +1103,10 @@ public class PyUtil {
    * Counts initial underscores of an identifier.
    *
    * @param name identifier
-   * @return 0 if no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
+   * @return 0 if null or no initial underscores found, 1 if there's only one underscore, 2 if there's two or more initial underscores.
    */
-  public static int getInitialUnderscores(String name) {
-    if (name == null) {
-      return 0;
-    }
-    int underscores = 0;
-    if (name.startsWith("__")) {
-      underscores = 2;
-    }
-    else if (name.startsWith("_")) underscores = 1;
-    return underscores;
+  public static int getInitialUnderscores(@Nullable String name) {
+    return name == null ? 0 : name.startsWith("__") ? 2 : name.startsWith(PyNames.UNDERSCORE) ? 1 : 0;
   }
 
   /**
@@ -1126,14 +1124,14 @@ public class PyUtil {
   /**
    * Constructs new lookup element for completion of keyword argument with equals sign appended.
    *
-   * @param name    name of the parameter
-   * @param project project instance to check code style settings and surround equals sign with spaces if necessary
+   * @param name name of the parameter
+   * @param settingsAnchor file to check code style settings and surround equals sign with spaces if necessary
    * @return lookup element
    */
   @NotNull
-  public static LookupElement createNamedParameterLookup(@NotNull String name, @Nullable Project project) {
+  public static LookupElement createNamedParameterLookup(@NotNull String name, @NotNull PsiFile settingsAnchor) {
     final String suffix;
-    if (CodeStyleSettingsManager.getSettings(project).getCustomSettings(PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
+    if (CodeStyle.getCustomSettings(settingsAnchor, PyCodeStyleSettings.class).SPACE_AROUND_EQ_IN_KEYWORD_ARGUMENT) {
       suffix = " = ";
     }
     else {
@@ -1208,7 +1206,11 @@ public class PyUtil {
     return null;
   }
 
+  /**
+   * @deprecated This method will be removed in 2018.3.
+   */
   @Nullable
+  @Deprecated
   public static List<String> getStringListFromTargetExpression(PyTargetExpression attr) {
     return strListValue(attr.findAssignedValue());
   }
@@ -1649,7 +1651,8 @@ public class PyUtil {
     final PyFunction method = callable.asMethod();
     if (method != null) {
       return PyNames.NEW.equals(method.getName()) || method.getModifier() != STATICMETHOD;
-    } else {
+    }
+    else {
       final PyCallableParameter first = ContainerUtil.getFirstItem(parameters);
       return first != null && PyNames.CANONICAL_SELF.equals(first.getName());
     }
@@ -1705,11 +1708,11 @@ public class PyUtil {
    * I.e. {@code django.apps.conf.AppConfig} is not documented, but you know
    * {@code AppConfig} and {@code django} package.
    *
-   * @param symbol element to check (class or function)
+   * @param symbol          element to check (class or function)
    * @param expectedPackage package like "django"
-   * @param expectedName expected name (i.e. AppConfig)
+   * @param expectedName    expected name (i.e. AppConfig)
    * @return true if element in package
-   * @deprecated  use {@link com.jetbrains.python.nameResolver.FQNamesProvider#isNameMatches(PyQualifiedNameOwner)}
+   * @deprecated use {@link com.jetbrains.python.nameResolver.FQNamesProvider#isNameMatches(PyQualifiedNameOwner)}
    * Remove in 2018
    */
   @Deprecated
@@ -1841,6 +1844,65 @@ public class PyUtil {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static PyLoopStatement getCorrespondingLoop(@NotNull PsiElement breakOrContinue) {
+    return breakOrContinue instanceof PyContinueStatement || breakOrContinue instanceof PyBreakStatement
+           ? getCorrespondingLoopImpl(breakOrContinue)
+           : null;
+  }
+
+  @Nullable
+  private static PyLoopStatement getCorrespondingLoopImpl(@NotNull PsiElement element) {
+    final PyLoopStatement loop = PsiTreeUtil.getParentOfType(element, PyLoopStatement.class, true, ScopeOwner.class);
+
+    if (loop instanceof PyStatementWithElse && PsiTreeUtil.isAncestor(((PyStatementWithElse)loop).getElsePart(), element, true)) {
+      return getCorrespondingLoopImpl(loop);
+    }
+
+    return loop;
+  }
+
+  public static boolean isForbiddenMutableDefault(@Nullable PyTypedElement value, @NotNull TypeEvalContext context) {
+    if (value == null) return false;
+
+    final PyClassType type = as(context.getType(value), PyClassType.class);
+    if (type != null && !type.isDefinition()) {
+      final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(value);
+      final Set<PyClass> forbiddenClasses = StreamEx
+        .of(builtinCache.getListType(), builtinCache.getSetType(), builtinCache.getDictType())
+        .nonNull()
+        .map(PyClassType::getPyClass)
+        .toSet();
+
+      final PyClass cls = type.getPyClass();
+      return forbiddenClasses.contains(cls) || ContainerUtil.exists(cls.getAncestorClasses(context), forbiddenClasses::contains);
+    }
+
+    return false;
+  }
+
+  public static void addDecorator(@NotNull PyFunction function, @NotNull String decorator) {
+    final PyDecoratorList currentDecorators = function.getDecoratorList();
+
+    final List<String> decoTexts = new ArrayList<>();
+    decoTexts.add(decorator);
+    if (currentDecorators != null) {
+      for (PyDecorator deco : currentDecorators.getDecorators()) {
+        decoTexts.add(deco.getText());
+      }
+    }
+
+    final PyElementGenerator generator = PyElementGenerator.getInstance(function.getProject());
+    final PyDecoratorList newDecorators = generator.createDecoratorList(decoTexts.toArray(ArrayUtil.EMPTY_STRING_ARRAY));
+
+    if (currentDecorators != null) {
+      currentDecorators.replace(newDecorators);
+    }
+    else {
+      function.addBefore(newDecorators, function.getFirstChild());
+    }
   }
 
   /**
@@ -1977,6 +2039,7 @@ public class PyUtil {
 
   public static class IterHelper {  // TODO: rename sanely
     private IterHelper() {}
+
     @Nullable
     public static PsiNamedElement findName(Iterable<PsiNamedElement> it, String name) {
       PsiNamedElement ret = null;

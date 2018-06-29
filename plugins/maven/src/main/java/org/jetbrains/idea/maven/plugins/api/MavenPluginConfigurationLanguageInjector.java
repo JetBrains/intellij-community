@@ -31,12 +31,13 @@ public final class MavenPluginConfigurationLanguageInjector implements LanguageI
 
   @Override
   public void getLanguagesToInject(@NotNull final PsiLanguageInjectionHost host, @NotNull final InjectedLanguagePlaces injectionPlacesRegistrar) {
-    if (host.isValid() && host.getContainingFile().getLanguage().is(HTMLLanguage.INSTANCE)) return;
     if (!(host instanceof XmlText)) return;
 
     final XmlText xmlText = (XmlText)host;
 
     if (!MavenPluginParamInfo.isSimpleText(xmlText)) return;
+
+    if (host.getContainingFile().getLanguage().is(HTMLLanguage.INSTANCE)) return;
 
     MavenPluginParamInfo.ParamInfoList infoList = MavenPluginParamInfo.getParamInfoList(xmlText);
     for (MavenPluginParamInfo.ParamInfo info : infoList) {

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -22,8 +23,6 @@ import com.intellij.openapi.editor.FoldRegion;
 import com.intellij.openapi.editor.FoldingModel;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
@@ -59,21 +58,9 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
   protected FileType fileType;
   protected Language language;
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    CodeStyleSettingsManager.getInstance(myFixture.getProject()).setTemporarySettings(new CodeStyleSettings());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(myFixture.getProject()).dropTemporarySettings();
-    super.tearDown();
-  }
-
   @NotNull
   protected CommonCodeStyleSettings getCommonSettings() {
-    return CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
+    return CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
   }
 
   protected static ArrangementSectionRule section(@NotNull StdArrangementMatchRule... rules) {
@@ -183,7 +170,7 @@ public abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFix
 
     @SuppressWarnings("unchecked")
     List<StdArrangementRuleAliasToken> aliases = (List<StdArrangementRuleAliasToken>)args.get("aliases");
-    CommonCodeStyleSettings settings = CodeStyleSettingsManager.getInstance(myFixture.getProject()).getCurrentSettings().getCommonSettings(language);
+    CommonCodeStyleSettings settings = CodeStyle.getSettings(myFixture.getProject()).getCommonSettings(language);
     final StdArrangementSettings arrangementSettings =
       aliases == null ?
       new StdArrangementSettings(groupingRules, sectionRules) :

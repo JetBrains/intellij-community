@@ -46,3 +46,17 @@ class A implements I1 {
 
 class B extends A implements <warning descr="Non-annotated method 'foo' from 'A' implements non-null method from 'I2'">I2</warning> {
 }
+
+interface InheritorMethodOverriddenButParameterNot {
+  @NotNull
+  Integer get(<warning descr="Overridden method parameters are not annotated">@NotNull</warning> String param);
+}
+
+class InheritorMethodOverriddenButParameterNot_Impl implements InheritorMethodOverriddenButParameterNot {
+
+  @NotNull
+  @Override
+  public Integer get(String <warning descr="Not annotated parameter overrides @NotNull parameter">param</warning>) {
+    return 1;
+  }
+}

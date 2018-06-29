@@ -26,7 +26,9 @@ public class ChangesBrowserIgnoredFilesNode extends ChangesBrowserSpecificFilesN
   private final boolean myUpdatingMode;
 
   protected ChangesBrowserIgnoredFilesNode(Project project, int filesSize, int dirsSize, boolean many, boolean updatingMode) {
-    super(IGNORED_FILES_TAG, filesSize, dirsSize, many, () -> new IgnoredViewDialog(project).show());
+    super(IGNORED_FILES_TAG, filesSize, dirsSize, many, () -> {
+      if (!project.isDisposed()) new IgnoredViewDialog(project).show();
+    });
     myUpdatingMode = updatingMode;
   }
 

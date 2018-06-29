@@ -55,8 +55,14 @@
   <item name="java.lang.Class java.lang.reflect.Method getMethod(java.lang.String, java.lang.Class&lt;?&gt;...) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
   <item name="java.lang.ClassLoader java.io.InputStream getResourceAsStream(java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
+  </item>
+  <item name='java.lang.ClassLoader java.io.InputStream getSystemResourceAsStream(java.lang.String)'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
   </item>
   <item name="java.lang.ClassLoader java.net.URL getResource(java.lang.String)">
     <annotation name="org.jetbrains.annotations.Nullable" />
@@ -81,6 +87,12 @@
       <val name="from" val="0"/>
       <val name="to" val="java.lang.Integer.MAX_VALUE"/>
     </annotation>
+  </item>
+  <item name='java.lang.Enum java.lang.Class&lt;E&gt; getDeclaringClass()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Enum java.lang.String name()'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
   <item name='java.lang.Integer int bitCount(int)'>
     <annotation name='org.jetbrains.annotations.Range'>
@@ -491,9 +503,6 @@
   <item name="java.lang.String java.lang.String copyValueOf(char[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
-  <item name='java.lang.String java.lang.String format(java.lang.String, java.lang.Object...)'>
-    <annotation name='org.jetbrains.annotations.NotNull'/>
-  </item>
   <item name="java.lang.String java.lang.String format(java.lang.String, java.lang.Object...) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
@@ -688,8 +697,81 @@
   <item name="java.lang.Thread Thread(java.lang.Runnable, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='java.lang.Thread Thread(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String, long) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.Runnable, java.lang.String, long) 2'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.Nullable'/>
+  </item>
+  <item name='java.lang.Thread Thread(java.lang.ThreadGroup, java.lang.String) 1'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread boolean isAlive()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread boolean isInterrupted()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread int enumerate(java.lang.Thread[])'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="mutates" val="&quot;param&quot;"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread java.lang.StackTraceElement[] getStackTrace()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread java.lang.String getName()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
   <item name="java.lang.Thread java.lang.Thread currentThread()">
     <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread java.lang.Thread.State getState()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread java.util.Map&lt;java.lang.Thread,java.lang.StackTraceElement[]&gt; getAllStackTraces()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
+  </item>
+  <item name='java.lang.Thread long getId()'>
+    <annotation name='org.jetbrains.annotations.Contract'>
+      <val name="pure" val="true"/>
+    </annotation>
+  </item>
+  <item name='java.lang.Thread void setName(java.lang.String) 0'>
+    <annotation name='org.jetbrains.annotations.NotNull'/>
   </item>
 </root>
 

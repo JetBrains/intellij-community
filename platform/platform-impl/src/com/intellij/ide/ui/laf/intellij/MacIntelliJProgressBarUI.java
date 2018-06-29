@@ -15,9 +15,9 @@
  */
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IntelliJLaf;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaProgressBarUI;
 import com.intellij.ui.Gray;
+import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -40,13 +40,13 @@ public class MacIntelliJProgressBarUI extends DarculaProgressBarUI {
   @SuppressWarnings("UseJBColor")
   @Override
   protected Color getFinishedColor() {
-    return IntelliJLaf.isGraphite() ? new Color(0x989a9e) : new Color(0x0089fc);
+    return UIUtil.isGraphite() ? new Color(0x989a9e) : new Color(0x0089fc);
   }
 
   @SuppressWarnings("UseJBColor")
   @Override
   protected Color getStartColor() {
-    return IntelliJLaf.isGraphite() ? Gray.xD4 : new Color(0x86c4ff);
+    return UIUtil.isGraphite() ? Gray.xD4 : new Color(0x86c4ff);
   }
 
   @Override

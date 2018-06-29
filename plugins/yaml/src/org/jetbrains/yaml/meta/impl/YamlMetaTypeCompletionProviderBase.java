@@ -11,6 +11,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ProcessingContext;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -24,7 +25,6 @@ import org.jetbrains.yaml.psi.*;
 
 import java.util.*;
 import java.util.stream.Collectors;
-import java.util.stream.Stream;
 
 import static com.intellij.codeInsight.completion.CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
 
@@ -82,6 +82,9 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       YamlScalarType scalarType = (YamlScalarType)metaType;
       if (insertedScalar.getParent() instanceof YAMLKeyValue) {
         PsiElement prevSibling = PsiTreeUtil.skipWhitespacesBackward(insertedScalar);
+        if (isOfType(prevSibling, YAMLTokenTypes.COLON)) {
+          prevSibling = PsiTreeUtil.skipWhitespacesBackward(prevSibling);
+        }
         if (isOfType(prevSibling, YAMLTokenTypes.SCALAR_KEY)) {
           addValueCompletions(insertedScalar, scalarType, result, Collections.emptyMap());
           return;
@@ -99,13 +102,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
 
         Map<String, YAMLScalar> siblingValues =
           siblingItems.stream()
-            .filter(i -> i.getKeysValues().isEmpty()) // we only need are interested in literal siblings
+            .filter(i -> i.getKeysValues().isEmpty()) // we only are interested in literal siblings
             .filter(i -> !currentItem.equals(i))
             .map(YAMLSequenceItem::getValue)
             .filter(Objects::nonNull)
             .filter(YAMLScalar.class::isInstance)
             .map(YAMLScalar.class::cast)
-            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar));
+            .collect(Collectors.toMap(scalar -> scalar.getText().trim(), scalar -> scalar, (oldVal, newVal) -> newVal));
 
         addValueCompletions(insertedScalar, scalarType, result, siblingValues);
         return;
@@ -172,8 +175,8 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
     }
     else {
       fieldList.stream()
-        .filter(childField -> !existingByKey.containsKey(childField.getName()))
-        .forEach(childField -> registerBasicKeyCompletion(childField, result, insertedScalar, needsSequenceItemMark));
+               .filter(childField -> !existingByKey.containsKey(childField.getName()))
+               .forEach(childField -> registerBasicKeyCompletion(metaClass, childField, result, insertedScalar, needsSequenceItemMark));
     }
   }
 
@@ -182,11 +185,12 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
            !parentField.hasRelationSpecificType(Field.Relation.OBJECT_CONTENTS);
   }
 
-  private static void registerBasicKeyCompletion(@NotNull Field toBeInserted,
+  private static void registerBasicKeyCompletion(@NotNull YamlMetaClass metaClass,
+                                                 @NotNull Field toBeInserted,
                                                  @NotNull CompletionResultSet result,
                                                  @NotNull PsiElement insertedScalar,
                                                  boolean needsSequenceItemMark) {
-    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(insertedScalar);
+    List<LookupElementBuilder> lookups = toBeInserted.getKeyLookups(metaClass, insertedScalar);
     if (!lookups.isEmpty()) {
       InsertHandler<LookupElement> keyInsertHandler = new YamlKeyInsertHandlerImpl(needsSequenceItemMark, toBeInserted);
       lookups.stream()
@@ -209,11 +213,13 @@ public abstract class YamlMetaTypeCompletionProviderBase extends CompletionProvi
       return;
     }
 
-    fields.forEach(field -> {
-      final List<Field> fieldPath = Stream.concat(currentPath.stream(), Stream.of(field)).collect(Collectors.toList());
+    fields.stream()
+          .filter(field -> !field.isAnyNameAllowed())
+          .forEach(field -> {
+      final List<Field> fieldPath = StreamEx.of(currentPath).append(field).toList();
       result.add(fieldPath);
       final YamlMetaType metaType = field.getType(field.getDefaultRelation());
-      if (metaType instanceof YamlMetaClass && !field.isAnyNameAllowed()) {
+            if (metaType instanceof YamlMetaClass) {
         doCollectPathsRec(((YamlMetaClass)metaType).getFeatures().stream().filter(Field::isEditable).collect(Collectors.toList()),
                           fieldPath, result, deepness);
       }

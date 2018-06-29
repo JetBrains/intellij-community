@@ -20,14 +20,22 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.util.QualifiedName;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PythonLanguage;
-import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.PyFile;
+import com.jetbrains.python.psi.PyImportElement;
+import com.jetbrains.python.psi.PyTypedElement;
+import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import com.jetbrains.python.psi.resolve.ResolveImportUtil;
 import com.jetbrains.python.psi.types.PyImportedModuleType;
 import com.jetbrains.python.psi.types.PyType;
 import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
+import java.util.Objects;
 
 /**
  * @author yole
@@ -41,7 +49,6 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
    * @param importElement  parental import element, may be {@code null} if we're resolving {@code module} part in {@code from module import ...} statement
    * @param containingFile file to be used as anchor e.g. to determine relative import position
    * @param importedPrefix qualified name to resolve
-   *
    * @see ResolveImportUtil
    */
   public PyImportedModule(@Nullable PyImportElement importElement, @NotNull PyFile containingFile, @NotNull QualifiedName importedPrefix) {
@@ -62,14 +69,17 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return myImportedPrefix;
   }
 
+  @Override
   public String getText() {
     return "import " + myImportedPrefix;
   }
 
+  @Override
   public void accept(@NotNull PsiElementVisitor visitor) {
     visitor.visitElement(this);
   }
 
+  @Override
   public PsiElement copy() {
     return new PyImportedModule(myImportElement, myContainingFile, myImportedPrefix);
   }
@@ -91,24 +101,42 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     return super.getNavigationElement();
   }
 
+  @Override
+  public boolean isValid() {
+    return (myImportElement == null || myImportElement.isValid()) && myContainingFile.isValid();
+  }
+
   @Nullable
   public PyImportElement getImportElement() {
     return myImportElement;
   }
 
-  @Nullable
+  /**
+   * @deprecated use {@link #multiResolve()} instead
+   */
+  @Deprecated
   public PsiElement resolve() {
-    final PsiElement element;
+    return multiResolve().stream().findFirst().map(res -> res.getElement()).orElse(null);
+  }
+
+  @NotNull
+  public List<RatedResolveResult> multiResolve() {
+    final List<RatedResolveResult> results;
     if (myImportElement != null) {
-      element = ResolveImportUtil.resolveImportElement(myImportElement, myImportedPrefix);
+      results = ResolveImportUtil.multiResolveImportElement(myImportElement, myImportedPrefix);
     }
     else {
-      element = ResolveImportUtil.resolveModuleInRoots(myImportedPrefix, myContainingFile);
+      final ResolveResultList resList = new ResolveResultList();
+      ResolveImportUtil.multiResolveModuleInRoots(myImportedPrefix, myContainingFile)
+                       .forEach(res -> resList.poke(res, RatedResolveResult.RATE_NORMAL));
+      results = resList;
     }
-    if (element instanceof PsiDirectory) {
-      return PyUtil.getPackageElement((PsiDirectory)element, this);
-    }
-    return element;
+    return ContainerUtil.map(results, this::tryReplaceDirWithPackage);
+  }
+
+  private RatedResolveResult tryReplaceDirWithPackage(RatedResolveResult el) {
+    final PsiElement element = el.getElement();
+    return element instanceof PsiDirectory ? el.replace(PyUtil.getPackageElement((PsiDirectory)element, this)) : el;
   }
 
   @Nullable
@@ -122,5 +150,20 @@ public class PyImportedModule extends LightElement implements PyTypedElement {
     final PsiElement resolved = ResolveImportUtil.resolveImportElement(importElement, prefix);
     final PsiElement packageInit = PyUtil.turnDirIntoInit(resolved);
     return packageInit != null ? packageInit : resolved;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+    final PyImportedModule module = (PyImportedModule)o;
+    return Objects.equals(myImportElement, module.myImportElement) &&
+           Objects.equals(myContainingFile, module.myContainingFile) &&
+           Objects.equals(myImportedPrefix, module.myImportedPrefix);
+  }
+
+  @Override
+  public int hashCode() {
+    return Objects.hash(myImportElement, myContainingFile, myImportedPrefix);
   }
 }

@@ -32,7 +32,7 @@ public interface ChangeSignatureHandler extends RefactoringActionHandler {
   String REFACTORING_NAME = RefactoringBundle.message("changeSignature.refactoring.name");
 
   @Nullable
-  PsiElement findTargetMember(PsiFile file, Editor editor);
+  PsiElement findTargetMember(@NotNull PsiFile file, @NotNull Editor editor);
 
   @Nullable
   PsiElement findTargetMember(PsiElement element);

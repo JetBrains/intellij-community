@@ -3,14 +3,13 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 public class ObjectsRequireNonNullPostfixTemplate extends JavaEditablePostfixTemplate {
-  public ObjectsRequireNonNullPostfixTemplate(@NotNull PostfixEditableTemplateProvider provider) {
+  public ObjectsRequireNonNullPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("reqnonnull",
           "java.util.Objects.requireNonNull($EXPR$)",
           "Objects.requireNonNull(expr)",

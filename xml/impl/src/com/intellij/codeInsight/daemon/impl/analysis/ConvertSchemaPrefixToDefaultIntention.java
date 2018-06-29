@@ -99,12 +99,9 @@ public class ConvertSchemaPrefixToDefaultIntention extends PsiElementBaseIntenti
       });
     }, NAME, null);
 
-    new WriteCommandAction(project, NAME, xmlns.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        xmlns.setName("xmlns");
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project, xmlns.getContainingFile()).withName(NAME).run(() -> {
+      xmlns.setName("xmlns");
+    });
   }
 
   private static void convertTagsAndAttributes(String ns, final List<XmlTag> tags, final List<XmlAttribute> attrs, Project project) {

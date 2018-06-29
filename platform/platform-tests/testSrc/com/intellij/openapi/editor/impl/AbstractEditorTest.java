@@ -183,12 +183,12 @@ public abstract class AbstractEditorTest extends LightPlatformCodeInsightTestCas
   }
 
   protected static void runWriteCommand(ThrowableRunnable r) {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        r.run();
-      }
-    }.execute();
+    try {
+      WriteCommandAction.writeCommandAction(getProject()).run(r);
+    }
+    catch (Throwable throwable) {
+      throw new RuntimeException(throwable);
+    }
   }
 
   protected static void runFoldingOperation(Runnable r) {

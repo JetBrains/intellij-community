@@ -1,0 +1,20 @@
+class A : B {
+    fun foo() : void {
+    }
+}
+
+class B {
+    var a: A = A()
+    public fun bar() : A {
+        return A()
+    }
+    public fun barR(a: java.lang.String) : A {
+        return bar()
+    }
+    public static fun main(args: java.lang.String[]) : void {
+        var b: B = B()
+        b.bar().barR("asdf").bar().foo()
+        b.bar().bar().bar().foo()
+        b.a.a.a.bar().a.foo()
+    }
+}

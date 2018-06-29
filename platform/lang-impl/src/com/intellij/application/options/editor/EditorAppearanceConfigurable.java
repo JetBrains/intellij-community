@@ -11,6 +11,7 @@ import com.intellij.codeInsight.hints.settings.ParameterNameHintsConfigurable;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.options.CompositeConfigurable;
@@ -176,6 +177,7 @@ public class EditorAppearanceConfigurable extends CompositeConfigurable<UnnamedC
       uiSettings.fireUISettingsChanged();
     }
     EditorOptionsPanel.restartDaemons();
+    ApplicationManager.getApplication().getMessageBus().syncPublisher(EditorOptionsListener.APPEARANCE_CONFIGURABLE_TOPIC).changesApplied();
 
     super.apply();
   }

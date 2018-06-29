@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -61,12 +62,11 @@ public class CodeStyleSettingsCodeFragmentFilter {
 
   @NotNull
   public CodeStyleSettingsToShow getFieldNamesAffectingCodeFragment(LanguageCodeStyleSettingsProvider.SettingsType... types) {
-    CodeStyleSettingsManager codeStyleSettingsManager = CodeStyleSettingsManager.getInstance(myProject);
-    CodeStyleSettings clonedSettings = codeStyleSettingsManager.getCurrentSettings().clone();
+    CodeStyleSettings clonedSettings = CodeStyle.getSettings(myFile).clone();
     myCommonSettings = clonedSettings.getCommonSettings(myProvider.getLanguage());
 
     try {
-      codeStyleSettingsManager.setTemporarySettings(clonedSettings);
+      CodeStyle.setTemporarySettings(myProject, clonedSettings);
 
       String title = CodeInsightBundle.message("configure.code.style.on.fragment.dialog.title");
       SequentialModalProgressTask progressTask = new SequentialModalProgressTask(myProject, StringUtil.capitalizeWords(title, true));
@@ -107,7 +107,7 @@ public class CodeStyleSettingsCodeFragmentFilter {
       };
     }
     finally {
-      codeStyleSettingsManager.dropTemporarySettings();
+      CodeStyle.dropTemporarySettings(myProject);
     }
   }
 

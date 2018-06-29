@@ -17,7 +17,6 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import org.gradle.initialization.BuildCancellationToken;
-import org.gradle.initialization.layout.BuildLayoutFactory;
 import org.gradle.internal.classpath.ClassPath;
 import org.gradle.internal.classpath.DefaultClassPath;
 import org.gradle.internal.logging.progress.ProgressLoggerFactory;
@@ -52,15 +51,15 @@ import static org.gradle.internal.FileUtils.hasExtension;
 public class DistributionFactoryExt extends DistributionFactory {
 
   private DistributionFactoryExt() {
-    super(Time.clock(), BuildLayoutFactory.forDefaultScriptingLanguages());
+    super(Time.clock());
   }
 
-  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleHome) {
+  public static void setWrappedDistribution(GradleConnector connector, String wrapperPropertyFile, File gradleUserHome) {
     File propertiesFile = new File(wrapperPropertyFile);
     if (propertiesFile.exists()) {
       WrapperExecutor wrapper = WrapperExecutor.forWrapperPropertiesFile(propertiesFile);
       if (wrapper.getDistribution() != null) {
-        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleHome);
+        Distribution distribution = new DistributionFactoryExt().getWrappedDistribution(propertiesFile, gradleUserHome);
         try {
           setDistributionField(connector, distribution);
         }

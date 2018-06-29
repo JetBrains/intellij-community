@@ -101,7 +101,7 @@ public class QuickEditAction implements IntentionAction, LowPriorityAction {
     if (!ApplicationManager.getApplication().isUnitTestMode()) {
       DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injectedFile);
       if (documentWindow != null) {
-        handler.navigate(documentWindow.hostToInjectedUnescaped(offset));
+        handler.navigate(InjectedLanguageUtil.hostToInjectedUnescaped(documentWindow, offset));
       }
     }
     return handler;

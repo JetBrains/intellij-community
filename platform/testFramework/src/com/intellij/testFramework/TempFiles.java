@@ -1,23 +1,10 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -52,10 +39,17 @@ public class TempFiles {
 
   @NotNull
   public File createTempFile(@NotNull String prefix, String suffix) {
+    return createTempFile(prefix, suffix, true);
+  }
+
+  @NotNull
+  public File createTempFile(@NotNull String prefix, String suffix, boolean isRefreshVfs) {
     try {
-      File tempFile = FileUtil.createTempFile(prefix, suffix);
+      File tempFile = FileUtilRt.createTempFile(prefix, suffix, false);
       tempFileCreated(tempFile);
-      getVFileByFile(tempFile);
+      if (isRefreshVfs) {
+        getVFileByFile(tempFile);
+      }
       return tempFile;
     }
     catch (IOException e) {
@@ -103,6 +97,7 @@ public class TempFiles {
   public void deleteAll() {
     for (File file : myFilesToDelete) {
       if (!FileUtil.delete(file)) {
+        //noinspection SSBasedInspection
         file.deleteOnExit();
       }
     }

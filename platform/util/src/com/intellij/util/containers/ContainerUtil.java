@@ -1241,9 +1241,21 @@ public class ContainerUtil extends ContainerUtilRt {
     }
   }
 
+  /**
+   * Add all supplied elements to the supplied collection and returns the modified collection.
+   * Unlike {@link Collections#addAll(Collection, Object[])} this method does not track whether collection
+   * was modified, so it could be marginally faster.
+   *
+   * @param collection collection to add elements to
+   * @param elements elements to add
+   * @param <T> type of collection elements
+   * @param <A> type of elements to add (subtype of collection elements)
+   * @param <C> type of the collection
+   * @return the collection passed as first argument
+   */
+  @SuppressWarnings({"UseBulkOperation", "ManualArrayToCollectionCopy"})
   @NotNull
   public static <T, A extends T, C extends Collection<T>> C addAll(@NotNull C collection, @NotNull A... elements) {
-    //noinspection ManualArrayToCollectionCopy
     for (T element : elements) {
       collection.add(element);
     }
@@ -1319,18 +1331,6 @@ public class ContainerUtil extends ContainerUtilRt {
       result.addAll(ts);
     }
     return result.isEmpty() ? Collections.<T>emptyList() : result;
-  }
-
-  /**
-   * @deprecated Use {@link #append(List, Object[])} or {@link #prepend(List, Object[])} instead
-   * @param appendTail specify whether additional values should be appended in front or after the list
-   * @return read-only list consisting of the elements from specified list with some additional values
-   */
-  @Deprecated
-  @NotNull
-  @Contract(pure=true)
-  public static <T> List<T> concat(boolean appendTail, @NotNull List<? extends T> list, @NotNull T... values) {
-    return appendTail ? concat(list, list(values)) : concat(list(values), list);
   }
 
   @NotNull
@@ -1554,6 +1554,24 @@ public class ContainerUtil extends ContainerUtilRt {
   @Contract(pure=true)
   public static <T> T getFirstItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
     return items == null || items.isEmpty() ? defaultResult : items.iterator().next();
+  }
+
+  /**
+   * Returns the only item from the collection or null if collection is empty or contains more than one item
+   *
+   * @param items collection to get the item from
+   * @param <T> type of collection element
+   * @return the only collection element or null
+   */
+  @Nullable
+  @Contract(pure=true)
+  public static <T> T getOnlyItem(@Nullable final Collection<T> items) {
+    return getOnlyItem(items, null);
+  }
+
+  @Contract(pure=true)
+  public static <T> T getOnlyItem(@Nullable final Collection<T> items, @Nullable final T defaultResult) {
+    return items == null || items.size() != 1 ? defaultResult : items.iterator().next();
   }
 
   /**
@@ -1844,6 +1862,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @param iterable an input iterable to process
+   * @param mapping a side-effect free function which transforms iterable elements
    * @return read-only list consisting of the elements from the iterable converted by mapping
    */
   @NotNull
@@ -1857,16 +1877,20 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @return read-only list consisting of the elements from the iterable converted by mapping
+   * @param collection an input collection to process
+   * @param mapping a side-effect free function which transforms iterable elements
+   * @return read-only list consisting of the elements from the input collection converted by mapping
    */
   @NotNull
   @Contract(pure=true)
-  public static <T,V> List<V> map(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
-    return ContainerUtilRt.map2List(iterable, mapping);
+  public static <T,V> List<V> map(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
+    return ContainerUtilRt.map2List(collection, mapping);
   }
 
   /**
-   * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
+   * @param array an input array to process
+   * @param mapping a side-effect free function which transforms array elements
+   * @return read-only list consisting of the elements from the input array converted by mapping with nulls filtered out
    */
   @NotNull
   @Contract(pure=true)
@@ -1875,7 +1899,10 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
-   * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
+   * @param array an input array to process
+   * @param mapping a side-effect free function which transforms array elements
+   * @param emptyArray an empty array of desired result type (may be returned if the result is also empty)
+   * @return array consisting of the elements from the input array converted by mapping with nulls filtered out
    */
   @NotNull
   @Contract(pure=true)
@@ -1895,6 +1922,8 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @param iterable an input iterable to process
+   * @param mapping a side-effect free function which transforms iterable elements
    * @return read-only list consisting of the elements from the iterable converted by mapping with nulls filtered out
    */
   @NotNull
@@ -1911,17 +1940,19 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   /**
+   * @param collection an input collection to process
+   * @param mapping a side-effect free function which transforms collection elements
    * @return read-only list consisting of the elements from the array converted by mapping with nulls filtered out
    */
   @NotNull
   @Contract(pure=true)
-  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> iterable, @NotNull Function<T, V> mapping) {
-    if (iterable.isEmpty()) {
+  public static <T, V> List<V> mapNotNull(@NotNull Collection<? extends T> collection, @NotNull Function<T, V> mapping) {
+    if (collection.isEmpty()) {
       return emptyList();
     }
 
-    List<V> result = new ArrayList<V>(iterable.size());
-    for (T t : iterable) {
+    List<V> result = new ArrayList<V>(collection.size());
+    for (T t : collection) {
       final V o = mapping.fun(t);
       if (o != null) {
         result.add(o);
@@ -1964,11 +1995,12 @@ public class ContainerUtil extends ContainerUtilRt {
       return emptyArray;
     }
 
-    List<V> result = new ArrayList<V>(arr.length);
-    for (T t : arr) {
-      result.add(mapping.fun(t));
+    V[] result = emptyArray.length < arr.length ? Arrays.copyOf(emptyArray, arr.length) : emptyArray;
+
+    for (int i = 0; i < arr.length; i++) {
+      result[i] = mapping.fun(arr[i]);
     }
-    return result.toArray(emptyArray);
+    return result;
   }
 
   @NotNull
@@ -2260,9 +2292,9 @@ public class ContainerUtil extends ContainerUtilRt {
    */
   @NotNull
   @Contract(pure=true)
-  public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<E>> collections) {
+  public static <E> List<E> flatten(@NotNull Iterable<? extends Collection<? extends E>> collections) {
     List<E> result = new ArrayList<E>();
-    for (Collection<E> list : collections) {
+    for (Collection<? extends E> list : collections) {
       result.addAll(list);
     }
 
@@ -2376,6 +2408,10 @@ public class ContainerUtil extends ContainerUtilRt {
     });
   }
 
+  /**
+   * @deprecated use {@link List#indexOf(Object)} instead, to be removed in 2018.3
+   */
+  @Deprecated
   @Contract(pure=true)
   public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
     return indexOf(list, new Condition<T>() {

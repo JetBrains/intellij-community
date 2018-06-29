@@ -1,27 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.intellij;
 
-import com.intellij.ide.ui.laf.IconCache;
 import com.intellij.ide.ui.laf.darcula.ui.DarculaSpinnerUI;
-import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.LafIconLookup;
 import org.intellij.lang.annotations.MagicConstant;
-import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.plaf.ComponentUI;
@@ -34,14 +18,14 @@ import java.awt.geom.Area;
 import java.awt.geom.Path2D;
 import java.awt.geom.Rectangle2D;
 
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.maximize;
 import static com.intellij.util.ui.JBUI.*;
 
 public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
   static final String HOVER_PROPERTY = "JSpinner.hover";
 
-  static final int BUTTON_WIDTH = 21;
-  static final int SPINNER_HEIGHT = 24;
-  static final int EDITOR_OFFSET = 5;
+  static final int BUTTON_WIDTH = 20;
+  static final int SPINNER_HEIGHT = 22;
 
   private MouseListener editorMouseListener;
 
@@ -105,7 +89,8 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
         g2.fill(r);
       }
 
-      JBInsets.removeFrom(r, insets(2, 2, 2, BUTTON_WIDTH));
+      JBInsets.removeFrom(r, insets(1, 1, 1, BUTTON_WIDTH));
+      JBInsets.removeFrom(r, c.getInsets());
       g2.setColor(c.isEnabled() ? c.getBackground() : UIManager.getColor("Button.background"));
 
       if (!c.isEnabled()) {
@@ -126,6 +111,9 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
       @Override public void paint(Graphics g) {
         Graphics2D g2 = (Graphics2D)g.create();
         try {
+          g2.setRenderingHint(RenderingHints.KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
+          g2.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_NORMALIZE);
+
           int bw = scale(1);
           ButtonModel bm = getModel();
 
@@ -161,7 +149,7 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
           g2.fill(outerRect);
 
           // paint icon
-          Icon icon = IconCache.getIcon(iconName, false, false, isEnabled());
+          Icon icon = LafIconLookup.getIcon(iconName, false, false, isEnabled());
           icon.paintIcon(this, g2, scale(5), scale(3));
 
           // paint border
@@ -191,7 +179,8 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
       }
 
       @Override public Dimension getPreferredSize() {
-        return new JBDimension(BUTTON_WIDTH, (getDirection() == SwingConstants.NORTH) ? 13 : 12);
+        Insets si = spinner.getInsets();
+        return JBUI.size(BUTTON_WIDTH + si.right, (getDirection() == SwingConstants.NORTH) ? 13 : 12);
       }
     };
 
@@ -229,7 +218,17 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
 
         JComponent editor = spinner.getEditor();
         if (editor != null) {
-          layoutEditor(bounds, editor);
+          int w = spinner.getWidth();
+          int h = spinner.getHeight();
+
+          Insets i = spinner.getInsets();
+          Insets m = editorMargins();
+          int editorHeight = editor.getPreferredSize().height;
+          int editorOffset = (h - i.top - i.bottom - m.top - m.bottom - editorHeight) / 2;
+
+          editor.setBounds(i.left + m.left,
+                           i.top + m.top + editorOffset,
+                           w - (i.left + m.left + scale(BUTTON_WIDTH) + m.right + i.right), editorHeight);
         }
       }
     };
@@ -248,24 +247,17 @@ public class WinIntelliJSpinnerUI extends DarculaSpinnerUI {
     newEditor.setOpaque(false);
   }
 
-  private void layoutEditor(Rectangle pBounds, @NotNull JComponent editor) {
-    Rectangle bounds = editor.getBounds();
-    Insets i = spinner.getInsets();
-
-    int offset = scale(EDITOR_OFFSET) - i.left;
-    editor.setBounds(bounds.x + offset,
-                     bounds.y,
-                     bounds.width - offset,
-                     pBounds.height - (i.top + i.bottom));
-  }
-
   protected Dimension getSizeWithButtons(Insets i, Dimension size) {
-     if (size == null) {
-      Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : emptySize();
-      return new Dimension(i.left + Math.max(scale(EDITOR_OFFSET + 10), editorSize.width) + scale(BUTTON_WIDTH),
-                           Math.max(scale(SPINNER_HEIGHT), i.top + editorSize.height + i.bottom));
-    } else {
-      return size;
-    }
+    int iconWidth = scale(BUTTON_WIDTH) + i.right;
+    int iconHeight = scale(SPINNER_HEIGHT) + i.top + i.bottom;
+
+    Dimension minSize = new Dimension(i.left + MINIMUM_WIDTH.get() + i.right, iconHeight);
+    size = maximize(size, minSize);
+
+    Dimension editorSize = spinner.getEditor() != null ? spinner.getEditor().getPreferredSize() : emptySize();
+    Insets m = editorMargins();
+
+    return new Dimension(Math.max(size.width, i.left + m.left + editorSize.width + m.right + iconWidth),
+                         Math.max(size.height, i.top + m.top + editorSize.height + m.bottom + i.bottom));
   }
 }

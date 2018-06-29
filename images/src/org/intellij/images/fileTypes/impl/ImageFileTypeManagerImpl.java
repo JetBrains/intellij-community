@@ -26,7 +26,6 @@ import icons.ImagesIcons;
 import org.intellij.images.ImagesBundle;
 import org.intellij.images.fileTypes.ImageFileTypeManager;
 import org.intellij.images.vfs.IfsUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 import javax.imageio.ImageIO;
@@ -39,7 +38,7 @@ import java.util.Set;
  */
 final class ImageFileTypeManagerImpl extends ImageFileTypeManager {
 
-  @NonNls private static final String IMAGE_FILE_TYPE_NAME = "Images";
+  private static final String IMAGE_FILE_TYPE_NAME = "Image";
   private static final String IMAGE_FILE_TYPE_DESCRIPTION = ImagesBundle.message("images.filetype.description");
   private static final UserFileType imageFileType;
 

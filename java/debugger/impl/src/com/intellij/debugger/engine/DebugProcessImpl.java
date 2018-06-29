@@ -17,7 +17,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -63,10 +62,8 @@ import com.intellij.ui.classFilter.DebuggerClassFilterProvider;
 import com.intellij.util.Alarm;
 import com.intellij.util.Consumer;
 import com.intellij.util.EventDispatcher;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XSourcePosition;
@@ -135,8 +132,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
 
-  private List<CapturePoint> myAgentInsertPoints = Collections.emptyList();
-
   protected DebugProcessImpl(Project project) {
     myProject = project;
     myDebuggerManagerThread = new DebuggerManagerThreadImpl(myDisposable, myProject);
@@ -160,7 +155,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       }
 
       @Override
-      protected void action() throws Exception {
+      protected void action() {
         myNodeRenderersMap.clear();
         myRenderers.clear();
         try {
@@ -311,7 +306,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         ((ListeningConnector)findConnector(SOCKET_LISTENING_CONNECTOR_NAME)).stopListening(arguments);
       }
     }
-    catch (IOException | IllegalConnectorArgumentsException e) {
+    catch (IOException | IllegalConnectorArgumentsException | IllegalArgumentException e) {
       LOG.debug(e);
     }
     catch (ExecutionException e) {
@@ -367,7 +362,11 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
         //noinspection HardCodedStringLiteral
         stepRequest.putProperty("hint", hint);
       }
-      stepRequest.enable();
+      try {
+        stepRequest.enable();
+      } catch (IllegalThreadStateException e) { // thread is already dead
+        requestManager.deleteEventRequest(stepRequest);
+      }
     }
     catch (ObjectCollectedException ignored) {
 
@@ -397,24 +396,20 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   void deleteStepRequests(@Nullable final ThreadReference stepThread) {
     EventRequestManager requestManager = getVirtualMachineProxy().eventRequestManager();
-    List<StepRequest> stepRequests = requestManager.stepRequests();
-    if (!stepRequests.isEmpty()) {
-      final List<StepRequest> toDelete = new ArrayList<>(stepRequests.size());
-      for (final StepRequest request : stepRequests) {
-        ThreadReference threadReference = request.thread();
-        // [jeka] on attempt to delete a request assigned to a thread with unknown status, a JDWP error occurs
+    for (StepRequest request : new ArrayList<>(requestManager.stepRequests())) { // need a copy here to avoid CME
+      if (stepThread == null || stepThread.equals(request.thread())) {
         try {
-          if (threadReference.status() != ThreadReference.THREAD_STATUS_UNKNOWN && (stepThread == null || stepThread.equals(threadReference))) {
-            toDelete.add(request);
-          }
-        }
-        catch (IllegalThreadStateException e) {
-          LOG.info(e); // undocumented by JDI: may be thrown when querying thread status
+          requestManager.deleteEventRequest(request);
         }
         catch (ObjectCollectedException ignored) {
         }
+        catch (VMDisconnectedException e) {
+          throw e;
+        }
+        catch (Exception e) {
+          LOG.error(e); // report all for now
+        }
       }
-      requestManager.deleteEventRequests(toDelete);
     }
   }
 
@@ -797,7 +792,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     StringBuilder buf = new StringBuilder(message.length());
     int index = 0;
     while (index < message.length()) {
-      buf.append(message.substring(index, Math.min(index + lineLength, message.length()))).append('\n');
+      buf.append(message, index, Math.min(index + lineLength, message.length())).append('\n');
       index += lineLength;
     }
     return buf.toString();
@@ -842,26 +837,21 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     String message;
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
-      if (address != null) {
-        buf.append(" (").append(address).append(")");
-      }
-      buf.append(": ");
-      buf.append(e.getClass().getName()).append(" ");
-      final String localizedMessage = e.getLocalizedMessage();
-      if (!StringUtil.isEmpty(localizedMessage)) {
-        buf.append('"');
-        buf.append(localizedMessage);
-        buf.append('"');
-      }
-      LOG.debug(e);
-      message = buf.toString();
+    final StringBuilder buf = new StringBuilder();
+    buf.append(DebuggerBundle.message("error.cannot.open.debugger.port"));
+    if (address != null) {
+      buf.append(" (").append(address).append(")");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
+    buf.append(": ");
+    buf.append(e.getClass().getName()).append(" ");
+    final String localizedMessage = e.getLocalizedMessage();
+    if (!StringUtil.isEmpty(localizedMessage)) {
+      buf.append('"');
+      buf.append(localizedMessage);
+      buf.append('"');
     }
+    LOG.debug(e);
+    message = buf.toString();
     return message;
   }
 
@@ -1354,23 +1344,18 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
       dims++;
     }
 
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      StringUtil.repeatSymbol(buffer, '[', dims);
-      String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
-      if(primitiveSignature != null) {
-        buffer.append(primitiveSignature);
-      }
-      else {
-        buffer.append('L');
-        buffer.append(className);
-        buffer.append(';');
-      }
-      return buffer.toString();
+    StringBuilder buffer = new StringBuilder();
+    StringUtil.repeatSymbol(buffer, '[', dims);
+    String primitiveSignature = JVMNameUtil.getPrimitiveSignature(className);
+    if(primitiveSignature != null) {
+      buffer.append(primitiveSignature);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    else {
+      buffer.append('L');
+      buffer.append(className);
+      buffer.append(';');
     }
+    return buffer.toString();
   }
 
   @SuppressWarnings({"HardCodedStringLiteral", "SpellCheckingInspection"})
@@ -1460,7 +1445,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    protected void action() throws Exception {
+    protected void action() {
       if (isAttached()) {
         final VirtualMachineProxyImpl virtualMachineProxy = getVirtualMachineProxy();
         if (myIsTerminateTargetVM) {
@@ -1781,7 +1766,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     }
 
     @Override
-    protected void action() throws Exception {
+    protected void action() {
       SuspendManager suspendManager = getSuspendManager();
       if (!suspendManager.isFrozen(myThread)) {
         suspendManager.freezeThread(myThread);
@@ -1849,7 +1834,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
     if (!myIsStopped.get()) {
       getManagerThread().schedule(new DebuggerCommandImpl() {
         @Override
-        protected void action() throws Exception {
+        protected void action() {
           closeProcess(false);
           doReattach();
         }
@@ -2016,7 +2001,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
           final VirtualMachine vm1 = vm;
           afterProcessStarted(() -> getManagerThread().schedule(new DebuggerCommandImpl() {
             @Override
-            protected void action() throws Exception {
+            protected void action() {
               try {
                 commitVM(vm1);
               } catch (VMDisconnectedException e) {
@@ -2170,7 +2155,7 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   //  if (isAttached()) {
   //    getManagerThread().schedule(new DebuggerCommandImpl() {
   //      @Override
-  //      protected void action() throws Exception {
+  //      protected void action() {
   //        // set the flag before enabling/disabling cause it affects if breakpoints will create requests
   //        if (myBreakpointsMuted.getAndSet(muted) != muted) {
   //          final BreakpointManager breakpointManager = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager();
@@ -2214,14 +2199,5 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
-  }
-
-  @NotNull
-  public List<CapturePoint> getAgentInsertPoints() {
-    return myAgentInsertPoints;
-  }
-
-  public void setAgentInsertPoints(@NotNull List<CapturePoint> agentInsertPoints) {
-    myAgentInsertPoints = agentInsertPoints;
   }
 }

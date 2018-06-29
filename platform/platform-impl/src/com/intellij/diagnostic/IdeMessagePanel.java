@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.icons.AllIcons;
@@ -31,6 +17,7 @@ import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.ui.BalloonLayout;
 import com.intellij.ui.BalloonLayoutData;
+import com.intellij.ui.ClickListener;
 import com.intellij.ui.JBColor;
 import com.intellij.util.concurrency.EdtExecutorService;
 import com.intellij.util.ui.UIUtil;
@@ -39,43 +26,41 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.List;
+import java.awt.event.MouseEvent;
 import java.util.concurrent.TimeUnit;
 
 public class IdeMessagePanel extends JPanel implements MessagePoolListener, IconLikeCustomStatusBarWidget {
   public static final String FATAL_ERROR = "FatalError";
-  private final IdeFatalErrorsIcon myIdeFatal;
-  private Balloon myBalloon;
 
-  static final String INTERNAL_ERROR_NOTICE = DiagnosticBundle.message("error.notification.tooltip");
-
-  private IdeErrorsDialog myDialog;
-  private boolean myOpeningInProgress;
+  private final IdeErrorsIcon myIcon;
   private final IdeFrame myFrame;
   private final MessagePool myMessagePool;
-  private boolean myNotificationPopupAlreadyShown = false;
+
+  private Balloon myBalloon;
+  private IdeErrorsDialog myDialog;
+  private boolean myOpeningInProgress;
+  private boolean myNotificationPopupAlreadyShown;
 
   public IdeMessagePanel(@Nullable IdeFrame frame, @NotNull MessagePool messagePool) {
     super(new BorderLayout());
-    myIdeFatal = new IdeFatalErrorsIcon(new ActionListener() {
+
+    myIcon = new IdeErrorsIcon(frame != null);
+    myIcon.setVerticalAlignment(SwingConstants.CENTER);
+    add(myIcon, BorderLayout.CENTER);
+    new ClickListener() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        openFatals(null);
+      public boolean onClick(@NotNull MouseEvent event, int clickCount) {
+        openErrorsDialog(null);
+        return true;
       }
-    }, frame != null);
-
-    myIdeFatal.setVerticalAlignment(SwingConstants.CENTER);
-
-    add(myIdeFatal, BorderLayout.CENTER);
+    }.installOn(myIcon);
 
     myFrame = frame;
 
     myMessagePool = messagePool;
     messagePool.addListener(this);
 
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
 
     setOpaque(false);
   }
@@ -97,172 +82,123 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
   }
 
   @Override
-  public void install(@NotNull StatusBar statusBar) {
-  }
+  public void install(@NotNull StatusBar statusBar) { }
 
   @Override
   public JComponent getComponent() {
     return this;
   }
 
-  public void openFatals(@Nullable final LogMessage message) {
+  /** @deprecated use {@link #openErrorsDialog(LogMessage)} (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("SpellCheckingInspection")
+  public void openFatals(@Nullable LogMessage message) {
+    openErrorsDialog(message);
+  }
+
+  public void openErrorsDialog(@Nullable LogMessage message) {
     if (myDialog != null) return;
     if (myOpeningInProgress) return;
     myOpeningInProgress = true;
 
-    final Runnable task = new Runnable() {
+    new Runnable() {
       @Override
       public void run() {
-        if (isOtherModalWindowActive()) {
-          if (myDialog == null) {
-            EdtExecutorService.getScheduledExecutorInstance().schedule(this, (long)300, TimeUnit.MILLISECONDS);
+        if (!isOtherModalWindowActive()) {
+          try {
+            doOpenErrorsDialog(message);
           }
-          return;
+          finally {
+            myOpeningInProgress = false;
+          }
         }
-
-        try {
-          _openFatals(message);
-        }
-        finally {
-          myOpeningInProgress = false;
+        else if (myDialog == null) {
+          EdtExecutorService.getScheduledExecutorInstance().schedule(this, 300L, TimeUnit.MILLISECONDS);
         }
       }
-    };
-
-    task.run();
+    }.run();
   }
 
-  private void _openFatals(@Nullable final LogMessage message) {
-    myDialog = new IdeErrorsDialog(myMessagePool, message) {
+  private void doOpenErrorsDialog(@Nullable LogMessage message) {
+    Project project = myFrame != null ? myFrame.getProject() : null;
+    myDialog = new IdeErrorsDialog(myMessagePool, project, message) {
       @Override
-      public void doOKAction() {
-        super.doOKAction();
-        disposeDialog(this);
-      }
-
-      @Override
-      public void doCancelAction() {
-        super.doCancelAction();
-        disposeDialog(this);
+      protected void dispose() {
+        super.dispose();
+        myDialog = null;
+        updateIconAndNotify();
       }
 
       @Override
       protected void updateOnSubmit() {
         super.updateOnSubmit();
-        updateState(computeState());
+        updateIcon(myMessagePool.getState());
       }
     };
-
-    myMessagePool.addListener(myDialog);
-    if (!isOtherModalWindowActive()) {
-      if (myBalloon != null) {
-        myBalloon.hide();
-      }
-      myDialog.show();
-    }
-    else {
-      myDialog.close(0);
-      disposeDialog(myDialog);
-    }
+    myDialog.show();
   }
 
-  private void updateState(final IdeFatalErrorsIcon.State state) {
-    myIdeFatal.setState(state);
-    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != IdeFatalErrorsIcon.State.NoErrors));
-  }
-
-  private void disposeDialog(final IdeErrorsDialog listDialog) {
-    myMessagePool.removeListener(listDialog);
-    updateFatalErrorsIcon();
-    myDialog = null;
+  private void updateIcon(MessagePool.State state) {
+    myIcon.setState(state);
+    UIUtil.invokeLaterIfNeeded(() -> setVisible(state != MessagePool.State.NoErrors));
   }
 
   @Override
   public void newEntryAdded() {
-    updateFatalErrorsIcon();
-
+    updateIconAndNotify();
   }
 
   @Override
   public void poolCleared() {
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
   }
 
   @Override
   public void entryWasRead() {
-    updateFatalErrorsIcon();
+    updateIconAndNotify();
   }
 
   private boolean isOtherModalWindowActive() {
-    final Window window = getActiveModalWindow();
-    if (window == null) return false;
-
-    return myDialog == null || myDialog.getWindow() != window;
-
+    Window activeWindow = KeyboardFocusManager.getCurrentKeyboardFocusManager().getActiveWindow();
+    return activeWindow instanceof JDialog &&
+           ((JDialog)activeWindow).isModal() &&
+           (myDialog == null || myDialog.getWindow() != activeWindow);
   }
 
-  private static Window getActiveModalWindow() {
-    final KeyboardFocusManager manager = KeyboardFocusManager.getCurrentKeyboardFocusManager();
-    final Window activeWindow = manager.getActiveWindow();
-    if (activeWindow instanceof JDialog) {
-      if (((JDialog) activeWindow).isModal()) {
-        return activeWindow;
-      }
-    }
+  private void updateIconAndNotify() {
+    MessagePool.State state = myMessagePool.getState();
+    updateIcon(state);
 
-    return null;
-  }
-
-  private IdeFatalErrorsIcon.State computeState() {
-    final List<AbstractMessage> errors = myMessagePool.getFatalErrors(true, false);
-    if (errors.isEmpty()) {
-      return IdeFatalErrorsIcon.State.NoErrors;
-    }
-    else {
-      for (AbstractMessage error : errors) {
-        if (!error.isRead()) {
-          return IdeFatalErrorsIcon.State.UnreadErrors;
-        }
-      }
-      return IdeFatalErrorsIcon.State.ReadErrors;
-    }
-  }
-
-  void updateFatalErrorsIcon() {
-    final IdeFatalErrorsIcon.State state = computeState();
-    updateState(state);
-
-    if (state == IdeFatalErrorsIcon.State.NoErrors) {
+    if (state == MessagePool.State.NoErrors) {
       myNotificationPopupAlreadyShown = false;
+      if (myBalloon != null) {
+        myBalloon.hide();
+      }
     }
-    else if (state == IdeFatalErrorsIcon.State.UnreadErrors && !myNotificationPopupAlreadyShown) {
-      Project project = myFrame == null ? null : myFrame.getProject();
+    else if (state == MessagePool.State.UnreadErrors && !myNotificationPopupAlreadyShown && isActive(myFrame)) {
+      Project project = myFrame.getProject();
       if (project != null) {
-        ApplicationManager.getApplication().invokeLater(() -> {
-          String notificationText = tryGetFromMessages(myMessagePool.getFatalErrors(false, false));
-          showErrorNotification(notificationText, project);
-        }, project.getDisposed());
+        ApplicationManager.getApplication().invokeLater(() -> showErrorNotification(project), project.getDisposed());
         myNotificationPopupAlreadyShown = true;
       }
     }
   }
 
-  private static final String ERROR_TITLE = DiagnosticBundle.message("error.new.notification.title");
-  private static final String ERROR_LINK = DiagnosticBundle.message("error.new.notification.link");
+  private static boolean isActive(IdeFrame frame) {
+    return frame instanceof Window && ((Window)frame).isActive();
+  }
 
-  private void showErrorNotification(@Nullable String notificationText, @NotNull Project project) {
-    Notification notification = new Notification("", AllIcons.Ide.FatalError, notificationText == null ? ERROR_TITLE : "", null,
-                                                 notificationText == null ? "" : notificationText, NotificationType.ERROR, null);
-
-    if (notificationText == null) {
-      notification.addAction(new NotificationAction(ERROR_LINK) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
-          notification.expire();
-          _openFatals(null);
-        }
-      });
-    }
+  private void showErrorNotification(@NotNull Project project) {
+    String title = DiagnosticBundle.message("error.new.notification.title");
+    String linkText = DiagnosticBundle.message("error.new.notification.link");
+    Notification notification = new Notification("", AllIcons.Ide.FatalError, title, null, null, NotificationType.ERROR, null);
+    notification.addAction(new NotificationAction(linkText) {
+      @Override
+      public void actionPerformed(@NotNull AnActionEvent e, @NotNull Notification notification) {
+        notification.expire();
+        openErrorsDialog(null);
+      }
+    });
 
     BalloonLayout layout = myFrame.getBalloonLayout();
     assert layout != null;
@@ -276,30 +212,5 @@ public class IdeMessagePanel extends JPanel implements MessagePoolListener, Icon
     myBalloon = NotificationsManagerImpl.createBalloon(myFrame, notification, false, false, new Ref<>(layoutData), project);
     Disposer.register(myBalloon, () -> myBalloon = null);
     layout.add(myBalloon);
-  }
-
-  private static String tryGetFromMessages(List<AbstractMessage> messages) {
-    String result = null;
-    for (AbstractMessage message : messages) {
-      String s;
-      if (message instanceof LogMessageEx) {
-        s = ((LogMessageEx)message).getNotificationText();
-      }
-      else if (message instanceof GroupedLogMessage) {
-        s = tryGetFromMessages(((GroupedLogMessage)message).getMessages());
-      }
-      else {
-        return null;
-      }
-
-      if (result == null) {
-        result = s;
-      }
-      else if (!result.equals(s)) {
-        // if texts are different, show default
-        return null;
-      }
-    }
-    return result;
   }
 }

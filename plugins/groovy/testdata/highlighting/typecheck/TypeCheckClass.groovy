@@ -10,16 +10,16 @@ class FooClass {
 
   def classCast() {
     (Class) null
-    <error descr="Cannot cast 'char' to 'Class'">(Class) 1 as char</error>
-    <error descr="Cannot cast 'BigDecimal' to 'Class'">(Class) 1 as BigDecimal</error>
-    <error descr="Cannot cast 'BigInteger' to 'Class'">(Class) 1 as BigInteger</error>
-    <error descr="Cannot cast 'double' to 'Class'">(Class) 1 as double</error>
-    <error descr="Cannot cast 'float' to 'Class'">(Class) 1 as float</error>
-    <error descr="Cannot cast 'int' to 'Class'">(Class) 1 as int</error>
-    <error descr="Cannot cast 'short' to 'Class'">(Class) 1 as short</error>
-    <error descr="Cannot cast 'long' to 'Class'">(Class) 1 as long</error>
-    <error descr="Cannot cast 'boolean' to 'Class'">(Class) 1 as boolean</error>
-    <error descr="Cannot cast 'void' to 'Class'">(Class) 1 as void</error>
+    <error descr="Cannot cast 'char' to 'Class'">(Class) (1 as char)</error>
+    <error descr="Cannot cast 'BigDecimal' to 'Class'">(Class) (1 as BigDecimal)</error>
+    <error descr="Cannot cast 'BigInteger' to 'Class'">(Class) (1 as BigInteger)</error>
+    <error descr="Cannot cast 'double' to 'Class'">(Class) (1 as double)</error>
+    <error descr="Cannot cast 'float' to 'Class'">(Class) (1 as float)</error>
+    <error descr="Cannot cast 'int' to 'Class'">(Class) (1 as int)</error>
+    <error descr="Cannot cast 'short' to 'Class'">(Class) (1 as short)</error>
+    <error descr="Cannot cast 'long' to 'Class'">(Class) (1 as long)</error>
+    <error descr="Cannot cast 'boolean' to 'Class'">(Class) (1 as boolean)</error>
+    <error descr="Cannot cast 'void' to 'Class'">(Class) (1 as void)</error>
     <error descr="Cannot cast 'void' to 'Class'">(Class) explicitVoid()</error>
     <error descr="Cannot cast 'Date' to 'Class'">(Class) new Date()</error>
     <error descr="Cannot cast 'String' to 'Class'">(Class) "a"</error>
@@ -28,7 +28,7 @@ class FooClass {
     <error descr="Cannot cast 'Object[]' to 'Class'">(Class) new Object[0]</error>
     <error descr="Cannot cast 'Closure<Integer>' to 'Class'">(Class) { int a, int b -> a + b }</error>
     (Class) o
-    <error descr="Cannot cast 'Matcher' to 'Class'">(Class) "aaa" =~ /aaa/</error>
+    <error descr="Cannot cast 'Matcher' to 'Class'">(Class) ("aaa" =~ /aaa/)</error>
     <error descr="Cannot cast 'List' to 'Class'">(Class) []</error>
     <error descr="Cannot cast 'String' to 'Class'">(Class) "java.util.List"</error>
     (Class) List

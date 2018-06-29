@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.mock;
 
 import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
@@ -17,7 +15,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -31,6 +28,7 @@ import com.intellij.util.ArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.Promise;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
@@ -172,7 +170,7 @@ public class Mock {
 
     @NotNull
     @Override
-    public AsyncResult<EditorWindow> getActiveWindow() {
+    public Promise<EditorWindow> getActiveWindow() {
       throw new RuntimeException("not implemented");
     }
 
@@ -378,13 +376,7 @@ public class Mock {
       return new FileEditor[0];
     }
 
-    @Override
-    public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    }
 
-    @Override
-    public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {
-    }
 
     @Override
     public void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener) {
@@ -447,7 +439,7 @@ public class Mock {
     }
 
     @Override
-    public void rename(Object requestor, @NotNull String newName) throws IOException {
+    public void rename(Object requestor, @NotNull String newName) {
     }
 
     @Override
@@ -488,27 +480,27 @@ public class Mock {
     }
 
     @Override
-    public void delete(Object requestor) throws IOException {
+    public void delete(Object requestor) {
     }
 
     @Override
-    public void move(Object requestor, @NotNull VirtualFile newParent) throws IOException {
+    public void move(Object requestor, @NotNull VirtualFile newParent) {
     }
 
     @Override
-    public InputStream getInputStream() throws IOException {
+    public InputStream getInputStream() {
       return null;
     }
 
     @Override
     @NotNull
-    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) throws IOException {
+    public OutputStream getOutputStream(Object requestor, long newModificationStamp, long newTimeStamp) {
       throw new UnsupportedOperationException();
     }
 
     @Override
     @NotNull
-    public byte[] contentsToByteArray() throws IOException {
+    public byte[] contentsToByteArray() {
       return ArrayUtil.EMPTY_BYTE_ARRAY;
     }
 

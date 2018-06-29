@@ -87,7 +87,7 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
         while (continueSearch) {
           mIndex = addString.indexOf("m", position);
           if (mIndex < 0) {
-            remaining = addString.substring(position, addString.length());
+            remaining = addString.substring(position);
             continueSearch = false;
             continue;
           }
@@ -101,7 +101,7 @@ public class IpnbErrorPanel extends IpnbCodeOutputPanel<IpnbErrorOutputCell> {
           index = addString.indexOf("\u001B", position);
 
           if (index == -1) {
-            substring = addString.substring(position, addString.length());
+            substring = addString.substring(position);
             append(currentColor, substring);
             continueSearch = false;
             continue;

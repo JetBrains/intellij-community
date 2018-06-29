@@ -19,8 +19,10 @@ import com.intellij.openapi.projectRoots.Sdk
 import com.intellij.openapi.ui.TextFieldWithBrowseButton
 import com.intellij.openapi.ui.ValidationInfo
 import com.intellij.openapi.util.text.StringUtil
+import com.jetbrains.python.sdk.add.PyAddSdkDialogFlowAction.OK
 import com.jetbrains.python.sdk.isNotEmptyDirectory
 import icons.PythonIcons
+import java.awt.Component
 import java.io.File
 import javax.swing.Icon
 import javax.swing.JComponent
@@ -29,16 +31,36 @@ import javax.swing.JPanel
 /**
  * @author vlan
  */
-abstract class PyAddSdkPanel : JPanel() {
-  abstract val panelName: String
-  open val icon: Icon = PythonIcons.Python.Python
+abstract class PyAddSdkPanel : JPanel(), PyAddSdkView {
+  override val actions: Map<PyAddSdkDialogFlowAction, Boolean>
+    get() = mapOf(OK.enabled())
+
+  override val component: Component
+    get() = this
+
+  /**
+   * [component] is permanent. [PyAddSdkStateListener.onComponentChanged] won't
+   * be called anyway.
+   */
+  override fun addStateListener(stateListener: PyAddSdkStateListener): Unit = Unit
+
+  override fun previous(): Nothing = throw UnsupportedOperationException()
+
+  override fun next(): Nothing = throw UnsupportedOperationException()
+
+  override fun complete(): Unit = Unit
+
+  override abstract val panelName: String
+  override val icon: Icon = PythonIcons.Python.Python
   open val sdk: Sdk? = null
   open val nameExtensionComponent: JComponent? = null
   open var newProjectPath: String? = null
 
-  open fun getOrCreateSdk(): Sdk? = sdk
+  override fun getOrCreateSdk(): Sdk? = sdk
 
-  open fun validateAll(): List<ValidationInfo> = emptyList()
+  override fun onSelected(): Unit = Unit
+
+  override fun validateAll(): List<ValidationInfo> = emptyList()
 
   open fun addChangeListener(listener: Runnable) {}
 

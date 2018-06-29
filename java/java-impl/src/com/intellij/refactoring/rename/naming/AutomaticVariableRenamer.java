@@ -52,17 +52,17 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
       if (statement != null) {
         for(PsiElement declaredElement: statement.getDeclaredElements()) {
           if (declaredElement instanceof PsiVariable) {
-            checkRenameVariable(element, (PsiVariable) declaredElement, oldClassName);
+            checkRenameVariable(element, (PsiVariable) declaredElement, oldClassName, newClassName);
           }
         }
       }
       else {
         PsiVariable variable = PsiTreeUtil.getParentOfType(element, PsiVariable.class);
         if (variable != null) {
-          checkRenameVariable(element, variable, oldClassName);
+          checkRenameVariable(element, variable, oldClassName, newClassName);
           if (variable instanceof PsiField) {
             for(PsiField field: getFieldsInSameDeclaration((PsiField) variable)) {
-              checkRenameVariable(element, field, oldClassName);
+              checkRenameVariable(element, field, oldClassName, newClassName);
             }
           }
         }
@@ -104,13 +104,18 @@ public class AutomaticVariableRenamer extends AutomaticRenamer {
     return result;
   }
 
-  private void checkRenameVariable(final PsiElement element, final PsiVariable variable, final String oldClassName) {
+  private void checkRenameVariable(final PsiElement element,
+                                   final PsiVariable variable,
+                                   final String oldClassName,
+                                   String newClassName) {
     final PsiTypeElement typeElement = variable.getTypeElement();
     if (typeElement == null) return;
     final PsiJavaCodeReferenceElement ref = typeElement.getInnermostComponentReferenceElement();
     if (ref == null) return;
     final String variableName = variable.getName();
-    if (variableName != null && !StringUtil.containsIgnoreCase(variableName, oldClassName)) return;
+    if (variableName == null) return;
+    if (variableName.equalsIgnoreCase(newClassName)) return;
+    if (!StringUtil.containsIgnoreCase(variableName, oldClassName)) return;
     if (ref.equals(element)) {
       myElements.add(variable);
       if (variable.getType() instanceof PsiArrayType) {

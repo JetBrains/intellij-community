@@ -12,7 +12,6 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
@@ -538,21 +537,18 @@ public class CreateTestDialog extends DialogWrapper {
       }
 
       if (roots.size() == 1) {
-        return (roots.get(0));
+        return roots.get(0);
       }
       else {
         PsiDirectory defaultDir = chooseDefaultDirectory(targetPackage.getDirectories(), roots);
-        return (MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir));
+        return MoveClassesOrPackagesUtil.chooseSourceRoot(targetPackage, roots, defaultDir);
       }
     });
 
     if (selectedRoot == null) return null;
 
-    return new WriteCommandAction<PsiDirectory>(myProject, CodeInsightBundle.message("create.directory.command")) {
-      protected void run(@NotNull Result<PsiDirectory> result) {
-        result.setResult(RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
-      }
-    }.execute().getResultObject();
+    return WriteCommandAction.writeCommandAction(myProject).withName(CodeInsightBundle.message("create.directory.command"))
+                             .compute(() -> RefactoringUtil.createPackageDirectoryInSourceRoot(targetPackage, selectedRoot));
   }
 
   @Nullable

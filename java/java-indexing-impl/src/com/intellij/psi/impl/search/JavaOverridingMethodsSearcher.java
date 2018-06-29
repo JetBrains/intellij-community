@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.search;
 
 import com.intellij.ide.highlighter.JavaFileType;
@@ -45,7 +31,7 @@ import java.util.LinkedHashSet;
  */
 public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, OverridingMethodsSearch.SearchParameters> {
   @Override
-  public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters parameters, @NotNull final Processor<PsiMethod> consumer) {
+  public boolean execute(@NotNull final OverridingMethodsSearch.SearchParameters parameters, @NotNull final Processor<? super PsiMethod> consumer) {
     final PsiMethod method = parameters.getMethod();
 
     Project project = ReadAction.compute(method::getProject);
@@ -86,7 +72,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
   private static boolean processLocalScope(@NotNull LocalSearchScope searchScope,
                                            @NotNull PsiMethod method,
                                            @NotNull Project project,
-                                           @NotNull final Processor<PsiMethod> consumer) {
+                                           @NotNull final Processor<? super PsiMethod> consumer) {
     // optimisation: in case of local scope it's considered cheaper to enumerate all scope files and check if there is an inheritor there,
     // instead of traversing the (potentially huge) class hierarchy and filter out almost everything by scope.
     VirtualFile[] virtualFiles = searchScope.getVirtualFiles();
@@ -101,15 +87,15 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
         public void run() {
           PsiFile psiFile = PsiManager.getInstance(project).findFile(virtualFile);
           if (psiFile != null) {
-            psiFile.accept(new JavaRecursiveElementVisitor() {
+            psiFile.accept(new JavaRecursiveElementWalkingVisitor() {
               @Override
               public void visitClass(PsiClass candidate) {
                 ProgressManager.checkCanceled();
-                if (!success[0]) return;
                 PsiMethod overridingMethod = candidate.isInheritor(methodContainingClass, true)
                                              ? findOverridingMethod(candidate, method, methodContainingClass) : null;
                 if (overridingMethod != null && !consumer.process(overridingMethod)) {
                   success[0] = false;
+                  stopWalking();
                 }
                 else {
                   super.visitClass(candidate);
@@ -170,7 +156,7 @@ public class JavaOverridingMethodsSearcher implements QueryExecutor<PsiMethod, O
 
   @NotNull
   private static MethodSignature getSuperSignature(PsiClass inheritor, @NotNull PsiClass parentClass, PsiMethod method) {
-    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY, null);
+    PsiSubstitutor substitutor = TypeConversionUtil.getMaybeSuperClassSubstitutor(parentClass, inheritor, PsiSubstitutor.EMPTY);
     // if null, we have EJB custom inheritance here and still check overriding
     return method.getSignature(substitutor != null ? substitutor : PsiSubstitutor.EMPTY);
   }

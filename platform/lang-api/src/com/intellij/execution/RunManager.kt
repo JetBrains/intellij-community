@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution
 
 import com.intellij.execution.configurations.ConfigurationFactory
@@ -77,7 +63,7 @@ abstract class RunManager {
    * @return all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("", ReplaceWith("getConfigurationsList(type)"))
-  fun getConfigurations(type: ConfigurationType) = getConfigurationsList(type).toTypedArray()
+  fun getConfigurations(type: ConfigurationType): Array<RunConfiguration> = getConfigurationsList(type).toTypedArray()
 
   /**
    * Returns the list of all configurations of a specified type.
@@ -92,7 +78,7 @@ abstract class RunManager {
    * @return settings for all configurations of the type, or an empty array if no configurations of the type are defined.
    */
   @Deprecated("", ReplaceWith("getConfigurationSettingsList(type)"))
-  fun getConfigurationSettings(type: ConfigurationType) = getConfigurationSettingsList(type).toTypedArray()
+  fun getConfigurationSettings(type: ConfigurationType): Array<RunnerAndConfigurationSettings> = getConfigurationSettingsList(type).toTypedArray()
 
   /**
    * Returns the list of [RunnerAndConfigurationSettings] for all configurations of a specified type.
@@ -107,7 +93,7 @@ abstract class RunManager {
    * Returns the list of all run configurations.
    */
   @Deprecated("", ReplaceWith("allConfigurationsList"))
-  fun getAllConfigurations() = allConfigurationsList.toTypedArray()
+  fun getAllConfigurations(): Array<RunConfiguration> = allConfigurationsList.toTypedArray()
 
   /**
    * Returns the list of all run configurations.
@@ -145,11 +131,11 @@ abstract class RunManager {
    */
   abstract fun createConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings
 
-  fun createRunConfiguration(name: String, factory: ConfigurationFactory) = createConfiguration(name, factory)
+  fun createRunConfiguration(name: String, factory: ConfigurationFactory): RunnerAndConfigurationSettings = createConfiguration(name, factory)
 
   /**
    * Creates a configuration settings object based on a specified [RunConfiguration]. Note that you need to call
-   * [.addConfiguration] if you want the configuration to be persisted in the project.
+   * [addConfiguration] if you want the configuration to be persisted in the project.
    * @param runConfiguration the run configuration
    * @param factory the factory instance.
    */
@@ -172,7 +158,10 @@ abstract class RunManager {
    * @param isShared true if the configuration is marked as shared (stored in the versioned part of the project files), false if it's local
    * *                 (stored in the workspace file).
    */
-  abstract fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean)
+  fun addConfiguration(settings: RunnerAndConfigurationSettings, isShared: Boolean) {
+    settings.isShared = isShared
+    addConfiguration(settings)
+  }
 
   /**
    * Marks the specified run configuration as recently used (the temporary run configurations are deleted in LRU order).
@@ -213,14 +202,18 @@ abstract class RunManager {
 
   abstract fun findConfigurationByName(name: String?): RunnerAndConfigurationSettings?
 
-  fun findConfigurationByTypeAndName(typeId: String, name: String) = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+  abstract fun findSettings(configuration: RunConfiguration): RunnerAndConfigurationSettings?
+
+  fun findConfigurationByTypeAndName(typeId: String, name: String): RunnerAndConfigurationSettings? = allSettings.firstOrNull { typeId == it.type.id && name == it.name }
+
+  fun findConfigurationByTypeAndName(type: ConfigurationType?, name: String): RunnerAndConfigurationSettings? = type?.let { findConfigurationByTypeAndName(it.id, name) }
 
   abstract fun removeConfiguration(settings: RunnerAndConfigurationSettings?)
 
   abstract fun setTemporaryConfiguration(tempConfiguration: RunnerAndConfigurationSettings?)
 }
 
-private val UNNAMED = "Unnamed"
+private const val UNNAMED = "Unnamed"
 
-val IS_RUN_MANAGER_INITIALIZED = Key.create<Boolean>("RunManagerInitialized")
+val IS_RUN_MANAGER_INITIALIZED: Key<Boolean> = Key.create<Boolean>("RunManagerInitialized")
 private  val LOG = Logger.getInstance(RunManager::class.java)

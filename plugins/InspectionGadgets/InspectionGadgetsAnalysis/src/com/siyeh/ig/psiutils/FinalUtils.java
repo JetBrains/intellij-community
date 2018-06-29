@@ -19,6 +19,7 @@ import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.controlFlow.ControlFlowUtil;
+import com.intellij.psi.controlFlow.LocalsOrMyInstanceFieldsControlFlowPolicy;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -41,7 +42,7 @@ public class FinalUtils {
       return false;
     }
     PsiElement scope = variable instanceof PsiField
-                       ? ((PsiField)variable).getContainingClass()
+                       ? PsiUtil.getTopLevelClass(variable)
                        : PsiUtil.getVariableCodeBlock(variable, null);
     if (scope == null) return false;
     Map<PsiElement, Collection<ControlFlowUtil.VariableInfo>> finalVarProblems = new THashMap<>();
@@ -54,6 +55,7 @@ public class FinalUtils {
         .checkVariableInitializedBeforeUsage(ref, variable, uninitializedVarProblems, variable.getContainingFile(), true);
       if (highlightInfo != null) return false;
       if (!PsiUtil.isAccessedForWriting(ref)) return true;
+      if (!LocalsOrMyInstanceFieldsControlFlowPolicy.isLocalOrMyInstanceReference(ref)) return false;
       if (ControlFlowUtil.isVariableAssignedInLoop(ref, variable)) return false;
       if (variable instanceof PsiField) {
         if (PsiUtil.findEnclosingConstructorOrInitializer(ref) == null) return false;

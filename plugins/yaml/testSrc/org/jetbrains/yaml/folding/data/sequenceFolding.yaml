@@ -1,0 +1,8 @@
+<fold text='sequence: <4 items>'>sequence:
+  - <fold text='scalar1'>"scalar1"</fold>
+  - <fold text='scalar2'>scalar2</fold>
+  <fold text='- <2 keys>'>- key1: <fold text='value1'>value1</fold>
+    key2: <fold text='value2'>value2</fold></fold>
+  <fold text='- <3 keys>'>- key3: <fold text='value3'>value3</fold>
+    key4: <fold text='value4'>value4</fold>
+    key5: <fold text='value5'>value5</fold></fold></fold>

@@ -17,6 +17,7 @@ package org.intellij.images.thumbnail.impl;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import org.intellij.images.thumbnail.ThumbnailManager;
 import org.intellij.images.thumbnail.ThumbnailView;
 import org.jetbrains.annotations.NotNull;
@@ -44,7 +45,7 @@ final class ThumbnailManagerImpl extends ThumbnailManager implements Disposable 
 
   public void dispose() {
     if (thumbnailView != null) {
-      thumbnailView.dispose();
+      Disposer.dispose(thumbnailView);
       thumbnailView = null;
     }
   }

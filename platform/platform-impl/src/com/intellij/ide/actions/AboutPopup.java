@@ -9,26 +9,29 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.GraphicsConfig;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.Alarm;
 import com.intellij.util.text.DateFormatUtil;
-import com.intellij.util.ui.JBPoint;
-import com.intellij.util.ui.JBRectangle;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,20 +39,34 @@ import org.jetbrains.annotations.Nullable;
 import javax.accessibility.AccessibleAction;
 import javax.accessibility.AccessibleContext;
 import javax.swing.*;
+import javax.swing.text.html.HTMLDocument;
+import javax.swing.text.html.StyleSheet;
 import java.awt.*;
 import java.awt.datatransfer.StringSelection;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.awt.event.MouseMotionAdapter;
+import java.awt.event.*;
+import java.io.File;
+import java.io.IOException;
 import java.text.SimpleDateFormat;
 import java.util.*;
 import java.util.List;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
+
+import static com.intellij.util.ui.UIUtil.isUnderDarcula;
+import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
+import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
 
 /**
  * @author Konstantin Bulenkov
  */
 public class AboutPopup {
   private static JBPopup ourPopup;
+  private static final Logger LOG = Logger.getInstance(AboutPopup.class);
+  /**
+   * File with third party libraries HTML content,
+   * see the same constant at org.jetbrains.intellij.build.impl.DistributionJARsBuilder#THIRD_PARTY_LIBRARIES_FILE_PATH
+   */
+  private static final String THIRD_PARTY_LIBRARIES_FILE_PATH = "license/third-party-libraries.html";
 
   public static void show(@Nullable Window window, boolean showDebugInfo) {
     ApplicationInfoEx appInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -136,7 +153,7 @@ public class AboutPopup {
       String appName = appInfo.getFullApplicationName();
       String edition = ApplicationNamesInfo.getInstance().getEditionName();
       if (edition != null) appName += " (" + edition + ")";
-      myLines.add(new AboutBoxLine(appName, true, null));
+      myLines.add(new AboutBoxLine(appName, true));
       appendLast();
 
       String buildInfo = IdeBundle.message("about.box.build.number", appInfo.getBuild().asString());
@@ -154,7 +171,7 @@ public class AboutPopup {
 
       LicensingFacade provider = LicensingFacade.getInstance();
       if (provider != null) {
-        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true, null));
+        myLines.add(new AboutBoxLine(provider.getLicensedToMessage(), true));
         appendLast();
         for (String message : provider.getLicenseRestrictionsMessages()) {
           myLines.add(new AboutBoxLine(message));
@@ -175,12 +192,18 @@ public class AboutPopup {
       myLines.add(new AboutBoxLine(IdeBundle.message("about.box.vm", vmVersion, vmVendor)));
       appendLast();
 
-      String thirdParty = appInfo.getThirdPartySoftwareURL();
-      if (thirdParty != null) {
-        myLines.add(new AboutBoxLine(""));
-        myLines.add(new AboutBoxLine(""));
-        myLines.add(new AboutBoxLine("Powered by ").keepWithNext());
-        myLines.add(new AboutBoxLine("open-source software", false, thirdParty));
+      myLines.add(new AboutBoxLine(""));
+      myLines.add(new AboutBoxLine(""));
+      myLines.add(new AboutBoxLine(IdeBundle.message("about.box.powered.by") + " ").keepWithNext());
+
+      final String thirdPartyLibraries = loadThirdPartyLibraries();
+      if (thirdPartyLibraries != null) {
+        myLines.add(new AboutBoxLine(IdeBundle.message("about.box.open.source.software"),
+                                     () -> showOpenSoftwareSources(thirdPartyLibraries)));
+      }
+      else {
+        // When compiled from sources, third-party-libraries.html file isn't generated, so window can't be shown
+        myLines.add(new AboutBoxLine(IdeBundle.message("about.box.open.source.software")));
       }
 
       addMouseListener(new MouseAdapter() {
@@ -188,7 +211,7 @@ public class AboutPopup {
         public void mouseClicked(MouseEvent event) {
           if (myActiveLink != null) {
             event.consume();
-            BrowserUtil.browse(myActiveLink.myUrl);
+            myActiveLink.actionPerformed(new ActionEvent(event.getSource(), event.getID(), event.paramString()));
           }
 
           if (getCopyIconArea().contains(event.getPoint())) {
@@ -268,6 +291,20 @@ public class AboutPopup {
       });
     }
 
+    @Nullable
+    private static String loadThirdPartyLibraries() {
+      final File thirdPartyLibrariesFile = new File(PathManager.getHomePath(), THIRD_PARTY_LIBRARIES_FILE_PATH);
+      if (thirdPartyLibrariesFile.isFile()) {
+        try {
+          return FileUtil.loadFile(thirdPartyLibrariesFile);
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      }
+      return null;
+    }
+
     private Rectangle getCopyIconArea() {
       return new Rectangle(getCopyIconCoord(), JBUI.size(16));
     }
@@ -310,7 +347,7 @@ public class AboutPopup {
       ApplicationInfo appInfo = ApplicationInfo.getInstance();
       Rectangle aboutLogoRect = appInfo.getAboutLogoRect();
       if (aboutLogoRect != null) {
-        myLinks.add(new Link(aboutLogoRect, appInfo.getCompanyURL()));
+        myLinks.add(new Link(new JBRectangle(aboutLogoRect), appInfo.getCompanyURL()));
       }
 
       if (appInfo instanceof ApplicationInfoImpl) {
@@ -349,11 +386,11 @@ public class AboutPopup {
     @NotNull
     protected String getCopyrightText() {
       ApplicationInfo applicationInfo = ApplicationInfo.getInstance();
-      return "Copyright \u00A9 " + 
-             ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() + 
-             "\u2013" + 
-             Calendar.getInstance(Locale.US).get(Calendar.YEAR) + 
-             " " + 
+      return "Copyright \u00A9 " +
+             ((ApplicationInfoImpl)applicationInfo).getCopyrightStart() +
+             "\u2013" +
+             Calendar.getInstance(Locale.US).get(Calendar.YEAR) +
+             " " +
              applicationInfo.getCompanyName();
     }
 
@@ -414,10 +451,11 @@ public class AboutPopup {
         for (AboutBoxLine line : lines) {
           final String s = line.getText();
           setFont(line.isBold() ? myBoldFont : myFont);
-          if (line.getUrl() != null) {
+          if (line.isRunnable()) {
             g2.setColor(myLinkColor);
             FontMetrics metrics = g2.getFontMetrics(font);
-            myLinks.add(new Link(new Rectangle(xBase + x, yBase + y - fontAscent, metrics.stringWidth(s + " "), fontHeight), line.getUrl()));
+            final Rectangle myRectangle = new Rectangle(xBase + x, yBase + y - fontAscent, metrics.stringWidth(s + " "), fontHeight);
+            myLinks.add(new Link(myRectangle, line));
           }
           else {
             g2.setColor(appInfo.getAboutForeground());
@@ -467,7 +505,6 @@ public class AboutPopup {
             fontmetrics = fm;
           }
         }
-
       }
 
       private void lineFeed(int indent, final String s) throws OverflowException {
@@ -492,22 +529,26 @@ public class AboutPopup {
       }
     }
 
-    private static class AboutBoxLine {
+    private static class AboutBoxLine implements ActionListener {
       private final String myText;
       private final boolean myBold;
-      private final String myUrl;
       private boolean myKeepWithNext;
+      private final Runnable myRunnable;
 
-      public AboutBoxLine(final String text, final boolean bold, final String url) {
+      public AboutBoxLine(final String text, final boolean bold) {
         myText = text;
         myBold = bold;
-        myUrl = url;
+        myRunnable = null;
       }
 
       public AboutBoxLine(final String text) {
+        this(text, false);
+      }
+
+      public AboutBoxLine(final String text, @NotNull Runnable runnable) {
         myText = text;
         myBold = false;
-        myUrl = null;
+        myRunnable = runnable;
       }
 
       public String getText() {
@@ -518,8 +559,8 @@ public class AboutPopup {
         return myBold;
       }
 
-      public String getUrl() {
-        return myUrl;
+      public boolean isRunnable() {
+        return myRunnable != null;
       }
 
       public boolean isKeepWithNext() {
@@ -530,15 +571,30 @@ public class AboutPopup {
         myKeepWithNext = true;
         return this;
       }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        if (myRunnable != null) myRunnable.run();
+      }
     }
 
-    private static class Link {
+    private static class Link implements ActionListener {
       private final Rectangle myRectangle;
-      private final String myUrl;
+      private final ActionListener myAction;
+
+      private Link(Rectangle rectangle, ActionListener action) {
+        myRectangle = rectangle;
+        myAction = action;
+      }
 
       private Link(Rectangle rectangle, String url) {
         myRectangle = rectangle;
-        myUrl = url;
+        myAction = e -> BrowserUtil.browse(url);
+      }
+
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myAction.actionPerformed(e);
       }
     }
 
@@ -625,5 +681,70 @@ public class AboutPopup {
         return false;
       }
     }
+  }
+
+  public static void showOpenSoftwareSources(@NotNull String htmlText) {
+    DialogWrapper dialog = new DialogWrapper(true) {
+      {
+        init();
+        setAutoAdjustable(false);
+        setOKButtonText("Close");
+      }
+
+      @Override
+      protected JComponent createCenterPanel() {
+        JPanel centerPanel = new JPanel(new BorderLayout(JBUI.scale(5), JBUI.scale(5)));
+
+        JEditorPane viewer = SwingHelper.createHtmlViewer(true, null, JBColor.WHITE, JBColor.BLACK);
+        viewer.setFocusable(true);
+        viewer.addHyperlinkListener(new BrowserHyperlinkListener());
+
+        String resultHtmlText = getScaledHtmlText();
+        if (isUnderDarcula()) {
+          resultHtmlText = resultHtmlText.replaceAll("779dbd", "5676a0");
+        }
+        viewer.setText(resultHtmlText);
+
+        StyleSheet styleSheet = ((HTMLDocument)viewer.getDocument()).getStyleSheet();
+        styleSheet.addRule("body {font-family: \"Segoe UI\", Tahoma, sans-serif;}");
+        styleSheet.addRule("body {margin-top:0;padding-top:0;}");
+        styleSheet.addRule("body {font-size:" + JBUI.scaleFontSize(14) + "pt;}");
+
+        viewer.setCaretPosition(0);
+        viewer.setBorder(JBUI.Borders.empty(0, 5, 5, 5));
+
+        JBScrollPane scrollPane = new JBScrollPane(viewer, VERTICAL_SCROLLBAR_AS_NEEDED, HORIZONTAL_SCROLLBAR_NEVER);
+
+        centerPanel.add(scrollPane, BorderLayout.CENTER);
+        return centerPanel;
+      }
+
+      @Override
+      @NotNull
+      protected Action[] createActions() {
+        return new Action[]{getOKAction()};
+      }
+
+      @NotNull
+      private String getScaledHtmlText() {
+        final Pattern pattern = Pattern.compile("(\\d+)px");
+        final Matcher matcher = pattern.matcher(htmlText);
+
+        StringBuffer sb = new StringBuffer();
+        while (matcher.find()) {
+          matcher.appendReplacement(sb, JBUI.scale(Integer.parseInt(matcher.group(1))) + "px");
+        }
+        matcher.appendTail(sb);
+
+        return sb.toString();
+      }
+    };
+
+    ourPopup.cancel();
+    dialog.setTitle(String.format("Third-Party Software Used by %s %s",
+                                  ApplicationNamesInfo.getInstance().getFullProductName(),
+                                  ApplicationInfo.getInstance().getFullVersion()));
+    dialog.setSize(JBUI.scale(750), JBUI.scale(650));
+    dialog.show();
   }
 }

@@ -1,11 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.actionSystem.impl;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.HelpTooltip;
 import com.intellij.ide.impl.DataManagerImpl;
-import com.intellij.internal.statistic.customUsageCollectors.ui.ToolbarClicksCollector;
+import com.intellij.ide.ui.UISettings;
+import com.intellij.internal.statistic.collectors.fus.ui.persistence.ToolbarClicksCollector;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionButtonLook;
@@ -18,23 +19,23 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.ex.KeymapManagerEx;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.ui.ColorUtil;
-import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.awt.RelativeRectangle;
 import com.intellij.ui.paint.LinePainter2D;
 import com.intellij.ui.switcher.QuickActionProvider;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -115,6 +116,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private final DefaultActionGroup mySecondaryActions = new DefaultActionGroup();
   private PopupStateModifier mySecondaryButtonPopupStateModifier = null;
   private boolean myForceMinimumSize = false;
+  private boolean myForceShowFirstComponent = false;
+  private boolean mySkipWindowAdjustments = false;
   private boolean myMinimalMode;
   private boolean myForceUseMacEnhancements;
 
@@ -130,6 +133,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   private JComponent myTargetComponent;
   private boolean myReservePlaceAutoPopupIcon = true;
   private boolean myAddSeparatorFirst;
+  private boolean myShowSeparatorTitles = false;
 
   public ActionToolbarImpl(String place,
                            @NotNull final ActionGroup actionGroup,
@@ -175,7 +179,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     setLayout(new BorderLayout());
     setOrientation(horizontal ? SwingConstants.HORIZONTAL : SwingConstants.VERTICAL);
 
-    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.SecondaryGroup);
+    mySecondaryActions.getTemplatePresentation().setIcon(AllIcons.General.GearPlain);
     mySecondaryActions.setPopup(true);
 
     myUpdater.updateActions(updateActionsNow, false);
@@ -251,6 +255,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     return JBSwingUtilities.runGlobalCGTransform(this, super.getComponentGraphics(graphics));
   }
 
+  @Nullable
+  public String getGroupId() {
+    return myActionManager.getId(myActionGroup);
+  }
+
   @Override
   protected void paintComponent(final Graphics g) {
     if (doMacEnhancementsForMainToolbar()) {
@@ -282,7 +291,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     final List<AnAction> rightAligned = new ArrayList<>();
     boolean isLastElementSeparator = false;
     if (myAddSeparatorFirst) {
-      add(new MySeparator());
+      add(new MySeparator(null));
       isLastElementSeparator = true;
     }
     for (int i = 0; i < actions.size(); i++) {
@@ -302,7 +311,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       if (action instanceof Separator) {
         if (isLastElementSeparator) continue;
         if (i > 0 && i < actions.size() - 1) {
-          add(new MySeparator());
+          add(new MySeparator(myShowSeparatorTitles ? ((Separator) action).getText() : null));
           isLastElementSeparator = true;
           continue;
         }
@@ -353,13 +362,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
   private JComponent getCustomComponent(AnAction action) {
     Presentation presentation = myPresentationFactory.getPresentation(action);
-    JComponent customComponent = ObjectUtils.tryCast(presentation.getClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY), JComponent.class);
+    JComponent customComponent = presentation.getClientProperty(CustomComponentAction.COMPONENT_KEY);
     if (customComponent == null) {
       customComponent = ((CustomComponentAction)action).createCustomComponent(presentation);
-      presentation.putClientProperty(CustomComponentAction.CUSTOM_COMPONENT_PROPERTY, customComponent);
-    }
-    if (customComponent instanceof JCheckBox) {
-      customComponent.setBorder(JBUI.Borders.emptyLeft(9));
+      presentation.putClientProperty(CustomComponentAction.COMPONENT_KEY, customComponent);
+      UIUtil.putClientProperty(customComponent, CustomComponentAction.ACTION_KEY, action);
     }
     tweakActionComponentUI(customComponent);
 
@@ -422,6 +429,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       @Override
       protected HelpTooltip.Alignment getTooltipLocation() {
         return tooltipLocation();
+      }
+
+      @Override
+      protected Icon getFallbackIcon(boolean enabled) {
+        return enabled ? AllIcons.Toolbar.Unknown : IconLoader.getDisabledIcon(AllIcons.Toolbar.Unknown);
       }
     };
     actionButton.setLook(look);
@@ -702,7 +714,13 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more than 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+        int maxRowWidth = Math.max(widthToFit, componentCount * maxWidth / 3);
+        for (int i = 0; i < componentCount; i++) {
+          final Component component = getComponent(i);
+          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+            maxRowWidth -= getChildPreferredSize(i).width;
+          }
+        }
         for (int i = 0; i < componentCount; i++) {
           if (xOffset + maxWidth > maxRowWidth) { // place component at new row
             xOffset = 0;
@@ -752,7 +770,14 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
         int xOffset = 0;
         int yOffset = 0;
         // Calculate max size of a row. It's not possible to make more then 3 row toolbar
-        final int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
+        int maxRowWidth = Math.max(widthToFit, componentCount * myMinimumButtonSize.width() / 3);
+        for (int i = 0; i < componentCount; i++) {
+          final Component component = getComponent(i);
+          if (component instanceof JComponent && ((JComponent)component).getClientProperty(RIGHT_ALIGN_KEY) == Boolean.TRUE) {
+            maxRowWidth -= getChildPreferredSize(i).width;
+          }
+        }
+
         for (int i = 0; i < componentCount; i++) {
           final Dimension d = dims[i];
           if (xOffset + d.width > maxRowWidth) { // place component at new row
@@ -843,8 +868,22 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public Dimension getPreferredSize() {
     final ArrayList<Rectangle> bounds = new ArrayList<>();
-    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);
+    calculateBounds(new Dimension(Integer.MAX_VALUE, Integer.MAX_VALUE), bounds);//it doesn't take into account wrapping
     if (bounds.isEmpty()) return JBUI.emptySize();
+    int forcedHeight = 0;
+    if (getWidth() > 0 && getLayoutPolicy() == ActionToolbar.WRAP_LAYOUT_POLICY && myOrientation == SwingConstants.HORIZONTAL) {
+      final ArrayList<Rectangle> limitedBounds = new ArrayList<>();
+      calculateBounds(new Dimension(getWidth(), Integer.MAX_VALUE), limitedBounds);
+      Rectangle union = null;
+      for (Rectangle bound : limitedBounds) {
+        if (union == null) {
+          union = bound;
+        } else {
+          union = union.union(bound);
+        }
+      }
+      forcedHeight = union != null ? union.height : 0;
+    }
     int xLeft = Integer.MAX_VALUE;
     int yTop = Integer.MAX_VALUE;
     int xRight = Integer.MIN_VALUE;
@@ -857,7 +896,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       xRight = Math.max(xRight, each.x + each.width);
       yBottom = Math.max(yBottom, each.y + each.height);
     }
-    final Dimension dimension = new Dimension(xRight - xLeft, yBottom - yTop);
+    final Dimension dimension = new Dimension(xRight - xLeft, Math.max(yBottom - yTop, forcedHeight));
 
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY && myReservePlaceAutoPopupIcon && !isInsideNavBar()) {
       if (myOrientation == SwingConstants.HORIZONTAL) {
@@ -876,6 +915,24 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myForceMinimumSize = force;
   }
 
+  /**
+   *  By default minimum size is to show chevron only.
+   *  If this option is <code>true</code> toolbar shows at least one (the first) component plus chevron (if need)
+   */
+  public void setForceShowFirstComponent(boolean showFirstComponent) {
+    myForceShowFirstComponent = showFirstComponent;
+  }
+
+  /**
+   * This option makes sense when you use a toolbar inside JBPopup
+   * When some 'actions' are hidden under the chevron the popup with extra components would be shown/hidden
+   * with size adjustments for the main popup (this is default behavior).
+   * If this option is <code>true</code> size adjustments would be omitted
+   */
+  public void setSkipWindowAdjustments(boolean skipWindowAdjustments) {
+    mySkipWindowAdjustments = skipWindowAdjustments;
+  }
+
   @Override
   public Dimension getMinimumSize() {
     if (myForceMinimumSize) {
@@ -883,6 +940,18 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     }
     if (myLayoutPolicy == AUTO_LAYOUT_POLICY) {
       final Insets i = getInsets();
+      if (myForceShowFirstComponent && getComponentCount() > 0) {
+        Component c = getComponent(0);
+        Dimension firstSize = c.getPreferredSize();
+        if (myOrientation == SwingConstants.HORIZONTAL) {
+          return new Dimension(firstSize.width + AllIcons.Ide.Link.getIconWidth() + i.left + i.right,
+                               Math.max(firstSize.height, myMinimumButtonSize.height()) + i.top + i.bottom);
+        }
+        else {
+          return new Dimension(Math.max(firstSize.width, AllIcons.Ide.Link.getIconWidth()) + i.left + i.right,
+                               firstSize.height + myMinimumButtonSize.height() + i.top + i.bottom);
+        }
+      }
       return new Dimension(AllIcons.Ide.Link.getIconWidth() + i.left + i.right, myMinimumButtonSize.height() + i.top + i.bottom);
     }
     else {
@@ -917,48 +986,81 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   }
 
   private final class MySeparator extends JComponent {
-    private final JBDimension mySize;
+    private final String myText;
 
-    public MySeparator() {
-      if (myOrientation == SwingConstants.HORIZONTAL) {
-        mySize = JBUI.size(6, 24);
-      }
-      else {
-        mySize = JBUI.size(24, 6);
-      }
+    private MySeparator(String text) {
+      myText = text;
+      setFont(JBUI.Fonts.toolbarSmallComboBoxFont());
     }
 
     @Override
     public Dimension getPreferredSize() {
-      return mySize.size();
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
+      int width = gap * 2 + center;
+      int height = JBUI.scale(24);
+
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        if (myText != null) {
+          FontMetrics fontMetrics = getFontMetrics(getFont());
+
+          int textWidth = getTextWidth(fontMetrics, myText, getGraphics());
+          return new JBDimension(width + gap * 2 + textWidth,
+                                 Math.max(fontMetrics.getHeight(), height), true);
+        }
+        else {
+          return new JBDimension(width, height, true);
+        }
+      }
+      else {
+        //noinspection SuspiciousNameCombination
+        return new JBDimension(height, width, true);
+      }
     }
 
     @Override
     protected void paintComponent(final Graphics g) {
-      final Insets i = getInsets();
-      int gap = JBUI.scale(2);
-      int offset = JBUI.scale(3);
+      if (getParent() == null) return;
 
-      if (UIUtil.isUnderAquaBasedLookAndFeel() || UIUtil.isUnderDarcula()) {
-        if (getParent() != null) {
-          final JBColor col = new JBColor(Gray._128, Gray._111);
-          final Graphics2D g2 = (Graphics2D)g;
-          if (myOrientation == SwingConstants.HORIZONTAL) {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.top + gap, getParent().getSize().height - gap - i.top - i.bottom, offset, col, false);
-          } else {
-            UIUtil.drawDoubleSpaceDottedLine(g2, i.left + gap, getParent().getSize().width - gap - i.left - i.right, offset, col, true);
-          }
+      int gap = JBUI.scale(2);
+      int center = JBUI.scale(3);
+      int offset;
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        offset = ActionToolbarImpl.this.getHeight() - getMaxButtonHeight() - 1;
+      } else {
+        offset = ActionToolbarImpl.this.getWidth() - getMaxButtonWidth() - 1;
+      }
+
+      g.setColor(UIUtil.getSeparatorColor());
+      if (myOrientation == SwingConstants.HORIZONTAL) {
+        int y2 = ActionToolbarImpl.this.getHeight() - gap * 2 - offset;
+        LinePainter2D.paint((Graphics2D)g, center, gap, center, y2);
+
+        if (myText != null) {
+          FontMetrics fontMetrics = getFontMetrics(getFont());
+          int top = (getHeight() - fontMetrics.getHeight()) / 2;
+          UISettings.setupAntialiasing(g);
+          g.setColor(JBColor.foreground());
+          g.drawString(myText, gap * 2 + center + gap, top + fontMetrics.getAscent());
         }
       }
       else {
-        g.setColor(UIUtil.getSeparatorColor());
-        if (getParent() != null) {
-          if (myOrientation == SwingConstants.HORIZONTAL) {
-            LinePainter2D.paint((Graphics2D)g, offset, gap, offset, getParent().getSize().height - gap);
-          }
-          else {
-            LinePainter2D.paint((Graphics2D)g, gap, offset, getParent().getSize().width - gap, offset);
-          }
+        LinePainter2D.paint((Graphics2D)g, gap, center, ActionToolbarImpl.this.getWidth() - gap * 2 - offset, center);
+      }
+    }
+
+    private int getTextWidth(@NotNull FontMetrics fontMetrics, @NotNull String text, @Nullable Graphics graphics) {
+      if (graphics == null) {
+        return fontMetrics.stringWidth(text);
+      }
+      else {
+        Graphics g = graphics.create();
+        try {
+          UISettings.setupAntialiasing(g);
+          return fontMetrics.getStringBounds(text, g).getBounds().width;
+        }
+        finally {
+          g.dispose();
         }
       }
     }
@@ -994,6 +1096,10 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
     myOrientation = orientation;
   }
 
+  int getOrientation() {
+    return myOrientation;
+  }
+
   @Override
   public void updateActionsImmediately() {
     ApplicationManager.getApplication().assertIsDispatchThread();
@@ -1020,7 +1126,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
 
       Dimension newSize = getPreferredSize();
 
-      ((WindowManagerEx)WindowManager.getInstance()).adjustContainerWindow(this, oldSize, newSize);
+      if (!mySkipWindowAdjustments) {
+        ((WindowManagerEx)WindowManager.getInstance()).adjustContainerWindow(this, oldSize, newSize);
+      }
 
       if (shouldRebuildUI) {
         revalidate();
@@ -1073,6 +1181,11 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
   @Override
   public DataContext getToolbarDataContext() {
     return getDataContext();
+  }
+
+  @Override
+  public void setShowSeparatorTitles(boolean showSeparatorTitles) {
+    myShowSeparatorTitles = showSeparatorTitles;
   }
 
   protected DataContext getDataContext() {
@@ -1252,6 +1365,9 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       super(place, actionGroup, horizontal, false, dataManager, actionManager, keymapManager, true);
       myActionManager.addAnActionListener(this);
       myParent = parent;
+      if (myParent != null) {
+        setBorder(myParent.getBorder());
+      }
     }
 
     @Override
@@ -1332,13 +1448,8 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar, QuickAct
       setBorder(JBUI.Borders.empty());
       setOpaque(false);
     } else {
-      if (UIUtil.isUnderWin10LookAndFeel()) {
-        setBorder(JBUI.Borders.empty(0));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 22) : JBUI.size(25, 22));
-      } else {
-        setBorder(JBUI.Borders.empty(3));
-        setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
-      }
+      setBorder(JBUI.Borders.empty(2));
+      setMinimumButtonSize(myDecorateButtons ? JBUI.size(30, 20) : DEFAULT_MINIMUM_BUTTON_SIZE);
       setOpaque(true);
       setLayoutPolicy(AUTO_LAYOUT_POLICY);
     }

@@ -38,9 +38,6 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
-import static com.intellij.psi.CommonClassNames.JAVA_LANG_STRING;
-import static com.intellij.psi.SyntaxTraverser.psiTraverser;
-
 public final class PsiUtil extends PsiUtilCore {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.util.PsiUtil");
 
@@ -84,9 +81,31 @@ public final class PsiUtil extends PsiUtilCore {
   public static boolean isAccessible(@NotNull PsiMember member, @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
     return isAccessible(place.getProject(), member, place, accessObjectClass);
   }
+
+  /**
+   * Checks that a *resolved* to {@code member} reference at {@code place} is accessible: it's visible by visibility rules as well as 
+   * by module (java) rules. 
+   * 
+   * <p>NOTE:</p>
+   * If there is no module (IDEA's) dependency from module with {@code place} on a module with {@code member}, 
+   * then reference won't be resolved and this method will return {@code true}.
+   * 
+   * Please use {@link #isMemberAccessibleAt(PsiMember, PsiElement)} to catch these cases as well
+   */
   public static boolean isAccessible(@NotNull Project project, @NotNull PsiMember member,
                                      @NotNull PsiElement place, @Nullable PsiClass accessObjectClass) {
     return JavaPsiFacade.getInstance(project).getResolveHelper().isAccessible(member, place, accessObjectClass);
+  }
+
+  /**
+   * Checks that reference on {@code member} inserted at {@code place} will be resolved and accessible
+   */
+  public static boolean isMemberAccessibleAt(@NotNull PsiMember member, @NotNull PsiElement place) {
+    VirtualFile virtualFile = PsiUtilCore.getVirtualFile(member);
+    if (virtualFile != null && !place.getResolveScope().contains(virtualFile)) {
+      return false;
+    }
+    return isAccessible(member, place, null);
   }
 
   @NotNull
@@ -192,7 +211,11 @@ public final class PsiUtil extends PsiUtilCore {
       ref = factory.createReferenceElementByFQClassName(exceptionName, method.getResolveScope());
     }
     else {
-      PsiClassType type = factory.createType(exceptionClass);
+      PsiClass superClass = exceptionClass.getSuperClass();
+      while (superClass != null && isLocalOrAnonymousClass(superClass)) {
+        superClass = superClass.getSuperClass();
+      }
+      PsiClassType type = factory.createType(superClass != null ? superClass : exceptionClass);
       ref = factory.createReferenceElementByType(type);
     }
     throwsList.add(ref);
@@ -374,7 +397,7 @@ public final class PsiUtil extends PsiUtilCore {
       }
       return true;
     }
-    else if (element instanceof PsiExpressionStatement) {
+    if (element instanceof PsiExpressionStatement) {
       return isStatement(((PsiExpressionStatement) element).getExpression());
     }
     if (element instanceof PsiDeclarationStatement) {
@@ -488,13 +511,10 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
 
+  @FunctionalInterface
   public interface ApplicabilityChecker {
-    ApplicabilityChecker ASSIGNABILITY_CHECKER = new ApplicabilityChecker() {
-      @Override
-      public boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId) {
-        return TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
-      }
-    };
+    ApplicabilityChecker ASSIGNABILITY_CHECKER =
+      (left, right, allowUncheckedConversion, argId) -> TypeConversionUtil.isAssignable(left, right, allowUncheckedConversion);
 
     boolean isApplicable(PsiType left, PsiType right, boolean allowUncheckedConversion, int argId);
   }
@@ -645,6 +665,7 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   /** @deprecated use more generic {@link #isCompileTimeConstant(PsiVariable)} instead */
+  @Deprecated
   public static boolean isCompileTimeConstant(@NotNull final PsiField field) {
     return isCompileTimeConstant((PsiVariable)field);
   }
@@ -654,7 +675,7 @@ public final class PsiUtil extends PsiUtilCore {
    */
   public static boolean isCompileTimeConstant(@NotNull final PsiVariable field) {
     return field.hasModifierProperty(PsiModifier.FINAL)
-           && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText(JAVA_LANG_STRING))
+           && (TypeConversionUtil.isPrimitiveAndNotNull(field.getType()) || field.getType().equalsToText(CommonClassNames.JAVA_LANG_STRING))
            && field.hasInitializer()
            && isConstantExpression(field.getInitializer());
   }
@@ -703,7 +724,7 @@ public final class PsiUtil extends PsiUtilCore {
 
   @Nullable
   public static PsiClass getTopLevelClass(@NotNull PsiElement element) {
-    PsiClass topClass = JBIterable.generate(element, PsiElement::getParent).filter(PsiClass.class).last();
+    PsiClass topClass = JBIterable.generate(element, PsiElement::getParent).takeWhile(e -> !(e instanceof PsiFile)).filter(PsiClass.class).last();
     return topClass instanceof PsiTypeParameter ? null : topClass;
   }
 
@@ -749,7 +770,7 @@ public final class PsiUtil extends PsiUtilCore {
     if (element instanceof PsiVariable) {
       return ((PsiVariable)element).getType();
     }
-    else if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
+    if (element instanceof PsiMethod) return ((PsiMethod)element).getReturnType();
     return null;
   }
 
@@ -803,7 +824,7 @@ public final class PsiUtil extends PsiUtilCore {
    * Opens top level captured wildcards and remap them according to the context.
    * The only valid purpose: allow to speculate on non-physical expressions about types, e.g. to detect redundant casts with 'wildcards'
    */
-  public static PsiType recaptureWildcards(PsiType type, PsiElement context) {
+  static PsiType recaptureWildcards(PsiType type, PsiElement context) {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass aClass = resolveResult.getElement();
@@ -926,6 +947,7 @@ public final class PsiUtil extends PsiUtilCore {
   /**
    * @deprecated Use {@link #canBeOverridden(PsiMethod)} instead
    */
+  @Deprecated
   public static boolean canBeOverriden(@NotNull PsiMethod method) {
     return canBeOverridden(method);
   }
@@ -984,6 +1006,14 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isLanguageLevel9OrHigher(@NotNull final PsiElement element) {
     return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_1_9);
+  }
+
+  public static boolean isLanguageLevel10OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_10);
+  }
+
+  public static boolean isLanguageLevel11OrHigher(@NotNull final PsiElement element) {
+    return getLanguageLevel(element).isAtLeast(LanguageLevel.JDK_11);
   }
 
   @NotNull
@@ -1175,11 +1205,11 @@ public final class PsiUtil extends PsiUtilCore {
   }
 
   @Nullable
-  public static PsiExpression skipParenthesizedExprDown(PsiExpression initializer) {
-    while (initializer instanceof PsiParenthesizedExpression) {
-      initializer = ((PsiParenthesizedExpression)initializer).getExpression();
+  public static PsiExpression skipParenthesizedExprDown(PsiExpression expression) {
+    while (expression instanceof PsiParenthesizedExpression) {
+      expression = ((PsiParenthesizedExpression)expression).getExpression();
     }
-    return initializer;
+    return expression;
   }
 
   public static PsiElement skipParenthesizedExprUp(PsiElement parent) {
@@ -1242,29 +1272,19 @@ public final class PsiUtil extends PsiUtilCore {
 
   public static boolean isCondition(PsiElement expr, PsiElement parent) {
     if (parent instanceof PsiIfStatement) {
-      if (checkSameExpression(expr, ((PsiIfStatement)parent).getCondition())) {
-        return true;
-      }
+      return checkSameExpression(expr, ((PsiIfStatement)parent).getCondition());
     }
-    else if (parent instanceof PsiWhileStatement) {
-      if (checkSameExpression(expr, ((PsiWhileStatement)parent).getCondition())) {
-        return true;
-      }
+    if (parent instanceof PsiWhileStatement) {
+      return checkSameExpression(expr, ((PsiWhileStatement)parent).getCondition());
     }
-    else if (parent instanceof PsiForStatement) {
-      if (checkSameExpression(expr, ((PsiForStatement)parent).getCondition())) {
-        return true;
-      }
+    if (parent instanceof PsiForStatement) {
+      return checkSameExpression(expr, ((PsiForStatement)parent).getCondition());
     }
-    else if (parent instanceof PsiDoWhileStatement) {
-      if (checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition())) {
-        return true;
-      }
+    if (parent instanceof PsiDoWhileStatement) {
+      return checkSameExpression(expr, ((PsiDoWhileStatement)parent).getCondition());
     }
-    else if (parent instanceof PsiConditionalExpression) {
-      if (checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition())) {
-        return true;
-      }
+    if (parent instanceof PsiConditionalExpression) {
+      return checkSameExpression(expr, ((PsiConditionalExpression)parent).getCondition());
     }
     return false;
   }
@@ -1283,7 +1303,7 @@ public final class PsiUtil extends PsiUtilCore {
     return vector.toArray(PsiReturnStatement.EMPTY_ARRAY);
   }
 
-  private static void addReturnStatements(ArrayList<PsiReturnStatement> vector, PsiElement element) {
+  private static void addReturnStatements(List<? super PsiReturnStatement> vector, PsiElement element) {
     if (element instanceof PsiReturnStatement) {
       vector.add((PsiReturnStatement)element);
     }
@@ -1323,9 +1343,9 @@ public final class PsiUtil extends PsiUtilCore {
     PsiJavaParserFacade facade = JavaPsiFacade.getInstance(module.getProject()).getParserFacade();
     PsiStatement statement = facade.createModuleStatementFromText(text);
 
-    PsiElement anchor = psiTraverser().children(module).filter(statement.getClass()).last();
+    PsiElement anchor = SyntaxTraverser.psiTraverser().children(module).filter(statement.getClass()).last();
     if (anchor == null) {
-      anchor = psiTraverser().children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
+      anchor = SyntaxTraverser.psiTraverser().children(module).filter(e -> isJavaToken(e, JavaTokenType.LBRACE)).first();
     }
     if (anchor == null) {
       throw new IllegalStateException("No anchor in " + Arrays.toString(module.getChildren()));

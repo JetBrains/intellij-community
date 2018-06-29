@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.execution.junit;
 
@@ -8,6 +6,7 @@ import com.intellij.codeInsight.MetaAnnotationUtil;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.RunConfigurationProducer;
+import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configuration.EnvironmentVariablesComponent;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultRunExecutor;
@@ -18,16 +17,15 @@ import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ExecutionEnvironmentBuilder;
 import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.execution.testframework.sm.runner.SMTRunnerConsoleProperties;
+import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.util.ClassUtil;
@@ -38,11 +36,13 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.util.*;
 
 public class JUnitConfiguration extends JavaTestConfigurationBase {
   public static final String DEFAULT_PACKAGE_NAME = ExecutionBundle.message("default.package.presentable.name");
+  public static final byte FRAMEWORK_ID = 0x0;
 
   @NonNls public static final String TEST_CLASS = "class";
   @NonNls public static final String TEST_PACKAGE = "package";
@@ -106,7 +106,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       restoreOriginalModule(originalModule);
     }
   };
-  
+
   final RefactoringListeners.Accessor<PsiClass> myCategory = new RefactoringListeners.Accessor<PsiClass>() {
     @Override
     public void setName(@NotNull final String qualifiedName) {
@@ -128,6 +128,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   public JUnitConfiguration(final String name, final Project project, ConfigurationFactory configurationFactory) {
     this(name, project, new Data(), configurationFactory);
+  }
+
+  public JUnitConfiguration(final String name, final Project project) {
+    this(name, project, new Data(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
   protected JUnitConfiguration(final String name, final Project project, final Data data, ConfigurationFactory configurationFactory) {
@@ -213,7 +217,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setVMParameters(@Nullable String value) {
-    myData.setVMParameters(value);
+    myData.setVMParameters(StringUtil.nullize(value));
   }
 
   @Override
@@ -264,7 +268,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
+    boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
   @Override
@@ -274,7 +280,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
 
   @Override
   public void setAlternativeJrePath(String path) {
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
     ALTERNATIVE_JRE_PATH = path;
+    ApplicationConfiguration.onAlternativeJreChanged(changed, getProject());
   }
 
   @Override
@@ -317,8 +325,18 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   }
 
   @Override
+  public String getTestType() {
+    return getPersistentData().TEST_OBJECT;
+  }
+
+  @Override
   public TestSearchScope getTestSearchScope() {
     return getPersistentData().getScope();
+  }
+
+  @Override
+  public void setSearchScope(TestSearchScope searchScope) {
+    getPersistentData().setScope(searchScope);
   }
 
   public void beFromSourcePosition(PsiLocation<PsiMethod> sourceLocation) {
@@ -412,11 +430,17 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       getPersistentData().setUniqueIds(ArrayUtil.toStringArray(ids));
     }
 
-    Element tagsElement = element.getChild("tags");
-    if (tagsElement != null) {
-      List<String> tags = new ArrayList<>();
-      tagsElement.getChildren("tag").forEach(tagElement -> tags.add(tagElement.getAttributeValue("value")));
-      getPersistentData().setTags(ArrayUtil.toStringArray(tags));
+    Element tagElement = element.getChild("tag");
+    if (tagElement != null) {
+      getPersistentData().setTags(tagElement.getAttributeValue("value"));
+    }
+    else {
+      Element tagsElement = element.getChild("tags");
+      if (tagsElement != null) {
+        List<String> tags = new ArrayList<>();
+        tagsElement.getChildren("tag").forEach(tElement -> tags.add(tElement.getAttributeValue("value")));
+        getPersistentData().setTags(StringUtil.join(tags, "|"));
+      }
     }
   }
 
@@ -424,9 +448,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
   public void writeExternal(@NotNull final Element element) throws WriteExternalException {
     super.writeExternal(element);
     JavaRunConfigurationExtensionManager.getInstance().writeExternal(this, element);
-    DefaultJDOMExternalizer.writeExternal(this, element);
+    DefaultJDOMExternalizer.writeExternal(this, element, JavaParametersUtil.getFilter(this));
     final Data persistentData = getPersistentData();
-    DefaultJDOMExternalizer.writeExternal(persistentData, element);
+    DefaultJDOMExternalizer.writeExternal(persistentData, element, new DifferenceFilter<>(persistentData, new Data()));
 
     if (!persistentData.getEnvs().isEmpty()) {
       EnvironmentVariablesComponent.writeExternal(element, persistentData.getEnvs());
@@ -446,13 +470,16 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.addContent(categoryNameElement);
     }
 
-    final Element patternsElement = new Element(PATTERNS_EL_NAME);
-    for (String o : persistentData.getPatterns()) {
-      final Element patternElement = new Element(PATTERN_EL_NAME);
-      patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
-      patternsElement.addContent(patternElement);
+    if (!persistentData.getPatterns().isEmpty()) {
+      final Element patternsElement = new Element(PATTERNS_EL_NAME);
+      for (String o : persistentData.getPatterns()) {
+        final Element patternElement = new Element(PATTERN_EL_NAME);
+        patternElement.setAttribute(TEST_CLASS_ATT_NAME, o);
+        patternsElement.addContent(patternElement);
+      }
+      element.addContent(patternsElement);
     }
-    element.addContent(patternsElement);
+
     final String forkMode = getForkMode();
     if (!forkMode.equals("none")) {
       final Element forkModeElement = new Element("fork_mode");
@@ -473,10 +500,10 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       element.addContent(uniqueIds);
     }
 
-    String[] tags = persistentData.getTags();
-    if (tags != null && tags.length > 0) {
-      Element tagsElement = new Element("tags");
-      Arrays.stream(tags).forEach(id -> tagsElement.addContent(new Element("tag").setAttribute("value", id)));
+    String tags = persistentData.getTags();
+    if (tags != null && tags.length() > 0) {
+      Element tagsElement = new Element("tag");
+      tagsElement.setAttribute("value", tags);
       element.addContent(tagsElement);
     }
   }
@@ -540,10 +567,9 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     return new JUnitConsoleProperties(this, executor);
   }
 
-  @NotNull
   @Override
-  public String getFrameworkPrefix() {
-    return "j";
+  public byte getTestFrameworkId() {
+    return FRAMEWORK_ID;
   }
 
   public static class Data implements Cloneable {
@@ -551,11 +577,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     public String MAIN_CLASS_NAME;
     public String METHOD_NAME;
     private String[] UNIQUE_ID = ArrayUtil.EMPTY_STRING_ARRAY;
-    private String[] TAGS = ArrayUtil.EMPTY_STRING_ARRAY;
+    private String TAGS;
     public String TEST_OBJECT = TEST_CLASS;
-    public String VM_PARAMETERS;
+    public String VM_PARAMETERS = "-ea";
     public String PARAMETERS;
-    public String WORKING_DIRECTORY;
+    public String WORKING_DIRECTORY = PathMacroUtil.MODULE_WORKING_DIR;
     public boolean PASS_PARENT_ENVS = true;
     public TestSearchScope.Wrapper TEST_SEARCH_SCOPE = new TestSearchScope.Wrapper();
     private String DIR_NAME;
@@ -648,7 +674,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public void setWorkingDirectory(String value) {
-      WORKING_DIRECTORY = ExternalizablePath.urlValue(value);
+      WORKING_DIRECTORY = StringUtil.isEmptyOrSpaces(value) ? "" : FileUtilRt.toSystemIndependentName(value.trim());
     }
 
     public void setUniqueIds(String... uniqueId) {
@@ -666,11 +692,11 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
       return setMainClass(methodLocation instanceof MethodLocation ? ((MethodLocation)methodLocation).getContainingClass() : method.getContainingClass());
     }
 
-    public String[] getTags() {
+    public String getTags() {
       return TAGS;
     }
 
-    public void setTags(String[] tags) {
+    public void setTags(String tags) {
       TAGS = tags;
     }
 
@@ -717,7 +743,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
         return UNIQUE_ID != null && UNIQUE_ID.length > 0 ? StringUtil.join(UNIQUE_ID, " ") : "Temp suite";
       }
       if (TEST_TAGS.equals(TEST_OBJECT)) {
-        return TAGS != null && TAGS.length > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
+        return TAGS != null && TAGS.length() > 0 ? "Tags (" + StringUtil.join(TAGS, " ") + ")" : "Temp suite";
       }
       final String className = JavaExecutionUtil.getPresentableClassName(getMainClassName());
       if (TEST_METHOD.equals(TEST_OBJECT)) {
@@ -762,11 +788,7 @@ public class JUnitConfiguration extends JavaTestConfigurationBase {
     }
 
     public String getPatternPresentation() {
-      final List<String> enabledTests = new ArrayList<>();
-      for (String pattern : myPattern) {
-        enabledTests.add(pattern);
-      }
-      return StringUtil.join(enabledTests, "||");
+      return StringUtil.join(myPattern, "||");
     }
 
     public TestObject getTestObject(@NotNull JUnitConfiguration configuration) {

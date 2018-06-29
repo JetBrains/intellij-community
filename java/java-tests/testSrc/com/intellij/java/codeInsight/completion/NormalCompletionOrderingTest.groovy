@@ -825,7 +825,11 @@ class Foo {
   }
 
   void testPreferTypeToGeneratedMethod() {
-    checkPreferredItems 0, 'String', 'public String getZoo', 'public String toString'
+    checkPreferredItems 0, 'SomeClass', 'public SomeClass getZoo'
+  }
+
+  void testPreferPrimitiveTypeToGeneratedMethod() {
+    checkPreferredItems 0, 'boolean', 'public boolean isZoo', 'public boolean equals'
   }
 
   void testPreferExceptionsInCatch() {
@@ -847,6 +851,10 @@ class Foo {
 
   void testPreferExpectedTypeArguments() {
     checkPreferredItems 0, 'BlaOperation'
+  }
+
+  void testPreferFinalBeforeVariable() {
+    checkPreferredItems 0, 'final', 'find1'
   }
 
 }

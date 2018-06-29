@@ -7,7 +7,6 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.resolve.ResolveCache.PolyVariantResolver;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtilBase;
@@ -40,11 +39,13 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literal
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.GrReferenceTypeEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.*;
 import org.jetbrains.plugins.groovy.lang.resolve.DependentResolver;
+import org.jetbrains.plugins.groovy.lang.resolve.GroovyResolver;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.typing.GrTypeCalculator;
 
 import java.util.*;
 
+import static org.jetbrains.plugins.groovy.lang.psi.GroovyTokenSets.REFERENCE_DOTS;
 import static org.jetbrains.plugins.groovy.lang.resolve.GrReferenceResolveRunnerKt.resolveReferenceExpression;
 
 /**
@@ -67,7 +68,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   );
 
   @NotNull
-  private static List<GroovyResolveResult> filterMembersFromSuperClasses(GroovyResolveResult[] results) {
+  private static List<GroovyResolveResult> filterMembersFromSuperClasses(Collection<GroovyResolveResult> results) {
     List<GroovyResolveResult> filtered = new ArrayList<>();
     for (GroovyResolveResult result : results) {
       final PsiElement element = result.getElement();
@@ -90,20 +91,14 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitReferenceExpression(this);
   }
 
   @Override
   @Nullable
   public PsiElement getReferenceNameElement() {
-    final ASTNode lastChild = getNode().getLastChildNode();
-    if (lastChild == null) return null;
-    if (TokenSets.REFERENCE_NAMES.contains(lastChild.getElementType())) {
-      return lastChild.getPsi();
-    }
-
-    return null;
+    return findChildByType(TokenSets.REFERENCE_NAMES);
   }
 
   @Override
@@ -194,11 +189,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (type != null) {
         return type;
       }
-    }
-
-    IElementType dotType = getDotTokenType();
-    if (dotType == GroovyTokenTypes.mMEMBER_POINTER) {
-      return GrClosureType.create(multiResolve(false), this);
     }
 
     if (ResolveUtil.isDefinitelyKeyOfMap(this)) {
@@ -342,7 +332,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Nullable
   private static PsiType calculateType(@NotNull GrReferenceExpressionImpl refExpr) {
-    final GroovyResolveResult[] results = refExpr.multiResolve(false, true);
+    final Collection<? extends GroovyResolveResult> results = refExpr.multiResolve(false, true);
     final GroovyResolveResult result = PsiImplUtil.extractUniqueResult(results);
     final PsiElement resolved = result.getElement();
 
@@ -418,28 +408,29 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   }
 
   @NotNull
-  GroovyResolveResult[] doPolyResolve(boolean incompleteCode, boolean forceRValue) {
+  Collection<GroovyResolveResult> doPolyResolve(boolean incompleteCode, boolean forceRValue) {
     final PsiElement nameElement = getReferenceNameElement();
     final String name = getReferenceName();
-    if (name == null || nameElement == null) return GroovyResolveResult.EMPTY_ARRAY;
+    if (name == null || nameElement == null) return Collections.emptyList();
 
     try {
       ResolveProfiler.start();
       final IElementType nameType = nameElement.getNode().getElementType();
       if (nameType == GroovyTokenTypes.kTHIS) {
-        final GroovyResolveResult[] results = GrThisReferenceResolver.resolveThisExpression(this);
+        final Collection<GroovyResolveResult> results = GrThisReferenceResolver.resolveThisExpression(this);
         if (results != null) return results;
       }
       else if (nameType == GroovyTokenTypes.kSUPER) {
-        final GroovyResolveResult[] results = GrSuperReferenceResolver.resolveSuperExpression(this);
+        final Collection<GroovyResolveResult> results = GrSuperReferenceResolver.resolveSuperExpression(this);
         if (results != null) return results;
-      } else if (nameType == GroovyTokenTypes.kCLASS && !PsiUtil.isCompileStatic(this)) {
-        GrExpression qualifier = getQualifier();
-        if (qualifier == null || qualifier.getType() == null) return GroovyResolveResult.EMPTY_ARRAY;
       }
-      final GroovyResolveResult[] results = resolveReferenceExpression(this, forceRValue, incompleteCode).toArray(GroovyResolveResult.EMPTY_ARRAY);
-      if (results.length == 0) {
-        return GroovyResolveResult.EMPTY_ARRAY;
+      else if (nameType == GroovyTokenTypes.kCLASS && !PsiUtil.isCompileStatic(this)) {
+        GrExpression qualifier = getQualifier();
+        if (qualifier == null || qualifier.getType() == null) return Collections.emptyList();
+      }
+      final Collection<GroovyResolveResult> results = resolveReferenceExpression(this, forceRValue, incompleteCode);
+      if (results.isEmpty()) {
+        return Collections.emptyList();
       }
       else if (!ResolveUtil.canResolveToMethod(this)) {
         if (!ResolveUtil.mayBeKeyOfMap(this)) {
@@ -447,8 +438,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
         }
         else {
           //filter out all members from super classes. We should return only accessible members from map classes
-          final List<GroovyResolveResult> filtered = filterMembersFromSuperClasses(results);
-          return ContainerUtil.toArray(filtered, new GroovyResolveResult[filtered.size()]);
+          return filterMembersFromSuperClasses(results);
         }
       }
       else {
@@ -474,7 +464,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   @Override
   public boolean hasMemberPointer() {
-    return findChildByType(GroovyTokenTypes.mMEMBER_POINTER) != null;
+    return false;
   }
 
   @Override
@@ -526,7 +516,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Override
   @Nullable
   public PsiElement getDotToken() {
-    return findChildByType(TokenSets.DOTS);
+    return findChildByType(REFERENCE_DOTS);
   }
 
   @Override
@@ -551,7 +541,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     return this;
   }
 
-  private static final PolyVariantResolver<GrReferenceExpressionImpl> RESOLVER = new DependentResolver<GrReferenceExpressionImpl>() {
+  private static final GroovyResolver<GrReferenceExpressionImpl> RESOLVER = new DependentResolver<GrReferenceExpressionImpl>() {
 
     @Nullable
     @Override
@@ -587,35 +577,35 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
     @NotNull
     @Override
-    public ResolveResult[] doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
-      GroovyResolveResult[] regularResults = ref.multiResolve(incomplete, false);
+    public Collection<GroovyResolveResult> doResolve(@NotNull GrReferenceExpressionImpl ref, boolean incomplete) {
+      Collection<? extends GroovyResolveResult> regularResults = ref.multiResolve(incomplete, false);
       if (PsiUtil.isLValueOfOperatorAssignment(ref)) {
         Set<GroovyResolveResult> result = ContainerUtil.newLinkedHashSet();
-        ContainerUtil.addAll(result, ref.multiResolve(incomplete, true));
-        ContainerUtil.addAll(result, regularResults);
-        return result.toArray(GroovyResolveResult.EMPTY_ARRAY);
+        result.addAll(ref.multiResolve(incomplete, true));
+        result.addAll(regularResults);
+        return result;
       }
       else {
-        return regularResults;
+        return new SmartList<>(regularResults);
       }
     }
   };
 
   @NotNull
   @Override
-  public GroovyResolveResult[] multiResolve(boolean incompleteCode) {
-    return TypeInferenceHelper.getCurrentContext().multiResolve(this, incompleteCode, RESOLVER);
+  public Collection<? extends GroovyResolveResult> resolve(boolean incomplete) {
+    return TypeInferenceHelper.getCurrentContext().resolve(this, incomplete, RESOLVER);
   }
 
   @NotNull
-  public GroovyResolveResult[] multiResolve(boolean incomplete, boolean forceRValue) {
-    return (forceRValue ? myFakeGetterReference : myFakeReference).getValue().multiResolve(incomplete);
+  public Collection<? extends GroovyResolveResult> multiResolve(boolean incomplete, boolean forceRValue) {
+    return (forceRValue ? myFakeGetterReference : myFakeReference).getValue().resolve(incomplete);
   }
 
   @Override
   @NotNull
   public GroovyResolveResult[] getSameNameVariants() {
-    return doPolyResolve(true, false);
+    return doPolyResolve(true, false).toArray(GroovyResolveResult.EMPTY_ARRAY);
   }
 
   @Override

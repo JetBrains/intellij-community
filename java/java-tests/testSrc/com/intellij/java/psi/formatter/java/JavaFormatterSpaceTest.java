@@ -1,8 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.psi.formatter.java;
 
+import com.intellij.JavaTestUtil;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightPlatformTestCase;
 
@@ -16,7 +16,7 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(LanguageLevel.JDK_X);
+    LanguageLevelProjectExtension.getInstance(LightPlatformTestCase.getProject()).setLanguageLevel(JavaTestUtil.getMaxRegisteredLanguageLevel());
   }
 
   public void testSpacingBetweenTypeParameters() {
@@ -686,7 +686,20 @@ public class JavaFormatterSpaceTest extends AbstractJavaFormatterTest {
   }
 
   public void testSpacingAroundVarKeyword() {
-    doMethodTest("for (  var  path  :  paths) ;", "for (var path : paths) ;");
+    doMethodTest("for (  var  path :  paths) ;", "for (var path : paths) ;");
     doMethodTest("try ( @A  var  r  =  open()) { }", "try (@A var r = open()) {\n}");
+  }
+
+  public void testSpacingBeforeColonInForeach() {
+    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = false;
+    doMethodTest("for (int i:arr) ;", "for (int i: arr) ;");
+    getJavaSettings().SPACE_BEFORE_COLON_IN_FOREACH = true;
+    doMethodTest("for (int i:arr) ;", "for (int i : arr) ;");
+  }
+
+  public void testOneLineEnumSpacing() {
+    getJavaSettings().SPACE_INSIDE_ONE_LINE_ENUM_BRACES = true;
+    doTextTest("enum E {E1, E2}",
+               "enum E { E1, E2 }");
   }
 }

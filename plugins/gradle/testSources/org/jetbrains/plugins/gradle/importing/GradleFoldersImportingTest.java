@@ -15,9 +15,25 @@
  */
 package org.jetbrains.plugins.gradle.importing;
 
+import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ex.ProjectManagerEx;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.SystemIndependent;
+import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.plugins.gradle.tooling.annotation.TargetVersions;
 import org.junit.Test;
+
+import java.io.IOException;
 
 /**
  * @author Vladislav.Soroka
@@ -29,6 +45,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @Test
   public void testBaseJavaProject() throws Exception {
 
+    createDefaultDirs();
     importProject(
       "apply plugin: 'java'"
     );
@@ -66,7 +83,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testCompileOutputPathCustomizedWithIdeaPlugin() throws Exception {
-
+    createDefaultDirs();
     importProject(
       "apply plugin: 'java'\n" +
       "apply plugin: 'idea'\n" +
@@ -98,7 +115,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @Test
   @TargetVersions("2.2+")
   public void testSourceGeneratedFoldersWithIdeaPlugin() throws Exception {
-
+    createDefaultDirs();
     importProject(
       "apply plugin: 'java'\n" +
       "apply plugin: 'idea'\n" +
@@ -129,6 +146,7 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
   @Test
   public void testProjectWithInheritedOutputDirs() throws Exception {
 
+    createDefaultDirs();
     importProject(
       "apply plugin: 'java'\n" +
       "apply plugin: 'idea'\n" +
@@ -159,6 +177,12 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
 
   @Test
   public void testSourceFoldersMerge() throws Exception {
+
+    createDefaultDirs();
+    createProjectSubFile("src/B.java");
+    createProjectSubFile("src/resources/res.properties");
+    createProjectSubFile("test/BTest.java");
+    createProjectSubFile("test/resources/res_test.properties");
 
     importProject(
       "apply plugin: 'java'\n" +
@@ -197,6 +221,93 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertTestResources("project", "src/test/resources", "test/resources");
   }
 
+  @Test
+  public void testRootsAreNotCreatedIfFilesAreMissing() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    createProjectSubFile("src/test/resources/res.properties");
+    importProjectUsingSingeModulePerGradleProject(
+     "apply plugin: 'java'"
+    );
+
+    assertModules("project");
+    assertExcludes("project", ".gradle", "build", "out");
+    assertSources("project", "src/main/java");
+    assertResources("project");
+    assertTestSources("project");
+    assertTestResources("project", "src/test/resources");
+  }
+
+  @Test
+  public void testRootsAreAddedWhenAFolderCreated() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+
+    assertModules("project");
+    assertSources("project", "src/main/java");
+    assertTestSources("project");
+
+    createProjectSubFile("src/test/java/ATest.java");
+    assertTestSources("project", "src/test/java");
+
+    createProjectSubFile("src/main/resources/res.txt");
+    assertResources("project", "src/main/resources");
+  }
+
+  @Test
+  public void testRootsListenersAreUpdatedWithProjectModel() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+
+    assertModules("project");
+
+    importProjectUsingSingeModulePerGradleProject(
+      "apply plugin: 'java'\n" +
+      "sourceSets {\n" +
+      " test {\n" +
+      "    java.srcDirs = [file('test-src/java')]" +
+      "  }\n" +
+      "}");
+
+    createProjectSubFile("src/test/java/ATest.java");
+    createProjectSubFile("test-src/java/BTest.java");
+
+    assertTestSources("project", "test-src/java");
+  }
+
+  @Test
+  public void testRootsListenersRestoredWhenProjectOpen() throws Exception {
+    createProjectSubFile("src/main/java/A.java");
+    importProjectUsingSingeModulePerGradleProject("apply plugin: 'java'");
+
+    @SystemIndependent final String path = myProject.getProjectFilePath();
+
+    edt(() -> {
+      VirtualFileManager.getInstance().syncRefresh();
+      UIUtil.dispatchAllInvocationEvents();
+      PlatformTestUtil.saveProject(myProject);
+      ProjectManagerEx.getInstanceEx().closeProject(myProject);
+      UIUtil.dispatchAllInvocationEvents();
+    });
+
+    final ProjectManagerEx projectManager = ProjectManagerEx.getInstanceEx();
+    final Ref<Project> projectRef = new Ref<>();
+    try {
+      projectRef.set(projectManager.loadProject(path));
+      edt(() -> projectManager.openTestProject(projectRef.get()));
+
+      createProjectSubFile("src/test/java/ATest.java");
+      assertTestSources(projectRef.get(), "project", "src/test/java");
+    } finally {
+      if (!projectRef.isNull()) {
+        edt(() ->{
+          projectManager.closeTestProject(projectRef.get());
+          WriteAction.run(() -> Disposer.dispose(projectRef.get()));
+        });
+      }
+    }
+  }
+
+
   protected void assertDefaultGradleJavaProjectFolders(@NotNull String mainModuleName) {
     assertExcludes(mainModuleName, ".gradle", "build", "out");
     final String mainSourceSetModuleName = mainModuleName + "_main";
@@ -217,4 +328,19 @@ public class GradleFoldersImportingTest extends GradleImportingTestCase {
     assertTestSources(moduleName, "src/test/java");
     assertTestResources(moduleName, "src/test/resources");
   }
+
+  private void createDefaultDirs() throws IOException {
+    createProjectSubFile("src/main/java/A.java");
+    createProjectSubFile("src/test/java/A.java");
+    createProjectSubFile("src/main/resources/resource.properties");
+    createProjectSubFile("src/test/resources/test_resource.properties");
+  }
+
+  private void assertTestSources(Project project, String moduleName, String... expected) {
+    final Module fooModule = getModule(project, moduleName);
+    final ContentEntry[] contentRoots = ModuleRootManager.getInstance(fooModule).getContentEntries();
+    String rootUrl = contentRoots.length > 1 ? ExternalSystemApiUtil.getExternalProjectPath(fooModule) : null;
+    doAssertContentFolders(rootUrl, contentRoots, JavaSourceRootType.TEST_SOURCE, expected);
+  }
+
 }

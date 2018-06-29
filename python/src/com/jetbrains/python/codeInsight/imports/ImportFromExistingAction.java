@@ -20,13 +20,12 @@ import com.intellij.ide.DataManager;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -37,7 +36,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.QualifiedName;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import com.intellij.util.ObjectUtils;
 import com.jetbrains.python.PyBundle;
@@ -117,23 +115,15 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void selectSourceAndDo() {
     // GUI part
-    ImportCandidateHolder[] items = mySources.toArray(new ImportCandidateHolder[0]); // silly JList can't handle modern collections
-    final JList list = new JBList(items);
-    list.setCellRenderer(new CellRenderer(myName));
-
-    final Runnable runnable = () -> {
-      final Object selected = list.getSelectedValue();
-      if (selected instanceof ImportCandidateHolder) {
-        final ImportCandidateHolder item = (ImportCandidateHolder)selected;
+    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(mySources)
+      .setRenderer(new CellRenderer(myName))
+      .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
+      .setItemChosenCallback((item) -> {
         PsiDocumentManager.getInstance(myTarget.getProject()).commitAllDocuments();
         doWriteAction(item);
-      }
-    };
-
-    DataManager.getInstance().getDataContextFromFocus().doWhenDone((Consumer<DataContext>)dataContext -> new PopupChooserBuilder(list)
-      .setTitle(myUseQualifiedImport? PyBundle.message("ACT.qualify.with.module") : PyBundle.message("ACT.from.some.module.import"))
-      .setItemChoosenCallback(runnable)
-      .setFilteringEnabled(o -> ((ImportCandidateHolder) o).getPresentableText(myName))
+      })
+      .setNamerForFiltering(o -> o.getPresentableText(myName))
       .createPopup()
       .showInBestPositionFor(dataContext));
   }
@@ -153,6 +143,9 @@ public class ImportFromExistingAction implements QuestionAction {
     final PyElementGenerator gen = PyElementGenerator.getInstance(project);
 
     final PsiFileSystemItem filesystemAnchor = ObjectUtils.chooseNotNull(as(item.getImportable(), PsiFileSystemItem.class), item.getFile());
+    if (filesystemAnchor == null) {
+      return;
+    }
     AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, filesystemAnchor);
     PsiFile file = myTarget.getContainingFile();
     InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
@@ -214,12 +207,13 @@ public class ImportFromExistingAction implements QuestionAction {
 
   private void doWriteAction(final ImportCandidateHolder item) {
     PsiElement src = item.getImportable();
-    new WriteCommandAction(src.getProject(), PyBundle.message("ACT.CMD.use.import"), myTarget.getContainingFile()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        doIt(item);
-      }
-    }.execute();
+    if (src == null) {
+      return;
+    }
+    WriteCommandAction.writeCommandAction(src.getProject(), myTarget.getContainingFile()).withName(PyBundle.message("ACT.CMD.use.import"))
+                      .run(() -> {
+                        doIt(item);
+                      });
     if (myOnDoneCallback != null) {
       myOnDoneCallback.run();
     }
@@ -259,7 +253,10 @@ public class ImportFromExistingAction implements QuestionAction {
       clear();
 
       ImportCandidateHolder item = (ImportCandidateHolder)value;
-      setIcon(item.getImportable().getIcon(0));
+      PsiElement importable = ((ImportCandidateHolder)value).getImportable();
+      if (importable != null) {
+        setIcon(importable.getIcon(0));
+      }
       String item_name = item.getPresentableText(myName);
       append(item_name, SimpleTextAttributes.REGULAR_ATTRIBUTES);
 

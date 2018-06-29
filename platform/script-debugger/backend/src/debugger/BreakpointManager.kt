@@ -62,7 +62,7 @@ interface BreakpointManager {
 
   fun removeAll(): Promise<*>
 
-  fun getMuteMode() = BreakpointManager.MUTE_MODE.ONE
+  fun getMuteMode(): MUTE_MODE = BreakpointManager.MUTE_MODE.ONE
 
   /**
    * Flushes the breakpoint parameter changes (set* methods) into the browser

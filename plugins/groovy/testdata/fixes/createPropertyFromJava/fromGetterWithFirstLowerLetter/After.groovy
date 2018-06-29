@@ -1,0 +1,3 @@
+class A {
+    String bBar
+}

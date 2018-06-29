@@ -1,27 +1,11 @@
-import de.undercouch.gradle.tasks.download.DownloadAction
-
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 buildscript {
   repositories {
     maven { url "http://repo.labs.intellij.net/plugins-gradle-org/" }
     maven { url "https://plugins.gradle.org/m2/" }
   }
   dependencies {
-    classpath "de.undercouch:gradle-download-task:3.2.0"
+    classpath "de.undercouch:gradle-download-task:3.4.2"
   }
 }
 
@@ -54,47 +38,6 @@ catch (UnknownHostException e) {
   project.ext.inJetBrainsNetwork = false
 }
 
-class DownloadActionWrapper extends DownloadAction {
-  DownloadActionWrapper(Project project) {
-    super(project)
-  }
-
-  @Override
-  void execute() throws IOException {
-    def destFile = getDest()
-    if (destFile == null || !destFile.exists()) {
-      def tempFile = new File(destFile.absolutePath + ".part")
-      dest(tempFile)
-      overwrite(true)
-      onlyIfNewer(false)
-      super.execute()
-      dest(destFile)
-      tempFile.renameTo(destFile)
-    }
-  }
-}
-
-class DownloadWrapperExtension implements Configurable<DownloadWrapperExtension> {
-  Project project
-
-  DownloadWrapperExtension(Project project) {
-    this.project = project
-  }
-
-  @Override
-  DownloadWrapperExtension configure(Closure cl) {
-    DownloadActionWrapper da = ConfigureUtil.configure(cl, new DownloadActionWrapper(project))
-    try {
-      da.execute()
-    }
-    catch (IOException e) {
-      throw new IllegalStateException("Could not download file", e)
-    }
-    return this
-  }
-}
-project.extensions.create('downloadWrapper', DownloadWrapperExtension.class, project)
-
 apply from: 'setupJdk.gradle'
 apply from: 'setupJbre.gradle'
 apply from: 'setupKotlin.gradle'
@@ -119,4 +62,5 @@ task dependenciesFile() {
 
 task wrapper(type: Wrapper) {
   gradleVersion = '4.3.1'
+  distributionUrl = "https://cache-redirector.shared.aws.intellij.net/services.gradle.org/distributions/gradle-${gradleVersion}-all.zip"
 }

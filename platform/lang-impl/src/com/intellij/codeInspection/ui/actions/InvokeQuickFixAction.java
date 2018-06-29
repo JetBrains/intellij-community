@@ -30,8 +30,7 @@ public class InvokeQuickFixAction extends AnAction {
   private final InspectionResultsView myView;
 
   public InvokeQuickFixAction(final InspectionResultsView view) {
-    super(InspectionsBundle.message("inspection.action.apply.quickfix"), InspectionsBundle.message("inspection.action.apply.quickfix.description"),
-          AllIcons.Actions.CreateFromUsage);
+    super(InspectionsBundle.message("inspection.action.apply.quickfix"), InspectionsBundle.message("inspection.action.apply.quickfix.description"), AllIcons.Actions.IntentionBulb);
     myView = view;
     registerCustomShortcutSet(ActionManager.getInstance().getAction(IdeActions.ACTION_SHOW_INTENTION_ACTIONS).getShortcutSet(),
                               myView.getTree());

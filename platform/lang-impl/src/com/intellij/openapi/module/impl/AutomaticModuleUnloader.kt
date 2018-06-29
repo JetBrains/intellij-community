@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.notification.Notification
@@ -22,7 +20,7 @@ import com.intellij.xml.util.XmlStringUtil
  *
  * @author nik
  */
-@State(name = "AutomaticModuleUnloader", storages = arrayOf(Storage(StoragePathMacros.WORKSPACE_FILE)))
+@State(name = "AutomaticModuleUnloader", storages = [(Storage(StoragePathMacros.WORKSPACE_FILE))])
 class AutomaticModuleUnloader(private val project: Project) : PersistentStateComponent<LoadedModulesListStorage> {
   private val loadedModulesListStorage = LoadedModulesListStorage()
 
@@ -122,7 +120,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
     }
   }
 
-  fun createAction(text: String, action: (MutableList<String>) -> Unit) = object : NotificationAction(text) {
+  fun createAction(text: String, action: (MutableList<String>) -> Unit): NotificationAction = object : NotificationAction(text) {
     override fun actionPerformed(e: AnActionEvent, notification: Notification) {
       val unloaded = ArrayList<String>()
       val moduleManager = ModuleManager.getInstance(project)
@@ -138,7 +136,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
     loadedModulesListStorage.modules.addAll(modules)
   }
 
-  override fun getState() = loadedModulesListStorage
+  override fun getState(): LoadedModulesListStorage = loadedModulesListStorage
 
   override fun loadState(state: LoadedModulesListStorage) {
     setLoadedModules(state.modules)
@@ -146,7 +144,7 @@ class AutomaticModuleUnloader(private val project: Project) : PersistentStateCom
 
   companion object {
     @JvmStatic
-    fun getInstance(project: Project) = project.service<AutomaticModuleUnloader>()
+    fun getInstance(project: Project): AutomaticModuleUnloader = project.service<AutomaticModuleUnloader>()
 
     private val NOTIFICATION_GROUP = NotificationGroup.balloonGroup("Automatic Module Unloading")
   }

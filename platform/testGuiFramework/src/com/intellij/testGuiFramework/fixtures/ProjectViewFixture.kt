@@ -26,15 +26,13 @@ import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdk
 import com.intellij.openapi.roots.JdkOrderEntry
-import com.intellij.openapi.ui.Queryable
 import com.intellij.openapi.util.Ref
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.testFramework.PlatformTestUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.computeOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.runOnEdt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitUntil
+import com.intellij.testGuiFramework.impl.GuiTestUtilKt.withPauseWhenNull
 import com.intellij.ui.LoadingNode
 import com.intellij.util.ui.tree.TreeUtil
 import org.fest.assertions.Assertions.assertThat
@@ -43,7 +41,6 @@ import org.fest.swing.core.MouseButton
 import org.fest.swing.core.Robot
 import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
-import org.fest.swing.exception.ComponentLookupException
 import org.fest.swing.exception.WaitTimedOutError
 import org.junit.Assert.assertNotNull
 import java.awt.Point
@@ -56,7 +53,7 @@ import kotlin.collections.ArrayList
 
 class ProjectViewFixture internal constructor(project: Project, robot: Robot) : ToolWindowFixture("Project", project, robot) {
 
-  fun selectProjectPane(): PaneFixture = getPaneById("ProjectPane")
+  private fun selectProjectPane(): PaneFixture = getPaneById("ProjectPane")
   fun selectAndroidPane(): PaneFixture = getPaneById("AndroidView")
 
   private fun getPaneById(id: String): PaneFixture {
@@ -74,73 +71,37 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     }
   }
 
-  fun assertStructure(expectedStructure: String) {
-    val printInfo = Queryable.PrintInfo()
-    runOnEdt {
-//      ProjectViewTestUtil.assertStructureEqual(treeStructure, expectedStructure, StringUtil.countNewLines(expectedStructure) + 1,
-//                                               PlatformTestUtil.createComparator(printInfo), treeStructure.rootElement, printInfo)
-    }
-  }
-
-  fun assertAsyncStructure(expectedStructure: String) {
-    val lastThrowable = Ref<Throwable>()
-    val timeout = SHORT_TIMEOUT
-    try {
-      waitUntil("Waiting for project view update", 120) {
-        val printInfo = Queryable.PrintInfo()
-        computeOnEdt {
-          try {
-            //todo: replace AbstractTreeStructure
-//            ProjectViewTestUtil.assertStructureEqual(treeStructure, expectedStructure, StringUtil.countNewLines(expectedStructure) + 1,
-//                                                     PlatformTestUtil.createComparator(printInfo), treeStructure.rootElement,
-//                                                     printInfo)
-          }
-          catch (ae: AssertionError) {
-            lastThrowable.set(ae)
-          }
-          true
-        }!!
-      }
-    }
-    catch (error: WaitTimedOutError) {
-      val throwable = lastThrowable.get()
-      if (throwable != null) {
-        throw AssertionError(
-          "Failed on waiting project structure update for " + timeout.toString() + ", expected and actual structures are still different: ",
-          throwable)
-      }
-      else {
-        throw error
-      }
-    }
-
-  }
-
   /**
    * @param pathTo could be a separate vararg of String objects like ["project_name", "src", "Test.java"] or one String with a path
    * separated by slash sign: ["project_name/src/Test.java"]
    * @return NodeFixture object for a pathTo; may be used for expanding, scrolling and clicking node
    */
   fun path(vararg pathTo: String): NodeFixture {
-    val projectPaneFixture: PaneFixture = selectProjectPane()
-    val nodeFixtureRef = Ref<NodeFixture>()
-    try {
-      waitUntil("node by path $pathTo will appear", 30) {
+    selectProjectPane()
+    val times = 3
+    repeat(times) {
+      val nodeFixture = getNodeFixture(pathTo)
+      if (nodeFixture != null) return nodeFixture
+    }
+    throw Exception("Unable to find path: ${Arrays.toString(pathTo)} for current project structure in $times times.")
+  }
+
+  private fun getNodeFixture(pathTo: Array<out String>): NodeFixture? {
+    return try {
+      withPauseWhenNull(30) {
         try {
-          val nodeFixtureByPath = getNodeFixtureByPath(pathTo as Array<String>)
-          nodeFixtureRef.set(nodeFixtureByPath)
-          nodeFixtureByPath != null
+          getNodeFixtureByPath(pathTo as Array<String>)
         }
-        catch (e: java.lang.Exception) {
-          false
+        catch (e: Exception) {
+          LOG.debug("Exception during getting node by path (${Arrays.toString(pathTo)}) : $e")
+          null
         }
       }
     }
     catch (timedOutError: WaitTimedOutError) {
-      LOG.error("Unable to find path: ${Arrays.toString(pathTo)} for current project structure.", timedOutError)
+      LOG.warn("Unable to find path: ${Arrays.toString(pathTo)} for current project structure.", timedOutError)
+      null
     }
-    //expand path to the node and rebuild NodeFixture if it left tree
-    return nodeFixtureRef.get()
   }
 
   private fun getNodeFixtureByPath(pathTo: Array<String>): NodeFixture? {
@@ -166,8 +127,6 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
       return this
     }
 
-    fun getPane() = myPane
-
     fun getNode(path: Array<String>): NodeFixture? {
       val tree = myPane.tree
       val root = computeOnEdt { myPane.tree.model.root } ?: throw Exception("Unfortunately the root for a tree model in ProjectView is null")
@@ -188,7 +147,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
         for (child in children) {
           child ?: throw Exception("Path element ($pathItem) is null")
           val nodeText = getNodeText(child.userObject)
-          nodeText ?: throw AssertionError("Unable to get text of project view node for pathItem: " + pathItem)
+          nodeText ?: throw AssertionError("Unable to get text of project view node for pathItem: $pathItem")
           if (nodeText == pathItem) {
             pivotRoot = child
             childIsFound = true
@@ -321,7 +280,7 @@ class ProjectViewFixture internal constructor(project: Project, robot: Robot) : 
     private fun getNodeText(node: Any): String? {
       assert(node is PresentableNodeDescriptor<*>)
       val descriptor = node as PresentableNodeDescriptor<*>
-      descriptor.update()
+      runOnEdt { descriptor.update() }
       return descriptor.presentation.presentableText
     }
   }

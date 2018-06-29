@@ -72,6 +72,11 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     return getFileTypeByExtension(extension);
   }
 
+  @Override
+  public boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type) {
+    return getFileTypeByFile(file) == type;
+  }
+
   @NotNull
   @Override
   public FileType getFileTypeByExtension(@NonNls @NotNull String extension) {
@@ -84,12 +89,6 @@ public class CoreFileTypeRegistry extends FileTypeRegistry {
     for (final String ext : extension.split(";")) {
       myExtensionsMap.put(ext, fileType);
     }
-  }
-
-  @NotNull
-  @Override
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return UnknownFileType.INSTANCE;
   }
 
   @Nullable

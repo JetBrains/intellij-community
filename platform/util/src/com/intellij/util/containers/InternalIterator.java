@@ -22,7 +22,6 @@ import java.util.Map;
 
 public interface InternalIterator<T>{
   /**
-   * @param element
    * @return false to stop iteration true to continue if more elements are avaliable.
    */
   boolean visit(T element);

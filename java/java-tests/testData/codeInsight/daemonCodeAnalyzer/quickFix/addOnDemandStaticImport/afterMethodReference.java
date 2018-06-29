@@ -8,6 +8,7 @@ import static java.util.Arrays.*;
 public class Foo {
   {
     Block<Integer[]> b2 = Arrays::sort;
+    Block<Integer> bBroken = Arrays::sort;
     sort((byte[])null);
   }
 

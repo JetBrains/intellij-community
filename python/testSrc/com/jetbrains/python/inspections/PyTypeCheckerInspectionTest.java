@@ -344,7 +344,7 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
-  // PY-22222
+  // PY-22222, PY-29233
   public void testPassClassWithDunderSlotsToMethodThatUsesSlottedAttribute() {
     doTest();
   }
@@ -521,8 +521,61 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
   }
 
+  // PY-28720
+  public void testOverriddenBuiltinMethodAgainstTypingProtocol() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON35,
+      () ->
+        doTestByText("import typing\n" +
+                     "class Proto(typing.Protocol):\n" +
+                     "    def function(self) -> None:\n" +
+                     "        pass\n" +
+                     "class Cls:\n" +
+                     "    def __eq__(self, other) -> 'Cls':\n" +
+                     "        pass\n" +
+                     "    def function(self) -> None:\n" +
+                     "        pass\n" +
+                     "def method(p: Proto):\n" +
+                     "    pass\n" +
+                     "method(Cls())")
+    );
+  }
+
+  // PY-28720
+  public void testAgainstInvalidProtocol() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON34,
+      () ->
+        doTestByText(
+          "from typing import Any, Protocol\n" +
+          "class B:\n" +
+          "    def foo(self):\n" +
+          "        ...\n" +
+          "class C(B, Protocol):\n" +
+          "    def bar(self):\n" +
+          "        ...\n" +
+          "class Bar:\n" +
+          "    def bar(self):\n" +
+          "        ...\n" +
+          "def f(x: C) -> Any:\n" +
+          "    ...\n" +
+          "f(Bar())"
+        )
+    );
+  }
+
   // PY-23161
   public void testGenericWithTypeVarBounds() {
     runWithLanguageLevel(LanguageLevel.PYTHON35, this::doTest);
+  }
+
+  // PY-27788
+  public void testOverloadedFunctionAssignedToTargetInStub() {
+    doMultiFileTest();
+  }
+
+  // PY-27949
+  public void testAssigningToDictEntry() {
+    doTest();
   }
 }

@@ -114,6 +114,8 @@ public abstract class PyResolveTestCase extends PyTestCase {
   }
 
   public static int findMarkerOffset(final PsiFile psiFile) {
+    // TODO: harmonize with CythonResolveTest synax
+    // TODO: check and fix work with single letter identifiers
     Document document = PsiDocumentManager.getInstance(psiFile.getProject()).getDocument(psiFile);
     assert document != null;
     int offset = -1;

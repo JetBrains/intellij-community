@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.CustomShortcutSet;
+import com.intellij.openapi.application.ApplicationActivationListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.Messages;
@@ -37,6 +38,7 @@ import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.ListUtil;
 import com.intellij.ui.components.JBList;
@@ -46,24 +48,23 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.SystemIndependent;
 
 import javax.swing.*;
 import javax.swing.border.LineBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.io.File;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.ScheduledExecutorService;
 import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicBoolean;
 
 public class RecentProjectPanel extends JPanel {
   public static final String RECENT_PROJECTS_LABEL = "Recent Projects";
@@ -388,8 +389,13 @@ public class RecentProjectPanel extends JPanel {
       final int i = locationToIndex(event.getPoint());
       if (i != -1) {
         final Object elem = getModel().getElementAt(i);
-        if (elem instanceof ReopenProjectAction && RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
-          return PathUtil.toSystemDependentName(((ReopenProjectAction)elem).getProjectPath());
+        if (elem instanceof ReopenProjectAction) {
+          @SystemIndependent String path = ((ReopenProjectAction)elem).getProjectPath();
+          boolean valid = isPathValid(path);
+          if (!valid || RecentProjectPanel.this.projectsWithLongPathes.contains(elem)) {
+            String suffix = valid ? "" : " (unavailable)";
+            return PathUtil.toSystemDependentName(path) + suffix;
+          }
         }
       }
       return super.getToolTipText(event);
@@ -537,54 +543,111 @@ public class RecentProjectPanel extends JPanel {
     }
   }
 
-  private static class FilePathChecker implements Disposable {
+  private static class FilePathChecker implements Disposable, ApplicationActivationListener, PowerSaveMode.Listener {
     private static final int MIN_AUTO_UPDATE_MILLIS = 2500;
-    private final ScheduledExecutorService myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths service", 2);
-    private final Map<String, AtomicBoolean> myStates = ContainerUtil.newHashMap();
+    private ScheduledExecutorService myService = null;
+    private final Set<String> myInvalidPaths = Collections.synchronizedSet(new HashSet<>());
 
     private final Runnable myCallback;
     private final Collection<String> myPaths;
 
-     FilePathChecker(Runnable callback, Collection<String>paths) {
+    FilePathChecker(Runnable callback, Collection<String> paths) {
       myCallback = callback;
       myPaths = paths;
-      for (String path : myPaths) {
-        myStates.put(path, new AtomicBoolean(true));//initially everything is valid
-      }
-      if (!PowerSaveMode.isEnabled()) {
-         for (String path : paths) {
-           scheduleCheck(path, MIN_AUTO_UPDATE_MILLIS);
-         }
-       }
+      MessageBusConnection connection = ApplicationManager.getApplication().getMessageBus().connect(this);
+      connection.subscribe(ApplicationActivationListener.TOPIC, this);
+      connection.subscribe(PowerSaveMode.TOPIC, this);
+      onAppStateChanged();
     }
 
-     boolean isValid(String path) {
-      AtomicBoolean b = myStates.get(path);
-      return b == null || b.get();
+    boolean isValid(String path) {
+      return !myInvalidPaths.contains(path);
     }
 
     @Override
+    public void applicationActivated(IdeFrame ideFrame) {
+      onAppStateChanged();
+    }
+
+    @Override
+    public void delayedApplicationDeactivated(IdeFrame ideFrame) {
+      onAppStateChanged();
+    }
+
+    @Override
+    public void applicationDeactivated(IdeFrame ideFrame) {
+    }
+
+    @Override
+    public void powerSaveStateChanged() {
+      onAppStateChanged();
+    }
+
+    private void onAppStateChanged() {
+      boolean settingsAreOK = Registry.is("autocheck.availability.welcome.screen.projects") && !PowerSaveMode.isEnabled();
+      boolean everythingIsOK = settingsAreOK && ApplicationManager.getApplication().isActive();
+      if (myService == null && everythingIsOK) {
+        myService = AppExecutorUtil.createBoundedScheduledExecutorService("CheckRecentProjectPaths Service", 2);
+        for (String path : myPaths) {
+          scheduleCheck(path, 0);
+        }
+        ApplicationManager.getApplication().invokeLater(myCallback);
+      }
+      if (myService != null && !everythingIsOK) {
+        if (!settingsAreOK) {
+          myInvalidPaths.clear();
+        }
+        if (!myService.isShutdown()) {
+          myService.shutdown();
+          myService = null;
+        }
+        ApplicationManager.getApplication().invokeLater(myCallback);
+      }
+    }
+
+
+    @Override
     public void dispose() {
-      myService.shutdownNow();
+      if (myService != null) {
+        myService.shutdownNow();
+      }
     }
 
     private void scheduleCheck(String path, long delay) {
-      if (myService.isShutdown()) return;
-      
+      if (myService == null || myService.isShutdown()) return;
+
       myService.schedule(() -> {
         final long startTime = System.currentTimeMillis();
-        boolean exists;
+        boolean pathIsValid;
         try {
-          exists = new File(path).exists();
+          pathIsValid = isFileAvailable(new File(path));
         }
         catch (Exception e) {
-          exists = false;
+          pathIsValid = false;
         }
-        if (myStates.get(path).getAndSet(exists) != exists) {
+        
+        if (myInvalidPaths.contains(path) == pathIsValid) {
+          if (pathIsValid) {
+            myInvalidPaths.remove(path);
+          } else {
+            myInvalidPaths.add(path);
+          }
           ApplicationManager.getApplication().invokeLater(myCallback);
         }
         scheduleCheck(path, Math.max(MIN_AUTO_UPDATE_MILLIS, 10 * (System.currentTimeMillis() - startTime)));
       }, delay, TimeUnit.MILLISECONDS);
     }
+  }
+
+  private static boolean isFileAvailable(File file) {
+    List<File> roots = Arrays.asList(File.listRoots());
+    File tmp = file;
+    while(tmp != null) {
+      if (roots.contains(tmp)) {
+        return file.exists();
+      }
+      tmp = tmp.getParentFile();
+    }
+    return false;
   }
 }

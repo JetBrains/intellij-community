@@ -74,30 +74,37 @@ public abstract class CodeStyleFacade {
     return getLineIndent(editor.getDocument(), offset);
   }
 
+  /**
+   * @deprecated Use {@link com.intellij.application.options.CodeStyle#getIndentSize(com.intellij.psi.PsiFile)} instead.
+   */
+  @Deprecated
   public abstract int getIndentSize(FileType fileType);
 
-  public abstract boolean isSmartTabs(final FileType fileType);
-
+  /**
+   * @deprecated Use {@code getRightMargin(Language)} method of {@code CodeStyle.getSettings(PsiFile)} or
+   *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
+   */
+  @Deprecated
   public abstract int getRightMargin(Language language);
 
   /**
-   * @return True if wrap on typing is enabled
-   * @deprecated Use isWrapOnTyping(language) instead
+   * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).TAB_SIZE}. See {@code CodeStyle for more information}
    */
-  public abstract boolean isWrapWhenTypingReachesRightMargin();
-
-  @SuppressWarnings("deprecation")
-  public boolean isWrapOnTyping(@Nullable Language language) {
-    return isWrapWhenTypingReachesRightMargin();
-  }
-
+  @Deprecated
   public abstract int getTabSize(final FileType fileType);
 
+  /**
+   * @deprecated Use {@code CodeStyle.getIndentOptions(PsiFile).USE_TAB_CHARACTER}. See {@code CodeStyle for more information}
+   */
+  @Deprecated
   public abstract boolean useTabCharacter(final FileType fileType);
 
+  /**
+   * @deprecated Use {@code getLineSeparator()} method of {@code CodeStyle.getSettings(PsiFile)} or
+   *             {@code CodeStyle.getSettings(Project)} if there is no {@code PsiFile}
+   */
+  @Deprecated
   public abstract String getLineSeparator();
-
-  public abstract boolean projectUsesOwnSettings();
 
   public abstract boolean isUnsuitableCodeStyleConfigurable(Configurable c);
 }

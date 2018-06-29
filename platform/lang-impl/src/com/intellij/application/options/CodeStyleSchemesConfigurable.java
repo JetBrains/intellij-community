@@ -19,14 +19,14 @@ package com.intellij.application.options;
 import com.intellij.ConfigurableFactory;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesModel;
 import com.intellij.application.options.codeStyle.CodeStyleSchemesPanel;
-import com.intellij.application.options.codeStyle.CodeStyleSettingsListener;
-import com.intellij.openapi.editor.EditorFactory;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.codeStyle.CodeStyleScheme;
+import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -160,7 +160,8 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       panel.applyPanel();
     }
 
-    EditorFactory.getInstance().refreshAllEditors();
+    //noinspection deprecation
+    CodeStyleSettingsManager.getInstance(myProject).fireCodeStyleSettingsChanged(null);
   }
 
   @Override
@@ -204,7 +205,7 @@ public class CodeStyleSchemesConfigurable extends SearchableConfigurable.Parent.
       myModel = new CodeStyleSchemesModel(myProject);
       myRootSchemesPanel = new CodeStyleSchemesPanel(myModel, 0);
 
-      myModel.addListener(new CodeStyleSettingsListener(){
+      myModel.addListener(new CodeStyleSchemesModelListener(){
         @Override
         public void currentSchemeChanged(final Object source) {
           if (source != myRootSchemesPanel) {

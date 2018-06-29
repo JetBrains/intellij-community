@@ -1,12 +1,10 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.artifacts;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -65,49 +63,41 @@ public class UpdateArtifactsAfterRenameTest extends PackagingElementsTestCase {
                            " artifact:yyy");
   }
 
-  public void testRenameModule() {
+  public void testRenameModule() throws ModuleWithNameAlreadyExists {
     final ModuleManager moduleManager = ModuleManager.getInstance(myProject);
-    final Module module = new WriteAction<Module>() {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
-        Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA.getId());
-        result.setResult(res);
-      }
-    }.execute().getResultObject();
-    final Artifact artifact = addArtifact(root().module(module));
+    final Module module = WriteAction.computeAndWait(() -> {
+      Module res = moduleManager.newModule(getProjectBasePath() + "/myModule.iml", StdModuleTypes.JAVA.getId());
+      return res;
+    });
+    final Artifact artifact = addArtifact(root().module(module).moduleSource(module));
 
     assertLayout(artifact, "<root>\n" +
-                           " module:myModule");
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) throws ModuleWithNameAlreadyExists {
-        final ModifiableModuleModel model = moduleManager.getModifiableModel();
-        model.renameModule(module, "newName");
-        model.commit();
-      }
-    }.execute();
+                           " module:myModule\n" +
+                           " module sources:myModule");
+    WriteAction.runAndWait(() -> {
+      final ModifiableModuleModel model = moduleManager.getModifiableModel();
+      model.renameModule(module, "newName");
+      model.commit();
+    });
 
     assertLayout(artifact, "<root>\n" +
-                           " module:newName");
+                           " module:newName\n" +
+                           " module sources:newName");
 
     moduleManager.disposeModule(module);
 
     assertLayout(artifact, "<root>\n" +
-                           " module:newName");
+                           " module:newName\n" +
+                           " module sources:newName");
   }
 
   private void moveFile(final VirtualFile file, final VirtualFile newParent) {
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        try {
-          file.move(this, newParent);
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
-      }
-    }.execute();
+    try {
+      WriteAction.runAndWait(() -> file.move(this, newParent));
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
 }

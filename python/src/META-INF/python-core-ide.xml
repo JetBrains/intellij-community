@@ -4,6 +4,10 @@
 
   <xi:include href="/META-INF/python-core-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <extensions defaultExtensionNs="com.intellij">
+    <applicationService serviceInterface="com.intellij.lang.IdeLanguageCustomization"
+                        serviceImplementation="com.jetbrains.python.PyCharmLanguageCustomization"
+                        overrides="true"/>
+
     <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                     serviceImplementation="com.jetbrains.python.psi.search.PyProjectScopeBuilder"
                     overrides="true"/>

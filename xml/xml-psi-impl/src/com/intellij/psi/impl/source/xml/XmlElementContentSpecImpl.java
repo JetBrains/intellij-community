@@ -40,7 +40,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XML_CONTENT_ANY) {
@@ -86,7 +86,7 @@ public class XmlElementContentSpecImpl extends XmlElementImpl implements XmlElem
   @Override
   @NotNull
   public PsiReference[] getReferences() {
-    return ReferenceProvidersRegistry.getReferencesFromProviders(this,XmlElementContentSpec.class);
+    return ReferenceProvidersRegistry.getReferencesFromProviders(this);
   }
 
   @Override

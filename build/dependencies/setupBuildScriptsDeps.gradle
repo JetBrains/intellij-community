@@ -1,42 +1,49 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+import java.nio.file.Files
+import java.nio.file.Paths
+
 repositories {
   mavenCentral()
-  if (project.ext.inJetBrainsNetwork) {
-    maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
-  }
+  maven { url "http://repo.labs.intellij.net/intellij-third-party-dependencies/" }
   maven { url "https://jetbrains.bintray.com/intellij-third-party-dependencies" }
+  maven { url "https://jetbrains.bintray.com/test-discovery" }
+  jcenter()
 }
 
 configurations {
   buildScriptsDeps
+  testDiscoveryDeps
 }
 
+List<String> projectLibraries = [
+  "Groovy",
+  "cli-parser",
+  "protobuf",
+  "OroMatcher",
+  "commons-codec",
+  "commons-logging",
+  "Trove4j",
+  "JDOM",
+  "NanoXML",
+  "Guava",
+  "JUnit4",
+  "netty-codec-http",
+  "netty-handler",
+  "lz4-java",
+  "gant-groovy",
+  "Log4J",
+  "Slf4j",
+  "jna",
+  "jgoodies-forms",
+  "http-client"
+]
+
 dependencies {
-  buildScriptsDeps loadLibraryMavenId("Groovy")
-  buildScriptsDeps loadLibraryMavenId("cli-parser")
-  buildScriptsDeps loadLibraryMavenId("protobuf")
-  buildScriptsDeps loadLibraryMavenId("OroMatcher")
-  buildScriptsDeps loadLibraryMavenId("commons-codec")
-  buildScriptsDeps loadLibraryMavenId("commons-logging")
-  buildScriptsDeps loadLibraryMavenId("Trove4j")
-  buildScriptsDeps loadLibraryMavenId("NanoXML")
-  buildScriptsDeps loadLibraryMavenId("Guava")
-  buildScriptsDeps loadLibraryMavenId("JUnit4")
-  buildScriptsDeps(loadLibraryMavenId("gant-groovy"), { transitive = false })
+  (projectLibraries.collect { loadProjectLibraryProperties(it) } +
+   loadModuleLibraryProperties("aether-dependency-resolver/intellij.java.aetherDependencyResolver.iml")
+  ).each { properties ->
+    buildScriptsDeps(properties.first, { transitive = properties.second })
+  }
 }
 
 /**
@@ -47,8 +54,23 @@ task setupBuildScriptsDeps(dependsOn: configurations.buildScriptsDeps, type: Syn
   into "${project.buildDir}/build-scripts-deps"
 }
 
-private String loadLibraryMavenId(String libraryName) {
-  File file = new File(project.rootDir, "../../.idea/libraries/${libraryName.replace('-', '_')}.xml")
+task setupTestDiscoveryDeps {
+  doFirst {
+    def dir = "${project.buildDir}/test-discovery-deps"
+    def testDiscoveryDeps = file(dir)
+    testDiscoveryDeps.deleteDir()
+    testDiscoveryDeps.mkdirs()
+    configurations.detachedConfiguration(
+      dependencies.create(loadProjectLibraryProperties('test-discovery-plugin-base', '../../..').first)
+    ).files.each { from ->
+      def into = Paths.get("$dir/$from.name")
+      Files.copy(from.toPath(), into)
+    }
+  }
+}
+
+private Tuple2<String, Boolean> loadProjectLibraryProperties(String libraryName, String idea = '../..') {
+  File file = new File(project.rootDir, "$idea/.idea/libraries/${libraryName.replace('-', '_')}.xml")
   if (!file.exists()) {
     throw new GradleException("Cannot find $libraryName project library: $file doesn't exist")
   }
@@ -57,6 +79,31 @@ private String loadLibraryMavenId(String libraryName) {
   if (propertiesTags.isEmpty()) {
     throw new GradleException("$libraryName project library is not a repository library")
   }
-  //noinspection GrUnresolvedAccess
-  propertiesTags.first().'@maven-id'
+  //noinspection GroovyAssignabilityCheck
+  loadLibraryProperties(propertiesTags.first())
+}
+
+private List<Tuple2<String, Boolean>> loadModuleLibraryProperties(String moduleFileRelativePath) {
+  File file = new File(project.rootDir, "../../$moduleFileRelativePath")
+  if (!file.exists()) {
+    throw new GradleException("Cannot find $moduleFileRelativePath module: $file doesn't exist")
+  }
+
+  def root = new XmlParser().parse(file)
+  def rootManager = root.component?.find { it.@name == 'NewModuleRootManager' }
+  if (rootManager == null) {
+    throw new GradleException("Cannot find 'NewModuleRootManager' component in $file")
+  }
+  rootManager.orderEntry.findAll { it.@type == 'module-library' }.collect {
+    def libraryTag = it.library.first()
+    if (libraryTag.properties.isEmpty()) {
+      throw new GradleException("Library '${libraryTag.'@name'}' in $moduleFileRelativePath is not a repository library")
+    }
+    //noinspection GroovyAssignabilityCheck
+    loadLibraryProperties(libraryTag.properties.first())
+  }
+}
+
+private static Tuple2<String, Boolean> loadLibraryProperties(Node propertiesTag) {
+  new Tuple2(propertiesTag.'@maven-id', propertiesTag.'@include-transitive-deps' != "false")
 }

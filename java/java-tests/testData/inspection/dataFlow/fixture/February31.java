@@ -17,7 +17,7 @@ public class February31 {
     if (time.month == 2 && IsLeapYear(time.year)) {
       return <warning descr="Condition 'time.month <= kDaysInMonth[time.month] + 1' is always 'true'">time.month <= kDaysInMonth[time.month] + 1</warning>;
     } else {
-      return time.month <= kDaysInMonth[time.month];
+      return <warning descr="Condition 'time.month <= kDaysInMonth[time.month]' is always 'true'">time.month <= kDaysInMonth[time.month]</warning>;
     }
   }
 

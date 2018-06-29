@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("DEPRECATION")
 
 package com.intellij.configurationStore.xml
@@ -18,10 +19,16 @@ import com.intellij.util.xmlb.annotations.Tag
 import com.intellij.util.xmlb.annotations.XCollection
 import org.jdom.Element
 import org.junit.Test
-import java.util.*
 
+@Suppress("PropertyName")
 internal class XmlSerializerCollectionTest {
   @Test fun jdomExternalizableStringList() {
+    @Tag("b")
+    class Bean3 {
+      @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
+      var list = JDOMExternalizableStringList()
+    }
+
     val bean = Bean3()
     bean.list.add("\u0001one")
     bean.list.add("two")
@@ -57,7 +64,14 @@ internal class XmlSerializerCollectionTest {
     bean.list.add("one")
     bean.list.add("two")
     bean.list.add("three")
-    testSerializer("<b>\n" + "  <list>\n" + "    <item value=\"one\" />\n" + "    <item value=\"two\" />\n" + "    <item value=\"three\" />\n" + "  </list>\n" + "</b>", bean, SkipDefaultsSerializationFilter())
+    testSerializer("""
+      <b>
+        <list>
+          <item value="one" />
+          <item value="two" />
+          <item value="three" />
+        </list>
+      </b>""", bean, SkipDefaultsSerializationFilter())
   }
 
   @Test fun collectionBeanReadJDOMExternalizableStringList() {
@@ -76,7 +90,7 @@ internal class XmlSerializerCollectionTest {
   @Test fun polymorphicArray() {
     @Tag("bean")
     class BeanWithPolymorphicArray {
-      @AbstractCollection(elementTypes = arrayOf(BeanWithPublicFields::class, BeanWithPublicFieldsDescendant::class))
+      @AbstractCollection(elementTypes = [(BeanWithPublicFields::class), (BeanWithPublicFieldsDescendant::class)])
       var v = arrayOf<BeanWithPublicFields>()
     }
 
@@ -120,7 +134,7 @@ internal class XmlSerializerCollectionTest {
 
   @Test fun arrayAnnotationWithElementTag() {
     @Tag("bean") class Bean {
-      @AbstractCollection(elementTag = "vvalue", elementValueAttribute = "v")
+      @AbstractCollection(elementTag = "vValue", elementValueAttribute = "v")
       var v = arrayOf("a", "b")
     }
 
@@ -130,24 +144,32 @@ internal class XmlSerializerCollectionTest {
     <bean>
       <option name="v">
         <array>
-          <vvalue v="a" />
-          <vvalue v="b" />
+          <vValue v="a" />
+          <vValue v="b" />
         </array>
       </option>
     </bean>""", bean)
 
     bean.v = arrayOf("1", "2", "3")
 
-    testSerializer(
-      "<bean>\n" + "  <option name=\"v\">\n" + "    <array>\n" + "      <vvalue v=\"1\" />\n" + "      <vvalue v=\"2\" />\n" + "      <vvalue v=\"3\" />\n" + "    </array>\n" + "  </option>\n" + "</bean>",
-      bean)
+    testSerializer("""
+      <bean>
+        <option name="v">
+          <array>
+            <vValue v="1" />
+            <vValue v="2" />
+            <vValue v="3" />
+          </array>
+        </option>
+      </bean>""", bean)
   }
 
   @Test fun arrayWithoutTag() {
     @Tag("bean")
     class Bean {
-      @XCollection(elementName = "vvalue", valueAttributeName = "v")
+      @XCollection(elementName = "vValue", valueAttributeName = "v")
       var v = arrayOf("a", "b")
+      @Suppress("PropertyName", "unused")
       var INT_V = 1
     }
 
@@ -157,8 +179,8 @@ internal class XmlSerializerCollectionTest {
     <bean>
       <option name="INT_V" value="1" />
       <option name="v">
-        <vvalue v="a" />
-        <vvalue v="b" />
+        <vValue v="a" />
+        <vValue v="b" />
       </option>
     </bean>""", bean)
 
@@ -168,14 +190,14 @@ internal class XmlSerializerCollectionTest {
     <bean>
       <option name="INT_V" value="1" />
       <option name="v">
-        <vvalue v="1" />
-        <vvalue v="2" />
-        <vvalue v="3" />
+        <vValue v="1" />
+        <vValue v="2" />
+        <vValue v="3" />
       </option>
     </bean>""", bean)
   }
 
-  private data class BeanWithArray(var ARRAY_V: Array<String> = arrayOf("a", "b"))
+  private data class BeanWithArray(@Suppress("ArrayInDataClass") var ARRAY_V: Array<String> = arrayOf("a", "b"))
 
   @Test fun array() {
     val bean = BeanWithArray()
@@ -186,40 +208,6 @@ internal class XmlSerializerCollectionTest {
     bean.ARRAY_V = arrayOf("1", "2", "3", "")
     testSerializer(
       "<BeanWithArray>\n  <option name=\"ARRAY_V\">\n    <array>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n      <option value=\"\" />\n    </array>\n  </option>\n</BeanWithArray>",
-      bean)
-  }
-
-  private class BeanWithList {
-    var VALUES: List<String> = ArrayList(Arrays.asList("a", "b", "c"))
-  }
-
-  @Test fun ListSerialization() {
-    val bean = BeanWithList()
-
-    testSerializer(
-      "<BeanWithList>\n  <option name=\"VALUES\">\n    <list>\n      <option value=\"a\" />\n      <option value=\"b\" />\n      <option value=\"c\" />\n    </list>\n  </option>\n</BeanWithList>",
-      bean)
-
-    bean.VALUES = ArrayList(Arrays.asList("1", "2", "3"))
-
-    testSerializer(
-      "<BeanWithList>\n  <option name=\"VALUES\">\n    <list>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n    </list>\n  </option>\n</BeanWithList>",
-      bean)
-  }
-
-  internal class BeanWithSet {
-    var VALUES: Set<String> = LinkedHashSet(Arrays.asList("a", "b", "w"))
-  }
-
-  @Test fun setSerialization() {
-    val bean = BeanWithSet()
-    testSerializer(
-      "<BeanWithSet>\n  <option name=\"VALUES\">\n    <set>\n      <option value=\"a\" />\n      <option value=\"b\" />\n      <option value=\"w\" />\n    </set>\n  </option>\n</BeanWithSet>",
-      bean)
-    bean.VALUES = LinkedHashSet(Arrays.asList("1", "2", "3"))
-
-    testSerializer(
-      "<BeanWithSet>\n  <option name=\"VALUES\">\n    <set>\n      <option value=\"1\" />\n      <option value=\"2\" />\n      <option value=\"3\" />\n    </set>\n  </option>\n</BeanWithSet>",
       bean)
   }
 
@@ -253,8 +241,6 @@ internal class XmlSerializerCollectionTest {
             <projectService serviceInterface="com.intellij.psi.search.ProjectScopeBuilder"
                             serviceImplementation="com.intellij.database.ide.DatabaseProjectScopeBuilder"
                             overrides="true"/>
-
-            <goto.nonProjectScopeDisabler/>
           </extensions>
 
           <application-components>
@@ -267,7 +253,7 @@ internal class XmlSerializerCollectionTest {
           <project-components>
             <component>
               <option name="overrides" value="true"/>
-              <interface-class>com.intellij.database.autoconfig.DatabaseConfigFileWatcher</interface-class>
+              <interface-class>com.intellij.database.autoConfig.DatabaseConfigFileWatcher</interface-class>
               <implementation-class/>
             </component>
           </project-components>
@@ -317,12 +303,6 @@ internal class XmlSerializerCollectionTest {
         <action overrides="true" id="DatabaseView.ImportDataSources" class="com.intellij.openapi.actionSystem.EmptyAction" text="Import from Sources..." />
       </actions>""".trimIndent())
   }
-}
-
-@Tag("b")
-private class Bean3 {
-  @Suppress("DEPRECATED_SYMBOL_WITH_MESSAGE")
-  var list = JDOMExternalizableStringList()
 }
 
 @Tag("b")

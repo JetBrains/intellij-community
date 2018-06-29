@@ -18,7 +18,6 @@ import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
 import com.jetbrains.python.run.AbstractPythonRunConfigurationParams;
@@ -158,17 +157,19 @@ public abstract class ConfigurationBasedProcessRunner<CONF_T extends AbstractPyt
     castedConfiguration.setSdkHome(sdkPath);
     castedConfiguration.setWorkingDirectory(workingDir);
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) throws Throwable {
+    try {
+      WriteAction.run(() -> {
         configurationCreatedAndWillLaunch(castedConfiguration);
 
         RunManager runManager = RunManager.getInstance(project);
         runManager.addConfiguration(settings);
         runManager.setSelectedConfiguration(settings);
         Assert.assertSame(settings, runManager.getSelectedConfiguration());
-      }
-    }.execute();
+      });
+    }
+    catch (IOException e) {
+      throw new ExecutionException(e);
+    }
 
 
     // Execute

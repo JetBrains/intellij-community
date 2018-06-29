@@ -19,8 +19,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ClassInheritorsSearch;
 import com.intellij.psi.util.MethodSignatureUtil;
-import com.intellij.psi.util.PsiSuperMethodUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.MultiMap;
@@ -43,7 +43,7 @@ public class FindSuperElementsHelper {
     if (element instanceof PsiMethod) {
       PsiMethod method = (PsiMethod) element;
       if (method.isConstructor()) {
-        PsiMethod constructorInSuper = PsiSuperMethodUtil.findConstructorInSuper(method);
+        PsiMethod constructorInSuper = JavaPsiConstructorUtil.findConstructorInSuper(method);
         if (constructorInSuper != null) {
           return new PsiMethod[]{constructorInSuper};
         }

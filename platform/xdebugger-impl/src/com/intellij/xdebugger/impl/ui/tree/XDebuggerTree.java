@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.ui.tree;
 
 import com.intellij.execution.configurations.RemoteRunProfile;
@@ -261,6 +259,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
       if (node.isEllipsis()) {
         TreeNode parent = node.getParent();
         if (parent instanceof XValueContainerNode) {
+          selectNodeOnLoad(n -> n.getParent() == parent, n -> ((XValueContainerNode)parent).isObsolete());
           ((XValueContainerNode)parent).startComputingChildren();
           return true;
         }
@@ -371,6 +370,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     UIUtil.dispose(this);
     setLeadSelectionPath(null);
     setAnchorSelectionPath(null);
+    accessibleContext = null;
     removeComponentListener(myMoveListener);
     removeTreeExpansionListener(myTreeExpansionListener);
     myListeners.clear();
@@ -403,10 +403,13 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     return myLaterInvocator;
   }
 
-  public void selectNodeOnLoad(final Condition<TreeNode> nodeFilter) {
+  public void selectNodeOnLoad(Condition<TreeNode> nodeFilter, Condition<TreeNode> obsoleteChecker) {
     addTreeListener(new XDebuggerTreeListener() {
       @Override
       public void nodeLoaded(@NotNull RestorableStateNode node, String name) {
+        if (obsoleteChecker.value(node)) {
+          removeTreeListener(this);
+        }
         if (nodeFilter.value(node)) {
           setSelectionPath(node.getPath());
           removeTreeListener(this); // remove the listener on first match

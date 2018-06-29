@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.execution.CommandLineUtil;
@@ -25,9 +11,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtilRt;
-import com.intellij.util.Base64;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +19,9 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
+import java.util.Base64;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicInteger;
 
@@ -48,7 +34,7 @@ public abstract class AbstractJavaFxPackager {
   protected String getArtifactRootName() {
     return PathUtilRt.getFileName(getArtifactOutputFilePath());
   }
-  
+
   protected abstract String getArtifactName();
 
   protected abstract String getArtifactOutputPath();
@@ -381,7 +367,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getKeypass(boolean selfSigning) {
-    return selfSigning ? "keypass" : new String(Base64.decode(getKeypass()), CharsetToolkit.UTF8_CHARSET);
+    return selfSigning ? "keypass" : new String(Base64.getDecoder().decode(getKeypass()), StandardCharsets.UTF_8);
   }
 
   private String getKeystore(boolean selfSigning) {
@@ -389,7 +375,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getStorepass(boolean selfSigning) {
-    return selfSigning ? "storepass" : new String(Base64.decode(getStorepass()), CharsetToolkit.UTF8_CHARSET);
+    return selfSigning ? "storepass" : new String(Base64.getDecoder().decode(getStorepass()), StandardCharsets.UTF_8);
   }
 
   public abstract String getKeypass();

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.blocks;
 
@@ -53,7 +53,7 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitClosure(this);
   }
 
@@ -135,7 +135,8 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                   @Nullable final PsiType classToDelegate) {
     if (classToDelegate == null) return true;
 
-    return ResolveUtil.processAllDeclarations(classToDelegate, processor, state.put(ClassHint.RESOLVE_CONTEXT, this), place);
+    ResolveState delegateState = state.put(ClassHint.THIS_TYPE, classToDelegate).put(ClassHint.RESOLVE_CONTEXT, this);
+    return ResolveUtil.processAllDeclarations(classToDelegate, processor, delegateState, place);
   }
 
   private boolean processClosureClassMembers(@NotNull PsiScopeProcessor processor,

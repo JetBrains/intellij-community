@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.miscGenerics;
 
 import com.intellij.codeInspection.*;
@@ -105,7 +105,7 @@ public class RawTypeCanBeGenericInspection extends AbstractBaseJavaLocalInspecti
         final PsiType type = getSuggestedType(variable);
         if (type != null) {
           final TypeMigrationRules rules = new TypeMigrationRules(project);
-          rules.setBoundScope(PsiSearchHelper.SERVICE.getInstance(project).getUseScope(variable));
+          rules.setBoundScope(PsiSearchHelper.getInstance(project).getUseScope(variable));
           TypeMigrationProcessor.runHighlightingTypeMigration(project, null, rules, variable, type, false, true);
         }
       }

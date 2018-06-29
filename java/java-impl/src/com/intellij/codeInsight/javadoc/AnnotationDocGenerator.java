@@ -97,7 +97,7 @@ public class AnnotationDocGenerator {
     buffer.append("@");
     String name = forceShortNames ? myNameReference.getReferenceName() : myNameReference.getText();
     if (type != null && generateLink) {
-      JavaDocInfoGenerator.generateLink(buffer, myTargetClass, name, false);
+      JavaDocInfoGenerator.generateLink(buffer, myTargetClass, name, format == AnnotationFormat.JavaDocComplete);
     } else {
       buffer.append(name);
     }

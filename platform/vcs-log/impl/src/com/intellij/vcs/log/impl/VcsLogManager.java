@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.impl;
 
 import com.intellij.openapi.Disposable;
@@ -31,13 +17,13 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.vcs.log.VcsLogProvider;
 import com.intellij.vcs.log.VcsLogRefresher;
+import com.intellij.vcs.log.VcsUserRegistry;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.data.VcsLogStorage;
 import com.intellij.vcs.log.ui.AbstractVcsLogUi;
-import com.intellij.vcs.log.ui.VcsLogColorManager;
 import com.intellij.vcs.log.ui.VcsLogColorManagerImpl;
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import com.intellij.vcs.log.visible.VcsLogFilterer;
+import com.intellij.vcs.log.visible.VcsLogFiltererImpl;
 import com.intellij.vcs.log.visible.VisiblePackRefresherImpl;
 import org.jetbrains.annotations.CalledInAny;
 import org.jetbrains.annotations.CalledInAwt;
@@ -74,13 +60,15 @@ public class VcsLogManager implements Disposable {
     myRecreateMainLogHandler = recreateHandler;
 
     Map<VirtualFile, VcsLogProvider> logProviders = findLogProviders(roots, myProject);
-    myLogData = new VcsLogData(myProject, logProviders, new MyFatalErrorsHandler(), this);
+    MyFatalErrorsHandler fatalErrorsHandler = new MyFatalErrorsHandler();
+    myLogData = new VcsLogData(myProject, logProviders, fatalErrorsHandler, this);
     myPostponableRefresher = new PostponableLogRefresher(myLogData);
     myTabsLogRefresher = new VcsLogTabsWatcher(myProject, myPostponableRefresher);
 
     refreshLogOnVcsEvents(logProviders, myPostponableRefresher, myLogData);
 
     myColorManager = new VcsLogColorManagerImpl(logProviders.keySet());
+    myLogData.getUserRegistry().addRebuildListener(t -> fatalErrorsHandler.consume(myLogData.getUserRegistry(), t), this);
 
     if (scheduleRefreshImmediately) {
       scheduleInitialization();
@@ -103,8 +91,18 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogUiImpl createLogUi(@NotNull String logId, @Nullable String contentTabName) {
-    return createLogUi(contentTabName, getMainLogUiFactory(logId));
+  public VcsLogColorManagerImpl getColorManager() {
+    return myColorManager;
+  }
+
+  @NotNull
+  public VcsLogTabsProperties getUiProperties() {
+    return myUiProperties;
+  }
+
+  @NotNull
+  public VcsLogUiImpl createLogUi(@NotNull String logId, boolean isToolWindowTab) {
+    return createLogUi(getMainLogUiFactory(logId), isToolWindowTab);
   }
 
   @NotNull
@@ -113,13 +111,12 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public <U extends AbstractVcsLogUi> U createLogUi(@Nullable String contentTabName,
-                                                    @NotNull VcsLogUiFactory<U> factory) {
-    U ui = factory.createLogUi(myProject, myLogData, myColorManager);
+  public <U extends AbstractVcsLogUi> U createLogUi(@NotNull VcsLogUiFactory<U> factory, boolean isToolWindowTab) {
+    U ui = factory.createLogUi(myProject, myLogData);
 
     Disposable disposable;
-    if (contentTabName != null) {
-      disposable = myTabsLogRefresher.addTabToWatch(contentTabName, ui.getRefresher());
+    if (isToolWindowTab) {
+      disposable = myTabsLogRefresher.addTabToWatch(ui.getId(), ui.getRefresher());
     }
     else {
       disposable = myPostponableRefresher.addLogWindow(ui.getRefresher());
@@ -136,7 +133,7 @@ public class VcsLogManager implements Disposable {
     MultiMap<VcsLogProvider, VirtualFile> providers2roots = MultiMap.create();
     logProviders.forEach((key, value) -> providers2roots.putValue(value, key));
 
-    for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry : providers2roots.entrySet()) {
+    for (Map.Entry<VcsLogProvider, Collection<VirtualFile>> entry: providers2roots.entrySet()) {
       Disposable disposable = entry.getKey().subscribeToRootRefreshEvents(entry.getValue(), refresher);
       Disposer.register(disposableParent, disposable);
     }
@@ -146,7 +143,7 @@ public class VcsLogManager implements Disposable {
   public static Map<VirtualFile, VcsLogProvider> findLogProviders(@NotNull Collection<VcsRoot> roots, @NotNull Project project) {
     Map<VirtualFile, VcsLogProvider> logProviders = ContainerUtil.newHashMap();
     VcsLogProvider[] allLogProviders = Extensions.getExtensions(VcsLogProvider.LOG_PROVIDER_EP, project);
-    for (VcsRoot root : roots) {
+    for (VcsRoot root: roots) {
       AbstractVcs vcs = root.getVcs();
       VirtualFile path = root.getPath();
       if (vcs == null || path == null) {
@@ -154,7 +151,7 @@ public class VcsLogManager implements Disposable {
         continue;
       }
 
-      for (VcsLogProvider provider : allLogProviders) {
+      for (VcsLogProvider provider: allLogProviders) {
         if (provider.getSupportedVcs().equals(vcs.getKeyInstanceMethod())) {
           logProviders.put(path, provider);
           break;
@@ -174,6 +171,7 @@ public class VcsLogManager implements Disposable {
     LOG.assertTrue(ApplicationManager.getApplication().isDispatchThread());
 
     myTabsLogRefresher.closeLogTabs();
+
     Disposer.dispose(myTabsLogRefresher);
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Disposer.dispose(this);
@@ -212,7 +210,7 @@ public class VcsLogManager implements Disposable {
         LOG.error(e);
       }
 
-      if (source instanceof VcsLogStorage) {
+      if (source instanceof VcsLogStorage || source instanceof VcsUserRegistry) {
         myLogData.getIndex().markCorrupted();
       }
     }
@@ -225,8 +223,7 @@ public class VcsLogManager implements Disposable {
 
   @FunctionalInterface
   public interface VcsLogUiFactory<T extends AbstractVcsLogUi> {
-    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData,
-                  @NotNull VcsLogColorManager colorManager);
+    T createLogUi(@NotNull Project project, @NotNull VcsLogData logData);
   }
 
   private class MainVcsLogUiFactory implements VcsLogUiFactory<VcsLogUiImpl> {
@@ -238,15 +235,14 @@ public class VcsLogManager implements Disposable {
 
     @Override
     public VcsLogUiImpl createLogUi(@NotNull Project project,
-                                    @NotNull VcsLogData logData,
-                                    @NotNull VcsLogColorManager manager) {
+                                    @NotNull VcsLogData logData) {
       MainVcsLogUiProperties properties = myUiProperties.createProperties(myLogId);
       VisiblePackRefresherImpl refresher =
         new VisiblePackRefresherImpl(project, logData, properties.get(MainVcsLogUiProperties.BEK_SORT_TYPE),
-                                     new VcsLogFilterer(logData.getLogProviders(), logData.getStorage(),
-                                                        logData.getTopCommitsCache(),
-                                                        logData.getCommitDetailsGetter(), logData.getIndex()));
-      return new VcsLogUiImpl(logData, project, manager, properties, refresher);
+                                     new VcsLogFiltererImpl(logData.getLogProviders(), logData.getStorage(),
+                                                            logData.getTopCommitsCache(),
+                                                            logData.getCommitDetailsGetter(), logData.getIndex()), myLogId);
+      return new VcsLogUiImpl(myLogId, logData, myColorManager, properties, refresher);
     }
   }
 }

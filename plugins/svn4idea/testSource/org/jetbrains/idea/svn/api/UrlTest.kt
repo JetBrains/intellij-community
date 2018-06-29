@@ -34,6 +34,18 @@ class UrlTest {
   }
 
   @Test
+  fun `file protocol to string`() {
+    assertEquals("file://localhost/home", Url.parse("file://localhost/home").toString())
+    assertEquals("file://localhost/home/aaa", Url.parse("file://localhost/home").appendPath("aaa").toString())
+
+    assertEquals("file:///home", Url.parse("file:///home").toString())
+    assertEquals("file:///home/aaa", Url.parse("file:///home").appendPath("aaa").toString())
+
+    assertEquals("file:///C:/svn", Url.parse("file:///C:/svn").toString())
+    assertEquals("file:///C:/svn/aaa", Url.parse("file:///C:/svn").appendPath("aaa").toString())
+  }
+
+  @Test
   fun `append path`() {
     val url = Url.parse("http://aaa")
 

@@ -98,7 +98,7 @@ public class BuildPropertiesImpl extends BuildProperties {
         fileSet.add(new Include("javac2.jar"));
         fileSet.add(new Include("jdom.jar"));
         fileSet.add(new Include("asm-all*.jar"));
-        fileSet.add(new Include("jgoodies-forms.jar"));
+        fileSet.add(new Include("forms-*.jar"));
         javac2.add(fileSet);
         add(javac2);
         register.add(new Tag("taskdef",

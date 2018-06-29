@@ -1,8 +1,9 @@
 !include "TextFunc.nsh"
-!define INSTALL_OPTION_ELEMENTS 8
+!define INSTALL_OPTION_ELEMENTS 10
 !define PYTHON_VERSIONS 4
 !define CUSTOM_SILENT_CONFIG 1
 
+Var internetConnection
 ${StrTok}
 
 Function customPreInstallActions
@@ -12,13 +13,15 @@ deletePythonFileInfo:
 getPythonFileInfo:
   inetc::get "https://www.jetbrains.com/updates/python.txt" "$TEMP\python.txt"
   ${LineSum} "$TEMP\python.txt" $R0
-  IfErrors cantOpenFile
+  IfErrors removePythonChoice
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
-cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded." /SD IDOK
 removePythonChoice:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Flags" "DISABLED"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Flags" "DISABLED"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "Text" "No internet connection. Python won't be downloaded."
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "Right" "-1"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "Type" "Label"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "Text" ""
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "Left" "-1"
   goto done
 getPythonInfo:
   Call getPythonInfo
@@ -26,18 +29,18 @@ getPythonInfo:
 ; check if pythons are already installed
   StrCpy $R2 $0
   Call searchPython
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "Text" "Python $R2"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "Text" "Python $R2"
   StrCmp $4 "Absent" checkPython3
-  StrCpy $R4 "Field 6"
-  StrCpy $R5 "Field 7"
+  StrCpy $R4 "Field 8"
+  StrCpy $R5 "Field 9"
   Call updatePythonControls
 checkPython3:
   StrCpy $R2 $R0
   Call searchPython
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "Text" "Python $R2"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "Text" "Python $R2"
   StrCmp $4 "Absent" done
-  StrCpy $R4 "Field 7"
-  StrCpy $R5 "Field 6"
+  StrCpy $R4 "Field 9"
+  StrCpy $R5 "Field 8"
   Call updatePythonControls
 done:  
 FunctionEnd
@@ -62,37 +65,44 @@ run_in_user_mode:
   ClearErrors
   ${ConfigRead} "$R1" "launcher32=" $R3
   IfErrors launcher_64
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 2" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $launcherShortcut" "State" $R3
 
 launcher_64:
   ClearErrors
   ${ConfigRead} "$R1" "launcher64=" $R3
+  IfErrors update_PATH
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $secondLauncherShortcut" "State" $R3
+
+update_PATH:
+  ClearErrors
+  ${ConfigRead} "$R1" "updatePATH=" $R3
   IfErrors download_jre32
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 3" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $addToPath" "State" $R3
 
 download_jre32:
   ClearErrors
   ${ConfigRead} "$R1" "jre32=" $R3
   IfErrors download_python2
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "Type" "checkbox"
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 4" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "Type" "checkbox"
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field $downloadJRE" "State" $R3
 
 download_python2:
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "State" 0
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "State" 0
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "State" 0
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "State" 0
   ClearErrors
   ${ConfigRead} "$R1" "python2=" $R3
   IfErrors download_python3
   StrCmp $R3 "1" 0 download_python3
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 6" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 8" "State" $R3
 
 download_python3:
   ClearErrors
   ${ConfigRead} "$R1" "python3=" $R3
   IfErrors associations
   StrCmp $R3 "1" 0 associations
-  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 7" "State" $R3
+  !insertmacro INSTALLOPTIONS_WRITE "Desktop.ini" "Field 9" "State" $R3
 
 associations:
   StrCmp "${ASSOCIATION}" "NoAssociation" done
@@ -118,17 +128,18 @@ FunctionEnd
 
 
 Function customInstallActions
+  StrCpy $internetConnection "Yes"
   ${LineSum} "$TEMP\python.txt" $R0
   IfErrors cantOpenFile
 ; info about 2 and 3 version of python
   StrCmp $R0 ${PYTHON_VERSIONS} getPythonInfo
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is invalid. Python will not be downloaded." /SD IDOK
-  goto skip_python_download
+  StrCpy $internetConnection "No"
+  goto check_python
 getPythonInfo:  
   Call getPythonInfo
   StrCmp $0 "Error" skip_python_download
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 6" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 8" "State"
   StrCpy $R7 "msiexec.exe /i "
   StrCpy $R8 "$0.msi"
   StrCpy $R9 "/quiet /qn"
@@ -137,7 +148,7 @@ getPythonInfo:
   StrCpy $R3 $1
   goto check_python
 python3:  
-  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 7" "State"
+  !insertmacro INSTALLOPTIONS_READ $R2 "Desktop.ini" "Field 9" "State"
   StrCpy $R7 ""
   StrCpy $R8 "$R0.exe"
   StrCpy $R9 "InstallAllUsers=1 /quiet"
@@ -154,6 +165,7 @@ installation_for_all_users:
 verefy_python_launcher:
   IfFileExists $1python.exe python_exists get_python
 get_python:
+  StrCmp $internetConnection "No" skip_python_download
   CreateDirectory "$INSTDIR\python"
   inetc::get "$R3" "$INSTDIR\python\python_$R8" /END
   Pop $0
@@ -205,7 +217,6 @@ getPythonInfo:
   ${StrTok} $R1 $4 " " "2" "1"
   goto done
 cantOpenFile:
-  MessageBox MB_OK|MB_ICONEXCLAMATION "python.txt is not exist. Python will not be downloaded." /SD IDOK
   StrCpy $0 "Error"
 done:
 FunctionEnd

@@ -1,0 +1,11 @@
+a?[
+-----
+Groovy script
+  Property by index
+    Reference expression
+      PsiElement(identifier)('a')
+    PsiElement(?)('?')
+    Arguments
+      PsiElement([)('[')
+      PsiErrorElement:']' expected
+        <empty list>

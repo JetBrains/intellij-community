@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.index
 
 import com.intellij.ide.todo.TodoConfiguration
@@ -53,36 +39,27 @@ import com.intellij.psi.impl.cache.impl.id.IdIndexEntry
 import com.intellij.psi.impl.cache.impl.id.IdIndexImpl
 import com.intellij.psi.impl.cache.impl.todo.TodoIndex
 import com.intellij.psi.impl.file.impl.FileManagerImpl
+import com.intellij.psi.impl.java.JavaFunctionalExpressionIndex
 import com.intellij.psi.impl.java.stubs.index.JavaStubIndexKeys
 import com.intellij.psi.impl.search.JavaNullMethodArgumentIndex
-import com.intellij.psi.impl.source.JavaFileElementType
-import com.intellij.psi.impl.source.PostprocessReformattingAspect
-import com.intellij.psi.impl.source.PsiFileWithStubSupport
-import com.intellij.psi.search.EverythingGlobalScope
-import com.intellij.psi.search.FilenameIndex
-import com.intellij.psi.search.GlobalSearchScope
-import com.intellij.psi.search.PsiSearchHelper
-import com.intellij.psi.search.TodoAttributesUtil
-import com.intellij.psi.search.TodoPattern
+import com.intellij.psi.impl.source.*
+import com.intellij.psi.search.*
 import com.intellij.psi.stubs.SerializedStubTree
 import com.intellij.psi.stubs.StubIndex
 import com.intellij.psi.stubs.StubIndexImpl
 import com.intellij.psi.stubs.StubUpdatingIndex
 import com.intellij.testFramework.IdeaTestUtil
-import com.intellij.testFramework.LightVirtualFile
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.PsiTestUtil
 import com.intellij.testFramework.SkipSlowTestLocally
 import com.intellij.testFramework.exceptionCases.IllegalArgumentExceptionCase
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase
-import com.intellij.util.FileContentUtil
-import com.intellij.util.IncorrectOperationException
-import com.intellij.util.Processor
-import com.intellij.util.TimeoutUtil
+import com.intellij.util.*
 import com.intellij.util.indexing.*
 import com.intellij.util.indexing.impl.MapIndexStorage
 import com.intellij.util.indexing.impl.MapReduceIndex
 import com.intellij.util.io.*
+import com.intellij.util.ref.GCUtil
 import com.siyeh.ig.JavaOverridingMethodUtil
 import groovy.transform.CompileStatic
 import org.jetbrains.annotations.NotNull
@@ -269,10 +246,43 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     assertTrue(count != getPsiManager().getModificationTracker().getModificationCount())
   }
 
+  void testPersistentChangeAffectsDocument() throws IOException {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    final VirtualFile vFile = psiFile.getVirtualFile()
+
+    CodeStyleManager.getInstance(project).reformat(psiFile)
+    
+    PostprocessReformattingAspect.getInstance(project).doPostponedFormatting()
+    PsiManager.getInstance(project).reloadFromDisk(psiFile)
+
+    FileContentUtilCore.reparseFiles(vFile)
+
+    def provider = PsiManager.getInstance(project).findViewProvider(vFile)
+    def stubTree = ((PsiFileImpl)provider.getPsi(provider.getBaseLanguage())).getGreenStubTree()
+    
+    VfsUtil.saveText(vFile, "class Bar {}")
+    
+    assertNotNull(findClass("Foo"))
+  }
+
+  void testPersistentChangeAffectsUnsavedDocument() throws IOException {
+    def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
+    final VirtualFile vFile = psiFile.getVirtualFile()
+
+    Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.insertString(0, "class f {}")
+    PsiManager.getInstance(project).reloadFromDisk(psiFile)
+    assertNotNull findClass("Foo")
+    VfsUtil.saveText(vFile, "class x {}")
+    document.insertString(0, "class a {}")
+    PlatformTestUtil.tryGcSoftlyReachableObjects()
+    assertNotNull findClass("Foo")
+  }
+
   void testSkipUnknownFileTypes() throws IOException {
     final VirtualFile vFile = myFixture.addFileToProject("Foo.test", "Foo").getVirtualFile()
     assertEquals(PlainTextFileType.INSTANCE, vFile.getFileType())
-    final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getProject())
+    final PsiSearchHelper helper = PsiSearchHelper.getInstance(getProject())
     assertOneElement(helper.findFilesWithPlainTextWords("Foo"))
 
     final Document document = FileDocumentManager.getInstance().getDocument(vFile)
@@ -408,6 +418,43 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     PlatformTestUtil.tryGcSoftlyReachableObjects()
     assert ((PsiJavaFile)getPsiManager().findFile(vFile)).importList.node
   }
+  
+  void "test unknown file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "").virtualFile
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments() 
+    assert findClass("Foo")
+    
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
+  }
+
+  void "test uncommitted saved document 2"() {
+    def file = myFixture.addFileToProject('a.java', 'class Foo {}')
+    WriteCommandAction.runWriteCommandAction(project) {
+      assert findClass('Foo')
+      file.viewProvider.document.text = ''
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      file.viewProvider.document.text = 'class Foo {}'
+      FileDocumentManager.instance.saveAllDocuments()
+      assert !findClass('Foo')
+    }
+  }
+
+  void "test plain text file type in stubs" () {
+    def vFile = myFixture.addFileToProject("Foo.java", "class Bar {}").virtualFile
+    assert findClass("Bar")
+    final Document document = FileDocumentManager.getInstance().getDocument(vFile)
+    document.setText("class Foo {}")
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert findClass("Foo")
+    assert !findClass("Bar")
+
+    vFile.rename(null, "Foo1")
+    assert !findClass("Foo")
+    assert !findClass("Bar")
+  }
 
   void "test changing a file without psi makes the document committed and updates index"() {
     def psiFile = myFixture.addFileToProject("Foo.java", "class Foo {}")
@@ -462,6 +509,13 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("Foo3 class")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(IdIndex.NAME, project))
+
+    document.text = "class Foo { Runnable r = () -> {}; }"
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    stamp = ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
+    document.text = "class Foo { Runnable x = () -> { }; }"
+    PsiDocumentManager.getInstance(project).commitAllDocuments()
+    assert stamp == ((FileBasedIndexImpl)FileBasedIndex.instance).getIndexModificationStamp(JavaFunctionalExpressionIndex.INDEX_ID, project)
   }
 
   void "test no index stamp update when no change 2"() throws IOException {
@@ -533,6 +587,68 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
     document.setText("class Foo2 { }")
     PsiDocumentManager.getInstance(project).commitAllDocuments()
     assertTrue(stamp != ((StubIndexImpl)StubIndex.instance).getIndexModificationStamp(JavaStubIndexKeys.CLASS_SHORT_NAMES, project))
+  }
+
+  void "test internalErrorOfStubProcessingInvalidatesIndex"() throws IOException {
+    final VirtualFile vFile = myFixture.addClass("class Foo {}").getContainingFile().getVirtualFile()
+    
+    assertTrue(findClass("Foo") != null)
+
+    runFindClassStubIndexQueryThatProducesInvalidResult("Foo")
+
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    assertNull(findClass("Foo"))
+
+    // check invalidation of transient indices state
+    def document = FileDocumentManager.instance.getDocument(vFile)
+    document.setText("class Foo2 {}")
+    PsiDocumentManager.getInstance(project).commitDocument(document)
+
+    assertTrue(findClass("Foo2") != null)
+
+    runFindClassStubIndexQueryThatProducesInvalidResult("Foo2")
+    GCUtil.tryGcSoftlyReachableObjects() // invalidates cache in findClass
+    assertNull(findClass("Foo2"))
+  }
+
+  private void runFindClassStubIndexQueryThatProducesInvalidResult(String qName) {
+    def foundFile = [null]
+
+    def key = qName.hashCode()
+    def searchScope = GlobalSearchScope.allScope(project)
+    def processor = new Processor<PsiFile>() {
+      @Override
+      boolean process(PsiFile file) {
+        foundFile[0] = file
+        return false
+      }
+    }
+    
+    try {
+
+      StubIndex.instance.
+        processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiClass.class, new Processor<PsiClass>() {
+          @Override
+          boolean process(PsiClass aClass) {
+            StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
+
+            return false
+          }
+        })
+      fail("Unexpected")
+    }
+    catch (AssertionError ignored) {
+      // stub mismatch
+    }
+    
+    try {      
+      StubIndex.instance.processElements(JavaStubIndexKeys.CLASS_FQN, key, project, searchScope, PsiFile.class, processor)
+
+      fail("Unexpected")
+    }
+    catch (AssertionError ignored) {
+      // stub mismatch
+    }
   }
 
   void "test do not collect stub tree while holding stub elements"() throws IOException {
@@ -968,6 +1084,21 @@ class IndexTest extends JavaCodeInsightFixtureTestCase {
 
       VfsUtil.saveText(file, fileText)
       assertNotNull(findClass("Bar"))
-   }
+    }
+  }
+
+  void "test IDEA-188028" () {
+    def file = myFixture.addFileToProject('a.java', 'class Foo {}') as PsiJavaFileImpl
+    WriteCommandAction.runWriteCommandAction(project) {
+      def document = file.viewProvider.document
+      document.setText('')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      PsiManager.getInstance(project).reloadFromDisk(file)
+      document.setText('')
+      assert !findClass('Foo')
+      file.virtualFile.rename(this, 'a1.java')
+      PsiDocumentManager.getInstance(project).commitAllDocuments()
+      assert !findClass('Foo')
+    }
   }
 }

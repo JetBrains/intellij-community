@@ -29,6 +29,6 @@ public class RemoteServersIcons {
   }
 
   public static final Icon ResumeScaled = load("/icons/resumeScaled.png"); // 16x16
-  public static final Icon ServersToolWindow = load("/icons/serversToolWindow.png"); // 13x13
+  public static final Icon ServersToolWindow = load("/icons/serversToolWindow.svg"); // 13x13
   public static final Icon SuspendScaled = load("/icons/suspendScaled.png"); // 16x16
 }

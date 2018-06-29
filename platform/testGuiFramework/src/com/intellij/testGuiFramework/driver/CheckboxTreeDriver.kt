@@ -31,7 +31,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
   }
 
   fun getCheckboxComponent(tree: CheckboxTree, pathStrings: List<String>): JCheckBox? {
-    val treePath = matchingPathFor(tree, pathStrings)
+    val treePath = findAndWaitForMatchingPath(tree, pathStrings)
     val rendererComponent = tree.cellRenderer.getTreeCellRendererComponent(tree, treePath.lastPathComponent, false, false, false,
                                                                            tree.getRowForPath(treePath),
                                                                            false)
@@ -39,7 +39,7 @@ class CheckboxTreeDriver(robot: Robot) : ExtendedJTreeDriver(robot) {
   }
 
   fun clickCheckbox(tree: CheckboxTree, pathStrings: List<String>) {
-    val treePath = matchingPathFor(tree, pathStrings)
+    val treePath = findAndWaitForMatchingPath(tree, pathStrings)
     val checkBox = getCheckboxComponent(tree, pathStrings) ?: throw ComponentLookupException("Unable to find checkBox for a CheckboxTree with path $pathStrings")
     val pathBounds = tree.getPathBounds(treePath)
     val checkBoxCenterPoint = Point(pathBounds.x + checkBox.location.x + checkBox.width / 2,

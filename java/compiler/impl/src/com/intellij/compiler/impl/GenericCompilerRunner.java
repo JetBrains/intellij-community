@@ -18,8 +18,6 @@ package com.intellij.compiler.impl;
 import com.intellij.compiler.impl.generic.GenericCompilerCache;
 import com.intellij.compiler.impl.generic.GenericCompilerPersistentData;
 import com.intellij.openapi.application.ReadAction;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -267,20 +265,15 @@ public class GenericCompilerRunner {
         }
       }
 
-      final RunResult runResult = new ReadAction() {
-        protected void run(@NotNull final Result result) throws Throwable {
-          for (Item item : processedItems) {
-            SourceState sourceState = sourceStates.get(item);
-            if (sourceState == null) {
-              sourceState = item.computeSourceState();
-            }
-            cache.putState(targetId, item.getKey(), sourceState, item.computeOutputState());
+      ReadAction.run(()->{
+        for (Item item : processedItems) {
+          SourceState sourceState = sourceStates.get(item);
+          if (sourceState == null) {
+            sourceState = item.computeSourceState();
           }
+          cache.putState(targetId, item.getKey(), sourceState, item.computeOutputState());
         }
-      }.executeSilently();
-      Throwable throwable = runResult.getThrowable();
-      if (throwable instanceof IOException) throw (IOException) throwable;
-      else if (throwable != null) throw new RuntimeException(throwable);
+      });
     });
 
     return true;

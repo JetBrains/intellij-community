@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class MethodBreakpoint
@@ -38,7 +36,8 @@ import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.JDOMExternalizerUtil;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.xdebugger.XDebuggerManager;
@@ -90,15 +89,21 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     return super.isValid() && getMethodName() != null;
   }
 
-  protected void reload(@NotNull PsiFile psiFile) {
+  @Override
+  public void reload() {
+    super.reload();
+
     setMethodName(null);
     mySignature = null;
 
-    MethodDescriptor descriptor = getMethodDescriptor(myProject, psiFile, getSourcePosition());
-    if (descriptor != null) {
-      setMethodName(descriptor.methodName);
-      mySignature = descriptor.methodSignature;
-      myIsStatic = descriptor.isStatic;
+    SourcePosition sourcePosition = getSourcePosition();
+    if (sourcePosition != null) {
+      MethodDescriptor descriptor = getMethodDescriptor(myProject, sourcePosition);
+      if (descriptor != null) {
+        setMethodName(descriptor.methodName);
+        mySignature = descriptor.methodSignature;
+        myIsStatic = descriptor.isStatic;
+      }
     }
     PsiClass psiClass = getPsiClass();
     if (psiClass != null) {
@@ -186,73 +191,67 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
     if (!base && !shouldCreateRequest(breakpoint, breakpoint.getXBreakpoint(), debugProcess, true)) {
       return;
     }
-    try {
-      Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
-      if (lambdaMethod != null &&
-          !breakpoint
-            .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
-            .findFirst().isPresent()) {
+    Method lambdaMethod = MethodBytecodeUtil.getLambdaMethod(classType, classesByName);
+    if (lambdaMethod != null &&
+        !breakpoint
+          .matchingMethods(StreamEx.of(((ClassType)classType).interfaces()).flatCollection(ReferenceType::allMethods), debugProcess)
+          .findFirst().isPresent()) {
+      return;
+    }
+    StreamEx<Method> methods = lambdaMethod != null
+                       ? StreamEx.of(lambdaMethod)
+                       : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
+    boolean found = false;
+    for (Method method : methods) {
+      found = true;
+      if (method.isNative()) {
+        breakpoint.disableEmulation();
         return;
       }
-      StreamEx<Method> methods = lambdaMethod != null
-                         ? StreamEx.of(lambdaMethod)
-                         : breakpoint.matchingMethods(StreamEx.of(classType.methods()).filter(m -> base || !m.isAbstract()), debugProcess);
-      boolean found = false;
-      for (Method method : methods) {
-        found = true;
-        if (method.isNative()) {
-          breakpoint.disableEmulation();
-          return;
-        }
-        Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
-        if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
-          method = target;
-        }
-
-        List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
-        if (allLineLocations == null && !method.isBridge()) { // no line numbers
-          breakpoint.disableEmulation();
-          return;
-        }
-        if (!ContainerUtil.isEmpty(allLineLocations)) {
-          if (breakpoint.isWatchEntry()) {
-            createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
-          }
-          if (breakpoint.isWatchExit()) {
-            MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
-              int myLastLine = 0;
-              @Override
-              public void visitLineNumber(int line, Label start) {
-                myLastLine = line;
-              }
-
-              @Override
-              public void visitInsn(int opcode) {
-                switch (opcode) {
-                  case Opcodes.RETURN:
-                  case Opcodes.IRETURN:
-                  case Opcodes.FRETURN:
-                  case Opcodes.ARETURN:
-                  case Opcodes.LRETURN:
-                  case Opcodes.DRETURN:
-                  //case Opcodes.ATHROW:
-                    allLineLocations.stream()
-                      .filter(l -> l.lineNumber() == myLastLine)
-                      .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
-                }
-              }
-            }, true);
-          }
-        }
-      }
-      if (base && found) {
-        // desired class found - now also track all new classes
-        createRequestForSubClasses(breakpoint, debugProcess, classType);
+      Method target = MethodBytecodeUtil.getBridgeTargetMethod(method, classesByName);
+      if (target != null && !ContainerUtil.isEmpty(DebuggerUtilsEx.allLineLocations(target))) {
+        method = target;
       }
 
+      List<Location> allLineLocations = DebuggerUtilsEx.allLineLocations(method);
+      if (allLineLocations == null && !method.isBridge()) { // no line numbers
+        breakpoint.disableEmulation();
+        return;
+      }
+      if (!ContainerUtil.isEmpty(allLineLocations)) {
+        if (breakpoint.isWatchEntry()) {
+          createLocationBreakpointRequest(breakpoint, ContainerUtil.getFirstItem(allLineLocations), debugProcess, true);
+        }
+        if (breakpoint.isWatchExit()) {
+          MethodBytecodeUtil.visit(method, new MethodVisitor(Opcodes.API_VERSION) {
+            int myLastLine = 0;
+            @Override
+            public void visitLineNumber(int line, Label start) {
+              myLastLine = line;
+            }
+
+            @Override
+            public void visitInsn(int opcode) {
+              switch (opcode) {
+                case Opcodes.RETURN:
+                case Opcodes.IRETURN:
+                case Opcodes.FRETURN:
+                case Opcodes.ARETURN:
+                case Opcodes.LRETURN:
+                case Opcodes.DRETURN:
+                //case Opcodes.ATHROW:
+                  allLineLocations.stream()
+                    .filter(l -> l.lineNumber() == myLastLine)
+                    .findFirst().ifPresent(location -> createLocationBreakpointRequest(breakpoint, location, debugProcess, false));
+              }
+            }
+          }, true);
+        }
+      }
     }
-    catch (Exception e) {
-      LOG.debug(e);
+    if (base && found) {
+      // desired class found - now also track all new classes
+      createRequestForSubClasses(breakpoint, debugProcess, classType);
     }
   }
 
@@ -363,52 +362,42 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
   }
 
   protected Icon getDisabledIcon(boolean isMuted) {
-    final Breakpoint master = DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this);
-    if (master != null) {
-      return isMuted ? AllIcons.Debugger.Db_muted_dep_method_breakpoint : AllIcons.Debugger.Db_dep_method_breakpoint;
+    if (DebuggerManagerEx.getInstanceEx(myProject).getBreakpointManager().findMasterBreakpoint(this) != null && isMuted) {
+      return AllIcons.Debugger.Db_muted_dep_method_breakpoint;
     }
     return null;
   }
 
-  @NotNull
-  protected Icon getInvalidIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_invalid_method_breakpoint : AllIcons.Debugger.Db_invalid_method_breakpoint;
-  }
-
-  @NotNull
+  @Override
   protected Icon getVerifiedIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_verified_method_breakpoint : AllIcons.Debugger.Db_verified_method_breakpoint;
+    return isSuspend() ? AllIcons.Debugger.Db_verified_method_breakpoint : AllIcons.Debugger.Db_verified_no_suspend_method_breakpoint;
   }
 
   @NotNull
   protected Icon getVerifiedWarningsIcon(boolean isMuted) {
-    return isMuted? AllIcons.Debugger.Db_muted_method_warning_breakpoint : AllIcons.Debugger.Db_method_warning_breakpoint;
+    return new LayeredIcon(isMuted ? AllIcons.Debugger.Db_muted_method_breakpoint : AllIcons.Debugger.Db_method_breakpoint,
+                           AllIcons.General.WarningDecorator);
   }
 
   public String getDisplayName() {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      if(isValid()) {
-        final String className = getClassName();
-        final boolean classNameExists = className != null && className.length() > 0;
+    final StringBuilder buffer = new StringBuilder();
+    if(isValid()) {
+      final String className = getClassName();
+      final boolean classNameExists = className != null && className.length() > 0;
+      if (classNameExists) {
+        buffer.append(className);
+      }
+      if(getMethodName() != null) {
         if (classNameExists) {
-          buffer.append(className);
+          buffer.append(".");
         }
-        if(getMethodName() != null) {
-          if (classNameExists) {
-            buffer.append(".");
-          }
-          buffer.append(getMethodName());
-        }
+        buffer.append(getMethodName());
       }
-      else {
-        buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
-      }
-      return buffer.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    else {
+      buffer.append(DebuggerBundle.message("status.breakpoint.invalid"));
     }
+    return buffer.toString();
   }
 
   public boolean evaluateCondition(@NotNull EvaluationContextImpl context, @NotNull LocatableEvent event) throws EvaluateException {
@@ -444,13 +433,8 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
    * finds FQ method's class name and method's signature
    */
   @Nullable
-  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project,
-                                                      @NotNull final PsiFile psiJavaFile,
-                                                      @Nullable final SourcePosition sourcePosition) {
-    if (sourcePosition == null) {
-      return null;
-    }
-    Document document = PsiDocumentManager.getInstance(project).getDocument(psiJavaFile);
+  private static MethodDescriptor getMethodDescriptor(@NotNull final Project project, @NotNull final SourcePosition sourcePosition) {
+    Document document = PsiDocumentManager.getInstance(project).getDocument(sourcePosition.getFile());
     if (document == null) {
       return null;
     }
@@ -464,10 +448,7 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         return null;
       }
       final int methodOffset = method.getTextOffset();
-      if (methodOffset < 0) {
-        return null;
-      }
-      if (document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
+      if (!DocumentUtil.isValidOffset(methodOffset, document) || document.getLineNumber(methodOffset) < sourcePosition.getLine()) {
         return null;
       }
 
@@ -589,7 +570,11 @@ public class MethodBreakpoint extends BreakpointWithHighlighter<JavaMethodBreakp
         }
         ReferenceType type = allTypes.get(i);
         if (type.isPrepared()) {
-          supertypes(type).forEach(st -> inheritance.putValue(st, type));
+          try {
+            supertypes(type).forEach(st -> inheritance.putValue(st, type));
+          }
+          catch (ObjectCollectedException ignored) {
+          }
         }
         progressIndicator.setText2(i + "/" + allTypes.size());
         progressIndicator.setFraction((double)i / allTypes.size());

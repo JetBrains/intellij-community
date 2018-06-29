@@ -66,6 +66,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
     JLabel label = new JLabel(title);
     label.setIcon(icon);
     label.setBorder(new EmptyBorder(1,1,1,1));
+    label.setFont(getFont());
     setTabComponentAt(index, label);
     updateSelectedTabForeground();
     label.putClientProperty(LABEL_FROM_TABBED_PANE, Boolean.TRUE);

@@ -40,6 +40,7 @@ import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -66,11 +67,8 @@ import java.awt.geom.Rectangle2D;
 import java.lang.ref.Reference;
 import java.lang.ref.WeakReference;
 
-import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
-import static java.lang.Math.ceil;
-
 public class Bookmark implements Navigatable, Comparable<Bookmark> {
-  public static final Icon DEFAULT_ICON = new MyCheckedIcon();
+  static final Icon DEFAULT_ICON = new MyCheckedIcon();
 
   private final VirtualFile myFile;
   @NotNull private OpenFileDescriptor myTarget;
@@ -78,7 +76,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   private Reference<RangeHighlighterEx> myHighlighterRef;
 
   private String myDescription;
-  private char myMnemonic = 0;
+  private char myMnemonic;
 
   public Bookmark(@NotNull Project project, @NotNull VirtualFile file, int line, @NotNull String description) {
     myFile = file;
@@ -106,7 +104,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
     return getTarget().compareTo(o.getTarget());
   }
 
-  public void updateHighlighter() {
+  void updateHighlighter() {
     release();
     addHighlighter();
   }
@@ -306,7 +304,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
         element = model.getCurrentEditorElement();
       }
       finally {
-        model.dispose();
+        Disposer.dispose(model);
       }
       if (element instanceof NavigationItem) {
         ItemPresentation presentation = ((NavigationItem)element).getPresentation();
@@ -337,7 +335,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @NotNull
     @Override
-    protected MnemonicIcon copy() {
+    public MnemonicIcon copy() {
       return new MnemonicIcon(myMnemonic);
     }
 
@@ -387,12 +385,16 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public int getIconWidth() {
-      return (int)ceil(scaleVal(DEFAULT_ICON.getIconWidth(), OBJ_SCALE));
+      return scale(DEFAULT_ICON.getIconWidth());
+    }
+
+    private int scale(int width) {
+      return (int)Math.ceil(scaleVal(width, JBUI.ScaleType.OBJ_SCALE));
     }
 
     @Override
     public int getIconHeight() {
-      return (int)ceil(scaleVal(DEFAULT_ICON.getIconHeight(), OBJ_SCALE));
+      return scale(DEFAULT_ICON.getIconHeight());
     }
 
     @Override
@@ -420,22 +422,26 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
 
     @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
-      IconUtil.scale((darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack), c, getScale()).paintIcon(c, g, x, y);
+      IconUtil.scale(darkBackground() ? AllIcons.Actions.CheckedGrey : AllIcons.Actions.CheckedBlack, c, getScale()).paintIcon(c, g, x, y);
     }
 
     @Override
     public int getIconWidth() {
-      return (int)ceil(scaleVal(PlatformIcons.CHECK_ICON.getIconWidth(), OBJ_SCALE));
+      return scale(PlatformIcons.CHECK_ICON.getIconWidth());
+    }
+
+    private int scale(int width) {
+      return (int)Math.ceil(scaleVal(width, JBUI.ScaleType.OBJ_SCALE));
     }
 
     @Override
     public int getIconHeight() {
-      return (int)ceil(scaleVal(PlatformIcons.CHECK_ICON.getIconHeight(), OBJ_SCALE));
+      return scale(PlatformIcons.CHECK_ICON.getIconHeight());
     }
 
     @NotNull
     @Override
-    protected MyCheckedIcon copy() {
+    public MyCheckedIcon copy() {
       return new MyCheckedIcon();
     }
   }
@@ -451,7 +457,7 @@ public class Bookmark implements Navigatable, Comparable<Bookmark> {
   private static class MyGutterIconRenderer extends GutterIconRenderer implements DumbAware {
     private final Bookmark myBookmark;
 
-    public MyGutterIconRenderer(@NotNull Bookmark bookmark) {
+    MyGutterIconRenderer(@NotNull Bookmark bookmark) {
       myBookmark = bookmark;
     }
 

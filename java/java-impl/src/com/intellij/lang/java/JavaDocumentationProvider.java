@@ -1,10 +1,12 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.lang.java;
 
 import com.intellij.codeInsight.CodeInsightBundle;
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.CompletionMemory;
 import com.intellij.codeInsight.documentation.DocumentationManagerProtocol;
 import com.intellij.codeInsight.documentation.PlatformDocumentationUtil;
+import com.intellij.codeInsight.documentation.QuickDocUtil;
 import com.intellij.codeInsight.editorActions.CodeDocumentationUtil;
 import com.intellij.codeInsight.javadoc.JavaDocExternalFilter;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
@@ -14,10 +16,7 @@ import com.intellij.ide.util.PackageUtil;
 import com.intellij.lang.CodeDocumentationAwareCommenter;
 import com.intellij.lang.LangBundle;
 import com.intellij.lang.LanguageCommenters;
-import com.intellij.lang.documentation.CodeDocumentationProvider;
-import com.intellij.lang.documentation.CompositeDocumentationProvider;
-import com.intellij.lang.documentation.DocumentationProviderEx;
-import com.intellij.lang.documentation.ExternalDocumentationProvider;
+import com.intellij.lang.documentation.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
@@ -45,15 +44,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.Url;
 import com.intellij.util.containers.ContainerUtil;
-import java.util.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.builtInWebServer.BuiltInWebBrowserUrlProviderKt;
 
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Maxim.Mossienko
@@ -71,6 +66,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
 
   @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
+    return QuickDocUtil.inferLinkFromFullDocumentation(this, element, originalElement,
+                                                       getQuickNavigationInfoInner(element, originalElement));
+  }
+
+  @Nullable
+  private static String getQuickNavigationInfoInner(PsiElement element, PsiElement originalElement) {
     if (element instanceof PsiClass) {
       return generateClassInfo((PsiClass)element);
     }
@@ -117,11 +118,12 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   private static void generateInitializer(StringBuilder buffer, PsiVariable variable) {
     PsiExpression initializer = variable.getInitializer();
     if (initializer != null) {
-      JavaDocInfoGenerator.appendExpressionValue(buffer, initializer, " = ");
+      JavaDocInfoGenerator.appendExpressionValue(buffer, initializer);
       PsiExpression constantInitializer = JavaDocInfoGenerator.calcInitializerExpression(variable);
       if (constantInitializer != null) {
-        buffer.append("\n");
-        JavaDocInfoGenerator.appendExpressionValue(buffer, constantInitializer, CodeInsightBundle.message("javadoc.resolved.value"));
+        buffer.append(DocumentationMarkup.GRAYED_START);
+        JavaDocInfoGenerator.appendExpressionValue(buffer, constantInitializer);
+        buffer.append(DocumentationMarkup.GRAYED_END);
       }
     }
   }
@@ -408,17 +410,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   @Override
   public String generateDocumentationContentStub(PsiComment _comment) {
     final PsiJavaDocumentedElement commentOwner = ((PsiDocComment)_comment).getOwner();
-    final Project project = _comment.getProject();
     final StringBuilder builder = new StringBuilder();
     final CodeDocumentationAwareCommenter commenter =
       (CodeDocumentationAwareCommenter)LanguageCommenters.INSTANCE.forLanguage(_comment.getLanguage());
     if (commentOwner instanceof PsiMethod) {
       PsiMethod psiMethod = (PsiMethod)commentOwner;
-      generateParametersTakingDocFromSuperMethods(project, builder, commenter, psiMethod);
+      generateParametersTakingDocFromSuperMethods(builder, commenter, psiMethod);
 
       final PsiTypeParameterList typeParameterList = psiMethod.getTypeParameterList();
       if (typeParameterList != null) {
-        createTypeParamsListComment(builder, project, commenter, typeParameterList);
+        createTypeParamsListComment(builder, commenter, typeParameterList);
       }
       if (psiMethod.getReturnType() != null && !PsiType.VOID.equals(psiMethod.getReturnType())) {
         builder.append(CodeDocumentationUtil.createDocCommentLine(RETURN_TAG, _comment.getContainingFile(), commenter));
@@ -435,15 +436,15 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     else if (commentOwner instanceof PsiClass) {
       final PsiTypeParameterList typeParameterList = ((PsiClass)commentOwner).getTypeParameterList();
       if (typeParameterList != null) {
-        createTypeParamsListComment(builder, project, commenter, typeParameterList);
+        createTypeParamsListComment(builder, commenter, typeParameterList);
       }
     }
     return builder.length() > 0 ? builder.toString() : null;
   }
 
-  public static void generateParametersTakingDocFromSuperMethods(Project project,
-                                                                 StringBuilder builder,
-                                                                 CodeDocumentationAwareCommenter commenter, PsiMethod psiMethod) {
+  public static void generateParametersTakingDocFromSuperMethods(StringBuilder builder,
+                                                                 CodeDocumentationAwareCommenter commenter,
+                                                                 PsiMethod psiMethod) {
     final PsiParameter[] parameters = psiMethod.getParameterList().getParameters();
     final Map<String, String> param2Description = new HashMap<>();
     final PsiMethod[] superMethods = psiMethod.findSuperMethods();
@@ -454,18 +455,16 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
         final PsiDocTag[] params = comment.findTagsByName("param");
         for (PsiDocTag param : params) {
           final PsiElement[] dataElements = param.getDataElements();
-          if (dataElements != null) {
-            String paramName = null;
-            for (PsiElement dataElement : dataElements) {
-              if (dataElement instanceof PsiDocParamRef) {
-                //noinspection ConstantConditions
-                paramName = dataElement.getReference().getCanonicalText();
-                break;
-              }
+          String paramName = null;
+          for (PsiElement dataElement : dataElements) {
+            if (dataElement instanceof PsiDocParamRef) {
+              //noinspection ConstantConditions
+              paramName = dataElement.getReference().getCanonicalText();
+              break;
             }
-            if (paramName != null) {
-              param2Description.put(paramName, param.getText());
-            }
+          }
+          if (paramName != null) {
+            param2Description.put(paramName, param.getText());
           }
         }
       }
@@ -487,9 +486,8 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
   }
 
   public static void createTypeParamsListComment(final StringBuilder buffer,
-                                                  final Project project,
-                                                  final CodeDocumentationAwareCommenter commenter,
-                                                  final PsiTypeParameterList typeParameterList) {
+                                                 final CodeDocumentationAwareCommenter commenter,
+                                                 final PsiTypeParameterList typeParameterList) {
     final PsiTypeParameter[] typeParameters = typeParameterList.getTypeParameters();
     for (PsiTypeParameter typeParameter : typeParameters) {
       buffer.append(CodeDocumentationUtil.createDocCommentLine(PARAM_TAG, typeParameterList.getContainingFile(), commenter));
@@ -508,14 +506,20 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
       originalElement = null;
     }
     if (element instanceof PsiMethodCallExpression) {
-      PsiMethod method = CompletionMemory.getChosenMethod((PsiMethodCallExpression)element);
+      PsiMethod method = CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION
+                         ? CompletionMemory.getChosenMethod((PsiMethodCallExpression)element) : null;
       if (method == null) return getMethodCandidateInfo((PsiMethodCallExpression)element);
       else element = method;
     }
 
     // Try hard for documentation of incomplete new Class instantiation
-    PsiElement elt = originalElement != null && !(originalElement instanceof PsiPackage) ? PsiTreeUtil.prevLeaf(originalElement): element;
-    if (elt instanceof PsiErrorElement) elt = elt.getPrevSibling();
+    PsiElement elt = element;
+    if (originalElement != null && !(originalElement instanceof PsiPackage || originalElement instanceof PsiFileSystemItem)) {
+      elt = PsiTreeUtil.prevLeaf(originalElement);
+    }
+    if (elt instanceof PsiErrorElement) {
+      elt = elt.getPrevSibling();
+    }
     else if (elt != null && !(elt instanceof PsiNewExpression)) {
       elt = elt.getParent();
     }
@@ -718,7 +722,7 @@ public class JavaDocumentationProvider extends DocumentationProviderEx implement
     String signature = PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, options, parameterOptions, 999);
 
     if (java8Format) {
-      signature = signature.replaceAll("\\(|\\)|, ", "-").replaceAll("\\[\\]", ":A");
+      signature = signature.replaceAll("\\(|\\)|, ", "-").replaceAll("\\[]", ":A");
     }
 
     return signature;

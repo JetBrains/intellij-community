@@ -141,7 +141,7 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     <dependency>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.2</version>
+      <version>3.8.1</version>
       <scope>compile</scope>
     </dependency>
   </dependencies>
@@ -161,12 +161,12 @@ class MavenDuplicatedDependencyInspectionTest extends MavenDomTestCase {
     <<warning>dependency</warning>>
       <groupId>junit</groupId>
       <artifactId>junit</artifactId>
-      <version>3.8.2</version>
+      <version>3.8.1</version>
     </dependency>
   </dependencies>
 """)
 
-    importProject()
+    importProjectWithErrors(true)
 
     checkHighlighting(myProjectPom, true, false, true)
   }

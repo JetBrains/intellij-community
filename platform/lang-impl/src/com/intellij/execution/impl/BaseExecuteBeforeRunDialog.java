@@ -11,6 +11,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.SmartList;
 import com.intellij.util.StringSetSpinAllocator;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
@@ -219,17 +220,17 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     task.setEnabled(true);
     if (enabled) {
       if (!tasks.contains(task)) {
-        tasks = new ArrayList<>(tasks);
+        tasks = new SmartList<>(tasks);
         tasks.add(task);
       }
     }
     else {
       if (tasks.contains(task)) {
-        tasks = new ArrayList<>(tasks);
+        tasks = new SmartList<>(tasks);
         tasks.remove(task);
       }
     }
-    runManager.setBeforeRunTasks(config, tasks, false);
+    runManager.setBeforeRunTasks(config, tasks);
   }
 
   protected abstract void update(T task);

@@ -40,6 +40,7 @@ public class LookupElementPresentation {
   private Color myItemTextForeground = JBColor.foreground();
   private boolean myItemTextBold;
   private boolean myItemTextUnderlined;
+  private boolean myItemTextItalic;
   private boolean myTypeGrayed;
   @Nullable private List<TextFragment> myTail;
 
@@ -57,6 +58,10 @@ public class LookupElementPresentation {
 
   public void setItemTextBold(boolean bold) {
     myItemTextBold = bold;
+  }
+
+  public void setItemTextItalic(boolean itemTextItalic) {
+    myItemTextItalic = itemTextItalic;
   }
 
   public void setTailText(@Nullable String text) {
@@ -155,14 +160,12 @@ public class LookupElementPresentation {
     return myTail != null && myTail.get(0).myGrayed;
   }
 
-  @Nullable
-  @Deprecated
-  public Color getTailForeground() {
-    return myTail != null ? myTail.get(0).myFgColor : null;
-  }
-
   public boolean isItemTextBold() {
     return myItemTextBold;
+  }
+
+  public boolean isItemTextItalic() {
+    return myItemTextItalic;
   }
 
   public boolean isItemTextUnderlined() {
@@ -192,6 +195,7 @@ public class LookupElementPresentation {
     myTypeText = presentation.myTypeText;
     myStrikeout = presentation.myStrikeout;
     myItemTextBold = presentation.myItemTextBold;
+    myItemTextItalic = presentation.myItemTextItalic;
     myTypeGrayed = presentation.myTypeGrayed;
     myTypeIconRightAligned = presentation.myTypeIconRightAligned;
     myItemTextUnderlined = presentation.myItemTextUnderlined;

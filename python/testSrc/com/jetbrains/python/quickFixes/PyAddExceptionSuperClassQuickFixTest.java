@@ -15,6 +15,7 @@
  */
 package com.jetbrains.python.quickFixes;
 
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyQuickFixTestCase;
@@ -24,6 +25,7 @@ import com.jetbrains.python.inspections.PyExceptionInheritInspection;
 public class PyAddExceptionSuperClassQuickFixTest extends PyQuickFixTestCase {
 
   public void testEmptySuperList() {
+    PsiTestUtil.disablePsiTextConsistencyChecks(getTestRootDisposable());
     doQuickFixTest(PyExceptionInheritInspection.class, PyBundle.message("QFIX.NAME.add.exception.base"));
   }
 

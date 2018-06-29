@@ -81,7 +81,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
     myRecentCommitCount = recentCommitsCount;
     myProgress = progress;
 
-    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, dataPack -> {
+    mySingleTaskController = new SingleTaskController<RefreshRequest, DataPack>(myProject, "permanent", dataPack -> {
       myDataPack = dataPack;
       dataPackUpdateHandler.consume(dataPack);
     }, false, this) {
@@ -95,7 +95,7 @@ public class VcsLogRefresherImpl implements VcsLogRefresher, Disposable {
 
   protected SingleTaskController.SingleTask startNewBackgroundTask(@NotNull final Task.Backgroundable refreshTask) {
     LOG.debug("Starting a background task...");
-    ProgressIndicator indicator = myProgress.createProgressIndicator();
+    ProgressIndicator indicator = myProgress.createProgressIndicator(VcsLogData.DATA_PACK_REFRESH);
     Future<?> future = ((CoreProgressManager)ProgressManager.getInstance()).runProcessWithProgressAsynchronously(refreshTask, indicator,
                                                                                                                  null);
     return new SingleTaskController.SingleTaskImpl(future, indicator);

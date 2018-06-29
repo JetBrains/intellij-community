@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.settings;
 
 import com.intellij.openapi.options.Configurable;
@@ -85,7 +83,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
         Configurable[] mergedArray = new Configurable[generalConfigurables.length + 1];
         System.arraycopy(generalConfigurables, 0, mergedArray, 0, generalConfigurables.length);
         mergedArray[generalConfigurables.length] = firstConfigurable;
-        myRootConfigurable = new MergedCompositeConfigurable("", "", mergedArray);
+        myRootConfigurable = new MergedCompositeConfigurable("", "", null, mergedArray);
         myChildren = firstConfigurable instanceof SearchableConfigurable.Parent ? ((Parent)firstConfigurable).getConfigurables() : EMPTY_CONFIGURABLES;
       }
     }
@@ -101,7 +99,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       if (!configurables.isEmpty()) {
         String id = category.name().toLowerCase(Locale.ENGLISH);
         result.add(new MergedCompositeConfigurable("debugger." + id, XDebuggerBundle.message("debugger." + id + ".display.name"),
-                                                   configurables.toArray(new Configurable[0])));
+                                                   getDefaultCategoryHelpTopic(category), configurables.toArray(new Configurable[0])));
       }
     }
   }
@@ -119,7 +117,7 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       boolean c1e = StringUtil.isEmpty(o1.getDisplayName());
       return c1e == StringUtil.isEmpty(o2.getDisplayName()) ? 0 : (c1e ? -1 : 1);
     });
-    return new MergedCompositeConfigurable("", "", mergedRootConfigurables);
+    return new MergedCompositeConfigurable("", "", null, mergedRootConfigurables);
   }
 
   @Override
@@ -185,5 +183,13 @@ public class DebuggerConfigurable implements SearchableConfigurable.Parent {
       }
     }
     return ContainerUtil.notNullize(configurables);
+  }
+
+  private static String getDefaultCategoryHelpTopic(DebuggerSettingsCategory category) {
+    switch (category) {
+      case STEPPING: return "reference.idesettings.debugger.stepping";
+      case HOTSWAP: return "reference.idesettings.debugger.hotswap";
+      default: return null;
+    }
   }
 }

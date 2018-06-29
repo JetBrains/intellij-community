@@ -190,7 +190,7 @@ public class RedundantMethodOverrideInspection extends BaseInspection {
         }
         final PackageScope scope = new PackageScope(aPackage, false, false);
         if (isOnTheFly()) {
-          final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(method.getProject());
+          final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(method.getProject());
           final PsiSearchHelper.SearchCostResult cost =
             searchHelper.isCheapEnoughToSearch(method.getName(), scope, null, null);
           if (cost == PsiSearchHelper.SearchCostResult.ZERO_OCCURRENCES) {

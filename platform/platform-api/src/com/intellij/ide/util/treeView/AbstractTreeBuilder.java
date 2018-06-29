@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.treeView;
 
@@ -23,15 +9,18 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.reference.SoftReference;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.concurrency.AsyncPromise;
+import org.jetbrains.concurrency.Promise;
+import org.jetbrains.concurrency.Promises;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultMutableTreeNode;
@@ -242,6 +231,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @see #queueUpdateFrom
    * @deprecated
    */
+  @Deprecated
   public void updateFromRoot() {
     queueUpdate();
   }
@@ -249,15 +239,6 @@ public class AbstractTreeBuilder implements Disposable {
   public void initRootNode() {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.initRootNode();
-  }
-
-  /**
-   * @see #queueUpdateFrom
-   * @deprecated
-   */
-  @NotNull
-  protected ActionCallback updateFromRootCB() {
-    return queueUpdate();
   }
 
   @NotNull
@@ -303,6 +284,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @param element
    * @deprecated
    */
+  @Deprecated
   public void buildNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
     if (ui != null) ui.buildNodeForElement(element);
@@ -313,6 +295,7 @@ public class AbstractTreeBuilder implements Disposable {
    * @return
    * @deprecated
    */
+  @Deprecated
   @Nullable
   public DefaultMutableTreeNode getNodeForElement(Object element) {
     AbstractTreeUi ui = getUi();
@@ -351,15 +334,6 @@ public class AbstractTreeBuilder implements Disposable {
     return getUi() == null;
   }
 
-  /**
-   * @param node
-   * @deprecated
-   */
-  public final void updateSubtree(final DefaultMutableTreeNode node) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.updateSubtree(node, true);
-  }
-
   public final boolean wasRootNodeInitialized() {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.wasRootNodeInitialized();
@@ -368,24 +342,6 @@ public class AbstractTreeBuilder implements Disposable {
   public final boolean isNodeBeingBuilt(final TreePath path) {
     AbstractTreeUi ui = getUi();
     return ui != null && ui.isNodeBeingBuilt(path);
-  }
-
-  /**
-   * @param path
-   * @deprecated
-   */
-  public final void buildNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    if (ui != null) ui.buildNodeForPath(path);
-  }
-
-  /**
-   * @deprecated
-   */
-  @Nullable
-  public final DefaultMutableTreeNode getNodeForPath(final Object[] path) {
-    AbstractTreeUi ui = getUi();
-    return ui == null ? null : ui.getNodeForPath(path);
   }
 
   @Nullable
@@ -503,11 +459,18 @@ public class AbstractTreeBuilder implements Disposable {
   }
 
   @NotNull
-  public AsyncResult<Object> revalidateElement(Object element) {
+  public Promise<Object> revalidateElement(Object element) {
     AbstractTreeStructure structure = getTreeStructure();
-    if (structure == null) return AsyncResult.rejected();
+    if (structure == null) {
+      return Promises.rejectedPromise();
+    }
 
-    return structure.revalidateElement(element);
+    AsyncPromise<Object> promise = new AsyncPromise<>();
+    structure
+      .revalidateElement(element)
+      .doWhenDone((Consumer<Object>)o -> promise.setResult(o))
+      .doWhenRejected(s -> promise.setError(s));
+    return promise;
   }
 
   public static class AbstractTreeNodeWrapper extends AbstractTreeNode<Object> {

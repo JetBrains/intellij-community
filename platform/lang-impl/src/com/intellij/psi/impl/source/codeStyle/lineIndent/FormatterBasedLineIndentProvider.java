@@ -15,11 +15,13 @@
  */
 package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
+import com.intellij.formatting.FormattingMode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.lineIndent.LineIndentProvider;
 import org.jetbrains.annotations.NotNull;
@@ -33,8 +35,11 @@ public class FormatterBasedLineIndentProvider implements LineIndentProvider {
   @Override
   public String getLineIndent(@NotNull Project project, @NotNull Editor editor, Language language, int offset) {
     Document document = editor.getDocument();
-    PsiDocumentManager.getInstance(project).commitDocument(document);
-    return CodeStyleManager.getInstance(project).getLineIndent(document, offset);
+    final PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
+    documentManager.commitDocument(document);
+    PsiFile file = documentManager.getPsiFile(document);
+    if (file == null) return "";
+    return CodeStyleManager.getInstance(project).getLineIndent(file, offset, FormattingMode.ADJUST_INDENT_ON_ENTER);
   }
 
   @Override

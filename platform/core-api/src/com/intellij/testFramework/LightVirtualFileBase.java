@@ -172,8 +172,8 @@ public abstract class LightVirtualFileBase extends VirtualFile {
   }
 
   @Override
-  public void setWritable(boolean b) {
-    myIsWritable = b;
+  public void setWritable(boolean writable) {
+    myIsWritable = writable;
   }
 
   @Override

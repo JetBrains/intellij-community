@@ -16,10 +16,9 @@
 
 package com.intellij.ui.popup;
 
-import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.documentation.DocumentationManager;
 import com.intellij.codeInsight.lookup.*;
-import com.intellij.ide.util.gotoByName.ChooseByNameBase;
+import com.intellij.ide.util.gotoByName.QuickSearchComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
@@ -49,10 +48,8 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
           if (windowEvent.asPopup().isVisible()) { //was not canceled yet
             final LookupElement item = event.getItem();
             if (item != null) {
-              PsiElement targetElement = CompletionUtil.getTargetElement(item);
-              if (targetElement == null) {
-                targetElement = DocumentationManager.getInstance(myProject).getElementFromLookup(activeLookup.getEditor(), activeLookup.getPsiFile());
-              }
+              PsiElement targetElement =
+                DocumentationManager.getInstance(myProject).getElementFromLookup(activeLookup.getEditor(), activeLookup.getPsiFile());
 
               updatePopup(targetElement); //open next
             }
@@ -64,15 +61,24 @@ public abstract class PopupUpdateProcessor extends PopupUpdateProcessorBase {
     }
     else {
       final Component focusedComponent = WindowManagerEx.getInstanceEx().getFocusedComponent(myProject);
-      boolean fromQuickSearch = focusedComponent != null && focusedComponent.getParent() instanceof ChooseByNameBase.JPanelProvider;
-      if (fromQuickSearch) {
-        ChooseByNameBase.JPanelProvider panelProvider = (ChooseByNameBase.JPanelProvider)focusedComponent.getParent();
-        panelProvider.registerHint(windowEvent.asPopup());
+      QuickSearchComponent quickSearch = findQuickSearchComponent(focusedComponent);
+      if (quickSearch != null) {
+        quickSearch.registerHint(windowEvent.asPopup());
       }
       else if (focusedComponent instanceof JComponent) {
         HintUpdateSupply supply = HintUpdateSupply.getSupply((JComponent)focusedComponent);
         if (supply != null) supply.registerHint(windowEvent.asPopup());
       }
     }
+  }
+
+  private static QuickSearchComponent findQuickSearchComponent(Component c) {
+    while (c != null) {
+      if (c instanceof QuickSearchComponent) {
+        return (QuickSearchComponent) c;
+      }
+      c = c.getParent();
+    }
+    return null;
   }
 }

@@ -2,38 +2,44 @@ YAML file
   YAML document
     YAML mapping
       YAML key value
-        PsiElement(scalar key)('application:')
+        PsiElement(scalar key)('application')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('gaeproject')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('version:')
+        PsiElement(scalar key)('version')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('1')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('runtime:')
+        PsiElement(scalar key)('runtime')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('python27')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('api_version:')
+        PsiElement(scalar key)('api_version')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('1')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('threadsafe:')
+        PsiElement(scalar key)('threadsafe')
+        PsiElement(:)(':')
         PsiWhiteSpace(' ')
         YAML plain scalar text
           PsiElement(text)('yes')
       PsiElement(Eol)('\n')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('handlers:')
+        PsiElement(scalar key)('handlers')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         YAML sequence
           YAML sequence item
@@ -41,21 +47,24 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('url:')
+                PsiElement(scalar key)('url')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('/favicon\.ico')
               PsiElement(Eol)('\n')
               PsiElement(indent)('  ')
               YAML key value
-                PsiElement(scalar key)('static_files:')
+                PsiElement(scalar key)('static_files')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('favicon.ico')
               PsiElement(Eol)('\n')
               PsiElement(indent)('  ')
               YAML key value
-                PsiElement(scalar key)('upload:')
+                PsiElement(scalar key)('upload')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('favicon\.ico')
@@ -66,14 +75,16 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('url:')
+                PsiElement(scalar key)('url')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('.*')
               PsiElement(Eol)('\n')
               PsiElement(indent)('  ')
               YAML key value
-                PsiElement(scalar key)('script:')
+                PsiElement(scalar key)('script')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('test/main.app')
@@ -81,7 +92,8 @@ YAML file
       PsiElement(indent)('  ')
       PsiElement(Eol)('\n')
       YAML key value
-        PsiElement(scalar key)('libraries:')
+        PsiElement(scalar key)('libraries')
+        PsiElement(:)(':')
         PsiElement(Eol)('\n')
         YAML sequence
           YAML sequence item
@@ -89,14 +101,16 @@ YAML file
             PsiWhiteSpace(' ')
             YAML mapping
               YAML key value
-                PsiElement(scalar key)('name:')
+                PsiElement(scalar key)('name')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML plain scalar text
                   PsiElement(text)('webapp2')
               PsiElement(Eol)('\n')
               PsiElement(indent)('  ')
               YAML key value
-                PsiElement(scalar key)('version:')
+                PsiElement(scalar key)('version')
+                PsiElement(:)(':')
                 PsiWhiteSpace(' ')
                 YAML quoted text
                   PsiElement(scalar dstring)('"2.5.2"')

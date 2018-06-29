@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.CodeInsightWorkspaceSettings;
@@ -18,13 +18,13 @@ import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.intention.impl.CreateClassInPackageInModuleFix;
 import com.intellij.codeInsight.intention.impl.ReplaceAssignmentWithComparisonFix;
+import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspectionBase;
 import com.intellij.codeInspection.ex.EntryPointsManagerBase;
 import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspectionBase;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.diagnostic.AttachmentFactory;
-import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.lang.java.request.CreateConstructorFromUsage;
 import com.intellij.lang.java.request.CreateMethodFromUsage;
@@ -46,16 +46,14 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.ClassKind;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyMemberType;
+import com.intellij.refactoring.memberPushDown.JavaPushDownHandler;
 import com.intellij.util.DocumentUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author cdr
@@ -127,7 +125,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
                                                          @NotNull PsiClassType exceptionClass,
                                                          boolean shouldThrow,
                                                          boolean showContainingClass) {
-    return new MethodThrowsFix(method, exceptionClass, shouldThrow, showContainingClass);
+    return shouldThrow ? new MethodThrowsFix.Add(method, exceptionClass, showContainingClass) : new MethodThrowsFix.Remove(method, exceptionClass, showContainingClass);
   }
 
   @NotNull
@@ -228,6 +226,12 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createSurroundWithTryCatchFix(@NotNull PsiElement element) {
     return new SurroundWithTryCatchFix(element);
+  }
+
+  @NotNull
+  @Override
+  public IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element) {
+    return new AddExceptionToExistingCatchFix(element);
   }
 
   @NotNull
@@ -527,6 +531,20 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @NotNull
   @Override
+  public List<IntentionAction> createCreateConstructorFromCallExpressionFixes(@NotNull PsiMethodCallExpression call) {
+    if (JvmElementActionFactories.useInterlaguageActions()) {
+      return CreateConstructorFromUsage.generateConstructorActions(call);
+    }
+    else {
+      return Arrays.asList(
+        createCreateConstructorFromSuperFix(call),
+        createCreateConstructorFromThisFix(call)
+      );
+    }
+  }
+
+  @NotNull
+  @Override
   public IntentionAction createCreateGetterSetterPropertyFromUsageFix(@NotNull PsiMethodCallExpression call) {
     return new CreateGetterSetterPropertyFromUsageFix(call);
   }
@@ -559,7 +577,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public List<IntentionAction> createCreateConstructorFromUsageFixes(@NotNull PsiConstructorCall call) {
     if (JvmElementActionFactories.useInterlaguageActions()) {
-      return CreateConstructorFromUsage.generateActions(call);
+      return CreateConstructorFromUsage.generateConstructorActions(call);
     }
     else {
       return Collections.singletonList(createCreateConstructorFromCallFix(call));
@@ -706,11 +724,10 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @NotNull
   @Override
   public IntentionAction createAddToDependencyInjectionAnnotationsFix(@NotNull Project project,
-                                                                      @NotNull String qualifiedName,
-                                                                      @NotNull String element) {
+                                                                      @NotNull String qualifiedName) {
     final EntryPointsManagerBase entryPointsManager = EntryPointsManagerBase.getInstance(project);
     return SpecialAnnotationsUtil.createAddToSpecialAnnotationsListIntentionAction(
-      QuickFixBundle.message("fix.unused.symbol.injection.text", element, qualifiedName),
+      QuickFixBundle.message("fix.unused.symbol.injection.text", qualifiedName),
       QuickFixBundle.message("fix.unused.symbol.injection.family"),
       entryPointsManager.ADDITIONAL_ANNOTATIONS, qualifiedName);
   }
@@ -781,9 +798,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
       if (oldStamp != document.getModificationStamp()) {
         String afterText = file.getText();
         if (Comparing.strEqual(beforeText, afterText)) {
-          LOG.error(
-            LogMessageEx.createEvent("Import optimizer  hasn't optimized any imports", file.getViewProvider().getVirtualFile().getPath(),
-                                     AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile())));
+          LOG.error("Import optimizer hasn't optimized any imports",
+                    new Throwable(file.getViewProvider().getVirtualFile().getPath()),
+                    AttachmentFactory.createAttachment(file.getViewProvider().getVirtualFile()));
         }
       }
     });
@@ -902,5 +919,16 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   @Override
   public IntentionAction createCreateClassInPackageInModuleFix(@NotNull Module module, @Nullable String packageName) {
     return CreateClassInPackageInModuleFix.createFix(module, packageName);
+  }
+
+  @Override
+  public IntentionAction createPushDownMethodFix() {
+    return new RunRefactoringAction(new JavaPushDownHandler(), "Push method down...") {
+      @NotNull
+      @Override
+      public Priority getPriority() {
+        return Priority.NORMAL;
+      }
+    };
   }
 }

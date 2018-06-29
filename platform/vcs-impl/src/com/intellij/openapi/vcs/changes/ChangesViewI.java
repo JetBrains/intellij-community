@@ -30,5 +30,6 @@ public interface ChangesViewI {
   void refreshChangesViewNodeAsync(VirtualFile file);
   void updateProgressText(final String text, final boolean isError);
   void setBusy(boolean b);
-  void setShowFlattenMode(boolean state);
+
+  void setGrouping(@NotNull String groupingKey);
 }

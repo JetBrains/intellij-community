@@ -47,10 +47,7 @@ import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationEx;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.undo.UndoManager;
@@ -80,6 +77,8 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.impl.CoreProgressManager;
+import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbServiceImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.project.ex.ProjectManagerEx;
@@ -417,7 +416,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     final AtomicReference<RuntimeException> stopDaemonReason = new AtomicReference<>();
     StorageUtilKt.setDEBUG_LOG("");
     getProject().getMessageBus().connect(disposable).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC,
-            new DaemonCodeAnalyzer.DaemonListenerAdapter() {
+            new DaemonCodeAnalyzer.DaemonListener() {
               @Override
               public void daemonCancelEventOccurred(@NotNull String reason) {
                 RuntimeException e = new RuntimeException("Some bastard's restarted daemon: " + reason +
@@ -693,7 +692,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     final int[] count = {0};
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
         count[0]++;
@@ -819,7 +818,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     assertEmpty(errors);
 
     MarkupModelEx modelEx = (MarkupModelEx)DocumentMarkupModel.forDocument(getDocument(getFile()), getProject(), true);
-    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+    modelEx.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
         if (TextRange.create(highlighter).substring(highlighter.getDocument().getText()).equals("TTTTTTTTTTTTTTT")) {
@@ -912,7 +911,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       TextRange range = ObjectUtils.assertNotNull(FileStatusMap.getDirtyTextRange(getEditor(), Pass.UPDATE_ALL));
       log.append("FileStatusMap.getDirtyTextRange: " + range+"\n");
       List<PsiElement> elements = CollectHighlightsUtil.getElementsInRange(getFile(), range.getStartOffset(), range.getEndOffset());
-      log.append("CollectHighlightsUtil.getElementsInRange" + range + ": " + elements.size() +" elements : "+ elements+"\n");
+      log.append("CollectHighlightsUtil.getElementsInRange: " + range + ": " + elements.size() +" elements : "+ elements+"\n");
       List<HighlightInfo> infos = doHighlighting();
       log.append(" File text: '" + getFile().getText() + "'\n");
       log.append("infos: " + infos + "\n");
@@ -1220,8 +1219,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
   }
 
 
-  // disabled for now
-  public void _testSOEInEndlessAppendChainPerformance() {
+  public void testSOEInEndlessAppendChainPerformance() {
     StringBuilder text = new StringBuilder("class S { String ffffff =  new StringBuilder()\n");
     for (int i=0; i<2000; i++) {
       text.append(".append(").append(i).append(")\n");
@@ -1229,21 +1227,34 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     text.append(".toString();<caret>}");
     configureByText(StdFileTypes.JAVA, text.toString());
 
-    PlatformTestUtil.startPerformanceTest("tree visitors", 30000, () -> {
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 60_000, () -> {
       List<HighlightInfo> infos = highlightErrors();
       assertEmpty(infos);
-      type("kjhgas");
-      List<HighlightInfo> errors = highlightErrors();
-      assertFalse(errors.isEmpty());
+      type("k");
+      assertNotEmpty(highlightErrors());
       backspace();
+    }).usesAllCPUCores().assertTiming();
+  }
+
+  public void testPerformanceOfHighlightingLongCallChainWithHierarchyAndGenerics() {
+    String text = "class Foo { native Foo foo(); }\n" +
+                  "class Bar<T extends Foo> extends Foo {\n" +
+                  "  native Bar<T> foo();" +
+                  "}\n" +
+                  "class Goo extends Bar<Goo> {}\n" +
+                  "class S { void x(Goo g) { g\n" +
+                  StringUtil.repeat(".foo()\n", 2000) +
+                  ".toString(); } }";
+    configureByText(StdFileTypes.JAVA, text);
+
+    PlatformTestUtil.startPerformanceTest("highlighting deep call chain", 90_000, () -> {
+      assertEmpty(highlightErrors());
+
+      type("k");
+      assertNotEmpty(highlightErrors());
+
       backspace();
-      backspace();
-      backspace();
-      backspace();
-      backspace();
-      infos = highlightErrors();
-      assertEmpty(infos);
-    }).useLegacyScaling().assertTiming();
+    }).usesAllCPUCores().assertTiming();
   }
 
 
@@ -1302,7 +1313,6 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     highlightErrors();
 
     GeneralSettings settings = GeneralSettings.getInstance();
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     boolean frameSave = settings.isSaveOnFrameDeactivation();
     settings.setSaveOnFrameDeactivation(true);
     UtilKt.runInAllowSaveMode(() -> {
@@ -1517,15 +1527,11 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     try {
       Module alienModule = doCreateRealModuleIn("x", alienProject, getModuleType());
       final VirtualFile alienRoot = PsiTestUtil.createTestProjectStructure(alienProject, alienModule, myFilesToDelete);
-      OpenFileDescriptor alienDescriptor = new WriteAction<OpenFileDescriptor>() {
-        @Override
-        protected void run(@NotNull Result<OpenFileDescriptor> result) throws Throwable {
-          VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
-          setFileText(alienFile, "class Alien { }");
-          OpenFileDescriptor alienDescriptor = new OpenFileDescriptor(alienProject, alienFile);
-          result.setResult(alienDescriptor);
-        }
-      }.execute().throwException().getResultObject();
+      OpenFileDescriptor alienDescriptor = WriteAction.compute(() -> {
+        VirtualFile alienFile = alienRoot.createChildData(this, "X.java");
+        setFileText(alienFile, "class Alien { }");
+        return new OpenFileDescriptor(alienProject, alienFile);
+      });
 
       FileEditorManager fe = FileEditorManager.getInstance(alienProject);
       final Editor alienEditor = ObjectUtils.assertNotNull(fe.openTextEditor(alienDescriptor, false));
@@ -1685,9 +1691,9 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
     type(' ');
     CompletionContributor.forLanguage(getFile().getLanguage());
-    long s = System.currentTimeMillis();
+    //long s = System.currentTimeMillis();
     highlightErrors();
-    long e = System.currentTimeMillis();
+    //long e = System.currentTimeMillis();
     //System.out.println("Hi elapsed: "+(e-s));
 
     //List<String> dumps = new ArrayList<>();
@@ -1846,12 +1852,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, myProject, false);
     final boolean[] errorRemoved = {false};
 
-    model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener.Adapter() {
+    model.addMarkupModelListener(getTestRootDisposable(), new MarkupModelListener() {
       @Override
       public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
-        Object tt = highlighter.getErrorStripeTooltip();
-        if (!(tt instanceof HighlightInfo)) return;
-        String description = ((HighlightInfo)tt).getDescription();
+        HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+        if (info == null) return;
+        String description = info.getDescription();
         if (errorDescription.equals(description)) {
           errorRemoved[0] = true;
 
@@ -2025,7 +2031,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() || !applied.contains(editor)) {
           UIUtil.dispatchAllInvocationEvents();
-          if (System.currentTimeMillis() - start > 10000) {
+          if (System.currentTimeMillis() - start > 1000000) {
             fail("Too long waiting for daemon");
           }
         }
@@ -2170,9 +2176,8 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
 
   public void testModificationInWorkspaceXmlDoesNotCauseRehighlight() {
     configureByText(JavaFileType.INSTANCE, "class X { <caret> }");
-    ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     UtilKt.runInAllowSaveMode(() -> {
-      application.saveAll(true);
+      StoreUtil.saveDocumentsAndProjectsAndApp(true);
       VirtualFile workspaceFile = Objects.requireNonNull(getProject().getWorkspaceFile());
       PsiFile excluded = ObjectUtils.assertNotNull(PsiManager.getInstance(getProject()).findFile(workspaceFile));
 
@@ -2227,8 +2232,12 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         UIUtil.dispatchAllInvocationEvents();
         caretLeft();
         DaemonProgressIndicator updateProgress = myDaemonCodeAnalyzer.getUpdateProgress();
-        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) { // wait until daemon started
+        long waitForDaemonStart = System.currentTimeMillis();
+        while (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress && System.currentTimeMillis() < waitForDaemonStart + 5000) { // wait until daemon started
           UIUtil.dispatchAllInvocationEvents();
+        }
+        if (myDaemonCodeAnalyzer.getUpdateProgress() == updateProgress) {
+          throw new RuntimeException("Daemon failed to start in 5000 ms");
         }
         long start = System.currentTimeMillis();
         while (myDaemonCodeAnalyzer.isRunning() && System.currentTimeMillis() < start + 500) {
@@ -2270,15 +2279,21 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
     });
 
     highlightErrors();
+    UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintBeforeDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
     assertNotNull(lastHintBeforeDeletion);
+    assertTrue(lastHintBeforeDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
 
     delete(myEditor);
     highlightErrors();
+    UIUtil.dispatchAllInvocationEvents();
     IntentionHintComponent lastHintAfterDeletion = myDaemonCodeAnalyzer.getLastIntentionHint();
-    assertSame(lastHintBeforeDeletion, lastHintAfterDeletion);
-
-    assertEmpty(visibleHints);
+    // it must be either hidden or not have that error anymore
+    if (lastHintAfterDeletion != null) {
+      assertFalse(lastHintBeforeDeletion.getCachedIntentions().toString(), lastHintBeforeDeletion.getCachedIntentions().getErrorFixes().stream().anyMatch(e -> e.getText().equals("Initialize variable 'var'")));
+    } else {
+      assertEmpty(visibleHints);
+    }
   }
 
   public void testCodeFoldingPassRestartsOnRegionUnfolding() {
@@ -2294,12 +2309,7 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       waitForDaemon();
       checkFoldingState("[FoldRegion +(25:33), placeholder='{}']");
 
-      new WriteCommandAction<Void>(myProject) {
-        @Override
-        protected void run(@NotNull Result<Void> result) {
-          myEditor.getDocument().insertString(0, "/*");
-        }
-      }.execute();
+      WriteCommandAction.runWriteCommandAction(myProject, () -> myEditor.getDocument().insertString(0, "/*"));
       waitForDaemon();
       checkFoldingState("[FoldRegion -(0:37), placeholder='/.../', FoldRegion +(27:35), placeholder='{}']");
 
@@ -2344,7 +2354,10 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
       UIUtil.dispatchInvocationEvent();
     }
     while (daemonIsWorkingOrPending()) {
-      if (System.currentTimeMillis() > deadline) fail("Too long waiting for daemon to finish");
+      if (System.currentTimeMillis() > deadline) {
+        dumpThreadsToConsole();
+        fail("Too long waiting for daemon to finish");
+      }
       UIUtil.dispatchInvocationEvent();
     }
   }
@@ -2547,6 +2560,71 @@ public class DaemonRespondToChangesTest extends DaemonAnalyzerTestCase {
         WriteCommandAction.runWriteCommandAction(project, () -> ((PsiIfStatement)descriptor.getPsiElement().getParent()).getElseBranch().delete());
       }
     }
+  }
+
+  public void testDumbAwareHighlightingPassesStartEvenInDumbMode() {
+    List<TextEditorHighlightingPassFactory> collected = Collections.synchronizedList(new ArrayList<>());
+    List<TextEditorHighlightingPassFactory> applied = Collections.synchronizedList(new ArrayList<>());
+      class DumbFac implements TextEditorHighlightingPassFactory, DumbAware {
+        @Override
+        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+          return new MyDumbPass(editor, file);
+        }
+
+        class MyDumbPass extends EditorBoundHighlightingPass implements DumbAware {
+          MyDumbPass(Editor editor, PsiFile file) {
+            super(editor, file, false);
+          }
+
+          @Override
+          public void doCollectInformation(@NotNull ProgressIndicator progress) {
+            collected.add(DumbFac.this);
+          }
+
+          @Override
+          public void doApplyInformationToEditor() {
+            applied.add(DumbFac.this);
+          }
+        }
+      }
+      TextEditorHighlightingPassRegistrar registrar = TextEditorHighlightingPassRegistrar.getInstance(getProject());
+    DumbFac dumbFac = new DumbFac();
+    registrar.registerTextEditorHighlightingPass(dumbFac, null, null, false, -1);
+      class SmartFac implements TextEditorHighlightingPassFactory {
+        @Override
+        public TextEditorHighlightingPass createHighlightingPass(@NotNull PsiFile file, @NotNull final Editor editor) {
+          return new EditorBoundHighlightingPass(editor, file, false) {
+            @Override
+            public void doCollectInformation(@NotNull ProgressIndicator progress) {
+              collected.add(SmartFac.this);
+            }
+
+            @Override
+            public void doApplyInformationToEditor() {
+              applied.add(SmartFac.this);
+            }
+          };
+        }
+      }
+    SmartFac smartFac = new SmartFac();
+    registrar.registerTextEditorHighlightingPass(smartFac, null, null, false, -1);
+
+    configureByText(PlainTextFileType.INSTANCE, "");
+    doHighlighting();
+    assertSameElements(collected, dumbFac, smartFac);
+    assertSameElements(applied, dumbFac, smartFac);
+    collected.clear();
+    applied.clear();
+
+    ((DaemonCodeAnalyzerImpl)DaemonCodeAnalyzer.getInstance(getProject())).mustWaitForSmartMode(false, getTestRootDisposable());
+    DumbServiceImpl.getInstance(myProject).setDumb(true);
+    type(' ');
+    doHighlighting();
+
+    TextEditorHighlightingPassFactory f = assertOneElement(collected);
+    assertSame(dumbFac, f);
+    TextEditorHighlightingPassFactory f2 = assertOneElement(applied);
+    assertSame(dumbFac, f2);
   }
 }
 

@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  * when Java references are being resolved.
  *
  * @author ik, dsl
- * @see com.intellij.psi.PsiCall#resolveMethodGenerics()
+ * @see PsiCall#resolveMethodGenerics()
  */
 public interface JavaResolveResult extends ResolveResult {
   JavaResolveResult[] EMPTY_ARRAY = new JavaResolveResult[0];

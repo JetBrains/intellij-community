@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.impl.file.impl;
 
 import com.intellij.AppTopics;
@@ -21,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.impl.FileDocumentManagerImpl;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeEvent;
@@ -599,7 +585,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
           assert depthCounter >= 0 : depthCounter;
           if (depthCounter > 0) return;
 
-          DebugUtil.performPsiModification(null, () -> myFileManager.invalidateAllPsi());
+          DebugUtil.performPsiModification(null, () -> myFileManager.possiblyInvalidatePhysicalPsi());
 
           PsiTreeChangeEventImpl treeEvent = new PsiTreeChangeEventImpl(myManager);
           treeEvent.setPropertyName(PsiTreeChangeEvent.PROP_ROOTS);
@@ -614,18 +600,18 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
     }
   }
 
-  private class MyFileDocumentManagerAdapter extends FileDocumentManagerAdapter {
+  private class MyFileDocumentManagerAdapter implements FileDocumentManagerListener {
     @Override
     public void fileWithNoDocumentChanged(@NotNull final VirtualFile file) {
-      final PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
-      if (psiFile != null) {
+      FileViewProvider viewProvider = myFileManager.findCachedViewProvider(file);
+      if (viewProvider != null) {
         ApplicationManager.getApplication().runWriteAction(
           (ExternalChangeAction)() -> {
             if (FileDocumentManagerImpl.recomputeFileTypeIfNecessary(file)) {
               myFileManager.forceReload(file);
             }
             else {
-              myFileManager.reloadPsiAfterTextChange(psiFile, file);
+              myFileManager.reloadPsiAfterTextChange(viewProvider, file);
             }
           }
         );
@@ -636,7 +622,7 @@ public class PsiVFSListener implements VirtualFileListener, BulkFileListener {
 
     @Override
     public void fileContentReloaded(@NotNull VirtualFile file, @NotNull Document document) {
-      PsiFile psiFile = myFileManager.getCachedPsiFileInner(file);
+      FileViewProvider psiFile = myFileManager.findCachedViewProvider(file);
       if (!file.isValid() || psiFile == null || !FileUtilRt.isTooLarge(file.getLength()) || psiFile instanceof PsiLargeFile) return;
       ApplicationManager.getApplication().runWriteAction((ExternalChangeAction)() -> myFileManager.reloadPsiAfterTextChange(psiFile, file));
     }

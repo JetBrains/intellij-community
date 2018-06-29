@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.editorActions;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.template.impl.editorActions.TypedActionHandlerBase;
 import com.intellij.lang.Language;
 import com.intellij.lang.java.JavaLanguage;
@@ -33,7 +34,6 @@ import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilBase;
@@ -185,7 +185,7 @@ public class AutoFormatTypedHandler extends TypedActionHandlerBase {
     PsiFile file = project == null ? null : PsiUtilBase.getPsiFileInEditor(editor, project);
     if (file != null) {
       Language language = file.getLanguage();
-      CodeStyleSettings settings = CodeStyleSettingsManager.getInstance(project).getCurrentSettings();
+      CodeStyleSettings settings = CodeStyle.getSettings(editor);
       CommonCodeStyleSettings common = settings.getCommonSettings(language);
       return common.SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }

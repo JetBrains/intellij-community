@@ -48,5 +48,8 @@ interface DslFactory {
 
   fun updateTime(): Expression
 
+  @Deprecated("use createPeekCall(GenericType, Lambda): IntermediateStreamCall instead")
   fun createPeekCall(elementsType: GenericType, lambda: String): IntermediateStreamCall
+
+  fun createPeekCall(elementType: GenericType, lambda: Lambda): IntermediateStreamCall
 }

@@ -9,16 +9,16 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
 import com.jetbrains.env.PyTestTask;
-import com.jetbrains.env.Staging;
 import com.jetbrains.python.packaging.PyPackage;
 import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyRequirement;
+import com.jetbrains.python.packaging.requirement.PyRequirementRelation;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import com.jetbrains.python.tools.sdkTools.SdkCreationType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.junit.Assume;
 import org.junit.Test;
 
 import java.io.File;
@@ -29,6 +29,7 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.testFramework.UsefulTestCase.assertInstanceOf;
+import static com.jetbrains.python.packaging.PyRequirementsKt.pyRequirement;
 import static org.junit.Assert.*;
 
 /**
@@ -37,10 +38,8 @@ import static org.junit.Assert.*;
 public class PyPackagingTest extends PyEnvTestCase {
   @Override
   public void runPythonTest(PyTestTask testTask) {
-    if (UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
-    }
-
+    Assume.assumeFalse("Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled",
+                       UsefulTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows);
     super.runPythonTest(testTask);
   }
 
@@ -67,7 +66,6 @@ public class PyPackagingTest extends PyEnvTestCase {
   }
 
   @Test
-  @Staging
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
@@ -100,7 +98,6 @@ public class PyPackagingTest extends PyEnvTestCase {
     });
   }
 
-  @Staging
   @Test
   public void testInstallPackage() {
     runPythonTest(new PyPackagingTestTask() {
@@ -117,8 +114,8 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackageManager manager = PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.refreshAndGetPackages(false);
           // TODO: Install Markdown from a local file
-          manager.install(list(PyRequirement.fromLine("Markdown<2.2"),
-                               new PyRequirement("httplib2")), Collections.emptyList());
+          manager.install(Arrays.asList(pyRequirement("Markdown", PyRequirementRelation.LT, "2.2"), pyRequirement("httplib2")),
+                          Collections.emptyList());
           final List<PyPackage> packages2 = manager.refreshAndGetPackages(false);
           final PyPackage markdown2 = findPackage("Markdown", packages2);
           assertNotNull(markdown2);
@@ -126,7 +123,7 @@ public class PyPackagingTest extends PyEnvTestCase {
           final PyPackage pip1 = findPackage("pip", packages1);
           assertNotNull(pip1);
           assertEquals("pip", pip1.getName());
-          manager.uninstall(list(pip1));
+          manager.uninstall(Collections.singletonList(pip1));
           final List<PyPackage> packages3 = manager.refreshAndGetPackages(false);
           final PyPackage pip2 = findPackage("pip", packages3);
           assertNull(pip2);
@@ -150,11 +147,6 @@ public class PyPackagingTest extends PyEnvTestCase {
     }
     return null;
   }
-
-  private static <T> List<T> list(T... xs) {
-    return Arrays.asList(xs);
-  }
-
 
   private abstract static class PyPackagingTestTask extends PyExecutionFixtureTestTask {
     PyPackagingTestTask() {

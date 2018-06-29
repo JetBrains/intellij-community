@@ -25,5 +25,7 @@
     <orderEntry type="module" module-name="intellij.platform.vcs.tests" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks" scope="TEST" />
     <orderEntry type="module" module-name="intellij.platform.tasks.impl" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="http-client-3.1" level="project" />
+    <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
   </component>
 </module>

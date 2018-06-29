@@ -9,7 +9,7 @@ public class Main {
   }
 
   public Optional<String> test(List<Object> objects) {
-      Optional<String> result = objects.stream().filter(obj -> obj instanceof String).findFirst().flatMap(obj -> trim((String) obj));
+    Optional<String> result = objects.stream().filter(obj -> obj instanceof String).findFirst().flatMap(obj -> trim((String) obj));
       return result;
   }
 }

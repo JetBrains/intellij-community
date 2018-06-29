@@ -17,5 +17,6 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
     <orderEntry type="module" module-name="intellij.platform.diff.tests" scope="TEST" />
+    <orderEntry type="library" scope="TEST" name="mockito" level="project" />
   </component>
 </module>

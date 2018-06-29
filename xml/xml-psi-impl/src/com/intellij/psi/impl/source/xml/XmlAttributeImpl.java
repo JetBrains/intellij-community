@@ -15,10 +15,13 @@
  */
 package com.intellij.psi.impl.source.xml;
 
+import com.intellij.javaee.ExternalResourceManagerEx;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ModificationTracker;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.PomManager;
@@ -34,6 +37,9 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.CachedValueProvider;
+import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -68,7 +74,7 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == XmlTokenType.XML_NAME) {
@@ -352,9 +358,23 @@ public class XmlAttributeImpl extends XmlElementImpl implements XmlAttribute, Hi
   @Override
   @Nullable
   public XmlAttributeDescriptor getDescriptor() {
-    final PsiElement parentElement = getParent();
-    if (parentElement == null) return null; // e.g. XmlDecl or PI
-    final XmlTag tag = (XmlTag)parentElement;
+    return CachedValuesManager.getCachedValue(this,
+                                              () -> CachedValueProvider.Result.create(getDescriptorImpl(),
+                                                                                      PsiModificationTracker.MODIFICATION_COUNT,
+                                                                                      externalResourceModificationTracker()));
+  }
+
+  private ModificationTracker externalResourceModificationTracker() {
+    Project project = getProject();
+    ExternalResourceManagerEx manager = ExternalResourceManagerEx.getInstanceEx();
+    return () -> manager.getModificationCount(project);
+  }
+
+
+  @Nullable
+  private XmlAttributeDescriptor getDescriptorImpl() {
+    final XmlTag tag = getParent();
+    if (tag == null) return null; // e.g. XmlDecl or PI
     final XmlElementDescriptor descr = tag.getDescriptor();
     if (descr == null) return null;
     final XmlAttributeDescriptor attributeDescr = descr.getAttributeDescriptor(this);

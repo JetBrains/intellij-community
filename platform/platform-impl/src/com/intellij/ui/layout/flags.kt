@@ -1,18 +1,6 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+@file:Suppress("EnumEntryName")
+
 package com.intellij.ui.layout
 
 // http://www.migcalendar.com/miglayout/mavensite/docs/cheatsheet.pdf
@@ -38,54 +26,42 @@ enum class LCFlags {
    */
   fill, fillX, fillY,
 
+  // temp flag, will be removed or renamed later
+  disableMagic,
+
   lcWrap,
 
   debug
 }
 
+/**
+ * See FAQ in the [docs](https://github.com/JetBrains/intellij-community/tree/master/platform/platform-impl/src/com/intellij/ui/layout).
+ * Do not use this flags directly.
+ */
 enum class CCFlags {
   /**
-   * Wrap to the next line/column **after** the component that this constraint belongs to.
+   * Use [Row.grow] instead.
    */
-  // use row instead
-  //wrap,
+  grow,
+  /**
+   * Use [Row.growX] instead.
+   */
+  growX,
+  /**
+   * Use [Row.growY] instead.
+   */
+  growY,
 
   /**
-   * Span cells in both x and y.
+   * Use [Row.push] instead.
    */
-  // use row instead
-  //span, spanX, spanY,
-
+  push,
   /**
-   * Splits the cell in a number of sub cells. Basically this means that the next count number of components will be put in the same cell, next to each other with default gaps.
-   * Only the first component in a cell can set the split, any subsequent "split" keywords in the cell will be ignored.
-   * "count" defaults to infinite if not specified, which means that "split" alone will put all subsequent components in the same cell.
-   * "skip", "wrap" and "newline" will break out of the split cell. The latter two will move to a new row/column as usual.
-   * "skip" will skip out if the splitting and continue in the next cell.
+   * Use [Row.pushX] instead.
    */
-  // use row instead
-  //split,
-
+  pushX,
   /**
-   * Sets how keen the component should be to grow in relation to other component **in the same cell**. Use `push` in addition if need.
-   * The weight (defaults to 100 if not specified) is purely a relative value to other components' weight. Twice the weight will get double the extra space.
-   * If this constraint is not set the grow weight is set to 0 and the component will not grow (unless fill is set in the row/column in which case "grow 0" can be used to explicitly make it not grow).
-   * Grow weight will only be compared against the weights in the same grow priority group and for the same cell.
+   * Use [Row.pushY] instead.
    */
-  grow, growX, growY,
-
-  /**
-   * Makes the row and/or column that the component is residing in grow with `weight`.
-   */
-  push, pushY, pushX,
-
-  // use right { } instead
-  //right,
-
-  /**
-   * Skips a number of cells in the flow. This is used to jump over a number of cells before the next free cell is looked for.
-   * The skipping is done before this component is put in a cell and thus this cells is affected by it. "count" defaults to 1 if not specified.
-   */
-  // use row instead
-  //skip
+  pushY,
 }

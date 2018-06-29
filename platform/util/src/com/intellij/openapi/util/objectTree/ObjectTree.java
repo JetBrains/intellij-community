@@ -30,6 +30,8 @@ import java.util.concurrent.atomic.AtomicLong;
 
 public final class ObjectTree<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.util.objectTree.ObjectTree");
+  
+  private static final ThreadLocal<Throwable> ourTopmostDisposeTrace = new ThreadLocal<Throwable>();
 
   private final List<ObjectTreeListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
@@ -65,16 +67,18 @@ public final class ObjectTree<T> {
 
   public final void register(@NotNull T parent, @NotNull T child) {
     if (parent == child) throw new IllegalArgumentException("Cannot register to itself: "+parent);
-    Object wasDisposed = getDisposalInfo(parent);
-    if (wasDisposed != null) {
-      throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
-                                            "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
-                                            wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
-    }
-    if (isDisposing(parent)) {
-      throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
-    }
     synchronized (treeLock) {
+      Object wasDisposed = getDisposalInfo(parent);
+      if (wasDisposed != null) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " has already been disposed " +
+                                              "(see the cause for stacktrace) so the child: "+child+" will never be disposed",
+                                              wasDisposed instanceof Throwable ? (Throwable)wasDisposed : null);
+      }
+
+      if (isDisposing(parent)) {
+        throw new IncorrectOperationException("Sorry but parent: " + parent + " is being disposed so the child: "+child+" will never be disposed");
+      }
+
       myDisposedObjects.remove(child); // if we dispose thing and then register it back it means it's not disposed anymore
       ObjectNode<T> parentNode = getNode(parent);
       if (parentNode == null) parentNode = createNodeFor(parent, null);
@@ -132,14 +136,25 @@ public final class ObjectTree<T> {
     synchronized (treeLock) {
       node = getNode(object);
     }
-    if (node == null) {
-      if (processUnregistered) {
-        rememberDisposedTrace(object);
-        executeUnregistered(object, action);
+    boolean needTrace = (node != null || processUnregistered) && Disposer.isDebugMode() && ourTopmostDisposeTrace.get() == null;
+    if (needTrace) {
+      ourTopmostDisposeTrace.set(ThrowableInterner.intern(new Throwable()));
+    }
+    try {
+      if (node == null) {
+        if (processUnregistered) {
+          rememberDisposedTrace(object);
+          executeUnregistered(object, action);
+        }
+      }
+      else {
+        node.execute(action);
       }
     }
-    else {
-      node.execute(action);
+    finally {
+      if (needTrace) {
+        ourTopmostDisposeTrace.remove();
+      }
     }
   }
 
@@ -277,7 +292,8 @@ public final class ObjectTree<T> {
 
   private void rememberDisposedTrace(@NotNull Object object) {
     synchronized (treeLock) {
-      myDisposedObjects.put(object, Disposer.isDebugMode() ? ThrowableInterner.intern(new Throwable()) : Boolean.TRUE);
+      Throwable trace = ourTopmostDisposeTrace.get();
+      myDisposedObjects.put(object, trace != null ? trace : Boolean.TRUE);
     }
   }
 

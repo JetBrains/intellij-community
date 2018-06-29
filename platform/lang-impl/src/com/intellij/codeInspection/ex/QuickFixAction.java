@@ -59,7 +59,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
-    this(text, AllIcons.Actions.CreateFromUsage, null, toolWrapper);
+    this(text, AllIcons.Actions.IntentionBulb, null, toolWrapper);
   }
 
   protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
@@ -123,7 +123,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
         doApplyFix(getSelectedElements(view), view);
       }
 
-      view.removeSelectedNodes();
+      view.getTree().removeSelectedProblems();
     } finally {
       view.setApplyingFix(false);
     }
@@ -174,7 +174,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
       PerformFixesTask performFixesTask = new PerformFixesTask(project, descriptors, ignoredElements, context);
       if (startInWriteAction) {
         ((ApplicationImpl)ApplicationManager.getApplication())
-          .runWriteActionWithNonCancellableProgressInDispatchThread(templatePresentationText, project, null, performFixesTask::doRun);
+          .runWriteActionWithCancellableProgressInDispatchThread(templatePresentationText, project, null, performFixesTask::doRun);
       }
       else {
         final SequentialModalProgressTask progressTask =
@@ -282,7 +282,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
-      icon = AllIcons.Actions.CreateFromUsage;
+      icon = AllIcons.Actions.IntentionBulb;
     }
     button.setEnabled(presentation.isEnabled());
     button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));

@@ -10,7 +10,7 @@ import com.intellij.util.xmlb.annotations.Property
 
 @Property(style = Property.Style.ATTRIBUTE)
 class ExternalStorageConfiguration : BaseState() {
-  var enabled by property(false)
+  var enabled: Boolean by property(false)
 }
 
 @State(name = "ExternalStorageConfigurationManager")
@@ -22,7 +22,7 @@ class ExternalStorageConfigurationManager : PersistentStateComponent<ExternalSto
 
   private var state = ExternalStorageConfiguration()
 
-  override fun getModificationCount() = state.modificationCount
+  override fun getModificationCount(): Long = state.modificationCount
 
   override fun getState(): ExternalStorageConfiguration {
     return state
@@ -32,7 +32,7 @@ class ExternalStorageConfigurationManager : PersistentStateComponent<ExternalSto
     this.state = state
   }
 
-  fun isEnabled() = state.enabled
+  fun isEnabled(): Boolean = state.enabled
 
   /**
    * Internal use only. Call ExternalProjectsManagerImpl.setStoreExternally instead.

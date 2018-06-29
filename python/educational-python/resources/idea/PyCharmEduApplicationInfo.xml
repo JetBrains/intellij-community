@@ -1,10 +1,10 @@
 <component xmlns="http://jetbrains.org/intellij/schema/application-info"
            xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
            xsi:schemaLocation="http://jetbrains.org/intellij/schema/application-info http://jetbrains.org/intellij/schema/ApplicationInfo.xsd">
-  <version major="2018" minor="1" eap="true"/>
+  <version major="2018" minor="3" eap="true"/>
   <company name="JetBrains s.r.o." url="https://www.jetbrains.com" copyrightStart="2010"/>
   <build number="__BUILD_NUMBER__" date="__BUILD_DATE__"/>
-  <logo url="/pycharm_edu_logo.png" textcolor="e5e5e5" progressColor="21d688" progressY="281" progressTailIcon="/community_progress_tail.png"/>
+  <logo url="/pycharm_edu_logo.png" textcolor="ffffff" progressColor="ffffff" progressY="281" progressTailIcon="/community_progress_tail.png"/>
   <about url="/pycharm_edu_about.png" logoX="540" logoY="300" logoW="100" logoH="100" foreground="e5e5e5"
          copyrightForeground="858585" linkColor="589df6"/>
   <icon size32="/PyCharmEdu32.png" size16="/PyCharmEdu16.png" ico="PyCharmEdu.ico"/>

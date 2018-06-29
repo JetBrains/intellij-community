@@ -117,9 +117,9 @@ public final class RegExpLanguageHosts extends ClassExtension<RegExpLanguageHost
     return host.getSupportedNamedGroupTypes(context);
   }
 
-  public boolean isValidGroupName(String name, @Nullable final PsiElement context) {
-    final RegExpLanguageHost host = findRegExpHost(context);
-    return host != null && host.isValidGroupName(name, context);
+  public boolean isValidGroupName(String name, @Nullable final RegExpGroup group) {
+    final RegExpLanguageHost host = findRegExpHost(group);
+    return host != null && host.isValidGroupName(name, group);
   }
 
   public boolean supportsPerl5EmbeddedComments(@Nullable final PsiComment comment) {

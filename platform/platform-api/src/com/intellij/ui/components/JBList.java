@@ -294,31 +294,7 @@ public class JBList<E> extends JList<E> implements ComponentWithEmptyText, Compo
   }
 
   public <T> void installCellRenderer(@NotNull final NotNullFunction<T, JComponent> fun) {
-    setCellRenderer(new DefaultListCellRenderer() {
-      @NotNull
-      @Override
-      public Component getListCellRendererComponent(@NotNull JList list,
-                                                    Object value,
-                                                    int index,
-                                                    boolean isSelected,
-                                                    boolean cellHasFocus) {
-        @SuppressWarnings({"unchecked"})
-        final JComponent comp = fun.fun((T)value);
-        comp.setOpaque(true);
-        if (isSelected) {
-          comp.setBackground(list.getSelectionBackground());
-          comp.setForeground(list.getSelectionForeground());
-        }
-        else {
-          comp.setBackground(list.getBackground());
-          comp.setForeground(list.getForeground());
-        }
-        for (JLabel label : UIUtil.findComponentsOfType(comp, JLabel.class)) {
-          label.setForeground(UIUtil.getListForeground(isSelected));
-        }
-        return comp;
-      }
-    });
+    setCellRenderer(new SelectionAwareListCellRenderer<>(fun));
   }
 
   public void setDataProvider(@NotNull DataProvider provider) {

@@ -2,6 +2,8 @@
 package com.intellij.ui;
 
 import com.intellij.util.NotNullProducer;
+import com.intellij.util.ObjectUtils;
+import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -11,14 +13,16 @@ import java.awt.color.ColorSpace;
 import java.awt.geom.AffineTransform;
 import java.awt.geom.Rectangle2D;
 import java.awt.image.ColorModel;
+import java.util.Map;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
-
-  private static volatile boolean DARK = UIUtil.isUnderDarcula();
+  private static class Lazy {
+    private static volatile boolean DARK = UIUtil.isUnderDarcula();
+  }
 
   private final Color darkColor;
   private final NotNullProducer<Color> func;
@@ -27,20 +31,34 @@ public class JBColor extends Color {
     this(new Color(rgb), new Color(darkRGB));
   }
 
-  public JBColor(Color regular, Color dark) {
+  public JBColor(@NotNull Color regular, @NotNull Color dark) {
     super(regular.getRGB(), regular.getAlpha() != 255);
     darkColor = dark;
-    //noinspection AssignmentToStaticFieldFromInstanceMethod
-    DARK = UIUtil.isUnderDarcula(); //Double check. Sometimes DARK != isDarcula() after dialogs appear on splash screen
     func = null;
   }
 
-  public JBColor(NotNullProducer<Color> function) {
+  public JBColor(@NotNull NotNullProducer<Color> function) {
     super(0);
     darkColor = null;
     func = function;
   }
 
+  public static JBColor namedColor(@NotNull String propertyName, int defaultValueRGB) {
+    return namedColor(propertyName, new Color(defaultValueRGB));
+  }
+
+
+  public static JBColor namedColor(@NotNull final String propertyName, @NotNull final Color defaultColor) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        return ObjectUtils.notNull(UIManager.getColor(propertyName), defaultColor);
+      }
+    });
+  }
+
+  @NotNull
   public static Color link() {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
@@ -52,39 +70,39 @@ public class JBColor extends Color {
     });
   }
 
+  @NotNull
   public static Color linkHover() {
     Color hoverColor = UIManager.getColor("link.hover.foreground");
     return hoverColor == null ? link() : hoverColor;
   }
 
+  @NotNull
   public static Color linkPressed() {
     Color pressedColor = UIManager.getColor("link.pressed.foreground");
     return pressedColor == null ? new JBColor(0xf00000, 0xba6f25) : pressedColor;
   }
 
+  @NotNull
   public static Color linkVisited() {
     Color visitedColor = UIManager.getColor("link.visited.foreground");
     return visitedColor == null ? new JBColor(0x800080, 0x9776a9) : visitedColor;
   }
 
   public static void setDark(boolean dark) {
-    DARK = dark;
+    Lazy.DARK = dark;
   }
 
   public static boolean isBright() {
-    return !DARK;
+    return !Lazy.DARK;
   }
 
   Color getDarkVariant() {
     return darkColor;
   }
 
+  @NotNull
   Color getColor() {
-    if (func != null) {
-      return func.produce();
-    } else {
-      return DARK ? getDarkVariant() : this;
-    }
+    return func != null ? func.produce() : Lazy.DARK ? getDarkVariant() : this;
   }
 
   @Override
@@ -118,6 +136,7 @@ public class JBColor extends Color {
   }
 
   @Override
+  @NotNull
   public Color brighter() {
     if (func != null) {
       return new JBColor(new NotNullProducer<Color>() {
@@ -132,6 +151,7 @@ public class JBColor extends Color {
   }
 
   @Override
+  @NotNull
   public Color darker() {
     if (func != null) {
       return new JBColor(new NotNullProducer<Color>() {
@@ -164,48 +184,56 @@ public class JBColor extends Color {
   }
 
   @Override
+  @NotNull
   public float[] getRGBComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getRGBComponents(compArray) : c.getRGBComponents(compArray);
   }
 
   @Override
+  @NotNull
   public float[] getRGBColorComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getRGBComponents(compArray) : c.getRGBColorComponents(compArray);
   }
 
   @Override
+  @NotNull
   public float[] getComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getComponents(compArray) : c.getComponents(compArray);
   }
 
   @Override
+  @NotNull
   public float[] getColorComponents(float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getColorComponents(compArray) : c.getColorComponents(compArray);
   }
 
   @Override
-  public float[] getComponents(ColorSpace cspace, float[] compArray) {
+  @NotNull
+  public float[] getComponents(@NotNull ColorSpace cspace, float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getComponents(cspace, compArray) : c.getComponents(cspace, compArray);
   }
 
   @Override
-  public float[] getColorComponents(ColorSpace cspace, float[] compArray) {
+  @NotNull
+  public float[] getColorComponents(@NotNull ColorSpace cspace, float[] compArray) {
     final Color c = getColor();
     return c == this ? super.getColorComponents(cspace, compArray) : c.getColorComponents(cspace, compArray);
   }
 
   @Override
+  @NotNull
   public ColorSpace getColorSpace() {
     final Color c = getColor();
     return c == this ? super.getColorSpace() : c.getColorSpace();
   }
 
   @Override
+  @NotNull
   public synchronized PaintContext createContext(ColorModel cm, Rectangle r, Rectangle2D r2d, AffineTransform xform, RenderingHints hints) {
     final Color c = getColor();
     return c == this ? super.createContext(cm, r, r2d, xform, hints) : c.createContext(cm, r, r2d, xform, hints);
@@ -223,12 +251,7 @@ public class JBColor extends Color {
   public static final JBColor blue = new JBColor(Color.blue, DarculaColors.BLUE);
   public static final JBColor BLUE = blue;
 
-  public static final JBColor white = new JBColor(Color.white, UIUtil.getListBackground()) {
-    @Override
-    Color getDarkVariant() {
-      return UIUtil.getListBackground();
-    }
-  };
+  public static final JBColor white = new JBColor(Color.white, background());
   public static final JBColor WHITE = white;
 
   public static final JBColor black = new JBColor(Color.black, foreground());
@@ -261,6 +284,7 @@ public class JBColor extends Color {
   public static final Color cyan = new JBColor(Color.cyan, new Color(0, 137, 137));
   public static final Color CYAN = cyan;
 
+  @NotNull
   public static Color foreground() {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
@@ -271,6 +295,7 @@ public class JBColor extends Color {
     });
   }
 
+  @NotNull
   public static Color background() {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
@@ -281,6 +306,7 @@ public class JBColor extends Color {
     });
   }
 
+  @NotNull
   public static Color border() {
     return new JBColor(new NotNullProducer<Color>() {
       @NotNull
@@ -288,6 +314,25 @@ public class JBColor extends Color {
       public Color produce() {
         //noinspection deprecation
         return UIUtil.getBorderColor();
+      }
+    });
+  }
+
+  private static final Map<String, Color> defaultThemeColors = new HashMap<String, Color>();
+
+  @NotNull 
+  public static Color get(@NotNull final String colorId, @NotNull final Color defaultColor) {
+    return new JBColor(new NotNullProducer<Color>() {
+      @NotNull
+      @Override
+      public Color produce() {
+        Color color = defaultThemeColors.get(colorId);
+        if (color != null) {
+          return color;
+        }
+
+        defaultThemeColors.put(colorId, defaultColor);
+        return defaultColor;
       }
     });
   }

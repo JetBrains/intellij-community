@@ -83,11 +83,14 @@ private class JavaMethodRenderer(
   private fun renderMethod(): PsiMethod {
     val method = factory.createMethod(request.methodName, PsiType.VOID)
 
-    var modifiersToRender = requestedModifiers
+    val modifiersToRender = requestedModifiers.toMutableList()
     if (targetClass.isInterface) {
       modifiersToRender -= (visibilityModifiers + JvmModifier.ABSTRACT)
     }
     else if (abstract) {
+      if (modifiersToRender.remove(JvmModifier.PRIVATE)) {
+        modifiersToRender += JvmModifier.PROTECTED
+      }
       modifiersToRender += JvmModifier.ABSTRACT
     }
 
@@ -119,7 +122,7 @@ private class JavaMethodRenderer(
     val builder = TemplateBuilderImpl(method)
     createTemplateContext(builder).run {
       setupTypeElement(method.returnTypeElement, request.returnType)
-      setupParameters(method, request.parameters)
+      setupParameters(method, request.expectedParameters)
     }
     builder.setEndVariableAfter(method.body ?: method)
     return builder

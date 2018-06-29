@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.tasks.generic;
 
 import com.intellij.openapi.util.Comparing;
@@ -36,7 +34,6 @@ import static com.intellij.tasks.generic.TemplateVariable.FactoryVariable;
  */
 @Tag("Generic")
 public class GenericRepository extends BaseRepositoryImpl {
-
   @NonNls public static final String SERVER_URL = "serverUrl";
   @NonNls public static final String USERNAME = "username";
   @NonNls public static final String PASSWORD = "password";
@@ -66,7 +63,6 @@ public class GenericRepository extends BaseRepositoryImpl {
   private final List<FactoryVariable> myPredefinedTemplateVariables = Arrays.asList(myServerTemplateVariable,
                                                                                     myUserNameTemplateVariable,
                                                                                     myPasswordTemplateVariable);
-
   private String myLoginURL = "";
   private String myTasksListUrl = "";
   private String mySingleTaskUrl;
@@ -359,6 +355,9 @@ public class GenericRepository extends BaseRepositoryImpl {
     }
   )
   public List<ResponseHandler> getResponseHandlers() {
+    if (myResponseHandlersMap.isEmpty()) {
+      return Collections.emptyList();
+    }
     return Collections.unmodifiableList(new ArrayList<>(myResponseHandlersMap.values()));
   }
 

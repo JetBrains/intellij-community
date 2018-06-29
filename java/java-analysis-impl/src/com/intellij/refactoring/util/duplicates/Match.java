@@ -18,10 +18,7 @@ package com.intellij.refactoring.util.duplicates;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.*;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -32,14 +29,11 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * @author dsl
@@ -49,13 +43,14 @@ public final class Match {
   private final PsiElement myMatchStart;
   private final PsiElement myMatchEnd;
   private final Map<PsiVariable, List<PsiElement>> myParameterValues = new HashMap<>();
-  private final Map<PsiVariable, ArrayList<PsiElement>> myParameterOccurrences = new HashMap<>();
+  private final Map<PsiVariable, List<PsiElement>> myParameterOccurrences = new HashMap<>();
   private final Map<PsiElement, PsiElement> myDeclarationCorrespondence = new HashMap<>();
   private ReturnValue myReturnValue;
   private Ref<PsiExpression> myInstanceExpression;
   final Map<PsiVariable, PsiType> myChangedParams = new HashMap<>();
   private final boolean myIgnoreParameterTypes;
   private final List<ExtractedParameter> myExtractedParameters = new ArrayList<>();
+  private final Map<DuplicatesFinder.Parameter, List<Pair.NonNull<PsiExpression, PsiExpression>>> myFoldedExpressionMappings = new HashMap<>();
 
   Match(PsiElement start, PsiElement end, boolean ignoreParameterTypes) {
     LOG.assertTrue(start.getParent() == end.getParent());
@@ -71,6 +66,13 @@ public final class Match {
 
   public PsiElement getMatchEnd() {
     return myMatchEnd;
+  }
+
+  public PsiElement[] getMatchElements() {
+    return StreamEx.iterate(myMatchStart,
+                            Objects::nonNull,
+                            element -> element != myMatchEnd ? element.getNextSibling() : null)
+                   .toArray(PsiElement.EMPTY_ARRAY);
   }
 
   @Nullable
@@ -98,8 +100,8 @@ public final class Match {
   }
 
 
-  public boolean putParameter(Pair<PsiVariable, PsiType> parameter, PsiElement value) {
-    final PsiVariable psiVariable = parameter.first;
+  public boolean putParameter(DuplicatesFinder.Parameter parameter, PsiElement value) {
+    final PsiVariable psiVariable = parameter.getVariable();
 
     if (myDeclarationCorrespondence.get(psiVariable) == null) {
       final boolean [] valueDependsOnReplacedScope = new boolean[1];
@@ -125,7 +127,7 @@ public final class Match {
     final boolean isVararg = psiVariable instanceof PsiParameter && ((PsiParameter)psiVariable).isVarArgs();
     if (!(value instanceof PsiExpression)) return false;
     final PsiType type = ((PsiExpression)value).getType();
-    final PsiType parameterType = parameter.second;
+    final PsiType parameterType = parameter.getType();
     if (type == null) return false;
     if (currentValue == null) {
       if (parameterType instanceof PsiClassType && ((PsiClassType)parameterType).resolve() instanceof PsiTypeParameter) {
@@ -235,7 +237,7 @@ public final class Match {
     return element;
   }
 
-  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable) throws IncorrectOperationException {
+  public PsiElement replaceByStatement(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, final PsiVariable outputVariable, @Nullable PsiType returnType) throws IncorrectOperationException {
     PsiStatement statement = null;
     if (outputVariable != null) {
       ReturnValue returnValue = getOutputVariableValue(outputVariable);
@@ -243,10 +245,10 @@ public final class Match {
         returnValue = new FieldReturnValue((PsiField)outputVariable);
       }
       if (returnValue == null) return null;
-      statement = returnValue.createReplacement(extractedMethod, methodCallExpression);
+      statement = returnValue.createReplacement(extractedMethod, methodCallExpression, returnType);
     }
     else if (getReturnValue() != null) {
-      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression);
+      statement = getReturnValue().createReplacement(extractedMethod, methodCallExpression, returnType);
     }
     if (statement == null) {
       final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(methodCallExpression.getProject()).getElementFactory();
@@ -269,12 +271,16 @@ public final class Match {
   }
 
   public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable) throws IncorrectOperationException {
+    return replace(extractedMethod, methodCallExpression, outputVariable, null);
+  }
+
+  public PsiElement replace(final PsiMethod extractedMethod, final PsiMethodCallExpression methodCallExpression, PsiVariable outputVariable, @Nullable PsiType returnType) throws IncorrectOperationException {
     declareLocalVariables();
     if (getMatchStart() == getMatchEnd() && getMatchStart() instanceof PsiExpression) {
       return replaceWithExpression(methodCallExpression);
     }
     else {
-      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable);
+      return replaceByStatement(extractedMethod, methodCallExpression, outputVariable, returnType);
     }
   }
 
@@ -428,8 +434,23 @@ public final class Match {
     return ExtractedParameter.match(patternPart, candidatePart, myExtractedParameters);
   }
 
+  public void addExtractedParameter(@NotNull ExtractedParameter parameter) {
+    myExtractedParameters.add(parameter);
+  }
+
   @NotNull
   public List<ExtractedParameter> getExtractedParameters() {
     return myExtractedParameters;
+  }
+
+  public void putFoldedExpressionMapping(@NotNull DuplicatesFinder.Parameter parameter,
+                                         @NotNull PsiExpression pattern,
+                                         @NotNull PsiExpression candidate) {
+    myFoldedExpressionMappings.computeIfAbsent(parameter, unused -> new ArrayList<>()).add(Pair.createNonNull(pattern, candidate));
+  }
+
+  @Nullable
+  public List<Pair.NonNull<PsiExpression, PsiExpression>> getFoldedExpressionMappings(@NotNull DuplicatesFinder.Parameter parameter) {
+    return myFoldedExpressionMappings.get(parameter);
   }
 }

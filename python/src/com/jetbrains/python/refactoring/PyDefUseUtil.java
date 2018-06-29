@@ -42,7 +42,13 @@ public class PyDefUseUtil {
   @NotNull
   public static List<Instruction> getLatestDefs(ScopeOwner block, String varName, PsiElement anchor, boolean acceptTypeAssertions,
                                                 boolean acceptImplicitImports) {
-    final ControlFlow controlFlow = ControlFlowCache.getControlFlow(block);
+    return getLatestDefs(ControlFlowCache.getControlFlow(block), varName, anchor, acceptTypeAssertions, acceptImplicitImports);
+  }
+
+
+  @NotNull
+  public static List<Instruction> getLatestDefs(ControlFlow controlFlow, String varName, PsiElement anchor, boolean acceptTypeAssertions,
+                                                boolean acceptImplicitImports) {
     final Instruction[] instructions = controlFlow.getInstructions();
     final PyAugAssignmentStatement augAssignment = PyAugAssignmentStatementNavigator.getStatementByTarget(anchor);
     if (augAssignment != null) {

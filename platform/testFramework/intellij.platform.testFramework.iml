@@ -16,7 +16,6 @@
     <orderEntry type="module" module-name="intellij.platform.lvcs.impl" scope="RUNTIME" />
     <orderEntry type="module" module-name="intellij.tools.testsBootstrap" />
     <orderEntry type="module" module-name="intellij.java.resources.en" scope="RUNTIME" />
-    <orderEntry type="library" exported="" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="intellij.java.rt" exported="" />
     <orderEntry type="library" exported="" name="Groovy" level="project" />
     <orderEntry type="module" module-name="intellij.platform.resources" exported="" scope="RUNTIME" />
@@ -26,7 +25,7 @@
     <orderEntry type="module" module-name="intellij.regexp" exported="" scope="RUNTIME" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="module" module-name="intellij.platform.boot" />
-    <orderEntry type="module" module-name="intellij.tools.jetCheck" exported="" scope="TEST" />
+    <orderEntry type="module" module-name="intellij.tools.jetCheck" exported="" />
     <orderEntry type="module" module-name="intellij.platform.testFramework.core" exported="" />
   </component>
 </module>

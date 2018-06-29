@@ -31,9 +31,9 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 /**
- * Provides completion for available Language-IDs in
- * <pre>@Language("[ctrl-space]")</pre>
+ * @deprecated replaced by {@link ULiteralLanguageReference}. Will be removed in IDEA 2019.1
  */
+@Deprecated
 public final class LanguageReference extends StringLiteralReference {
 
   public LanguageReference(PsiLiteral value) {

@@ -3,7 +3,13 @@
  */
 package com.intellij.ide;
 
+import com.intellij.openapi.actionSystem.AnActionEvent;
+
 public interface TreeExpander {
+  default boolean isVisible(AnActionEvent event) {
+    return true;
+  }
+
   default void expandAll() {
   }
 

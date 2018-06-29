@@ -10,6 +10,7 @@ import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.completion.JavaMethodCallElement;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
+import com.intellij.codeInsight.hint.ParameterInfoController;
 import com.intellij.codeInsight.hints.ParameterHintsPass;
 import com.intellij.codeInsight.javadoc.JavaDocInfoGenerator;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -55,8 +56,8 @@ import java.util.List;
 public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabActionSupport<PsiExpressionList, Object, PsiExpression>, DumbAware {
   private static final Set<Class> ourArgumentListAllowedParentClassesSet = ContainerUtil.newHashSet(
     PsiMethodCallExpression.class, PsiNewExpression.class, PsiAnonymousClass.class, PsiEnumConstant.class);
-  private static final Set<? extends Class> ourStopSearch = Collections.singleton(PsiMethod.class);
-  private static final String WHITESPACE = " \t";
+  private static final Set<Class> ourStopSearch = Collections.singleton(PsiMethod.class);
+  private static final String WHITESPACE_OR_LINE_BREAKS = " \t\n";
   private static final Key<Inlay> CURRENT_HINT = Key.create("current.hint");
   private static final Key<List<Inlay>> HIGHLIGHTED_HINTS = Key.create("highlighted.hints");
 
@@ -110,7 +111,24 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @Override
   public void showParameterInfo(@NotNull final PsiExpressionList element, @NotNull final CreateParameterInfoContext context) {
-    context.showHint(element, element.getTextRange().getStartOffset(), this);
+    int offset = element.getTextRange().getStartOffset();
+    if (CodeInsightSettings.getInstance().SHOW_PARAMETER_NAME_HINTS_ON_COMPLETION) {
+      ParameterInfoController controller = ParameterInfoController.findControllerAtOffset(context.getEditor(), offset);
+      PsiElement parent = element.getParent();
+      if (parent instanceof PsiCall && controller != null && controller.isHintShown(false)) {
+        Object highlighted = controller.getHighlighted();
+        Object[] objects = controller.getObjects();
+        if (objects != null && objects.length > 0 && (highlighted != null || objects.length == 1)) {
+          PsiCall methodCall = (PsiCall)parent;
+          JavaMethodCallElement.setCompletionModeIfNotSet(methodCall, controller);
+          PsiMethod targetMethod = (PsiMethod)((CandidateInfo)(highlighted == null ? objects[0] : highlighted)).getElement();
+          CompletionMemory.registerChosenMethod(targetMethod, methodCall);
+          controller.setPreservedOnHintHidden(true);
+          ParameterHintsPass.syncUpdate(methodCall, context.getEditor());
+        }
+      }
+    }
+    context.showHint(element, offset, this);
   }
 
   @Override
@@ -154,6 +172,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
                   document != null && psiDocumentManager.isCommitted(document) &&
                   isIncompatibleParameterCount(chosenMethod, currentNumberOfParameters)) {
                 JavaMethodCallElement.setCompletionMode((PsiCall)parent, false);
+                ParameterHintsPass.syncUpdate(parent, context.getEditor()); // make sure the statement above takes effect
                 highlightHints(context.getEditor(), null, -1, context.getCustomContext());
               }
               else {
@@ -231,10 +250,15 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
   }
 
   private static boolean isIncompatibleParameterCount(@NotNull PsiMethod method, int numberOfParameters) {
+    int limit = JavaMethodCallElement.getCompletionHintsLimit();
     int originalNumberOfParameters = method.getParameterList().getParametersCount();
-    return PsiImplUtil.isVarArgs(method) 
-           ? originalNumberOfParameters > 2 && numberOfParameters < originalNumberOfParameters - 1 
-           : originalNumberOfParameters != numberOfParameters && !(originalNumberOfParameters == 1 && numberOfParameters == 0);
+    return Registry.is("editor.completion.hints.virtual.comma")
+           ? !PsiImplUtil.isVarArgs(method) && numberOfParameters > originalNumberOfParameters
+           : PsiImplUtil.isVarArgs(method)
+             ? originalNumberOfParameters > 2 &&
+               numberOfParameters < Math.min(limit, originalNumberOfParameters) - 1 && !(limit == 1 && numberOfParameters == 0)
+             : (originalNumberOfParameters < numberOfParameters || numberOfParameters < Math.min(limit, originalNumberOfParameters)) &&
+               !(Math.min(limit, originalNumberOfParameters) == 1 && numberOfParameters == 0);
   }
 
   @Override
@@ -336,7 +360,8 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
       }
     }
 
-    context.setHighlightedParameter(ObjectUtils.coalesce(chosenInfo, completeMatch));
+    context.setHighlightedParameter((Registry.is("editor.completion.hints.virtual.comma") || args.length == 0) && chosenInfo != null
+                                    ? chosenInfo : ObjectUtils.coalesce(completeMatch, chosenInfo));
 
     Object highlightedCandidate = candidates.length == 1 ? candidates[0] : context.getHighlightedParameter();
     if (highlightedCandidate != null) {
@@ -379,7 +404,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
           if (prevDelimiter != null && nextDelimiter != null) {
             CharSequence text = editor.getDocument().getImmutableCharSequence();
             int firstRangeStartOffset = prevDelimiter.getTextRange().getEndOffset();
-            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE);
+            int firstRangeEndOffset = CharArrayUtil.shiftForward(text, firstRangeStartOffset, WHITESPACE_OR_LINE_BREAKS);
             for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(firstRangeStartOffset, firstRangeEndOffset)) {
               if (presentationManager.isParameterHint(inlay)) {
                 highlightedHints.add(inlay);
@@ -388,7 +413,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             }
             int secondRangeEndOffset = nextDelimiter.getTextRange().getStartOffset();
             if (secondRangeEndOffset > firstRangeEndOffset) {
-              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE) + 1;
+              int secondRangeStartOffset = CharArrayUtil.shiftBackward(text, secondRangeEndOffset - 1, WHITESPACE_OR_LINE_BREAKS) + 1;
               for (Inlay inlay : editor.getInlayModel().getInlineElementsInRange(secondRangeStartOffset, secondRangeEndOffset)) {
                 if (presentationManager.isParameterHint(inlay)) {
                   highlightedHints.add(inlay);
@@ -499,7 +524,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
 
   @NotNull
   @Override
-  public Set<? extends Class> getArgListStopSearchClasses() {
+  public Set<Class> getArgListStopSearchClasses() {
     return ourStopSearch;
   }
 
@@ -755,8 +780,10 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
         context.setUIComponentEnabled(false);
         return;
       }
+      PsiElement parameterOwner = context.getParameterOwner();
+      PsiCall call = parameterOwner instanceof PsiExpressionList ? getCall((PsiExpressionList)parameterOwner) : null;
 
-      updateMethodPresentation(method, getCandidateInfoSubstitutor(context.getParameterOwner(), info, false), context);
+      updateMethodPresentation(method, getCandidateInfoSubstitutor(parameterOwner, info, call != null && call.resolveMethod() == method), context);
     }
     else {
       updateMethodPresentation((PsiMethod)p, null, context);

@@ -24,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.labels.LinkListener;
@@ -35,7 +36,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
-import javax.swing.text.BadLocationException;
 import javax.swing.text.html.HTMLEditorKit;
 import java.awt.*;
 
@@ -61,9 +61,11 @@ public class RegExHelpPopup extends JPanel {
                          "  summary=\"Regular expression constructs, and what they match\"> \n" +
                          " \n" +
                          " <tr align=\"left\"> \n" +
-                         " <th bgcolor=\"" + toHTMLColor(UIUtil.getLabelBackground()) +
+                         " <th bgcolor=\"" +
+                         ColorUtil.toHtmlColor(UIUtil.getLabelBackground()) +
                          "\" align=\"left\" id=\"construct\">Construct</th> \n" +
-                         " <th bgcolor=\"" + toHTMLColor(UIUtil.getLabelBackground()) +
+                         " <th bgcolor=\"" +
+                         ColorUtil.toHtmlColor(UIUtil.getLabelBackground()) +
                          "\" align=\"left\" id=\"matches\">Matches</th> \n" +
                          " </tr> \n" +
                          " \n" +
@@ -390,9 +392,5 @@ public class RegExHelpPopup extends JPanel {
   @Override
   public Dimension getPreferredSize() {
     return JBUI.size(600, 300);
-  }
-
-  private static String toHTMLColor(Color color) {
-    return "#" + Integer.toHexString(color.getRGB() & 0xffffff);
   }
 }

@@ -22,6 +22,8 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.registry.RegistryValue;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -268,7 +270,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testFinalParamUsedInsideAnon() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = false;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = false;
     doTestWithJava17();
   }
 
@@ -285,7 +287,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testNonFinalWritableParam() throws Exception {
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_PARAMETERS = true;
+    JavaCodeStyleSettings.getInstance(getProject()).GENERATE_FINAL_PARAMETERS = true;
     doTest();
   }
 
@@ -294,6 +296,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testDuplicatesFromAnonymous() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testDuplicatesFullyQualifiedType() throws Exception {
     doDuplicatesTest();
   }
 
@@ -549,15 +555,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testReassignedVarAfterCall() throws Exception {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    boolean oldGenerateFinalLocals = settings.GENERATE_FINAL_LOCALS;
-    try {
-      settings.GENERATE_FINAL_LOCALS = true;
-      doTest();
-    }
-    finally {
-      settings.GENERATE_FINAL_LOCALS = oldGenerateFinalLocals;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.GENERATE_FINAL_LOCALS = true;
+    doTest();
   }
 
   public void testNonPhysicalAssumptions() throws Exception {
@@ -804,6 +804,14 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testSuggestChangeSignatureSameSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testSuggestChangeSignatureTrivialMethod() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testSuggestChangeSignaturePlusOneFolding() throws Exception {
     doDuplicatesTest();
   }
@@ -870,6 +878,46 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testParametrizedDuplicateNestedSubexpression() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateDeclaredOutputVariable() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateDeclaredReusedVariable() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testExactDuplicateDeclaredReusedVariable() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testExactDuplicateTwoDeclaredReusedVariables() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateUnfoldArrayArgument() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldListElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldArrayElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedMultiDuplicatesFoldArrayElement() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testParametrizedDuplicateFoldArrayElementTwoUsages() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testTripleParametrizedDuplicate() throws Exception {
     doDuplicatesTest();
   }
 
@@ -949,15 +997,9 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
   }
 
   public void testDefaultNamesConflictResolution() throws Exception {
-    final JavaCodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class);
-    final String oldPrefix = settings.LOCAL_VARIABLE_NAME_PREFIX;
-    try {
-      settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
-      doTest();
-    }
-    finally {
-      settings.LOCAL_VARIABLE_NAME_PREFIX = oldPrefix;
-    }
+    final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(getProject());
+    settings.LOCAL_VARIABLE_NAME_PREFIX = "_";
+    doTest();
   }
 
   public void testInferredNotNull() throws Exception {
@@ -1043,6 +1085,17 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testNotNullArgument7() throws Exception {
     doTest();
+  }
+
+  public void testNotNullArgumentTooComplexCode() throws Exception {
+    RegistryValue value = Registry.get("ide.dfa.state.limit");
+    int oldValue = value.asInteger();
+    try {
+      value.setValue(50);
+      doTest();
+    }finally {
+      value.setValue(oldValue);
+    }
   }
 
   public void testVariableInLoopWithConditionalBreak() throws Exception {
@@ -1217,6 +1270,18 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     doDuplicatesTest();
   }
 
+  public void testBoxedConditionalReturn() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testAvoidGenericArgumentCast() throws Exception {
+    doDuplicatesTest();
+  }
+
+  public void testAvoidGenericArgumentCastLocalClass() throws Exception {
+    doDuplicatesTest();
+  }
+
   public void testBeforeCommentAfterSelectedFragment() throws Exception {
     doTest();
   }
@@ -1227,6 +1292,10 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
 
   public void testEmptyBlockStatement() throws Exception {
     doExitPointsTest(false);
+  }
+
+  public void testCallChainExpression() throws Exception {
+    doTest();
   }
 
   private void doTestDisabledParam() throws PrepareFailedException {
@@ -1375,7 +1444,7 @@ public class ExtractMethodTest extends LightCodeInsightTestCase {
     if (doRefactor) {
       processor.testTargetClass(targetClass);
       processor.testPrepare(returnType, makeStatic);
-      processor.testNullness();
+      processor.testNullability();
       if (disabledParams != null) {
         for (int param : disabledParams) {
           processor.doNotPassParameter(param);

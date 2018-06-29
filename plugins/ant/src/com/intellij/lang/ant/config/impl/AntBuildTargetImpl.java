@@ -15,6 +15,7 @@
  */
 package com.intellij.lang.ant.config.impl;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.ant.AntSupport;
 import com.intellij.lang.ant.config.*;
 import com.intellij.lang.ant.config.execution.ExecutionHandler;
@@ -23,18 +24,18 @@ import com.intellij.lang.ant.dom.AntDomProject;
 import com.intellij.lang.ant.dom.AntDomRecursiveVisitor;
 import com.intellij.lang.ant.dom.AntDomTarget;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.Navigatable;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.DomTarget;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collections;
 import java.util.List;
 
 public class AntBuildTargetImpl implements AntBuildTargetBase {
@@ -160,8 +161,10 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
     return null;
   }
 
-  public OpenFileDescriptor getOpenFileDescriptor() {
-    return (myFile == null) ? null : new OpenFileDescriptor(myProject, myFile, myTextOffset);
+  public Navigatable getOpenFileDescriptor() {
+    return (myFile == null)
+           ? null
+           : PsiNavigationSupport.getInstance().createNavigatable(myProject, myFile, myTextOffset);
   }
 
   public void run(DataContext dataContext, List<BuildFileProperty> additionalProperties, AntBuildListener buildListener) {
@@ -176,7 +179,6 @@ public class AntBuildTargetImpl implements AntBuildTargetBase {
       throw new IllegalStateException("Target '" + getName() + "' is invalid: build file is null");
     }
 
-    String[] targets = isDefault() ? ArrayUtil.EMPTY_STRING_ARRAY : new String[]{getName()};
-    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, targets, null, dataContext, additionalProperties, buildListener);
+    ExecutionHandler.runBuild((AntBuildFileBase)buildFile, isDefault()? Collections.emptyList() : getTargetNames(), null, dataContext, additionalProperties, buildListener);
   }
 }

@@ -120,7 +120,8 @@ public class PsiJShellHolderMethodImpl extends ASTWrapperPsiElement implements P
   @Nullable
   @Override
   public PsiCodeBlock getBody() {
-    return (PsiCodeBlock)getFirstChild();
+    final PsiElement child = getFirstChild();
+    return child instanceof PsiCodeBlock? (PsiCodeBlock)child : null;
   }
 
   @Override

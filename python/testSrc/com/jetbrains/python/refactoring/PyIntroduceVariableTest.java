@@ -314,6 +314,21 @@ public class PyIntroduceVariableTest extends PyIntroduceTestCase {
     doTest();
   }
 
+  // PY-25488
+  public void testFormattingOfDictLiteralPreserved() {
+    doTest();
+  }
+
+  // PY-25488
+  public void testFormattingOfParenthesizedTuplePreserved() {
+    doTest();
+  }
+
+  // PY-25488
+  public void testNotParenthesizedTupleInlined() {
+    doTest();
+  }
+
   @Override
   protected String getTestDataPath() {
     return super.getTestDataPath() + "/refactoring/introduceVariable";

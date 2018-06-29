@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.roots.ui.configuration.artifacts;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
@@ -143,16 +142,13 @@ public class ArtifactsStructureConfigurableContextImpl implements ArtifactsStruc
   @Override
   public void editLayout(@NotNull final Artifact artifact, final Runnable action) {
     final Artifact originalArtifact = getOriginalArtifact(artifact);
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
-        if (modifiableArtifact.getRootElement() == originalArtifact.getRootElement()) {
-          modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(originalArtifact));
-        }
-        action.run();
+    WriteAction.run(() -> {
+      final ModifiableArtifact modifiableArtifact = getOrCreateModifiableArtifactModel().getOrCreateModifiableArtifact(originalArtifact);
+      if (modifiableArtifact.getRootElement() == originalArtifact.getRootElement()) {
+        modifiableArtifact.setRootElement(getOrCreateModifiableRootElement(originalArtifact));
       }
-    }.execute();
+      action.run();
+    });
     myContext.getDaemonAnalyzer().queueUpdate(getOrCreateArtifactElement(originalArtifact));
   }
 

@@ -78,6 +78,12 @@ public class SurroundWithUtil {
               PsiVariable var = (PsiVariable)element1;
               PsiExpression initializer = var.getInitializer();
               if (initializer != null) {
+                PsiTypeElement typeElement = var.getTypeElement();
+                if (typeElement != null && 
+                    typeElement.isInferredType() && 
+                    PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
+                  continue;
+                }
                 if (!generateInitializers || var.hasModifierProperty(PsiModifier.FINAL)) {
                   initializer.delete();
                 }

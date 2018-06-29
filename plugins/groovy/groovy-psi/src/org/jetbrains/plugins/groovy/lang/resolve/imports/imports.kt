@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyImports")
 
 package org.jetbrains.plugins.groovy.lang.resolve.imports
@@ -21,7 +21,8 @@ internal val defaultImports = defaultStarImports + defaultRegularImports
 internal val defaultRegularImportsSet = THashSet(defaultRegularImports, RegularImportHashingStrategy)
 internal val defaultStarImportsSet = THashSet(defaultStarImports, StarImportHashingStrategy)
 
-val importedNameKey = Key.create<String>("groovy.imported.via.name")
+val importKey: Key<GroovyImport> = Key.create<GroovyImport>("groovy.imported.via")
+val importedNameKey: Key<String> = Key.create<String>("groovy.imported.via.name")
 
 fun GroovyFile.getImports(): GroovyFileImports {
   return CachedValuesManager.getCachedValue(this) {

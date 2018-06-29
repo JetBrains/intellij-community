@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.concurrency;
 
-import com.intellij.openapi.util.Getter;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 public abstract class PromiseManager<HOST, VALUE> {
   private final AtomicFieldUpdater<HOST, Promise<VALUE>> fieldUpdater;
@@ -55,7 +43,7 @@ public abstract class PromiseManager<HOST, VALUE> {
 
   public final boolean has(HOST host) {
     Promise<VALUE> result = fieldUpdater.get(host);
-    return result != null && result.getState() == Promise.State.FULFILLED;
+    return result != null && result.isSucceeded();
   }
 
   @Nullable
@@ -88,10 +76,15 @@ public abstract class PromiseManager<HOST, VALUE> {
         // if current promise is not processed, so, we don't need to check cache state
         return promise;
       }
-      else if (state == Promise.State.FULFILLED) {
+      else if (state == Promise.State.SUCCEEDED) {
         //noinspection unchecked
-        if (!checkFreshness || isUpToDate(host, ((Getter<VALUE>)promise).get())) {
-          return promise;
+        try {
+          if (!checkFreshness || isUpToDate(host, promise.blockingGet(0))) {
+            return promise;
+          }
+        }
+        catch (ExecutionException | TimeoutException e) {
+          throw new RuntimeException(e);
         }
 
         if (!fieldUpdater.compareAndSet(host, promise, promise = new AsyncPromise<>())) {
@@ -121,7 +114,7 @@ public abstract class PromiseManager<HOST, VALUE> {
     Promise<VALUE> effectivePromise = load(host);
     if (effectivePromise != promise) {
       fieldUpdater.compareAndSet(host, promise, effectivePromise);
-      effectivePromise.notify((AsyncPromise<VALUE>)promise);
+      effectivePromise.processed(promise);
     }
     return effectivePromise;
   }

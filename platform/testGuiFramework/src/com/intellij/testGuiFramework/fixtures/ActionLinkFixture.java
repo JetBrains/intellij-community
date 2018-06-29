@@ -18,6 +18,7 @@ package com.intellij.testGuiFramework.fixtures;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.util.Ref;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
 import com.intellij.ui.components.labels.ActionLink;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
@@ -32,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
 import java.awt.*;
 import java.util.Collection;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static com.intellij.util.containers.ContainerUtil.getFirstItem;
 import static org.fest.swing.timing.Pause.pause;
 
@@ -64,7 +64,7 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
         }
         return false;
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     ActionLink actionLink = actionLinkRef.get();
     if (actionLink == null) {
@@ -110,7 +110,7 @@ public class ActionLinkFixture extends JComponentFixture<ActionLinkFixture, Acti
   public static ActionLinkFixture findActionLinkByName(@NotNull final String actionName,
                                                        @NotNull final Robot robot,
                                                        @NotNull final Container container) {
-    return findActionLinkByName(actionName, robot, container, SHORT_TIMEOUT);
+    return findActionLinkByName(actionName, robot, container, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
   }
 
   private ActionLinkFixture(@NotNull Robot robot, @NotNull ActionLink target) {

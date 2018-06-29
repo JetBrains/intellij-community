@@ -85,7 +85,11 @@ public class DomServiceImpl extends DomService {
 
     if (!file.isValid()) return XmlFileHeader.EMPTY;
 
-    return NanoXmlUtil.parseHeader(file);
+    XmlFileHeader header = NanoXmlUtil.parseHeader(file);
+    if (header.getRootTagLocalName() == null) { // nanoxml failed
+      return computeHeaderByPsi(file);
+    }
+    return header;
   }
 
   private static XmlFileHeader computeHeaderByPsi(XmlFile file) {

@@ -12,11 +12,7 @@ import com.intellij.util.xmlb.annotations.OptionTag
 import com.intellij.util.xmlb.annotations.XMap
 import java.util.*
 
-
-@State(
-  name = "SvnDiffSettings",
-  storages = arrayOf(Storage(value = DiffUtil.DIFF_CONFIG))
-)
+@State(name = "SvnDiffSettings", storages = [(Storage(value = DiffUtil.DIFF_CONFIG))])
 class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.State> {
   class SharedSettings(
   )
@@ -71,7 +67,7 @@ class SvnDiffSettingsHolder : PersistentStateComponent<SvnDiffSettingsHolder.Sta
     var PLACES_MAP: TreeMap<String, PlaceSettings> = TreeMap()
 
     @JvmField
-    var SHARED_SETTINGS = SharedSettings()
+    var SHARED_SETTINGS: SharedSettings = SharedSettings()
   }
 
   private var myState: State = State()

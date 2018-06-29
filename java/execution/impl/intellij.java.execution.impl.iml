@@ -18,9 +18,14 @@
     <orderEntry type="module" module-name="intellij.java.indexing" />
     <orderEntry type="module" module-name="intellij.platform.smRunner" />
     <orderEntry type="module" module-name="intellij.java.jshell.protocol" />
-    <orderEntry type="library" name="Coverage" level="project" />
+    <orderEntry type="library" name="intellij-coverage" level="project" />
+    <orderEntry type="library" name="intellij-test-discovery" level="project" />
     <orderEntry type="library" scope="RUNTIME" name="precompiled_jshell-frontend" level="project" />
     <orderEntry type="module" module-name="intellij.platform.externalSystem" />
+    <orderEntry type="library" name="gson" level="project" />
+    <orderEntry type="library" name="jackson" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
+    <orderEntry type="module" module-name="intellij.platform.vcs.impl" />
   </component>
   <component name="copyright">
     <Base>

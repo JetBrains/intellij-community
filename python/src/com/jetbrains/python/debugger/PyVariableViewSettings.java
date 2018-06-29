@@ -15,15 +15,23 @@
  */
 package com.jetbrains.python.debugger;
 
-import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.icons.AllIcons;
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.ui.SimpleTextAttributes;
+import com.intellij.xdebugger.frame.XCompositeNode;
+import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.jetbrains.python.debugger.settings.PyDebuggerSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.List;
+
 public class PyVariableViewSettings {
-  public static final String PYDEVD_LOAD_VALUES_ASYNC = "PYDEVD_LOAD_VALUES_ASYNC";
+  public static final String LOADING_TIMED_OUT = "Loading timed out";
+  public static final String ON_DEMAND_LINK_TEXT = "Switch to loading on demand";
+  public static final String WARNING_MESSAGE = "The values of several variables couldn't be loaded  ";
 
   public static class SimplifiedView extends ToggleAction {
     private final PyDebugProcess myProcess;
@@ -60,33 +68,107 @@ public class PyVariableViewSettings {
     }
   }
 
-  public static class AsyncView extends ToggleAction {
-    private final String myText;
-    private volatile boolean myLazyVariablesEvaluation;
+  public static void showWarningMessage(@Nullable final XCompositeNode node) {
+    if (node == null) return;
+    final PyDebuggerSettings debuggerSettings = PyDebuggerSettings.getInstance();
+    if (debuggerSettings.getValuesPolicy() == PyDebugValue.ValuesPolicy.ON_DEMAND) return;
 
-    public AsyncView() {
-      super("", "Load variable values asynchronously", null);
-      myLazyVariablesEvaluation = PyDebuggerSettings.getInstance().isLoadValuesAsync();
-      myText = "Load Values Asynchronously";
+    node.setMessage(
+      WARNING_MESSAGE, AllIcons.General.BalloonWarning, SimpleTextAttributes.REGULAR_ATTRIBUTES,
+      new XDebuggerTreeNodeHyperlink(ON_DEMAND_LINK_TEXT) {
+        private boolean linkClicked = false;
+
+        @Override
+        public void onClick(MouseEvent event) {
+          debuggerSettings.setValuesPolicy(PyDebugValue.ValuesPolicy.ON_DEMAND);
+          linkClicked = true;
+        }
+
+        @NotNull
+        @Override
+        public String getLinkText() {
+          if (linkClicked) {
+            return "";
+          }
+          else {
+            return ON_DEMAND_LINK_TEXT;
+          }
+        }
+      });
+  }
+
+  public static class VariablesPolicyGroup extends DefaultActionGroup {
+    @NotNull private final List<PolicyAction> myValuesPolicyActions = new ArrayList<>();
+
+    public VariablesPolicyGroup() {
+      super("Variables Loading Policy", true);
+      myValuesPolicyActions
+        .add(new PolicyAction("Synchronously", "Load variable values synchronously", PyDebugValue.ValuesPolicy.SYNC, this));
+      myValuesPolicyActions
+        .add(new PolicyAction("Asynchronously", "Load variable values asynchronously", PyDebugValue.ValuesPolicy.ASYNC, this));
+      myValuesPolicyActions
+        .add(new PolicyAction("On demand", "Load variable values on demand", PyDebugValue.ValuesPolicy.ON_DEMAND, this));
+
+      for (AnAction action : myValuesPolicyActions) {
+        add(action);
+      }
+    }
+
+    public void updatePolicyActions() {
+      final PyDebugValue.ValuesPolicy currentValuesPolicy = PyDebuggerSettings.getInstance().getValuesPolicy();
+      for (PolicyAction action : myValuesPolicyActions) {
+        action.setEnabled(currentValuesPolicy == action.getPolicy());
+      }
+    }
+  }
+
+  public static class PolicyAction extends ToggleAction {
+    @NotNull private final String myText;
+    @NotNull private final PyDebugValue.ValuesPolicy myPolicy;
+    @NotNull private final VariablesPolicyGroup myActionGroup;
+    private volatile boolean isEnabled;
+
+    public PolicyAction(@NotNull String text,
+                        @NotNull String description,
+                        @NotNull PyDebugValue.ValuesPolicy policy,
+                        @NotNull VariablesPolicyGroup actionGroup) {
+      super("", description, null);
+      myText = text;
+      myPolicy = policy;
+      myActionGroup = actionGroup;
+      isEnabled = PyDebuggerSettings.getInstance().getValuesPolicy() == policy;
     }
 
     @Override
     public void update(@NotNull final AnActionEvent e) {
       super.update(e);
+      myActionGroup.updatePolicyActions();
       final Presentation presentation = e.getPresentation();
       presentation.setEnabled(true);
       presentation.setText(myText);
     }
 
+    @NotNull
+    public PyDebugValue.ValuesPolicy getPolicy() {
+      return myPolicy;
+    }
+
+    public void setEnabled(boolean enabled) {
+      isEnabled = enabled;
+    }
+
     @Override
     public boolean isSelected(AnActionEvent e) {
-      return myLazyVariablesEvaluation;
+      return isEnabled;
     }
 
     @Override
     public void setSelected(AnActionEvent e, boolean hide) {
-      myLazyVariablesEvaluation = hide;
-      PyDebuggerSettings.getInstance().setLoadValuesAsync(hide);
+      isEnabled = hide;
+      if (hide) {
+        PyDebuggerSettings.getInstance().setValuesPolicy(myPolicy);
+      }
+      myActionGroup.updatePolicyActions();
     }
   }
 }

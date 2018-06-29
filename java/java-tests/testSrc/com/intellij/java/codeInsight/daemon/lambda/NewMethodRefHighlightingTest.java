@@ -16,12 +16,14 @@
 package com.intellij.java.codeInsight.daemon.lambda;
 
 import com.intellij.codeInsight.daemon.LightDaemonAnalyzerTestCase;
+import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.uncheckedWarnings.UncheckedWarningLocalInspection;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.testFramework.IdeaTestUtil;
 import org.jetbrains.annotations.NotNull;
+import org.junit.Assert;
 
 public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   private static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/lambda/newMethodRef/";
@@ -77,7 +79,17 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIncorrectArrayCreationSignature() { doTest(); }
   public void testRawTargetType() { doTest(); }
   public void testReturnTypeCheckForRawReceiver() { doTest(); }
-  public void testStaticNonStaticReferenceTypeAmbiguity() { doTest(); }
+  public void testStaticNonStaticReferenceTypeAmbiguity() { 
+    doTest();
+    doHighlighting()
+      .stream()
+      .filter(info -> info.type == HighlightInfoType.ERROR)
+      .forEach(info -> Assert.assertEquals("<html><body>Incompatible types." +
+                                           "<table><tr><td>Required:</td><td><font color='red'><b>Test.I</b></font></td></tr><tr><td>" +
+                                           "Found:</td><td><font color='red'><b>&lt;method reference&gt;</b></font></td></tr></table><br/>" +
+                                           "reason: method reference is ambiguous: both 'Test.m(Test, String)' and 'Test.m(String)' match</body></html>",
+                                           info.getToolTip()));
+  }
   public void testSuperClassPotentiallyApplicableMembers() { doTest(); }
   public void testExactMethodReferencePertinentToApplicabilityCheck() { doTest(); }
   public void testAmbiguityVarargs() { doTest(); }
@@ -180,8 +192,11 @@ public class NewMethodRefHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testMethodReferenceSwallowedErrors() { doTest(); }
   public void testConflictingVarargsFromFirstSearchWithNArityOfTheSecondSearch() { doTest(); }
   public void testSkipInferenceForInapplicableMethodReference() { doTest(); }
+  public void testRegisterVariablesForNonFoundParameterizations() { doTest(); }
 
   public void testPreferErrorOnTopLevelToFailedSubstitutorOnNestedLevel() { doTest(); }
+  public void testDontIgnoreIncompatibilitiesDuringFirstApplicabilityCheck() { doTest(); }
+  public void testCaptureOnDedicatedParameterOfSecondSearch() { doTest(); }
 
   private void doTest() {
     doTest(false);

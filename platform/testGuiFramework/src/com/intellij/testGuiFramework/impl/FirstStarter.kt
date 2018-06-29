@@ -20,9 +20,7 @@ import com.intellij.util.lang.UrlClassLoader
 import java.net.URL
 import kotlin.concurrent.thread
 
-class FirstStarter {
-
-}
+class FirstStarter
 
 fun main(args: Array<String>) {
   startRobotRoutine()
@@ -42,17 +40,12 @@ private fun startIdeMainRoutine(args: Array<String>) {
 private fun startRobotRoutine() {
   val robotClassLoader = createRobotClassLoader()
 
-  fun awtIsNotStarted()
-    = !(Thread.getAllStackTraces().keys.any { thread -> thread.name.toLowerCase().contains("awt-eventqueue") })
+  fun awtIsNotStarted() = !(Thread.getAllStackTraces().keys.any { thread -> thread.name.toLowerCase().contains("awt-eventqueue") })
 
-  thread(name = "Wait Awt and Start", contextClassLoader = robotClassLoader) {
+  thread(name = "GUI Test First Start: Wait AWT and Start", contextClassLoader = robotClassLoader) {
     while (awtIsNotStarted()) Thread.sleep(100)
-    val companion = Class.forName("com.intellij.testGuiFramework.impl.FirstStart\$Companion", true, robotClassLoader)
-    val firstStartClass = Class.forName("com.intellij.testGuiFramework.impl.FirstStart", true, robotClassLoader)
-    val value = firstStartClass.getField("Companion").get(Any())
-    val method = companion.getDeclaredMethod("guessIdeAndStartRobot")
-    method.isAccessible = true
-    method.invoke(value)
+    val firstStartClass = System.getProperty("idea.gui.test.first.start.class")
+    Class.forName(firstStartClass).newInstance() as FirstStart
   }
 }
 
@@ -72,10 +65,11 @@ fun createRobotClassLoader(): UrlClassLoader {
 fun getUrlOfBaseClassLoader(): List<URL> {
   val classLoader = Thread.currentThread().contextClassLoader
   val urlClassLoaderClass = classLoader.javaClass
-  val getUrlsMethod = urlClassLoaderClass.methods.filter { it.name.toLowerCase() == "geturls" }.firstOrNull()!!
+  val getUrlsMethod = urlClassLoaderClass.methods.firstOrNull { it.name.toLowerCase() == "geturls" } ?: throw Exception(
+    "Unable to get URLs for UrlClassLoader")
   @Suppress("UNCHECKED_CAST")
   val urlsListOrArray = getUrlsMethod.invoke(classLoader)
-  if (urlsListOrArray is Array<*>) return urlsListOrArray.toList() as List<URL>
-  else return urlsListOrArray as List<URL>
+  return if (urlsListOrArray is Array<*>) urlsListOrArray.toList() as List<URL>
+  else urlsListOrArray as List<URL>
 
 }

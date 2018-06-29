@@ -4,6 +4,7 @@ package org.jetbrains.jetCheck;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+import java.util.stream.Collectors;
 
 /**
  * @author peter
@@ -58,27 +59,45 @@ class CombinatorialIntCustomizer implements IntCustomizer {
       return true;
     }
 
-    int oMax = original.getMax();
-    int cMax = current.getMax();
-    int oMin = original.getMin();
-    int cMin = current.getMin();
-    if (oMax != cMax || oMin != cMin) {
-      addValueToTry(data, current, data.value);
-      addValueToTry(data, current, (data.value - oMin) + cMin);
-      addValueToTry(data, current, cMax - (oMax - data.value));
-      if (valuesToTry.containsKey(data.id)) {
+    if (original.getMax() != current.getMax() || original.getMin() != current.getMin()) {
+      LinkedHashSet<Integer> possibleValues = getPossibleValues(data, current, original);
+      if (!possibleValues.isEmpty()) {
+        assert !valuesToTry.containsKey(data.id);
+        valuesToTry.put(data.id, possibleValues);
+        changedDistributions.put(data.id, current);
         return true;
       }
     }
     return false;
   }
 
-  private void addValueToTry(IntData data, BoundedIntDistribution current, int value) {
-    value = Math.min(Math.max(value, current.getMin()), current.getMax());
-    if (current.isValidValue(value)) {
-      changedDistributions.put(data.id, current);
-      valuesToTry.computeIfAbsent(data.id, __1 -> new LinkedHashSet<>()).add(value);
+  private LinkedHashSet<Integer> getPossibleValues(IntData data, BoundedIntDistribution current, BoundedIntDistribution original) {
+    List<Integer> possibleValues = new ArrayList<>();
+    int fromStart = data.value - original.getMin();
+    int fromEnd = original.getMax() - data.value;
+
+    int sameDistanceFromStart = current.getMin() + fromStart;
+    int sameDistanceFromEnd = current.getMax() - fromEnd;
+
+    if (!tooManyCombinations()) {
+      if (fromStart < fromEnd) {
+        possibleValues.add(sameDistanceFromStart);
+        possibleValues.add(sameDistanceFromEnd);
+      } else {
+        possibleValues.add(sameDistanceFromEnd);
+        possibleValues.add(sameDistanceFromStart);
+      }
     }
+    possibleValues.add(data.value);
+    
+    return possibleValues.stream()
+                         .map(value -> Math.min(Math.max(value, current.getMin()), current.getMax()))
+                         .filter(current::isValidValue)
+                         .collect(Collectors.toCollection(LinkedHashSet::new));
+  }
+
+  private boolean tooManyCombinations() {
+    return valuesToTry.values().stream().filter(s -> s.size() > 1).count() > 3;
   }
 
   @Nullable

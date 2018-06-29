@@ -32,11 +32,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ChangelistConflictFileStatusProvider implements FileStatusProvider {
 
-  private static final FileStatus MODIFIED_OUTSIDE =
+  public static final FileStatus MODIFIED_OUTSIDE =
     FileStatusFactory.getInstance().createFileStatus("modifiedOutside", "Modified in not active changelist");
-  private static final FileStatus ADDED_OUTSIDE =
+  public static final FileStatus ADDED_OUTSIDE =
     FileStatusFactory.getInstance().createFileStatus("addedOutside", "Added in not active changelist");
-  private static final FileStatus CHANGELIST_CONFLICT =
+  public static final FileStatus CHANGELIST_CONFLICT =
     FileStatusFactory.getInstance().createFileStatus("changelistConflict", "Changelist conflict");
 
   private final ChangelistConflictTracker myConflictTracker;
@@ -51,18 +51,13 @@ public class ChangelistConflictFileStatusProvider implements FileStatusProvider 
   @Nullable
   public FileStatus getFileStatus(@NotNull VirtualFile virtualFile) {
     ChangelistConflictTracker.Options options = myConflictTracker.getOptions();
-    if (!options.TRACKING_ENABLED) {
-      return null;
-    }
-    boolean conflict = myConflictTracker.hasConflict(virtualFile);
-    if (conflict && options.HIGHLIGHT_CONFLICTS) {
+    if (options.HIGHLIGHT_CONFLICTS && myConflictTracker.hasConflict(virtualFile)) {
       return CHANGELIST_CONFLICT;
     }
     else if (options.HIGHLIGHT_NON_ACTIVE_CHANGELIST) {
       FileStatus status = myChangeListManager.getStatus(virtualFile);
       if (status == FileStatus.MODIFIED || status == FileStatus.ADDED) {
-        if (myConflictTracker.shouldDetectConflictsFor(virtualFile) &&
-            !myConflictTracker.isFromActiveChangelist(virtualFile)) {
+        if (!myConflictTracker.isFromActiveChangelist(virtualFile)) {
           return status == FileStatus.MODIFIED ? MODIFIED_OUTSIDE : ADDED_OUTSIDE;
         }
       }

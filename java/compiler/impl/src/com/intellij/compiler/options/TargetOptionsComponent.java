@@ -1,28 +1,31 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.compiler.options;
 
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.pom.java.LanguageLevel;
-import com.intellij.ui.*;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.TableSpeedSearch;
+import com.intellij.ui.TableUtil;
+import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.components.JBTextField;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.ui.ItemRemovable;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.JBUI;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 
 import javax.swing.*;
 import javax.swing.plaf.basic.BasicComboBoxEditor;
-import javax.swing.table.AbstractTableModel;
 import javax.swing.table.DefaultTableCellRenderer;
 import javax.swing.table.TableColumn;
 import java.awt.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Eugene Zhuravlev
@@ -31,302 +34,111 @@ public class TargetOptionsComponent extends JPanel {
   private static final String[] KNOWN_TARGETS;
   private static final String COMPILER_DEFAULT = "Same as language level";
 
-  private final ComboBox myCbProjectTargetLevel;
-  private final JBTable myTable;
-  private final Project myProject;
-
   static {
     List<String> targets = new ArrayList<>();
     targets.add("1.1");
     targets.add("1.2");
     for (LanguageLevel level : LanguageLevel.values()) {
-      targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
+      if (level != LanguageLevel.JDK_X && !level.isPreview()) {
+        targets.add(JpsJavaSdkType.complianceOption(level.toJavaVersion()));
+      }
     }
+    Collections.reverse(targets);
     KNOWN_TARGETS = ArrayUtil.toStringArray(targets);
   }
-  public TargetOptionsComponent(Project project) {
+
+  private final ComboBox<String> myCbProjectTargetLevel;
+  private final JBTable myTable;
+  private final Project myProject;
+
+  public TargetOptionsComponent(@NotNull Project project) {
     super(new GridBagLayout());
     myProject = project;
-    //setBorder(BorderFactory.createTitledBorder("Bytecode target level"));
     myCbProjectTargetLevel = createTargetOptionsCombo();
 
-    myTable = new JBTable(new TargetLevelTableModel());
-    myTable.setRowHeight(22);
+    myTable = new JBTable(new ModuleOptionsTableModel());
+    myTable.setRowHeight(JBUI.scale(22));
     myTable.getEmptyText().setText("All modules will be compiled with project bytecode version");
 
-    final TableColumn moduleColumn = myTable.getColumnModel().getColumn(0);
+    TableColumn moduleColumn = myTable.getColumnModel().getColumn(0);
     moduleColumn.setHeaderValue("Module");
     moduleColumn.setCellRenderer(new ModuleTableCellRenderer());
 
-    final TableColumn targetLevelColumn = myTable.getColumnModel().getColumn(1);
-    final String columnTitle = "Target bytecode version";
+    TableColumn targetLevelColumn = myTable.getColumnModel().getColumn(1);
+    String columnTitle = "Target bytecode version";
     targetLevelColumn.setHeaderValue(columnTitle);
     targetLevelColumn.setCellEditor(new TargetLevelCellEditor());
     targetLevelColumn.setCellRenderer(new TargetLevelCellRenderer());
-    final int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(columnTitle) + 10;
+    int width = myTable.getFontMetrics(myTable.getFont()).stringWidth(columnTitle) + 10;
     targetLevelColumn.setPreferredWidth(width);
     targetLevelColumn.setMinWidth(width);
     targetLevelColumn.setMaxWidth(width);
 
     new TableSpeedSearch(myTable);
 
-    add(new JLabel("Project bytecode version: "),
-        constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
+    add(new JLabel("Project bytecode version: "), constraints(0, 0, 1, 1, 0.0, 0.0, GridBagConstraints.NONE));
     add(myCbProjectTargetLevel, constraints(1, 0, 1, 1, 1.0, 0.0, GridBagConstraints.NONE));
     add(new JLabel("Per-module bytecode version:"), constraints(0, 1, 2, 1, 1.0, 0.0, GridBagConstraints.NONE));
-    final JPanel tableComp = ToolbarDecorator.createDecorator(myTable)
+    JPanel tableComp = ToolbarDecorator.createDecorator(myTable)
       .disableUpAction()
       .disableDownAction()
-      .setAddAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton anActionButton) {
-          addModules();
-        }
-      })
-      .setRemoveAction(new AnActionButtonRunnable() {
-        @Override
-        public void run(AnActionButton anActionButton) {
-          removeSelectedModules();
-        }
-      }).createPanel();
-
+      .setAddAction(b -> addModules())
+      .setRemoveAction(b -> removeSelectedModules())
+      .createPanel();
     tableComp.setPreferredSize(new Dimension(myTable.getWidth(), 150));
     add(tableComp, constraints(0, 2, 2, 1, 1.0, 1.0, GridBagConstraints.BOTH));
   }
 
-  private void removeSelectedModules() {
-    final int[] rows = myTable.getSelectedRows();
-    if (rows.length > 0) {
-      TableUtil.removeSelectedItems(myTable);
-    }
-  }
-
-  private void addModules() {
-    final TargetLevelTableModel model = (TargetLevelTableModel)myTable.getModel();
-    final List<Module> items = new ArrayList<>(Arrays.asList(ModuleManager.getInstance(myProject).getModules()));
-    Set<Module> alreadyAdded = new HashSet<>();
-    for (TargetLevelTableModel.Item item : model.getItems()) {
-      alreadyAdded.add(item.module);
-    }
-    for (Iterator<Module> it = items.iterator(); it.hasNext(); ) {
-      Module module = it.next();
-      if (alreadyAdded.contains(module)) {
-        it.remove();
-      }
-    }
-    Collections.sort(items, (o1, o2) -> o1.getName().compareTo(o2.getName()));
-    final ChooseModulesDialog chooser = new ChooseModulesDialog(this, items, "Choose module");
-    chooser.show();
-    final List<Module> elements = chooser.getChosenElements();
-    if (!elements.isEmpty()) {
-      model.addItems(elements);
-      int i = model.getModuleRow(elements.get(0));
-      if (i != -1) {
-        TableUtil.selectRows(myTable, new int[]{i});
-        TableUtil.scrollSelectionToVisible(myTable);
-      }
-    }
-  }
-
-  public void setProjectBytecodeTargetLevel(String level) {
-    myCbProjectTargetLevel.setSelectedItem(level == null? "" : level);
-  }
-
-  @Nullable
-  public String getProjectBytecodeTarget() {
-    final String item = ((String)myCbProjectTargetLevel.getSelectedItem()).trim();
-    return "".equals(item)? null : item;
-  }
-
-  public Map<String, String> getModulesBytecodeTargetMap() {
-    TargetLevelTableModel model = (TargetLevelTableModel)myTable.getModel();
-    final Map<String, String> map = new HashMap<>();
-    for (TargetLevelTableModel.Item item : model.getItems()) {
-      map.put(item.module.getName(), item.targetLevel);
-    }
-    return map;
-  }
-
-  public void setModuleTargetLevels(Map<String, String> moduleLevels) {
-    final Map<Module, String> map;
-    if (!moduleLevels.isEmpty()) {
-      map = new HashMap<>();
-      for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-        final String target = moduleLevels.get(module.getName());
-        if (target != null) {
-          map.put(module, target);
-        }
-      }
-    }
-    else {
-      map = Collections.emptyMap();
-    }
-    ((TargetLevelTableModel)myTable.getModel()).setItems(map);
-  }
-
-  private static GridBagConstraints constraints(final int gridx, final int gridy, final int gridwidth, final int gridheight, final double weightx, final double weighty, final int fill) {
-    return new GridBagConstraints(gridx, gridy, gridwidth, gridheight, weightx, weighty, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
-  }
-
-  private static final class TargetLevelTableModel extends AbstractTableModel implements ItemRemovable{
-    private final List<Item> myItems = new ArrayList<>();
-    @Override
-    public int getRowCount() {
-      return myItems.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-      return 2;
-    }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-      return columnIndex != 0;
-    }
-
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-      final Item item = myItems.get(rowIndex);
-      return columnIndex == 0? item.module : item.targetLevel;
-    }
-
-    @Override
-    public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
-      final Item item = myItems.get(rowIndex);
-      item.targetLevel = ((String)aValue).trim();
-      fireTableCellUpdated(rowIndex, columnIndex);
-    }
-
-    //public void addItem(Module module)  {
-    //  final int size = myItems.size();
-    //  myItems.add(new Item(module.getName()));
-    //  fireTableRowsInserted(size, size);
-    //}
-
-    public void addItems(Collection<Module> modules)  {
-      for (Module module : modules) {
-        myItems.add(new Item(module));
-      }
-      sorItems();
-      fireTableDataChanged();
-    }
-
-    private void sorItems() {
-      Collections.sort(myItems, (o1, o2) -> o1.module.getName().compareTo(o2.module.getName()));
-    }
-
-    public List<Item> getItems() {
-      return myItems;
-    }
-
-    @Override
-    public void removeRow(int idx) {
-      myItems.remove(idx);
-      fireTableRowsDeleted(idx, idx);
-    }
-
-    public void setItems(Map<Module, String> items) {
-      myItems.clear();
-      for (Map.Entry<Module, String> entry : items.entrySet()) {
-        myItems.add(new Item(entry.getKey(), entry.getValue()));
-      }
-      sorItems();
-      fireTableDataChanged();
-    }
-
-    public int getModuleRow(Module module) {
-      for (int i = 0; i < myItems.size(); i++) {
-        if (myItems.get(i).module.equals(module)) {
-          return i;
-        }
-      }
-      return -1;
-    }
-
-    private static final class Item {
-      final Module module;
-      String targetLevel = "";
-
-      Item(Module module) {
-        this.module = module;
-      }
-
-      Item(Module module, String targetLevel) {
-        this.module = module;
-        this.targetLevel = targetLevel;
-      }
-    }
-  }
-
-  private static final class TargetLevelComboboxModel extends AbstractListModel implements ComboBoxModel{
-
-    private final List<String> myOptions = new ArrayList<>();
-    private String mySelectedItem = "";
-
-    TargetLevelComboboxModel() {
-      for (int i = KNOWN_TARGETS.length - 1; i >= 0; i--) {
-        myOptions.add(KNOWN_TARGETS[i]);
-      }
-    }
-
-    @Override
-    public int getSize() {
-      return myOptions.size();
-    }
-
-    @Override
-    public void setSelectedItem(Object anItem) {
-      mySelectedItem = toModelItem((String)anItem);
-      fireContentsChanged(this, 0, myOptions.size());
-    }
-
-    @Override
-    public Object getSelectedItem() {
-      return mySelectedItem;
-    }
-
-    @Override
-    public Object getElementAt(int index) {
-      return myOptions.get(index);
-    }
-
-    private String toModelItem(String item) {
-      item = item.trim();
-      for (String option : myOptions) {
-        if (option.equals(item)) {
-          return option;
-        }
-      }
-      return item;
-    }
-  }
-
-  private static ComboBox createTargetOptionsCombo() {
-    final ComboBox combo = new ComboBox(new TargetLevelComboboxModel());
-    //combo.setRenderer(new DefaultListCellRenderer() {
-    //  @Override
-    //  public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-    //    try {
-    //      return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-    //    }
-    //    finally {
-    //      //if ("".equals(value)) {
-    //      //  setText(COMPILER_DEFAULT);
-    //      //}
-    //    }
-    //  }
-    //});
+  private static ComboBox<String> createTargetOptionsCombo() {
+    ComboBox<String> combo = new ComboBox<>(KNOWN_TARGETS);
     combo.setEditable(true);
     combo.setEditor(new BasicComboBoxEditor() {
       @Override
       protected JTextField createEditorComponent() {
-        HintTextField editor = new HintTextField(COMPILER_DEFAULT, 12);
+        JBTextField editor = new JBTextField(COMPILER_DEFAULT, 12);
+        editor.getEmptyText().setText(COMPILER_DEFAULT);
         editor.setBorder(null);
         return editor;
       }
     });
     return combo;
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static GridBagConstraints constraints(int gridX, int gridY, int gridWidth, int gridHeight, double weightX, double weightY, int fill) {
+    return new GridBagConstraints(gridX, gridY, gridWidth, gridHeight, weightX, weightY, GridBagConstraints.WEST, fill, JBUI.insets(5, 5, 0, 0), 0, 0);
+  }
+
+  private void addModules() {
+    int i = ((ModuleOptionsTableModel)myTable.getModel()).addModulesToModel(myProject, this);
+    if (i != -1) {
+      TableUtil.selectRows(myTable, new int[]{i});
+      TableUtil.scrollSelectionToVisible(myTable);
+    }
+  }
+
+  private void removeSelectedModules() {
+    if (myTable.getSelectedRows().length > 0) {
+      TableUtil.removeSelectedItems(myTable);
+    }
+  }
+
+  public void setProjectBytecodeTargetLevel(String level) {
+    myCbProjectTargetLevel.setSelectedItem(level == null ? "" : level);
+  }
+
+  @Nullable
+  public String getProjectBytecodeTarget() {
+    String item = ObjectUtils.notNull(((String)myCbProjectTargetLevel.getSelectedItem()), "").trim();
+    return item.isEmpty() ? null : item;
+  }
+
+  public Map<String, String> getModulesBytecodeTargetMap() {
+    return ((ModuleOptionsTableModel)myTable.getModel()).getModuleOptions();
+  }
+
+  public void setModuleTargetLevels(Map<String, String> moduleLevels) {
+    ((ModuleOptionsTableModel)myTable.getModel()).setModuleOptions(myProject, moduleLevels);
   }
 
   private static class TargetLevelCellEditor extends DefaultCellEditor {
@@ -339,9 +151,9 @@ public class TargetOptionsComponent extends JPanel {
   private static class TargetLevelCellRenderer extends DefaultTableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
-      final Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
+      Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (component instanceof JLabel) {
-        final JLabel comp = (JLabel)component;
+        JLabel comp = (JLabel)component;
         comp.setHorizontalAlignment(SwingConstants.CENTER);
         if ("".equals(value)) {
           comp.setForeground(JBColor.GRAY);
@@ -352,41 +164,6 @@ public class TargetOptionsComponent extends JPanel {
         }
       }
       return component;
-    }
-  }
-
-  static class HintTextField extends JTextField {
-    private final char[] myHint;
-
-    public HintTextField(final String hint) {
-      this(hint, 0);
-    }
-
-    public HintTextField(final String hint, final int columns) {
-      super(hint, columns);
-      myHint = hint.toCharArray();
-    }
-
-    @Override
-    protected void paintComponent(Graphics g) {
-      super.paintComponent(g);
-      final boolean isFocused = isFocusOwner();
-      if (!isFocused && getText().isEmpty()) {
-        final Color oldColor = g.getColor();
-        final Font oldFont = g.getFont();
-        try {
-          g.setColor(JBColor.GRAY);
-          //g.setFont(oldFont.deriveFont(Font.ITALIC));
-          final FontMetrics metrics = g.getFontMetrics();
-          int x = Math.abs(getWidth() - metrics.charsWidth(myHint, 0, myHint.length)) / 2;
-          int y = Math.abs(getHeight() - metrics.getHeight()) / 2 + metrics.getAscent();
-          g.drawChars(myHint, 0, myHint.length, x, y);
-        }
-        finally {
-          g.setColor(oldColor);
-          g.setFont(oldFont);
-        }
-      }
     }
   }
 }

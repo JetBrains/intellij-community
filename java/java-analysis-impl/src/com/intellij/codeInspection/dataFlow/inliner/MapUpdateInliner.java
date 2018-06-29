@@ -3,9 +3,9 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
 import com.intellij.codeInspection.dataFlow.NullabilityProblemKind;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiMethodCallExpression;
@@ -71,10 +71,10 @@ public class MapUpdateInliner implements CallInliner {
         .evaluateFunction(function)
         .pushUnknown()
         .ifNotNull()
-        .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
+        .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
         .swap()
         .invokeFunction(2, function)
-        .endIf()
+        .end()
         .flushFields();
       return true;
     }
@@ -91,8 +91,8 @@ public class MapUpdateInliner implements CallInliner {
       .flushFields()
       .elseBranch()
       .pop()
-      .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
-      .endIf();
+      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
+      .end();
   }
 
   private static void inlineComputeIfPresent(@NotNull CFGBuilder builder,
@@ -104,13 +104,13 @@ public class MapUpdateInliner implements CallInliner {
       .evaluateFunction(function)
       .pushUnknown() // stack: .. key; get() result
       .ifNotNull() // stack: .. key
-      .push(builder.getFactory().createTypeValue(type, Nullness.NOT_NULL))
+      .push(builder.getFactory().createTypeValue(type, Nullability.NOT_NULL))
       .invokeFunction(2, function) // stack: .. mapping result
       .flushFields()
       .elseBranch()
       .pop()
       .pushNull()
-      .endIf();
+      .end();
   }
 
   private static void inlineCompute(@NotNull CFGBuilder builder,
@@ -120,7 +120,7 @@ public class MapUpdateInliner implements CallInliner {
     builder
       .pushExpression(key) // stack: .. key
       .evaluateFunction(function)
-      .push(builder.getFactory().createTypeValue(type, Nullness.NULLABLE))
+      .push(builder.getFactory().createTypeValue(type, Nullability.NULLABLE))
       .invokeFunction(2, function) // stack: .. mapping result
       .flushFields();
   }

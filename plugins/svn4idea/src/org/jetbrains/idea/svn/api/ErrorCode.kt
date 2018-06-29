@@ -17,11 +17,11 @@ enum class ErrorCategory(val code: Int) {
   AUTHN(19),
   AUTHZ(20);
 
-  val start = ERROR_BASE + code * ERROR_CATEGORY_SIZE
+  val start: Int = ERROR_BASE + code * ERROR_CATEGORY_SIZE
 
   companion object {
     @JvmStatic
-    fun categoryCodeOf(errorCode: Int) = (errorCode - ERROR_BASE) / ERROR_CATEGORY_SIZE
+    fun categoryCodeOf(errorCode: Int): Int = (errorCode - ERROR_BASE) / ERROR_CATEGORY_SIZE
   }
 }
 
@@ -54,5 +54,5 @@ enum class ErrorCode(val category: ErrorCategory, val index: Int) {
   PROPERTY_NOT_FOUND(MISC, 17),
   MERGE_INFO_PARSE_ERROR(MISC, 20);
 
-  val code = category.start + index
+  val code: Int = category.start + index
 }

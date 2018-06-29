@@ -18,7 +18,7 @@ class GrUReferenceExpression(
 
   override val resolvedName: String? = (resolve() as? PsiNamedElement)?.name
 
-  override val uastParent by lazy(parentProvider)
+  override val uastParent: UElement? by lazy(parentProvider)
 
   override val annotations: List<UAnnotation> = emptyList()
 

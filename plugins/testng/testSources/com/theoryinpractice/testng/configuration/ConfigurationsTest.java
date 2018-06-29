@@ -85,11 +85,9 @@ public class ConfigurationsTest {
     final RenameRefactoring renameClass = RefactoringFactory.getInstance(project).createRename(psiClass, newName);
     renameClass.setSearchInComments(false);
     renameClass.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) {
-        renameClass.run();
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      renameClass.run();
+    });
     Assert.assertEquals(newName, configuration.getPersistantData().getMainClassName());
 
     final PsiMethod notATestMethod = findNotATestMethod(psiClass);
@@ -97,11 +95,9 @@ public class ConfigurationsTest {
     final RenameRefactoring renameNotATestMethod = RefactoringFactory.getInstance(project).createRename(notATestMethod, "aaaa");
     renameNotATestMethod.setSearchInComments(false);
     renameNotATestMethod.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) {
-        renameNotATestMethod.run();
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      renameNotATestMethod.run();
+    });
     Assert.assertEquals(configuration.getPersistantData().getMainClassName(), newName);
     Assert.assertEquals(configuration.getPersistantData().getMethodName(), "");
     Assert.assertEquals(configuration.getPersistantData().TEST_OBJECT, TestType.CLASS.getType());
@@ -121,11 +117,9 @@ public class ConfigurationsTest {
     final RenameRefactoring renameMethod = RefactoringFactory.getInstance(project).createRename(method, newMethodName);
     renameMethod.setSearchInComments(false);
     renameMethod.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) {
-        renameMethod.run();
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      renameMethod.run();
+    });
 
     Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
@@ -134,11 +128,9 @@ public class ConfigurationsTest {
     final RenameRefactoring renameNotATestMethod1 = RefactoringFactory.getInstance(project).createRename(notATestMethod, "bbbbb");
     renameNotATestMethod1.setSearchInComments(false);
     renameNotATestMethod1.setSearchInNonJavaFiles(false);
-    new WriteCommandAction(project) {
-      protected void run(@NotNull final Result result) {
-        renameNotATestMethod1.run();
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(project, () -> {
+      renameNotATestMethod1.run();
+    });
     Assert.assertEquals(className, configuration.getPersistantData().getMainClassName());
     Assert.assertEquals(newMethodName, configuration.getPersistantData().getMethodName());
   }

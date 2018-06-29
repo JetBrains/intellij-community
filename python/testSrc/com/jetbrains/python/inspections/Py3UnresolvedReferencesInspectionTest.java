@@ -196,6 +196,12 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
     doMultiFileTest("a.py", Collections.singletonList("lib1"));
   }
 
+
+  //PY-28383
+  public void testNamespacePackageInMultipleRoots() {
+    doMultiFileTest("a.py", Arrays.asList("root1/src", "root2/src"));
+  }
+
   // PY-18972
   public void testReferencesInFStringLiterals() {
     doTest();
@@ -253,6 +259,34 @@ public class Py3UnresolvedReferencesInspectionTest extends PyInspectionTestCase 
 
   // PY-28406
   public void testFromNamespacePackageImportInManySourceRoots() {
-    doMultiFileTest("a.py", Arrays.asList("root1" , "root2"));
+    doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
+  }
+
+  public void testNamespacePackageRedundantUnion() {
+    doMultiFileTest("a.py", Arrays.asList("root1", "root2"));
+  }
+
+  // PY-18629
+  public void testPreferImportedModuleOverNamespacePackage() {
+    doMultiFileTest();
+  }
+
+  // PY-27964
+  public void testUsingFunctoolsSingledispatch() {
+    doTest();
+  }
+
+  // PY-27866
+  public void testUnionOwnSlots() {
+    doTestByText("from typing import Union\n" +
+                 "\n" +
+                 "class A:\n" +
+                 "    __slots__ = ['x']\n" +
+                 "\n" +
+                 "class B:\n" +
+                 "    __slots__ = ['y']\n" +
+                 "    \n" +
+                 "def foo(ab: Union[A, B]):\n" +
+                 "    print(ab.x)");
   }
 }

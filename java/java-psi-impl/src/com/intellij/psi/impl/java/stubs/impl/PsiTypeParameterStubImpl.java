@@ -21,9 +21,7 @@ import com.intellij.psi.impl.java.stubs.PsiAnnotationStub;
 import com.intellij.psi.impl.java.stubs.PsiTypeParameterStub;
 import com.intellij.psi.stubs.StubBase;
 import com.intellij.psi.stubs.StubElement;
-import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -32,16 +30,16 @@ import java.util.List;
  * @author max
  */
 public class PsiTypeParameterStubImpl extends StubBase<PsiTypeParameter> implements PsiTypeParameterStub {
-  private final StringRef myName;
+  private final String myName;
 
-  public PsiTypeParameterStubImpl(final StubElement parent, final StringRef name) {
+  public PsiTypeParameterStubImpl(StubElement parent, String name) {
     super(parent, JavaStubElementTypes.TYPE_PARAMETER);
     myName = name;
   }
 
   @Override
   public String getName() {
-    return StringRef.toString(myName);
+    return myName;
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})

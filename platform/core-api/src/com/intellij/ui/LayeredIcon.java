@@ -16,7 +16,8 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.ScalableIcon;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconLoader.DarkIconProvider;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.JBUI.CachingScalableJBIcon;
 import org.intellij.lang.annotations.MagicConstant;
@@ -29,7 +30,7 @@ import java.util.Arrays;
 import static com.intellij.util.ui.JBUI.ScaleType.OBJ_SCALE;
 import static com.intellij.util.ui.JBUI.ScaleType.USR_SCALE;
 
-public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
+public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> implements DarkIconProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.LayeredIcon");
   private final Icon[] myIcons;
   private Icon[] myScaledIcons;
@@ -77,7 +78,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
 
   @NotNull
   @Override
-  protected LayeredIcon copy() {
+  public LayeredIcon copy() {
     return new LayeredIcon(this);
   }
 
@@ -86,21 +87,7 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
     if (myScaledIcons != null) {
       return myScaledIcons;
     }
-    if (getScale() == 1f) {
-      return myScaledIcons = myIcons;
-    }
-    for (Icon icon : myIcons) {
-      if (icon != null && !(icon instanceof ScalableIcon)) {
-        return myScaledIcons = myIcons;
-      }
-    }
-    myScaledIcons = new Icon[myIcons.length];
-    for (int i = 0; i < myIcons.length; i++) {
-      if (myIcons[i] != null) {
-        myScaledIcons[i] = ((ScalableIcon)myIcons[i]).scale(getScale());
-      }
-    }
-    return myScaledIcons;
+    return myScaledIcons = RowIcon.scaleIcons(myIcons, getScale());
   }
 
   @NotNull
@@ -295,6 +282,15 @@ public class LayeredIcon extends CachingScalableJBIcon<LayeredIcon> {
       myXShift = -minX;
       myYShift = -minY;
     }
+  }
+
+  @Override
+  public Icon getDarkIcon(boolean isDark) {
+    LayeredIcon newIcon = copy();
+    for (int i=0; i<newIcon.myIcons.length; i++) {
+      newIcon.myIcons[i] = IconLoader.getDarkIcon(newIcon.myIcons[i], isDark);
+    }
+    return newIcon;
   }
 
   public static Icon create(final Icon backgroundIcon, final Icon foregroundIcon) {

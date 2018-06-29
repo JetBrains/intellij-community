@@ -132,6 +132,21 @@ class MethodRef {
     assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('MethodRef::boo')}
   }
 
+  void "test suggest receiver method reference for generic methods"() {
+    myFixture.configureByText "a.java", """
+import java.util.*;
+import java.util.stream.Stream;
+class MethodRef {
+
+    private void m(Stream<Map.Entry<String, Integer>> stream) {
+        stream.map(<caret>);
+    }
+}
+"""
+    def items = myFixture.completeBasic()
+    assert items.find {LookupElementPresentation.renderElement(it).itemText.contains('Entry::getKey')}
+  }
+
   void "test constructor ref"() {
     myFixture.configureByText "a.java", """
 interface Foo9 {
@@ -235,6 +250,8 @@ class Test88 {
     checkResultByFileName()
   }
 
+  void testCollectorsJoining() { doTest() }
+
   void testCollectorsToSet() {
     configureByTestName()
     selectItem(myItems.find { it.lookupString.contains('toSet') })
@@ -247,6 +264,8 @@ class Test88 {
     selectItem(myItems[1])
     checkResultByFileName()
   }
+
+  void testCollectorsJoiningInsideCollect() { doTest() }
 
   void testNoExplicitTypeArgsInTernary() {
     configureByTestName()
@@ -262,6 +281,12 @@ class Test88 {
   void testLambdaInAmbiguousCall() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems(0, 'toString', 'wait')
+  }
+
+  void testLambdaInAmbiguousConstructorCall() {
+    configureByTestName()
+    selectItem(myItems.find { it.lookupString.contains('Empty') })
+    checkResultByFileName()
   }
 
   void testLambdaWithSuperWildcardInAmbiguousCall() {
@@ -342,4 +367,19 @@ class Test88 {
   private checkResultByFileName() {
     checkResultByFile(getTestName(false) + "_after.java")
   }
+
+  void "test intersection type members"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { (true ? new LinkedList<>() : new ArrayList<>()).<caret> }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
+  void "test do not suggest inaccessible methods"() {
+    myFixture.configureByText 'a.java',
+                              'import java.util.*; class F { { new ArrayList<String>().forEach(O<caret>) }}'
+    myFixture.completeBasic()
+    assert !('finalize' in myFixture.lookupElementStrings)
+  }
+
 }

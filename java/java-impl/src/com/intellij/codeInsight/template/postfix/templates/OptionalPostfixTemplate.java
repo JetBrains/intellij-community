@@ -1,13 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.template.postfix.templates;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
-import com.intellij.codeInspection.dataFlow.Nullness;
-import com.intellij.codeInspection.dataFlow.NullnessUtil;
+import com.intellij.codeInspection.dataFlow.NullabilityUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -18,7 +17,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.Collections;
 
 public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
-  public OptionalPostfixTemplate(@NotNull PostfixEditableTemplateProvider provider) {
+  public OptionalPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("opt",
           "java.util.$OPTIONAL_CLASS$.$OPTIONAL_METHOD$($EXPR$)",
           "Optional.ofNullable(expr)",
@@ -32,12 +31,6 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
   }
 
   @Override
-  public boolean isEditable() {
-    // cannot be editable until there is no UI for editing template variables
-    return false;
-  }
-
-  @Override
   protected void addTemplateVariables(@NotNull PsiElement element, @NotNull Template template) {
     super.addTemplateVariables(element, template);
     template.addVariable("OPTIONAL_CLASS", new TextExpression(getClassName(element)), false);
@@ -45,7 +38,7 @@ public class OptionalPostfixTemplate extends JavaEditablePostfixTemplate {
   }
 
   private static String getMethodName(@NotNull PsiElement element) {
-    if (element instanceof PsiExpression && Nullness.NOT_NULL.equals(NullnessUtil.getExpressionNullness((PsiExpression)element, true))) {
+    if (element instanceof PsiExpression && Nullability.NOT_NULL == NullabilityUtil.getExpressionNullability((PsiExpression)element, true)) {
       return "of";
     }
     return "ofNullable";

@@ -52,7 +52,7 @@ public class DeclareCollectionAsInterface
       <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning> list22 = new ArrayList();
       System.out.println(list22.get(0));
 
-      <warning descr="Declaration of 'ArrayList' should probably be weakened to 'java.util.List'">ArrayList</warning><String> list33 = new ArrayList();
+      ArrayList<String> list33 = new ArrayList();
       System.out.println(list33.get(0));
     }
 

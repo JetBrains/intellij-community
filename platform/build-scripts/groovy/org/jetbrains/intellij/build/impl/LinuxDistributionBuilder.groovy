@@ -15,11 +15,13 @@ import org.jetbrains.intellij.build.LinuxDistributionCustomizer
 class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private final LinuxDistributionCustomizer customizer
   private final File ideaProperties
+  private final String iconPngPath
 
   LinuxDistributionBuilder(BuildContext buildContext, LinuxDistributionCustomizer customizer, File ideaProperties) {
     super(BuildOptions.OS_LINUX, "Linux", buildContext)
     this.customizer = customizer
     this.ideaProperties = ideaProperties
+    iconPngPath = (buildContext.applicationInfo.isEAP ? customizer.iconPngPathForEAP : null) ?: customizer.iconPngPath
   }
 
   @Override
@@ -42,8 +44,8 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
     //todo[nik] converting line separators to unix-style make sense only when building Linux distributions under Windows on a local machine;
     // for real installers we need to checkout all text files with 'lf' separators anyway
     buildContext.ant.fixcrlf(file: "$unixDistPath/bin/idea.properties", eol: "unix")
-    if (customizer.iconPngPath != null) {
-      buildContext.ant.copy(file: customizer.iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
+    if (iconPngPath != null) {
+      buildContext.ant.copy(file: iconPngPath, tofile: "$unixDistPath/bin/${buildContext.productProperties.baseFileName}.png")
     }
     generateScripts(unixDistPath)
     generateVMOptions(unixDistPath)
@@ -175,7 +177,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
   private void buildSnapPackage(String jreDirectoryPath, String unixDistPath) {
     if (!buildContext.options.buildUnixSnaps || customizer.snapName == null) return
 
-    if (StringUtil.isEmpty(customizer.iconPngPath)) buildContext.messages.error("'iconPngPath' not set")
+    if (StringUtil.isEmpty(iconPngPath)) buildContext.messages.error("'iconPngPath' not set")
     if (StringUtil.isEmpty(customizer.snapDescription)) buildContext.messages.error("'snapDescription' not set")
 
     String snapDir = "${buildContext.paths.buildOutputRoot}/dist.snap"
@@ -190,11 +192,12 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
           filter(token: "NAME", value: productName)
           filter(token: "ICON", value: "\${SNAP}/bin/${buildContext.productProperties.baseFileName}.png")
           filter(token: "SCRIPT", value: customizer.snapName)
+          filter(token: "COMMENT", value: buildContext.applicationInfo.motto)
           filter(token: "WM_CLASS", value: getFrameClass())
         }
       }
 
-      buildContext.ant.copy(file: customizer.iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
+      buildContext.ant.copy(file: iconPngPath, tofile: "${snapDir}/${customizer.snapName}.png")
 
       def snapcraftTemplate = "${buildContext.paths.communityHome}/platform/build-scripts/resources/linux/snap/snapcraft-template.yaml"
       def version = "${buildContext.applicationInfo.majorVersion}.${buildContext.applicationInfo.minorVersion}${buildContext.applicationInfo.isEAP ? "-EAP" : ""}"
@@ -244,8 +247,7 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
         arg(value: "--volume=${unixDistPath}:/build/dist.unix:ro")
         arg(value: "--volume=${jreDirectoryPath}:/build/jre:ro")
         arg(value: "--workdir=/build")
-        arg(value: "--env=SNAPCRAFT_SETUP_CORE=1")
-        arg(value: "snapcore/snapcraft")
+        arg(value: buildContext.options.snapDockerImage)
         arg(value: "snapcraft")
         arg(value: "snap")
         arg(value: "-o")
@@ -264,6 +266,6 @@ class LinuxDistributionBuilder extends OsSpecificDistributionBuilder {
       .replace(' ', '-')
       .replace("intellij-idea", "idea").replace("android-studio", "studio")
       .replace("-community-edition", "-ce").replace("-ultimate-edition", "").replace("-professional-edition", "")
-    "jetbrains-" + name
+    name.startsWith("jetbrains-") ? name : "jetbrains-" + name
   }
 }

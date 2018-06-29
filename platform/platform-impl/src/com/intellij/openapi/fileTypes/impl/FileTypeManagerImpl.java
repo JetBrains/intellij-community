@@ -65,6 +65,7 @@ import java.io.*;
 import java.net.URL;
 import java.nio.channels.FileChannel;
 import java.util.*;
+import java.util.concurrent.ExecutorService;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
@@ -302,7 +303,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       registerFileTypeWithoutNotification(pair.fileType, pair.matchers, true);
     }
 
-    if (PlatformUtils.isDatabaseIDE() || PlatformUtils.isCidr()) {
+    if (PlatformUtils.isDataGrip() || PlatformUtils.isCidr()) {
       // build scripts are correct, but it is required to run from sources
       return;
     }
@@ -349,7 +350,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     LOG.debug(message + " - "+Thread.currentThread());
   }
 
-  private final BoundedTaskExecutor reDetectExecutor = new BoundedTaskExecutor("FileTypeManager redetect pool", PooledThreadExecutor.INSTANCE, 1, this);
+  private final ExecutorService reDetectExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor("FileTypeManager Redetect Pool", PooledThreadExecutor.INSTANCE, 1, this);
   private final HashSetQueue<VirtualFile> filesToRedetect = new HashSetQueue<>();
 
   private static final int CHUNK_SIZE = 10;
@@ -373,7 +374,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
   @TestOnly
   public void drainReDetectQueue() {
     try {
-      reDetectExecutor.waitAllTasksExecuted(1, TimeUnit.MINUTES);
+      ((BoundedTaskExecutor)reDetectExecutor).waitAllTasksExecuted(1, TimeUnit.MINUTES);
     }
     catch (Exception e) {
       throw new RuntimeException(e);
@@ -707,13 +708,6 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
            null;
   }
 
-  @NotNull
-  @Override
-  @Deprecated
-  public FileType detectFileTypeFromContent(@NotNull VirtualFile file) {
-    return file.getFileType();
-  }
-
   private void cacheAutoDetectedFileType(@NotNull VirtualFile file, @NotNull FileType fileType) {
     boolean wasAutodetectedAsText = fileType == PlainTextFileType.INSTANCE;
     boolean wasAutodetectedAsBinary = fileType == UnknownFileType.INSTANCE;
@@ -778,7 +772,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       if (toLog()) {
         log("F: processFirstBytes(): inputStream.read() returned "+n+"; retrying with read action. stream="+ streamInfo(stream));
       }
-      n = ApplicationManager.getApplication().runReadAction((ThrowableComputable<Integer, IOException>)() -> stream.read(buffer, offset, length));
+      n = ReadAction.compute(() -> stream.read(buffer, offset, length));
       if (toLog()) {
         log("F: processFirstBytes(): under read action inputStream.read() returned "+n+"; stream="+ streamInfo(stream));
       }
@@ -1171,6 +1165,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
       FileNameMatcher matcher = trinity.getFirst();
       if (type != null) {
         removeAssociation(type, matcher, false);
+        myRemovedMappings.put(matcher, Pair.create(type, trinity.third));
       }
       else {
         myUnresolvedRemovedMappings.put(matcher, Trinity.create(trinity.getSecond(), myUnresolvedMappings.get(matcher), trinity.getThird()));
@@ -1448,7 +1443,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
 
 
   @NotNull
-  FileTypeAssocTable getExtensionMap() {
+  FileTypeAssocTable<FileType> getExtensionMap() {
     return myPatternsTable;
   }
 
@@ -1543,6 +1538,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements Persistent
     }
     myStandardFileTypes.clear();
     myUnresolvedMappings.clear();
+    myRemovedMappings.clear();
     mySchemeManager.setSchemes(Collections.emptyList());
   }
 

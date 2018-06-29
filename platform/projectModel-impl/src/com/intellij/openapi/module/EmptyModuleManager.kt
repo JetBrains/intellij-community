@@ -21,34 +21,34 @@ import com.intellij.util.messages.MessageBus
 import org.jetbrains.annotations.NotNull
 
 class EmptyModuleManager(private val project: Project, messageBus: MessageBus) : ModuleManager() {
-  override fun hasModuleGroups() = false
+  override fun hasModuleGroups(): Boolean = false
 
-  override fun newModule(filePath: String, moduleTypeId: String) = throw UnsupportedOperationException()
+  override fun newModule(filePath: String, moduleTypeId: String): Nothing = throw UnsupportedOperationException()
 
-  override fun loadModule(filePath: String) = throw UnsupportedOperationException()
+  override fun loadModule(filePath: String): Nothing = throw UnsupportedOperationException()
 
   override fun disposeModule(module: Module) {
   }
 
-  override fun getModules() = emptyArray<Module>()
+  override fun getModules(): Array<Module> = emptyArray<Module>()
 
-  override fun findModuleByName(name: String) = null
+  override fun findModuleByName(name: String): Nothing? = null
 
-  override fun getSortedModules() = emptyArray<Module>()
+  override fun getSortedModules(): Array<Module> = emptyArray<Module>()
 
-  override fun moduleDependencyComparator() = throw UnsupportedOperationException()
+  override fun moduleDependencyComparator(): Nothing = throw UnsupportedOperationException()
 
-  override fun getModuleDependentModules(module: Module) = emptyList<Module>()
+  override fun getModuleDependentModules(module: Module): List<Module> = emptyList<Module>()
 
-  override fun isModuleDependent(@NotNull module: Module, @NotNull onModule: Module) = false
+  override fun isModuleDependent(@NotNull module: Module, @NotNull onModule: Module): Boolean = false
 
-  override fun moduleGraph() = moduleGraph(true)
+  override fun moduleGraph(): Nothing = moduleGraph(true)
 
-  override fun moduleGraph(includeTests: Boolean) = throw UnsupportedOperationException()
+  override fun moduleGraph(includeTests: Boolean): Nothing = throw UnsupportedOperationException()
 
-  override fun getModifiableModel() = throw UnsupportedOperationException()
+  override fun getModifiableModel(): Nothing = throw UnsupportedOperationException()
 
-  override fun getModuleGroupPath(module: Module) = emptyArray<String>()
+  override fun getModuleGroupPath(module: Module): Array<String> = emptyArray<String>()
 
   override fun setUnloadedModules(unloadedModuleNames: MutableList<String>) {
   }
@@ -57,11 +57,11 @@ class EmptyModuleManager(private val project: Project, messageBus: MessageBus) :
     return createGrouper(project, model)
   }
 
-  override fun getAllModuleDescriptions() = emptyList<ModuleDescription>()
+  override fun getAllModuleDescriptions(): List<ModuleDescription> = emptyList<ModuleDescription>()
 
-  override fun getUnloadedModuleDescriptions() = emptyList<UnloadedModuleDescription>()
+  override fun getUnloadedModuleDescriptions(): List<UnloadedModuleDescription> = emptyList<UnloadedModuleDescription>()
 
-  override fun getUnloadedModuleDescription(moduleName: String) = null
+  override fun getUnloadedModuleDescription(moduleName: String): Nothing? = null
 
   override fun removeUnloadedModules(unloadedModules: MutableCollection<UnloadedModuleDescription>) {
   }

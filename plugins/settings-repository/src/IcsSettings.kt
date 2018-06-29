@@ -37,7 +37,7 @@ class MyPrettyPrinter : DefaultPrettyPrinter() {
     _arrayIndenter = DefaultPrettyPrinter.NopIndenter.instance
   }
 
-  override fun createInstance() = MyPrettyPrinter()
+  override fun createInstance(): MyPrettyPrinter = MyPrettyPrinter()
 
   override fun writeObjectFieldValueSeparator(jg: JsonGenerator) {
     jg.writeRaw(": ")
@@ -86,12 +86,12 @@ fun loadSettings(settingsFile: Path): IcsSettings {
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)
 @JsonIgnoreProperties(ignoreUnknown = true)
 class IcsSettings {
-  var shareProjectWorkspace = false
-  var commitDelay = DEFAULT_COMMIT_DELAY
-  var doNoAskMapProject = false
+  var shareProjectWorkspace: Boolean = false
+  var commitDelay: Int = DEFAULT_COMMIT_DELAY
+  var doNoAskMapProject: Boolean = false
   var readOnlySources: List<ReadonlySource> = SmartList()
 
-  var autoSync = true
+  var autoSync: Boolean = true
 }
 
 @JsonInclude(value = JsonInclude.Include.NON_DEFAULT)

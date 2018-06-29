@@ -155,7 +155,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.uiDesigner.propertyInspector.DesignerToolWindowManager</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.ide.palette.impl.PaletteToolWindowManager</implementation-class>

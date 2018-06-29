@@ -28,6 +28,8 @@ import org.jetbrains.uast.visitor.UastVisitor
 interface UClass : UDeclaration, PsiClass {
   override val psi: PsiClass
 
+  override val javaPsi: PsiClass
+
   override fun getQualifiedName(): String?
 
   override fun isInterface(): Boolean
@@ -61,7 +63,7 @@ interface UClass : UDeclaration, PsiClass {
   override fun getInnerClasses(): Array<UClass> =
     psi.innerClasses.map { getLanguagePlugin().convert<UClass>(it, this) }.toTypedArray()
 
-  override fun asLogString() = log("name = $name")
+  override fun asLogString(): String = log("name = $name")
 
   override fun accept(visitor: UastVisitor) {
     if (visitor.visitClass(this)) return
@@ -70,7 +72,7 @@ interface UClass : UDeclaration, PsiClass {
     visitor.afterVisitClass(this)
   }
 
-  override fun asRenderString() = buildString {
+  override fun asRenderString(): String = buildString {
     append(psi.renderModifiers())
     val kind = when {
       psi.isAnnotationType -> "annotation"
@@ -91,7 +93,7 @@ interface UClass : UDeclaration, PsiClass {
     append("}")
   }
 
-  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D) =
+  override fun <D, R> accept(visitor: UastTypedVisitor<D, R>, data: D): R =
     visitor.visitClass(this, data)
 }
 
@@ -99,7 +101,5 @@ interface UAnonymousClass : UClass, PsiAnonymousClass {
   override val psi: PsiAnonymousClass
 }
 
-@Deprecated("transitional interface, don't rely on it", ReplaceWith("UClass"))
-interface UClassTypeSpecific : UClass {
-  override val javaPsi: PsiClass
-}
+@Deprecated("no more needed, use UClass", ReplaceWith("UClass"))
+interface UClassTypeSpecific : UClass

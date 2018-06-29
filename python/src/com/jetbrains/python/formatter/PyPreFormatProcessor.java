@@ -1,20 +1,7 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.python.formatter;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
@@ -22,8 +9,6 @@ import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.impl.source.codeStyle.PreFormatProcessor;
 import com.jetbrains.python.PythonLanguage;
 import com.jetbrains.python.psi.LanguageLevel;
@@ -52,9 +37,7 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
     PsiFile file = psiElement.isValid() ? psiElement.getContainingFile() : null;
     if (file == null) return range;
 
-    Project project = psiElement.getProject();
-
-    return new PyCommentFormatter(project).process(psiElement, range);
+    return new PyCommentFormatter(file).process(psiElement, range);
   }
 
   /**
@@ -62,16 +45,14 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
    */
   public static class PyCommentFormatter extends PyRecursiveElementVisitor {
     private final Project myProject;
-    private final CodeStyleSettings mySettings;
     private final PyCodeStyleSettings myPyCodeStyleSettings;
     private final List<Couple<PsiComment>> myCommentReplacements = new ArrayList<>();
     private TextRange myRange;
     private int myDelta = 0;
 
-    public PyCommentFormatter(Project project) {
-      myProject = project;
-      mySettings = CodeStyleSettingsManager.getSettings(project);
-      myPyCodeStyleSettings = mySettings.getCustomSettings(PyCodeStyleSettings.class);
+    public PyCommentFormatter(@NotNull PsiFile file) {
+      myProject = file.getProject();
+      myPyCodeStyleSettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
     }
 
     public TextRange process(PsiElement element, TextRange range) {
@@ -130,5 +111,10 @@ public class PyPreFormatProcessor implements PreFormatProcessor {
   private static boolean isTrailingComment(@NotNull PsiComment comment) {
     final PsiElement prevElement = comment.getPrevSibling();
     return prevElement != null && (!(prevElement instanceof PsiWhiteSpace) || !prevElement.textContains('\n'));
+  }
+
+  @Override
+  public boolean changesWhitespacesOnly() {
+    return true;
   }
 }

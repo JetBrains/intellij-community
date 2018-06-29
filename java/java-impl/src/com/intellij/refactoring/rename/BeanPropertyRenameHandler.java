@@ -25,7 +25,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.beanProperties.BeanProperty;
-import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.refactoring.RenameRefactoring;
 import com.intellij.refactoring.openapi.impl.JavaRenameRefactoringImpl;
@@ -38,11 +37,11 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class BeanPropertyRenameHandler implements RenameHandler {
 
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     return false;
   }
 
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return getProperty(dataContext) != null;
   }
 
@@ -69,14 +68,6 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     if (PsiElementRenameHandler.canRename(element.getProject(), editor, element)) {
       new PropertyRenameDialog(property, editor).show();
     }
-  }
-
-  @Deprecated
-  public static void doRename(@NotNull final BeanProperty property,
-                              final String newName,
-                              final boolean searchInComments,
-                              boolean isPreview) {
-    doRename(property, newName, null, searchInComments, isPreview);
   }
 
   public static void doRename(@NotNull final BeanProperty property,

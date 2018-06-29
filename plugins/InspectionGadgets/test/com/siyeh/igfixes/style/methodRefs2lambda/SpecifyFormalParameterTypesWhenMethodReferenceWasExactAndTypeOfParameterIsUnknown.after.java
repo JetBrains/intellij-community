@@ -1,6 +1,7 @@
 import java.util.*;
 class Test {
   {
-    Comparator.comparing((String s) -> s.trim());
+    Comparator.comparing(//end of line comment
+            (String s) -> s.trim());
   }
 }

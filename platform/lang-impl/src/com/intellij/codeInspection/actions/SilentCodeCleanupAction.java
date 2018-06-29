@@ -53,6 +53,10 @@ public class SilentCodeCleanupAction extends AnAction {
   }
 
   @SuppressWarnings("WeakerAccess")
+  @Nullable
+  protected Runnable getPostRunnable() { return null; }
+
+  @SuppressWarnings("WeakerAccess")
   protected void runInspections(@NotNull Project project, @NotNull AnalysisScope scope) {
     InspectionProfile profile = getProfileForSilentCleanup(project);
     if (profile == null) {
@@ -60,7 +64,7 @@ public class SilentCodeCleanupAction extends AnAction {
     }
     InspectionManager managerEx = InspectionManager.getInstance(project);
     GlobalInspectionContextBase globalContext = (GlobalInspectionContextBase) managerEx.createNewGlobalContext(false);
-    globalContext.codeCleanup(scope, profile, getTemplatePresentation().getText(), null, false);
+    globalContext.codeCleanup(scope, profile, getTemplatePresentation().getText(), getPostRunnable(), false);
   }
 
   @SuppressWarnings("WeakerAccess")

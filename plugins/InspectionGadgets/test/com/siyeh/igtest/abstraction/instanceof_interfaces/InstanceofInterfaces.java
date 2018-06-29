@@ -28,5 +28,14 @@ class InstanceofInterfaces {
       System.out.println("?");
     }
   }
+
+  void testEquality(Object a) {
+    if(a.getClass() == <warning descr="Class comparison against concrete class 'InstanceofInterfaces'">InstanceofInterfaces</warning>.class) {}
+    if(a.getClass() != <warning descr="Class comparison against concrete class 'InstanceofInterfaces'">InstanceofInterfaces</warning>.class) {}
+    if(<warning descr="Class comparison against concrete class 'InstanceofInterfaces'">InstanceofInterfaces</warning>.class != a.getClass()) {}
+    if(a.getClass().equals(<warning descr="Class comparison against concrete class 'InstanceofInterfaces'">InstanceofInterfaces</warning>.class)) {}
+    if(!<warning descr="Class comparison against concrete class 'InstanceofInterfaces'">InstanceofInterfaces</warning>.class.equals(a.getClass())) {}
+    if(a.getClass() == XYZ.class) {}
+  }
 }
 interface XYZ {}

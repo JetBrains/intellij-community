@@ -41,7 +41,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     f = createChildData(myRoot, "f.txt");
   }
 
-  public void testBasics() throws IOException {
+  public void testBasics() throws Exception {
     String before = "public class Bar {\n" +
                     "  public String foo() {\n" +
                     "    return \"old\";\n" +
@@ -68,7 +68,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     assertEquals(expected, new String(f.contentsToByteArray()));
   }
 
-  public void testChangeSetName() throws IOException {
+  public void testChangeSetName() throws Exception {
     long time = new Date(2001, 1, 11, 12, 30).getTime();
     Clock.setTime(time);
 
@@ -105,7 +105,7 @@ public class SelectionReverterTest extends IntegrationTestCase {
     assertEquals(f, files.get(0));
   }
 
-  private void revertToPreviousRevision(int from, int to) throws IOException {
+  private void revertToPreviousRevision(int from, int to) throws Exception {
     createReverter(from, to).revert();
   }
 

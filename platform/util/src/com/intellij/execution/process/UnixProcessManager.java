@@ -115,7 +115,11 @@ public class UnixProcessManager {
   public static boolean sendSignalToProcessTree(int processId, int signal) {
     checkCLib();
 
-    final int our_pid = C_LIB.getpid();
+    final int ourPid = C_LIB.getpid();
+    return sendSignalToProcessTree(processId, signal, ourPid);
+  }
+
+  public static boolean sendSignalToProcessTree(int processId, int signal, int ourPid) {
     if (LOG.isDebugEnabled()) {
       LOG.debug("Sending signal " + signal + " to process tree with root PID " + processId);
     }
@@ -124,7 +128,7 @@ public class UnixProcessManager {
     final ProcessInfo processInfo = new ProcessInfo();
     final List<Integer> childrenPids = new ArrayList<Integer>();
 
-    findChildProcesses(our_pid, processId, foundPid, processInfo, childrenPids);
+    findChildProcesses(ourPid, processId, foundPid, processInfo, childrenPids);
 
     // result is true if signal was sent to at least one process
     final boolean result;
@@ -273,10 +277,5 @@ public class UnixProcessManager {
       }
       sendSignal(pid, signal);
     }
-  }
-
-  /** @deprecated to be removed in IDEA 2018 */
-  public static int getProcessPid(@NotNull Process process) {
-    return getProcessId(process);
   }
 }

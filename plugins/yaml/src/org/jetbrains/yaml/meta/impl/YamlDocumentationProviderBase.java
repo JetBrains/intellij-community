@@ -16,12 +16,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.meta.model.Field;
+import org.jetbrains.yaml.meta.model.TypeFieldPair;
 import org.jetbrains.yaml.meta.model.YamlMetaType;
 import org.jetbrains.yaml.meta.model.YamlMetaType.ForcedCompletionPath;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLMapping;
 import org.jetbrains.yaml.psi.YAMLPsiElement;
 import org.jetbrains.yaml.psi.YAMLValue;
+
+import java.util.Objects;
 
 @ApiStatus.Experimental
 public abstract class YamlDocumentationProviderBase extends AbstractDocumentationProvider {
@@ -57,7 +60,10 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
     if (object instanceof ForcedCompletionPath) {  // deep completion
       return createFromCompletionPath((ForcedCompletionPath)object, contextElement);
     }
-    else if (object instanceof String) {  // basic completion
+    else if (object instanceof TypeFieldPair) {  // basic completion with Field object
+      return createFromField((TypeFieldPair)object, contextElement);
+    }
+    else if (object instanceof String) {  // basic completion with plain string
       return createFromString((String)object, contextElement);
     }
     else {
@@ -180,6 +186,12 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
     return new DocumentationElement(contextElement.getManager(), proxy.getMetaType(), field);
   }
 
+  @NotNull
+  private DocumentationElement createFromField(@NotNull TypeFieldPair field, @NotNull PsiElement contextElement) {
+    return new DocumentationElement(contextElement.getManager(), field.getMetaType(), field.getField());
+  }
+
+
 
   private class DocumentationElement extends LightElement {
     @NotNull private final Project myProject;
@@ -210,6 +222,22 @@ public abstract class YamlDocumentationProviderBase extends AbstractDocumentatio
     @Nullable
     public String getDocumentation() {
       return YamlDocumentationProviderBase.this.getDocumentation(myProject, myType, myField);
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (o == null || getClass() != o.getClass()) return false;
+      DocumentationElement element = (DocumentationElement)o;
+      return Objects.equals(myProject, element.myProject) &&
+             Objects.equals(myType, element.myType) &&
+             Objects.equals(myField, element.myField);
+    }
+
+    @Override
+    public int hashCode() {
+
+      return Objects.hash(myProject, myType, myField);
     }
   }
 }

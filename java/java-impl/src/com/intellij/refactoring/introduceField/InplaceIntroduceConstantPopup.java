@@ -264,24 +264,21 @@ public class InplaceIntroduceConstantPopup extends AbstractInplaceIntroduceField
                                                 getType(),
                                                 true,
                                                 getParentClass(), false, false);
-    new WriteCommandAction(myProject, getCommandName(), getCommandName()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        if (getLocalVariable() != null) {
-          final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
-            new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, true,
-                                                           myOccurrences);
-          fieldRunnable.run();
-        }
-        else {
-          final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
-            new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
-                                                                    myOccurrences, myOccurrenceManager,
-                                                                    getAnchorElementIfAll(), getAnchorElement(), myEditor, getParentClass());
-          convertToFieldRunnable.run();
-        }
+    WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).withGroupId(getCommandName()).run(() -> {
+      if (getLocalVariable() != null) {
+        final LocalToFieldHandler.IntroduceFieldRunnable fieldRunnable =
+          new LocalToFieldHandler.IntroduceFieldRunnable(false, (PsiLocalVariable)getLocalVariable(), getParentClass(), settings, true,
+                                                         myOccurrences);
+        fieldRunnable.run();
       }
-    }.execute();
+      else {
+        final BaseExpressionToFieldHandler.ConvertToFieldRunnable convertToFieldRunnable =
+          new BaseExpressionToFieldHandler.ConvertToFieldRunnable(myExpr, settings, settings.getForcedType(),
+                                                                  myOccurrences, myOccurrenceManager,
+                                                                  getAnchorElementIfAll(), getAnchorElement(), myEditor, getParentClass());
+        convertToFieldRunnable.run();
+      }
+    });
   }
 
   @Override

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.smartPointers;
 
 import com.google.common.base.MoreObjects;
 import com.intellij.lang.Language;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractFileViewProvider;
@@ -34,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
  * @author peter
  */
 public abstract class Identikit {
+  private static final Logger LOG = Logger.getInstance(Identikit.class);
   private static final WeakInterner<ByType> ourPlainInterner = new WeakInterner<>();
   private static final WeakInterner<ByAnchor> ourAnchorInterner = new WeakInterner<>();
 
@@ -85,6 +87,10 @@ public abstract class Identikit {
     public PsiElement findPsiElement(@NotNull PsiFile file, int startOffset, int endOffset) {
       Language actualLanguage = myFileLanguage != Language.ANY ? myFileLanguage : file.getViewProvider().getBaseLanguage();
       PsiFile actualLanguagePsi = file.getViewProvider().getPsi(actualLanguage);
+      if (actualLanguagePsi == null) {
+        LOG.error("getPsi("+actualLanguage+")=null; file="+file+"; myLanguage="+myFileLanguage+"; baseLanguage="+file.getViewProvider().getBaseLanguage());
+        return null;
+      }
       return findInside(actualLanguagePsi, startOffset, endOffset);
     }
 

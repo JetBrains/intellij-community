@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore
 
 import com.intellij.credentialStore.kdbx.KdbxPassword
@@ -35,7 +21,25 @@ import javax.crypto.spec.SecretKeySpec
 
 private const val GROUP_NAME = SERVICE_NAME_PREFIX
 
-internal val DB_FILE_NAME = "c.kdbx"
+internal const val DB_FILE_NAME = "c.kdbx"
+
+private fun loadOrNewOnError(dbFile: Path, masterPassword: ByteArray): KeePassDatabase {
+  if (!dbFile.exists()) {
+    return KeePassDatabase()
+  }
+
+  return try {
+    loadKdbx(dbFile, KdbxPassword(masterPassword))
+  }
+  catch (e: Throwable) {
+    LOG.error(e)
+    LOG.runAndLogException {
+      dbFile.move(dbFile.parent.resolve("corrupted.c.kdbx"))
+    }
+    NOTIFICATION_MANAGER.notify("KeePass database file is corrupted, new one is created", null)
+    KeePassDatabase()
+  }
+}
 
 internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Credentials>? = null,
                                       baseDirectory: Path = Paths.get(PathManager.getConfigPath()),
@@ -79,7 +83,7 @@ internal class KeePassCredentialStore(keyToValue: Map<CredentialAttributes, Cred
           db = KeePassDatabase()
         }
         else {
-          db = loadKdbx(this.dbFile, KdbxPassword(masterPassword)) ?: KeePassDatabase()
+          db = loadOrNewOnError(this.dbFile, masterPassword)
           if (existingMasterPassword != null) {
             masterKeyStorage.set(existingMasterPassword)
           }
@@ -223,9 +227,9 @@ interface MasterKeyStorage {
 }
 
 class WindowsEncryptionSupport(key: Key): EncryptionSupport(key) {
-  override fun encrypt(data: ByteArray, size: Int) = WindowsCryptUtils.protect(super.encrypt(data, size))
+  override fun encrypt(data: ByteArray, size: Int): ByteArray = WindowsCryptUtils.protect(super.encrypt(data, size))
 
-  override fun decrypt(data: ByteArray) = super.decrypt(WindowsCryptUtils.unprotect(data))
+  override fun decrypt(data: ByteArray): ByteArray = super.decrypt(WindowsCryptUtils.unprotect(data))
 }
 
 class MasterKeyFileStorage(baseDirectory: Path) : MasterKeyStorage {

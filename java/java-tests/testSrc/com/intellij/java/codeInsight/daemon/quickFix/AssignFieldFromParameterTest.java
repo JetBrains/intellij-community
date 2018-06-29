@@ -16,32 +16,17 @@
 package com.intellij.java.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.LightIntentionActionTestCase;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
-import org.jdom.Element;
 
 /**
  * @author ven
  */
 public class AssignFieldFromParameterTest extends LightIntentionActionTestCase {
-  private Element myOldSettings;
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    myOldSettings = new Element("dummy2");
-    settings.writeExternal(myOldSettings);
-    settings.getCustomSettings(JavaCodeStyleSettings.class).FIELD_NAME_PREFIX = "my";
-    settings.getCustomSettings(JavaCodeStyleSettings.class).STATIC_FIELD_NAME_PREFIX = "our";
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-    settings.readExternal(myOldSettings);
-    super.tearDown();
+    JavaCodeStyleSettings.getInstance(getProject()).FIELD_NAME_PREFIX = "my";
+    JavaCodeStyleSettings.getInstance(getProject()).STATIC_FIELD_NAME_PREFIX = "our";
   }
 
   public void test() { doAllTests(); }

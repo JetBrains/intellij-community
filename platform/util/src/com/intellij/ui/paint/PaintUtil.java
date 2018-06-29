@@ -9,6 +9,8 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.geom.AffineTransform;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.FLOOR;
 import static com.intellij.ui.paint.PaintUtil.RoundingMode.ROUND;
@@ -29,9 +31,39 @@ public class PaintUtil {
    * Defines which of the {@link Math} rounding method should be applied when converting to the device space.
    */
   public enum RoundingMode {
-    FLOOR,
-    CEIL,
-    ROUND
+    FLOOR {
+      @Override
+      public int round(double value) {
+        return (int)Math.floor(value);
+      }
+    },
+    CEIL {
+      @Override
+      public int round(double value) {
+        return (int)Math.ceil(value);
+      }
+    },
+    ROUND {
+      @Override
+      public int round(double value) {
+        return (int)Math.round(value);
+      }
+    },
+    /** Rounds with flooring .5 value */
+    ROUND_FLOOR_BIAS {
+      @Override
+      public int round(double value) {
+        return (int)Math.ceil(value - 0.5);
+      }
+    };
+
+    /**
+     * Rounds the value according to the rounding mode.
+     *
+     * @param value the value to round
+     * @return the rounded value
+     */
+    public abstract int round(double value);
   }
 
   /**
@@ -125,6 +157,13 @@ public class PaintUtil {
   }
 
   /**
+   * @see #alignToInt(double, ScaleContext, RoundingMode, ParityMode)
+   */
+  public static double alignToInt(double usrValue, @NotNull ScaleContext ctx) {
+    return alignToInt(usrValue, ctx, null, null);
+  }
+
+  /**
    * Converts the value from the user to the device space.
    *
    * @param usrValue the value in the user space
@@ -143,9 +182,8 @@ public class PaintUtil {
   }
 
   private static int devValue(double usrValue, double scale, @Nullable RoundingMode rm) {
-    return (rm == null || rm == ROUND) ? (int)Math.round(usrValue * scale) :
-           (rm == FLOOR) ? (int)Math.floor(usrValue * scale) :
-           (int)Math.ceil(usrValue * scale);
+    if (rm == null) rm = ROUND;
+    return rm.round(usrValue * scale);
   }
 
   /**
@@ -168,19 +206,28 @@ public class PaintUtil {
    * otherwise does nothing.
    *
    * @param g the graphics to align
+   * @param offset x/y offset to take into account when provided (this may be e.g. insets left/top)
    * @param alignX should the x-translate be aligned
    * @param alignY should the y-translate be aligned
    * @return the original graphics transform when aligned, otherwise null
    */
-  public static AffineTransform alignToInt(@NotNull Graphics2D g, boolean alignX, boolean alignY) {
+  public static AffineTransform alignTxToInt(@NotNull Graphics2D g, @Nullable Point2D offset, boolean alignX, boolean alignY, RoundingMode rm) {
     try {
       AffineTransform tx = g.getTransform();
       if (isFractionalScale(tx)) {
         double scaleX = tx.getScaleX();
         double scaleY = tx.getScaleY();
         AffineTransform alignedTx = new AffineTransform();
-        double trX = alignX ? (int)Math.ceil(tx.getTranslateX() - 0.5) : tx.getTranslateX();
-        double trY = alignY ? (int)Math.ceil(tx.getTranslateY() - 0.5) : tx.getTranslateY();
+        double trX = tx.getTranslateX();
+        double trY = tx.getTranslateY();
+        if (alignX) {
+          double offX = trX + (offset != null ? offset.getX() * scaleX : 0);
+          trX += rm.round(offX) - offX;
+        }
+        if (alignY) {
+          double offY = trY + (offset != null ? offset.getY() * scaleY : 0);
+          trY += rm.round(offY) - offY;
+        }
         alignedTx.translate(trX, trY);
         alignedTx.scale(scaleX, scaleY);
         assert tx.getShearX() == 0 && tx.getShearY() == 0; // the shear is ignored
@@ -190,6 +237,38 @@ public class PaintUtil {
     }
     catch (Exception e) {
       Logger.getInstance("#com.intellij.ui.paint.PaintUtil").error(e);
+    }
+    return null;
+  }
+
+  /**
+   * Aligns the graphics rectangular clip to int coordinates if the graphics has fractional scale transform.
+   *
+   * @param g the graphics to align
+   * @param alignH should the x/width be aligned
+   * @param alignV should the y/height be aligned
+   * @param xyRM the rounding mode to apply to the clip's x/y
+   * @param whRM the rounding mode to apply to the clip's width/height
+   * @return the original graphics clip when aligned, otherwise null
+   */
+  public static Shape alignClipToInt(@NotNull Graphics2D g, boolean alignH, boolean alignV, RoundingMode xyRM, RoundingMode whRM) {
+    Shape clip = g.getClip();
+    if ((clip instanceof Rectangle2D) && isFractionalScale(g.getTransform())) {
+      Rectangle2D rect = (Rectangle2D)clip;
+      double x = rect.getX();
+      double y = rect.getY();
+      double w = rect.getWidth();
+      double h = rect.getHeight();
+      if (alignH) {
+        x = alignToInt(rect.getX(), g, xyRM);
+        w = alignToInt(rect.getX() + rect.getWidth(), g, whRM) - x;
+      }
+      if (alignV) {
+        y = alignToInt(rect.getY(), g, xyRM);
+        h = alignToInt(rect.getY() + rect.getHeight(), g, whRM) - y;
+      }
+      g.setClip(new Rectangle2D.Double(x, y, w, h));
+      return clip;
     }
     return null;
   }
@@ -222,5 +301,10 @@ public class PaintUtil {
     } finally {
       g.setRenderingHint(RenderingHints.KEY_ANTIALIASING, key);
     }
+  }
+
+  @NotNull
+  public static Point2D insets2offset(@Nullable Insets in) {
+    return in == null ? new Point2D.Double(0, 0) : new Point2D.Double(in.left, in.top);
   }
 }

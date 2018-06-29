@@ -38,32 +38,36 @@ public class PyAnyExpressionEvaluator extends PyEvaluator {
 
   @Nullable
   @Override
-  public Object evaluate(final PyExpression expr) {
-    final Object evaluate = super.evaluate(expr);
-    return ((evaluate != null) ? evaluate : expr);
+  public Object evaluate(@Nullable PyExpression expression) {
+    final Object evaluate = super.evaluate(expression);
+    return evaluate != null ? evaluate : expression;
   }
 
   @Override
-  public Object concatenate(final Object lhs, final Object rhs) {
-    final Object evaluate = super.concatenate(lhs, rhs);
-    return ((evaluate != null) ? evaluate : Arrays.asList(lhs, rhs));
+  @NotNull
+  public Object applyPlus(@Nullable Object lhs, @Nullable Object rhs) {
+    final Object evaluate = super.applyPlus(lhs, rhs);
+    return evaluate != null ? evaluate : Arrays.asList(lhs, rhs);
   }
 
   @Override
-  protected Object evaluateReferenceExpression(final PyReferenceExpression expr) {
-    final Object evaluate = super.evaluateReferenceExpression(expr);
-    return ((evaluate != null) ? evaluate : expr);
+  @NotNull
+  protected Object evaluateReference(@NotNull PyReferenceExpression expression) {
+    final Object evaluate = super.evaluateReference(expression);
+    return evaluate != null ? evaluate : expression;
   }
 
   @Override
-  protected Object evaluateCall(final PyCallExpression call) {
-    final Object evaluate = super.evaluateCall(call);
-    return ((evaluate != null) ? evaluate : call);
+  @NotNull
+  protected Object evaluateCall(@NotNull PyCallExpression expression) {
+    final Object evaluate = super.evaluateCall(expression);
+    return evaluate != null ? evaluate : expression;
   }
 
   @Override
-  protected Object evaluateSequenceExpression(final PySequenceExpression expr) {
-    return myEvalSequence ? super.evaluateSequenceExpression(expr) : expr;
+  @NotNull
+  protected Object evaluateSequence(@NotNull PySequenceExpression expression) {
+    return myEvalSequence ? super.evaluateSequence(expression) : expression;
   }
 
   /**

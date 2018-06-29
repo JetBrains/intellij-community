@@ -180,6 +180,7 @@ public class AntDomPropertyReference extends PsiPolyVariantReferenceBase<PsiElem
       return myProvider;
     }
 
+    @Override
     public boolean isValidResult() {
       return true;
     }

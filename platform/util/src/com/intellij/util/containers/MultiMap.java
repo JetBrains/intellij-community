@@ -160,6 +160,7 @@ public class MultiMap<K, V> implements Serializable {
   /**
    * @deprecated use {@link #remove(Object, Object)} instead
    */
+  @Deprecated
   public void removeValue(K key, V value) {
     remove(key, value);
   }

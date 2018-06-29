@@ -22,6 +22,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -83,11 +84,11 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       final boolean isDefault;
-      if (isMavenDefaultAnnotationProcessorConfiguration(annotationProcessorDirectory, testAnnotationProcessorDirectory, mavenProject)) {
+      if (isMavenDefaultAnnotationProcessorConfiguration(annotationProcessorDirectory, testAnnotationProcessorDirectory, mavenProject, project)) {
         moduleProfileName = MAVEN_DEFAULT_ANNOTATION_PROFILE;
         isDefault = true;
       }
-      else if (isMavenProcessorPluginDefaultConfiguration(annotationProcessorDirectory, testAnnotationProcessorDirectory, mavenProject)) {
+      else if (isMavenProcessorPluginDefaultConfiguration(annotationProcessorDirectory, testAnnotationProcessorDirectory, mavenProject, project)) {
         moduleProfileName = MAVEN_BSC_DEFAULT_ANNOTATION_PROFILE;
         isDefault = true;
       }
@@ -122,10 +123,19 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       moduleProfile.addModuleName(module.getName());
+      configureAnnotationProcessorPath(moduleProfile, mavenProject, project);
       cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, moduleProfile, isDefault, module);
     }
     else {
       cleanAndMergeModuleProfiles(rootProject, compilerConfiguration, null, false, module);
+    }
+  }
+
+  private static void configureAnnotationProcessorPath(ProcessorConfigProfile profile, MavenProject mavenProject, Project project) {
+    String annotationProcessorPath = mavenProject.getAnnotationProcessorPath(project);
+    if (StringUtil.isNotEmpty(annotationProcessorPath)) {
+      profile.setObtainProcessorsFromClasspath(false);
+      profile.setProcessorPath(annotationProcessorPath);
     }
   }
 
@@ -144,6 +154,7 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
       }
 
       if (!isDefault && moduleProfile != null && isSimilarProfiles(p, moduleProfile)) {
+        moduleProfile.setEnabled(p.isEnabled());
         final String mavenProjectRootProfileName = PROFILE_PREFIX + rootProject.getDisplayName();
         ProcessorConfigProfile mergedProfile = compilerConfiguration.findModuleProcessorProfile(mavenProjectRootProfileName);
         if (mergedProfile == null) {
@@ -177,31 +188,37 @@ public class MavenAnnotationProcessorConfigurer extends MavenModuleConfigurer {
 
     ProcessorConfigProfileImpl p1 = new ProcessorConfigProfileImpl(profile1);
     p1.setName("tmp");
+    p1.setEnabled(true);
     p1.clearModuleNames();
     ProcessorConfigProfileImpl p2 = new ProcessorConfigProfileImpl(profile2);
     p2.setName("tmp");
+    p2.setEnabled(true);
     p2.clearModuleNames();
     return p1.equals(p2);
   }
 
   private static boolean isMavenDefaultAnnotationProcessorConfiguration(@NotNull String annotationProcessorDirectory,
                                                                         @NotNull String testAnnotationProcessorDirectory,
-                                                                        @NotNull MavenProject mavenProject) {
+                                                                        @NotNull MavenProject mavenProject,
+                                                                        @NotNull Project project) {
     Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
     List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
     return ContainerUtil.isEmpty(processors)
            && options.isEmpty()
+           && StringUtil.isEmpty(mavenProject.getAnnotationProcessorPath(project))
            && DEFAULT_ANNOTATION_PATH_OUTPUT.equals(annotationProcessorDirectory.replace('\\', '/'))
            && DEFAULT_TEST_ANNOTATION_OUTPUT.equals(testAnnotationProcessorDirectory.replace('\\', '/'));
   }
 
   private static boolean isMavenProcessorPluginDefaultConfiguration(@NotNull String annotationProcessorDirectory,
                                                                     @NotNull String testAnnotationProcessorDirectory,
-                                                                    @NotNull MavenProject mavenProject) {
+                                                                    @NotNull MavenProject mavenProject,
+                                                                    @NotNull Project project) {
     Map<String, String> options = mavenProject.getAnnotationProcessorOptions();
     List<String> processors = mavenProject.getDeclaredAnnotationProcessors();
     return ContainerUtil.isEmpty(processors)
            && options.isEmpty()
+           && StringUtil.isEmpty(mavenProject.getAnnotationProcessorPath(project))
            && DEFAULT_BSC_ANNOTATION_PATH_OUTPUT.equals(annotationProcessorDirectory.replace('\\', '/'))
            && DEFAULT_BSC_TEST_ANNOTATION_OUTPUT.equals(testAnnotationProcessorDirectory.replace('\\', '/'));
   }

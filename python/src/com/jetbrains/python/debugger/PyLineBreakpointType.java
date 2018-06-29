@@ -24,6 +24,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiComment;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -33,6 +35,8 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpointTypeBase;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.codeInsight.userSkeletons.PyUserSkeletonsUtil;
+import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -75,7 +79,7 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
                                          Class[] unstoppablePsiElements,
                                          Set<IElementType> unstoppableElementTypes,
                                          Ref<Boolean> stoppable) {
-    if (file.getFileType() == fileType || isPythonScratch(project, file)) {
+    if ((file.getFileType() == fileType || isPythonScratch(project, file)) && !isSkeleton(project, file)) {
       XDebuggerUtil.getInstance().iterateLine(project, document, line, psiElement -> {
 
         if (PsiTreeUtil.getNonStrictParentOfType(psiElement, unstoppablePsiElements) != null) {
@@ -103,6 +107,13 @@ public class PyLineBreakpointType extends XLineBreakpointTypeBase {
   @Override
   public SuspendPolicy getDefaultSuspendPolicy() {
     return SuspendPolicy.THREAD;
+  }
+
+  private static boolean isSkeleton(@NotNull Project project, @NotNull VirtualFile file) {
+    if (PyUserSkeletonsUtil.isUnderUserSkeletonsDirectory(file)) return true;
+
+    final PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
+    return psiFile != null && PySdkUtil.isElementInSkeletons(psiFile);
   }
 
   private static boolean isPythonScratch(@NotNull Project project, @NotNull VirtualFile file) {

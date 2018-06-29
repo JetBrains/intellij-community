@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NotNull;
 
 public class InsertNewFix implements IntentionAction {
@@ -61,13 +62,14 @@ public class InsertNewFix implements IntentionAction {
     PsiElementFactory factory = JavaPsiFacade.getInstance(myMethodCall.getProject()).getElementFactory();
     PsiNewExpression newExpression = (PsiNewExpression)factory.createExpressionFromText("new X()",null);
 
+    CommentTracker tracker = new CommentTracker();
     PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
     assert classReference != null;
     classReference.replace(factory.createClassReferenceElement(myClass));
     PsiExpressionList argumentList = newExpression.getArgumentList();
     assert argumentList != null;
-    argumentList.replace(myMethodCall.getArgumentList());
-    myMethodCall.replace(newExpression);
+    argumentList.replace(tracker.markUnchanged(myMethodCall.getArgumentList()));
+    tracker.replaceAndRestoreComments(myMethodCall, newExpression);
   }
 
   @Override

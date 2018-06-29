@@ -9,6 +9,7 @@ import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.jsonSchema.JsonSchemaHeavyAbstractTest;
 import com.jetbrains.jsonSchema.UserDefinedJsonSchemaConfiguration;
+import com.jetbrains.jsonSchema.impl.JsonSchemaVersion;
 import org.junit.Assert;
 
 import java.util.Collections;
@@ -51,7 +52,7 @@ public class JsonSchemaFileResolveTest extends JsonSchemaHeavyAbstractTest {
       public void registerSchemes() {
         final String path = VfsUtilCore.getRelativePath(myFile.getVirtualFile(), myProject.getBaseDir());
         final UserDefinedJsonSchemaConfiguration info =
-          new UserDefinedJsonSchemaConfiguration("test", path, false, Collections.emptyList());
+          new UserDefinedJsonSchemaConfiguration("test", JsonSchemaVersion.SCHEMA_4, path, false, Collections.emptyList());
         JsonSchemaFileResolveTest.this.addSchema(info);
       }
     });

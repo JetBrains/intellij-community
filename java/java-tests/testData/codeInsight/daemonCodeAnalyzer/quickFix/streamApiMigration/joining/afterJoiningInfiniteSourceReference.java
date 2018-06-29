@@ -14,6 +14,6 @@ class B extends A {}
 
 public class Main {
   public static int find(List<List<String>> list) {
-      String sb = Stream.iterate(new A(), A::next).filter(a -> a.x % 100 == 0).map(a -> String.valueOf(a.x)).collect(Collectors.joining());
+    String sb = Stream.iterate(new A(), A::next).filter(a -> a.x % 100 == 0).map(a -> String.valueOf(a.x)).collect(Collectors.joining());
   }
 }

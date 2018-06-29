@@ -1,25 +1,11 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
-import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.testframework.Printer;
 import com.intellij.execution.testframework.sm.runner.events.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.util.containers.ContainerUtil;
@@ -30,6 +16,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsProcessor {
+
+  private static final Logger LOG = Logger.getInstance(GeneralIdBasedToSMTRunnerEventsConvertor.class);
 
   private final HashMap<String, Node> myNodeByIdMap = new HashMap<>();
   private final Set<Node> myRunningTestNodes = ContainerUtil.newHashSet();
@@ -47,8 +35,11 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     myNodeByIdMap.put(myTestsRootNode.getId(), myTestsRootNode);
   }
 
+  @Override
   public void onStartTesting() {
+    LOG.debug("onStartTesting");
     addToInvokeLater(() -> {
+      LOG.debug("onStartTesting: invoked");
       myTestsRootNode.setState(State.RUNNING, this);
       myTestsRootProxy.setStarted();
       fireOnTestingStarted(myTestsRootProxy);
@@ -60,9 +51,13 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     addToInvokeLater(() -> fireOnTestsReporterAttached(myTestsRootProxy));
   }
 
+  @Override
   public void onFinishTesting() {
+    LOG.debug("onFinishTesting");
     addToInvokeLater(() -> {
+      LOG.debug("onFinishTesting: invoked");
       if (myIsTestingFinished) {
+        LOG.debug("has already been invoked");
         // has been already invoked!
         return;
       }
@@ -73,6 +68,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       // Lets assume, if at finish all nodes except root suite have final state (passed, failed or ignored),
       // then all is ok otherwise process was terminated by user
       boolean completeTree = isTreeComplete(myRunningTestNodes, myTestsRootProxy);
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("completeTree:" + completeTree);
+      }
       if (completeTree) {
         myTestsRootProxy.setFinished();
       } else {
@@ -95,15 +93,26 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     myTestProxyPrinterProvider = printerProvider;
   }
 
+  @Override
   public void onTestStarted(@NotNull final TestStartedEvent testStartedEvent) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("onTestStarted " + testStartedEvent.getId());
+    }
     addToInvokeLater(() -> doStartNode(testStartedEvent, false));
   }
 
+  @Override
   public void onSuiteStarted(@NotNull final TestSuiteStartedEvent suiteStartedEvent) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("onSuiteStarted " + suiteStartedEvent.getId());
+    }
     addToInvokeLater(() -> doStartNode(suiteStartedEvent, true));
   }
 
   private void doStartNode(@NotNull BaseStartedNodeEvent startedNodeEvent, boolean suite) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("doStartNode " + startedNodeEvent.getId());
+    }
     Node node = findNode(startedNodeEvent);
     if (node != null) {
       if (node.getState() == State.NOT_RUNNING && startedNodeEvent.isRunning()) {
@@ -186,8 +195,11 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     return parentNode;
   }
 
+  @Override
   public void onTestFinished(@NotNull final TestFinishedEvent testFinishedEvent) {
+    LOG.debug("onTestFinished");
     addToInvokeLater(() -> {
+      LOG.debug("onTestFinished: invoked");
       Node node = findNodeToTerminate(testFinishedEvent);
       if (node != null) {
         SMTestProxy testProxy = node.getProxy();
@@ -197,23 +209,38 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
         }
         testProxy.setFrameworkOutputFile(testFinishedEvent.getOutputFile());
         testProxy.setFinished();
-        if (node.getState() != State.FAILED) {
-          // Don't count the same test twice if 'testFailed' message is followed by 'testFinished' message
-          // which may happen if generated TeamCity messages adhere rules from
-          //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
-          // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
-          // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
-          fireOnTestFinished(testProxy);
-        }
+        fireOnTestFinishedIfNeeded(testProxy, node);
         terminateNode(node, State.FINISHED);
       }
     });
   }
 
+  private void fireOnTestFinishedIfNeeded(@NotNull SMTestProxy testProxy, @NotNull Node node) {
+    // allow clients to omit sending 'testFinished' messages after 'testFailed'/'testIgnored' messages
+    if (node.getState() != State.FINISHED && node.getState() != State.FAILED && node.getState() != State.IGNORED) {
+      LOG.debug("onTestFinished: state != FINISHED && state != FAILED && state != IGNORED");
+      // Don't count the same test twice if 'testFailed' or 'testIgnored' message is followed by 'testFinished' message
+      // which may happen if generated TeamCity messages adhere rules from
+      //   https://confluence.jetbrains.com/display/TCD10/Build+Script+Interaction+with+TeamCity
+      // Anyway, this id-based converter already breaks TeamCity protocol by expecting messages with
+      // non-standard TeamCity attributes: 'nodeId'/'parentNodeId' instead of 'name'.
+      fireOnTestFinished(testProxy);
+    }
+  }
+
   public void onSuiteFinished(@NotNull final TestSuiteFinishedEvent suiteFinishedEvent) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("onSuiteFinished " + suiteFinishedEvent.getId());
+    }
     addToInvokeLater(() -> {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("onSuiteFinished invoked " + suiteFinishedEvent.getId());
+      }
       Node node = findNodeToTerminate(suiteFinishedEvent);
       if (node != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("finished:" + node.myId);
+        }
         SMTestProxy suiteProxy = node.getProxy();
         suiteProxy.setFinished();
         fireOnSuiteFinished(suiteProxy);
@@ -232,7 +259,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     return node;
   }
 
+  @Override
   public void onUncapturedOutput(@NotNull final String text, final Key outputType) {
+    LOG.debug("onUncapturedOutput " + text);
     addToInvokeLater(() -> {
       Node activeNode = findActiveNode();
       SMTestProxy activeProxy = activeNode.getProxy();
@@ -240,6 +269,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     });
   }
 
+  @Override
   public void onError(@NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
@@ -250,7 +280,11 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
                       @NotNull final String localizedMessage,
                       @Nullable final String stackTrace,
                       final boolean isCritical) {
+    LOG.debug("onError " + localizedMessage);
     addToInvokeLater(() -> {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("onError invoked " + localizedMessage);
+      }
       SMTestProxy activeProxy = null;
       if (nodeId != null) {
         activeProxy = findProxyById(nodeId);
@@ -263,8 +297,15 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
     });
   }
   
+  @Override
   public void onTestFailure(@NotNull final TestFailedEvent testFailedEvent) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("onTestFailure " + testFailedEvent.getId());
+    }
     addToInvokeLater(() -> {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug("onTestFailure invoked " + testFailedEvent.getId());
+      }
       Node node = findNodeToTerminate(testFailedEvent);
       if (node == null) {
         return;
@@ -291,46 +332,52 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
       if (duration >= 0) {
         testProxy.setDuration(duration);
       }
-      fireOnTestFinished(testProxy);
 
-      // fire event
       fireOnTestFailed(testProxy);
+      fireOnTestFinishedIfNeeded(testProxy, node);
 
       terminateNode(node, State.FAILED);
     });
   }
 
+  @Override
   public void onTestIgnored(@NotNull final TestIgnoredEvent testIgnoredEvent) {
+    LOG.debug("onTestIgnored");
     addToInvokeLater(() -> {
+      LOG.debug("onTestIgnored invoked");
       Node node = findNodeToTerminate(testIgnoredEvent);
       if (node != null) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("onTestIgnored node " + node.myId);
+        }
         SMTestProxy testProxy = node.getProxy();
         testProxy.setTestIgnored(testIgnoredEvent.getIgnoreComment(), testIgnoredEvent.getStacktrace());
-        // fire event
+
         fireOnTestIgnored(testProxy);
+        fireOnTestFinishedIfNeeded(testProxy, node);
+
         terminateNode(node, State.IGNORED);
       }
     });
   }
 
+  @Override
   public void onTestOutput(@NotNull final TestOutputEvent testOutputEvent) {
+    LOG.debug("onTestOutput");
     addToInvokeLater(() -> {
+      LOG.debug("onTestOutput invoke");
       Node node = findNode(testOutputEvent);
       if (node == null) {
         logProblem("Test wasn't started! But " + testOutputEvent + "!");
         return;
       }
-      SMTestProxy testProxy = node.getProxy();
-
-      if (testOutputEvent.isStdOut()) {
-        testProxy.addStdOutput(testOutputEvent.getText(), ProcessOutputTypes.STDOUT);
-      } else {
-        testProxy.addStdErr(testOutputEvent.getText());
-      }
+      node.getProxy().addOutput(testOutputEvent.getText(), testOutputEvent.getOutputType());
     });
   }
 
+  @Override
   public void onTestsCountInSuite(final int count) {
+    LOG.debug("onTestsCountInSuite");
     addToInvokeLater(() -> fireOnTestsCountInSuite(count));
   }
 
@@ -358,6 +405,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   /*
    * Remove listeners,  etc
    */
+  @Override
   public void dispose() {
     super.dispose();
     addToInvokeLater(() -> {
@@ -393,6 +441,9 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor extends GeneralTestEventsP
   }
 
   private void terminateNode(@NotNull Node node, @NotNull State terminateState) {
+    if (LOG.isDebugEnabled()) {
+      LOG.debug("terminateNode " + node.myId);
+    }
     node.setState(terminateState, this);
     myRunningTestNodes.remove(node);
     myRunningSuiteNodes.remove(node);

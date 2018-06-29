@@ -109,6 +109,17 @@ public class TaskManagerTest extends TaskManagerTestCase {
     assertTrue(repositories[0].isShared());
   }
 
+  public void testRemoveShared() {
+    TaskRepository repository = new YouTrackRepository(new YouTrackRepositoryType());
+    repository.setShared(true);
+    myTaskManager.setRepositories(Collections.singletonList(repository));
+
+    myTaskManager.setRepositories(Collections.emptyList());
+
+    TaskProjectConfiguration configuration = ServiceManager.getService(getProject(), TaskProjectConfiguration.class);
+    assertEquals(0, configuration.getState().servers.size());
+  }
+
   public void testIssuesCacheSurvival() {
     final Ref<Boolean> stopper = new Ref<>(Boolean.FALSE);
     TestRepository repository = new TestRepository(new LocalTaskImpl("foo", "bar")) {

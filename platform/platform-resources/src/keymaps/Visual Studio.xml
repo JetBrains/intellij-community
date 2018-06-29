@@ -207,6 +207,12 @@
   <action id="VcsShowPrevChangeMarker">
     <keyboard-shortcut first-keystroke="shift control alt UP"/>
   </action>
+  <action id="GotoNextElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="alt shift D"/>
+  </action>
+  <action id="GotoPrevElementUnderCaretUsage">
+    <keyboard-shortcut first-keystroke="alt shift U"/>
+  </action>
   <action id="CopyElement"/>
   <action id="Rerun"/>
 </keymap>

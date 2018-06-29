@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -65,14 +64,14 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
   private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @NotNull final DependencyScope scope) {
-    return addDependency(fromModules, mavenId, null, null, scope);
+    return addDependency(fromModules, mavenId, null, null, null, scope);
   }
 
   private Promise<Void> addDependency(@NotNull Collection<Module> fromModules,
                                       @NotNull final MavenId mavenId,
                                       @Nullable String minVersion,
                                       @Nullable String maxVersion,
-                                      @NotNull final DependencyScope scope) {
+                                      @Nullable String preferredVersion, @NotNull final DependencyScope scope) {
     final List<Trinity<MavenDomProjectModel, MavenId, String>> models = new ArrayList<>(fromModules.size());
     List<XmlFile> files = new ArrayList<>(fromModules.size());
     List<MavenProject> projectToUpdate = new ArrayList<>(fromModules.size());
@@ -98,7 +97,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
         }
 
         if (managedDependency == null || StringUtil.isEmpty(managedDependency.getVersion().getStringValue())) {
-          version = selectVersion(mavenId, minVersion, maxVersion);
+          version = selectVersion(mavenId, minVersion, maxVersion, preferredVersion);
           scopeToSet = mavenScope;
         }
       }
@@ -108,23 +107,20 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       projectToUpdate.add(fromProject);
     }
 
-    new WriteCommandAction(myProject, "Add Maven Dependency", PsiUtilCore.toPsiFileArray(files)) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
-          final MavenDomProjectModel model = trinity.first;
-          MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
-          String mavenScope = trinity.third;
-          if (mavenScope != null) {
-            dependency.getScope().setStringValue(mavenScope);
-          }
-          Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
-          if (document != null) {
-            FileDocumentManager.getInstance().saveDocument(document);
-          }
+    WriteCommandAction.writeCommandAction(myProject, PsiUtilCore.toPsiFileArray(files)).withName("Add Maven Dependency").run(() -> {
+      for (Trinity<MavenDomProjectModel, MavenId, String> trinity : models) {
+        final MavenDomProjectModel model = trinity.first;
+        MavenDomDependency dependency = MavenDomUtil.createDomDependency(model, null, trinity.second);
+        String ms = trinity.third;
+        if (ms != null) {
+          dependency.getScope().setStringValue(ms);
+        }
+        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+        if (document != null) {
+          FileDocumentManager.getInstance().saveDocument(document);
         }
       }
-    }.execute();
+    });
     return myProjectsManager.forceUpdateProjects(projectToUpdate);
   }
 
@@ -140,12 +136,18 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     }
 
     MavenId mavenId = new MavenId(descriptor.getLibraryGroupId(), descriptor.getLibraryArtifactId(), null);
-    return addDependency(modules, mavenId, descriptor.getMinVersion(), descriptor.getMaxVersion(), scope);
+    return addDependency(modules, mavenId, descriptor.getMinVersion(), descriptor.getMaxVersion(), descriptor.getPreferredVersion(), scope);
   }
 
   @NotNull
-  private String selectVersion(@NotNull MavenId mavenId, @Nullable String minVersion, @Nullable String maxVersion) {
+  private String selectVersion(@NotNull MavenId mavenId,
+                               @Nullable String minVersion,
+                               @Nullable String maxVersion,
+                               @Nullable String preferredVersion) {
     Set<String> versions = myIndicesManager.getVersions(mavenId.getGroupId(), mavenId.getArtifactId());
+    if (preferredVersion != null && versions.contains(preferredVersion)) {
+      return preferredVersion;
+    }
     List<String> suitableVersions = new ArrayList<>();
     for (String version : versions) {
       if ((minVersion == null || VersionComparatorUtil.compare(minVersion, version) <= 0)
@@ -178,19 +180,16 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     final MavenDomProjectModel model = MavenDomUtil.getMavenDomProjectModel(myProject, mavenProject.getFile());
     if (model == null) return null;
 
-    new WriteCommandAction(myProject, "Add Maven Dependency", DomUtil.getFile(model)) {
-      @Override
-      protected void run(@NotNull Result result) {
-        XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
-        String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
-        setChildTagValue(tag, "source", option);
-        setChildTagValue(tag, "target", option);
-        Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
-        if (document != null) {
-          FileDocumentManager.getInstance().saveDocument(document);
-        }
+    WriteCommandAction.writeCommandAction(myProject, DomUtil.getFile(model)).withName("Add Maven Dependency").run(() -> {
+      XmlTag tag = getCompilerPlugin(model).getConfiguration().ensureTagExists();
+      String option = JpsJavaSdkType.complianceOption(level.toJavaVersion());
+      setChildTagValue(tag, "source", option);
+      setChildTagValue(tag, "target", option);
+      Document document = PsiDocumentManager.getInstance(myProject).getDocument(DomUtil.getFile(model));
+      if (document != null) {
+        FileDocumentManager.getInstance().saveDocument(document);
       }
-    }.execute();
+    });
     return myProjectsManager.forceUpdateProjects(Collections.singleton(mavenProject));
   }
 
@@ -219,7 +218,6 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
     return plugin;
   }
 
-  @Nullable
   private static String getMavenScope(@NotNull DependencyScope scope) {
     switch (scope) {
       case RUNTIME:
@@ -231,7 +229,7 @@ public class MavenProjectModelModifier extends JavaProjectModelModifier {
       case PROVIDED:
         return MavenConstants.SCOPE_PROVIDED;
       default:
-        return null;
+        throw new IllegalArgumentException(String.valueOf(scope));
     }
   }
 }

@@ -45,7 +45,7 @@ public class SettingsTreeFixture extends ComponentFixture<SettingsTreeFixture, S
   //done
   @NotNull
   public static SettingsTreeFixture find(@NotNull Robot robot) {
-    SimpleTree simpleTree = GuiTestUtil.waitUntilFound(robot, ClassNameMatcher.forClass("com.intellij.openapi.options.newEditor.SettingsTreeView$MyTree", SimpleTree.class));
+    SimpleTree simpleTree = GuiTestUtil.INSTANCE.waitUntilFound(robot, ClassNameMatcher.forClass("com.intellij.openapi.options.newEditor.SettingsTreeView$MyTree", SimpleTree.class));
     return new SettingsTreeFixture(robot, simpleTree);
   }
 

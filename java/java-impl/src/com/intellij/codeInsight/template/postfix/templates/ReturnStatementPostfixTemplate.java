@@ -3,19 +3,18 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 public class ReturnStatementPostfixTemplate extends JavaEditablePostfixTemplate {
-  public ReturnStatementPostfixTemplate(@NotNull PostfixEditableTemplateProvider provider) {
+  public ReturnStatementPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("return",
           "return $EXPR$;$END$",
           "return expr",
           Collections.singleton(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNonVoidExpressionCondition()),
-          LanguageLevel.JDK_1_8, true, provider);
+          LanguageLevel.JDK_1_3, true, provider);
   }
 
   @Override

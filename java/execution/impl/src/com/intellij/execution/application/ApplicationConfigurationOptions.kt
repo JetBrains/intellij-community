@@ -8,20 +8,20 @@ import java.util.*
 
 open class ApplicationConfigurationOptions : JvmConfigurationOptions() {
   @get:OptionTag("PROGRAM_PARAMETERS")
-  open var programParameters by string()
+  open var programParameters: String? by string()
 
   @get:OptionTag("WORKING_DIRECTORY")
-  open var workingDirectory by string()
+  open var workingDirectory: String? by string()
 
   @get:OptionTag("INCLUDE_PROVIDED_SCOPE")
-  var includeProvidedScope by property(false)
+  var includeProvidedScope: Boolean by property(false)
 
   @get:OptionTag("ENABLE_SWING_INSPECTOR")
-  var isSwingInspectorEnabled by property(false)
+  var isSwingInspectorEnabled: Boolean by property(false)
 
   @get:OptionTag("PASS_PARENT_ENVS")
-  var isPassParentEnv by property(true)
+  var isPassParentEnv: Boolean by property(true)
 
   @get:XMap(propertyElementName = "envs", entryTagName = "env", keyAttributeName = "name")
-  var env by property(LinkedHashMap<String, String>())
+  var env: MutableMap<String, String> by property(LinkedHashMap<String, String>())
 }

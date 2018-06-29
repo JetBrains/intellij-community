@@ -3,7 +3,6 @@
  */
 package com.siyeh.ig;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -16,7 +15,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class PsiReplacementUtil {
-  private static final Logger LOG = Logger.getInstance(PsiReplacementUtil.class);
 
   /**
    * Consider to use {@link #replaceExpression(PsiExpression, String, CommentTracker)} to preserve comments
@@ -32,7 +30,7 @@ public class PsiReplacementUtil {
   }
 
   /**
-   * @param commentTracker ensure to {@link CommentTracker#markUnchanged(PsiElement)} expressions used as getText in newExpressionText
+   * @param tracker ensure to {@link CommentTracker#markUnchanged(PsiElement)} expressions used as getText in newExpressionText
    */
   public static void replaceExpression(@NotNull PsiExpression expression, @NotNull @NonNls String newExpressionText, CommentTracker tracker) {
     final Project project = expression.getProject();
@@ -62,7 +60,7 @@ public class PsiReplacementUtil {
   }
 
   /**
-   * Consider to use {@link #replaceStatement(PsiExpression, String, CommentTracker)} to preserve comments
+   * Consider to use {@link #replaceStatement(PsiStatement, String, CommentTracker)} to preserve comments
    */
   public static PsiElement replaceStatement(@NotNull PsiStatement statement, @NotNull @NonNls String newStatementText) {
     final Project project = statement.getProject();
@@ -117,7 +115,8 @@ public class PsiReplacementUtil {
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory factory = psiFacade.getElementFactory();
     final PsiReferenceExpression newExpression = (PsiReferenceExpression)factory.createExpressionFromText("xxx", expression);
-    final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)expression.replace(newExpression);
+    CommentTracker tracker = new CommentTracker();
+    final PsiReferenceExpression replacementExpression = (PsiReferenceExpression)tracker.replaceAndRestoreComments(expression, newExpression);
     final PsiElement element = replacementExpression.bindToElement(target);
     final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
     styleManager.shortenClassReferences(element);

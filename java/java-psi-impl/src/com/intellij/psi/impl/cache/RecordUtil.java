@@ -23,7 +23,6 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaDocTokenType;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiModifier;
-import com.intellij.psi.PsiModifierList;
 import com.intellij.psi.impl.java.stubs.JavaStubElementTypes;
 import com.intellij.psi.impl.java.stubs.PsiClassStub;
 import com.intellij.psi.impl.java.stubs.PsiFieldStub;
@@ -93,12 +92,12 @@ public class RecordUtil {
   }
 
   public static boolean isStaticNonPrivateMember(@NotNull StubElement<?> stub) {
-    StubElement<PsiModifierList> type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
-    if (!(type instanceof PsiModifierListStub)) {
+    PsiModifierListStub type = stub.findChildStubByType(JavaStubElementTypes.MODIFIER_LIST);
+    if (type == null) {
       return false;
     }
 
-    int mask = ((PsiModifierListStub)type).getModifiersMask();
+    int mask = type.getModifiersMask();
     if (ModifierFlags.hasModifierProperty(PsiModifier.PRIVATE, mask)) {
       return false;
     }

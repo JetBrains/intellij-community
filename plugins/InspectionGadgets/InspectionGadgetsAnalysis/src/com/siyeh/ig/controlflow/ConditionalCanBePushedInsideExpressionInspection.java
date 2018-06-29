@@ -24,6 +24,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
@@ -93,7 +94,9 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
         JavaPsiFacade.getElementFactory(project).createExpressionFromText(expression, conditionalExpression);
       final PsiElement replacedConditionalExpression = leftDiff.replace(newConditionalExpression);
       ParenthesesUtils.removeParentheses((PsiExpression)replacedConditionalExpression, false);
-      conditionalExpression.replace(thenExpression);
+      CommentTracker commentTracker = new CommentTracker();
+      commentTracker.markUnchanged(conditionalExpression.getCondition());
+      commentTracker.replaceAndRestoreComments(conditionalExpression, thenExpression);
     }
   }
 

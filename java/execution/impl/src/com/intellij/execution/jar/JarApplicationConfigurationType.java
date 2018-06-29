@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.jar;
 
 import com.intellij.execution.ExecutionBundle;
@@ -23,7 +21,7 @@ public class JarApplicationConfigurationType extends ConfigurationTypeBase imple
 
   public JarApplicationConfigurationType() {
     super("JarApplication", ExecutionBundle.message("jar.application.configuration.name"),
-          ExecutionBundle.message("jar.application.configuration.description"), AllIcons.FileTypes.Archive);
+          ExecutionBundle.message("jar.application.configuration.description"), lazyIcon(() -> AllIcons.FileTypes.Archive));
     addFactory(new ConfigurationFactoryEx(this) {
       @Override
       public void onNewConfigurationCreated(@NotNull RunConfiguration configuration) {
@@ -35,7 +33,7 @@ public class JarApplicationConfigurationType extends ConfigurationTypeBase imple
       }
 
       @NotNull
-      public RunConfiguration createTemplateConfiguration(Project project) {
+      public RunConfiguration createTemplateConfiguration(@NotNull Project project) {
         return new JarApplicationConfiguration(project, this, "");
       }
     });

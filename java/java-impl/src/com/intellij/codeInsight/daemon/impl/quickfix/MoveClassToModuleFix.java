@@ -41,8 +41,8 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.PsiShortNamesCache;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.RefactoringActionHandlerFactory;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -113,35 +113,32 @@ public class MoveClassToModuleFix implements IntentionAction {
     }
     else {
       LOG.assertTrue(editor != null);
-      final JBList list = new JBList(myModules.keySet());
-      list.setCellRenderer(new PsiElementListCellRenderer<PsiClass>() {
-        @Override
-        public String getElementText(PsiClass psiClass) {
-          return psiClass.getQualifiedName();
-        }
-
-        @Nullable
-        @Override
-        protected String getContainerText(PsiClass element, String name) {
-          return null;
-        }
-
-        @Override
-        protected int getIconFlags() {
-          return 0;
-        }
-      });
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(ContainerUtil.newArrayList(myModules.keySet()))
         .setTitle("Choose Class to Move")
+        .setRenderer(new PsiElementListCellRenderer<PsiClass>() {
+          @Override
+          public String getElementText(PsiClass psiClass) {
+            return psiClass.getQualifiedName();
+          }
+
+          @Nullable
+          @Override
+          protected String getContainerText(PsiClass element, String name) {
+            return null;
+          }
+
+          @Override
+          protected int getIconFlags() {
+            return 0;
+          }
+        })
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(() -> {
-          final Object value = list.getSelectedValue();
-          if (value instanceof PsiClass) {
-            TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, (PsiClass)value));
-          }
-        }).createPopup().showInBestPositionFor(editor);
+        .setItemChosenCallback((value) -> TransactionGuard.getInstance().submitTransactionAndWait(() -> moveClass(project, editor, file, value)))
+        .createPopup()
+        .showInBestPositionFor(editor);
     }
   }
 

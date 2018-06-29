@@ -1,0 +1,136 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: -1, value: 0.0}
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id003 {horizontal: true, value: 6.0}
+      min: *id003
+      preferred: *id003
+    grow: 0.0
+  - {}
+  count: 2
+componentConstrains:
+  'Text field:': {}
+  'JTextField #1':
+    horizontal: {grow: 100.0}
+    spanX: 2097051
+    wrap: true
+  'Password:': {}
+  'JPasswordField #3': {spanX: 2097051, wrap: true}
+  'Combobox:': {}
+  'JComboBox #5':
+    horizontal: {grow: 1000.0}
+    spanX: 2097051
+    wrap: true
+  'Combobox Editable:': {}
+  'JComboBox #7':
+    horizontal: {grow: 1000.0}
+    spanX: 2097051
+    wrap: true
+  'Button:': {}
+  label: {spanX: 2097051, wrap: true}
+  'CheckBox:': {}
+  enabled: {spanX: 2097051, wrap: true}
+  'RadioButton:': {}
+  'Spinner:': {}
+  'JBIntSpinner #15': {spanX: 2097051, wrap: true}
+  'Text with browse:': {}
+  'TextFieldWithHistoryWithBrowseButton #17':
+    horizontal:
+      grow: 100.0
+      size:
+        min: {horizontal: true, value: 350.0}
+    spanX: 2097051
+    wrap: true
+  'All:': {}
+  'JTextField #19':
+    horizontal: {grow: 100.0}
+    split: 6
+  'JPasswordField #20': {}
+  'JComboBox #21':
+    horizontal: {grow: 1000.0}
+  b: {}
+  c: {}
+  rb: {spanX: 2097051, wrap: true}
+  'Scroll pane:':
+    vertical:
+      align: {horizontal: false, unit: 6, value: 0.0}
+      gapBefore:
+        min: &id004 {horizontal: false, value: 1.0}
+        preferred: *id004
+  'JBScrollPane #26':
+    horizontal: {grow: 100.0}
+    pushY: 100.0
+    spanX: 2097051
+    vertical: {grow: 100.0}
+    wrap: true
+cellBounds:
+- [0, 0, 108, 24]
+- [114, 0, 570, 24]
+- [0, 34, 108, 24]
+- [114, 34, 570, 24]
+- [0, 68, 108, 24]
+- [114, 68, 570, 24]
+- [0, 102, 108, 24]
+- [114, 102, 570, 24]
+- [0, 136, 108, 24]
+- [114, 136, 570, 24]
+- [0, 170, 108, 16]
+- [114, 170, 570, 16]
+- [0, 196, 108, 16]
+- [114, 196, 570, 16]
+- [0, 222, 108, 24]
+- [114, 222, 570, 24]
+- [0, 256, 108, 24]
+- [114, 256, 570, 24]
+- [0, 290, 108, 25]
+- [114, 290, 570, 25]
+- [114, 290, 570, 25]
+- [114, 290, 570, 25]
+- [114, 290, 570, 25]
+- [114, 290, 570, 25]
+- [114, 290, 570, 25]
+- [0, 325, 108, 53]
+- [114, 325, 570, 53]
+componentBounds:
+  'Text field:': [0, 4, 51, 16]
+  'JTextField #1': [111, -3, 576, 30]
+  'Password:': [0, 37, 53, 16]
+  'JPasswordField #3': [111, 31, 256, 30]
+  'Combobox:': [0, 72, 63, 16]
+  'JComboBox #5': [111, 65, 576, 30]
+  'Combobox Editable:': [0, 106, 108, 16]
+  'JComboBox #7': [111, 99, 576, 30]
+  'Button:': [0, 140, 39, 16]
+  label: [112, 195, 48, 19]
+  'CheckBox:': [0, 170, 56, 16]
+  enabled: [111, 170, 65, 18]
+  'RadioButton:': [0, 196, 69, 16]
+  'Spinner:': [0, 226, 43, 16]
+  'JBIntSpinner #15': [111, 219, 83, 30]
+  'Text with browse:': [0, 260, 92, 16]
+  'TextFieldWithHistoryWithBrowseButton #17': [111, 253, 576, 30]
+  'All:': [0, 294, 17, 16]
+  'JTextField #19': [111, 287, 64, 30]
+  'JPasswordField #20': [177, 288, 256, 30]
+  'JComboBox #21': [435, 287, 98, 30]
+  b: [535, 287, 78, 30]
+  c: [615, 294, 29, 18]
+  rb: [650, 293, 34, 19]
+  'Scroll pane:': [0, 326, 61, 16]
+  'JBScrollPane #26': [114, 325, 570, 53]

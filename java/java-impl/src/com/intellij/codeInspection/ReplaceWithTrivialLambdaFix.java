@@ -25,9 +25,6 @@ import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author Tagir Valeev
- */
 public class ReplaceWithTrivialLambdaFix implements LocalQuickFix {
   private final String myValue;
 

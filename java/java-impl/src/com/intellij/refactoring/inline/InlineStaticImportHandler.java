@@ -52,14 +52,11 @@ public class InlineStaticImportHandler extends JavaInlineActionHandler {
     RefactoringEventData data = new RefactoringEventData();
     data.addElement(element);
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringStarted(REFACTORING_ID, data);
-    
 
-    new WriteCommandAction(project, REFACTORING_NAME){
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        replaceAllAndDeleteImport(referenceElements, null, staticStatement);
-      }
-    }.execute();
+
+    WriteCommandAction.writeCommandAction(project).withName(REFACTORING_NAME).run(() -> {
+      replaceAllAndDeleteImport(referenceElements, null, staticStatement);
+    });
     project.getMessageBus().syncPublisher(RefactoringEventListener.REFACTORING_EVENT_TOPIC).refactoringDone(REFACTORING_ID, null);
   }
 }

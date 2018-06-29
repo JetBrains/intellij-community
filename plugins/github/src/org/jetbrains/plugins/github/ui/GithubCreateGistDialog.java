@@ -15,48 +15,48 @@
  */
 package org.jetbrains.plugins.github.ui;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.ui.panel.PanelGridBuilder;
+import com.intellij.ui.components.JBBox;
+import com.intellij.ui.components.JBCheckBox;
+import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.JBTextField;
+import com.intellij.util.ui.JBDimension;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.github.util.GithubSettings;
+import org.jetbrains.plugins.github.authentication.accounts.GithubAccount;
+import org.jetbrains.plugins.github.authentication.ui.GithubAccountCombobox;
 
 import javax.swing.*;
+import java.util.Set;
 
-/**
- * @author oleg
- * @date 9/27/11
- */
+import static com.intellij.util.ui.UI.PanelFactory.grid;
+import static com.intellij.util.ui.UI.PanelFactory.panel;
+
 public class GithubCreateGistDialog extends DialogWrapper {
-  private final GithubCreateGistPanel myGithubCreateGistPanel;
+  @Nullable private final JBTextField myFileNameField;
+  @NotNull private final JTextArea myDescriptionField;
+  @NotNull private final JBCheckBox mySecretCheckBox;
+  @NotNull private final JBCheckBox myOpenInBrowserCheckBox;
+  @NotNull private final GithubAccountCombobox myAccountSelector;
 
-  public GithubCreateGistDialog(@NotNull final Project project, @Nullable Editor editor, @Nullable VirtualFile[] files, @Nullable VirtualFile file) {
+  public GithubCreateGistDialog(@NotNull Project project,
+                                @NotNull Set<GithubAccount> accounts,
+                                @Nullable GithubAccount defaultAccount,
+                                @Nullable String fileName,
+                                boolean secret,
+                                boolean openInBrowser) {
     super(project, true);
-    myGithubCreateGistPanel = new GithubCreateGistPanel();
-    // Use saved settings for controls
-    final GithubSettings settings = GithubSettings.getInstance();
-    myGithubCreateGistPanel.setAnonymous(settings.isAnonymousGist());
-    myGithubCreateGistPanel.setSecret(settings.isPrivateGist());
-    myGithubCreateGistPanel.setOpenInBrowser(settings.isOpenInBrowserGist());
 
-    if (editor != null) {
-      if (file != null) {
-        myGithubCreateGistPanel.showFileNameField(file.getName());
-      }
-      else {
-        myGithubCreateGistPanel.showFileNameField("");
-      }
-    }
-    else if (files != null) {
-      if (files.length == 1 && !files[0].isDirectory()) {
-        myGithubCreateGistPanel.showFileNameField(files[0].getName());
-      }
-    }
-    else if (file != null && !file.isDirectory()) {
-      myGithubCreateGistPanel.showFileNameField(file.getName());
-    }
+    myFileNameField = fileName != null ? new JBTextField(fileName) : null;
+    myDescriptionField = new JTextArea();
+    mySecretCheckBox = new JBCheckBox("Secret", secret);
+    myOpenInBrowserCheckBox = new JBCheckBox("Open in browser", openInBrowser);
+    myAccountSelector = new GithubAccountCombobox(accounts, defaultAccount, null);
 
     setTitle("Create Gist");
     init();
@@ -64,7 +64,21 @@ public class GithubCreateGistDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    return myGithubCreateGistPanel.getPanel();
+    JBBox checkBoxes = JBBox.createHorizontalBox();
+    checkBoxes.add(mySecretCheckBox);
+    checkBoxes.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
+    checkBoxes.add(myOpenInBrowserCheckBox);
+
+    JBScrollPane descriptionPane = new JBScrollPane(myDescriptionField);
+    descriptionPane.setPreferredSize(new JBDimension(270, 55));
+    descriptionPane.setMinimumSize(new JBDimension(270, 55));
+
+    PanelGridBuilder grid = grid().resize();
+    if (myFileNameField != null) grid.add(panel(myFileNameField).withLabel("Filename:"));
+    grid.add(panel(descriptionPane).withLabel("Description:").anchorLabelOn(UI.Anchor.Top).resizeY(true))
+        .add(panel(checkBoxes));
+    if (myAccountSelector.isEnabled()) grid.add(panel(myAccountSelector).withLabel("Create for:").resizeX(false));
+    return grid.createPanel();
   }
 
   @Override
@@ -78,39 +92,31 @@ public class GithubCreateGistDialog extends DialogWrapper {
   }
 
   @Override
-  protected void doOKAction() {
-    // Store settings
-    final GithubSettings settings = GithubSettings.getInstance();
-    settings.setAnonymousGist(myGithubCreateGistPanel.isAnonymous());
-    settings.setOpenInBrowserGist(myGithubCreateGistPanel.isOpenInBrowser());
-    settings.setPrivateGist(myGithubCreateGistPanel.isSecret());
-    super.doOKAction();
-  }
-
-  @Override
   public JComponent getPreferredFocusedComponent() {
-    return myGithubCreateGistPanel.getDescriptionTextArea();
-  }
-
-  public boolean isSecret() {
-    return myGithubCreateGistPanel.isSecret();
-  }
-
-  public boolean isAnonymous() {
-    return myGithubCreateGistPanel.isAnonymous();
-  }
-
-  @NotNull
-  public String getDescription() {
-    return myGithubCreateGistPanel.getDescriptionTextArea().getText();
+    return myDescriptionField;
   }
 
   @Nullable
   public String getFileName() {
-    return myGithubCreateGistPanel.getFileNameField().getText();
+    return myFileNameField != null ? myFileNameField.getText() : null;
+  }
+
+  @NotNull
+  public String getDescription() {
+    return myDescriptionField.getText();
+  }
+
+  public boolean isSecret() {
+    return mySecretCheckBox.isSelected();
   }
 
   public boolean isOpenInBrowser() {
-    return myGithubCreateGistPanel.isOpenInBrowser();
+    return myOpenInBrowserCheckBox.isSelected();
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @NotNull
+  public GithubAccount getAccount() {
+    return (GithubAccount)myAccountSelector.getSelectedItem();
   }
 }

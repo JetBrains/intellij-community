@@ -247,15 +247,11 @@ public class ActionsTreeUtil {
       }
       if (action instanceof ActionGroup) {
         Group subGroup = createGroup((ActionGroup)action, getName(action), null, null, ignore, filtered, normalizeSeparators);
-        if (subGroup.getSize() > 0) {
-          if (!ignore && !((ActionGroup)action).isPopup()) {
-            group.addAll(subGroup);
-          }
-          else {
-            group.addGroup(subGroup);
-          }
+        if (!ignore && !((ActionGroup)action).isPopup()) {
+          group.addAll(subGroup);
         }
-        else if (filtered == null || filtered.value(action)) {
+        else if (subGroup.getSize() > 0 ||
+                 filtered == null || filtered.value(action)) {
           group.addGroup(subGroup);
         }
       }

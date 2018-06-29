@@ -188,6 +188,7 @@ public abstract class CodeStyleManager  {
   /**
    * @deprecated this method is not intended to be used by plugins.
    */
+  @Deprecated
   public abstract boolean isLineToBeIndented(@NotNull PsiFile file, int offset);
 
   /**
@@ -203,6 +204,22 @@ public abstract class CodeStyleManager  {
   public abstract String getLineIndent(@NotNull PsiFile file, int offset);
 
   /**
+   * Calculates the indent that should be used for the specified line in
+   * the specified file with the given formatting mode. Default implementation falls back to
+   * {@link #getLineIndent(PsiFile, int)}
+   *
+   * @param file   the file for which the indent should be calculated.
+   * @param offset the offset for the line at which the indent should be calculated.
+   * @param mode   the formatting mode {@link FormattingMode}
+   * @return the indent string (containing of tabs and/or whitespaces), or null if it
+   *         was not possible to calculate the indent.
+   */
+  @Nullable
+  public String getLineIndent(@NotNull PsiFile file, int offset, FormattingMode mode) {
+    return getLineIndent(file, offset);
+  }
+
+  /**
    * Calculates the indent that should be used for the current line in the specified
    * editor.
    *
@@ -216,16 +233,19 @@ public abstract class CodeStyleManager  {
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract Indent getIndent(String text, FileType fileType);
 
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract String fillIndent(Indent indent, FileType fileType);
 
   /**
    * @deprecated
    */
+  @Deprecated
   public abstract Indent zeroIndent();
 
   /**

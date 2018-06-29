@@ -9,6 +9,7 @@ import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.BatchModeDescriptorsUtil;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
+import com.intellij.codeInspection.ui.util.SynchronizedBidiMultiMap;
 import com.intellij.concurrency.ConcurrentCollectionFactory;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -24,6 +25,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import gnu.trove.THashSet;
 import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +38,8 @@ import javax.swing.tree.TreePath;
 import java.awt.event.MouseEvent;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
+import java.util.function.Predicate;
+import java.util.stream.IntStream;
 import java.util.stream.Stream;
 
 import static com.intellij.codeInspection.CommonProblemDescriptor.DESCRIPTOR_COMPARATOR;
@@ -87,7 +91,12 @@ public class InspectionTree extends Tree {
     mySeverityGroupNodes.clear();
     myGroups.clear();
     getRoot().removeAllChildren();
-    ApplicationManager.getApplication().invokeLater(() -> nodeStructureChanged(getRoot()));
+    ApplicationManager.getApplication().invokeLater(() -> {
+      InspectionResultsView view = myContext.getView();
+      if (view != null && !view.isDisposed()) {
+        nodeStructureChanged(getRoot());
+      }
+    });
   }
 
   public InspectionTreeNode getRoot() {
@@ -311,7 +320,7 @@ public class InspectionTree extends Tree {
     if (isGroupedBySeverity) {
       InspectionSeverityGroupNode severityGroupNode = mySeverityGroupNodes.get(level);
       if (severityGroupNode == null) {
-        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(myContext.getProject(), level);
+        InspectionSeverityGroupNode newNode = new InspectionSeverityGroupNode(myContext.getCurrentProfile().getProfileManager().getSeverityRegistrar(), level);
         severityGroupNode = ConcurrencyUtil.cacheOrGet(mySeverityGroupNodes, level, newNode);
         if (severityGroupNode == newNode) {
           InspectionTreeNode root = getRoot();
@@ -359,6 +368,98 @@ public class InspectionTree extends Tree {
 
   public void restoreExpansionAndSelection(boolean treeNodesMightChange) {
     myState.restoreExpansionAndSelection(this, treeNodesMightChange);
+  }
+
+  public void removeSelectedProblems() {
+    if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
+      return;
+    }
+    synchronized (getContext().getView().getTreeStructureUpdateLock()) {
+      TreePath[] selected = getSelectionPaths();
+      if (selected == null) return;
+      Set<InspectionTreeNode> processedNodes = new THashSet<>();
+      List<InspectionTreeNode> toRemove = new ArrayList<>();
+      List<TreePath> pathsToSelect = new ArrayList<>();
+      for (TreePath path : selected) {
+        Object[] nodePath = path.getPath();
+
+        // ignore root
+        for (int i = 1; i < nodePath.length; i++) {
+          InspectionTreeNode node = (InspectionTreeNode) nodePath[i];
+          if (!processedNodes.add(node)) break;
+
+          if (shouldDelete(node)) {
+            toRemove.add(node);
+            TreePath toSelect = getParentPath(path, nodePath.length - i);
+            if (toSelect != null) {
+              pathsToSelect.add(toSelect);
+            }
+            break;
+          }
+        }
+      }
+
+      if (toRemove.isEmpty()) return;
+      DefaultTreeModel model = (DefaultTreeModel)getModel();
+      for (InspectionTreeNode node : toRemove) {
+        TreeNode parent = node.getParent();
+        if (parent != null) {
+          model.removeNodeFromParent(node);
+        }
+      }
+
+      TreeUtil.selectPath(this, TreeUtil.findCommonPath(pathsToSelect.toArray(new TreePath[0])));
+    }
+    revalidate();
+    repaint();
+  }
+
+  private static TreePath getParentPath(TreePath path, int ord) {
+    TreePath parent = path;
+    for (int j = 0; j < ord; j++) {
+      parent = parent.getParentPath();
+    }
+    return parent;
+  }
+
+  private boolean shouldDelete(InspectionTreeNode node) {
+    if (node instanceof RefElementNode) {
+      RefElementNode refElementNode = (RefElementNode)node;
+      RefEntity refEntity = refElementNode.getElement();
+      if (refEntity == null || isEntityExcludedOrResolvedRecursively(refEntity, refElementNode.getPresentation())) {
+        return true;
+      }
+    }
+    else if (node instanceof ProblemDescriptionNode) {
+      ProblemDescriptionNode problemDescriptionNode = (ProblemDescriptionNode)node;
+      CommonProblemDescriptor descriptor = problemDescriptionNode.getDescriptor();
+      InspectionToolPresentation presentation = problemDescriptionNode.getPresentation();
+      if (descriptor == null || presentation.isExcluded(descriptor) || presentation.isProblemResolved(descriptor)) {
+        return true;
+      }
+    }
+    else if (node instanceof InspectionGroupNode || node instanceof InspectionSeverityGroupNode || node instanceof InspectionModuleNode || node instanceof InspectionPackageNode) {
+      return IntStream.range(0, node.getChildCount()).mapToObj(i -> (InspectionTreeNode)node.getChildAt(i)).allMatch(this::shouldDelete);
+    }
+    else if (node instanceof InspectionNode) {
+      InspectionToolPresentation presentation = myContext.getPresentation(((InspectionNode)node).getToolWrapper());
+      SynchronizedBidiMultiMap<RefEntity, CommonProblemDescriptor> problemElements = presentation.getProblemElements();
+      if (problemElements.isEmpty()) {
+        return true;
+      }
+      return problemElements.keys().stream().allMatch(entity -> presentation.isExcluded(entity));
+    }
+    return false;
+  }
+
+  private static boolean isEntityExcludedOrResolvedRecursively(RefEntity key, InspectionToolPresentation presentation) {
+    if (presentation.isProblemResolved(key) ||
+        presentation.isExcluded(key) ||
+        presentation.isSuppressed(key)) {
+      return true;
+    }
+    List<RefEntity> children = key.getChildren();
+    return !children.isEmpty() && children.stream().allMatch(entity -> isEntityExcludedOrResolvedRecursively(entity, presentation));
   }
 
   public InspectionTreeState getTreeState() {

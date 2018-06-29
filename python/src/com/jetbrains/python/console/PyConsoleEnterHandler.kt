@@ -86,12 +86,9 @@ class PyConsoleEnterHandler {
 
   private fun executeEnterHandler(project: Project, editor:EditorEx) {
     val enterHandler = EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER)
-    object : WriteCommandAction<Nothing>(project) {
-      @Throws(Throwable::class)
-      override fun run(result: Result<Nothing>) {
+    WriteCommandAction.runWriteCommandAction(project) {
         enterHandler.execute(editor, null, DataManager.getInstance().getDataContext(editor.component))
-      }
-    }.execute()
+    }
   }
 
   private fun isElementInsideDocString(atElement: PsiElement, caretOffset: Int): Boolean {

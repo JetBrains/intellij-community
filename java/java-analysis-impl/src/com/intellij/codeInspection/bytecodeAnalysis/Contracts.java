@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.bytecodeAnalysis;
 
 import com.intellij.codeInspection.bytecodeAnalysis.Direction.ParamValueBasedDirection;
@@ -21,6 +7,7 @@ import com.intellij.codeInspection.bytecodeAnalysis.asm.RichControlFlow;
 import com.intellij.openapi.progress.ProgressManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.org.objectweb.asm.Handle;
+import org.jetbrains.org.objectweb.asm.Opcodes;
 import org.jetbrains.org.objectweb.asm.Type;
 import org.jetbrains.org.objectweb.asm.tree.*;
 import org.jetbrains.org.objectweb.asm.tree.analysis.AnalyzerException;
@@ -57,7 +44,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     interpreter = new InOutInterpreter(direction, richControlFlow.controlFlow.methodNode.instructions, resultOrigins);
     inValue = direction instanceof ParamValueBasedDirection ? ((ParamValueBasedDirection)direction).inValue : null;
     generalizeShift = (methodNode.access & ACC_STATIC) == 0 ? 1 : 0;
-    internalResult = new Final(Value.Bot);
+    internalResult = Value.Bot;
   }
 
   @NotNull
@@ -123,7 +110,7 @@ abstract class ContractAnalysis extends Analysis<Result> {
     } else if (unsureOnly) {
       // We are not sure whether exceptional paths were actually taken or not
       // probably they handle exceptions which can never be thrown before dereference occurs
-      return mkEquation(ClassDataIndexer.FINAL_BOT);
+      return mkEquation(Value.Bot);
     } else {
       return mkEquation(internalResult);
     }
@@ -287,31 +274,31 @@ class InOutAnalysis extends ContractAnalysis {
         BasicValue stackTop = popValue(frame);
         Result subResult;
         if (FalseValue == stackTop) {
-          subResult = new Final(Value.False);
+          subResult = Value.False;
         }
         else if (TrueValue == stackTop) {
-          subResult = new Final(Value.True);
+          subResult = Value.True;
         }
         else if (NullValue == stackTop) {
-          subResult = new Final(Value.Null);
+          subResult = Value.Null;
         }
         else if (stackTop instanceof NotNullValue) {
-          subResult = new Final(Value.NotNull);
+          subResult = Value.NotNull;
         }
         else if (stackTop instanceof ParamValue) {
-          subResult = new Final(inValue);
+          subResult = inValue;
         }
         else if (stackTop instanceof CallResultValue) {
           Set<EKey> keys = ((CallResultValue) stackTop).inters;
           subResult = new Pending(new Component[] {new Component(Value.Top, keys)});
         }
         else {
-          earlyResult = new Final(Value.Top);
+          earlyResult = Value.Top;
           return true;
         }
         internalResult = checkLimit(resultUtil.join(internalResult, subResult));
         unsureOnly &= unsure;
-        if (!unsure && internalResult instanceof Final && ((Final)internalResult).value == Value.Top) {
+        if (!unsure && internalResult == Value.Top) {
           earlyResult = internalResult;
         }
         return true;
@@ -338,7 +325,7 @@ class InThrowAnalysis extends ContractAnalysis {
   boolean handleReturn(Frame<BasicValue> frame, int opcode, boolean unsure) {
     Result subResult;
     if (interpreter.deReferenced) {
-      subResult = new Final(Value.Top);
+      subResult = Value.Top;
     } else {
       switch (opcode) {
         case ARETURN:
@@ -353,13 +340,13 @@ class InThrowAnalysis extends ContractAnalysis {
           } else {
             myReturnValue = value;
           }
-          subResult = new Final(Value.Top);
+          subResult = Value.Top;
           break;
         case RETURN:
-          subResult = new Final(Value.Top);
+          subResult = Value.Top;
           break;
         case ATHROW:
-          subResult = new Final(Value.Fail);
+          subResult = Value.Fail;
           break;
         default:
           return false;
@@ -367,7 +354,7 @@ class InThrowAnalysis extends ContractAnalysis {
     }
     internalResult = resultUtil.join(internalResult, subResult);
     unsureOnly &= unsure;
-    if (!unsure && internalResult instanceof Final && ((Final)internalResult).value == Value.Top && myHasNonTrivialReturn) {
+    if (!unsure && internalResult == Value.Top && myHasNonTrivialReturn) {
       earlyResult = internalResult;
     }
     return true;
@@ -383,6 +370,7 @@ class InOutInterpreter extends BasicInterpreter {
   boolean deReferenced;
 
   InOutInterpreter(Direction direction, InsnList insns, boolean[] resultOrigins) {
+    super(Opcodes.API_VERSION);
     this.insns = insns;
     this.resultOrigins = resultOrigins;
     if(direction instanceof ParamValueBasedDirection) {

@@ -36,7 +36,7 @@
     </action>
 
     <action id="GenerateModuleDescriptors" class="com.intellij.codeInspection.java19api.Java9GenerateModuleDescriptorsAction">
-      <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
+      <add-to-group group-id="CodeMenu" anchor="last"/>
     </action>
     <action id="StubHierarchy" class="com.intellij.psi.stubsHierarchy.impl.test.BuildStubsHierarchyAction" text="Build Stub Hierarchy" internal="true">
       <add-to-group group-id="InspectCodeGroup" anchor="after" relative-to-action="ViewOfflineInspection"/>
@@ -107,7 +107,7 @@
     </group>
 
     <action id="Hotswap" class="com.intellij.debugger.actions.HotSwapAction">
-      <add-to-group group-id="DebugMainMenu" anchor="before" relative-to-action="StepOver"/>
+      <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="UpdateRunningApplication"/>
     </action>
 
     <action id="Debugger.PopFrame" class="com.intellij.debugger.actions.PopFrameAction" icon="AllIcons.Actions.PopFrame">
@@ -123,7 +123,7 @@
       <add-to-group group-id="DebugMainMenu" anchor="after" relative-to-action="ToggleLineBreakpoint"/>
     </group>
 
-    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.Actions.Export">
+    <action id="ExportThreads" class="com.intellij.debugger.actions.ExportThreadsAction" icon="AllIcons.ToolbarDecorator.Export">
       <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       <add-to-group group-id="XDebugger.Actions"/>
     </action>
@@ -234,7 +234,7 @@
         <add-to-group group-id="XDebugger.ValueGroup" anchor="last"/>
       </action>
 
-      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction" text="Async Stacktraces">
+      <action id="Debugger.AsyncStacks" class="com.intellij.debugger.actions.AsyncStacksToggleAction" text="Async Stack Traces">
         <add-to-group group-id="XDebugger.Frames.Tree.Popup"/>
       </action>
       <action id="Debugger.SwitchToTheNextContext" class="com.intellij.debugger.actions.SwitchToTheNextContextAction"
@@ -260,7 +260,7 @@
               id="MemoryView.ShowOnlyWithInstances"
               text="Show With Instances Only"/>
 
-      <action class="com.intellij.debugger.memory.action.ShowClassesWithDiffAction"
+      <action class="com.intellij.xdebugger.memory.action.ShowClassesWithDiffAction"
               id="MemoryView.ShowOnlyWithDiff"
               text="Show Non-Zero Diff Only"/>
 
@@ -274,7 +274,7 @@
               id="MemoryView.EnableTrackingWithClosedWindow"
               text="Enable Tracking With Hidden Memory View"/>
 
-      <action class="com.intellij.debugger.memory.action.SwitchUpdateModeAction"
+      <action class="com.intellij.xdebugger.memory.action.SwitchUpdateModeAction"
               id="MemoryView.SwitchUpdateMode"
               text="Update Loaded Classes On Debugger Stop"
               description="Load classes on debugger pause (may increase overhead on debugger stepping)"/>
@@ -489,6 +489,14 @@
       <action id="ToggleInferredAnnotationsHintsAction"
               class="com.intellij.codeInsight.hints.AnnotationHintsPass$ToggleInferredAnnotationsHintsAction"
               text="Show Inferred Annotations"/>
+      <separator/>
+      <reference ref="EditorPopupMenu"/>
+    </group>
+
+    <group id="MethodChainHintsContextMenu" popup="true">
+      <action id="MethodChainHintAction"
+              class="com.intellij.codeInsight.hints.MethodChainHintTurningAction"
+              text="Show method chain hints"/>
       <separator/>
       <reference ref="EditorPopupMenu"/>
     </group>

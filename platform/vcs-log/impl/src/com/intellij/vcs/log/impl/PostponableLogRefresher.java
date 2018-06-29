@@ -48,7 +48,7 @@ public class PostponableLogRefresher implements VcsLogRefresher {
   @NotNull
   public Disposable addLogWindow(@NotNull VcsLogWindow window) {
     myLogWindows.add(window);
-    filtererActivated(window.getRefresher(), true);
+    refresherActivated(window.getRefresher(), true);
     return () -> myLogWindows.remove(window);
   }
 
@@ -73,23 +73,23 @@ public class PostponableLogRefresher implements VcsLogRefresher {
     return false;
   }
 
-  public void filtererActivated(@NotNull VisiblePackRefresher refresher, boolean firstTime) {
+  public void refresherActivated(@NotNull VisiblePackRefresher refresher, boolean firstTime) {
+    myLogData.initialize();
+    
     if (!myRootsToRefresh.isEmpty()) {
       refreshPostponedRoots();
     }
     else {
-      if (firstTime) {
-        refresher.onRefresh();
-      }
-      refresher.setValid(true);
+      refresher.setValid(true, firstTime);
     }
   }
 
   private static void dataPackArrived(@NotNull VisiblePackRefresher refresher, boolean visible) {
     if (!visible) {
-      refresher.setValid(false);
+      refresher.setValid(false, true);
+    } else {
+      refresher.onRefresh();
     }
-    refresher.onRefresh();
   }
 
   public void refresh(@NotNull final VirtualFile root) {

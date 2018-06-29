@@ -76,7 +76,7 @@ public class GenerateConstructorTest extends LightCodeInsightFixtureTestCase {
 
   @NotNull
   private JavaCodeStyleSettings getJavaSettings() {
-    return CodeStyleSettingsManager.getInstance(getProject()).getCurrentSettings().getCustomSettings(JavaCodeStyleSettings.class);
+    return JavaCodeStyleSettings.getInstance(getProject());
   }
 
   public void testFieldPrefixCoincidence1() {

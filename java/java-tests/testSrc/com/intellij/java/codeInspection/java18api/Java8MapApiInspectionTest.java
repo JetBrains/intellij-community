@@ -21,9 +21,6 @@ import com.intellij.codeInspection.java18api.Java8MapApiInspection;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
-/**
- * @author Tagir Valeev
- */
 public class Java8MapApiInspectionTest extends LightQuickFixParameterizedTestCase {
   @NotNull
   @Override

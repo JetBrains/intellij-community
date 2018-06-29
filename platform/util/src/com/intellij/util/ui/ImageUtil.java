@@ -17,10 +17,16 @@ package com.intellij.util.ui;
 
 import com.intellij.util.ImageLoader;
 import com.intellij.util.JBHiDPIScaledImage;
+import com.intellij.util.RetinaImage;
+import com.intellij.util.ui.JBUI.ScaleContext;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.image.*;
+
+import static com.intellij.util.ui.JBUI.ScaleType.SYS_SCALE;
 
 /**
  * @author Konstantin Bulenkov
@@ -78,6 +84,13 @@ public class ImageUtil {
     return bufferedImage;
   }
 
+  public static double getImageScale(Image image) {
+    if (image instanceof JBHiDPIScaledImage) {
+      return ((JBHiDPIScaledImage)image).getScale();
+    }
+    return 1;
+  }
+
   public static int getRealWidth(@NotNull Image image) {
     if (image instanceof JBHiDPIScaledImage) {
       Image img = ((JBHiDPIScaledImage)image).getDelegate();
@@ -119,5 +132,17 @@ public class ImageUtil {
    */
   public static Image scaleImage(Image image, double scale) {
     return ImageLoader.scaleImage(image, scale);
+  }
+
+  /**
+   * Wraps the {@code image} with {@link JBHiDPIScaledImage} according to {@code ctx} when applicable.
+   */
+  @Contract("null, _ -> null; !null, _ -> !null")
+  public static Image ensureHiDPI(@Nullable Image image, @NotNull ScaleContext ctx) {
+    if (image == null) return null;
+    if (UIUtil.isJreHiDPI(ctx)) {
+      return RetinaImage.createFrom(image, ctx.getScale(SYS_SCALE), null);
+    }
+    return image;
   }
 }

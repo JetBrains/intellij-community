@@ -179,7 +179,7 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
     val visibleElementsInNextRow = getSortedVisibleElementsInRow(visibleRowIndex)
 
     val toPosition = HashMap<GraphElement, Int>(visibleElementsInNextRow.size)
-    visibleElementsInNextRow.forEachIndexed { position, element -> toPosition.put(element, position) }
+    visibleElementsInNextRow.forEachIndexed { position, element -> toPosition[element] = position }
 
     return { edge ->
       toPosition[edge] ?: run {
@@ -312,14 +312,13 @@ class PrintElementGeneratorImpl @TestOnly constructor(private val linearGraph: L
   companion object {
     private val LOG = Logger.getInstance(PrintElementGeneratorImpl::class.java)
 
-    private val VERY_LONG_EDGE_SIZE = 1000
-    @JvmField
-    val LONG_EDGE_SIZE = 30
-    private val VERY_LONG_EDGE_PART_SIZE = 250
-    private val LONG_EDGE_PART_SIZE = 1
+    private const val VERY_LONG_EDGE_SIZE = 1000
+    const val LONG_EDGE_SIZE: Int = 30
+    private const val VERY_LONG_EDGE_PART_SIZE = 250
+    private const val LONG_EDGE_PART_SIZE = 1
 
-    private val CACHE_SIZE = 100
-    private val SAMPLE_SIZE = 20000
-    private val K = 0.1
+    private const val CACHE_SIZE = 100
+    private const val SAMPLE_SIZE = 20000
+    private const val K = 0.1
   }
 }

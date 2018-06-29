@@ -1,23 +1,13 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.editor.Caret;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.Weigher;
 import com.intellij.util.Consumer;
@@ -43,7 +33,7 @@ public abstract class CompletionService {
    * A "weigher" extension key (see {@link Weigher}) to sort the whole lookup descending.
    * @deprecated use "completion" relevance key instead
    */
-  public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
+  @Deprecated public static final Key<CompletionWeigher> SORTING_KEY = Key.create("completionSorting");
 
   public static CompletionService getCompletionService() {
     return ServiceManager.getService(CompletionService.class);
@@ -60,7 +50,24 @@ public abstract class CompletionService {
    * @param text
    * @deprecated use {@link CompletionResultSet#addLookupAdvertisement(String)}
    */
+  @Deprecated
   public abstract void setAdvertisementText(@Nullable String text);
+
+  /**
+   * Creates the completion parameters for the given context.
+   *
+   * @param caret the selected caret in the given editor
+   * @param invocationCount the number of times the user has pressed the code completion shortcut (0 if autopopup)
+   * @param parentDisposable The disposable you need to dispose when the completion procedure is over.
+   * @return the completion parameters instance
+   */
+  @SuppressWarnings("unused")
+  public abstract CompletionParameters createCompletionParameters(@NotNull Project project,
+                                                                  @NotNull Editor editor,
+                                                                  @NotNull Caret caret,
+                                                                  int invocationCount,
+                                                                  CompletionType completionType,
+                                                                  @NotNull Disposable parentDisposable);
 
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
@@ -80,11 +87,7 @@ public abstract class CompletionService {
       CompletionContributor contributor = contributors.get(i);
 
       CompletionResultSet result = createResultSet(parameters, consumer, contributor);
-      try {
-        contributor.fillCompletionVariants(parameters, result);
-      }
-      catch (CompletionWithoutEditorException ignore) {
-      }
+      contributor.fillCompletionVariants(parameters, result);
       if (result.isStopped()) {
         return;
       }
@@ -123,5 +126,4 @@ public abstract class CompletionService {
   public abstract CompletionSorter defaultSorter(CompletionParameters parameters, PrefixMatcher matcher);
 
   public abstract CompletionSorter emptySorter();
-
 }

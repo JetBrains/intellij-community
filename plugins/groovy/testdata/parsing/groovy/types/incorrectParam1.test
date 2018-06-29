@@ -17,7 +17,7 @@ Groovy script
           PsiElement(.)('.')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('B')
-      PsiErrorElement:Identifier expected
+      PsiErrorElement:identifier expected, got ')'
         <empty list>
     PsiElement())(')')
     Throw clause

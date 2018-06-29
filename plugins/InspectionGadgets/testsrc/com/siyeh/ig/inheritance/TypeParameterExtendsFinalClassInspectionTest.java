@@ -19,6 +19,7 @@ public class TypeParameterExtendsFinalClassInspectionTest extends LightInspectio
     return new TypeParameterExtendsFinalClassInspection();
   }
 
+  @Override
   @NotNull
   protected LightProjectDescriptor getProjectDescriptor() {
     return JAVA_1_7;

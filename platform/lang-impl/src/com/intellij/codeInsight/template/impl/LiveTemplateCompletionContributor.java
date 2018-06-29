@@ -26,7 +26,9 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.patterns.PatternCondition;
 import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.StandardPatterns;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiPlainTextFile;
 import com.intellij.ui.EditorTextField;
@@ -141,9 +143,14 @@ public class LiveTemplateCompletionContributor extends CompletionContributor {
     return shouldShowAllTemplates();
   }
 
-  private static void ensureTemplatesShown(AtomicBoolean templatesShown, Map<TemplateImpl, String> templates,
-                                           CompletionResultSet result) {
+  private static void ensureTemplatesShown(AtomicBoolean templatesShown, Map<TemplateImpl, String> templates, CompletionResultSet result) {
     if (!templatesShown.getAndSet(true)) {
+      result.restartCompletionOnPrefixChange(StandardPatterns.string().with(new PatternCondition<String>("type after non-identifier") {
+        @Override
+        public boolean accepts(@NotNull String s, ProcessingContext context) {
+          return s.length() > 1 && !Character.isJavaIdentifierPart(s.charAt(s.length() - 2));
+        }
+      }));
       for (final Map.Entry<TemplateImpl, String> entry : templates.entrySet()) {
         ProgressManager.checkCanceled();
         result.withPrefixMatcher(result.getPrefixMatcher().cloneWithPrefix(StringUtil.notNullize(entry.getValue())))

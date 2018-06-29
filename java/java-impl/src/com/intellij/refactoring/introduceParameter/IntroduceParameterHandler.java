@@ -586,8 +586,12 @@ public class IntroduceParameterHandler extends IntroduceHandlerBase {
   }
 
   public static PsiElement[] getElementsInCopy(Project project, PsiFile file, PsiElement[] elements) {
+    return getElementsInCopy(project, file, elements, true);
+  }
+
+  public static PsiElement[] getElementsInCopy(Project project, PsiFile file, PsiElement[] elements, boolean reuseNonPhysical) {
     final PsiElement[] elementsCopy;
-    if (!elements[0].isPhysical()) {
+    if (reuseNonPhysical && !elements[0].isPhysical()) {
       elementsCopy = elements;
     }
     else {

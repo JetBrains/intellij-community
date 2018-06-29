@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.dataFlow.types;
 
 import com.intellij.openapi.util.Computable;
@@ -50,6 +50,8 @@ public class TypeInferenceHelper {
     ourInferenceContext.set(new InferenceContext.PartialContext(bindings));
     try {
       return computation.compute();
+    } catch(Throwable e) {
+      throw e;
     }
     finally {
       ourInferenceContext.set(old);
@@ -191,7 +193,7 @@ public class TypeInferenceHelper {
       final GrExpression rValue = pparent.getRValue();
       if (rValue instanceof GrListOrMap && !((GrListOrMap)rValue).isMap()) {
         final GrExpression[] initializers = ((GrListOrMap)rValue).getInitializers();
-        if (initializers.length < i) return initializers[i];
+        if (i < initializers.length) return initializers[i];
       }
     }
 

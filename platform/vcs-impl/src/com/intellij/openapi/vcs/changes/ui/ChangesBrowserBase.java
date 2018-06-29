@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.diff.DiffDialogHints;
@@ -47,6 +33,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   protected final ChangesTree myViewer;
 
   private final DefaultActionGroup myToolBarGroup = new DefaultActionGroup();
+  private final DefaultActionGroup myPopupMenuGroup = new DefaultActionGroup();
   private final ActionToolbar myToolbar;
   private final JScrollPane myViewerScrollPane;
   private final AnAction myShowDiffAction;
@@ -58,19 +45,21 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
                                boolean showCheckboxes,
                                boolean highlightProblems) {
     myProject = project;
-    myViewer = new MyChangesTreeList(this, project, showCheckboxes, highlightProblems);
+    myViewer = createTreeList(project, showCheckboxes, highlightProblems);
 
-    DefaultActionGroup toolbarGroups = new DefaultActionGroup();
-    toolbarGroups.add(myToolBarGroup);
-    toolbarGroups.addSeparator();
-    toolbarGroups.addAll(myViewer.getTreeActions());
-    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", toolbarGroups, true);
+    myToolbar = ActionManager.getInstance().createActionToolbar("ChangesBrowser", myToolBarGroup, true);
     myToolbar.setTargetComponent(this);
-    myViewer.installPopupHandler(myToolBarGroup);
+
+    myViewer.installPopupHandler(myPopupMenuGroup);
 
     myViewerScrollPane = ScrollPaneFactory.createScrollPane(myViewer);
 
     myShowDiffAction = new MyShowDiffAction();
+  }
+
+  @NotNull
+  protected ChangesBrowserTreeList createTreeList(@NotNull Project project, boolean showCheckboxes, boolean highlightProblems) {
+    return new ChangesBrowserTreeList(this, project, showCheckboxes, highlightProblems);
   }
 
   protected void init() {
@@ -78,7 +67,9 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     setFocusable(false);
 
     JPanel topPanel = new JPanel(new BorderLayout());
-    topPanel.add(createToolbarComponent(), BorderLayout.CENTER);
+
+    TreeActionsToolbarPanel toolbarPanel = new TreeActionsToolbarPanel(createToolbarComponent(), myViewer);
+    topPanel.add(toolbarPanel, BorderLayout.CENTER);
 
     JComponent headerPanel = createHeaderPanel();
     if (headerPanel != null) topPanel.add(headerPanel, BorderLayout.EAST);
@@ -88,6 +79,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
 
     myToolBarGroup.addAll(createToolbarActions());
+    myPopupMenuGroup.addAll(createPopupMenuActions());
+
+    AnAction groupByAction = ActionManager.getInstance().getAction(ChangesTree.GROUP_BY_ACTION_GROUP);
+    if (!ActionUtil.recursiveContainsAction(myToolBarGroup, groupByAction)) {
+      myToolBarGroup.addSeparator();
+      myToolBarGroup.add(groupByAction);
+    }
 
     myShowDiffAction.registerCustomShortcutSet(this, null);
   }
@@ -98,7 +96,7 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(boolean showFlatten);
+  protected abstract DefaultTreeModel buildTreeModel();
 
 
   @Nullable
@@ -117,6 +115,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
 
   @NotNull
   protected List<AnAction> createToolbarActions() {
+    return ContainerUtil.list(
+      myShowDiffAction
+    );
+  }
+
+  @NotNull
+  protected List<AnAction> createPopupMenuActions() {
     return ContainerUtil.list(
       myShowDiffAction
     );
@@ -170,13 +175,19 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     return myViewer;
   }
 
+  @NotNull
+  public ChangesGroupingPolicyFactory getGrouping() {
+    return myViewer.getGrouping();
+  }
+
   @Nullable
   @Override
   public Object getData(String dataId) {
     if (DATA_KEY.is(dataId)) {
       return this;
     }
-    return VcsTreeModelData.getData(myProject, myViewer, dataId);
+    Object viewerData = myViewer.getData(dataId);
+    return viewerData != null ? viewerData : VcsTreeModelData.getData(myProject, myViewer, dataId);
   }
 
 
@@ -219,13 +230,13 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
   }
 
 
-  private static class MyChangesTreeList extends ChangesTree {
+  protected static class ChangesBrowserTreeList extends ChangesTree {
     @NotNull private final ChangesBrowserBase myViewer;
 
-    public MyChangesTreeList(@NotNull ChangesBrowserBase viewer,
-                             @NotNull Project project,
-                             boolean showCheckboxes,
-                             boolean highlightProblems) {
+    public ChangesBrowserTreeList(@NotNull ChangesBrowserBase viewer,
+                                  @NotNull Project project,
+                                  boolean showCheckboxes,
+                                  boolean highlightProblems) {
       super(project, showCheckboxes, highlightProblems);
       myViewer = viewer;
       setDoubleClickHandler(myViewer::onDoubleClick);
@@ -233,8 +244,8 @@ public abstract class ChangesBrowserBase extends JPanel implements DataProvider 
     }
 
     @Override
-    public void rebuildTree() {
-      DefaultTreeModel newModel = myViewer.buildTreeModel(isShowFlatten());
+    public final void rebuildTree() {
+      DefaultTreeModel newModel = myViewer.buildTreeModel();
       updateTreeModel(newModel);
     }
   }

@@ -22,59 +22,89 @@ import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SeparatorFactory;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
+import javax.swing.text.BadLocationException;
+import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
+import java.util.List;
 
 public final class MacrosDialog extends DialogWrapper {
-  private final DefaultListModel myMacrosModel;
-  private final JList myMacrosList;
-  private final JTextArea myPreviewTextarea;
+  private final DefaultListModel<MacroWrapper> myMacrosModel = new DefaultListModel<>();
+  private final JBList<MacroWrapper> myMacrosList = new JBList<>(myMacrosModel);
+  private final JTextArea myPreviewTextarea = new JTextArea();
 
   public MacrosDialog(Project project) {
     super(project, true);
     MacroManager.getInstance().cacheMacrosPreview(SimpleDataContext.getProjectContext(project));
-    setTitle(IdeBundle.message("title.macros"));
-    setOKButtonText(IdeBundle.message("button.insert"));
-
-    myMacrosModel = new DefaultListModel();
-    myMacrosList = new JBList(myMacrosModel);
-    myPreviewTextarea = new JTextArea();
-
     init();
   }
 
   public MacrosDialog(Component parent) {
     super(parent, true);
     MacroManager.getInstance().cacheMacrosPreview(DataManager.getInstance().getDataContext(parent));
-    setTitle(IdeBundle.message("title.macros"));
-    setOKButtonText(IdeBundle.message("button.insert"));
-
-    myMacrosModel = new DefaultListModel();
-    myMacrosList = new JBList(myMacrosModel);
-    myPreviewTextarea = new JTextArea();
-
     init();
+  }
+
+  public static void show(@NotNull JTextComponent textComponent, @Nullable Condition<? super Macro> filter) {
+    MacrosDialog dialog = new MacrosDialog(textComponent);
+    if (filter != null) {
+      for (int i = 0; i < dialog.myMacrosModel.size(); i++)  {
+         if (!filter.value(dialog.myMacrosModel.get(i).myMacro)) {
+           dialog.myMacrosModel.remove(i);
+           i--;
+         }
+      }
+      if (dialog.myMacrosModel.size() > 0){
+        dialog.myMacrosList.setSelectedIndex(0);
+      }
+      else{
+        dialog.setOKActionEnabled(false);
+      }
+
+    }
+    if (dialog.showAndGet() && dialog.getSelectedMacro() != null) {
+      String macro = dialog.getSelectedMacro().getName();
+      int position = textComponent.getCaretPosition();
+      int selectionStart = textComponent.getSelectionStart();
+      int selectionEnd = textComponent.getSelectionEnd();
+      try {
+        if (selectionStart < selectionEnd) {
+          textComponent.getDocument().remove(selectionStart, selectionEnd - selectionStart);
+          position = selectionStart;
+        }
+        textComponent.getDocument().insertString(position, "$" + macro + "$", null);
+        textComponent.setCaretPosition(position + macro.length() + 2);
+      } catch (BadLocationException ignored) {
+      }
+    }
+    IdeFocusManager.findInstance().requestFocus(textComponent, true);
   }
 
   @Override
   protected void init() {
     super.init();
 
-    java.util.List<Macro> macros = new ArrayList<>(MacroManager.getInstance().getMacros());
+    setTitle(IdeBundle.message("title.macros"));
+    setOKButtonText(IdeBundle.message("button.insert"));
+
+    List<Macro> macros = new ArrayList<>(MacroManager.getInstance().getMacros());
     Collections.sort(macros, new Comparator<Macro>() {
       @Override
       public int compare(Macro macro1, Macro macro2) {

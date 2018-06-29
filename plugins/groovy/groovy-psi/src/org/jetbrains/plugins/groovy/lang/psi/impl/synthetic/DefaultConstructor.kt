@@ -18,7 +18,7 @@ class DefaultConstructor(
 
   override fun getNavigationElement(): PsiElement = myConstructedClass
 
-  override fun getName() = myConstructedClass.name!!
+  override fun getName(): String = myConstructedClass.name!!
 
   override fun getNameIdentifier(): PsiIdentifier? = null
 
@@ -65,13 +65,13 @@ class DefaultConstructor(
 
   override fun isVarArgs(): Boolean = false
 
-  override fun getSignature(substitutor: PsiSubstitutor) = MethodSignatureBackedByPsiMethod.create(this, substitutor)
+  override fun getSignature(substitutor: PsiSubstitutor): MethodSignatureBackedByPsiMethod = MethodSignatureBackedByPsiMethod.create(this, substitutor)
 
-  override fun getHierarchicalMethodSignature() = getHierarchicalMethodSignature(this)
+  override fun getHierarchicalMethodSignature(): HierarchicalMethodSignature = getHierarchicalMethodSignature(this)
 
   override fun isDeprecated(): Boolean = myConstructedClass.isDeprecated
 
-  override fun toString() = "Default constructor for ${myConstructedClass.name}"
+  override fun toString(): String = "Default constructor for ${myConstructedClass.name}"
 
   // --
 
@@ -81,7 +81,7 @@ class DefaultConstructor(
 
   override fun findSuperMethods(parentClass: PsiClass?): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 
-  override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean) = emptyList<MethodSignatureBackedByPsiMethod>()
+  override fun findSuperMethodSignaturesIncludingStatic(checkAccess: Boolean): List<MethodSignatureBackedByPsiMethod> = emptyList<MethodSignatureBackedByPsiMethod>()
 
   override fun findDeepestSuperMethods(): Array<PsiMethod> = PsiMethod.EMPTY_ARRAY
 

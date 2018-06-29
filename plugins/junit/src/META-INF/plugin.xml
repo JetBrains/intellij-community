@@ -53,9 +53,8 @@
     <stacktrace.fold substring="at org.junit.Assert.failNotSame("/>
     <stacktrace.fold substring="at org.junit.Assert.failSame("/>
     <stacktrace.fold substring="at junit.framework.Assert.assert"/>
-    <stacktrace.fold substring="at junit.framework.Assert.fail("/>
-    <stacktrace.fold substring="at junit.framework.Assert.failNotSame("/>
-    <stacktrace.fold substring="at junit.framework.Assert.failSame("/>
+    <stacktrace.fold substring="at junit.framework.Assert.fail"/>
+    <stacktrace.fold substring="at junit.framework.TestCase.assert"/>
     <stacktrace.fold substring="at org.junit.Assert.internalArrayEquals("/>
     <stacktrace.fold substring="at org.junit.internal.ComparisonCriteria.arrayEquals("/>
     <stacktrace.fold substring="at org.junit.Assert.assert"/>
@@ -77,6 +76,8 @@
     <codeInsight.externalLibraryResolver implementation="com.intellij.execution.junit.codeInsight.JUnit5ExternalLibraryResolver"/>
     <junitListener implementation="com.intellij.junit4.JUnitTestDiscoveryListener"/>
     <runConfigurationProducer implementation="com.intellij.execution.junit.testDiscovery.JUnitTestDiscoveryConfigurationProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.LocalTestDiscoveryProducer"/>
+    <testDiscoveryProducer implementation="com.intellij.execution.testDiscovery.IntellijTestDiscoveryProducer"/>
     <implicitUsageProvider implementation="com.intellij.execution.junit2.inspection.JUnitImplicitUsageProvider"/>
     <predefinedMigrationMapProvider implementation="com.intellij.execution.junit2.refactoring.JUnit5Migration"/>
     <psi.referenceContributor implementation="com.intellij.execution.junit.codeInsight.references.JUnitReferenceContributor"/>
@@ -90,11 +91,17 @@
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedRepeatedTestInspection"/>
 
+    <localInspection groupPath="Java" language="JVM" shortName="JUnit5MalformedNestedClass" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit5.nested.test.display.name"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.execution.junit.codeInsight.JUnit5MalformedNestedClassInspection"/>
+
     <runDashboardContributor implementation="com.intellij.execution.junit.JUnitRunDashboardContributor"/>
   </extensions>
 
   <extensionPoints>
     <extensionPoint qualifiedName="com.intellij.junitListener" interface="com.intellij.rt.execution.junit.IDEAJUnitListener"/>
+    <extensionPoint qualifiedName="com.intellij.testDiscoveryProducer" interface="com.intellij.execution.testDiscovery.TestDiscoveryProducer"/>
   </extensionPoints>
 
   <actions>

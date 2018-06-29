@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.update;
 
 import com.google.common.annotations.VisibleForTesting;
@@ -75,7 +61,7 @@ public class GitUpdateProcess {
 
   @NotNull private final List<GitRepository> myRepositories;
   private final boolean myCheckRebaseOverMergeProblem;
-  private final boolean myCheckForTrackedBranchExistance;
+  private final boolean myCheckForTrackedBranchExistence;
   private final UpdatedFiles myUpdatedFiles;
   @NotNull private final ProgressIndicator myProgressIndicator;
   @NotNull private final GitMerger myMerger;
@@ -85,10 +71,10 @@ public class GitUpdateProcess {
                           @NotNull Collection<GitRepository> repositories,
                           @NotNull UpdatedFiles updatedFiles,
                           boolean checkRebaseOverMergeProblem,
-                          boolean checkForTrackedBranchExistance) {
+                          boolean checkForTrackedBranchExistence) {
     myProject = project;
     myCheckRebaseOverMergeProblem = checkRebaseOverMergeProblem;
-    myCheckForTrackedBranchExistance = checkForTrackedBranchExistance;
+    myCheckForTrackedBranchExistence = checkForTrackedBranchExistence;
     myGit = Git.getInstance();
     myChangeListManager = ChangeListManager.getInstance(project);
     myVcsManager = ProjectLevelVcsManager.getInstance(project);
@@ -331,7 +317,7 @@ public class GitUpdateProcess {
       GitBranchTrackInfo trackInfo = GitBranchUtil.getTrackInfoForBranch(repository, branch);
       if (trackInfo == null) {
         LOG.info(String.format("checkTrackedBranchesConfigured: no track info for current branch %s in %s", branch, repository));
-        if (myCheckForTrackedBranchExistance) {
+        if (myCheckForTrackedBranchExistence) {
           notifyImportantError(repository.getProject(), "Can't Update", getNoTrackedBranchError(repository, branch.getName()));
           return null;
         }
@@ -356,7 +342,7 @@ public class GitUpdateProcess {
 
   @NotNull
   private static String recommendSetupTrackingCommand(@NotNull GitRepository repository, @NotNull String branchName) {
-    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository.getVcs().getVersion()) ?
+    return String.format(GitVersionSpecialty.KNOWS_SET_UPSTREAM_TO.existsIn(repository) ?
                          "git branch --set-upstream-to=origin/%1$s %1$s" :
                          "git branch --set-upstream %1$s origin/%1$s", branchName);
   }
@@ -372,7 +358,7 @@ public class GitUpdateProcess {
       return false;
     }
     LOG.info("isMergeInProgress: roots with unfinished merge: " + mergingRoots);
-    GitConflictResolver.Params params = new GitConflictResolver.Params();
+    GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished merge. These conflicts must be resolved before update.");
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, mergingRoots, params, false).merge();
@@ -384,7 +370,7 @@ public class GitUpdateProcess {
    */
   private boolean areUnmergedFiles() {
     LOG.info("areUnmergedFiles: checking if there are unmerged files...");
-    GitConflictResolver.Params params = new GitConflictResolver.Params();
+    GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle("Update was not started");
     params.setMergeDescription("Unmerged files detected. These conflicts must be resolved before update.");
     return !new GitMergeCommittingConflictResolver(myProject, myGit, myMerger, getRootsFromRepositories(myRepositories),
@@ -404,7 +390,7 @@ public class GitUpdateProcess {
     }
     LOG.info("checkRebaseInProgress: roots with unfinished rebase: " + rebasingRoots);
 
-    GitConflictResolver.Params params = new GitConflictResolver.Params();
+    GitConflictResolver.Params params = new GitConflictResolver.Params(myProject);
     params.setErrorNotificationTitle("Can't update");
     params.setMergeDescription("You have unfinished rebase process. These conflicts must be resolved before update.");
     params.setErrorNotificationAdditionalDescription("Then you may <b>continue rebase</b>. <br/> You also may <b>abort rebase</b> to restore the original branch and stop rebasing.");

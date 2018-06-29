@@ -8,14 +8,11 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.mac.foundation.Foundation;
-import com.intellij.util.ui.tree.WideSelectionTreeUI;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultTreeCellRenderer;
 import java.awt.*;
 import java.awt.geom.GeneralPath;
-import java.lang.reflect.Field;
 
 public class MacUIUtil {
 
@@ -125,21 +122,6 @@ public class MacUIUtil {
           paintComboboxFocusRing((Graphics2D)g, combobox.getBounds());
         }
       }
-    }
-  }
-
-  @Deprecated
-  public static void doNotFillBackground(@NotNull final JTree tree, @NotNull final DefaultTreeCellRenderer renderer) {
-    if (WideSelectionTreeUI.isWideSelection(tree)) {
-        renderer.setOpaque(false);
-        try {
-          final Field fillBackground = DefaultTreeCellRenderer.class.getDeclaredField("fillBackground");
-          fillBackground.setAccessible(true);
-          fillBackground.set(renderer, false);
-        }
-        catch (Exception e) {
-          // nothing
-        }
     }
   }
 

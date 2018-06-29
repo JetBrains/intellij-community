@@ -9,9 +9,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.interact &=
 		(	common.attrs.contenteditable?
 		&	common.attrs.draggable?
-		&	common.attrs.dropzone?
 		&	common.attrs.hidden?
 		&	common.attrs.spellcheck?
+		&	common.attrs.autocapitalize?
 		)
 		
 	common.attrs.other &= common.attrs.interact
@@ -30,26 +30,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 			w:string "true" | w:string "false"
 		}
 
-## Dropzone: dropzone
-
-	common.attrs.dropzone =
-		attribute dropzone {
-			list {
-				(	xsd:string { pattern = "[sS][tT][rR][iI][nN][gG]:.+" }
-				|	xsd:string { pattern = "[fF][iI][lL][eE]:.+" }
-				)*
-				,
-				(	w:string "copy"
-				|	w:string "move"
-				|	w:string "link"
-				)?
-				,
-				(	xsd:string { pattern = "[sS][tT][rR][iI][nN][gG]:.+" }
-				|	xsd:string { pattern = "[fF][iI][lL][eE]:.+" }
-				)*
-			}
-		}
-
 ## Hidden Element: hidden
 
 	common.attrs.hidden =
@@ -62,6 +42,19 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.spellcheck =
 		attribute spellcheck{
 			w:string "true" | w:string "false" | w:string ""
+		}
+
+## Autocapitalization
+
+	common.attrs.autocapitalize =
+		attribute autocapitalize {
+			(	w:string "off"
+			|	w:string "none"
+			|	w:string "on"
+			|	w:string "sentences"
+			|	w:string "words"
+			|	w:string "characters"
+			)
 		}
 
 ## Application Cache: manifest
@@ -107,13 +100,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	(	common.attrs.aria.implicit.dialog
 			|	common.attrs.aria.role.alert
 			|	common.attrs.aria.role.alertdialog
+			|	common.attrs.aria.role.application
 			|	common.attrs.aria.role.contentinfo
 			|	common.attrs.aria.role.dialog
 			|	common.attrs.aria.role.log
 			|	common.attrs.aria.role.marquee
 			|	common.attrs.aria.role.region
 			|	common.attrs.aria.role.status
-			|	common.attrs.aria.landmark.application
 			|	common.attrs.aria.landmark.document
 			|	common.attrs.aria.landmark.main
 			|	common.attrs.aria.landmark.search
@@ -130,7 +123,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Toolbar: <menu>
 
 	menu.elem =
-		element menu { menu.inner & menu.attrs }
+		element menu { menu.inner & menu.attrs } & nonW3C
 	menu.attrs =
 		(	common.attrs
 		&	(	common.attrs.aria.implicit.toolbar
@@ -170,106 +163,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		)
 	mli.inner =
 		( common.inner.flow )
-
-## Explicit command in popup menu: <menuitem type=command>
-	menuitem.explicit.command.elem =
-		element menuitem { menuitem.inner & menuitem.explicit.command.attrs }
-	menuitem.explicit.command.attrs =
-		(	common.attrs
-		&	menuitem.explicit.command.attrs.type?
-		&	menuitem.attrs.label?
-		&	menuitem.attrs.icon?
-		&	menuitem.attrs.disabled?
-		&	menuitem.attrs.default?
-		&	common.attrs.aria?
-		)
-		menuitem.explicit.command.attrs.type =
-			attribute type {
-				w:string "command"
-			}
-		menuitem.attrs.label =
-			attribute label {
-				w:non-empty-string
-			}
-		menuitem.attrs.icon =
-			attribute icon {
-				common.data.uri.non-empty
-			}
-		menuitem.attrs.disabled =
-			attribute disabled {
-				w:string "" | w:string "disabled"
-			}
-		menuitem.attrs.default =
-			attribute default {
-				w:string "" | w:string "default"
-			}
-	menuitem.elem |= menuitem.explicit.command.elem
-
-## Checkbox in popup menu: <menuitem type=checkbox>
-	menuitem.checkbox.elem =
-		element menuitem { menuitem.inner & menuitem.checkbox.attrs }
-	menuitem.checkbox.attrs =
-		(	common.attrs
-		&	menuitem.checkbox.attrs.type
-		&	menuitem.attrs.label?
-		&	menuitem.attrs.icon?
-		&	menuitem.attrs.disabled?
-		&	menuitem.attrs.checked?
-		&	menuitem.attrs.radiogroup?
-		&	menuitem.attrs.default?
-		&	common.attrs.aria?
-		)
-		menuitem.checkbox.attrs.type =
-			attribute type {
-				w:string "checkbox"
-			}
-		menuitem.attrs.checked =
-			attribute checked {
-				w:string "checked" | w:string ""
-			}
-		menuitem.attrs.radiogroup =
-			attribute radiogroup {
-				string
-			}
-	menuitem.elem |= menuitem.checkbox.elem
-
-## Radio button in popup menu: <menuitem type=radio>
-	menuitem.radio.elem =
-		element menuitem { menuitem.inner & menuitem.radio.attrs }
-	menuitem.radio.attrs =
-		(	common.attrs
-		&	menuitem.radio.attrs.type
-		&	menuitem.attrs.label?
-		&	menuitem.attrs.icon?
-		&	menuitem.attrs.disabled?
-		&	menuitem.attrs.checked?
-		&	menuitem.attrs.radiogroup?
-		&	menuitem.attrs.default?
-		&	common.attrs.aria?
-		)
-		menuitem.radio.attrs.type =
-			attribute type {
-				w:string "radio"
-			}
-	menuitem.elem |= menuitem.radio.elem
-
-## Indirect command in popup menu: <menuitem command>
-	menuitem.indirect.command.elem =
-		element menuitem { menuitem.inner & menuitem.indirect.command.attrs }
-	menuitem.indirect.command.attrs =
-		(	common.attrs
-		&	menuitem.attrs.default?
-		&	menuitem.attrs.command
-		&	common.attrs.aria?
-		)
-		menuitem.attrs.command =
-			attribute command {
-				common.data.idref
-			}
-	menuitem.elem |= menuitem.indirect.command.elem
-
-	menuitem.inner =
-		( empty )
 
 ## Canvas for Dynamic Graphics: <canvas>
 

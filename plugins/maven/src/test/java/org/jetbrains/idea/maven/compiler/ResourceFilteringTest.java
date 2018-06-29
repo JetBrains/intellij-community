@@ -15,16 +15,15 @@
  */
 package org.jetbrains.idea.maven.compiler;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenExplicitProfiles;
 
+import java.io.IOException;
 import java.util.Arrays;
 
 public class ResourceFilteringTest extends MavenCompilingTestCase {
@@ -146,6 +145,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
+                     "<packaging>pom</packaging>" +
 
                      "<modules>" +
                      "  <module>m1</module>" +
@@ -295,7 +295,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
 
                   "<properties>" +
                   "  <foo>c:\\projects\\foo/bar</foo>" +
-                  "  <bar>a\\b\\c</foo>" +
+                  "  <bar>a\\b\\c</bar>" +
                   "</properties>" +
 
                   "<build>" +
@@ -539,12 +539,7 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
     compileModules("project");
     assertResult("target/classes/file.properties", "value=1");
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        VfsUtil.saveText(filter, "xxx=2");
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> VfsUtil.saveText(filter, "xxx=2"));
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
     compileModules("project");
     assertResult("target/classes/file.properties", "value=2");
@@ -1010,15 +1005,10 @@ public class ResourceFilteringTest extends MavenCompilingTestCase {
                  "value2=\\value\n");
   }
 
-  public void testDoNotFilterButCopyBigFiles() {
+  public void testDoNotFilterButCopyBigFiles() throws IOException {
     assertEquals(FileTypeManager.getInstance().getFileTypeByFileName("file.xyz"), FileTypes.UNKNOWN);
 
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]);
-      }
-    }.execute().throwException();
+    WriteAction.runAndWait(() -> createProjectSubFile("resources/file.xyz").setBinaryContent(new byte[1024 * 1024 * 20]));
 
     importProject("<groupId>test</groupId>" +
                   "<artifactId>project</artifactId>" +

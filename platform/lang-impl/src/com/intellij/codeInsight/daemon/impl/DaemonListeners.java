@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.ProjectTopics;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
 import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.facet.Facet;
@@ -47,7 +32,6 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.event.*;
 import com.intellij.openapi.editor.ex.EditorEventMulticasterEx;
-import com.intellij.openapi.editor.ex.EditorMarkupModel;
 import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -109,6 +93,7 @@ public class DaemonListeners implements Disposable {
   private final FileStatusManager myFileStatusManager;
   @NotNull private final ActionManager myActionManager;
   private final TooltipController myTooltipController;
+  private final ErrorStripeUpdateManager myErrorStripeUpdateManager;
 
   private boolean myEscPressed;
 
@@ -144,7 +129,8 @@ public class DaemonListeners implements Disposable {
                          @NotNull UndoManager undoManager,
                          @NotNull ProjectLevelVcsManager projectLevelVcsManager,
                          @NotNull VcsDirtyScopeManager vcsDirtyScopeManager,
-                         @NotNull FileStatusManager fileStatusManager) {
+                         @NotNull FileStatusManager fileStatusManager,
+                         @NotNull ErrorStripeUpdateManager stripeUpdateManager) {
     myProject = project;
     myDaemonCodeAnalyzer = daemonCodeAnalyzer;
     myPsiDocumentManager = psiDocumentManager;
@@ -155,6 +141,7 @@ public class DaemonListeners implements Disposable {
     myFileStatusManager = fileStatusManager;
     myActionManager = actionManagerEx;
     myTooltipController = tooltipController;
+    myErrorStripeUpdateManager = stripeUpdateManager;
 
     boolean replaced = ((UserDataHolderEx)myProject).replace(DAEMON_INITIALIZED, null, Boolean.TRUE);
     if (!replaced) {
@@ -180,11 +167,11 @@ public class DaemonListeners implements Disposable {
         Document document = e.getDocument();
         VirtualFile virtualFile = fileDocumentManager.getFile(document);
         Project project = virtualFile == null ? null : ProjectUtil.guessProjectForFile(virtualFile);
-        if (!worthBothering(document, project)) {
-          return; //no need to stop daemon if something happened in the console
+        //no need to stop daemon if something happened in the console or in non-physical document
+        if (worthBothering(document, project) && application.isDispatchThread()) {
+          stopDaemon(true, "Document change");
+          UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
         }
-        stopDaemon(true, "Document change");
-        UpdateHighlightersUtil.updateHighlightersByTyping(myProject, e);
       }
     }, this);
 
@@ -192,17 +179,16 @@ public class DaemonListeners implements Disposable {
       @Override
       public void caretPositionChanged(CaretEvent e) {
         final Editor editor = e.getEditor();
-        if (!editor.getComponent().isShowing() && !application.isUnitTestMode() ||
-            !worthBothering(editor.getDocument(), editor.getProject())) {
-          return; //no need to stop daemon if something happened in the console
-        }
-        if (!application.isUnitTestMode()) {
-          ApplicationManager.getApplication().invokeLater(() -> {
-            if (!editor.getComponent().isShowing() || myProject.isDisposed()) {
-              return;
-            }
-            myDaemonCodeAnalyzer.hideLastIntentionHint();
-          }, ModalityState.current());
+        if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) &&
+            worthBothering(editor.getDocument(), editor.getProject())) {
+
+          if (!application.isUnitTestMode()) {
+            ApplicationManager.getApplication().invokeLater(() -> {
+              if ((editor.getComponent().isShowing() || application.isHeadlessEnvironment()) && !myProject.isDisposed()) {
+                IntentionsUI.getInstance(myProject).invalidate();
+              }
+            }, ModalityState.current());
+          }
         }
       }
     }, this);
@@ -225,7 +211,7 @@ public class DaemonListeners implements Disposable {
           myDaemonCodeAnalyzer.setUpdateByTimerEnabled(true);
         }
         for (Editor editor : activeEditors) {
-          repaintErrorStripeRenderer(editor, myProject);
+          myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
         }
       }
     };
@@ -246,13 +232,13 @@ public class DaemonListeners implements Disposable {
                     showing + "; project is open and file is mine: " + worthBothering);
           return;
         }
-        repaintErrorStripeRenderer(editor, myProject);
+        myErrorStripeUpdateManager.repaintErrorStripePanel(editor);
       }
 
       @Override
       public void editorReleased(@NotNull EditorFactoryEvent event) {
         // mem leak after closing last editor otherwise
-        UIUtil.invokeLaterIfNeeded(myDaemonCodeAnalyzer::hideLastIntentionHint);
+        UIUtil.invokeLaterIfNeeded(IntentionsUI.getInstance(myProject)::invalidate);
       }
     };
     editorFactory.addEditorFactoryListener(editorFactoryListener, this);
@@ -325,9 +311,9 @@ public class DaemonListeners implements Disposable {
     ((EditorEventMulticasterEx)eventMulticaster).addErrorStripeListener(e -> {
       RangeHighlighter highlighter = e.getHighlighter();
       if (!highlighter.isValid()) return;
-      Object info = highlighter.getErrorStripeTooltip();
-      if (info instanceof HighlightInfo) {
-        GotoNextErrorHandler.navigateToError(myProject, e.getEditor(), (HighlightInfo)info);
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(highlighter);
+      if (info != null) {
+        GotoNextErrorHandler.navigateToError(myProject, e.getEditor(), info);
       }
     }, this);
 
@@ -585,6 +571,9 @@ public class DaemonListeners implements Disposable {
   private class MyEditorMouseMotionListener implements EditorMouseMotionListener {
     @Override
     public void mouseMoved(EditorMouseEvent e) {
+      if (Registry.is("ide.disable.editor.tooltips")) {
+        return;
+      }
       Editor editor = e.getEditor();
       if (myProject != editor.getProject()) return;
       if (editor.getComponent().getClientProperty(EditorImpl.IGNORE_MOUSE_TRACKING) != null) return;
@@ -633,18 +622,5 @@ public class DaemonListeners implements Disposable {
     if (myDaemonCodeAnalyzer.doRestart()) {
       myDaemonEventPublisher.daemonCancelEventOccurred(reason);
     }
-  }
-
-  // needed for Rider
-  public static void repaintErrorStripeRenderer(@NotNull Editor editor, @NotNull Project project) {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-    if (!project.isInitialized()) return;
-    final Document document = editor.getDocument();
-    final PsiFile psiFile = PsiDocumentManager.getInstance(project).getPsiFile(document);
-    final EditorMarkupModel markup = (EditorMarkupModel)editor.getMarkupModel();
-    markup.setErrorPanelPopupHandler(new DaemonEditorPopup(psiFile));
-    markup.setErrorStripTooltipRendererProvider(new DaemonTooltipRendererProvider(project));
-    markup.setMinMarkHeight(DaemonCodeAnalyzerSettings.getInstance().ERROR_STRIPE_MARK_MIN_HEIGHT);
-    TrafficLightRenderer.setOrRefreshErrorStripeRenderer(markup, project, document, psiFile);
   }
 }

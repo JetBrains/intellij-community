@@ -42,9 +42,11 @@ public class RunContentDescriptor implements Disposable {
   private final Icon myIcon;
   private final String myHelpId;
   private RunnerLayoutUi myRunnerLayoutUi = null;
+  private RunContentDescriptorReusePolicy myReusePolicy = RunContentDescriptorReusePolicy.DEFAULT;
 
   private boolean myActivateToolWindowWhenAdded = true;
   private boolean myReuseToolWindowActivation = false;
+  private boolean mySelectContentWhenAdded = true;
   private long myExecutionId = 0;
   private Computable<JComponent> myFocusComputable = null;
   private boolean myAutoFocusContent = false;
@@ -201,6 +203,14 @@ public class RunContentDescriptor implements Disposable {
     myActivateToolWindowWhenAdded = activateToolWindowWhenAdded;
   }
 
+  public boolean isSelectContentWhenAdded() {
+    return mySelectContentWhenAdded;
+  }
+
+  public void setSelectContentWhenAdded(boolean selectContentWhenAdded) {
+    mySelectContentWhenAdded = selectContentWhenAdded;
+  }
+
   public boolean isReuseToolWindowActivation() {
     return myReuseToolWindowActivation;
   }
@@ -268,5 +278,16 @@ public class RunContentDescriptor implements Disposable {
   @ApiStatus.Experimental
   public boolean isHiddenContent() {
     return false;
+  }
+
+  @NotNull
+  @ApiStatus.Experimental
+  public RunContentDescriptorReusePolicy getReusePolicy() {
+    return myReusePolicy;
+  }
+
+  @ApiStatus.Experimental
+  public void setReusePolicy(@NotNull RunContentDescriptorReusePolicy reusePolicy) {
+    myReusePolicy = reusePolicy;
   }
 }

@@ -47,6 +47,7 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testAssignmentTwicePreciseTypeDfa() { doTest() }
   void testAssignmentParameterDfa() { doTest() }
   void testAssignmentNoPreciseTypeDfa() { doTest() }
+  void testAssignmentPrimitiveLiteral() { doTest() }
   void testDeclarationPreciseTypeDfa() { doTest() }
   void testInstanceOfAssignmentDfa() { doTest() }
   void testStreamDfa() { doTest() }
@@ -56,10 +57,16 @@ class NormalCompletionDfaTest extends NormalCompletionTestCase {
   void testCastWhenMethodComesFromDfaSuperType() { doTest() }
   void testGenericTypeDfa() { doTest() }
   void testNarrowingReturnType() { doTest() }
+  void testNarrowingReturnTypeInVoidContext() { doTest() }
   void testNoUnnecessaryCastDfa() { doTest() }
   void testNoUnnecessaryCastRawDfa() { doTest() }
+  void testInconsistentHierarchyDfa() { doTest() }
   void testNoUnnecessaryCastDeepHierarchy() { doTest() }
   void testInstanceOfAfterFunction() { doTest() }
+  void testInstanceOfDisjunction() { doTest() }
+  void testInstanceOfDisjunction2() { doTest() }
+  void testInstanceOfDisjunctionDeep() { doTest() }
+  void testInstanceOfDisjunctionCircular() { doTest() }
   void testComplexInstanceOfDfa() {
     configureByTestName()
     myFixture.assertPreferredCompletionItems 0, 'methodFromX', 'methodFromX2', 'methodFromY', 'methodFromY2'

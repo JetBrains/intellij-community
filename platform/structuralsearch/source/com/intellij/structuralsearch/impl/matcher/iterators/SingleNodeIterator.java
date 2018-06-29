@@ -1,19 +1,29 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.impl.matcher.iterators;
 
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Bas Leijdekkers
  */
 public class SingleNodeIterator extends NodeIterator {
 
-  private final PsiElement myNode;
-  private boolean myHasNext = true;
+  public static final SingleNodeIterator EMPTY = new SingleNodeIterator(null);
 
-  public SingleNodeIterator(PsiElement node) {
+  private final PsiElement myNode;
+  private boolean myHasNext;
+
+  private SingleNodeIterator(PsiElement node) {
     myNode = node;
+    myHasNext = node != null;
+  }
+
+  @NotNull
+  public static SingleNodeIterator newSingleNodeIterator(@Nullable PsiElement node) {
+    return node == null ? EMPTY : new SingleNodeIterator(node);
   }
 
   @Override
@@ -33,11 +43,11 @@ public class SingleNodeIterator extends NodeIterator {
 
   @Override
   public void rewind() {
-    myHasNext = true;
+    reset();
   }
 
   @Override
   public void reset() {
-    myHasNext = true;
+    myHasNext = myNode != null;
   }
 }

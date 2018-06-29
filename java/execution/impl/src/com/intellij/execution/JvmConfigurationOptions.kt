@@ -8,14 +8,14 @@ import com.intellij.util.xmlb.annotations.OptionTag
 
 abstract class JvmConfigurationOptions : ModuleBasedConfigurationOptions() {
   @get:OptionTag("MAIN_CLASS_NAME")
-  var mainClassName by string()
+  var mainClassName: String? by string()
 
   @get:OptionTag("VM_PARAMETERS")
-  var vmParameters by string()
+  var vmParameters: String? by string()
 
   @get:OptionTag("ALTERNATIVE_JRE_PATH")
-  var alternativeJrePath by string()
+  var alternativeJrePath: String? by string()
 
   @get:OptionTag("ALTERNATIVE_JRE_PATH_ENABLED")
-  var isAlternativeJrePathEnabled by property(false)
+  var isAlternativeJrePathEnabled: Boolean by property(false)
 }

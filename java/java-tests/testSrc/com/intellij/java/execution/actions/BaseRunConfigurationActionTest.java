@@ -1,19 +1,15 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.execution.actions;
 
 import com.intellij.execution.actions.BaseRunConfigurationAction;
 import com.intellij.execution.application.ApplicationConfiguration;
-import com.intellij.execution.application.ApplicationConfigurationType;
 import com.intellij.execution.configurations.LocatableConfiguration;
 import com.intellij.execution.junit.JUnitConfiguration;
-import com.intellij.execution.junit.JUnitConfigurationType;
 import com.intellij.testFramework.LightIdeaTestCase;
 
 public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
   public void testRunApplicationName() {
-    ApplicationConfiguration configuration = new ApplicationConfiguration(null, getProject(), ApplicationConfigurationType.getInstance());
+    ApplicationConfiguration configuration = new ApplicationConfiguration(null, getProject());
 
     configuration.setMainClassName("com.comp.AClass");
     configuration.setGeneratedName();
@@ -32,7 +28,7 @@ public class BaseRunConfigurationActionTest extends LightIdeaTestCase {
   }
 
   public void testRunTestMethodName() {
-    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject(), JUnitConfigurationType.getInstance().getConfigurationFactories()[0]);
+    JUnitConfiguration configuration = new JUnitConfiguration(null, getProject());
     JUnitConfiguration.Data data = configuration.getPersistentData();
 
     data.MAIN_CLASS_NAME = "com.comp.ATestClass";

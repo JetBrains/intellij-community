@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.types;
 
 import com.google.common.collect.ImmutableSet;
+import com.google.common.collect.Sets;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.openapi.extensions.Extensions;
@@ -15,18 +16,19 @@ import com.intellij.psi.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
-import com.intellij.util.Function;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCustomMember;
+import com.jetbrains.python.codeInsight.completion.PyCompletionUtilsKt;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyImportedModule;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,6 +36,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Set;
+import java.util.function.Predicate;
 
 import static com.jetbrains.python.psi.PyUtil.inSameFile;
 
@@ -42,19 +45,14 @@ import static com.jetbrains.python.psi.PyUtil.inSameFile;
  */
 public class PyModuleType implements PyType { // Modules don't descend from object
   @NotNull private final PyFile myModule;
-  @Nullable private final PyImportedModule myImportedModule;
 
   public static final ImmutableSet<String> MODULE_MEMBERS = ImmutableSet.of(
     "__name__", "__file__", "__path__", "__doc__", "__dict__", "__package__");
 
   public PyModuleType(@NotNull PyFile source) {
-    this(source, null);
-  }
-  
-  public PyModuleType(@NotNull PyFile source, @Nullable PyImportedModule importedModule) {
     myModule = source;
-    myImportedModule = importedModule;
   }
+
 
   @NotNull
   public PyFile getModule() {
@@ -67,45 +65,192 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
                                                           @NotNull PyResolveContext resolveContext) {
-    final PsiElement overridingMember = resolveByOverridingMembersProviders(myModule, name, resolveContext);
-    if (overridingMember != null) {
-      return ResolveResultList.to(overridingMember);
-    }
-    final List<RatedResolveResult> attributes = myModule.multiResolveName(name);
-    if (!attributes.isEmpty()) {
-      return attributes;
-    }
-    if (PyUtil.isPackage(myModule)) {
-      final List<PyImportElement> importElements = new ArrayList<>();
-      if (myImportedModule != null && (location == null || !inSameFile(location, myImportedModule))) {
-        final PyImportElement importElement = myImportedModule.getImportElement();
-        if (importElement != null) {
-          importElements.add(importElement);
-        }
+    return resolveMemberInPackageOrModule(null, myModule, name, location, resolveContext);
+  }
+
+  @Nullable
+  public static List<? extends RatedResolveResult> resolveMemberInPackageOrModule(@Nullable PyImportedModule importedModule,
+                                                                                  @NotNull PsiFileSystemItem anchor,
+                                                                                  @NotNull String name,
+                                                                                  @Nullable PyExpression location,
+                                                                                  @NotNull PyResolveContext resolveContext) {
+
+
+    final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
+    if (module != null) {
+      final PsiElement overridingMember = resolveByOverridingMembersProviders(module, name, resolveContext);
+      if (overridingMember != null) {
+        return ResolveResultList.to(overridingMember);
       }
-      else if (location != null) {
-        final ScopeOwner owner = ScopeUtil.getScopeOwner(location);
-        if (owner != null) {
-          importElements.addAll(getVisibleImports(owner));
+
+      final List<RatedResolveResult> attributes = module.multiResolveName(name);
+      if (!attributes.isEmpty()) {
+        return attributes;
+      }
+    }
+
+
+    if (PyUtil.isPackage(anchor, location)) {
+      final ResolveResultList implicitMembers = new ResolveResultList();
+      processImplicitPackageMembers(anchor, location, importedModule, n -> name.endsWith(n), results -> {
+        implicitMembers.addAll(convertDirsToInit(results));
+        return implicitMembers.isEmpty();
+      });
+      if (!implicitMembers.isEmpty()) {
+        return implicitMembers;
+      }
+    }
+
+    if (module != null) {
+      final PsiElement member = resolveByMembersProviders(module, name, resolveContext);
+      if (member != null) {
+        return ResolveResultList.to(member);
+      }
+    }
+    return null;
+  }
+
+  private static void processImplicitPackageMembers(@NotNull PsiFileSystemItem anchor,
+                                                    @Nullable PsiElement location,
+                                                    @Nullable PyImportedModule importedModule,
+                                                    @NotNull Predicate<String> filter,
+                                                    @NotNull Processor<List<? extends RatedResolveResult>> resultProcessor) {
+    final List<PyImportElement> importElements = new ArrayList<>();
+    final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
+    if (anchor.getVirtualFile() == null) {
+      return;
+    }
+    final PsiElement footHold = location != null ? location.getContainingFile() : module;
+    if (footHold == null) {
+      return;
+    }
+    final PyImportElement origImportElement = importedModule != null ? importedModule.getImportElement() : null;
+    if (importedModule != null && (location == null || !inSameFile(location, importedModule))) {
+      if (origImportElement != null) {
+        importElements.add(origImportElement);
+      }
+    }
+    else if (location != null) {
+      final ScopeOwner owner = ScopeUtil.getScopeOwner(location);
+      if (owner != null) {
+        importElements.addAll(getVisibleImports(owner));
+      }
+
+      if (module != null) {
+        if (!inSameFile(location, module)) {
+          importElements.addAll(module.getImportTargets());
         }
-        if (!inSameFile(location, myModule)) {
-          importElements.addAll(myModule.getImportTargets());
-        }
-        final List<PyFromImportStatement> imports = myModule.getFromImports();
+        final List<PyFromImportStatement> imports = module.getFromImports();
         for (PyFromImportStatement anImport : imports) {
           Collections.addAll(importElements, anImport.getImportElements());
         }
       }
-      final List<? extends RatedResolveResult> implicitMembers = resolveImplicitPackageMember(name, importElements);
-      if (implicitMembers != null) {
-        return implicitMembers;
+    }
+
+    if (importElements.isEmpty()) {
+      return;
+    }
+
+    final Set<String> seen = Sets.newHashSet();
+    if (!processImplicitlyImportedByImportElements(anchor, footHold,
+                                                   importElements, name -> filter.test(name) && seen.add(name),
+                                                   resultProcessor)) {
+      return;
+    }
+
+    if (location != null) {
+      processImplicitlyImportedByLocation(anchor, location,
+                                          name -> filter.test(name) && seen.add(name),
+                                          resultProcessor);
+    }
+  }
+
+  private static boolean processImplicitlyImportedByImportElements(@NotNull PsiFileSystemItem anchor,
+                                                                   @NotNull PsiElement footHold,
+                                                                   @NotNull List<PyImportElement> importElements,
+                                                                   @NotNull Predicate<String> filter,
+                                                                   @NotNull Processor<List<? extends RatedResolveResult>> resultProcessor) {
+    final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
+    final List<QualifiedName> packageQNames = QualifiedNameFinder.findImportableQNames(footHold, anchor.getVirtualFile());
+    for (PyImportElement importElement : importElements) {
+      for (QualifiedName packageQName : packageQNames) {
+        for (QualifiedName importedQName : getImportedQNames(importElement)) {
+          final String directChild = findFirstComponentAfterPrefix(importedQName, packageQName);
+          if (directChild != null && filter.test(directChild)) {
+            final List<RatedResolveResult> results =
+              ResolveImportUtil.resolveChildren(anchor, directChild, module, true, true, false, false);
+            if (!resultProcessor.process(ResolveResultList.asImportedResults(results, importElement))) {
+              return false;
+            }
+          }
+        }
       }
     }
-    final PsiElement member = resolveByMembersProviders(myModule, name, resolveContext);
-    if (member != null) {
-      return ResolveResultList.to(member);
+    return true;
+  }
+
+  private static void processImplicitlyImportedByLocation(@NotNull PsiFileSystemItem anchor,
+                                                          @NotNull PsiElement location,
+                                                          @NotNull Predicate<String> filter,
+                                                          @NotNull Processor<List<? extends RatedResolveResult>> resultProcessor) {
+
+    if (location.getContainingFile().getVirtualFile() == null) {
+      return;
     }
-    return null;
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(location);
+    if (owner == null) {
+      return;
+    }
+
+    final List<PyImportElement> visibleImports = getVisibleImports(owner);
+    final PyFile module = PyUtil.as(PyUtil.turnDirIntoInit(anchor), PyFile.class);
+    final List<QualifiedName> packageQNames =
+      QualifiedNameFinder.findImportableQNames(location.getContainingFile(), anchor.getVirtualFile());
+    final List<QualifiedName> locationQNames =
+      QualifiedNameFinder.findImportableQNames(location, location.getContainingFile().getVirtualFile());
+    for (QualifiedName locationQName : locationQNames) {
+      for (QualifiedName packageQName : packageQNames) {
+        final String directChild = findFirstComponentAfterPrefix(locationQName, packageQName);
+        if (directChild != null && filter.test(directChild)) {
+          final QualifiedName mainPackage = QualifiedName.fromComponents(locationQName.getFirstComponent());
+          final PyImportElement packageImportElement =
+            visibleImports.stream().filter(el -> getImportedQNames(el).stream().anyMatch(qName -> qName.matchesPrefix(mainPackage)))
+                          .findFirst().orElse(null);
+
+          if (packageImportElement != null) {
+            final List<RatedResolveResult> results =
+              ResolveImportUtil.resolveChildren(anchor, directChild, module, true, true, false, false);
+            if (!resultProcessor.process(ResolveResultList.asImportedResults(results, packageImportElement))) {
+              return;
+            }
+          }
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static String findFirstComponentAfterPrefix(@NotNull QualifiedName qualifiedName, @NotNull QualifiedName prefix) {
+    if (qualifiedName.matchesPrefix(prefix) && qualifiedName.getComponentCount() > prefix.getComponentCount()) {
+      return qualifiedName.removeHead(prefix.getComponentCount()).getFirstComponent();
+    }
+    else {
+      return null;
+    }
+  }
+
+  @NotNull
+  private static List<? extends RatedResolveResult> convertDirsToInit(@NotNull List<? extends RatedResolveResult> ratedResolveList) {
+    return ContainerUtil.map(ratedResolveList, result -> {
+      final PsiElement element = result.getElement();
+      if (element instanceof PsiDirectory) {
+        final PsiElement pkgInit = PyUtil.turnDirIntoInit(element);
+        return pkgInit != null ? result.replace(pkgInit) : result;
+      }
+      else {
+        return result;
+      }
+    });
   }
 
   @Nullable
@@ -136,47 +281,24 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     return null;
   }
 
-  @Nullable
-  private List<? extends RatedResolveResult> resolveImplicitPackageMember(@NotNull String name,
-                                                                          @NotNull List<PyImportElement> importElements) {
-    final VirtualFile moduleFile = myModule.getVirtualFile();
-    if (moduleFile != null) {
-      for (QualifiedName packageQName : QualifiedNameFinder.findImportableQNames(myModule, myModule.getVirtualFile())) {
-        final QualifiedName resolvingQName = packageQName.append(name);
-        for (PyImportElement importElement : importElements) {
-          for (QualifiedName qName : getImportedQNames(importElement)) {
-            if (qName.matchesPrefix(resolvingQName)) {
-              final PsiElement subModule = ResolveImportUtil.resolveChild(myModule, name, myModule, false, true, false);
-              if (subModule != null) {
-                final ResolveResultList results = new ResolveResultList();
-                results.add(new ImportedResolveResult(subModule, RatedResolveResult.RATE_NORMAL, importElement));
-                return results;
-              }
-            }
-          }
-        }
-      }
-    }
-    return null;
-  }
 
   @NotNull
   private static List<QualifiedName> getImportedQNames(@NotNull PyImportElement element) {
     final List<QualifiedName> importedQNames = new ArrayList<>();
     final PyStatement stmt = element.getContainingImportStatement();
-    if (stmt instanceof PyFromImportStatement) {
-      final PyFromImportStatement fromImportStatement = (PyFromImportStatement)stmt;
+    final PyFromImportStatement fromImportStatement = ObjectUtils.tryCast(stmt, PyFromImportStatement.class);
+    if (fromImportStatement != null) {
       final QualifiedName importedQName = fromImportStatement.getImportSourceQName();
       final String visibleName = element.getVisibleName();
       if (importedQName != null) {
         importedQNames.add(importedQName);
-        final QualifiedName implicitSubModuleQName = importedQName.append(visibleName);
-        if (implicitSubModuleQName != null) {
-          importedQNames.add(implicitSubModuleQName);
+        if (visibleName != null) {
+          importedQNames.add(importedQName.append(visibleName));
         }
       }
       else {
-        final List<PsiElement> elements = ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, element.getImportedQName());
+        final List<PsiElement> elements =
+          ResolveImportUtil.resolveFromImportStatementSource(fromImportStatement, element.getImportedQName());
         for (PsiElement psiElement : elements) {
           if (psiElement instanceof PsiFile) {
             final VirtualFile virtualFile = ((PsiFile)psiElement).getVirtualFile();
@@ -194,7 +316,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
         importedQNames.add(importedQName);
       }
     }
-    if (!ResolveImportUtil.isAbsoluteImportEnabledFor(element)) {
+    if (!ResolveImportUtil.isAbsoluteImportEnabledFor(element) ||
+        (fromImportStatement != null && fromImportStatement.getRelativeLevel() == 1)) {
       PsiFile file = element.getContainingFile();
       if (file != null) {
         file = file.getOriginalFile();
@@ -218,7 +341,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @NotNull
-  public static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
+  private static List<PyImportElement> getVisibleImports(@NotNull ScopeOwner owner) {
     final List<PyImportElement> visibleImports = new ArrayList<>();
     PyResolveUtil.scopeCrawlUp(new PsiScopeProcessor() {
       @Override
@@ -234,9 +357,8 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
 
   /**
    * @param directory the module directory
-   *
    * @return a list of submodules of the specified module directory, either files or dirs, for easier naming; may contain file names
-   *         not suitable for import.
+   * not suitable for import.
    */
   @NotNull
   private static List<PsiFileSystemItem> getSubmodulesList(@Nullable PsiDirectory directory, @Nullable PsiElement anchor) {
@@ -368,56 +490,25 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
                                                                               @NotNull PsiElement location,
                                                                               @Nullable final Set<String> existingNames) {
 
-    final List<PsiElement> elements = collectImportedSubmodules(pyPackage, location);
-    return elements != null ? ContainerUtil.mapNotNull(elements,
-                                                       (Function<PsiElement, LookupElement>)element -> {
-                                                         if (element instanceof PsiFileSystemItem) {
-                                                           return buildFileLookupElement((PsiFileSystemItem)element, existingNames);
-                                                         }
-                                                         else if (element instanceof PsiNamedElement) {
-                                                           return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
-                                                         }
-                                                         return null;
-                                                       }) : Collections.emptyList();
+
+    final List<PsiElement> elements = new ArrayList<>();
+    processImplicitPackageMembers(pyPackage, location, null, any -> true, results -> {
+
+      elements.addAll(ResolveResultList.getElements(results));
+      return true;
+    });
+    return ContainerUtil.mapNotNull(elements,
+                                    element -> {
+                                      if (element instanceof PsiFileSystemItem) {
+                                        return buildFileLookupElement(location.getContainingFile(), (PsiFileSystemItem)element, existingNames);
+                                      }
+                                      else if (element instanceof PsiNamedElement) {
+                                        return LookupElementBuilder.createWithIcon((PsiNamedElement)element);
+                                      }
+                                      return null;
+                                    });
   }
 
-  @Nullable
-  public static List<PsiElement> collectImportedSubmodules(@NotNull PsiFileSystemItem pyPackage, @NotNull PsiElement location) {
-    final PsiElement parentAnchor;
-    if (pyPackage instanceof PyFile && PyUtil.isPackage(((PyFile)pyPackage))) {
-      parentAnchor = ((PyFile)pyPackage).getContainingDirectory();
-    }
-    else if (pyPackage instanceof PsiDirectory && PyUtil.isPackage(((PsiDirectory)pyPackage), location)) {
-      parentAnchor = pyPackage;
-    }
-    else {
-      return null;
-    }
-
-    final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(location);
-    if (scopeOwner == null) {
-      return Collections.emptyList();
-    }
-    final List<PsiElement> result = new ArrayList<>();
-    nextImportElement:
-    for (PyImportElement importElement : getVisibleImports(scopeOwner)) {
-      PsiElement resolvedChild = PyUtil.turnInitIntoDir(importElement.resolve());
-      if (resolvedChild == null || !PsiTreeUtil.isAncestor(parentAnchor, resolvedChild, true)) {
-        continue;
-      }
-      QualifiedName importedQName = importElement.getImportedQName();
-      // Looking for strict child of parentAncestor
-      while (resolvedChild != null && resolvedChild.getParent() != parentAnchor) {
-        if (importedQName == null || importedQName.getComponentCount() <= 1) {
-          continue nextImportElement;
-        }
-        importedQName = importedQName.removeTail(1);
-        resolvedChild = PyUtil.turnInitIntoDir(ResolveImportUtil.resolveImportElement(importElement, importedQName));
-      }
-      ContainerUtil.addIfNotNull(result, resolvedChild);
-    }
-    return result;
-  }
 
   @NotNull
   public static List<LookupElement> getSubModuleVariants(@Nullable PsiDirectory directory,
@@ -426,7 +517,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
     final List<LookupElement> result = new ArrayList<>();
     for (PsiFileSystemItem item : getSubmodulesList(directory, location)) {
       if (item != location.getContainingFile().getOriginalFile()) {
-        final LookupElement lookupElement = buildFileLookupElement(item, namesAlready);
+        final LookupElement lookupElement = buildFileLookupElement(location.getContainingFile(), item, namesAlready);
         if (lookupElement != null) {
           result.add(lookupElement);
         }
@@ -436,28 +527,18 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   }
 
   @Nullable
-  public static LookupElementBuilder buildFileLookupElement(PsiFileSystemItem item, @Nullable Set<String> existingNames) {
+  public static LookupElementBuilder buildFileLookupElement(PsiFile file, PsiFileSystemItem item, @Nullable Set<String> existingNames) {
     final String s = FileUtil.getNameWithoutExtension(item.getName());
     if (!PyNames.isIdentifier(s)) return null;
     if (existingNames != null) {
-      if (existingNames.contains(s)) return null;
-      else existingNames.add(s);
+      if (existingNames.contains(s)) {
+        return null;
+      }
+      else {
+        existingNames.add(s);
+      }
     }
-    return LookupElementBuilder.create(item, s)
-      .withTypeText(getPresentablePath((PsiDirectory)item.getParent()))
-      .withPresentableText(s)
-      .withIcon(item.getIcon(0));
-  }
-
-  private static String getPresentablePath(PsiDirectory directory) {
-    if (directory == null) {
-      return "";
-    }
-    final String path = directory.getVirtualFile().getPath();
-    if (path.contains(PythonSdkType.SKELETON_DIR_NAME)) {
-      return "<built-in>";
-    }
-    return FileUtil.toSystemDependentName(path);
+    return PyCompletionUtilsKt.createLookupElementBuilder(file, item);
   }
 
   @Override
@@ -480,12 +561,5 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   @NotNull
   public static Set<String> getPossibleInstanceMembers() {
     return MODULE_MEMBERS;
-  }
-
-  @Override
-  public void accept(@NotNull PyTypeVisitor visitor) {
-    if (visitor instanceof PyTypeVisitorExt) {
-      ((PyTypeVisitorExt)visitor).visitModuleType(this);
-    }
   }
 }

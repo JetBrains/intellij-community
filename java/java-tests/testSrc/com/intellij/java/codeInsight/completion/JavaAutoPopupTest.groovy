@@ -57,6 +57,7 @@ import com.intellij.psi.*
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
 import com.intellij.testFramework.fixtures.CodeInsightTestUtil
+import com.intellij.util.ThrowableRunnable
 import com.intellij.util.containers.ContainerUtil
 import org.jetbrains.annotations.NotNull
 
@@ -782,12 +783,9 @@ public interface Test {
     assert lookup
 
     Editor another = null
-    def wca = new WriteCommandAction.Simple(getProject(), new PsiFile[0]) {
-      @Override
-      protected void run() {
+    Runnable wca = { WriteCommandAction.writeCommandAction(getProject()).run ({
         EditorActionManager.instance.getTypedAction().handler.execute(another, (char) 'x', DataManager.instance.dataContext)
-      }
-    }
+    } as ThrowableRunnable) }
 
     try {
       edt {
@@ -795,7 +793,7 @@ public interface Test {
         lookup.hide()
         def file = myFixture.addFileToProject("b.java", "")
         another = EditorFactory.instance.createEditor(file.viewProvider.document, project)
-        wca.execute()
+        wca.run()
         assert 'x' == another.document.text
       }
       joinAutopopup()
@@ -1776,6 +1774,7 @@ class Foo {
     myFixture.configureByText "a.java", "class Foo { { foo.<caret> } }"
     type 'b'
     assert myFixture.lookupElementStrings == ['bar']
+    assert LookupElementPresentation.renderElement(myFixture.lookupElements[0]).itemText == 'bar.'
     myFixture.type('\n')
     assert myFixture.editor.document.text.contains('foo.bar. ')
     joinAutopopup()

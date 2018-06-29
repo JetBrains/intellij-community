@@ -45,7 +45,7 @@ public class JsonSchemaFileType extends LanguageFileType implements FileTypeIden
   @NotNull
   @Override
   public String getDescription() {
-    return "JSON Schema file";
+    return "JSON Schema";
   }
 
   @NotNull

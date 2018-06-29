@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.ui.laf.darcula.ui;
 
 import com.intellij.openapi.ui.ErrorBorderCapable;
@@ -47,22 +33,24 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
 
       g2.translate(r.x, r.y);
 
-      float lw = lw(g2);
-      float bw = bw();
-      float arc = arc();
-
-      Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
-      border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
-      border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
-
-      g2.setColor(getOutlineColor(c.isEnabled()));
-      g2.fill(border);
+      float lw = LW.getFloat();
+      float bw = BW.getFloat();
+      float arc = COMPONENT_ARC.getFloat();
 
       Object op = ((JComponent)c).getClientProperty("JComponent.outline");
       if (op != null) {
         paintOutlineBorder(g2, r.width, r.height, arc, true, isFocused(c), Outline.valueOf(op.toString()));
-      } else if (isFocused(c)) {
-        paintFocusBorder(g2, r.width, r.height, arc, true);
+      } else {
+        if (isFocused(c)) {
+          paintFocusBorder(g2, r.width, r.height, arc, true);
+        }
+
+        Path2D border = new Path2D.Float(Path2D.WIND_EVEN_ODD);
+        border.append(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc), false);
+        border.append(new RoundRectangle2D.Float(bw + lw, bw + lw, r.width - (bw + lw) * 2, r.height - (bw + lw) * 2, arc, arc), false);
+
+        g2.setColor(getOutlineColor(c.isEnabled(), isFocused(c)));
+        g2.fill(border);
       }
     } finally {
       g2.dispose();
@@ -71,7 +59,7 @@ public class DarculaSpinnerBorder implements Border, UIResource, ErrorBorderCapa
 
   @Override
   public Insets getBorderInsets(Component c) {
-    return JBUI.insets(4, 8, 4, 4).asUIResource();
+    return JBUI.insets(3).asUIResource();
   }
 
   @Override

@@ -104,7 +104,6 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
       entryPointsManager.addEntryPoint(refClass!!, true)
       assertSize(1, patterns)
       assertEquals("Foo", patterns.iterator().next().pattern)
-      assertEmpty(entryPointsManager.entryPoints)
 
       //remove class entry point with constructors - ensure nothing is left in the entries
       entryPointsManager.removeEntryPoint(refClass)
@@ -113,7 +112,7 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
       }
 
       assertEmpty(patterns)
-      assertEmpty(entryPointsManager.entryPoints)
+      assertEmpty(entryPointsManager.getEntryPoints(context.refManager))
     }
     finally {
       context.cleanup()
@@ -137,12 +136,11 @@ class UnusedDeclarationClassPatternsTest : LightCodeInsightFixtureTestCase() {
       val classPattern = patterns.iterator().next()
       assertEquals("Foo", classPattern.pattern)
       assertEquals("foo", classPattern.method)
-      assertEmpty(entryPointsManager.entryPoints)
 
       entryPointsManager.removeEntryPoint(refMethod)
 
       assertEmpty(patterns)
-      assertEmpty(entryPointsManager.entryPoints)
+      assertEmpty(entryPointsManager.getEntryPoints(context.refManager))
     }
     finally {
       context.cleanup()

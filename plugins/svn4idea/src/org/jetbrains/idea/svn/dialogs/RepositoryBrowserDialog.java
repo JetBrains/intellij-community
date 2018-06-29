@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.dialogs;
 
 import com.intellij.CommonBundle;
@@ -15,6 +15,8 @@ import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.project.DumbAwareAction;
+import com.intellij.openapi.project.DumbAwareToggleAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
@@ -25,7 +27,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.ChangeListViewerDialog;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.util.IconUtil;
 import com.intellij.util.WaitForProgressToShow;
@@ -37,7 +38,6 @@ import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.actions.BrowseRepositoryAction;
 import org.jetbrains.idea.svn.api.Revision;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.api.Url;
@@ -61,6 +61,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.util.ArrayUtil.isEmpty;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
 
@@ -159,16 +160,9 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }, browser);
     group.add(action);
 
-    if ((additionalActions != null) || (! horizontal)) {
+    if (!isEmpty(additionalActions)) {
       group.addSeparator();
-    }
-    if (additionalActions != null) {
-      for (AnAction anAction : additionalActions) {
-        group.add(anAction);
-      }
-    }
-    if (! horizontal) {
-      group.add(new CloseToolWindowAction());
+      group.addAll(additionalActions);
     }
     return ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, group, horizontal).getComponent();
   }
@@ -317,7 +311,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     return getRepositoryBrowser().getSelectedNode();
   }
 
-  protected class HistoryAction extends AnAction {
+  protected class HistoryAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText(SvnBundle.message("repository.browser.history.action"));
       e.getPresentation().setDescription(SvnBundle.message("repository.browser.history.action"));
@@ -340,7 +334,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  public static class RefreshAction extends AnAction {
+  public static class RefreshAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public RefreshAction(final RepositoryBrowserComponent browserComponent) {
@@ -363,7 +357,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected static class AddLocationAction extends AnAction {
+  protected static class AddLocationAction extends DumbAwareAction {
 
     private final RepositoryBrowserComponent myBrowserComponent;
 
@@ -385,17 +379,17 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       final AddRepositoryLocationDialog dialog = new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy());
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        final String url = dialog.getSelected();
-        if (url != null && url.length() > 0) {
-          settings.addTypedUrl(url);
-          settings.addCheckoutURL(url);
+        Url url = dialog.getSelected();
+        if (url != null) {
+          settings.addTypedUrl(url.toDecodedString());
+          settings.addCheckoutURL(url.toDecodedString());
           myBrowserComponent.addURL(url);
         }
       }
     }
   }
 
-  protected static class EditLocationAction extends AnAction {
+  protected static class EditLocationAction extends DumbAwareAction {
 
     @NotNull private final RepositoryBrowserComponent myBrowserComponent;
 
@@ -419,13 +413,13 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       if (node == null || (! (node.getParent() instanceof RepositoryTreeRootNode))) {
         return;
       }
-      final String oldUrl = node.getURL().toString();
+      Url oldUrl = node.getURL();
       final SvnApplicationSettings settings = SvnApplicationSettings.getInstance();
       final AddRepositoryLocationDialog dialog =
         new AddRepositoryLocationDialog(myBrowserComponent.getProject(), settings.getTypedUrlsListCopy()) {
         @Override
         protected String initText() {
-          return oldUrl;
+          return oldUrl.toDecodedString();
         }
 
         @Override
@@ -435,11 +429,11 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       };
       dialog.show();
       if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
-        final String url = dialog.getSelected();
-        if (url != null && url.length() > 0) {
-          settings.addTypedUrl(url);
-          settings.removeCheckoutURL(oldUrl);
-          settings.addCheckoutURL(url);
+        Url url = dialog.getSelected();
+        if (url != null) {
+          settings.addTypedUrl(url.toDecodedString());
+          settings.removeCheckoutURL(oldUrl.toString());
+          settings.addCheckoutURL(url.toDecodedString());
 
           myBrowserComponent.removeURL(oldUrl);
           myBrowserComponent.addURL(url);
@@ -448,7 +442,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected static class DiscardLocationAction extends AnAction {
+  protected static class DiscardLocationAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public DiscardLocationAction(final RepositoryBrowserComponent browserComponent) {
@@ -476,12 +470,12 @@ public class RepositoryBrowserDialog extends DialogWrapper {
           return;
         }
         SvnApplicationSettings.getInstance().removeCheckoutURL(url.toString());
-        myBrowserComponent.removeURL(url.toString());
+        myBrowserComponent.removeURL(url);
       }
     }
   }
 
-  public static class MkDirAction extends AnAction {
+  public static class MkDirAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public MkDirAction(final RepositoryBrowserComponent browserComponent) {
@@ -519,7 +513,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class DiffAction extends AnAction {
+  protected class DiffAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Compare With...", true);
       setEnabled(e, getRepositoryBrowser().getSelectedNode());
@@ -581,7 +575,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class CopyOrMoveAction extends AnAction {
+  protected class CopyOrMoveAction extends DumbAwareAction {
     private final String myActionName;
     private final String myDialogTitleKey;
     private final boolean myMove;
@@ -617,7 +611,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         final String path = src.getPath();
         final int folder = path.replace('\\', '/').lastIndexOf('/');
         if (folder != -1) {
-          final String lastFolder = path.substring(folder + 1, path.length());
+          final String lastFolder = path.substring(folder + 1);
           if (myMove && "trunk".equalsIgnoreCase(lastFolder)) {
             final int result =
               Messages.showOkCancelDialog(myProject, "You are about to move folder named '" + lastFolder +
@@ -719,7 +713,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     };
   }
 
-  protected class CopyUrlAction extends AnAction {
+  protected class CopyUrlAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("Copy URL...");
       RepositoryTreeNode node = getRepositoryBrowser().getSelectedNode();
@@ -735,7 +729,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  public static class DeleteAction extends AnAction {
+  public static class DeleteAction extends DumbAwareAction {
     private final RepositoryBrowserComponent myBrowserComponent;
 
     public DeleteAction(final RepositoryBrowserComponent browserComponent) {
@@ -814,7 +808,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class ImportAction extends AnAction {
+  protected class ImportAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setVisible(showImportAction());
       e.getPresentation().setText(SvnBundle.message("repository.browser.import.action"));
@@ -828,7 +822,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class ExportAction extends AnAction {
+  protected class ExportAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Export...");
       e.getPresentation().setEnabled(getRepositoryBrowser().getSelectedNode() != null);
@@ -851,7 +845,8 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       }
     }
   }
-  protected class CheckoutAction extends AnAction {
+
+  protected class CheckoutAction extends DumbAwareAction {
     public void update(AnActionEvent e) {
       e.getPresentation().setText("_Checkout...", true);
       setEnabled(e, getRepositoryBrowser().getSelectedNode());
@@ -873,7 +868,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     e.getPresentation().setEnabled(node != null && (node.getSVNDirEntry() == null || node.getSVNDirEntry().isDirectory()) && !isRunning);
   }
 
-  protected class BrowseChangesAction extends AnAction {
+  protected class BrowseChangesAction extends DumbAwareAction {
     public BrowseChangesAction() {
       super(SvnBundle.message("repository.browser.browse.changes.action"),
             SvnBundle.message("repository.browser.browse.changes.description"), null);
@@ -885,8 +880,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
         return;
       }
       Url url = node.getURL();
-      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(),
-                                                                  new SvnRepositoryLocation(url.toString()),
+      AbstractVcsHelper.getInstance(myProject).showChangesBrowser(myVCS.getCommittedChangesProvider(), new SvnRepositoryLocation(url),
                                                                   "Changes in " + url.toString(), null);
     }
 
@@ -895,7 +889,7 @@ public class RepositoryBrowserDialog extends DialogWrapper {
     }
   }
 
-  protected class DetailsAction extends ToggleAction {
+  protected class DetailsAction extends DumbAwareToggleAction {
 
     private boolean myIsSelected;
 
@@ -1088,20 +1082,5 @@ public class RepositoryBrowserDialog extends DialogWrapper {
       dlg.setTitle(title);
       dlg.show();
     });
-  }
-
-  private class CloseToolWindowAction extends AnAction {
-    public void actionPerformed(AnActionEvent e) {
-      disposeRepositoryBrowser();
-      Project p = e.getData(CommonDataKeys.PROJECT);
-      ToolWindowManager.getInstance(p).unregisterToolWindow(BrowseRepositoryAction.REPOSITORY_BROWSER_TOOLWINDOW);
-
-    }
-
-    public void update(AnActionEvent e) {
-      e.getPresentation().setText("Close");
-      e.getPresentation().setDescription("Close this tool window");
-      e.getPresentation().setIcon(AllIcons.Actions.Cancel);
-    }
   }
 }

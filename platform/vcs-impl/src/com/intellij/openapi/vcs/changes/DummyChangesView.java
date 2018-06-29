@@ -53,6 +53,6 @@ class DummyChangesView implements ChangesViewI {
   }
 
   @Override
-  public void setShowFlattenMode(boolean state) {
+  public void setGrouping(@NotNull String groupingKey) {
   }
 }

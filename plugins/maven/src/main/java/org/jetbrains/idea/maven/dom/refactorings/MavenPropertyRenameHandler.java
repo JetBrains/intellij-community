@@ -17,12 +17,8 @@ package org.jetbrains.idea.maven.dom.refactorings;
 
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.rename.PsiElementRenameHandler;
@@ -32,7 +28,7 @@ import org.jetbrains.idea.maven.dom.references.MavenTargetUtil;
 
 public class MavenPropertyRenameHandler extends PsiElementRenameHandler {
   @Override
-  public boolean isAvailableOnDataContext(DataContext context) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext context) {
     return findTarget(context) != null;
   }
 

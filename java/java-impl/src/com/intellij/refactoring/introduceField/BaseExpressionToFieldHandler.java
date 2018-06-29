@@ -27,7 +27,6 @@ import com.intellij.ide.util.DirectoryChooserUtil;
 import com.intellij.ide.util.PackageUtil;
 import com.intellij.ide.util.PsiClassListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -153,8 +152,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         return true;
       }
       else if ("package-info.java".equals(file.getName())) {
-        CommonRefactoringUtil.showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
-                                            getRefactoringName(), getHelpID());
+        CommonRefactoringUtil
+          .showErrorHint(project, editor, RefactoringBundle.message("error.not.supported.for.package.info", getRefactoringName()),
+                         getRefactoringName(), getHelpID());
         return true;
       }
       else {
@@ -207,12 +207,9 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
                                  anchorStatementIfAll, tempAnchorElement, editor,
                                  myParentClass);
 
-    new WriteCommandAction(project, getRefactoringName()){
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        runnable.run();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(project).withName(getRefactoringName()).run(() -> {
+      runnable.run();
+    });
     return false;
   }
 
@@ -710,7 +707,7 @@ public abstract class BaseExpressionToFieldHandler extends IntroduceHandlerBase 
         }
 
         final SmartTypePointer type = SmartTypePointerManager.getInstance(myProject).createSmartTypePointer(myType);
-        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType);
+        initializer = IntroduceVariableBase.simplifyVariableInitializer(initializer, myType, initializerPlace == InitializationPlace.IN_FIELD_DECLARATION);
 
         final PsiMethod enclosingConstructor = getEnclosingConstructor(myParentClass, myAnchorElement);
         PsiClass destClass = mySettings.getDestinationClass() == null ? myParentClass : mySettings.getDestinationClass();

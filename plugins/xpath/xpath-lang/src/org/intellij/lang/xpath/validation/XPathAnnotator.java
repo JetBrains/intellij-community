@@ -150,7 +150,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
                 annotation.registerFix(new ExpressionReplacementFix(replacement, display, expression));
               }
             } else if (number == expression.getROperand()) {
-              final PsiElement next = PsiTreeUtil.getParentOfType(PsiTreeUtil.nextLeaf(expression), XPathExpression.class, true);
+              final XPathExpression next = PsiTreeUtil.getParentOfType(PsiTreeUtil.nextLeaf(expression), XPathExpression.class, true);
               if (next instanceof XPathBinaryExpression) {
                 final XPathBinaryExpression left = (XPathBinaryExpression)next;
                 final XPathExpression rOperand = left.getROperand();
@@ -159,7 +159,7 @@ public final class XPathAnnotator extends XPath2ElementVisitor implements Annota
                   final String replacement = lOperand.getText() + " " + expression.getOperationSign() + " " + display + " " + rOperand.getText();
 
                   assert PsiEquivalenceUtil.areElementsEquivalent(next, XPathChangeUtil.createExpression(next, replacement));
-                  annotation.registerFix(new ExpressionReplacementFix(replacement, display, (XPathExpression)next));
+                  annotation.registerFix(new ExpressionReplacementFix(replacement, display, next));
                 }
               }
             }

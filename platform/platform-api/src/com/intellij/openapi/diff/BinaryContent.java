@@ -15,9 +15,9 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.project.Project;
@@ -26,6 +26,7 @@ import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
+import com.intellij.pom.Navigatable;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
@@ -84,9 +85,9 @@ public class BinaryContent extends DiffContent {
   }
 
   @Override
-  public OpenFileDescriptor getOpenFileDescriptor(int offset) {
+  public Navigatable getOpenFileDescriptor(int offset) {
     VirtualFile file = findVirtualFile();
-    return file == null ? null : new OpenFileDescriptor(myProject, file, offset);
+    return file == null ? null : PsiNavigationSupport.getInstance().createNavigatable(myProject, file, offset);
   }
 
   @Nullable

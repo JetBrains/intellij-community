@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.openapi.application.ApplicationManager
@@ -209,7 +195,7 @@ internal class ApplicationStoreTest {
 </application>""")
   }
 
-  @State(name = "A", storages = arrayOf(Storage("a.xml")), additionalExportFile = "foo")
+  @State(name = "A", storages = [(Storage("a.xml"))], additionalExportFile = "foo")
   private open class A : PersistentStateComponent<TestState> {
     var options = TestState()
 
@@ -250,7 +236,7 @@ internal class ApplicationStoreTest {
   fun `modification tracker`() {
     testAppConfig.refreshVfs()
 
-    @State(name = "modificationTrackerA", storages = arrayOf(Storage("a.xml")))
+    @State(name = "modificationTrackerA", storages = [(Storage("a.xml"))])
     open class A : PersistentStateComponent<TestState>, SimpleModificationTracker() {
       var options = TestState()
 
@@ -314,7 +300,7 @@ internal class ApplicationStoreTest {
   fun persistentStateComponentWithModificationTracker() {
     testAppConfig.refreshVfs()
 
-    @State(name = "TestPersistentStateComponentWithModificationTracker", storages = arrayOf(Storage("b.xml")))
+    @State(name = "TestPersistentStateComponentWithModificationTracker", storages = [(Storage("b.xml"))])
     open class A : PersistentStateComponentWithModificationTracker<TestState> {
       var modificationCount = AtomicLong(0)
 
@@ -377,7 +363,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `do not check if only format changed for non-roamable storage`() {
-    @State(name = "A", storages = arrayOf(Storage(value = "b.xml", roamingType = RoamingType.DISABLED)))
+    @State(name = "A", storages = [(Storage(value = "b.xml", roamingType = RoamingType.DISABLED))])
     class AWorkspace : A()
 
     val oldContent = """<application><component name="A" foo="old" deprecated="old"/></application>"""
@@ -403,7 +389,7 @@ internal class ApplicationStoreTest {
   }
 
   @Test fun `other xml file as not-roamable without explicit roaming`() {
-    @State(name = "A", storages = arrayOf(Storage(value = "other.xml")))
+    @State(name = "A", storages = [(Storage(value = "other.xml"))])
     class AOther : A()
 
     val component = AOther()
@@ -470,7 +456,7 @@ internal class ApplicationStoreTest {
     var foo = "defaultValue"
   }
 
-  @State(name = "A", storages = arrayOf(Storage("new.xml"), Storage(value = "old.xml", deprecated = true)))
+  @State(name = "A", storages = [(Storage("new.xml")), (Storage(value = "old.xml", deprecated = true))])
   class SeveralStoragesConfigured : Foo(), PersistentStateComponent<SeveralStoragesConfigured> {
     override fun getState(): SeveralStoragesConfigured? {
       return this
@@ -481,7 +467,7 @@ internal class ApplicationStoreTest {
     }
   }
 
-  @State(name = "A", storages = arrayOf(Storage(value = "old.xml", deprecated = true), Storage("new.xml")))
+  @State(name = "A", storages = [(Storage(value = "old.xml", deprecated = true)), (Storage("new.xml"))])
   class ActualStorageLast : Foo(), PersistentStateComponent<ActualStorageLast> {
     override fun getState() = this
 

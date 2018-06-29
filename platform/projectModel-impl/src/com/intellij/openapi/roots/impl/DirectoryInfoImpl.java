@@ -73,16 +73,11 @@ public class DirectoryInfoImpl extends DirectoryInfo {
            "module=" + getModule() +
            ", isInModuleSource=" + myInModuleSource +
            ", rootTypeId=" + getSourceRootTypeId() +
-           ", isInLibrarySource=" + isInLibrarySource() +
            ", isExcludedFromModule=" + myExcluded +
            ", libraryClassRoot=" + getLibraryClassRoot() +
            ", contentRoot=" + getContentRoot() +
            ", sourceRoot=" + getSourceRoot() +
            "}";
-  }
-
-  public boolean isInProject() {
-    return !myExcluded;
   }
 
   @Override
@@ -110,10 +105,6 @@ public class DirectoryInfoImpl extends DirectoryInfo {
 
   public boolean isInModuleSource() {
     return myInModuleSource;
-  }
-
-  public boolean isInLibrarySource() {
-    return myInLibrarySource;
   }
 
   public boolean isInLibrarySource(@NotNull VirtualFile file) {

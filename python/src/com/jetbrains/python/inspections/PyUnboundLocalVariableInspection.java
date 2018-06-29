@@ -39,8 +39,10 @@ import com.jetbrains.python.inspections.quickfix.AddGlobalQuickFix;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyGlobalStatementNavigator;
+import com.jetbrains.python.psi.resolve.PyResolveUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -68,8 +70,13 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     public Visitor(final ProblemsHolder holder, LocalInspectionToolSession session) {
       super(holder, session);
     }
+
     @Override
     public void visitPyReferenceExpression(final PyReferenceExpression node) {
+      if (PyResolveUtil.allowForwardReferences(node)) {
+        return;
+      }
+
       if (node.getContainingFile() instanceof PyExpressionCodeFragment) {
         return;
       }
@@ -127,15 +134,15 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           return;
         }
         final PsiPolyVariantReference ref = node.getReference(getResolveContext());
-        if (ref == null) {
-          return;
-        }
         final PsiElement resolved = ref.resolve();
         final boolean isBuiltin = PyBuiltinCache.getInstance(node).isBuiltin(resolved);
         if (owner instanceof PyClass) {
           if (isBuiltin || ScopeUtil.getDeclarationScopeOwner(owner, name) != null) {
             return;
           }
+        }
+        if (isWriteAndRaiseInsideWith(node, resolved)) {
+          return;
         }
         if (PyUnreachableCodeInspection.hasAnyInterruptedControlFlowPaths(node)) {
           return;
@@ -158,6 +165,27 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
       }
     }
 
+    private static boolean isWriteAndRaiseInsideWith(@NotNull PyReferenceExpression node, @Nullable PsiElement resolvedElement) {
+      if (resolvedElement != null && !PyUtil.inSameFile(node, resolvedElement)) {
+        return false;
+      }
+      boolean isExceptionRaised = false;
+      boolean isUnderContextManager = false;
+      PsiElement firstWith = PsiTreeUtil.getParentOfType(resolvedElement, PyWithStatement.class, true, ScopeOwner.class);
+      if (firstWith != null && PsiTreeUtil.findChildOfType(firstWith, PyRaiseStatement.class) != null) {
+        isExceptionRaised = true;
+        PyWithStatement withStatement = (PyWithStatement)firstWith;
+        for (PyWithItem withItem : withStatement.getWithItems()) {
+          PyExpression contextManager = withItem.getExpression();
+          if (contextManager != null) {
+            isUnderContextManager = true;
+            break;
+          }
+        }
+      }
+      return isExceptionRaised && isUnderContextManager;
+    }
+
     private static boolean isFirstUnboundRead(@NotNull PyReferenceExpression node, @NotNull ScopeOwner owner) {
       final String nodeName = node.getReferencedName();
       final Scope scope = ControlFlowCache.getScope(owner);
@@ -173,7 +201,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
           final ReadWriteInstruction rwInstruction = (ReadWriteInstruction)instruction;
           final String name = rwInstruction.getName();
           final PsiElement element = rwInstruction.getElement();
-          if (element != null && name != null && name.equals(nodeName) && instruction.num() != num) {
+          if (element != null && name != null && name.equals(nodeName) && instruction.num() < num) {
             try {
               if (scope.getDeclaredVariable(element, name) == null) {
                 final ReadWriteInstruction.ACCESS access = rwInstruction.getAccess();

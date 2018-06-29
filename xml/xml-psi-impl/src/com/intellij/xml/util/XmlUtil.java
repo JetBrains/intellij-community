@@ -566,6 +566,9 @@ public class XmlUtil {
     final LeafElement emptyTagEnd = (LeafElement)XmlChildRole.EMPTY_TAG_END_FINDER.findChild(compositeElement);
     if (emptyTagEnd == null) return;
 
+    if (XmlTokenType.WHITESPACES.contains(emptyTagEnd.getTreePrev().getElementType())) {
+      compositeElement.removeChild(emptyTagEnd.getTreePrev());
+    }
     compositeElement.removeChild(emptyTagEnd);
     PsiElement[] children = newTag.getChildren();
 
@@ -630,18 +633,6 @@ public class XmlUtil {
       }
     }
     return (XmlTag)parent.add(child);
-  }
-
-  /**
-   * @see XmlTag#getAttributeValue(String)
-   */
-  @Nullable
-  @Deprecated
-  public static String getAttributeValue(XmlTag tag, String name) {
-    for (XmlAttribute attribute : tag.getAttributes()) {
-      if (name.equals(attribute.getName())) return attribute.getValue();
-    }
-    return null;
   }
 
   // Read the function name and parameter names to find out what this function does... :-)

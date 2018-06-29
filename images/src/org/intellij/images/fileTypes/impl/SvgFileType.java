@@ -17,6 +17,7 @@ package org.intellij.images.fileTypes.impl;
 
 import com.intellij.ide.highlighter.XmlLikeFileType;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.fileTypes.UIBasedFileType;
 import icons.ImagesIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -26,7 +27,7 @@ import javax.swing.*;
 /**
  * @author Konstantin Bulenkov
  */
-public final class SvgFileType extends XmlLikeFileType {
+public final class SvgFileType extends XmlLikeFileType implements UIBasedFileType {
   public static final SvgFileType INSTANCE = new SvgFileType();
 
   private SvgFileType() {

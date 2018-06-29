@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.groovy;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 
 import java.io.File;
@@ -24,7 +25,7 @@ import java.io.File;
  */
 public class GroovyJavaBuilderExtension extends JavaBuilderExtension {
   @Override
-  public boolean shouldHonorFileEncodingForCompilation(File file) {
+  public boolean shouldHonorFileEncodingForCompilation(@NotNull File file) {
     return GroovyBuilder.isGroovyFile(file.getAbsolutePath());
   }
 }

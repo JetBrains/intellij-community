@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.HyperlinkLabel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.TextFieldWithHistory;
 import com.intellij.ui.TextFieldWithHistoryWithBrowseButton;
 import com.intellij.ui.components.ComponentsKt;
@@ -630,7 +631,7 @@ public class SwingHelper {
                              @NotNull String bodyInnerHtml,
                              @Nullable Color foregroundColor) {
     editorPane.setText(buildHtml(
-      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, null, null),
+      UIUtil.getCssFontDeclaration(editorPane.getFont(), foregroundColor, JBColor.link(), null),
       bodyInnerHtml
     ));
   }
@@ -758,7 +759,7 @@ public class SwingHelper {
     disabledHtml = disabledHtml == null ? innerHtml : disabledHtml;
     final Font font = UIUtil.getLabelFont();
     String html = buildHtml(
-      UIUtil.getCssFontDeclaration(font, UIUtil.getInactiveTextColor(), null, null),
+      UIUtil.getCssFontDeclaration(font, UIUtil.getActiveTextColor(), null, null),
       innerHtml
     );
     String disabled = buildHtml(

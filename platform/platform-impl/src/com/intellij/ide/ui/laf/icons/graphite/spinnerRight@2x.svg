@@ -1,0 +1,31 @@
+<svg xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink" width="34" height="42" viewBox="0 0 34 42">
+  <defs>
+    <rect id="spinnerright@2x-a" width="34" height="42"/>
+    <linearGradient id="spinnerright@2x-c" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#B0B0B6"/>
+      <stop offset="100%" stop-color="#929296"/>
+    </linearGradient>
+    <linearGradient id="spinnerright@2x-e" x1="50%" x2="50%" y1="0%" y2="100%">
+      <stop offset="0%" stop-color="#A5A5AA"/>
+      <stop offset="100%" stop-color="#7E7D83"/>
+    </linearGradient>
+    <rect id="spinnerright@2x-d" width="130" height="42" x="-96" rx="8"/>
+  </defs>
+  <g fill="none" fill-rule="evenodd">
+    <mask id="spinnerright@2x-b" fill="#fff">
+      <use xlink:href="#spinnerright@2x-a"/>
+    </mask>
+    <g mask="url(#spinnerright@2x-b)">
+      <use fill="url(#spinnerright@2x-c)" xlink:href="#spinnerright@2x-d"/>
+      <rect width="129" height="41" x="-95.5" y=".5" stroke="url(#spinnerright@2x-e)" rx="8"/>
+    </g>
+    <g transform="translate(10 7)">
+      <rect width="13" height="3" y="22" fill="#D4D4D7"/>
+      <rect width="11" height="1" x="1" y="23" fill="#FFF"/>
+      <rect width="13" height="3" y="5" fill="#D4D4D7"/>
+      <rect width="3" height="13" x="5" fill="#D4D4D7"/>
+      <rect width="1" height="11" x="6" y="1" fill="#FFF"/>
+      <rect width="11" height="1" x="1" y="6" fill="#FFF"/>
+    </g>
+  </g>
+</svg>

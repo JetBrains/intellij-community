@@ -4,6 +4,7 @@ package com.intellij.openapi.project;
 import com.google.common.annotations.VisibleForTesting;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PowerSaveMode;
+import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.impl.ApplicationImpl;
@@ -50,6 +51,7 @@ import java.util.concurrent.locks.LockSupport;
 public class DumbServiceImpl extends DumbService implements Disposable, ModificationTracker {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.project.DumbServiceImpl");
   private final AtomicReference<State> myState = new AtomicReference<>(State.SMART);
+  private volatile Throwable myDumbEnterTrace;
   private volatile Throwable myDumbStart;
   private volatile TransactionId myDumbStartTransaction;
   private final DumbModeListener myPublisher;
@@ -74,6 +76,29 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
     myProject = project;
     myPublisher = project.getMessageBus().syncPublisher(DUMB_MODE);
     myStartupManager = startupManager;
+
+    ApplicationManager.getApplication().getMessageBus().connect(project)
+                      .subscribe(BatchFileChangeListener.TOPIC, new BatchFileChangeListener() {
+                        @SuppressWarnings("UnnecessaryFullyQualifiedName") // synchronized, can be accessed from different threads
+                        java.util.Stack<AccessToken> stack = new Stack<>(); 
+
+                        @Override
+                        public void batchChangeStarted(@NotNull Project project, @Nullable String activityName) {
+                          if (project == myProject) {
+                            stack.push(heavyActivityStarted(activityName != null ? UIUtil.removeMnemonic(activityName) : "file system changes"));
+                          }
+                        }
+
+                        @Override
+                        public void batchChangeCompleted(@NotNull Project project) {
+                          if (project != myProject) return;
+
+                          Stack<AccessToken> tokens = stack;
+                          if (!tokens.isEmpty()) { // just in case
+                            tokens.pop().finish();
+                          }
+                        }
+                      });
   }
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
@@ -114,20 +139,28 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   @Override
   public void suspendIndexingAndRun(@NotNull String activityName, @NotNull Runnable activity) {
+    try (AccessToken ignore = heavyActivityStarted(activityName)) {
+      activity.run();
+    }
+  }
+
+  @NotNull
+  private AccessToken heavyActivityStarted(@NotNull String activityName) {
     String reason = "Indexing paused due to " + activityName;
     synchronized (myRequestedSuspensions) {
       myRequestedSuspensions.add(reason);
     }
 
     suspendCurrentTask(reason);
-    try {
-      activity.run();
-    } finally {
-      synchronized (myRequestedSuspensions) {
-        myRequestedSuspensions.remove(reason);
+    return new AccessToken() {
+      @Override
+      public void finish() {
+        synchronized (myRequestedSuspensions) {
+          myRequestedSuspensions.remove(reason);
+        }
+        resumeAutoSuspendedTask(reason);
       }
-      resumeAutoSuspendedTask(reason);
-    }
+    };
   }
 
   private void suspendCurrentTask(String reason) {
@@ -269,6 +302,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         myState.set(State.SCHEDULED_TASKS);
       }
       myDumbStart = trace;
+      myDumbEnterTrace = new Throwable();
       myDumbStartTransaction = contextTransaction;
       myModificationCount++;
     });
@@ -295,6 +329,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
         return false;
       }
     }
+    myDumbEnterTrace = null;
     myDumbStart = null;
     myModificationCount++;
     return !myProject.isDisposed();
@@ -426,7 +461,7 @@ public class DumbServiceImpl extends DumbService implements Disposable, Modifica
 
   private void assertWeAreWaitingToFinish() {
     if (myState.get() != State.WAITING_FOR_FINISH) {
-      Attachment[] attachments = myDumbStart != null ? new Attachment[]{new Attachment("indexingStart.trace", myDumbStart)} : Attachment.EMPTY_ARRAY;
+      Attachment[] attachments = myDumbEnterTrace != null ? new Attachment[]{new Attachment("indexingStart", myDumbEnterTrace)} : Attachment.EMPTY_ARRAY;
       throw new RuntimeExceptionWithAttachments(myState.get().toString(), attachments);
     }
   }

@@ -19,6 +19,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Locale;
+
 /**
  * The entry for rebase editor
  */
@@ -98,32 +100,50 @@ class GitRebaseEntry {
     /**
      * the pick action
      */
-    pick,
+    PICK("pick", 'p'),
     /**
      * the edit action, the user will be offered to alter commit
      */
-    edit,
+    EDIT("edit", 'e'),
     /**
      * the skip action
      */
-    skip,
+    SKIP("skip", 's'),
     /**
      * the squash action (for two or more commits)
      */
-    squash,
+    SQUASH("squash", 'q'),
 
-    reword,
+    REWORD("reword", 'r'),
 
-    fixup;
+    FIXUP("fixup", 'f');
+
+
+    @NotNull private final String myText;
+    private final char myMnemonic;
+
+    Action(@NotNull String text, char mnemonic) {
+      myText = text;
+      myMnemonic = mnemonic;
+    }
+
+    public char getMnemonic() {
+      return myMnemonic;
+    }
+
+    @Override
+    public String toString() {
+      return myText;
+    }
 
     @NotNull
     static Action fromString(@NonNls @NotNull String actionName) {
       try {
-        return valueOf(actionName.toLowerCase());
+        return valueOf(actionName.toUpperCase(Locale.ENGLISH));
       }
       catch (IllegalArgumentException e) {
         log.error(e);
-        return pick;
+        return PICK;
       }
     }
   }

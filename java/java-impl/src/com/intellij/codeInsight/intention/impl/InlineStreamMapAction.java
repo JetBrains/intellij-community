@@ -243,13 +243,13 @@ public class InlineStreamMapAction extends PsiElementBaseIntentionAction {
       }
       ct.replace(e, replacement);
     }
-    ct.replace(nextParameters[0], ct.markUnchanged(prevParameters[0]));
+    ct.replace(nextParameters[0], prevParameters[0]);
     ExpressionUtils.bindReferenceTo(nextRef, newName);
     PsiExpression prevQualifier = mapCall.getMethodExpression().getQualifierExpression();
     if(prevQualifier == null) {
       ct.deleteAndRestoreComments(nextQualifier);
     } else {
-      ct.replaceAndRestoreComments(nextQualifier, ct.markUnchanged(prevQualifier));
+      ct.replaceAndRestoreComments(nextQualifier, prevQualifier);
     }
     CodeStyleManager.getInstance(project).reformat(lambda);
   }

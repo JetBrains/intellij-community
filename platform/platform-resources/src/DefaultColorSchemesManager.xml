@@ -121,6 +121,18 @@
       <option name="DEFAULT_PARAMETER">
         <value/>
       </option>
+      <option name="DEFAULT_REASSIGNED_PARAMETER">
+        <value>
+          <option name="EFFECT_COLOR" value="909090"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
+      <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="EFFECT_COLOR" value="909090"/>
+          <option name="EFFECT_TYPE" value="1"/>
+        </value>
+      </option>
       <option name="DEFAULT_STATIC_METHOD">
         <value>
           <option name="FONT_TYPE" value="2"/>
@@ -294,6 +306,13 @@
           <option name="EFFECT_TYPE" value="2"/>
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
           <option name="ERROR_STRIPE_COLOR" value="cf5b56" deuteranopia="d95716" protanopia="d95716"/>
+        </value>
+      </option>
+      <option name="RUNTIME_ERROR">
+        <value>
+          <option name="EFFECT_COLOR" value="f49810" />
+          <option name="ERROR_STRIPE_COLOR" value="cf5b56" />
+          <option name="EFFECT_TYPE" value="5" />
         </value>
       </option>
       <option name="BLINKING_HIGHLIGHTS_ATTRIBUTES">
@@ -791,6 +810,21 @@
           <option name="FONT_TYPE" deuteranopia="bold" protanopia="bold"/>
         </value>
       </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cccc"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="0000ee"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="00cd00"/>
+        </value>
+      </option>
       <option name="LOG_WARNING_OUTPUT">
         <value>
           <option name="FOREGROUND" value="a66f00" deuteranopia="a89c11" protanopia="a89c11"/>
@@ -1191,6 +1225,7 @@
       <option name="BREAKPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="3a2323" deuteranopia="42372b" protanopia="42372b"/>
+          <option name="ERROR_STRIPE_COLOR" value="664233" />
         </value>
       </option>
       <option name="COFFEESCRIPT.GLOBAL_VARIABLE">
@@ -1530,6 +1565,18 @@
           <option name="FOREGROUND" value="cc7832" deuteranopia="5c7ab8" protanopia="5c7ab8"/>
         </value>
       </option>
+      <option name="DEFAULT_REASSIGNED_PARAMETER">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
+      <option name="DEFAULT_REASSIGNED_LOCAL_VARIABLE">
+        <value>
+          <option name="EFFECT_COLOR" value="707d95" />
+          <option name="EFFECT_TYPE" value="1" />
+        </value>
+      </option>
       <option name="DELETED_TEXT_ATTRIBUTES">
         <value>
           <option name="FOREGROUND" value="bbbbbb" />
@@ -1592,6 +1639,13 @@
           <option name="ERROR_STRIPE_COLOR" value="9e2927" deuteranopia="ff8f40" protanopia="ff8f40"/>
         </value>
       </option>
+      <option name="RUNTIME_ERROR">
+        <value>
+          <option name="EFFECT_COLOR" value="f49810"/>
+          <option name="EFFECT_TYPE" value="5" />
+          <option name="ERROR_STRIPE_COLOR" value="9e2927"/>
+        </value>
+      </option>
       <option name="EXECUTIONPOINT_ATTRIBUTES">
         <value>
           <option name="BACKGROUND" value="2d6099" />
@@ -1599,7 +1653,7 @@
       </option>
       <option name="NOT_TOP_FRAME_ATTRIBUTES">
         <value>
-          <option name="BACKGROUND" value="243040"/>
+          <option name="BACKGROUND" value="2f3f55"/>
         </value>
       </option>
       <option name="EVALUATED_EXPRESSION_ATTRIBUTES">
@@ -1796,6 +1850,21 @@
           <option name="BACKGROUND"/>
           <option name="EFFECT_COLOR" value="ff0000"/>
           <option name="EFFECT_TYPE" value="0"/>
+        </value>
+      </option>
+      <option name="LOG_DEBUG_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="299999"/>
+        </value>
+      </option>
+      <option name="LOG_VERBOSE_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="5394ec"/>
+        </value>
+      </option>
+      <option name="LOG_INFO_OUTPUT">
+        <value>
+          <option name="FOREGROUND" value="abc023"/>
         </value>
       </option>
       <option name="LOG_WARNING_OUTPUT">

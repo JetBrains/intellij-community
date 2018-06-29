@@ -24,11 +24,7 @@ import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.AbstractMap;
-import java.util.Collection;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
 /**
@@ -99,22 +95,14 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public V remove(Object key) {
-    V v = myMap.remove(key);
+    V v = myMap.remove(notNull(key));
     return nullize(v);
   }
 
   @NotNull
   @Override
   public Set<K> keySet() {
-    final Set<K> ts = myMap.keySet();
-    K nullKey = FAKE_NULL();
-    if (ts.contains(nullKey)) {
-      Set<K> hashSet = new HashSet<K>(ts);
-      hashSet.remove(nullKey);
-      hashSet.add(null);
-      return hashSet;
-    }
-    return ts;
+    return new CollectionWrapper.Set<K>(myMap.keySet());
   }
 
   public boolean removeValue(Object value) {
@@ -140,7 +128,7 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public boolean containsValue(final Object value) {
-    return myMap.containsValue(value);
+    return myMap.containsValue(notNull(value));
   }
 
   @Override
@@ -153,23 +141,23 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   @NotNull
   @Override
   public Collection<V> values() {
-    return ContainerUtil.map(myMap.values(), new Function<V, V>() {
-      @Override
-      public V fun(V v) {
-        return nullize(v);
-      }
-    });
+    return new CollectionWrapper<V>(myMap.values());
   }
 
   @NotNull
   @Override
   public Set<Entry<K, V>> entrySet() {
-    return ContainerUtil.map2Set(myMap.entrySet(), new Function<Entry<K,V>, Entry<K,V>>() {
-          @Override
-          public Entry<K,V> fun(Entry<K,V> entry) {
-            return new AbstractMap.SimpleEntry<K, V>(nullize(entry.getKey()), nullize(entry.getValue()));
-          }
-        });
+    return new CollectionWrapper.Set<Entry<K, V>>(myMap.entrySet()) {
+      @Override
+      public Object wrap(Object val) {
+        return val instanceof EntryWrapper ? ((EntryWrapper)val).myEntry : val;
+      }
+
+      @Override
+      public Entry<K, V> unwrap(Entry<K, V> val) {
+        return val.getKey() == FAKE_NULL() || val.getValue() == FAKE_NULL() ? new EntryWrapper<K, V>(val) : val;
+      }
+    };
   }
 
   @NotNull
@@ -179,39 +167,22 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
 
   @Override
   public V putIfAbsent(@NotNull K key, V value) {
-    return myMap.putIfAbsent(key, value);
+    return nullize(myMap.putIfAbsent(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
   @Override
   public boolean remove(@NotNull Object key, Object value) {
-    return myMap.remove(key, value);
+    return myMap.remove(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value));
   }
 
   @Override
   public boolean replace(@NotNull K key, @NotNull V oldValue, @NotNull V newValue) {
-    return myMap.replace(key, oldValue, newValue);
+    return myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(oldValue), ConcurrentFactoryMap.<V>notNull(newValue));
   }
 
   @Override
   public V replace(@NotNull K key, @NotNull V value) {
-    return myMap.replace(key, value);
-  }
-
-  /**
-   * Use {@link #createMap(Function)} instead
-   * TODO to remove in IDEA 2018
-   */
-  @Deprecated
-  @NotNull
-  public static <T, V> ConcurrentFactoryMap<T, V> createConcurrentMap(@NotNull final Function<T, V> computeValue) {
-    //noinspection deprecation
-    return new ConcurrentFactoryMap<T, V>() {
-      @Nullable
-      @Override
-      protected V create(T key) {
-        return computeValue.fun(key);
-      }
-    };
+    return nullize(myMap.replace(ConcurrentFactoryMap.<K>notNull(key), ConcurrentFactoryMap.<V>notNull(value)));
   }
 
   @NotNull
@@ -262,5 +233,93 @@ public abstract class ConcurrentFactoryMap<K,V> implements ConcurrentMap<K,V> {
   public V getOrDefault(Object key, V defaultValue) {
       V v;
       return (v = get(key)) != null ? v : defaultValue;
+  }
+
+  private static class CollectionWrapper<K> extends AbstractCollection<K> {
+    private final Collection<K> myDelegate;
+
+    CollectionWrapper(Collection<K> delegate) {
+      myDelegate = delegate;
+    }
+
+    @NotNull
+    @Override
+    public Iterator<K> iterator() {
+      return new Iterator<K>() {
+        Iterator<K> it = myDelegate.iterator();
+        @Override
+        public boolean hasNext() {
+          return it.hasNext();
+        }
+        @Override
+        public K next() {
+          return unwrap(it.next());
+        }
+        @Override
+        public void remove() {
+          it.remove();
+        }
+      };
+    }
+
+    @Override
+    public int size() {
+      return myDelegate.size();
+    }
+
+    @Override
+    public boolean contains(Object o) {
+      return myDelegate.contains(wrap(o));
+    }
+
+    @Override
+    public boolean remove(Object o) {
+      return myDelegate.remove(wrap(o));
+    }
+
+    protected Object wrap(Object val) {
+      return notNull(val);
+    }
+    protected K unwrap(K val) {
+      return nullize(val);
+    }
+
+    private static class Set<K> extends CollectionWrapper<K> implements java.util.Set<K> {
+      public Set(Collection<K> delegate) {
+        super(delegate);
+      }
+    }
+
+    protected static class EntryWrapper<K, V> implements Entry<K, V> {
+      final Entry<K, V> myEntry;
+      private EntryWrapper(Entry<K, V> entry) {
+        myEntry = entry;
+      }
+
+      @Override
+      public K getKey() {
+        return nullize(myEntry.getKey());
+      }
+
+      @Override
+      public V getValue() {
+        return nullize(myEntry.getValue());
+      }
+
+      @Override
+      public V setValue(V value) {
+        return myEntry.setValue(ConcurrentFactoryMap.<V>notNull(value));
+      }
+
+      @Override
+      public int hashCode() {
+        return myEntry.hashCode();
+      }
+
+      @Override
+      public boolean equals(Object obj) {
+        return myEntry.equals(obj instanceof EntryWrapper ? ((EntryWrapper)obj).myEntry : obj);
+      }
+    }
   }
 }

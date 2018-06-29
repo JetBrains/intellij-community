@@ -34,6 +34,8 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.util.List;
 
+import static com.intellij.util.AstLoadingFilter.disableTreeLoading;
+
 public abstract class ElementBase extends UserDataHolderBase implements Iconable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.ElementBase");
 
@@ -88,7 +90,7 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     if (Registry.is("psi.deferIconLoading")) {
       Icon baseIcon = LastComputedIcon.get(psiElement, flags);
       if (baseIcon == null) {
-        baseIcon = computeBaseIcon(flags);
+        baseIcon = disableTreeLoading(() -> computeBaseIcon(flags));
       }
       return IconDeferrer.getInstance().defer(baseIcon, new ElementIconRequest(psiElement, psiElement.getProject(), flags), ICON_COMPUTE);
     }
@@ -98,6 +100,10 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @Nullable
   private static Icon computeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
+    return disableTreeLoading(() -> doComputeIconNow(element, flags));
+  }
+
+  private static Icon doComputeIconNow(@NotNull PsiElement element, @Iconable.IconFlags int flags) {
     final Icon providersIcon = PsiIconUtil.getProvidersIcon(element, flags);
     if (providersIcon != null) {
       return providersIcon instanceof RowIcon ? (RowIcon)providersIcon : createLayeredIcon(element, providersIcon, flags);
@@ -199,33 +205,28 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
 
   @Nullable
   protected Icon getElementIcon(@Iconable.IconFlags int flags) {
-    final PsiElement element = (PsiElement)this;
-
+    PsiElement element = (PsiElement)this;
     if (!element.isValid()) return null;
 
-    RowIcon baseIcon;
-    final boolean isLocked = BitUtil.isSet(flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
+    boolean isLocked = BitUtil.isSet(flags, ICON_FLAG_READ_STATUS) && !element.isWritable();
     int elementFlags = isLocked ? FLAGS_LOCKED : 0;
-    if (element instanceof ItemPresentation && ((ItemPresentation)element).getIcon(false) != null) {
-        baseIcon = createLayeredIcon(this, ((ItemPresentation)element).getIcon(false), elementFlags);
-    }
-    else if (element instanceof PsiFile) {
-      PsiFile file = (PsiFile)element;
 
-      VirtualFile virtualFile = file.getVirtualFile();
-      final Icon fileTypeIcon;
-      if (virtualFile == null) {
-        fileTypeIcon = file.getFileType().getIcon();
+    if (element instanceof ItemPresentation) {
+      Icon baseIcon = ((ItemPresentation)element).getIcon(false);
+      if (baseIcon != null) {
+        return createLayeredIcon(this, baseIcon, elementFlags);
       }
-      else {
-        fileTypeIcon = IconUtil.getIcon(virtualFile, flags & ~ICON_FLAG_READ_STATUS, file.getProject());
-      }
-      return createLayeredIcon(this, fileTypeIcon, elementFlags);
     }
-    else {
-      return null;
+
+    if (element instanceof PsiFile) {
+      PsiFile psiFile = (PsiFile)element;
+      VirtualFile vFile = psiFile.getVirtualFile();
+      Icon baseIcon = vFile != null ? IconUtil.getIcon(vFile, flags & ~ICON_FLAG_READ_STATUS, psiFile.getProject())
+                                    : psiFile.getFileType().getIcon();
+      return createLayeredIcon(this, baseIcon, elementFlags);
     }
-    return baseIcon;
+
+    return null;
   }
 
   @NotNull

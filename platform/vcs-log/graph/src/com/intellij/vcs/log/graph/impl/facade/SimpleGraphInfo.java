@@ -91,7 +91,7 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
     }
     IntTimestampGetter timestampGetter = PermanentCommitsInfoImpl.createTimestampGetter(graphCommits);
 
-    NotNullFunction<Integer, CommitId> function = createCommitIdMapFunction(commitsIdMap);
+    NotNullFunction<Integer, CommitId> commitIdMapping = createCommitIdMapFunction(commitsIdMap);
     PermanentLinearGraphImpl newLinearGraph = PermanentLinearGraphBuilder.newInstance(graphCommits).build();
 
     int[] layoutIndexes = new int[end - start];
@@ -115,28 +115,24 @@ public class SimpleGraphInfo<CommitId> implements PermanentGraphInfo<CommitId> {
 
     GraphLayoutImpl newLayout = new GraphLayoutImpl(layoutIndexes, headNodeIndexes, starts);
 
-    return new SimpleGraphInfo<>(newLinearGraph, newLayout, function, timestampGetter,
+    return new SimpleGraphInfo<>(newLinearGraph, newLayout, commitIdMapping, timestampGetter,
                                  LinearGraphUtils.convertIdsToNodeIndexes(linearGraph, branchNodeIds));
   }
 
   @NotNull
-  private static <CommitId> NotNullFunction<Integer, CommitId> createCommitIdMapFunction(List<CommitId> commitsIdMap) {
-    NotNullFunction<Integer, CommitId> function;
+  private static <CommitId> NotNullFunction<Integer, CommitId> createCommitIdMapFunction(@NotNull List<CommitId> commitsIdMap) {
     if (!commitsIdMap.isEmpty() && commitsIdMap.get(0) instanceof Integer) {
       int[] ints = new int[commitsIdMap.size()];
       for (int row = 0; row < commitsIdMap.size(); row++) {
         ints[row] = (Integer)commitsIdMap.get(row);
       }
-      function = (NotNullFunction<Integer, CommitId>)new IntegerCommitIdMapFunction(CompressedIntList.newInstance(ints));
+      return (NotNullFunction<Integer, CommitId>)new IntegerCommitIdMapFunction(CompressedIntList.newInstance(ints));
     }
-    else {
-      function = new CommitIdMapFunction<>(commitsIdMap);
-    }
-    return function;
+    return new CommitIdMapFunction<>(commitsIdMap);
   }
 
   @NotNull
-  private static <CommitId> TObjectIntHashMap<CommitId> reverseCommitIdMap(PermanentCommitsInfo<CommitId> permanentCommitsInfo, int size) {
+  private static <CommitId> TObjectIntHashMap<CommitId> reverseCommitIdMap(@NotNull PermanentCommitsInfo<CommitId> permanentCommitsInfo, int size) {
     TObjectIntHashMap<CommitId> result = new TObjectIntHashMap<>();
     for (int i = 0; i < size; i++) {
       result.put(permanentCommitsInfo.getCommitId(i), i);

@@ -39,6 +39,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.impl.source.resolve.graphInference.PsiPolyExpressionUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.RefactoringBundle;
@@ -69,6 +70,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   private final boolean myChangeAllUsages;
   private final int myMinUsagesNumberToShowDialog;
   ParameterInfoImpl[] myNewParametersInfo;
+  private String myShortName;
   private static final Logger LOG = Logger.getInstance(ChangeMethodSignatureFromUsageFix.class);
 
   public ChangeMethodSignatureFromUsageFix(@NotNull PsiMethod targetMethod,
@@ -87,27 +89,26 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
   @Override
   @NotNull
   public String getText() {
-    final String shortText = getShortText();
-    if (shortText != null) return shortText;
+    final String shortText = myShortName;
+    if (shortText != null) {
+      return shortText;
+    }
     return QuickFixBundle.message("change.method.signature.from.usage.text",
                                   JavaHighlightUtil.formatMethod(myTargetMethod),
                                   myTargetMethod.getName(),
                                   formatTypesList(myNewParametersInfo, myContext));
   }
 
-  @Nullable
-  private String getShortText() {
-    final StringBuilder buf = new StringBuilder();
-    final HashSet<ParameterInfoImpl> newParams = new HashSet<>();
-    final HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
-    final HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
-    getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, buf, newParams, removedParams, changedParams);
-
+  private String getShortText(final StringBuilder buf,
+                              final HashSet<ParameterInfoImpl> newParams,
+                              final HashSet<ParameterInfoImpl> removedParams,
+                              final HashSet<ParameterInfoImpl> changedParams) {
     final String targetMethodName = myTargetMethod.getName();
     if (myTargetMethod.getContainingClass().findMethodsByName(targetMethodName, true).length == 1) {
       if (newParams.size() == 1) {
         final ParameterInfoImpl p = newParams.iterator().next();
-        return QuickFixBundle.message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
+        return QuickFixBundle
+          .message("add.parameter.from.usage.text", p.getTypeText(), (ArrayUtil.find(myNewParametersInfo, p) + 1), targetMethodName);
       }
       if (removedParams.size() == 1) {
         final ParameterInfoImpl p = removedParams.iterator().next();
@@ -115,7 +116,9 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
       }
       if (changedParams.size() == 1) {
         final ParameterInfoImpl p = changedParams.iterator().next();
-        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName, myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),  p.getTypeText());
+        return QuickFixBundle.message("change.parameter.from.usage.text", (p.getOldIndex() + 1), targetMethodName,
+                                      myTargetMethod.getParameterList().getParameters()[p.getOldIndex()].getType().getPresentableText(),
+                                      p.getTypeText());
       }
     }
     return "<html> Change signature of " + targetMethodName + "(" + buf.toString() + ")</html>";
@@ -153,8 +156,13 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     }
     if (!mySubstitutor.isValid()) return false;
 
-    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor);
+    final StringBuilder buf = new StringBuilder();
+    final HashSet<ParameterInfoImpl> newParams = new HashSet<>();
+    final HashSet<ParameterInfoImpl> removedParams = new HashSet<>();
+    final HashSet<ParameterInfoImpl> changedParams = new HashSet<>();
+    myNewParametersInfo = getNewParametersInfo(myExpressions, myTargetMethod, mySubstitutor, buf, newParams, removedParams, changedParams);
     if (myNewParametersInfo == null || formatTypesList(myNewParametersInfo, myContext) == null) return false;
+    myShortName = getShortText(buf, newParams, removedParams, changedParams);
     return !isMethodSignatureExists();
   }
 
@@ -183,15 +191,15 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
     }
   }
 
-  public static List<ParameterInfoImpl> performChange(final Project project,
-                                                      final Editor editor,
-                                                      final PsiFile file,
-                                                      final PsiMethod method,
-                                                      final int minUsagesNumber,
-                                                      final ParameterInfoImpl[] newParametersInfo,
-                                                      final boolean changeAllUsages,
-                                                      final boolean allowDelegation,
-                                                      @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
+  static List<ParameterInfoImpl> performChange(@NotNull Project project,
+                                               final Editor editor,
+                                               final PsiFile file,
+                                               @NotNull PsiMethod method,
+                                               final int minUsagesNumber,
+                                               final ParameterInfoImpl[] newParametersInfo,
+                                               final boolean changeAllUsages,
+                                               final boolean allowDelegation,
+                                               @Nullable final Consumer<List<ParameterInfoImpl>> callback) {
     if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
@@ -339,6 +347,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
           if (exprType instanceof PsiDisjunctionType) {
             exprType = ((PsiDisjunctionType)exprType).getLeastUpperBound();
           }
+          if (!PsiTypesUtil.allTypeParametersResolved(myTargetMethod, exprType)) return null;
           final ParameterInfoImpl changedParameterInfo = new ParameterInfoImpl(i, parameter.getName(), exprType);
           result.add(changedParameterInfo);
           changedParams.add(changedParameterInfo);

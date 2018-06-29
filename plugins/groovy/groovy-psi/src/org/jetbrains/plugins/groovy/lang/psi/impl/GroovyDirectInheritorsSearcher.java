@@ -1,24 +1,12 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl;
 
+import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.impl.search.RelaxedDirectInheritorChecker;
 import com.intellij.psi.impl.search.StubHierarchyInheritorSearcher;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopeUtil;
@@ -36,7 +24,6 @@ import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrAnonymousClassIndex;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.index.GrDirectInheritorsIndex;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -58,37 +45,35 @@ public class GroovyDirectInheritorsSearcher implements QueryExecutor<PsiClass, D
       }
     }
     if (includeAnonymous) {
-      final Collection<GrAnonymousClassDefinition> classes =
-        StubIndex.getElements(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope, GrAnonymousClassDefinition.class);
-      for (GrAnonymousClassDefinition aClass : classes) {
-        inheritors.add(aClass);
-      }
+      inheritors.addAll(StubIndex.getElements(GrAnonymousClassIndex.KEY, name, clazz.getProject(), scope, GrAnonymousClassDefinition.class));
     }
     return inheritors;
   }
 
   @Override
-  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<PsiClass> consumer) {
+  public boolean execute(@NotNull final DirectClassInheritorsSearch.SearchParameters queryParameters, @NotNull final Processor<? super PsiClass> consumer) {
     final PsiClass clazz = queryParameters.getClassToProcess();
-    final SearchScope scope = queryParameters.getScope();
+    SearchScope scope = ReadAction.compute(() -> queryParameters.getScope().intersectWith(clazz.getUseScope()));
     Project project = PsiUtilCore.getProjectInReadAction(clazz);
     GlobalSearchScope globalSearchScope = GlobalSearchScopeUtil.toGlobalSearchScope(scope, project);
-    final List<PsiClass> candidates = DumbService.getInstance(project).runReadActionInSmartMode(() -> {
+    DumbService dumbService = DumbService.getInstance(project);
+    List<PsiClass> candidates = dumbService.runReadActionInSmartMode(() -> {
       if (!clazz.isValid()) return Collections.emptyList();
       GlobalSearchScope restrictedScope = StubHierarchyInheritorSearcher.restrictScope(globalSearchScope);
       return getDerivingClassCandidates(clazz, restrictedScope, queryParameters.includeAnonymous());
     });
-    for (final PsiClass candidate : candidates) {
-      if (!queryParameters.isCheckInheritance() || isInheritor(clazz, candidate, project)) {
-        if (!consumer.process(candidate)) {
-          return false;
+
+    if (!candidates.isEmpty()) {
+      RelaxedDirectInheritorChecker checker = dumbService.runReadActionInSmartMode(() -> new RelaxedDirectInheritorChecker(clazz));
+
+      for (PsiClass candidate : candidates) {
+        if (!queryParameters.isCheckInheritance() || dumbService.runReadActionInSmartMode(() -> checker.checkInheritance(candidate))) {
+          if (!consumer.process(candidate)) {
+            return false;
+          }
         }
       }
     }
     return true;
-  }
-
-  private static boolean isInheritor(PsiClass clazz, PsiClass candidate, Project project) {
-    return DumbService.getInstance(project).runReadActionInSmartMode(() -> candidate.isValid() && candidate.isInheritor(clazz, false));
   }
 }

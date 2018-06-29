@@ -53,11 +53,6 @@ public class YamlMetaClass extends YamlMetaType {
   }
 
   @NotNull
-  protected final Field addIntegerFeature(@NotNull String name) {
-    return addScalarFeature(name, YamlIntegerType.getInstance());
-  }
-
-  @NotNull
   protected Field addBooleanFeature(@NotNull String name) {
     return addScalarFeature(name, YamlBooleanType.getSharedInstance());
   }

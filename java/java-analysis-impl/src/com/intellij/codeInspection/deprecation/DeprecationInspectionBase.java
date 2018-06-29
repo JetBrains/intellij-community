@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -17,6 +17,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.JavaConstantExpressionEvaluator;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.compiled.ClsMethodImpl;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.javadoc.PsiDocTag;
@@ -209,10 +210,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
   }
 
   //@top
-  static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
-                                             List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
-                                             boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder,
-                                             boolean forRemoval, @NotNull ProblemHighlightType highlightType) {
+  private static void checkMethodOverridesDeprecated(MethodSignatureBackedByPsiMethod methodSignature,
+                                                     List<MethodSignatureBackedByPsiMethod> superMethodSignatures,
+                                                     boolean ignoreAbstractDeprecatedOverrides, ProblemsHolder holder,
+                                                     boolean forRemoval, @NotNull ProblemHighlightType highlightType) {
     PsiMethod method = methodSignature.getMethod();
     PsiElement methodName = method.getNameIdentifier();
     if (methodName == null) return;
@@ -313,10 +314,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     else if (value instanceof PsiExpression) {
       result = JavaConstantExpressionEvaluator.computeConstantExpression((PsiExpression)value, false);
     }
-    return result instanceof Boolean && ((Boolean)result);
+    return result instanceof Boolean && (Boolean)result;
   }
 
-  protected static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
+  static void addSameOutermostClassCheckBox(MultipleCheckboxOptionsPanel panel) {
     panel.addCheckbox("Ignore in the same outermost class", "IGNORE_IN_SAME_OUTERMOST_CLASS");
   }
 
@@ -332,12 +333,16 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
 
   private static PsiMethod findReplacementInJavaDoc(@NotNull PsiMethod method, @NotNull PsiMethodCallExpression call) {
     if (method instanceof PsiConstructorCall) return null;
+    if (method instanceof ClsMethodImpl) {
+      PsiMethod sourceMethod = ((ClsMethodImpl)method).getSourceMirrorMethod();
+      return sourceMethod == null ? null : findReplacementInJavaDoc(sourceMethod, call);
+    }
     PsiDocComment doc = method.getDocComment();
     if (doc == null) return null;
 
     Collection<PsiDocTag> docTags = PsiTreeUtil.findChildrenOfType(doc, PsiDocTag.class);
     if (docTags.isEmpty()) return null;
-    PsiMethod tagMethod = (PsiMethod)docTags
+    return docTags
       .stream()
       .filter(t -> {
         String name = t.getName();
@@ -348,14 +353,14 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
       .map(value -> value.getReference())
       .filter(Objects::nonNull)
       .map(reference -> reference.resolve())
-      .filter(Objects::nonNull)
       .distinct()
+      .map(resolved -> (PsiMethod)(resolved instanceof PsiMethod ? resolved : null))
+      .filter(Objects::nonNull)
+      .filter(tagMethod -> !tagMethod.isDeprecated())
+      .filter(tagMethod -> !tagMethod.isEquivalentTo(method))
+      .filter(tagMethod -> areReplaceable(method, tagMethod, call))
       .collect(MoreCollectors.onlyOne())
-      .filter(resolved -> resolved instanceof PsiMethod)
       .orElse(null);
-    return tagMethod == null || tagMethod.isDeprecated() || tagMethod.isEquivalentTo(method) || !areReplaceable(method, tagMethod, call)
-           ? null
-           : tagMethod;
   }
 
   private static boolean areReplaceable(@NotNull PsiMethod initial,
@@ -377,9 +382,10 @@ abstract class DeprecationInspectionBase extends AbstractBaseJavaLocalInspection
     String qualifierText;
     if (isInitialStatic) {
       qualifierText = ObjectUtils.notNull(suggestedReplacement.getContainingClass()).getQualifiedName() + ".";
-    } else {
+    }
+    else {
       PsiExpression qualifierExpression = call.getMethodExpression().getQualifierExpression();
-      qualifierText = qualifierExpression == null ? "" : (qualifierExpression.getText() + ".");
+      qualifierText = qualifierExpression == null ? "" : qualifierExpression.getText() + ".";
     }
 
     PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(initial.getProject());

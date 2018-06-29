@@ -27,12 +27,12 @@ import com.intellij.refactoring.rename.RenameHandler;
 import org.jetbrains.annotations.NotNull;
 
 public class FormRenameHandler implements RenameHandler {
-  public boolean isAvailableOnDataContext(DataContext dataContext) {
+  public boolean isAvailableOnDataContext(@NotNull DataContext dataContext) {
     Form[] forms = Form.DATA_KEY.getData(dataContext);
     return forms != null && forms.length == 1;
   }
 
-  public boolean isRenaming(DataContext dataContext) {
+  public boolean isRenaming(@NotNull DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 

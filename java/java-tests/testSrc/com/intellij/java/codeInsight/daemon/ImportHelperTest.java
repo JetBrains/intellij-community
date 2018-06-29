@@ -52,21 +52,9 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.getCustomSettings(JavaCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+    JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 100;
     DaemonCodeAnalyzer.getInstance(getProject()).setUpdateByTimerEnabled(false);
     enableInspectionTool(new UnusedImportInspection());
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    try {
-      CodeStyleSettingsManager.getInstance(getProject()).dropTemporarySettings();
-    }
-    finally {
-      super.tearDown();
-    }
   }
 
   @WrapInCommand
@@ -130,8 +118,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
       getProject(), () -> ApplicationManager.getApplication().runWriteAction(() -> {
         try {
 
-          CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-          JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+          JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
           javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
           PackageEntryTable table = new PackageEntryTable();
           table.addEntry(PackageEntry.ALL_OTHER_IMPORTS_ENTRY);
@@ -143,8 +130,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
           table.addEntry(PackageEntry.BLANK_LINE_ENTRY);
           table.addEntry(PackageEntry.ALL_OTHER_STATIC_IMPORTS_ENTRY);
 
-          settings.getCustomSettings(JavaCodeStyleSettings.class).IMPORT_LAYOUT_TABLE.copyFrom(table);
-          CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+          JavaCodeStyleSettings.getInstance(getProject()).IMPORT_LAYOUT_TABLE.copyFrom(table);
           JavaCodeStyleManager.getInstance(getProject()).optimizeImports(file);
 
           assertOrder(file, "java.awt.*", CommonClassNames.JAVA_UTIL_MAP, "static java.lang.Math.max", "static java.lang.Math.min",
@@ -186,9 +172,7 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     configureByFile(path + "/x/Usage.java", path);
     assertEmpty(highlightErrors());
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    settings.getCustomSettings(JavaCodeStyleSettings.class).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
+    JavaCodeStyleSettings.getInstance(getProject()).CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 2;
     WriteCommandAction.runWriteCommandAction(getProject(),
                                              () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
@@ -203,17 +187,14 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     final PsiFile file = configureByText(StdFileTypes.JAVA, "package java.util; class X{ Date d;}");
     assertEmpty(highlightErrors());
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
-        ImportHelper importHelper = new ImportHelper(settings);
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject());
+      ImportHelper importHelper = new ImportHelper(settings);
 
-        PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("java.sql.Date", GlobalSearchScope.allScope(getProject()));
-        boolean b = importHelper.addImport((PsiJavaFile)file, psiClass);
-        assertFalse(b); // must fail
-      }
-    }.execute().throwException();
+      PsiClass psiClass = JavaPsiFacade.getInstance(getProject()).findClass("java.sql.Date", GlobalSearchScope.allScope(getProject()));
+      boolean b = importHelper.addImport((PsiJavaFile)file, psiClass);
+      assertFalse(b); // must fail;
+    });
   }
 
   public void testAutoImportCaretLocation() {
@@ -485,13 +466,11 @@ public class ImportHelperTest extends DaemonAnalyzerTestCase {
     configureByFile(path + "/foo/A.java", path);
     assertEmpty(highlightErrors());
 
-    CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(getProject()).clone();
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
     javaSettings.CLASS_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
     javaSettings.NAMES_COUNT_TO_USE_IMPORT_ON_DEMAND = 3;
 
-    CodeStyleSettingsManager.getInstance(getProject()).setTemporarySettings(settings);
     WriteCommandAction.runWriteCommandAction(getProject(), () -> JavaCodeStyleManager.getInstance(getProject()).optimizeImports(getFile()));
 
     assertEmpty(highlightErrors());

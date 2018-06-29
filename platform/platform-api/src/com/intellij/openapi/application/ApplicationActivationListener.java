@@ -48,7 +48,7 @@ public interface ApplicationActivationListener {
   }
 
   /**
-   * @deprecated Use ApplicationActivationListener directly
+   * @deprecated Use {@link ApplicationActivationListener} instead
    */
   @Deprecated
   abstract class Adapter implements ApplicationActivationListener {

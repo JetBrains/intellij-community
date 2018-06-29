@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.ide.util.PropertiesComponent;
@@ -42,7 +28,10 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.*;
+import java.awt.event.FocusAdapter;
+import java.awt.event.FocusEvent;
+import java.awt.event.KeyEvent;
+import java.util.HashMap;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
@@ -65,6 +54,9 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
   private final SpotlightPainter mySpotlightPainter;
   private final LoadingDecorator myLoadingDecorator;
   private final Banner myBanner;
+
+  private final Map<Configurable, ConfigurableController> myControllers = new HashMap<>();
+  private ConfigurableController myLastController;
 
   SettingsEditor(Disposable parent, Project project, ConfigurableGroup[] groups, Configurable configurable, final String filter, final ISettingsTreeViewFactory factory) {
     super(parent);
@@ -122,7 +114,11 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
         }
         checkModified(oldConfigurable);
         ActionCallback result = myEditor.select(configurable);
-        result.doWhenDone(() -> myLoadingDecorator.stopLoading());
+        result.doWhenDone(() -> {
+          updateController(configurable);
+          //requestFocusToEditor(); // TODO
+          myLoadingDecorator.stopLoading();
+        });
         return result;
       }
 
@@ -206,17 +202,6 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myBanner.setBorder(BorderFactory.createEmptyBorder(5, 0, 0, 10));
     mySearch.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
     mySearchPanel.setBackground(UIUtil.SIDE_PANEL_BACKGROUND);
-    mySearchPanel.addComponentListener(new ComponentAdapter() {
-      @Override
-      public void componentResized(ComponentEvent event) {
-        Dimension size = myBanner.getPreferredSize();
-        size.height = mySearchPanel.getHeight() - 5;
-        myBanner.setPreferredSize(size);
-        myBanner.setSize(size);
-        myBanner.revalidate();
-        myBanner.repaint();
-      }
-    });
     JComponent left = new JPanel(new BorderLayout());
     left.add(BorderLayout.NORTH, mySearchPanel);
     left.add(BorderLayout.CENTER, myTreeView);
@@ -248,17 +233,15 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
     myTreeView.select(configurable).doWhenDone(() -> myFilter.update(filter, false, true));
     Disposer.register(this, myTreeView);
     installSpotlightRemover();
-    mySearch.getTextEditor().addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent event) {
-        myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(() -> {
-          JComponent component1 = myEditor.getPreferredFocusedComponent();
-          if (component1 != null) {
-            IdeFocusManager.findInstanceByComponent(component1).requestFocus(component1, true);
-          }
-        });
-      }
-    });
+    mySearch.getTextEditor().addActionListener(
+      event -> myTreeView.select(myFilter.myContext.getCurrentConfigurable()).doWhenDone(this::requestFocusToEditor));
+  }
+
+  private void requestFocusToEditor() {
+    JComponent component = myEditor.getPreferredFocusedComponent();
+    if (component != null) {
+      IdeFocusManager.findInstanceByComponent(component).requestFocus(component, true);
+    }
   }
 
   private void installSpotlightRemover() {
@@ -358,6 +341,19 @@ final class SettingsEditor extends AbstractEditor implements DataProvider {
           mySpotlightPainter.updateNow();
         }
       }, 300);
+    }
+  }
+
+  void updateController(Configurable configurable) {
+    if (myLastController != null) {
+      myLastController.setBanner(null);
+      myLastController = null;
+    }
+
+    ConfigurableController controller = ConfigurableController.getOrCreate(configurable, myControllers);
+    if (controller != null) {
+      myLastController = controller;
+      controller.setBanner(myBanner);
     }
   }
 

@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.ipnb.editor;
 
 import com.google.common.collect.Lists;
@@ -59,7 +60,7 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
   public IpnbFileEditor(Project project, final VirtualFile vFile) {
     myDocument = FileDocumentManager.getInstance().getDocument(vFile);
     project.getMessageBus().connect(this)
-      .subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before.Adapter() {
+      .subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new FileEditorManagerListener.Before() {
         @Override
         public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
           if (!new File(file.getPath()).exists()) return;
@@ -102,9 +103,12 @@ public class IpnbFileEditor extends UserDataHolderBase implements FileEditor {
     new IpnbAddCellAboveAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift EQUALS")),
                                                                myIpnbFilePanel);
     new IpnbMarkdownCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift M")),
-                                                             myIpnbFilePanel);
-    new IpnbCodeCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift Y")),
                                                                myIpnbFilePanel);
+    new IpnbCodeCellAction(this).registerCustomShortcutSet(new CustomShortcutSet(KeyStroke.getKeyStroke("ctrl shift Y")),
+                                                           myIpnbFilePanel);
+
+    new IpnbMoveCellDownAction(this);
+    new IpnbMoveCellUpAction(this);
   }
 
   private void registerHeadingActions() {

@@ -250,5 +250,5 @@ Groovy script
                                                                                     PsiElement(,)(',')
                                                                                     PsiWhiteSpace('\n')
                                                                                     PsiElement(])(']')
-                                                                                  PsiErrorElement:']' expected
+                                                                                  PsiErrorElement:',' or ']' expected
                                                                                     <empty list>

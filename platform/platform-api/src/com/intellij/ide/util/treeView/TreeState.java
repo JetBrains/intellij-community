@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.util.treeView;
 
 import com.intellij.navigation.NavigationItem;
@@ -457,8 +443,9 @@ public class TreeState implements JDOMExternalizable {
   @SuppressWarnings("DeprecatedIsStillUsed")
   public static void expand(@NotNull JTree tree, @NotNull Consumer<AsyncPromise<Void>> consumer) {
     Promise<Void> expanding = UIUtil.getClientProperty(tree, EXPANDING);
+    LOG.debug("EXPANDING: ", expanding);
     if (expanding == null) expanding = Promises.resolvedPromise();
-    expanding.processed(value -> {
+    expanding.onProcessed(value -> {
       AsyncPromise<Void> promise = new AsyncPromise<>();
       UIUtil.putClientProperty(tree, EXPANDING, promise);
       consumer.accept(promise);
@@ -483,9 +470,9 @@ public class TreeState implements JDOMExternalizable {
     TreeModel model = tree.getModel();
     if (!(model instanceof TreeVisitor.Acceptor)) return false;
 
-    expand(tree, promise -> expand(tree).processed(expanded -> {
+    expand(tree, promise -> expand(tree).onProcessed(expanded -> {
       if (isSelectionNeeded(expanded, tree, promise)) {
-        select(tree).processed(selected -> {
+        select(tree).onProcessed(selected -> {
           if (isSelectionNeeded(selected, tree, promise)) {
             for (TreePath path : selected) {
               tree.addSelectionPath(path);

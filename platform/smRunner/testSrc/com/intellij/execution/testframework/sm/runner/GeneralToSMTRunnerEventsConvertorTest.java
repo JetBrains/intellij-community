@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.sm.runner;
 
 import com.intellij.execution.executors.DefaultRunExecutor;
-import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.testframework.Filter;
 import com.intellij.execution.testframework.TestConsoleProperties;
 import com.intellij.execution.testframework.actions.AbstractRerunFailedTestsAction;
@@ -63,10 +48,10 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   private class MyConsoleView extends SMTRunnerConsoleView {
     private final TestsOutputConsolePrinter myTestsOutputConsolePrinter;
 
-    private MyConsoleView(final TestConsoleProperties consoleProperties, final ExecutionEnvironment environment) {
+    private MyConsoleView(final TestConsoleProperties consoleProperties) {
       super(consoleProperties);
 
-      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(MyConsoleView.this, consoleProperties, null) {
+      myTestsOutputConsolePrinter = new TestsOutputConsolePrinter(this, consoleProperties, null) {
         @Override
         public void print(final String text, final ConsoleViewContentType contentType) {
           myMockResettablePrinter.print(text, contentType);
@@ -91,9 +76,8 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     TestConsoleProperties.SELECT_FIRST_DEFECT.set(consoleProperties, false);
     TestConsoleProperties.TRACK_RUNNING_TEST.set(consoleProperties, false);
 
-    final ExecutionEnvironment environment = new ExecutionEnvironment();
     myMockResettablePrinter = new MockPrinter(true);
-    myConsole = new MyConsoleView(consoleProperties, environment);
+    myConsole = new MyConsoleView(consoleProperties);
     myConsole.initUI();
     myResultsViewer = myConsole.getResultsViewer();
     myEventsProcessor = new GeneralToSMTRunnerEventsConvertor(consoleProperties.getProject(), myResultsViewer.getTestsRootNode(), "SMTestFramework");
@@ -262,7 +246,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     onTestStarted("some_test");
     final String fullName = myEventsProcessor.getFullTestName("some_test");
     final SMTestProxy proxy = myEventsProcessor.getProxyByFullTestName(fullName);
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("some_test", 10L));
 
     assertEquals(0, myEventsProcessor.getRunningTestsQuantity());
 
@@ -306,7 +290,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnFinishedTesting_WithFailure() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", false, null, null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10L));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -322,7 +306,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnFinishedTesting_WithError() {
     onTestStarted("test");
     myEventsProcessor.onTestFailure(new TestFailedEvent("test", "", "", true, null, null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10L));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -338,7 +322,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
   public void testOnFinishedTesting_WithIgnored() {
     onTestStarted("test");
     myEventsProcessor.onTestIgnored(new TestIgnoredEvent("test", "", null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test", 10L));
     myEventsProcessor.onFinishTesting();
 
     //Tree
@@ -385,7 +369,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     assertEquals("suite3", test2.getParent().getName());
     assertEquals("suite2", test2.getParent().getParent().getName());
 
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("test2", 10l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("test2", 10L));
 
     //check that after finishing suite (suite3), current will be parent of finished suite (i.e. suite2)
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite3"));
@@ -430,7 +414,7 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite1"));
 
     myEventsProcessor.onSuiteStarted(new TestSuiteStartedEvent("suite2", null));
-    myEventsProcessor.onTestFinished(new TestFinishedEvent("suite2.test1", 10l));
+    myEventsProcessor.onTestFinished(new TestFinishedEvent("suite2.test1", 10L));
     myEventsProcessor.onSuiteFinished(new TestSuiteFinishedEvent("suite2"));
 
     assertNotNull(test1);
@@ -488,6 +472,34 @@ public class GeneralToSMTRunnerEventsConvertorTest extends BaseSMTRunnerTestCase
     final List<? extends SMTestProxy> tests = suite.getChildren();
     assertEquals(1, tests.size());
     assertEquals("ATest", tests.get(0).getName());
+  }
+  
+  public void testPreserveOutputOnImport() throws Exception {
+    myEventsProcessor.onStartTesting();
+    ImportedToGeneralTestEventsConverter.parseTestResults(() -> new StringReader("<?xml version=\"1.0\" encoding=\"UTF-8\"?>" +
+                                                                           "<testrun duration=\"592\" footerText=\"Generated by IntelliJ IDEA\" name=\"suite1\">\n" +
+                                                                           "    <suite name=\"suite1\" status=\"failed\">\n" +
+                                                                           "        <test name=\"ATest\" status=\"failed\">\n" + 
+                                                                           "          <output type=\"stdout\">test output</output>" +
+                                                                           "          <output type=\"stderr\">error output</output>" +
+                                                                           "        </test>" +
+                                                                           "    </suite>\n" +
+                                                                           "</testrun>\n"),
+                                                          myEventsProcessor);
+    myEventsProcessor.onFinishTesting();
+
+    final List<? extends SMTestProxy> children = myResultsViewer.getTestsRootNode().getChildren();
+    assertEquals(1, children.size());
+    final SMTestProxy suite = children.get(0);
+    assertEquals("suite1", suite.getName());
+    final List<? extends SMTestProxy> tests = suite.getChildren();
+    assertEquals(1, tests.size());
+    SMTestProxy proxy = tests.get(0);
+    assertEquals("ATest", proxy.getName());
+    MockPrinter printer = new MockPrinter();
+    proxy.printOn(printer);
+    assertEquals("test output", printer.getStdOut().trim());
+    assertEquals("error output", printer.getStdErr().trim());
   }
 
   public void testSampleImportTestWithMetainfo() throws Exception {

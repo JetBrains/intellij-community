@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal;
 
 import com.intellij.icons.AllIcons;
@@ -6,7 +7,6 @@ import com.intellij.ide.actions.ToggleToolbarAction;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
@@ -16,13 +16,11 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
-import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
 import com.intellij.openapi.wm.ex.ToolWindowManagerListener;
 import com.intellij.openapi.wm.impl.InternalDecorator;
 import com.intellij.ui.awt.RelativePoint;
@@ -78,11 +76,7 @@ public class TerminalView {
 
     toolWindow.getContentManager().addContent(content);
 
-    ((ToolWindowManagerEx)ToolWindowManager.getInstance(myProject)).addToolWindowManagerListener(new ToolWindowManagerListener() {
-      @Override
-      public void toolWindowRegistered(@NotNull String id) {
-      }
-
+    myProject.getMessageBus().connect().subscribe(ToolWindowManagerListener.TOPIC, new ToolWindowManagerListener() {
       @Override
       public void stateChanged() {
         ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(TerminalToolWindowFactory.TOOL_WINDOW_ID);
@@ -146,7 +140,7 @@ public class TerminalView {
     toolbar.setTargetComponent(panel);
     panel.setToolbar(toolbar.getComponent());
     panel.uiSettingsChanged(null);
-    
+
     content.setPreferredFocusableComponent(myTerminalWidget.getComponent());
 
     return content;
@@ -203,9 +197,6 @@ public class TerminalView {
   }
 
   public static void recordUsage(@NotNull TtyConnector ttyConnector) {
-    UsageTrigger.trigger(TERMINAL_FEATURE + "." +
-                         (ttyConnector.toString().contains("Jsch") ? "ssh" :
-                          SystemInfo.isWindows ? "win" : SystemInfo.isMac ? "mac" : "linux"));
   }
 
   private static ActionToolbar createToolbar(@Nullable final AbstractTerminalRunner terminalRunner,

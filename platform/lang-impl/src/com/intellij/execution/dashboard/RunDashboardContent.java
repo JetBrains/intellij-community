@@ -44,6 +44,7 @@ import com.intellij.ui.content.*;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,6 +52,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeExpansionListener;
+import javax.swing.event.TreeModelEvent;
 import javax.swing.tree.DefaultMutableTreeNode;
 import java.awt.*;
 import java.awt.event.MouseEvent;
@@ -147,10 +149,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       public void contentRemoved(ContentManagerEvent event) {
         Content content = event.getContent();
         myContentActions.remove(content);
-        updateContentToolbar(content);
-        if (myContentManager.getContentCount() == 0 && !RunDashboardManager.getInstance(project).isShowConfigurations()) {
-          RunDashboardManager.getInstance(project).setShowConfigurations(true);
-        }
+        updateContentToolbar(myContentManager.getSelectedContent());
       }
 
       @Override
@@ -204,6 +203,9 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
       public Object getData(@NonNls String dataId) {
         if (KEY.getName().equals(dataId)) {
           return RunDashboardContent.this;
+        }
+        else if (PlatformDataKeys.HELP_ID.is(dataId)) {
+          return RunDashboardManager.getInstance(myProject).getToolWindowContextHelpId();
         }
         Content content = myContentManager.getSelectedContent();
         if (content != null && content.getComponent() != null) {
@@ -268,10 +270,6 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
                                     .filter(action -> !(action instanceof StopAction) && !(action instanceof FakeRerunAction))
                                     .collect(Collectors.toList()));
     }
-
-    // TODO [konstantin.aleev] provide context help ID
-    //myContentActionGroup.addSeparator();
-    //myContentActionGroup.add(new ContextHelpAction(HELP_ID));
   }
 
   private void onSelectionChanged() {
@@ -352,9 +350,20 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
   private void showMessagePanel(String text) {
     Content selectedContent = myContentManager.getSelectedContent();
     if (selectedContent != null) {
-      myContentManager.removeContentManagerListener(myContentManagerListener);
-      myContentManager.removeFromSelection(selectedContent);
-      myContentManager.addContentManagerListener(myContentManagerListener);
+      // Invoke content selection change later after currently selected content correctly restores its state,
+      // since RunnerContentUi performs restoring later after addNotify call chain.
+      SwingUtilities.invokeLater(() -> {
+        if (myContentManager.isDisposed() || !myContentManager.isSelected(selectedContent)) return;
+
+        // Selected node may changed, we do not need to remove content from selection if it corresponds currently selected node.
+        if (myLastSelection instanceof RunDashboardNode) {
+          if (selectedContent == ((RunDashboardNode)myLastSelection).getContent()) return;
+        }
+
+        myContentManager.removeContentManagerListener(myContentManagerListener);
+        myContentManager.removeFromSelection(selectedContent);
+        myContentManager.addContentManagerListener(myContentManagerListener);
+      });
     }
 
     myMessagePanel.getEmptyText().setText(text);
@@ -401,7 +410,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
     DefaultActionGroup treeGroup = new DefaultActionGroup();
 
-    TreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    TreeExpander treeExpander = new RunDashboardTreeExpander();
     AnAction expandAllAction = CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
     treeGroup.add(expandAllAction);
 
@@ -409,15 +418,17 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     treeGroup.add(collapseAllAction);
 
     treeGroup.addSeparator();
-    myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).forEach(grouper -> treeGroup.add(new GroupAction(grouper)));
+    List<RunDashboardGrouper> groupers =
+      myGroupers.stream().filter(grouper -> !grouper.getRule().isAlwaysEnabled()).collect(Collectors.toList());
+    if (!groupers.isEmpty()) {
+      treeGroup.add(new GroupByActionGroup(groupers));
+    }
+    treeGroup.add(new StatusActionGroup());
 
     treeGroup.addSeparator();
     AnAction treeActions = ActionManager.getInstance().getAction(RUN_DASHBOARD_TREE_TOOLBAR);
     treeActions.registerCustomShortcutSet(this, null);
     treeGroup.add(treeActions);
-
-    treeGroup.addSeparator();
-    treeGroup.add(new StatusActionGroup());
 
     ActionToolbar treeActionsToolBar = ActionManager.getInstance().createActionToolbar(PLACE_TOOLBAR, treeGroup, true);
     toolBarPanel.add(treeActionsToolBar.getComponent(), BorderLayout.CENTER);
@@ -474,6 +485,52 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
     return mySplitter.getProportion();
   }
 
+  private class RunDashboardTreeExpander extends DefaultTreeExpander {
+    boolean myFlat;
+
+    RunDashboardTreeExpander() {
+      super(myTree);
+      myTreeModel.addTreeModelListener(new TreeModelAdapter() {
+        @Override
+        public void treeStructureChanged(TreeModelEvent e) {
+          myFlat = isFlat();
+        }
+      });
+    }
+
+    @Override
+    public boolean canExpand() {
+      return super.canExpand() && !myFlat;
+    }
+
+    @Override
+    public boolean canCollapse() {
+      return super.canCollapse() && !myFlat;
+    }
+
+    private boolean isFlat() {
+      Object root = myTreeModel.getRoot();
+      for (int i = 0; i < myTreeModel.getChildCount(root); i++) {
+        Object child = myTreeModel.getChild(root, i);
+        if (myTreeModel.getChildCount(child) > 0) {
+          return false;
+        }
+      }
+      return true;
+    }
+  }
+
+  private class GroupByActionGroup extends DefaultActionGroup implements CheckedActionGroup {
+    GroupByActionGroup(List<RunDashboardGrouper> groupers) {
+      super(ExecutionBundle.message("run.dashboard.group.by.action.name"), true);
+      getTemplatePresentation().setIcon(AllIcons.Actions.GroupBy);
+
+      for (RunDashboardGrouper grouper : groupers) {
+        add(new GroupAction(grouper));
+      }
+    }
+  }
+
   private class GroupAction extends ToggleAction implements DumbAware {
     private final RunDashboardGrouper myGrouper;
 
@@ -509,9 +566,7 @@ public class RunDashboardContent extends JPanel implements TreeContent, Disposab
 
   private class StatusActionGroup extends DefaultActionGroup implements CheckedActionGroup {
     StatusActionGroup() {
-      setPopup(true);
-
-      getTemplatePresentation().setText(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"));
+      super(ExecutionBundle.message("run.dashboard.filter.by.status.action.name"), true);
       getTemplatePresentation().setIcon(AllIcons.General.Filter);
 
       for (final RunDashboardRunConfigurationStatus status : new RunDashboardRunConfigurationStatus[]{STARTED, FAILED, STOPPED, CONFIGURED}) {

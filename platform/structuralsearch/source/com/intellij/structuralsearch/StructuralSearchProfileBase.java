@@ -1,24 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch;
 
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptor;
 import com.intellij.dupLocator.equivalence.EquivalenceDescriptorProvider;
-import com.intellij.dupLocator.equivalence.MultiChildDescriptor;
-import com.intellij.dupLocator.equivalence.SingleChildDescriptor;
 import com.intellij.dupLocator.iterators.FilteringNodeIterator;
 import com.intellij.dupLocator.iterators.NodeIterator;
 import com.intellij.dupLocator.util.DuplocatorUtil;
@@ -40,7 +24,6 @@ import com.intellij.structuralsearch.impl.matcher.GlobalMatchingVisitor;
 import com.intellij.structuralsearch.impl.matcher.MatchContext;
 import com.intellij.structuralsearch.impl.matcher.PatternTreeContext;
 import com.intellij.structuralsearch.impl.matcher.compiler.GlobalCompilingVisitor;
-import com.intellij.structuralsearch.impl.matcher.compiler.PatternCompiler;
 import com.intellij.structuralsearch.impl.matcher.handlers.*;
 import com.intellij.structuralsearch.impl.matcher.iterators.SsrFilteringNodeIterator;
 import com.intellij.structuralsearch.impl.matcher.strategies.MatchingStrategy;
@@ -48,14 +31,10 @@ import com.intellij.structuralsearch.plugin.replace.ReplaceOptions;
 import com.intellij.structuralsearch.plugin.replace.impl.ReplacementContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.LocalTimeCounter;
-import java.util.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 import java.util.regex.Pattern;
 
 /**
@@ -223,84 +202,7 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
   }
 
   @Override
-  public void checkReplacementPattern(Project project, ReplaceOptions options) {
-    final CompiledPattern compiledPattern = PatternCompiler.compilePattern(project, options.getMatchOptions());
-    if (compiledPattern == null) {
-      return;
-    }
-
-    final NodeIterator it = compiledPattern.getNodes();
-    if (!it.hasNext()) {
-      return;
-    }
-
-    final PsiElement root = it.current().getParent();
-
-    if (!checkOptionalChildren(root) ||
-        !checkErrorElements(root)) {
-      throw new UnsupportedPatternException(": Partial and expression patterns are not supported");
-    }
-  }
-
-  private static boolean checkErrorElements(PsiElement element) {
-    final boolean[] result = {true};
-    final int endOffset = element.getTextRange().getEndOffset();
-
-    element.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-
-        if (element instanceof PsiErrorElement && element.getTextRange().getEndOffset() == endOffset) {
-          result[0] = false;
-        }
-      }
-    });
-
-    return result[0];
-  }
-
-  private static boolean checkOptionalChildren(PsiElement root) {
-    final boolean[] result = {true};
-
-    root.accept(new PsiRecursiveElementWalkingVisitor() {
-      @Override
-      public void visitElement(PsiElement element) {
-        super.visitElement(element);
-
-        if (element instanceof LeafElement) {
-          return;
-        }
-
-        final EquivalenceDescriptorProvider provider = EquivalenceDescriptorProvider.getInstance(element);
-        if (provider == null) {
-          return;
-        }
-
-        final EquivalenceDescriptor descriptor = provider.buildDescriptor(element);
-        if (descriptor == null) {
-          return;
-        }
-
-        for (SingleChildDescriptor childDescriptor : descriptor.getSingleChildDescriptors()) {
-          if (childDescriptor.getType() == SingleChildDescriptor.MyType.OPTIONALLY_IN_PATTERN &&
-              childDescriptor.getElement() == null) {
-            result[0] = false;
-          }
-        }
-
-        for (MultiChildDescriptor childDescriptor : descriptor.getMultiChildDescriptors()) {
-          if (childDescriptor.getType() == MultiChildDescriptor.MyType.OPTIONALLY_IN_PATTERN) {
-            PsiElement[] elements = childDescriptor.getElements();
-            if (elements == null || elements.length == 0) {
-              result[0] = false;
-            }
-          }
-        }
-      }
-    });
-    return result[0];
-  }
+  public void checkReplacementPattern(Project project, ReplaceOptions options) {}
 
   @Override
   public StructuralReplaceHandler getReplaceHandler(@NotNull ReplacementContext context) {
@@ -660,15 +562,15 @@ public abstract class StructuralSearchProfileBase extends StructuralSearchProfil
     }
 
     @Override
-    public boolean matchSequentially(NodeIterator nodes, NodeIterator nodes2, MatchContext context) {
-      if (doMatchSequentially(nodes, nodes2, context)) {
+    public boolean matchSequentially(NodeIterator patternNodes, NodeIterator matchNodes, MatchContext context) {
+      if (doMatchSequentially(patternNodes, matchNodes, context)) {
         return true;
       }
-      final PsiElement current = nodes.current();
+      final PsiElement current = patternNodes.current();
       if (current != null) {
         myExceptedNodes.add(current);
       }
-      final boolean result = doMatchSequentiallyBySimpleHandler(nodes, nodes2, context);
+      final boolean result = doMatchSequentiallyBySimpleHandler(patternNodes, matchNodes, context);
       myExceptedNodes.remove(current);
       return result;
     }

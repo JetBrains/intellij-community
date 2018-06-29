@@ -93,11 +93,6 @@
     </component>
 
     <component>
-      <interface-class>com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent</interface-class>
-      <implementation-class>com.intellij.internal.statistic.ApplicationStatisticsPersistenceComponent</implementation-class>
-    </component>
-
-    <component>
       <interface-class>com.intellij.ide.ClipboardSynchronizer</interface-class>
       <implementation-class>com.intellij.ide.ClipboardSynchronizer</implementation-class>
     </component>
@@ -148,17 +143,19 @@
     <component>
       <implementation-class>com.intellij.ide.customize.WelcomeWizardHelper</implementation-class>
     </component>
+
+    <component>
+      <implementation-class>com.intellij.diagnostic.LowMemoryNotifier</implementation-class>
+    </component>
   </application-components>
 
   <project-components>
     <component>
       <implementation-class>com.intellij.notification.EventLog$ProjectTracker</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>
       <implementation-class>com.intellij.notification.impl.MacEventReader$ProjectTracker</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>
@@ -185,7 +182,6 @@
 
     <component>
       <implementation-class>com.intellij.notification.impl.NotificationsManagerImpl$ProjectNotificationsComponent</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 </idea-plugin>

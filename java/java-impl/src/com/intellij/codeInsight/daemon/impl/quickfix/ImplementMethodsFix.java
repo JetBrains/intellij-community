@@ -77,20 +77,18 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
     if (myPsiElement instanceof PsiEnumConstant) {
       final boolean hasClassInitializer = ((PsiEnumConstant)myPsiElement).getInitializingClass() != null;
       final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement,
-                                                                              ((PsiEnumConstant)myPsiElement).getContainingClass(), hasClassInitializer);
+                                                                              ((PsiEnumConstant)myPsiElement).getContainingClass(),
+                                                                              hasClassInitializer);
       if (chooser == null) return;
 
       final List<PsiMethodMember> selectedElements = chooser.getSelectedElements();
       if (selectedElements == null || selectedElements.isEmpty()) return;
 
-      new WriteCommandAction(project, file) {
-        @Override
-        protected void run(@NotNull final Result result) throws Throwable {
-          final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
-          OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
-                                                                       chooser.isInsertOverrideAnnotation());
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project, file).run(() -> {
+        final PsiClass psiClass = ((PsiEnumConstant)myPsiElement).getOrCreateInitializingClass();
+        OverrideImplementUtil.overrideOrImplementMethodsInRightPlace(editor, psiClass, selectedElements, chooser.isCopyJavadoc(),
+                                                                     chooser.isInsertOverrideAnnotation());
+      });
     }
     else {
       OverrideImplementUtil.chooseAndImplementMethods(project, editor, (PsiClass)myPsiElement);

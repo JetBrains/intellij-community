@@ -28,7 +28,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
-
 import org.intellij.lang.xpath.XPathFile;
 import org.intellij.lang.xpath.psi.XPathExpression;
 import org.intellij.lang.xpath.xslt.XsltSupport;
@@ -127,15 +126,12 @@ public abstract class BaseIntroduceAction<Settings extends RefactoringOptions> e
         if (dlg == null || dlg.isCanceled()) return;
 
         if (getCommandName() != null) {
-            new WriteCommandAction.Simple(e.getProject(), getCommandName()) {
-                protected void run() throws Throwable {
-                    if (extractImpl(expression, matchingExpressions, otherMatches, dlg)) {
-                        for (RangeHighlighter highlighter : highlighters) {
-                            highlighter.dispose();
-                        }
-                    }
+            WriteCommandAction.writeCommandAction(e.getProject()).withName(getCommandName()).run(() -> {
+            if (extractImpl(expression, matchingExpressions, otherMatches, dlg)) {
+                for (RangeHighlighter highlighter : highlighters) {
+                    highlighter.dispose();
                 }
-            }.execute();
+            }});
         } else {
             extractImpl(expression, matchingExpressions, otherMatches, dlg);
         }

@@ -26,21 +26,27 @@ public class DefaultAnnotationParamInspection extends AbstractBaseJavaLocalInspe
         PsiAnnotationMemberValue defaultValue = ((PsiAnnotationMethod)element).getDefaultValue();
         if (defaultValue == null) return;
         if (AnnotationUtil.equal(value, defaultValue)) {
-          holder.registerProblem(value, "Redundant default parameter value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL, new LocalQuickFix() {
-            @Nls
-            @NotNull
-            @Override
-            public String getFamilyName() {
-              return "Remove redundant parameter";
-            }
-
-            @Override
-            public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-              PsiElement parent = descriptor.getPsiElement().getParent();
-              parent.delete();
-            }
-          });
+          holder.registerProblem(value, "Redundant default parameter value assignment", ProblemHighlightType.LIKE_UNUSED_SYMBOL,
+                                 createRemoveParameterFix());
         }
+      }
+    };
+  }
+
+  @NotNull
+  private static LocalQuickFix createRemoveParameterFix() {
+    return new LocalQuickFix() {
+      @Nls
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return "Remove redundant parameter";
+      }
+
+      @Override
+      public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+        PsiElement parent = descriptor.getPsiElement().getParent();
+        parent.delete();
       }
     };
   }

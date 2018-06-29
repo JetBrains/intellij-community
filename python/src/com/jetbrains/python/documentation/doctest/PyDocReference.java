@@ -151,9 +151,8 @@ public class PyDocReference extends PyReferenceImpl {
   @NotNull
   public Object[] getVariants() {
     final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
-    final PsiElement originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement instanceof PyQualifiedExpression ?
-                                          (PyQualifiedExpression)originalElement : myElement;
+    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
 
     final ScopeOwner scopeOwner = getHostScopeOwner();
     if (scopeOwner != null) {

@@ -4,6 +4,7 @@
 package com.intellij.ide;
 
 import com.intellij.ide.impl.ProjectUtil;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.idea.StartupUtil;
 import com.intellij.openapi.application.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -72,7 +73,7 @@ public class CommandLineProcessor {
     else {
       NonProjectFileWritingAccessProvider.allowWriting(file);
       Project project = findBestProject(file, projects);
-      (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : new OpenFileDescriptor(project, file)).navigate(true);
+      (line > 0 ? new OpenFileDescriptor(project, file, line - 1, 0) : PsiNavigationSupport.getInstance().createNavigatable(project, file, -1)).navigate(true);
       return project;
     }
   }

@@ -17,6 +17,8 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.StringTokenizer;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 
 /**
  * Javadoc parser
@@ -33,6 +35,11 @@ public class JDParser {
 
   private final JavaCodeStyleSettings mySettings;
   private final CommonCodeStyleSettings myCommonSettings;
+
+  private final static String HTML_TAG_REGEXP = "\\s*</?\\w+\\s*(\\w+\\s*=.*)?>.*";
+  private final static String PRE_TAG_START_REGEXP = "<pre\\s*(\\w+\\s*=.*)?>";
+  private final static Pattern HTML_TAG_PATTERN = Pattern.compile(HTML_TAG_REGEXP);
+  private final static Pattern PRE_TAG_START_PATTERN = Pattern.compile(PRE_TAG_START_REGEXP);
 
   public JDParser(@NotNull CodeStyleSettings settings) {
     mySettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
@@ -280,7 +287,7 @@ public class JDParser {
         first = true;
         if (p2nl) {
           if (isParaTag(token) && s.indexOf(P_END_TAG, curPos) < 0) {
-            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : "");
+            list.add(isSelfClosedPTag(token) ? SELF_CLOSED_P_TAG : P_START_TAG);
             markers.add(Boolean.valueOf(preCount > 0));
             continue;
           }
@@ -290,9 +297,9 @@ public class JDParser {
         list.add(token);
 
         if (markers != null) {
-          if (token.contains(PRE_TAG_START)) preCount++;
+          if (lineHasUnclosedPreTag(token)) preCount++;
           markers.add(Boolean.valueOf(preCount > 0));
-          if (token.contains(PRE_TAG_END)) preCount--;
+          if (lineHasClosingPreTag(token)) preCount--;
         }
 
       }
@@ -355,7 +362,7 @@ public class JDParser {
         continue;
       }
       while (true) {
-        if (seq.length() < width) {
+        if (seq.length() < width || isMarked) {
           // keep remaining line and proceed with next paragraph
           seq = isMarked ? seq : seq.trim();
           list.add(seq);
@@ -444,7 +451,7 @@ public class JDParser {
 
   private static boolean startsWithTag(@NotNull String line) {
     if (line.trim().startsWith("<")) {
-      return line.matches("\\s*</?\\w+>.*");
+      return HTML_TAG_PATTERN.matcher(line).matches();
     }
     return false;
   }
@@ -553,11 +560,21 @@ public class JDParser {
   };
 
   private static boolean lineHasUnclosedPreTag(@NotNull String line) {
-    return StringUtil.getOccurrenceCount(line, PRE_TAG_START) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
+    return getOccurenceCount(line, PRE_TAG_START_PATTERN) > StringUtil.getOccurrenceCount(line, PRE_TAG_END);
   }
 
   private static boolean lineHasClosingPreTag(@NotNull String line) {
-    return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > StringUtil.getOccurrenceCount(line, PRE_TAG_START);
+    return StringUtil.getOccurrenceCount(line, PRE_TAG_END) > getOccurenceCount(line, PRE_TAG_START_PATTERN);
+  }
+
+  @SuppressWarnings("SameParameterValue")
+  private static int getOccurenceCount(@NotNull String line, @NotNull Pattern pattern) {
+    Matcher matcher = pattern.matcher(line);
+    int count = 0;
+    while (matcher.find()) {
+      count++;
+    }
+    return count;
   }
 
   @NotNull
@@ -634,17 +651,17 @@ public class JDParser {
         String line = list.get(i);
         if (line.isEmpty() && !mySettings.JD_KEEP_EMPTY_LINES) continue;
         if (i != 0) sb.append(continuationPrefix);
-        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag) {
+        if (line.isEmpty() && mySettings.JD_P_AT_EMPTY_LINES && !insidePreTag && !isFollowedByTagLine(list, i)) {
           sb.append(P_START_TAG);
         }
         else {
           sb.append(line);
 
           // We want to track if we're inside <pre>...</pre> in order to not generate <p/> there.
-          if (line.startsWith(PRE_TAG_START)) {
+          if (lineHasUnclosedPreTag(line)) {
             insidePreTag = true;
           }
-          else if (line.endsWith(PRE_TAG_END)) {
+          else if (lineHasClosingPreTag(line)) {
             insidePreTag = false;
           }
         }
@@ -653,6 +670,16 @@ public class JDParser {
     }
 
     return sb;
+  }
+
+  private static boolean isFollowedByTagLine(List<String> lines, int currLine) {
+    for (int i = currLine + 1; i < lines.size(); i ++) {
+      String line = lines.get(i);
+      if (!line.isEmpty()) {
+        return startsWithTag(line);
+      }
+    }
+    return false;
   }
 
   private static class CommentInfo {

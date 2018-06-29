@@ -139,7 +139,7 @@ public class CyclicDependenciesPanel extends JPanel implements Disposable, DataP
     TreeUtil.selectFirstNode(myLeftTree);
   }
 
-  private static void getPackageNodesHierarchy(PackageNode node, Set<PackageNode> result){
+  private static void getPackageNodesHierarchy(PackageNode node, Set<? super PackageNode> result){
     result.add(node);
     for (int i = 0; i < node.getChildCount(); i++){
       final TreeNode child = node.getChildAt(i);

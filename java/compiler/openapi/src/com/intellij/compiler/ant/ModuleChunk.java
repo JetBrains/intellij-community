@@ -119,6 +119,10 @@ public class ModuleChunk {
     options.add("-source");
     options.add(sourceVersion);
 
+    if (languageLevel.isPreview()) {
+      options.add("--enable-preview");
+    }
+
     String bytecodeTarget = CompilerConfiguration.getInstance(getProject()).getBytecodeTargetLevel(myMainModule);
     if (StringUtil.isEmpty(bytecodeTarget)) {
       // according to IDEA rule: if not specified explicitly, set target to be the same as source language level

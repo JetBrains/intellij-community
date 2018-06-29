@@ -194,6 +194,12 @@ public class SheetController implements Disposable {
     }
   }
 
+  void setResultAndStartClose(String result) {
+    if (result != null)
+      myResult = result;
+    mySheetMessage.startAnimation(false);
+  }
+
   JPanel getPanel(final JDialog w) {
     w.getRootPane().setDefaultButton(myDefaultButton);
 
@@ -201,10 +207,8 @@ public class SheetController implements Disposable {
     ActionListener actionListener = new ActionListener() {
       @Override
       public void actionPerformed(@NotNull ActionEvent e) {
-        if (e.getSource() instanceof JButton) {
-          myResult = ((JButton)e.getSource()).getName();
-        }
-        mySheetMessage.startAnimation(false);
+        final String res = e.getSource() instanceof JButton ? ((JButton)e.getSource()).getName() : null;
+        setResultAndStartClose(res);
       }
     };
 
@@ -492,4 +496,6 @@ public class SheetController implements Disposable {
     mySheetPanel.unregisterKeyboardAction(VK_ESC_KEYSTROKE);
     mySheetMessage = null;
   }
+
+  JButton getDefaultButton() { return myDefaultButton; }
 }

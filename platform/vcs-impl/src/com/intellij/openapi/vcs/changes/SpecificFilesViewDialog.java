@@ -1,32 +1,19 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
+import com.intellij.openapi.vcs.changes.ui.TreeActionsToolbarPanel;
 import com.intellij.openapi.vcs.changes.ui.TreeModelBuilder;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.GuiUtils;
@@ -36,6 +23,7 @@ import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
@@ -43,6 +31,10 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.util.List;
 import java.util.stream.Stream;
+
+import static com.intellij.openapi.vcs.changes.ui.ChangesTree.DEFAULT_GROUPING_KEYS;
+import static com.intellij.openapi.vcs.changes.ui.ChangesTree.GROUP_BY_ACTION_GROUP;
+import static com.intellij.util.containers.ContainerUtil.set;
 
 abstract class SpecificFilesViewDialog extends DialogWrapper {
   protected JPanel myPanel;
@@ -59,18 +51,23 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     myProject = project;
     final Runnable closer = () -> this.close(0);
     myView = new ChangesListView(project) {
+      @Nullable
       @Override
-      public void calcData(DataKey key, DataSink sink) {
-        super.calcData(key, sink);
-        if (shownDataKey.is(key.getName())) {
-          sink.put(shownDataKey, getSelectedVirtualFiles(null));
+      public Object getData(String dataId) {
+        if (shownDataKey.is(dataId)) {
+          return getSelectedVirtualFiles(null);
         }
+        return super.getData(dataId);
       }
 
       @Override
-      protected void editSourceRegistration() {
-        EditSourceOnDoubleClickHandler.install(this, closer);
+      protected void installEnterKeyHandler() {
         EditSourceOnEnterKeyHandler.install(this, closer);
+      }
+
+      @Override
+      protected void installDoubleClickHandler() {
+        EditSourceOnDoubleClickHandler.install(this, closer);
       }
     };
     myChangeListManager = ChangeListManager.getInstance(project);
@@ -80,7 +77,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     init();
     initData(initDataFiles);
     myView.setMinimumSize(new JBDimension(100, 100));
-
+    myView.addGroupingChangeListener(e -> refreshView());
 
     ChangeListAdapter changeListListener = new ChangeListAdapter() {
       @Override
@@ -101,7 +98,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
   private void initData(@NotNull final List<VirtualFile> files) {
     final TreeState state = TreeState.createOn(myView, (ChangesBrowserNode)myView.getModel().getRoot());
 
-    final DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.isShowFlatten(), files);
+    DefaultTreeModel model = TreeModelBuilder.buildFromVirtualFiles(myProject, myView.getGrouping(), files);
     myView.setModel(model);
     myView.expandPath(new TreePath(((ChangesBrowserNode)model.getRoot()).getPath()));
 
@@ -119,13 +116,17 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     final CommonActionsManager cam = CommonActionsManager.getInstance();
     final Expander expander = new Expander();
     group.addSeparator();
-    group.add(new ToggleShowFlattenAction());
-    group.add(cam.createExpandAllAction(expander, myView));
-    group.add(cam.createCollapseAllAction(expander, myView));
+    group.add(ActionManager.getInstance().getAction(GROUP_BY_ACTION_GROUP));
 
-    myPanel.add(actionToolbar.getComponent(), BorderLayout.NORTH);
+    DefaultActionGroup treeActions = new DefaultActionGroup();
+    treeActions.add(cam.createExpandAllHeaderAction(expander, myView));
+    treeActions.add(cam.createCollapseAllHeaderAction(expander, myView));
+
+    JPanel toolbarPanel = new TreeActionsToolbarPanel(actionToolbar, treeActions, myView);
+
+    myPanel.add(toolbarPanel, BorderLayout.NORTH);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
-    myView.setShowFlatten(false);
+    myView.getGroupingSupport().setGroupingKeysOrSkip(set(DEFAULT_GROUPING_KEYS));
   }
 
   protected void addCustomActions(@NotNull DefaultActionGroup group) {
@@ -152,7 +153,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     }
 
     public boolean canExpand() {
-      return !myView.isShowFlatten();
+      return !myView.getGroupingSupport().isNone();
     }
 
     public void collapseAll() {
@@ -161,7 +162,7 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
     }
 
     public boolean canCollapse() {
-      return !myView.isShowFlatten();
+      return !myView.getGroupingSupport().isNone();
     }
   }
 
@@ -175,21 +176,4 @@ abstract class SpecificFilesViewDialog extends DialogWrapper {
 
   @NotNull
   protected abstract List<VirtualFile> getFiles();
-
-  public class ToggleShowFlattenAction extends ToggleAction implements DumbAware {
-    public ToggleShowFlattenAction() {
-      super(VcsBundle.message("changes.action.show.directories.text"),
-            VcsBundle.message("changes.action.show.directories.description"),
-            AllIcons.Actions.GroupByPackage);
-    }
-
-    public boolean isSelected(AnActionEvent e) {
-      return !myView.isShowFlatten();
-    }
-
-    public void setSelected(AnActionEvent e, boolean state) {
-      myView.setShowFlatten(!state);
-      refreshView();
-    }
-  }
 }

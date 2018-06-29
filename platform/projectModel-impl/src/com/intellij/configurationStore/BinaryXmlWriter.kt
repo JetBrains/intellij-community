@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.configurationStore
 
 import com.intellij.util.containers.ObjectIntHashMap
@@ -109,7 +109,6 @@ internal class BinaryXmlWriter(private val out: DataOutputStream) {
   }
 
   private fun isAllWhitespace(obj: Text): Boolean {
-    val str = obj.text ?: return false
-    return (0 until str.length).any { Verifier.isXMLWhitespace(str[it]) }
+    return obj.text?.all { Verifier.isXMLWhitespace(it) } ?: return true
   }
 }

@@ -15,6 +15,7 @@
  */
 package com.intellij.util.ui;
 
+import javax.swing.*;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
 import java.awt.*;
@@ -37,6 +38,11 @@ public class JBEmptyBorder extends EmptyBorder {
 
   public JBEmptyBorderUIResource asUIResource() {
     return new JBEmptyBorderUIResource(this);
+  }
+
+  public <T extends JComponent> T wrap(T component) {
+    component.setBorder(this);
+    return component;
   }
 
   public static class JBEmptyBorderUIResource extends JBEmptyBorder implements UIResource {

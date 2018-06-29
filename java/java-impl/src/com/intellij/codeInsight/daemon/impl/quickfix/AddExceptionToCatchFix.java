@@ -30,6 +30,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -167,6 +168,11 @@ public class AddExceptionToCatchFix extends BaseIntentionAction {
     PsiElement element = file.findElementAt(offset);
     if (element instanceof PsiWhiteSpace) element = file.findElementAt(offset - 1);
     if (element == null) return null;
+    PsiElement parentStatement = RefactoringUtil.getParentStatement(element, false);
+    if (parentStatement instanceof PsiDeclarationStatement &&
+        ((PsiDeclarationStatement)parentStatement).getDeclaredElements()[0] instanceof PsiClass) {
+      return null;
+    }
 
     @SuppressWarnings({"unchecked"})
     final PsiElement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, PsiMethod.class, PsiFunctionalExpression.class);

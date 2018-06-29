@@ -156,7 +156,7 @@ public class GuessManagerImpl extends GuessManager {
       }
     };
 
-    TypeConstraint initial = type == null ? null : TypeConstraint.EMPTY.withInstanceofValue(runner.getFactory().createDfaType(type));
+    TypeConstraint initial = type == null ? null : runner.getFactory().createDfaType(type).asConstraint();
     final ExpressionTypeInstructionVisitor visitor = new ExpressionTypeInstructionVisitor(forPlace, onlyForPlace, initial);
     if (runner.analyzeMethodWithInlining(scope, visitor) == RunnerResult.OK) {
       return visitor.getResult();
@@ -340,32 +340,27 @@ public class GuessManagerImpl extends GuessManager {
   @NotNull
   @Override
   public List<PsiType> getControlFlowExpressionTypeConjuncts(@NotNull PsiExpression expr) {
-    List<PsiType> result = null;
+    if (expr.getType() instanceof PsiPrimitiveType) {
+      return Collections.emptyList();
+    }
     PsiExpression place = PsiUtil.skipParenthesizedExprDown(expr);
     if (place == null) return Collections.emptyList();
-    if (place instanceof PsiReferenceExpression) {
-      PsiElement target = ((PsiReferenceExpression)place).resolve();
-      if (target instanceof PsiParameter) {
-        PsiElement parent = target.getParent();
-        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression) {
-          result = getTypesFromDfa(expr);
-        }
-      }
-    }
-    if (result == null) {
+
+    List<PsiType> result = null;
+    if (!ControlFlowAnalyzer.inlinerMayInferPreciseType(place)) {
       GuessTypeVisitor visitor = new GuessTypeVisitor(place);
       getTopmostBlock(place).accept(visitor);
 
-      if (visitor.isDfaNeeded()) {
-        result = getTypesFromDfa(expr);
-      }
-      else {
+      if (!visitor.isDfaNeeded()) {
         result = visitor.mySpecificType == null ?
                  Collections.emptyList() : Collections.singletonList(tryGenerify(expr, visitor.mySpecificType));
       }
     }
+    if (result == null) {
+      result = getTypesFromDfa(expr);
+    }
     if (result.equals(Collections.singletonList(expr.getType()))) {
-      result = Collections.emptyList();
+      return Collections.emptyList();
     }
     return result;
   }
@@ -413,8 +408,11 @@ public class GuessManagerImpl extends GuessManager {
     private void handleAssignment(@Nullable PsiExpression expression) {
       if (expression == null) return;
       PsiType type = expression.getType();
+      if (type instanceof PsiPrimitiveType) {
+        type = ((PsiPrimitiveType)type).getBoxedType(expression);
+      }
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
-      if (rawType == null) return;
+      if (rawType == null || rawType.equals(PsiType.NULL)) return;
       if (mySpecificType == null) {
         mySpecificType = rawType;
       }
@@ -469,7 +467,7 @@ public class GuessManagerImpl extends GuessManager {
 
     public boolean isDfaNeeded() {
       if (myNeedDfa) return true;
-      if (myDeclared || mySpecificType == null) return true;
+      if (myDeclared || mySpecificType == null) return false;
       PsiType type = myPlace.getType();
       PsiType rawType = type instanceof PsiClassType ? ((PsiClassType)type).rawType() : type;
       return !mySpecificType.equals(rawType);
@@ -514,13 +512,13 @@ public class GuessManagerImpl extends GuessManager {
     @Override
     public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
       PsiExpression psiOperand = instruction.getLeft();
-      if (!isInteresting(psiOperand)) {
+      if (!isInteresting(psiOperand) || instruction.isClassObjectCheck()) {
         return super.visitInstanceof(instruction, runner, memState);
       }
       DfaValue type = memState.pop();
       DfaValue operand = memState.pop();
       DfaValue relation = runner.getFactory().createCondition(operand, DfaRelationValue.RelationType.IS, type);
-      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, instruction.getCastType(), relation, false));
+      memState.push(new DfaInstanceofValue(runner.getFactory(), psiOperand, Objects.requireNonNull(instruction.getCastType()), relation, false));
       return new DfaInstructionState[]{new DfaInstructionState(runner.getInstruction(instruction.getIndex() + 1), memState)};
     }
 

@@ -19,26 +19,27 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
 import com.intellij.ide.ui.laf.darcula.DarculaUIUtil;
+import com.intellij.openapi.actionSystem.ex.ComboBoxAction;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.util.ObjectUtils;
-import com.intellij.util.ui.JBInsets;
-import com.intellij.util.ui.JBUI;
-import com.intellij.util.ui.MacUIUtil;
-import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NotNull;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.JBColor;
+import com.intellij.ui.components.JBOptionButton;
+import com.intellij.util.ui.*;
 import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
-import javax.swing.plaf.ColorUIResource;
 import javax.swing.plaf.ComponentUI;
 import javax.swing.plaf.FontUIResource;
-import javax.swing.plaf.UIResource;
 import javax.swing.plaf.basic.BasicButtonUI;
+import javax.swing.plaf.basic.BasicGraphicsUtils;
 import javax.swing.plaf.basic.BasicHTML;
 import javax.swing.text.View;
 import java.awt.*;
 import java.awt.geom.Ellipse2D;
 import java.awt.geom.RoundRectangle2D;
+
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.BW;
+import static com.intellij.ide.ui.laf.darcula.DarculaUIUtil.MINIMUM_HEIGHT;
 
 /**
  * @author Konstantin Bulenkov
@@ -48,7 +49,9 @@ public class DarculaButtonUI extends BasicButtonUI {
   private final Rectangle textRect = new Rectangle();
   private final Rectangle iconRect = new Rectangle();
 
-  static int HELP_BUTTON_DIAMETER = 22;
+  protected static JBValue HELP_BUTTON_DIAMETER = new JBValue.Float(22);
+  protected static JBValue MINIMUM_BUTTON_WIDTH = new JBValue.Float(72);
+  protected static JBValue HORIZONTAL_PADDING = new JBValue.Float(14);
 
   @SuppressWarnings({"MethodOverridesStaticMethodOfSuperclass", "unused"})
   public static ComponentUI createUI(JComponent c) {
@@ -59,12 +62,28 @@ public class DarculaButtonUI extends BasicButtonUI {
     return c instanceof JButton && "square".equals(((JButton)c).getClientProperty("JButton.buttonType"));
   }
 
-  public static boolean isDefaultButton(Component c) {
+  public static boolean isDefaultButton(JComponent c) {
     return c instanceof JButton && ((JButton)c).isDefaultButton();
   }
 
-  public static boolean isComboButton(JComponent c) {
-    return c instanceof AbstractButton && c.getClientProperty("styleCombo") == Boolean.TRUE;
+  public static boolean isSmallComboButton(Component c) {
+    ComboBoxAction a = getComboAction(c);
+    return a != null && a.isSmallVariant();
+  }
+
+  public static ComboBoxAction getComboAction(Component c) {
+    return c instanceof AbstractButton ? (ComboBoxAction)((JComponent)c).getClientProperty("styleCombo") : null;
+  }
+
+  @Override
+  public void installDefaults(AbstractButton b) {
+    super.installDefaults(b);
+    b.setIconTextGap(textIconGap());
+    b.setMargin(JBUI.emptyInsets());
+  }
+
+  protected int textIconGap() {
+    return JBUI.scale(4);
   }
 
   /**
@@ -74,13 +93,14 @@ public class DarculaButtonUI extends BasicButtonUI {
    * @return {@code true} if it is allowed to continue painting,
    *         {@code false} if painting should be stopped
    */
+  @SuppressWarnings("UseJBColor")
   protected boolean paintDecorations(Graphics2D g, JComponent c) {
     Rectangle r = new Rectangle(c.getSize());
     JBInsets.removeFrom(r, JBUI.insets(1));
 
     if (UIUtil.isHelpButton(c)) {
-      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, r.height, getButtonColor2()));
-      int diam = JBUI.scale(HELP_BUTTON_DIAMETER);
+      g.setPaint(UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd()));
+      int diam = HELP_BUTTON_DIAMETER.get();
       int x = r.x + (r.width - diam) / 2;
       int y = r.x + (r.height - diam) / 2;
 
@@ -96,22 +116,19 @@ public class DarculaButtonUI extends BasicButtonUI {
 
         g2.translate(r.x, r.y);
 
-        float arc = isSquare(c) ? JBUI.scale(2.0f) : DarculaUIUtil.arc();
-        float bw = DarculaUIUtil.bw();
+        float arc = DarculaUIUtil.BUTTON_ARC.getFloat();
+        float bw = isSmallComboButton(c) ? 0 : BW.getFloat();
+
+        if (!c.hasFocus() && !isSmallComboButton(c) && c.isEnabled() && UIManager.getBoolean("Button.darcula.paintShadow")) {
+          Color shadowColor = JBColor.namedColor("Button.darcula.shadowColor", new Color(0xa6a6a680, true));
+          int shadowWidth = JBUI.scale(JBUI.getInt("Button.darcula.shadowWidth", 2));
+          g2.setColor(isDefaultButton(c) ? JBColor.namedColor("Button.darcula.defaultShadowColor", shadowColor) : shadowColor);
+          g2.fill(new RoundRectangle2D.Float(bw, bw + shadowWidth, r.width - bw * 2, r.height - bw * 2, arc, arc));
+        }
 
         if (c.isEnabled()) {
-          if (isSquare(c)) {
-            g2.setPaint(UIUtil.getGradientPaint(r.x, r.y, getButtonColor1(), r.x + r.width,
-                                                r.y + r.height, getButtonColor2()));
-            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-          }
-          else {
-            g2.setPaint(isDefaultButton(c) ?
-                        UIUtil.getGradientPaint(0, 0, getSelectedButtonColor1(), 0, r.height, getSelectedButtonColor2()) :
-                        UIUtil.getGradientPaint(0, 0, getButtonColor1(), 0, r.height, getButtonColor2()));
-
-            g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
-          }
+          g2.setPaint(getBackground(c, r));
+          g2.fill(new RoundRectangle2D.Float(bw, bw, r.width - bw * 2, r.height - bw * 2, arc, arc));
         }
       } finally {
         g2.dispose();
@@ -120,10 +137,20 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
+  private Paint getBackground(JComponent c, Rectangle r) {
+    Color backgroundColor = (Color)c.getClientProperty("JButton.backgroundColor");
+
+    return backgroundColor != null ? backgroundColor :
+      isSmallComboButton(c) ? JBColor.namedColor("Button.darcula.smallComboButtonBackground", UIUtil.getPanelBackground()) :
+      isDefaultButton(c) ?
+        UIUtil.getGradientPaint(0, 0, getDefaultButtonColorStart(), 0, r.height, getDefaultButtonColorEnd()) :
+        UIUtil.getGradientPaint(0, 0, getButtonColorStart(), 0, r.height, getButtonColorEnd());
+  }
+
   @Override
   public void paint(Graphics g, JComponent c) {
     if (paintDecorations((Graphics2D)g, c)) {
-      super.paint(g, c);
+      paintContents(g, (AbstractButton)c);
     }
   }
 
@@ -134,9 +161,7 @@ public class DarculaButtonUI extends BasicButtonUI {
     
     AbstractButton button = (AbstractButton)c;
     ButtonModel model = button.getModel();
-    g.setColor(getTextColor(button));
-
-    //UISettings.setupAntialiasing(g);
+    g.setColor(getButtonTextColor(button));
 
     FontMetrics metrics = SwingUtilities2.getFontMetrics(c, g);
     int mnemonicIndex = DarculaLaf.isAltPressed() ? button.getDisplayedMnemonicIndex() : -1;
@@ -151,15 +176,9 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  public static Color getTextColor(@NotNull AbstractButton button) {
-    Color fg = button.getForeground();
-    if (fg instanceof UIResource && isDefaultButton(button)) {
-      final Color selectedFg = UIManager.getColor("Button.darcula.selectedButtonForeground");
-      if (selectedFg != null) {
-        fg = selectedFg;
-      }
-    }
-    return fg;
+  protected Color getButtonTextColor(AbstractButton button) {
+    Color textColor = (Color)button.getClientProperty("JButton.textColor");
+    return textColor != null ? textColor : DarculaUIUtil.getButtonTextColor(button);
   }
 
   public static Color getDisabledTextColor() {
@@ -174,6 +193,8 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected void paintContents(Graphics g, AbstractButton b) {
+    if (b instanceof JBOptionButton) return;
+
     FontMetrics fm = SwingUtilities2.getFontMetrics(b, g);
     boolean isDotButton = isSquare(b) && b.getIcon() == AllIcons.General.Ellipsis;
     String text = isDotButton ? "..." : b.getText();
@@ -206,20 +227,31 @@ public class DarculaButtonUI extends BasicButtonUI {
   }
 
   protected Dimension getDarculaButtonSize(JComponent c, Dimension prefSize) {
-    float bw = DarculaUIUtil.bw();
-
     Insets i = c.getInsets();
-    int helpDiam = JBUI.scale(HELP_BUTTON_DIAMETER);
-    return UIUtil.isHelpButton(c) ?
-           new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
-                         Math.max(prefSize.height, helpDiam + i.top + i.bottom)):
-           new Dimension(Math.max(prefSize.width, (int)(JBUI.scale(74) + bw * 2)),
-                         Math.max(prefSize.height, (int)(JBUI.scale(26) + bw * 2)));
+    if (UIUtil.isHelpButton(c) || isSquare(c)) {
+      int helpDiam = HELP_BUTTON_DIAMETER.get();
+      return new Dimension(Math.max(prefSize.width, helpDiam + i.left + i.right),
+                           Math.max(prefSize.height, helpDiam + i.top + i.bottom));
+    } else {
+      int width = getComboAction(c) != null ?
+                  prefSize.width:
+                  Math.max(HORIZONTAL_PADDING.get() * 2 + prefSize.width, MINIMUM_BUTTON_WIDTH.get() + i.left + i.right);
+      int height = Math.max(prefSize.height, getMinimumHeight() + i.top + i.bottom);
+
+      return new Dimension(width, height);
+    }
+  }
+
+  protected int getMinimumHeight() {
+    return MINIMUM_HEIGHT.get();
   }
 
   @Override
   public final Dimension getPreferredSize(JComponent c) {
-    return getDarculaButtonSize(c, super.getPreferredSize(c));
+    AbstractButton b = (AbstractButton)c;
+    int textIconGap = StringUtil.isEmpty(b.getText()) || b.getIcon() == null ? 0 : b.getIconTextGap();
+    Dimension size = BasicGraphicsUtils.getPreferredButtonSize(b, textIconGap);
+    return getDarculaButtonSize(c, size);
   }
 
   @Override
@@ -238,20 +270,20 @@ public class DarculaButtonUI extends BasicButtonUI {
     }
   }
 
-  protected Color getButtonColor1() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color1"), new ColorUIResource(0x555a5c));
+  protected Color getButtonColorStart() {
+    return JBColor.namedColor("Button.darcula.startColor", 0x555a5c);
   }
 
-  protected Color getButtonColor2() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.color2"), new ColorUIResource(0x414648));
+  protected Color getButtonColorEnd() {
+    return JBColor.namedColor("Button.darcula.endColor", 0x414648);
   }
 
-  protected Color getSelectedButtonColor1() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color1"), new ColorUIResource(0x384f6b));
+  protected Color getDefaultButtonColorStart() {
+    return JBColor.namedColor("Button.darcula.defaultStartColor", 0x384f6b);
   }
 
-  protected Color getSelectedButtonColor2() {
-    return ObjectUtils.notNull(UIManager.getColor("Button.darcula.selection.color2"), new ColorUIResource(0x233143));
+  protected Color getDefaultButtonColorEnd() {
+    return JBColor.namedColor("Button.darcula.defaultEndColor", 0x233143);
   }
 
   protected String layout(AbstractButton b, String text, Icon icon, FontMetrics fm, int width, int height) {
@@ -266,14 +298,12 @@ public class DarculaButtonUI extends BasicButtonUI {
       b, fm, text, icon,
       b.getVerticalAlignment(), b.getHorizontalAlignment(),
       b.getVerticalTextPosition(), b.getHorizontalTextPosition(),
-      viewRect, iconRect, textRect, text == null ? 0 : b.getIconTextGap());
+      viewRect, iconRect, textRect,
+      StringUtil.isEmpty(text) || icon == null ? 0 : b.getIconTextGap());
   }
 
   protected void modifyViewRect(AbstractButton b, Rectangle rect) {
     JBInsets.removeFrom(rect, b.getInsets());
-
-    if (isComboButton(b)) {
-      rect.x += 6;
-    }
+    JBInsets.removeFrom(rect, b.getMargin());
   }
 }

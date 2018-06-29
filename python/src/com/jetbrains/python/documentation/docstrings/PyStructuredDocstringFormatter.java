@@ -18,6 +18,7 @@ package com.jetbrains.python.documentation.docstrings;
 import com.google.common.collect.Lists;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessOutput;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -32,7 +33,6 @@ import com.jetbrains.python.psi.PyStringLiteralExpression;
 import com.jetbrains.python.psi.StructuredDocString;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.toolbox.Substring;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -84,11 +84,6 @@ public class PyStructuredDocstringFormatter {
       result.add(structuredDocString.getDescription());
     }
 
-    // Information about parameters in Epytext-style docstrings are formatter on our side
-    if (format == DocStringFormat.EPYTEXT) {
-      result.add(formatStructuredDocString(structuredDocString));
-    }
-
     return result;
   }
 
@@ -96,6 +91,10 @@ public class PyStructuredDocstringFormatter {
   private static String runExternalTool(@NotNull final Module module,
                                         @NotNull final DocStringFormat format,
                                         @NotNull final String docstring) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return "Unittest placehoder";
+    }
+
     final Sdk sdk;
     final String missingInterpreterMessage;
     if (format == DocStringFormat.EPYTEXT) {
@@ -104,7 +103,7 @@ public class PyStructuredDocstringFormatter {
     }
     else {
       sdk = PythonSdkType.findLocalCPython(module);
-      missingInterpreterMessage = PyBundle.message("QDOC.sdk.not.found");
+      missingInterpreterMessage = PyBundle.message("QDOC.local.sdk.not.found");
     }
     if (sdk == null) {
       LOG.warn("Python SDK for docstring formatter " + format +  " is not found");
@@ -130,84 +129,5 @@ public class PyStructuredDocstringFormatter {
       return null;
     }
     return output.getStdout();
-  }
-
-  private static String formatStructuredDocString(@NotNull final StructuredDocString docString) {
-    final StringBuilder result = new StringBuilder();
-
-    final String attributeDescription = docString.getAttributeDescription();
-    if (attributeDescription != null) {
-      result.append(attributeDescription);
-      final String attrType = docString.getParamType(null);
-      if (attrType != null) {
-        result.append(" <i>Type: ").append(attrType).append("</i>");
-      }
-    }
-
-    formatParameterDescriptions(docString, result, false);
-    formatParameterDescriptions(docString, result, true);
-
-    final String returnDescription = docString.getReturnDescription();
-    final String returnType = docString.getReturnType();
-    if (returnDescription != null || returnType != null) {
-      result.append("<br><b>Return value:</b><br>");
-      if (returnDescription != null) {
-        result.append(returnDescription);
-      }
-      if (returnType != null) {
-        result.append(" <i>Type: ").append(returnType).append("</i>");
-      }
-    }
-
-    final List<String> raisedException = docString.getRaisedExceptions();
-    if (raisedException.size() > 0) {
-      result.append("<br><b>Raises:</b><br>");
-      for (String s : raisedException) {
-        result.append("<b>").append(s).append("</b> - ").append(docString.getRaisedExceptionDescription(s)).append("<br>");
-      }
-    }
-
-    if (docString instanceof TagBasedDocString) {
-      final TagBasedDocString taggedDocString = (TagBasedDocString)docString;
-      final List<String> additionalTags = taggedDocString.getAdditionalTags();
-      if (!additionalTags.isEmpty()) {
-        result.append("<br/><br/><b>Additional:</b><br/>");
-        result.append("<table>");
-        for (String tagName : additionalTags) {
-          final List<Substring> args = taggedDocString.getTagArguments(tagName);
-          for (Substring arg : args) {
-            final String s = arg.toString();
-            result.append("<tr><td align=\"right\"><b>").append(tagName);
-            result.append(" ").append(s).append(":</b>");
-            result.append("</td><td>").append(taggedDocString.getTagValue(tagName, s)).append("</td></tr>");
-          }
-          result.append("</table>");
-        }
-      }
-    }
-    return result.toString();
-  }
-
-  private static void formatParameterDescriptions(@NotNull final StructuredDocString docString,
-                                                  @NotNull final StringBuilder result,
-                                                  boolean keyword) {
-    final List<String> parameters = keyword ? docString.getKeywordArguments() : docString.getParameters();
-    if (parameters.size() > 0) {
-      result.append("<br><b>").append(keyword ? "Keyword arguments:" : "Parameters").append("</b><br>");
-      for (String parameter : parameters) {
-        final String description = keyword ? docString.getKeywordArgumentDescription(parameter) : docString.getParamDescription(parameter);
-        result.append("<b>");
-        result.append(parameter);
-        result.append("</b>: ");
-        if (description != null) {
-          result.append(description);
-        }
-        final String paramType = docString.getParamType(parameter);
-        if (paramType != null) {
-          result.append(" <i>Type: ").append(paramType).append("</i>");
-        }
-        result.append("<br>");
-      }
-    }
   }
 }

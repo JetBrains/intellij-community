@@ -15,6 +15,7 @@
  */
 package com.intellij.dvcs.ui;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.ui.LayeredIcon;
@@ -22,8 +23,6 @@ import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-
-import static icons.DvcsImplIcons.*;
 
 public abstract class BranchActionGroup extends ActionGroup implements DumbAware {
 
@@ -33,7 +32,7 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
 
   public BranchActionGroup() {
     super("", true);
-    setIcons(Favorite, EmptyIcon.ICON_16, FavoriteOnHover, NotFavoriteOnHover);
+    setIcons(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16, AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);
   }
 
   protected void setIcons(@NotNull Icon favorite,
@@ -67,4 +66,8 @@ public abstract class BranchActionGroup extends ActionGroup implements DumbAware
   public void toggle() {
     setFavorite(!myIsFavorite);
   }
+
+  public boolean hasIncomingCommits() {return false;}
+
+  public boolean hasOutgoingCommits() {return false;}
 }

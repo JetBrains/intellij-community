@@ -15,39 +15,55 @@
  */
 package com.intellij.openapi.vcs.actions;
 
+import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionPromoter;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.diff.actions.DiffWalkerAction;
-import com.intellij.openapi.vcs.ex.MoveChangesLineStatusAction;
-import com.intellij.openapi.vcs.ex.RollbackLineStatusAction;
+import com.intellij.util.containers.ContainerUtil;
 
 import java.util.ArrayList;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 
-/**
- * @author Konstantin Bulenkov
- */
 public class VcsActionPromoter implements ActionPromoter {
   @Override
   public List<AnAction> promote(List<AnAction> actions, DataContext context) {
-    List<AnAction> list = new ArrayList<>(0);
+    ActionManager am = ActionManager.getInstance();
+    List<AnAction> reorderedActions = new ArrayList<>(actions);
+    List<String> reorderedIds = ContainerUtil.map(reorderedActions, it -> am.getId(it));
 
-    for (AnAction action : actions) {
-      if (action instanceof RollbackLineStatusAction) {
-        list.add(action);
-      }
-      if (action instanceof MoveChangesLineStatusAction) {
-        list.add(action);
-      }
-      if (action instanceof ShowMessageHistoryAction) {
-        list.add(action);
-      }
-      if (action instanceof DiffWalkerAction) {
-        list.add(action);
-      }
-    }
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.MoveChangedLinesToChangelist", "ChangesView.Move");
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.RollbackChangedLines", "ChangesView.Revert");
+    reorderActionPair(reorderedActions, reorderedIds, "Vcs.Log.Refresh", "Refresh");
 
-    return list;
+    Set<AnAction> promoted = new HashSet<>(ContainerUtil.filter(actions, action -> {
+      return action instanceof ShowMessageHistoryAction ||
+             action instanceof DiffWalkerAction;
+    }));
+
+    reorderedActions.removeAll(promoted);
+    reorderedActions.addAll(0, promoted);
+
+    return reorderedActions;
+  }
+
+  /**
+   * Ensures that one global action has priority over another global action.
+   * But is not pushing it ahead of other actions (ex: of some local action with same shortcut).
+   */
+  private static void reorderActionPair(List<AnAction> reorderedActions, List<String> reorderedIds,
+                                       String highPriority, String lowPriority) {
+    int highPriorityIndex = reorderedIds.indexOf(highPriority);
+    int lowPriorityIndex = reorderedIds.indexOf(lowPriority);
+    if (highPriorityIndex == -1 || lowPriorityIndex == -1) return;
+    if (highPriorityIndex < lowPriorityIndex) return;
+
+    String id = reorderedIds.remove(highPriorityIndex);
+    AnAction action = reorderedActions.remove(highPriorityIndex);
+
+    reorderedIds.add(lowPriorityIndex, id);
+    reorderedActions.add(lowPriorityIndex, action);
   }
 }

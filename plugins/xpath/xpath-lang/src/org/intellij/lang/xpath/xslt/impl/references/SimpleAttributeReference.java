@@ -37,12 +37,14 @@ abstract class SimpleAttributeReference implements PsiReference {
         return getTextRange().substring(myAttribute.getValue());
     }
 
+    @NotNull
     public PsiElement getElement() {
         final XmlAttributeValue value = myAttribute.getValueElement();
         assert value != null;
         return value;
     }
 
+    @NotNull
     public TextRange getRangeInElement() {
         return getTextRange().shiftRight(1);
     }

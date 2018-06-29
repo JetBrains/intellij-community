@@ -593,6 +593,12 @@
   <action id="ChangesView.Revert">
     <keyboard-shortcut first-keystroke="control alt Z"/>
   </action>
+  <action id="Vcs.MoveChangedLinesToChangelist">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
+  </action>
+  <action id="ChangesView.Move">
+    <keyboard-shortcut first-keystroke="alt shift M"/>
+  </action>
 
   <action id="GotoNextError">
     <keyboard-shortcut first-keystroke="F2"/>
@@ -706,6 +712,9 @@
   </action>
   <action id="XDebugger.NewWatch">
     <keyboard-shortcut first-keystroke="INSERT"/>
+  </action>
+  <action id="XDebugger.AttachToProcess">
+    <keyboard-shortcut first-keystroke="control alt F5"/>
   </action>
   <action id="Debugger.EditTypeSource">
     <keyboard-shortcut first-keystroke="shift F4"/>
@@ -1031,6 +1040,9 @@
   <action id="VcsHistory.ShowAllAffected">
     <keyboard-shortcut first-keystroke="alt shift A" />
   </action>
+  <action id="ChangesView.GroupBy.Directory">
+    <keyboard-shortcut first-keystroke="ctrl P"/>
+  </action>
   <action id="ShelveChanges.UnshelveWithDialog">
     <keyboard-shortcut first-keystroke="control shift U" />
   </action>
@@ -1079,10 +1091,7 @@
     <keyboard-shortcut first-keystroke="control shift T"/>
   </action>
 
-  <action id="GotoNextElementUnderCaretUsage">
-    <mouse-shortcut keystroke="alt button142"/>
-  </action>
-  <action id="GotoPrevElementUnderCaretUsage">
-    <mouse-shortcut keystroke="alt button143"/>
+  <action id="BraceOrQuoteOut">
+    <keyboard-shortcut first-keystroke="TAB"/>
   </action>
 </keymap>

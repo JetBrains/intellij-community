@@ -26,53 +26,50 @@ import com.intellij.util.IncorrectOperationException;
 
 public class DocumentTest extends LightPlatformTestCase {
   public void testCorrectlyAddingAndRemovingListeners() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        final Document doc = new DocumentImpl("");
-        final StringBuilder b = new StringBuilder();
-        doc.addDocumentListener(new DocumentListener() {
-          @Override
-          public void beforeDocumentChange(DocumentEvent e) {
-            b.append("before1 ");
-          }
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final Document doc = new DocumentImpl("");
+      final StringBuilder b = new StringBuilder();
+      doc.addDocumentListener(new DocumentListener() {
+        @Override
+        public void beforeDocumentChange(DocumentEvent e) {
+          b.append("before1 ");
+        }
 
-          @Override
-          public void documentChanged(DocumentEvent e) {
-            b.append("after1 ");
-          }
-        });
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          b.append("after1 ");
+        }
+      });
 
-        doc.addDocumentListener(new DocumentListener() {
-          @Override
-          public void beforeDocumentChange(DocumentEvent event) {
-            doc.removeDocumentListener(this);
-          }
-        });
-        doc.addDocumentListener(new DocumentListener() {
-          @Override
-          public void documentChanged(DocumentEvent e) {
-            doc.removeDocumentListener(this);
-          }
-        });
+      doc.addDocumentListener(new DocumentListener() {
+        @Override
+        public void beforeDocumentChange(DocumentEvent event) {
+          doc.removeDocumentListener(this);
+        }
+      });
+      doc.addDocumentListener(new DocumentListener() {
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          doc.removeDocumentListener(this);
+        }
+      });
 
-        doc.addDocumentListener(new DocumentListener() {
-          @Override
-          public void beforeDocumentChange(DocumentEvent e) {
-            b.append("before2 ");
-          }
+      doc.addDocumentListener(new DocumentListener() {
+        @Override
+        public void beforeDocumentChange(DocumentEvent e) {
+          b.append("before2 ");
+        }
 
-          @Override
-          public void documentChanged(DocumentEvent e) {
-            b.append("after2 ");
-          }
-        });
+        @Override
+        public void documentChanged(DocumentEvent e) {
+          b.append("after2 ");
+        }
+      });
 
 
-        doc.setText("foo");
-        assertEquals("before2 before1 after1 after2 ", b.toString());
-      }
-    }.execute().throwException();
+      doc.setText("foo");
+      assertEquals("before2 before1 after1 after2 ", b.toString());
+    });
   }
 
   public void testModificationInsideCommandAssertion() {

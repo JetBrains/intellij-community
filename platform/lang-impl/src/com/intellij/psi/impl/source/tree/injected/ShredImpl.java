@@ -50,7 +50,7 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
   }
 
   private void assertValid() {
-    Segment hostRange = getHostRangeMarker();
+    Segment hostRange = relevantRangeInHost.getPsiRange();
     assert hostRange != null : "invalid host range: " + relevantRangeInHost;
 
     PsiLanguageInjectionHost host = hostElementPointer.getElement();
@@ -67,12 +67,13 @@ class ShredImpl implements PsiLanguageInjectionHost.Shred {
                       @NotNull PsiLanguageInjectionHost newHost) {
     SmartPsiFileRange rangeMarker = relevantRangeInHost;
     Segment oldRangeInHostElementPSI = calcRangeInsideHostElement(false);
-    SmartPointerManager pointerManager = SmartPointerManager.getInstance(rangeMarker.getProject());
-    SmartPsiElementPointer<PsiLanguageInjectionHost> newHostPointer = pointerManager.createSmartPsiElementPointer(newHost);
+    SmartPointerManagerImpl pointerManager = (SmartPointerManagerImpl)SmartPointerManager.getInstance(rangeMarker.getProject());
+    SmartPsiElementPointer<PsiLanguageInjectionHost> newHostPointer = pointerManager.createSmartPsiElementPointer(newHost, newHost.getContainingFile(), true);
 
     if (!rangeInHostElementPSI.equals(TextRange.create(oldRangeInHostElementPSI))) {
       Segment hostElementRange = newHostPointer.getRange();
-      rangeMarker = ((SmartPointerManagerImpl)pointerManager).createSmartPsiFileRangePointer(rangeMarker.getContainingFile(), rangeInHostElementPSI.shiftRight(hostElementRange.getStartOffset()), true);
+      rangeMarker = pointerManager
+        .createSmartPsiFileRangePointer(rangeMarker.getContainingFile(), rangeInHostElementPSI.shiftRight(hostElementRange.getStartOffset()), true);
     }
     return new ShredImpl(rangeMarker, newHostPointer, prefix, suffix, rangeInDecodedPSI, usePsiRange, isOneLine);
   }

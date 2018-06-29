@@ -90,13 +90,11 @@ public class ArrayTableCellEditor extends AbstractCellEditor implements TableCel
   }
 
   public void cancelEditing() {
-    new WriteCommandAction(null) {
-      protected void run(@NotNull Result result) throws Throwable {
-        if (myEditor.getEditor() != null) {
-          myEditor.getEditor().getDocument().setText(myLastValue.toString());
-        }
+    WriteCommandAction.writeCommandAction(null).run(() -> {
+      if (myEditor.getEditor() != null) {
+        myEditor.getEditor().getDocument().setText(myLastValue.toString());
       }
-    }.execute();
+    });
     myEditor.getComponent().repaint();
     stopCellEditing();
   }

@@ -10,15 +10,15 @@ class MappingOperationsTest : StreamExTestCase() {
   fun testElements() = doStreamExWithResultTest()
 
   fun testMapToEntry() = doStreamExWithResultTest()
-  fun testMapKeys() = doStreamExWithResultTest()
-  fun testMapToKey() = doStreamExWithResultTest()
-  fun testMapValues() = doStreamExWithResultTest()
-  fun testMapToValue() = doStreamExWithResultTest()
+  fun testMapKeys() = doStreamExVoidTest()
+  fun testMapToKey() = doStreamExVoidTest()
+  fun testMapValues() = doStreamExVoidTest()
+  fun testMapToValue() = doStreamExVoidTest()
   fun testMapKeyValue() = doStreamExWithResultTest()
 
-  fun testInvert() = doStreamExWithResultTest()
+  fun testInvert() = doStreamExVoidTest()
 
-  fun testKeys() = doStreamExWithResultTest()
+  fun testKeys() = doStreamExVoidTest()
   fun testValues() = doStreamExWithResultTest()
 
   fun testJoin() = doStreamExVoidTest()
@@ -30,5 +30,5 @@ class MappingOperationsTest : StreamExTestCase() {
   fun testMapFirstOrElse() = doStreamExWithResultTest()
   fun testMapLastOrElse() = doStreamExWithResultTest()
 
-  fun testWithFirst() = doStreamExWithResultTest()
+  fun testWithFirst() = doStreamExVoidTest()
 }

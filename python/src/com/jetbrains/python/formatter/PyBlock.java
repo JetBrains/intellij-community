@@ -17,7 +17,6 @@ package com.jetbrains.python.formatter;
 
 import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -892,6 +891,7 @@ public class PyBlock implements ASTBlock {
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
     int statementListsBelow = 0;
+
     if (newChildIndex > 0) {
       // always pass decision to a sane block from top level from file or definition
       if (myNode.getPsi() instanceof PyFile || myNode.getElementType() == PyTokenTypes.COLON) {
@@ -985,15 +985,30 @@ public class PyBlock implements ASTBlock {
 
   @Nullable
   private Alignment getChildAlignment() {
-    if (ourListElementTypes.contains(myNode.getElementType()) || myNode.getElementType() == PyElementTypes.SLICE_ITEM) {
+    // TODO merge it with needListAlignment(ASTNode)
+    final IElementType nodeType = myNode.getElementType();
+    if (ourListElementTypes.contains(nodeType) ||
+        nodeType == PyElementTypes.SLICE_ITEM ||
+        nodeType == PyElementTypes.STRING_LITERAL_EXPRESSION) {
       if (isInControlStatement()) {
         return null;
       }
-      if (myNode.getPsi() instanceof PyParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
+      final PsiElement elem = myNode.getPsi();
+      if (elem instanceof PyParameterList && !myContext.getSettings().ALIGN_MULTILINE_PARAMETERS) {
         return null;
       }
-      if (myNode.getPsi() instanceof PyDictLiteralExpression) {
-        final PyKeyValueExpression lastElement = ArrayUtil.getLastElement(((PyDictLiteralExpression)myNode.getPsi()).getElements());
+      if ((elem instanceof PySequenceExpression || elem instanceof PyComprehensionElement) &&
+          !myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS) {
+        return null;
+      }
+      if (elem instanceof PyParenthesizedExpression) {
+        final PyExpression parenthesized = ((PyParenthesizedExpression)elem).getContainedExpression();
+        if (parenthesized instanceof PyTupleExpression && !myContext.getPySettings().ALIGN_COLLECTIONS_AND_COMPREHENSIONS) {
+          return null;
+        }
+      }
+      if (elem instanceof PyDictLiteralExpression) {
+        final PyKeyValueExpression lastElement = ArrayUtil.getLastElement(((PyDictLiteralExpression)elem).getElements());
         if (lastElement == null || lastElement.getValue() == null /* incomplete */) {
           return null;
         }
@@ -1023,44 +1038,6 @@ public class PyBlock implements ASTBlock {
       final ASTNode lastFirstChild = lastChild.getFirstChildNode();
       if (lastFirstChild != null && lastFirstChild == lastChild.getLastChildNode() && lastFirstChild.getPsi() instanceof PsiErrorElement) {
         return Indent.getNormalIndent();
-      }
-    }
-    else if (lastChild != null && PyElementTypes.LIST_LIKE_EXPRESSIONS.contains(lastChild.getElementType())) {
-      // handle pressing enter at the end of a list literal when there's no closing paren or bracket
-      final ASTNode lastLastChild = lastChild.getLastChildNode();
-      if (lastLastChild != null && lastLastChild.getPsi() instanceof PsiErrorElement) {
-        // we're at a place like this: [foo, ... bar, <caret>
-        // we'd rather align to foo. this may be not a multiple of tabs.
-        final PsiElement expr = lastChild.getPsi();
-        PsiElement exprItem = expr.getFirstChild();
-        boolean found = false;
-        while (exprItem != null) { // find a worthy element to align to
-          if (exprItem instanceof PyElement) {
-            found = true; // align to foo in "[foo,"
-            break;
-          }
-          if (exprItem instanceof PsiComment) {
-            found = true; // align to foo in "[ # foo,"
-            break;
-          }
-          exprItem = exprItem.getNextSibling();
-        }
-        if (found) {
-          final PsiDocumentManager docMgr = PsiDocumentManager.getInstance(exprItem.getProject());
-          final Document doc = docMgr.getDocument(exprItem.getContainingFile());
-          if (doc != null) {
-            int lineNum = doc.getLineNumber(exprItem.getTextOffset());
-            final int itemCol = exprItem.getTextOffset() - doc.getLineStartOffset(lineNum);
-            final PsiElement hereElt = getNode().getPsi();
-            lineNum = doc.getLineNumber(hereElt.getTextOffset());
-            final int nodeCol = hereElt.getTextOffset() - doc.getLineStartOffset(lineNum);
-            final int padding = itemCol - nodeCol;
-            if (padding > 0) { // negative is a syntax error,  but possible
-              return Indent.getSpaceIndent(padding);
-            }
-          }
-        }
-        return Indent.getContinuationIndent(); // a fallback
       }
     }
 
@@ -1149,7 +1126,7 @@ public class PyBlock implements ASTBlock {
       final PyArgumentList argumentList = (PyArgumentList)myNode.getPsi();
       return argumentList.getClosingParen() == null;
     }
-    if (isIncompleteCall(myNode)) {
+    if (isIncompleteCall(myNode) || isIncompleteExpressionWithBrackets(myNode.getPsi())) {
       return true;
     }
 
@@ -1163,6 +1140,14 @@ public class PyBlock implements ASTBlock {
       if (argumentList == null || argumentList.getClosingParen() == null) {
         return true;
       }
+    }
+    return false;
+  }
+
+  private static boolean isIncompleteExpressionWithBrackets(@NotNull PsiElement elem) {
+    if (elem instanceof PySequenceExpression || elem instanceof PyComprehensionElement || elem instanceof PyParenthesizedExpression) {
+      return PyTokenTypes.OPEN_BRACES.contains(elem.getFirstChild().getNode().getElementType()) &&
+             !PyTokenTypes.CLOSE_BRACES.contains(elem.getLastChild().getNode().getElementType());
     }
     return false;
   }

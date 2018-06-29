@@ -1,8 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.xmlb;
 
+import com.intellij.util.SmartList;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -13,21 +13,30 @@ class CollectionBinding extends AbstractCollectionBinding  {
   public CollectionBinding(@NotNull ParameterizedType type, @Nullable MutableAccessor accessor) {
     super(XmlSerializerImpl.typeToClass(type.getActualTypeArguments()[0]), accessor);
   }
-  
-  @Override
-  @NotNull
-  Object processResult(@NotNull Collection result, @Nullable Object target) {
-    if (myAccessor == null || target == null) {
-      return result;
-    }
-    
-    assert target instanceof Collection : "Wrong target: " + target.getClass() + " in " + myAccessor;
-    Collection c = (Collection)target;
-    c.clear();
-    //noinspection unchecked
-    c.addAll(result);
 
-    return target;
+  private static boolean isMutableCollection(@Nullable Object object) {
+    return object instanceof Collection && !object.getClass().getSimpleName().startsWith("Unmodifiable");
+  }
+
+  @NotNull
+  @Override
+  protected Object doDeserializeList(@Nullable Object context, @NotNull List<Element> elements) {
+    Collection result;
+    boolean isContextMutable = isMutableCollection(context);
+    if (isContextMutable) {
+      result = (Collection)context;
+      result.clear();
+    }
+    else {
+      result = context instanceof Set ? new HashSet() : new SmartList();
+    }
+
+    for (Element node : elements) {
+      //noinspection unchecked
+      result.add(deserializeItem(node, context));
+    }
+
+    return result;
   }
 
   @SuppressWarnings("unchecked")
@@ -40,6 +49,7 @@ class CollectionBinding extends AbstractCollectionBinding  {
     return o instanceof Set ? new TreeSet((Set)o) : (Collection<Object>)o;
   }
 
+  @NotNull
   @Override
   protected String getCollectionTagName(@Nullable final Object target) {
     if (target instanceof Set) {
@@ -51,10 +61,5 @@ class CollectionBinding extends AbstractCollectionBinding  {
     else {
       return "collection";
     }
-  }
-
-  @Override
-  protected Collection createCollection(@NotNull String tagName) {
-    return tagName.equals(Constants.SET) ? new HashSet() : super.createCollection(tagName);
   }
 }

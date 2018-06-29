@@ -6,7 +6,6 @@ import com.intellij.codeInsight.template.impl.MacroCallNode;
 import com.intellij.codeInsight.template.impl.TextExpression;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.openapi.util.Condition;
 import com.intellij.pom.java.LanguageLevel;
@@ -24,11 +23,11 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
   /**
    * @deprecated
    */
-  public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
+  @Deprecated public static final Condition<PsiElement> IS_NUMBER_OR_ARRAY_OR_ITERABLE =
     element -> IS_ITERABLE_OR_ARRAY.value(element) || IS_NUMBER.value(element);
     
   protected ForIndexedPostfixTemplate(@NotNull String templateName, @NotNull String templateText, @NotNull String example,
-                                      @NotNull JavaEditablePostfixTemplateProvider provider) {
+                                      @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, templateText, example,
           ContainerUtil.newHashSet(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateNumberExpressionCondition(),
@@ -79,11 +78,5 @@ public abstract class ForIndexedPostfixTemplate extends JavaEditablePostfixTempl
   @Override
   public boolean isBuiltin() {
     return true;
-  }
-
-  @Override
-  public boolean isEditable() {
-    // cannot be editable until there is no UI for editing template variables
-    return false;
   }
 }

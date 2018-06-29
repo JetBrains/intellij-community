@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -30,8 +29,9 @@ import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.ui.content.*;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
+import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,16 +51,18 @@ import java.util.stream.Collectors;
 )
 public class RunDashboardManagerImpl implements RunDashboardManager, PersistentStateComponent<RunDashboardManagerImpl.State> {
   private static final float DEFAULT_CONTENT_PROPORTION = 0.3f;
+  @NonNls private static final String HELP_ID = "run-dashboard.reference";
 
   @NotNull private final Project myProject;
   @NotNull private final ContentManager myContentManager;
   @NotNull private final ContentManagerListener myContentManagerListener;
-  @NotNull private final Set<String> myTypes = ContainerUtil.newHashSet();
+
+  @NotNull private State myState = new State();
+
   @NotNull private final List<RunDashboardGrouper> myGroupers;
   @NotNull private final Condition<Content> myReuseCondition;
   @NotNull private final AtomicBoolean myListenersInitialized = new AtomicBoolean();
   private boolean myShowConfigurations = true;
-  private float myContentProportion = DEFAULT_CONTENT_PROPORTION;
 
   private RunDashboardContent myDashboardContent;
   private Content myToolWindowContent;
@@ -79,13 +81,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myReuseCondition = this::canReuseContent;
 
     myGroupers = Arrays.stream(RunDashboardGroupingRule.EP_NAME.getExtensions())
-      .sorted(RunDashboardGroupingRule.PRIORITY_COMPARATOR)
       .map(RunDashboardGrouper::new)
       .collect(Collectors.toList());
-  }
-
-  private static boolean isDashboardEnabled() {
-    return Registry.is("ide.run.dashboard");
   }
 
   private void initToolWindowContentListeners() {
@@ -162,6 +159,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         updateToolWindowContent();
         updateDashboard(true);
       }
+
+      @Override
+      public void contentRemoved(ContentManagerEvent event) {
+        if (myContentManager.getContentCount() == 0 && !isShowConfigurations()) {
+          setShowConfigurations(true);
+        }
+      }
     });
   }
 
@@ -181,8 +185,13 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   }
 
   @Override
+  public String getToolWindowContextHelpId() {
+    return HELP_ID;
+  }
+
+  @Override
   public boolean isToolWindowAvailable() {
-    return isDashboardEnabled() && hasContent();
+    return hasContent();
   }
 
   @Override
@@ -190,6 +199,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myDashboardContent = new RunDashboardContent(myProject, myContentManager, myGroupers);
     myToolWindowContent = ContentFactory.SERVICE.getInstance().createContent(myDashboardContent, null, false);
     myToolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    myToolWindowContent.setHelpId(getToolWindowContextHelpId());
     myToolWindowContent.setCloseable(false);
     Disposer.register(myToolWindowContent, myDashboardContent);
     Disposer.register(myToolWindowContent, () -> {
@@ -205,6 +215,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     myToolWindowContentManager.addContent(myToolWindowContent);
 
     myToolWindowContentManagerListener = new ToolWindowContentManagerListener();
+    myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
   }
 
   @Override
@@ -212,7 +223,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     List<Pair<RunnerAndConfigurationSettings, RunContentDescriptor>> result = new ArrayList<>();
 
     List<RunnerAndConfigurationSettings> configurations = RunManager.getInstance(myProject).getAllSettings().stream()
-      .filter(settings -> myTypes.contains(settings.getType().getId()))
+      .filter(settings -> myState.configurationTypes.contains(settings.getType().getId()))
       .collect(Collectors.toList());
 
     ExecutionManagerImpl executionManager = ExecutionManagerImpl.getInstance(myProject);
@@ -265,7 +276,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public float getContentProportion() {
-    return myContentProportion;
+    return myState.contentProportion;
   }
 
   @Override
@@ -277,7 +288,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
   @Override
   public boolean isShowInDashboard(@NotNull RunConfiguration runConfiguration) {
-    if (myTypes.contains(runConfiguration.getType().getId())) {
+    if (myState.configurationTypes.contains(runConfiguration.getType().getId())) {
       RunDashboardContributor contributor = getContributor(runConfiguration.getType());
       return contributor == null || contributor.isShowInDashboard(runConfiguration);
     }
@@ -288,14 +299,14 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   @NotNull
   public Set<String> getTypes() {
-    return Collections.unmodifiableSet(myTypes);
+    return Collections.unmodifiableSet(myState.configurationTypes);
   }
 
   @Override
   public void setTypes(@NotNull Set<String> types) {
-    myTypes.clear();
-    myTypes.addAll(types);
-    if (!myTypes.isEmpty()) {
+    myState.configurationTypes.clear();
+    myState.configurationTypes.addAll(types);
+    if (!myState.configurationTypes.isEmpty()) {
       initToolWindowContentListeners();
     }
     updateDashboard(true);
@@ -304,10 +315,6 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
   @Override
   @Nullable
   public RunDashboardContributor getContributor(@NotNull ConfigurationType type) {
-    if (!Registry.is("ide.run.dashboard")) {
-      return null;
-    }
-
     for (RunDashboardContributor contributor : RunDashboardContributor.EP_NAME.getExtensions()) {
       if (type.equals(contributor.getType())) {
         return contributor;
@@ -358,7 +365,7 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         boolean available = hasContent();
         ToolWindow toolWindow = toolWindowManager.getToolWindow(getToolWindowId());
         if (toolWindow == null) {
-          if (!myTypes.isEmpty() || available) {
+          if (!myState.configurationTypes.isEmpty() || available) {
             toolWindow = createToolWindow(toolWindowManager, available);
           }
           if (available) {
@@ -400,16 +407,26 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
         return;
       }
 
+      boolean containsConfigurationsContent = false;
+      for (Content content : myToolWindowContentManager.getContents()) {
+        if (myToolWindowContent.equals(content)) {
+          containsConfigurationsContent = true;
+          break;
+        }
+      }
+
       if (myShowConfigurations) {
-        if (!myDashboardToToolWindowContents.isEmpty() || myToolWindowContentManager.getContentCount() == 0) {
+        if (!containsConfigurationsContent) {
           myToolWindowContentManager.removeContentManagerListener(myToolWindowContentManagerListener);
           myDashboardToToolWindowContents.clear();
           myToolWindowContentManager.removeAllContents(true);
           myToolWindowContentManager.addContent(myToolWindowContent);
+          myToolWindowContentManager.addContentManagerListener(myToolWindowContentManagerListener);
         }
+        updateToolWindowContentTabHeader(myContentManager.getSelectedContent());
       }
       else {
-        if (myDashboardToToolWindowContents.isEmpty()) {
+        if (containsConfigurationsContent) {
           myToolWindowContentManager.removeContentManagerListener(myToolWindowContentManagerListener);
           myToolWindowContentManager.removeContent(myToolWindowContent, false);
           for (Content dashboardContent : myContentManager.getContents()) {
@@ -457,47 +474,59 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
     dashboardContent.addPropertyChangeListener(propertyChangeListener);
     toolWindowContent.setShouldDisposeContent(false);
     toolWindowContent.putUserData(ToolWindow.SHOW_CONTENT_ICON, Boolean.TRUE);
+    toolWindowContent.setHelpId(getToolWindowContextHelpId());
     myToolWindowContentManager.addContent(toolWindowContent);
     myDashboardToToolWindowContents.put(dashboardContent, toolWindowContent);
+  }
+
+  private void updateToolWindowContentTabHeader(@Nullable Content content) {
+    if (content != null) {
+      myToolWindowContent.setDisplayName(content.getDisplayName());
+      myToolWindowContent.setIcon(content.getIcon());
+      myToolWindowContent.setCloseable(true);
+    }
+    else {
+      myToolWindowContent.setDisplayName(null);
+      myToolWindowContent.setIcon(null);
+      myToolWindowContent.setCloseable(false);
+    }
   }
 
   @Nullable
   @Override
   public State getState() {
-    State state = new State();
-    state.configurationTypes.addAll(myTypes);
-    state.ruleStates = myGroupers.stream()
-      .filter(grouper -> !grouper.getRule().isAlwaysEnabled())
-      .map(grouper -> new RuleState(grouper.getRule().getName(), grouper.isEnabled()))
-      .collect(Collectors.toList());
-    if (myDashboardContent != null) {
-      myContentProportion = myDashboardContent.getContentProportion();
+    List<RuleState> ruleStates = myState.ruleStates;
+    ruleStates.clear();
+    for (RunDashboardGrouper grouper : myGroupers) {
+      if (!grouper.getRule().isAlwaysEnabled()) {
+        ruleStates.add(new RuleState(grouper.getRule().getName(), grouper.isEnabled()));
+      }
     }
-    state.contentProportion = myContentProportion;
-    return state;
+    if (myDashboardContent != null) {
+      myState.contentProportion = myDashboardContent.getContentProportion();
+    }
+    return myState;
   }
 
   @Override
   public void loadState(@NotNull State state) {
-    myTypes.clear();
-    myTypes.addAll(state.configurationTypes);
-    if (!myTypes.isEmpty()) {
+    myState = state;
+    if (!myState.configurationTypes.isEmpty()) {
       initToolWindowContentListeners();
     }
-    state.ruleStates.forEach(ruleState -> {
+    for (RuleState ruleState : state.ruleStates) {
       for (RunDashboardGrouper grouper : myGroupers) {
         if (grouper.getRule().getName().equals(ruleState.name) && !grouper.getRule().isAlwaysEnabled()) {
           grouper.setEnabled(ruleState.enabled);
-          return;
+          break;
         }
       }
-    });
-    myContentProportion = state.contentProportion;
+    }
   }
 
   static class State {
-    public Set<String> configurationTypes = ContainerUtil.newHashSet();
-    public List<RuleState> ruleStates = new ArrayList<>();
+    public final Set<String> configurationTypes = new THashSet<>();
+    public final List<RuleState> ruleStates = new ArrayList<>();
     public float contentProportion = DEFAULT_CONTENT_PROPORTION;
   }
 
@@ -548,12 +577,26 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
       if (event.getOperation() == ContentManagerEvent.ContentOperation.add) {
         contentAdded(event);
       }
+
+      if (myToolWindowContentManager == null || myToolWindowContent == null || !myShowConfigurations) return;
+
+      Content content = event.getOperation() == ContentManagerEvent.ContentOperation.add ? event.getContent() : null;
+      updateToolWindowContentTabHeader(content);
     }
   }
 
   private class ToolWindowContentManagerListener extends ContentManagerAdapter {
     @Override
     public void contentRemoveQuery(ContentManagerEvent event) {
+      if (event.getContent().equals(myToolWindowContent)) {
+        Content content = myContentManager.getSelectedContent();
+        if (content != null) {
+          myContentManager.removeContent(content, true);
+        }
+        event.consume();
+        return;
+      }
+
       Content dashboardContent = getDashboardContent(event.getContent());
       if (dashboardContent == null || dashboardContent.getManager() == null) return;
 
@@ -566,6 +609,8 @@ public class RunDashboardManagerImpl implements RunDashboardManager, PersistentS
 
     @Override
     public void selectionChanged(ContentManagerEvent event) {
+      if (event.getContent().equals(myToolWindowContent)) return;
+
       if (event.getOperation() != ContentManagerEvent.ContentOperation.add) return;
 
       Content dashboardContent = getDashboardContent(event.getContent());

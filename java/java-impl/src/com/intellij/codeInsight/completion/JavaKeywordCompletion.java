@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
@@ -8,6 +8,7 @@ import com.intellij.codeInsight.completion.util.ParenthesesInsertHandler;
 import com.intellij.codeInsight.daemon.impl.analysis.LambdaHighlightingUtil;
 import com.intellij.codeInsight.lookup.*;
 import com.intellij.openapi.util.Conditions;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.patterns.PsiElementPattern;
 import com.intellij.pom.java.LanguageLevel;
@@ -115,7 +116,8 @@ public class JavaKeywordCompletion {
   JavaKeywordCompletion(CompletionParameters parameters, JavaCompletionSession session) {
     myParameters = parameters;
     mySession = session;
-    myKeywordMatcher = new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
+    myKeywordMatcher = Registry.is("ide.completion.typo.tolerance") ? session.getMatcher()
+                                                                    : new FixingLayoutPlainMatcher(session.getMatcher().getPrefix());
     myPosition = parameters.getPosition();
     myPrevLeaf = prevSignificantLeaf(myPosition);
 
@@ -250,10 +252,44 @@ public class JavaKeywordCompletion {
     addMethodHeaderKeywords();
 
     addPrimitiveTypes(this::addKeyword, myPosition, mySession);
+    
+    addVar();
 
     addClassLiteral();
 
     addExtendsImplements();
+  }
+
+  private void addVar() {
+    if (isVarAllowed()) {
+      addKeyword(createKeyword(PsiKeyword.VAR));
+    }
+  }
+
+  private boolean isVarAllowed() {
+    if (PsiUtil.isLanguageLevel11OrHigher(myPosition) && isLambdaParameterType()) {
+      return true;
+    }
+
+    if (!PsiUtil.isLanguageLevel10OrHigher(myPosition)) return false;
+
+    if (isAtCatchOrResourceVariableStart(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiCatchSection.class) == null) {
+      return true;
+    }
+
+    return isVariableTypePosition(myPosition) &&
+           PsiTreeUtil.getParentOfType(myPosition, PsiCodeBlock.class, true, PsiMember.class, PsiLambdaExpression.class) != null;
+  }
+
+  private boolean isLambdaParameterType() {
+    PsiElement position = myParameters.getOriginalPosition();
+    PsiParameterList paramList = PsiTreeUtil.getParentOfType(position, PsiParameterList.class);
+    if (paramList != null && paramList.getParent() instanceof PsiLambdaExpression) {
+      PsiParameter param = PsiTreeUtil.getParentOfType(position, PsiParameter.class);
+      PsiTypeElement type = param == null ? null :param.getTypeElement();
+      return type == null || PsiTreeUtil.isAncestor(type, position, false);
+    }
+    return false;
   }
 
   boolean addWildcardExtendsSuper(CompletionResultSet result, PsiElement position) {
@@ -427,6 +463,7 @@ public class JavaKeywordCompletion {
 
   private void addFileHeaderKeywords() {
     PsiFile file = myPosition.getContainingFile();
+    assert file != null;
 
     if (!(file instanceof PsiExpressionCodeFragment) &&
         !(file instanceof PsiJavaCodeReferenceCodeFragment) &&
@@ -434,6 +471,10 @@ public class JavaKeywordCompletion {
       if (myPrevLeaf == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailType.HUMBLE_SPACE_BEFORE_WORD));
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailType.HUMBLE_SPACE_BEFORE_WORD));
+      }
+      else if (psiElement().inside(psiAnnotation().withParents(PsiModifierList.class, PsiFile.class)).accepts(myPrevLeaf)
+               && PsiPackage.PACKAGE_INFO_FILE.equals(file.getName())) {
+        addKeyword(new OverridableSpace(createKeyword(PsiKeyword.PACKAGE), TailType.HUMBLE_SPACE_BEFORE_WORD));
       }
       else if (isEndOfBlock(myPosition) && PsiTreeUtil.getParentOfType(myPosition, PsiMember.class) == null) {
         addKeyword(new OverridableSpace(createKeyword(PsiKeyword.IMPORT), TailType.HUMBLE_SPACE_BEFORE_WORD));
@@ -626,15 +667,12 @@ public class JavaKeywordCompletion {
     boolean declaration = isDeclarationStart(position);
     boolean expressionPosition = isExpressionPosition(position);
     boolean inGenerics = PsiTreeUtil.getParentOfType(position, PsiReferenceParameterList.class) != null;
-    if (START_FOR.accepts(position) ||
-        isInsideParameterList(position) ||
+    if (isVariableTypePosition(position) ||
         inGenerics ||
-        VARIABLE_AFTER_FINAL.accepts(position) ||
         inCast ||
         declaration ||
         typeFragment ||
-        expressionPosition ||
-        isStatementPosition(position)) {
+        expressionPosition) {
       for (String primitiveType : PRIMITIVE_TYPES) {
         if (!session.isKeywordAlreadyProcessed(primitiveType)) {
           result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, primitiveType));
@@ -651,6 +689,13 @@ public class JavaKeywordCompletion {
     else if (typeFragment && ((PsiTypeCodeFragment)position.getContainingFile()).isVoidValid()) {
       result.consume(BasicExpressionCompletionContributor.createKeywordLookupItem(position, PsiKeyword.VOID));
     }
+  }
+
+  private static boolean isVariableTypePosition(PsiElement position) {
+    return START_FOR.accepts(position) ||
+           isInsideParameterList(position) ||
+           VARIABLE_AFTER_FINAL.accepts(position) ||
+           isStatementPosition(position);
   }
 
   static boolean isDeclarationStart(@NotNull PsiElement position) {

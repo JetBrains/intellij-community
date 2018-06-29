@@ -9,7 +9,9 @@ import com.intellij.codeInsight.template.Template
 import com.intellij.codeInsight.template.TemplateEditingAdapter
 import com.intellij.lang.java.request.CreateFieldFromJavaUsageRequest
 import com.intellij.lang.jvm.JvmModifier
-import com.intellij.lang.jvm.actions.*
+import com.intellij.lang.jvm.actions.CreateFieldActionGroup
+import com.intellij.lang.jvm.actions.CreateFieldRequest
+import com.intellij.lang.jvm.actions.JvmActionGroup
 import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
@@ -19,27 +21,14 @@ import com.intellij.psi.presentation.java.ClassPresentationUtil.getNameForClass
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.psi.util.PsiUtil
 
-internal class CreateFieldAction(
-  target: PsiClass,
-  request: CreateFieldRequest,
-  private val constantField: Boolean
-) : CreateFieldActionBase(target, request), JvmGroupIntentionAction {
+internal class CreateFieldAction(target: PsiClass, request: CreateFieldRequest) : CreateFieldActionBase(target, request) {
 
-  override fun getActionGroup(): JvmActionGroup = if (constantField) CreateConstantActionGroup else CreateFieldActionGroup
+  override fun getActionGroup(): JvmActionGroup = CreateFieldActionGroup
 
-  override fun getText(): String {
-    val what = request.fieldName
-    val where = getNameForClass(target, false)
-    return if (constantField) {
-      message("create.constant.from.usage.full.text", what, where)
-    }
-    else {
-      message("create.field.from.usage.full.text", what, where)
-    }
-  }
+  override fun getText(): String = message("create.field.from.usage.full.text", request.fieldName, getNameForClass(target, false))
 
   override fun invoke(project: Project, editor: Editor?, file: PsiFile?) {
-    JavaFieldRenderer(project, constantField, target, request).doRender()
+    JavaFieldRenderer(project, false, target, request).doRender()
   }
 }
 
@@ -48,16 +37,16 @@ internal val constantModifiers = setOf(
   JvmModifier.FINAL
 )
 
-private class JavaFieldRenderer(
-  val project: Project,
-  val constantField: Boolean,
-  val targetClass: PsiClass,
-  val request: CreateFieldRequest
+internal class JavaFieldRenderer(
+  private val project: Project,
+  private val constantField: Boolean,
+  private val targetClass: PsiClass,
+  private val request: CreateFieldRequest
 ) {
 
-  val helper = JavaCreateFieldFromUsageHelper()
-  val javaUsage = request as? CreateFieldFromJavaUsageRequest
-  val expectedTypes = extractExpectedTypes(project, request.fieldType).toTypedArray()
+  private val helper = JavaCreateFieldFromUsageHelper() // TODO get rid of it
+  private val javaUsage = request as? CreateFieldFromJavaUsageRequest
+  private val expectedTypes = extractExpectedTypes(project, request.fieldType).toTypedArray()
 
   private val modifiersToRender: Collection<JvmModifier>
     get() {

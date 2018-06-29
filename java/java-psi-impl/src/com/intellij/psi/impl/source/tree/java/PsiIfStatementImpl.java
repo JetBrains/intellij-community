@@ -19,12 +19,12 @@ import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.source.Constants;
 import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.CompositePsiElement;
 import com.intellij.psi.impl.source.tree.ElementType;
-import com.intellij.psi.impl.source.Constants;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.ChildRoleBase;
+import com.intellij.psi.tree.IElementType;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -84,7 +84,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
     if (elseElement != null) elseElement.delete();
 
     PsiElementFactory elementFactory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-    PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", null);
+    PsiIfStatement ifStatement = (PsiIfStatement)elementFactory.createStatementFromText("if (true) {} else {}", this);
     ifStatement.getElseBranch().replace(statement);
 
     addRange(ifStatement.getElseElement(), ifStatement.getLastChild());
@@ -149,7 +149,7 @@ public class PsiIfStatementImpl extends CompositePsiElement implements PsiIfStat
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     LOG.assertTrue(child.getTreeParent() == this);
     IElementType i = child.getElementType();
     if (i == IF_KEYWORD) {

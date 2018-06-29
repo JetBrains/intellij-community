@@ -3,7 +3,7 @@
   <grid id="27dc6" binding="myPanel" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">
     <margin top="0" left="0" bottom="0" right="0"/>
     <constraints>
-      <xy x="20" y="20" width="631" height="400"/>
+      <xy x="20" y="20" width="927" height="400"/>
     </constraints>
     <properties/>
     <border type="none"/>
@@ -20,14 +20,6 @@
         </properties>
         <border type="empty"/>
         <children>
-          <grid id="30730" binding="myPanelForPreview" layout-manager="BorderLayout" hgap="0" vgap="0">
-            <constraints>
-              <splitpane position="right"/>
-            </constraints>
-            <properties/>
-            <border type="none"/>
-            <children/>
-          </grid>
           <grid id="177e3" layout-manager="GridBagLayout">
             <constraints>
               <splitpane position="left"/>
@@ -37,7 +29,7 @@
             <children>
               <scrollpane id="86224" class="com.intellij.ui.components.JBScrollPane">
                 <constraints>
-                  <grid row="0" column="0" row-span="1" col-span="6" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
+                  <grid row="0" column="0" row-span="1" col-span="2" vsize-policy="3" hsize-policy="7" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="1.0" weighty="1.0"/>
                 </constraints>
                 <properties/>
@@ -49,23 +41,42 @@
                   </component>
                 </children>
               </scrollpane>
-              <grid id="6e08e" layout-manager="GridBagLayout">
+              <grid id="a7592" binding="myOptionsPanel" layout-manager="GridBagLayout">
                 <constraints>
-                  <grid row="1" column="0" row-span="1" col-span="6" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+                  <grid row="1" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="8" fill="2" indent="0" use-parent-layout="false"/>
                   <gridbag weightx="0.0" weighty="0.0"/>
                 </constraints>
                 <properties/>
                 <border type="none"/>
                 <children>
-                  <component id="1217e" class="javax.swing.JButton" binding="myUnselectAllButton" default-binding="true">
+                  <component id="6c9e2" class="com.intellij.ui.components.JBCheckBox" binding="mySearchInComments">
                     <constraints>
-                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
-                      <gridbag top="0" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+                      <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag weightx="0.0" weighty="0.0"/>
                     </constraints>
                     <properties>
-                      <text resource-bundle="messages/RefactoringBundle" key="unselect.all.button"/>
+                      <text resource-bundle="messages/RefactoringBundle" key="search.in.comments.and.strings"/>
                     </properties>
                   </component>
+                  <component id="fafb7" class="com.intellij.ui.components.JBCheckBox" binding="mySearchTextOccurrences">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag top="0" left="10" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/RefactoringBundle" key="search.for.text.occurrences"/>
+                    </properties>
+                  </component>
+                </children>
+              </grid>
+              <grid id="6e08e" layout-manager="GridBagLayout">
+                <constraints>
+                  <grid row="1" column="1" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="4" fill="2" indent="0" use-parent-layout="false"/>
+                  <gridbag weightx="0.0" weighty="0.0"/>
+                </constraints>
+                <properties/>
+                <border type="none"/>
+                <children>
                   <component id="c4746" class="javax.swing.JButton" binding="mySelectAllButton" default-binding="true">
                     <constraints>
                       <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
@@ -75,9 +86,26 @@
                       <text resource-bundle="messages/RefactoringBundle" key="select.all.button"/>
                     </properties>
                   </component>
+                  <component id="1217e" class="javax.swing.JButton" binding="myUnselectAllButton" default-binding="true">
+                    <constraints>
+                      <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="3" anchor="4" fill="0" indent="0" use-parent-layout="false"/>
+                      <gridbag top="0" left="5" bottom="0" right="0" weightx="0.0" weighty="0.0"/>
+                    </constraints>
+                    <properties>
+                      <text resource-bundle="messages/RefactoringBundle" key="unselect.all.button"/>
+                    </properties>
+                  </component>
                 </children>
               </grid>
             </children>
+          </grid>
+          <grid id="30730" binding="myPanelForPreview" layout-manager="BorderLayout" hgap="0" vgap="0">
+            <constraints>
+              <splitpane position="right"/>
+            </constraints>
+            <properties/>
+            <border type="none"/>
+            <children/>
           </grid>
         </children>
       </splitpane>

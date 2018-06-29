@@ -1,7 +1,7 @@
 class Test {
     void foo() {
         int i = newMethod();
-      System.out.println(i);
+        System.out.println(i);
     }
 
     private int newMethod() {

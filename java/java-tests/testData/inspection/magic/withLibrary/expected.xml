@@ -1,9 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>X.java</file>
-    <line>23</line>
-    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Magic Constant</problem_class>
-    <description>Should be one of: WindowConstants.DO_NOTHING_ON_CLOSE, WindowConstants.HIDE_ON_CLOSE, WindowConstants.DISPOSE_ON_CLOSE, WindowConstants.EXIT_ON_CLOSE</description>
-  </problem>
-</problems>

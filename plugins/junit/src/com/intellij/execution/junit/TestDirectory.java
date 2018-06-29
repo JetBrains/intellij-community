@@ -30,19 +30,19 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.GlobalSearchScopesCore;
-import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.file.Path;
 import java.util.Collection;
+import java.util.Set;
 
 class TestDirectory extends TestPackage {
   public TestDirectory(JUnitConfiguration configuration, ExecutionEnvironment environment) {
@@ -55,16 +55,8 @@ class TestDirectory extends TestPackage {
     final String dirName = getConfiguration().getPersistentData().getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     final Project project = getConfiguration().getProject();
-    final GlobalSearchScope globalSearchScope;
-    if (file == null) {
-      globalSearchScope = GlobalSearchScope.EMPTY_SCOPE;
-    }
-    else {
-      //package created by directory getDirectories(scope) should return the directory itself,
-      // currently the parent directory should be specified for scope
-      VirtualFile scopeDirectory = Registry.is("junit4.search.4.tests.all.in.scope", true) ? ObjectUtils.notNull(file.getParent(), file) : file;
-      globalSearchScope = GlobalSearchScopesCore.directoryScope(project, scopeDirectory, true);
-    }
+    final GlobalSearchScope globalSearchScope =
+      file == null ? GlobalSearchScope.EMPTY_SCOPE : GlobalSearchScopesCore.directoryScope(project, file, true);
     return new SourceScope() {
       @Override
       public GlobalSearchScope getGlobalSearchScope() {
@@ -135,8 +127,38 @@ class TestDirectory extends TestPackage {
     return "";
   }
 
+
+  @Override
+  protected void collectClassesRecursively(TestClassFilter classFilter, Condition<PsiClass> acceptClassCondition, Set<PsiClass> classes) throws CantRunException {
+    collectClassesRecursively(getDirectory(getConfiguration().getPersistentData()), acceptClassCondition, classes);
+  }
+
+
+  private static void collectClassesRecursively(PsiDirectory directory,
+                                                Condition<PsiClass> acceptAsTest,
+                                                Set<PsiClass> classes) {
+    PsiDirectory[] subDirectories = ReadAction.compute(() -> directory.getSubdirectories());
+    for (PsiDirectory subDirectory : subDirectories) {
+      collectClassesRecursively(subDirectory, acceptAsTest, classes);
+    }
+    PsiFile[] files = ReadAction.compute(() -> directory.getFiles());
+    for (PsiFile file : files) {
+      if (file instanceof PsiClassOwner) {
+        for (PsiClass aClass : ReadAction.compute(() -> ((PsiClassOwner)file).getClasses())) {
+          collectInnerClasses(aClass, acceptAsTest, classes);
+        }
+      }
+    }
+  }
+  
+
   @Override
   protected PsiPackage getPackage(JUnitConfiguration.Data data) throws CantRunException {
+    final PsiDirectory directory = getDirectory(data);
+    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackageInSources(directory));
+  }
+
+  private PsiDirectory getDirectory(JUnitConfiguration.Data data) throws CantRunException {
     final String dirName = data.getDirName();
     final VirtualFile file = LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(dirName));
     if (file == null) {
@@ -146,7 +168,7 @@ class TestDirectory extends TestPackage {
     if (directory == null) {
       throw new CantRunException("Directory \'" + dirName + "\' is not found");
     }
-    return ReadAction.compute(() -> JavaDirectoryService.getInstance().getPackage(directory));
+    return directory;
   }
 
   @Override

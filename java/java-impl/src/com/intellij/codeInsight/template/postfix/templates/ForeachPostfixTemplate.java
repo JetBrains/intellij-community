@@ -9,7 +9,6 @@ import com.intellij.codeInsight.template.macro.IterableComponentTypeMacro;
 import com.intellij.codeInsight.template.macro.SuggestVariableNameMacro;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiElement;
@@ -18,7 +17,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class ForeachPostfixTemplate extends JavaEditablePostfixTemplate {
-  public ForeachPostfixTemplate(@NotNull String templateName, @NotNull PostfixEditableTemplateProvider provider) {
+  public ForeachPostfixTemplate(@NotNull String templateName, @NotNull JavaPostfixTemplateProvider provider) {
     super(templateName, "for ($FINAL$$TYPE$ $NAME$ : $EXPR$) {\n    $END$\n}", "for (T item : expr)",
           ContainerUtil.newHashSet(new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateArrayExpressionCondition(),
                                    new JavaPostfixTemplateExpressionCondition.JavaPostfixTemplateExpressionFqnCondition(

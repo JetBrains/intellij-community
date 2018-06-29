@@ -192,31 +192,6 @@ interface Result {
     return Stream.empty();
   }
 }
-final class Final implements Result {
-  @NotNull final Value value;
-
-  Final(@NotNull Value value) {
-    this.value = value;
-  }
-
-  @Override
-  public boolean equals(Object o) {
-    if (this == o) return true;
-    if (o == null || getClass() != o.getClass()) return false;
-
-    return value == ((Final)o).value;
-  }
-
-  @Override
-  public int hashCode() {
-    return value.ordinal();
-  }
-
-  @Override
-  public String toString() {
-    return "Final[" + value + ']';
-  }
-}
 
 final class Pending implements Result {
   @NotNull final Component[] delta; // sum

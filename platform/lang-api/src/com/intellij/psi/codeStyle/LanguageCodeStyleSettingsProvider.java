@@ -1,21 +1,9 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
+import com.intellij.application.options.CodeStyleBean;
 import com.intellij.application.options.IndentOptionsEditor;
+import com.intellij.lang.IdeLanguageCustomization;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -23,10 +11,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.ApiStatus;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Set;
 
 /**
@@ -43,6 +33,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
   @NotNull
   public abstract Language getLanguage();
 
+  @Nullable
   public abstract String getCodeSample(@NotNull SettingsType settingsType);
 
   public int getRightMargin(@NotNull SettingsType settingsType) {
@@ -110,7 +101,8 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   public DisplayPriority getDisplayPriority() {
-    return DisplayPriority.LANGUAGE_SETTINGS;
+    List<Language> primaryIdeLanguages = IdeLanguageCustomization.getInstance().getPrimaryIdeLanguages();
+    return primaryIdeLanguages.contains(getLanguage()) ? DisplayPriority.KEY_LANGUAGE_SETTINGS : DisplayPriority.LANGUAGE_SETTINGS;
   }
 
   @NotNull
@@ -282,12 +274,20 @@ public abstract class LanguageCodeStyleSettingsProvider {
   }
 
   /**
-   * Returns code documentation comment settings for the PSI file.
-   * @param file The file to return current document settings for.
-   * @return Documentation comment settings.
+   * Returns a wrapper around language's own code documentation comment settings from the given {@code rootSettings}.
+   * @param rootSettings Root code style setting to retrieve doc comment settings from.
+   * @return {@code DocCommentSettings} wrapper object object which allows to retrieve and modify language's own
+   *         settings related to doc comment. The object is used then by common platform doc comment handling algorithms.
    */
   @NotNull
-  public DocCommentSettings getDocCommentSettings(@NotNull PsiFile file) {
+  public DocCommentSettings getDocCommentSettings(@NotNull CodeStyleSettings rootSettings) {
     return DocCommentSettings.DEFAULTS;
   }
+
+  @Nullable
+  @ApiStatus.Experimental
+  public CodeStyleBean createBean() {
+    return null;
+  }
+
 }

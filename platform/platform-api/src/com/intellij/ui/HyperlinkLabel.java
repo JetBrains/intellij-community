@@ -76,8 +76,8 @@ public class HyperlinkLabel extends HighlightableComponent {
   }
 
   public HyperlinkLabel(String text, final Color textForegroundColor, final Color textBackgroundColor, final Color textEffectColor) {
-    myAnchorAttributes = UIUtil.isUnderWin10LookAndFeel() ?
-      new Win10TextAttributes(textBackgroundColor) :
+    myAnchorAttributes = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ?
+      new CustomTextAttributes(textBackgroundColor) :
       new TextAttributes(textForegroundColor, textBackgroundColor, textEffectColor, EffectType.LINE_UNDERSCORE, Font.PLAIN);
 
     enforceBackgroundOutsideText(textBackgroundColor);
@@ -325,8 +325,8 @@ public class HyperlinkLabel extends HighlightableComponent {
     }
   }
 
-  private class Win10TextAttributes extends TextAttributes {
-    private Win10TextAttributes(Color textBackgroundColor) {
+  private class CustomTextAttributes extends TextAttributes {
+    private CustomTextAttributes(Color textBackgroundColor) {
       super(null, textBackgroundColor, null, null, Font.PLAIN);
     }
 

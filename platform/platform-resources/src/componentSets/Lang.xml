@@ -39,6 +39,7 @@
 
     <component>
       <implementation-class>com.intellij.codeInsight.preview.ImageOrColorPreviewManager</implementation-class>
+      <headless-implementation-class/>
     </component>
 
     <component>
@@ -48,11 +49,6 @@
   </application-components>
 
   <project-components>
-    <component>
-      <interface-class>com.intellij.codeInsight.highlighting.HighlightManager</interface-class>
-      <implementation-class>com.intellij.codeInsight.highlighting.HighlightManagerImpl</implementation-class>
-    </component>
-
     <component>
       <interface-class>com.intellij.openapi.roots.ProjectRootManager</interface-class>
       <implementation-class>com.intellij.openapi.roots.impl.ProjectRootManagerComponent</implementation-class>
@@ -138,67 +134,51 @@
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.GeneralHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ChameleonSyntaxHighlightingPass$Factory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedGeneralHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LineMarkersPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowIntentionsPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.IdentifierHighlighterPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.refactoring.changeSignature.inplace.ChangeSignaturePassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.CodeFoldingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.hints.ParameterHintsPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.IndentsPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.InjectedCodeFoldingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.LocalInspectionsPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WholeFileLocalInspectionsPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ExternalToolPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.WolfPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.ShowAutoImportPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
     <component>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexProjectHandler</implementation-class>
@@ -207,7 +187,6 @@
     <component>
       <interface-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</interface-class>
       <implementation-class>com.intellij.codeInsight.navigation.CtrlMouseHandler</implementation-class>
-      <skipForDefaultProject/>
     </component>
 
     <component>
@@ -228,14 +207,13 @@
 
     <component>
       <implementation-class>com.intellij.facet.impl.ui.FacetDependentToolWindowManager</implementation-class>
-      <skipForDefaultProject/>
+      <headless-implementation-class/>
     </component>
 
     <component>
       <interface-class>com.intellij.ide.GeneratedSourceFileChangeTracker</interface-class>
       <implementation-class>com.intellij.ide.GeneratedSourceFileChangeTrackerImpl</implementation-class>
     </component>
-
   </project-components>
 
   <module-components>
@@ -253,4 +231,9 @@
       <implementation-class>com.intellij.facet.FacetManagerImpl</implementation-class>
     </component>
   </module-components>
+
+  <extensions defaultExtensionNs="com.intellij">
+    <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
+                    serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
+  </extensions>
 </idea-plugin>

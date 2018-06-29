@@ -1,9 +1,11 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>upFolder</title>
   <g>
-    <g opacity="0.7">
-      <path d="M14,5v5H9V5H7.98462L6.69629,3.71142A2.79972,2.79972,0,0,0,4.979,3H1.05127A0.05126,0.05126,0,0,0,1,3.05124V14H15V5H14Z" fill="#9aa7b0"/>
+    <g opacity="0.8">
+      <path d="M14,4V9H10V4H7.98462L6.69629,2.71143A2.79968,2.79968,0,0,0,4.979,2H1.05127A.05126.05126,0,0,0,1,2.05127V13H15V4Z" fill="#9aa7b0"/>
     </g>
-    <polygon points="15 4 11.5 0.464 8 4 10.015 4 10.015 9 12.985 9 12.985 4 15 4" fill="#40b6e0"/>
+    <g opacity="0.9">
+      <polygon points="15 3 12 0 9 3 11 3 11 8 13 8 13 3 15 3" fill="#40b6e0"/>
+    </g>
   </g>
 </svg>

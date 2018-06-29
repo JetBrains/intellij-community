@@ -1,5 +1,4 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.arguments;
 
 import com.intellij.lang.ASTNode;
@@ -28,11 +27,11 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrLiteral;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.literals.GrLiteralImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult;
 
 import java.util.Map;
 
@@ -46,7 +45,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitArgumentLabel(this);
   }
 
@@ -137,14 +136,15 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
   @Override
   @Nullable
   public String getName() {
-    final PsiElement element = getNameElement();
-    if (element instanceof GrExpression) {
-      final Object value = JavaPsiFacade.getInstance(getProject()).getConstantEvaluationHelper().computeConstantExpression(element);
+    final PsiElement expression = PsiUtil.skipParentheses(getNameElement(), false);
+    if (expression instanceof GrLiteral) {
+      final Object value = ((GrLiteral)expression).getValue();
       if (value instanceof String) {
         return (String)value;
       }
     }
 
+    final PsiElement element = getNameElement();
     final IElementType elemType = element.getNode().getElementType();
     if (GroovyTokenTypes.mIDENT == elemType || TokenSets.KEYWORDS.contains(elemType)) {
       return element.getText();
@@ -164,11 +164,13 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
     return null;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return new TextRange(0, getTextLength());
@@ -190,7 +192,7 @@ public class GrArgumentLabelImpl extends GroovyPsiElementImpl implements GrArgum
           results1[i] = EmptyGroovyResolveResult.INSTANCE;
         }
         else {
-          results1[i] = new GroovyResolveResultImpl(element, true);
+          results1[i] = new ElementResolveResult<>(element);
         }
       }
       return results1;

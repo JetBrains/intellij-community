@@ -6,7 +6,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -81,8 +81,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
 
   public void readExternal(final Element node) {
     removeAllExcludeEntryDescriptions();
-    for (final Object o : node.getChildren()) {
-      Element element = (Element)o;
+    for (final Element element : node.getChildren()) {
       String url = element.getAttributeValue(URL);
       if (url == null) continue;
       if (FILE.equals(element.getName())) {
@@ -126,7 +125,7 @@ public class ExcludedEntriesConfiguration implements PersistentStateComponent<Ex
         }
       }
       else if (entryDescription.isIncludeSubdirectories()) {
-        if (VfsUtil.isAncestor(descriptionFile, virtualFile, false)) {
+        if (VfsUtilCore.isAncestor(descriptionFile, virtualFile, false)) {
           return true;
         }
       }

@@ -18,7 +18,6 @@ package com.intellij.compiler;
 import com.intellij.compiler.server.BuildManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathMacros;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceKt;
@@ -73,12 +72,7 @@ public class CompilerTestUtil {
   @TestOnly
   public static void enableExternalCompiler() {
     final JavaAwareProjectJdkTableImpl table = JavaAwareProjectJdkTableImpl.getInstanceEx();
-    new WriteAction() {
-      @Override
-      protected void run(@NotNull final Result result) {
-        table.addJdk(table.getInternalJdk());
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> table.addJdk(table.getInternalJdk()));
   }
 
   @TestOnly

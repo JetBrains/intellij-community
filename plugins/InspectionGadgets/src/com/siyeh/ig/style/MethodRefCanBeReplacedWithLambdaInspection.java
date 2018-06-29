@@ -19,18 +19,15 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.AsyncResult;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLambdaExpression;
 import com.intellij.psi.PsiMethodReferenceExpression;
 import com.intellij.refactoring.util.LambdaRefactoringUtil;
-import com.intellij.util.Consumer;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -119,14 +116,16 @@ public class MethodRefCanBeReplacedWithLambdaInspection extends BaseInspection {
 
     @Override
     protected void doFix(Project project, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {
-      final AsyncResult<DataContext> contextFromFocus = DataManager.getInstance().getDataContextFromFocus();
-      contextFromFocus.doWhenDone((Consumer<DataContext>)context -> {
-        final Editor editor = CommonDataKeys.EDITOR.getData(context);
-        if (editor != null) {
-          CommandProcessor.getInstance()
-            .executeCommand(project, () -> doFixAndRemoveSideEffects(editor, methodReferenceExpression), getFamilyName(), null);
-        }
-      });
+      DataManager.getInstance()
+                 .getDataContextFromFocusAsync()
+                 .onSuccess(context -> {
+                   final Editor editor = CommonDataKeys.EDITOR.getData(context);
+                   if (editor != null) {
+                     CommandProcessor.getInstance()
+                                     .executeCommand(project, () -> doFixAndRemoveSideEffects(editor, methodReferenceExpression),
+                                                     getFamilyName(), null);
+                   }
+                 });
     }
 
     private static void doFixAndRemoveSideEffects(@NotNull Editor editor, @NotNull PsiMethodReferenceExpression methodReferenceExpression) {

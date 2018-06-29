@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.memory.utils;
 
 import com.intellij.debugger.DebuggerBundle;
@@ -146,7 +144,7 @@ public class StackFrameItem {
           StackFrameItem frameItem = new StackFrameItem(location, vars);
           res.add(frameItem);
 
-          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext, false);
+          List<StackFrameItem> relatedStack = StackCapturingLineBreakpoint.getRelatedStack(frame, suspendContext);
           if (!ContainerUtil.isEmpty(relatedStack)) {
             res.add(null); // separator
             res.addAll(relatedStack);

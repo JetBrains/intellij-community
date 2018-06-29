@@ -26,9 +26,11 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import java.util.Arrays;
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
   private static final Icon EMPTY_ICON = EmptyIcon.ICON_18;
+  private static final Pattern CLEANUP = Pattern.compile("(?i)\\s+file(?:s)?$");
 
   public interface FileTypeListProvider {
     Iterable<FileType> getCurrentFileTypeList();
@@ -57,7 +59,7 @@ public class FileTypeRenderer extends ListCellRendererWrapper<FileType> {
     setIcon(layeredIcon);
 
     String description = type.getDescription();
-    String trimmedDescription = StringUtil.capitalizeWords(description.replaceAll("(?i)\\s*file(?:s)?$", ""), true);
+    String trimmedDescription = StringUtil.capitalizeWords(CLEANUP.matcher(description).replaceAll(""), true);
     if (isDuplicated(description)) {
       setText(trimmedDescription + " (" + type.getName() + ")");
 

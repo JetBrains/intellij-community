@@ -7,18 +7,19 @@ import com.intellij.psi.scope.ElementClassHint
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 
-class LocalVariableProcessor(name: String) : FindFirstProcessor<ElementGroovyResult<GrVariable>>(name) {
+class LocalVariableProcessor(name: String) : FindFirstProcessor<ElementResolveResult<GrVariable>>() {
 
   init {
-    hint(ElementClassHint.KEY, ElementClassHint { false })
+    nameHint(name)
+    hint(ElementClassHint.KEY, ClassHint.EMPTY)
     hint(GroovyResolveKind.HINT_KEY, GroovyResolveKind.Hint { it == GroovyResolveKind.VARIABLE })
   }
 
-  override fun result(element: PsiElement, state: ResolveState): ElementGroovyResult<GrVariable>? {
+  override fun result(element: PsiElement, state: ResolveState): ElementResolveResult<GrVariable>? {
     if (element !is GrVariable || element is GrField) return null
     assert(element !is GrBindingVariable)
-    return ElementGroovyResult(element)
+    return ElementResolveResult(element)
   }
 }

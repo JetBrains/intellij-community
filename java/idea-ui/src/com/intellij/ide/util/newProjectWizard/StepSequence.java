@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2009 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.ide.util.newProjectWizard;
 
@@ -35,6 +21,7 @@ public class StepSequence {
   private final List<ModuleWizardStep> myCommonSteps;
   private final List<Pair<ModuleWizardStep, Set<String>>> myCommonFinishingSteps = new ArrayList<>();
   private final MultiMap<String, ModuleWizardStep> mySpecificSteps = new MultiMap<>();
+  private final MultiMap<String, ModuleWizardStep> mySpecificFinishingSteps = new MultiMap<>();
   @NonNls private final List<String> myTypes = new ArrayList<>();
   private List<ModuleWizardStep> mySelectedSteps;
 
@@ -57,6 +44,9 @@ public class StepSequence {
     if (!mySpecificSteps.containsKey(id)) {
       mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
     }
+    if (!mySpecificFinishingSteps.containsKey(id)) {
+      mySpecificFinishingSteps.put(id, Arrays.asList(builder.createFinishingSteps(wizardContext, modulesProvider)));
+    }
   }
 
   public void addSpecificStep(String type, ModuleWizardStep step) {
@@ -76,6 +66,10 @@ public class StepSequence {
         if (types == null || ContainerUtil.intersects(myTypes, types)) {
           mySelectedSteps.add(pair.getFirst());
         }
+      }
+      for (String type : myTypes) {
+        Collection<ModuleWizardStep> steps = mySpecificFinishingSteps.get(type);
+        mySelectedSteps.addAll(steps);
       }
       ContainerUtil.removeDuplicates(mySelectedSteps);
     }
@@ -118,6 +112,7 @@ public class StepSequence {
     for (Pair<ModuleWizardStep, Set<String>> pair : myCommonFinishingSteps) {
       result.add(pair.getFirst());
     }
+    result.addAll(mySpecificFinishingSteps.values());
     ContainerUtil.removeDuplicates(result);
     return result;
   }

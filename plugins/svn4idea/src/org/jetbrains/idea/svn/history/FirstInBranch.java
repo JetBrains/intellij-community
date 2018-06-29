@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.history;
 
 import com.google.common.base.MoreObjects;
@@ -25,11 +25,11 @@ public class FirstInBranch {
   private static final Logger LOG = Logger.getInstance(FirstInBranch.class);
 
   @NotNull private final SvnVcs myVcs;
-  @NotNull private final String myAbsoluteBranchUrl;
-  @NotNull private final String myAbsoluteTrunkUrl;
+  @NotNull private final Url myAbsoluteBranchUrl;
+  @NotNull private final Url myAbsoluteTrunkUrl;
   @NotNull private final Url myRepositoryRoot;
 
-  public FirstInBranch(@NotNull SvnVcs vcs, @NotNull Url repositoryRoot, @NotNull String branchUrl, @NotNull String trunkUrl) {
+  public FirstInBranch(@NotNull SvnVcs vcs, @NotNull Url repositoryRoot, @NotNull Url branchUrl, @NotNull Url trunkUrl) {
     myVcs = vcs;
     myRepositoryRoot = repositoryRoot;
     myAbsoluteBranchUrl = branchUrl;
@@ -38,8 +38,8 @@ public class FirstInBranch {
 
   @Nullable
   public CopyData run() throws VcsException {
-    Target trunk = Target.on(createUrl(myAbsoluteTrunkUrl), Revision.HEAD);
-    Target branch = Target.on(createUrl(myAbsoluteBranchUrl), Revision.HEAD);
+    Target trunk = Target.on(myAbsoluteTrunkUrl, Revision.HEAD);
+    Target branch = Target.on(myAbsoluteBranchUrl, Revision.HEAD);
     CopyData result = find(new BranchPoint(trunk), new BranchPoint(branch), true);
 
     debug(result);
@@ -89,7 +89,8 @@ public class FirstInBranch {
 
   private void debug(@Nullable CopyData copyData) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("Found branch point " + join(immutableList(myAbsoluteTrunkUrl, myAbsoluteBranchUrl, copyData), ", "));
+      LOG.debug("Found branch point " +
+                join(immutableList(myAbsoluteTrunkUrl.toDecodedString(), myAbsoluteBranchUrl.toDecodedString(), copyData), ", "));
     }
   }
 

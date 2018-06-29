@@ -94,13 +94,13 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
         }
         for (int pos = value.indexOf("\\n"); pos >= 0; pos = value.indexOf("\\n", prev)) {
           int end = checkForR(value, pos);
-          buffer.append(value.substring(prev, end));
+          buffer.append(value, prev, end);
           prev = end;
           buffer.append(quote);
           buffer.append("+\n");
           buffer.append(quote);
         }
-        buffer.append(value.substring(prev, value.length()));
+        buffer.append(value.substring(prev));
         if (!isInjection(child.getTreeNext())) {
           buffer.append(quote);
         }
@@ -117,13 +117,13 @@ public class GrBreakStringOnLineBreaksIntention extends Intention {
     for (int pos = value.indexOf("\\n"); pos >= 0; pos = value.indexOf("\\n", prev)) {
       buffer.append(quote);
       int end = checkForR(value, pos);
-      buffer.append(value.substring(prev, end));
+      buffer.append(value, prev, end);
       prev = end;
       buffer.append(quote);
       buffer.append("+\n");
     }
     buffer.append(quote);
-    buffer.append(value.substring(prev, value.length()));
+    buffer.append(value.substring(prev));
     buffer.append(quote);
   }
 

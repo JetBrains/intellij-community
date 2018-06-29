@@ -107,7 +107,7 @@ public abstract class ChooseFileEncodingAction extends ComboBoxAction {
     }
   }
 
-  protected static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
+  public static final Charset NO_ENCODING = new Charset("NO_ENCODING", null) {
     @Override
     public boolean contains(final Charset cs) {
       return false;

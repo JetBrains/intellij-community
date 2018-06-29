@@ -38,8 +38,8 @@ import org.jetbrains.annotations.Nullable
 import org.jetbrains.plugins.gradle.model.*
 import org.jetbrains.plugins.gradle.tooling.ErrorMessageBuilder
 import org.jetbrains.plugins.gradle.tooling.ModelBuilderService
-import org.jetbrains.plugins.gradle.tooling.util.DependencyResolverImpl
 import org.jetbrains.plugins.gradle.tooling.util.SourceSetCachedFinder
+import org.jetbrains.plugins.gradle.tooling.util.resolve.DependencyResolverImpl
 
 /**
  * @author Vladislav.Soroka
@@ -204,12 +204,12 @@ class ExternalProjectBuilderImpl implements ModelBuilderService {
     //noinspection GrUnresolvedAccess
     if(project.hasProperty('sourceCompatibility') && project.sourceCompatibility instanceof JavaVersion) {
       //noinspection GrUnresolvedAccess
-      projectSourceCompatibility = project.sourceCompatibility.name
+      projectSourceCompatibility = project.sourceCompatibility.toString()
     }
     //noinspection GrUnresolvedAccess
     if(project.hasProperty('targetCompatibility') && project.targetCompatibility instanceof JavaVersion) {
       //noinspection GrUnresolvedAccess
-      projectTargetCompatibility = project.targetCompatibility.name
+      projectTargetCompatibility = project.targetCompatibility.toString()
     }
 
     def result = [:] as Map<String, ExternalSourceSet>

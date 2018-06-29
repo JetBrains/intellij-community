@@ -3,6 +3,8 @@ package com.intellij.ui.messages;
 
 import com.apple.eawt.FullScreenUtilities;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.ui.DialogWrapper;
@@ -10,6 +12,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.mac.MacMainFrameDecorator;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.util.ui.Animator;
 import org.jetbrains.annotations.NotNull;
@@ -55,7 +58,9 @@ class SheetMessage implements Disposable {
     myWindow = new JDialog(owner, "This should not be shown", Dialog.ModalityType.APPLICATION_MODAL);
     myWindow.getRootPane().putClientProperty("apple.awt.draggableWindowBackground", Boolean.FALSE);
 
-    myParent = owner;
+    //Sometimes we cannot find the owner from the project. For instance, WelcomeScreen could be showing without a
+    // project being loaded. Let's employ the focus manager then.
+    myParent = (owner == null) ? KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusedWindow() : owner;
 
     myWindow.setUndecorated(true);
     myWindow.setBackground(Gray.TRANSPARENT);
@@ -135,6 +140,7 @@ class SheetMessage implements Disposable {
     }
 
     LaterInvocator.enterModal(myWindow);
+    _showTouchBar(buttons, myController.getDefaultButton() != null ? myController.getDefaultButton().getText() : null);
     myWindow.setVisible(true);
     LaterInvocator.leaveModal(myWindow);
 
@@ -157,6 +163,21 @@ class SheetMessage implements Disposable {
   public void dispose() {
     DialogWrapper.cleanupRootPane(myWindow.getRootPane());
     myWindow.dispose();
+  }
+
+  private void _showTouchBar(String[] buttons, String defaultButton) {
+    if (!TouchBarsManager.isTouchBarAvailable())
+      return;
+
+    final Runnable[] actions = new Runnable[buttons.length];
+    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    for (int c = 0; c < buttons.length; ++c) {
+      final String sb = buttons[c];
+      actions[c] = () -> ApplicationManager.getApplication().invokeLater(() -> myController.setResultAndStartClose(sb), ms);
+    }
+    final Disposable tb = TouchBarsManager.showSheetMessageButtons(buttons, actions, defaultButton);
+    if (tb != null)
+      Disposer.register(this, tb);
   }
 
   private static void maximizeIfNeeded(final Window owner) {

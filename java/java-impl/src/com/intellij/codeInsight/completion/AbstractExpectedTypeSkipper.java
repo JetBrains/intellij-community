@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.ExpectedTypeInfo;
-import com.intellij.codeInsight.generation.OverrideImplementUtil;
+import com.intellij.codeInsight.generation.OverrideImplementExploreUtil;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.psi.*;
 import com.intellij.psi.statistics.StatisticsManager;
@@ -65,7 +65,11 @@ public class AbstractExpectedTypeSkipper extends CompletionPreselectSkipper {
       }
     }
 
-    toImplement += OverrideImplementUtil.getMethodSignaturesToImplement(psiClass).size();
+    toImplement += OverrideImplementExploreUtil.getMapToOverrideImplement(psiClass, true)
+                                               .values()
+                                               .stream()
+                                               .filter(c -> ((PsiMethod)c.getElement()).hasModifierProperty(PsiModifier.ABSTRACT))
+                                               .count();
     if (toImplement > 2) return Result.ABSTRACT;
 
     final ExpectedTypeInfo[] infos = JavaCompletionUtil.EXPECTED_TYPES.getValue(location);

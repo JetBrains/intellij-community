@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.merge;
 
 import com.intellij.diff.DiffManagerEx;
@@ -177,6 +163,7 @@ public abstract class MergeRequestProcessor implements Disposable {
   protected void buildToolbar(@Nullable List<AnAction> viewerActions) {
     ActionGroup group = collectToolbarActions(viewerActions);
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.DIFF_TOOLBAR, group, true);
+    toolbar.setShowSeparatorTitles(true);
 
     DataManager.registerDataProvider(toolbar.getComponent(), myMainPanel);
     toolbar.setTargetComponent(toolbar.getComponent());
@@ -329,13 +316,12 @@ public abstract class MergeRequestProcessor implements Disposable {
   // Misc
   //
 
-  private boolean isFocused() {
-    return DiffUtil.isFocusedComponent(myProject, myPanel);
+  private boolean isFocusedInWindow() {
+    return DiffUtil.isFocusedComponentInWindow(myPanel);
   }
 
-  private void requestFocusInternal() {
-    JComponent component = getPreferredFocusedComponent();
-    if (component != null) component.requestFocusInWindow();
+  private void requestFocusInWindow() {
+    DiffUtil.requestFocusInWindow(getPreferredFocusedComponent());
   }
 
   //
@@ -461,13 +447,13 @@ public abstract class MergeRequestProcessor implements Disposable {
     }
 
     @Override
-    public boolean isFocused() {
-      return MergeRequestProcessor.this.isFocused();
+    public boolean isFocusedInWindow() {
+      return MergeRequestProcessor.this.isFocusedInWindow();
     }
 
     @Override
-    public void requestFocus() {
-      MergeRequestProcessor.this.requestFocusInternal();
+    public void requestFocusInWindow() {
+      MergeRequestProcessor.this.requestFocusInWindow();
     }
 
     @Override

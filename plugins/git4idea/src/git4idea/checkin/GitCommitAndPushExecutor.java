@@ -35,6 +35,11 @@ public class GitCommitAndPushExecutor implements CommitExecutor {
     return ID;
   }
 
+  @Override
+  public boolean supportsPartialCommit() {
+    return true;
+  }
+
   @NotNull
   public CommitSession createCommitSession() {
     myCheckinEnvironment.setNextCommitIsPushed(true);

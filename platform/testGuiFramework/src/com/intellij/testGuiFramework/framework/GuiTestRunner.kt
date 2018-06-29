@@ -20,9 +20,9 @@ import com.intellij.openapi.util.Ref
 import com.intellij.testGuiFramework.impl.GuiTestStarter
 import com.intellij.testGuiFramework.impl.GuiTestThread
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher
 import com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher.runIdeLocally
 import com.intellij.testGuiFramework.launcher.ide.Ide
+import com.intellij.testGuiFramework.remote.IdeProcessControlManager
 import com.intellij.testGuiFramework.remote.server.JUnitServer
 import com.intellij.testGuiFramework.remote.server.JUnitServerHolder
 import com.intellij.testGuiFramework.remote.transport.*
@@ -34,6 +34,7 @@ import org.junit.runner.notification.Failure
 import org.junit.runner.notification.RunListener
 import org.junit.runner.notification.RunNotifier
 import org.junit.runners.model.FrameworkMethod
+import java.net.SocketException
 import java.util.concurrent.TimeUnit
 
 
@@ -72,6 +73,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     try {
       if (!server.isConnected()) {
         val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
+        SERVER_LOG.info("Starting IDE ($localIde) with port for running tests: ${server.getPort()}")
         runIde(port = server.getPort(), ide = localIde)
         if (!server.isStarted()) {
           server.start()
@@ -87,31 +89,40 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     }
     var testIsRunning = true
     while (testIsRunning) {
-      val message = server.receive()
-      if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
-        when (message.content.type) {
-          Type.STARTED -> eachNotifier.fireTestStarted()
-          Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption(
-            (message.content.obj as Failure).exception as AssumptionViolatedException)
-          Type.IGNORED -> {
-            eachNotifier.fireTestIgnored(); testIsRunning = false
+      try {
+        val message = server.receive()
+        if (message.content is JUnitInfo && message.content.testClassAndMethodName == JUnitInfo.getClassAndMethodName(description)) {
+          when (message.content.type) {
+            Type.STARTED -> eachNotifier.fireTestStarted()
+            Type.ASSUMPTION_FAILURE -> eachNotifier.addFailedAssumption(
+              (message.content.obj as Failure).exception as AssumptionViolatedException)
+            Type.IGNORED -> {
+              eachNotifier.fireTestIgnored(); testIsRunning = false
+            }
+            Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
+            Type.FINISHED -> {
+              eachNotifier.fireTestFinished(); testIsRunning = false
+            }
+            else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
           }
-          Type.FAILURE -> eachNotifier.addFailure(message.content.obj as Throwable)
-          Type.FINISHED -> {
-            eachNotifier.fireTestFinished(); testIsRunning = false
-          }
-          else -> throw UnsupportedOperationException("Unable to recognize received from JUnitClient")
         }
-      }
-      if (message.type == MessageType.RESTART_IDE) {
-        restartIdeAndStartTestAgain(server, method)
-        sendRunTestCommand(method, server)
-      }
-      if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
-        val additionalInfoLabel = message.content
-        if (additionalInfoLabel !is String) throw Exception("Additional info for a resuming test should have a String type!")
-        restartIdeAndStartTestAgain(server, method)
-        sendResumeTestCommand(method, server, additionalInfoLabel)
+        if (message.type == MessageType.RESTART_IDE) {
+          restartIdeAndStartTestAgain(server, method)
+          sendRunTestCommand(method, server)
+        }
+        if (message.type == MessageType.RESTART_IDE_AND_RESUME) {
+          val additionalInfoLabel = message.content
+          if (additionalInfoLabel !is String) throw Exception("Additional info for a resuming test should have a String type!")
+          restartIdeAndStartTestAgain(server, method)
+          sendResumeTestCommand(method, server, additionalInfoLabel)
+        }
+      } catch (se: SocketException) {
+        //let's fail this test and move to the next one test
+        SERVER_LOG.warn("Server client connection is dead. Going to kill IDE process.")
+        stopServerAndKillIde(server)
+        eachNotifier.addFailure(se)
+        eachNotifier.fireTestFinished()
+        testIsRunning = false
       }
     }
   }
@@ -120,13 +131,19 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
     //close previous IDE
     server.send(TransportMessage(MessageType.CLOSE_IDE))
     //await to close previous process
-    GuiTestLocalLauncher.process?.waitFor(2, TimeUnit.MINUTES)
+    IdeProcessControlManager.waitForCurrentProcess(2, TimeUnit.MINUTES)
+    IdeProcessControlManager.killIdeProcess()
     //restart JUnitServer to let accept a new connection
     server.stopServer()
     //start a new one IDE
     val localIde = runner.ide ?: getIdeFromAnnotation(method.declaringClass)
     runIde(port = server.getPort(), ide = localIde)
     server.start()
+  }
+
+  private fun stopServerAndKillIde(server: JUnitServer) {
+    IdeProcessControlManager.killIdeProcess()
+    server.stopServer()
   }
 
   private fun sendRunTestCommand(method: FrameworkMethod,
@@ -146,7 +163,7 @@ class GuiTestRunner internal constructor(val runner: GuiTestRunnerInterface) {
 
     val runListener: RunListener = object : RunListener() {
       override fun testFailure(failure: Failure?) {
-        LOG.error("Test failed: '$testName'")
+        LOG.info("Test failed: '$testName'")
         notifier.removeListener(this)
         super.testFailure(failure)
       }

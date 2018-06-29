@@ -17,9 +17,7 @@
 package org.intellij.lang.xpath.xslt.refactoring.extractTemplate;
 
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SelectionModel;
@@ -203,49 +201,47 @@ public class XsltExtractTemplateAction extends XsltRefactoringActionBase {
                 newName;
 
         if (s != null) {
-            new WriteCommandAction(start.getProject()) {
-                protected void run(@NotNull Result result) throws Throwable {
-                    final PsiFile containingFile = start.getContainingFile();
+            WriteCommandAction.runWriteCommandAction(start.getProject(), ()-> {
+                final PsiFile containingFile = start.getContainingFile();
 
-                    XmlTag templateTag = parentScope.createChildTag("template", XsltSupport.XSLT_NS, sb.toString(), false);
-                    templateTag.setAttribute("name", s);
+                XmlTag templateTag = parentScope.createChildTag("template", XsltSupport.XSLT_NS, sb.toString(), false);
+                templateTag.setAttribute("name", s);
 
-                    final PsiElement dummy = XmlElementFactory.getInstance(start.getProject()).createDisplayText(" ");
-                    final PsiElement outerParent = outerTemplate.getParent();
-                    final PsiElement element = outerParent.addAfter(dummy, outerTemplate);
-                    templateTag = (XmlTag)outerParent.addAfter(templateTag, element);
+                final PsiElement dummy = XmlElementFactory.getInstance(start.getProject()).createDisplayText(" ");
+                final PsiElement outerParent = outerTemplate.getParent();
+                final PsiElement element = outerParent.addAfter(dummy, outerTemplate);
+                templateTag = (XmlTag)outerParent.addAfter(templateTag, element);
 
-                    final TextRange adjust = templateTag.getTextRange();
+                final TextRange adjust = templateTag.getTextRange();
 
-                    final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(start.getProject());
-                    final Document doc = psiDocumentManager.getDocument(containingFile);
-                    assert doc != null;
-                    psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
-                  CodeStyleManager.getInstance(start.getManager().getProject()).adjustLineIndent(containingFile, adjust);
+                final PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(start.getProject());
+                final Document doc = psiDocumentManager.getDocument(containingFile);
+                assert doc != null;
+                psiDocumentManager.doPostponedOperationsAndUnblockDocument(doc);
+                CodeStyleManager.getInstance(start.getManager().getProject()).adjustLineIndent(containingFile, adjust);
 
-                    final PsiElement parent = start.getParent();
-                    XmlTag callTag = parentScope.createChildTag("call-template", XsltSupport.XSLT_NS, null, false);
-                    callTag.setAttribute("name", s);
+                final PsiElement parent = start.getParent();
+                XmlTag callTag = parentScope.createChildTag("call-template", XsltSupport.XSLT_NS, null, false);
+                callTag.setAttribute("name", s);
 
-                    if (start instanceof XmlToken && ((XmlToken)start).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
-                        assert start == end;
-                        callTag = (XmlTag)start.replace(callTag);
-                    } else {
-                        callTag = (XmlTag)parent.addBefore(callTag, start);
-                        parent.deleteChildRange(start, end);
-                    }
-
-                    for (String var : vars) {
-                        final XmlTag param = templateTag.createChildTag("param", XsltSupport.XSLT_NS, null, false);
-                        param.setAttribute("name", var);
-                        RefactoringUtil.addParameter(templateTag, param);
-
-                        final XmlTag arg = RefactoringUtil.addWithParam(callTag);
-                        arg.setAttribute("name", var);
-                        arg.setAttribute("select", "$" + var);
-                    }
+                if (start instanceof XmlToken && ((XmlToken)start).getTokenType() == XmlTokenType.XML_DATA_CHARACTERS) {
+                    assert start == end;
+                    callTag = (XmlTag)start.replace(callTag);
+                } else {
+                    callTag = (XmlTag)parent.addBefore(callTag, start);
+                    parent.deleteChildRange(start, end);
                 }
-            }.execute().logException(Logger.getInstance(getClass().getName()));
+
+                for (String var : vars) {
+                    final XmlTag param = templateTag.createChildTag("param", XsltSupport.XSLT_NS, null, false);
+                    param.setAttribute("name", var);
+                    RefactoringUtil.addParameter(templateTag, param);
+
+                    final XmlTag arg = RefactoringUtil.addWithParam(callTag);
+                    arg.setAttribute("name", var);
+                    arg.setAttribute("select", "$" + var);
+                }
+            });
         }
         return true;
     }

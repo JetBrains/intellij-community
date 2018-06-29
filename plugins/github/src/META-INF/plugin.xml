@@ -3,7 +3,7 @@
   <id>org.jetbrains.plugins.github</id>
   <vendor>JetBrains</vendor>
   <description>
-      <![CDATA[
+    <![CDATA[
       Allows working with <a href="http://github.com/">GitHub</a>.
       The following features are available:
         <ul>
@@ -12,24 +12,34 @@
         <li>When GitHub is enabled, the GitHub node appears on the VCS menu, and on the context menu of the editor.
         </ul>
       ]]>
-   </description>
+  </description>
 
   <depends>com.intellij.modules.lang</depends>
   <depends>Git4Idea</depends>
   <depends optional="true" config-file="github-tracker.xml">com.intellij.tasks</depends>
 
   <extensions defaultExtensionNs="com.intellij">
-    <checkoutProvider implementation="org.jetbrains.plugins.github.extensions.GithubCheckoutProvider"/>
     <applicationService serviceInterface="org.jetbrains.plugins.github.util.GithubSettings"
                         serviceImplementation="org.jetbrains.plugins.github.util.GithubSettings"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.GithubAuthenticationManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.api.GithubApiTaskExecutor"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountInformationProvider"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubGitHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.util.GithubAccountsMigrationHelper"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.github.extensions.GithubAccountGitAuthenticationFailureManager"/>
     <projectService serviceInterface="org.jetbrains.plugins.github.util.GithubProjectSettings"
-                        serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
-    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider" />
-    <vcsConfigurableProvider implementation="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+                    serviceImplementation="org.jetbrains.plugins.github.util.GithubProjectSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.github.authentication.accounts.GithubProjectDefaultAccountHolder"/>
+    <vcsAnnotationGutterActionProvider implementation="org.jetbrains.plugins.github.extensions.GithubAnnotationGutterActionProvider"/>
+    <projectConfigurable parentId="project.propVCSSupport.Mappings" instance="org.jetbrains.plugins.github.ui.GithubSettingsConfigurable"/>
+    <statistics.applicationUsagesCollector
+        implementation="org.jetbrains.plugins.github.authentication.accounts.GithubAccountsStatisticsCollector"/>
   </extensions>
 
   <extensions defaultExtensionNs="Git4Idea">
-    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider" />
+    <GitHttpAuthDataProvider implementation="org.jetbrains.plugins.github.extensions.GithubHttpAuthDataProvider"/>
+    <gitRepositoryHostingService implementation="org.jetbrains.plugins.github.extensions.GithubRepositoryHostingService"/>
   </extensions>
 
   <actions>
@@ -42,13 +52,14 @@
     <action id="Github.Create.Pull.Request" class="org.jetbrains.plugins.github.GithubCreatePullRequestAction">
       <add-to-group group-id="Git.Menu"/>
     </action>
-    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserAction">
+    <action id="Github.Open.In.Browser" class="org.jetbrains.plugins.github.GithubOpenInBrowserActionGroup">
       <add-to-group group-id="EditorPopupMenu"/>
       <add-to-group group-id="ProjectViewPopupMenu"/>
       <add-to-group group-id="EditorTabPopupMenu"/>
       <add-to-group group-id="Git.LogContextMenu"/>
       <add-to-group group-id="Vcs.Log.ContextMenu"/>
       <add-to-group group-id="VcsHistoryActionsGroup"/>
+      <add-to-group group-id="VcsHistoryActionsGroup.Toolbar"/>
     </action>
     <action id="Github.Create.Gist" class="org.jetbrains.plugins.github.GithubCreateGistAction">
       <add-to-group group-id="EditorPopupMenu"/>

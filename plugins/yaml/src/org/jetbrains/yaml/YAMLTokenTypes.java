@@ -8,6 +8,7 @@ public interface YAMLTokenTypes {
   YAMLElementType WHITESPACE = new YAMLElementType("whitespace");
   YAMLElementType INDENT = new YAMLElementType("indent");
   YAMLElementType EOL = new YAMLElementType("Eol");
+  YAMLElementType SCALAR_EOL = new YAMLElementType("block scalar EOL");
 
   YAMLElementType LBRACE = new YAMLElementType("{");
   YAMLElementType RBRACE = new YAMLElementType("}");
@@ -16,6 +17,8 @@ public interface YAMLTokenTypes {
   YAMLElementType COMMA = new YAMLElementType(",");
   YAMLElementType COLON = new YAMLElementType(":");
   YAMLElementType QUESTION = new YAMLElementType("?");
+  YAMLElementType AMPERSAND = new YAMLElementType("&");
+  YAMLElementType STAR = new YAMLElementType("*");
 
   YAMLElementType DOCUMENT_MARKER = new YAMLElementType("---");
   YAMLElementType DOCUMENT_END = new YAMLElementType("...");
@@ -31,4 +34,7 @@ public interface YAMLTokenTypes {
 
   YAMLElementType SCALAR_LIST = new YAMLElementType("scalar list");
   YAMLElementType SCALAR_TEXT = new YAMLElementType("scalar text");
+
+  YAMLElementType ANCHOR = new YAMLElementType("anchor");
+  YAMLElementType ALIAS = new YAMLElementType("alias");
 }

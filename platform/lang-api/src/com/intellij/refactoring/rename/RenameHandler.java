@@ -19,15 +19,17 @@ package com.intellij.refactoring.rename;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.refactoring.RefactoringActionHandler;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author dsl
  */
 public interface RenameHandler extends RefactoringActionHandler {
   ExtensionPointName<RenameHandler> EP_NAME = new ExtensionPointName<>("com.intellij.renameHandler");
-  
+
   // called during rename action update. should not perform any user interactions
-  boolean isAvailableOnDataContext(DataContext dataContext);
+  boolean isAvailableOnDataContext(@NotNull DataContext dataContext);
+
   // called on rename actionPerformed. Can obtain additional info from user
-  boolean isRenaming(DataContext dataContext);
+  boolean isRenaming(@NotNull DataContext dataContext);
 }

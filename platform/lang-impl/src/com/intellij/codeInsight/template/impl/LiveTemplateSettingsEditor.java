@@ -25,6 +25,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.TreeTraversal;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.PlatformColors;
@@ -80,8 +81,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
     myNodeChanged = nodeChanged;
     myDefaultShortcutItem = CodeInsightBundle.message("dialog.edit.template.shortcut.default", defaultShortcut);
 
-    myKeyField=new JTextField();
-    myDescription=new JTextField();
+    myKeyField = new JTextField(20);
+    myDescription = new JTextField(100);
     myTemplateEditor = TemplateEditorUtil.createEditor(false, myTemplate.getString(), context);
     myTemplate.setId(null);
 
@@ -293,10 +294,10 @@ public class LiveTemplateSettingsEditor extends JPanel {
       String oldPrefix = "";
       for (TemplateContextType type : getApplicableContexts()) {
         final TemplateContextType base = type.getBaseContextType();
-        String ownName = UIUtil.removeMnemonic(type.getPresentableName());
+        String ownName = presentableName(type);
         String prefix = "";
         if (base != null && !(base instanceof EverywhereContextType)) {
-          prefix = UIUtil.removeMnemonic(base.getPresentableName()) + ": ";
+          prefix = presentableName(base) + ": ";
           ownName = StringUtil.decapitalize(ownName);
         }
         if (type instanceof EverywhereContextType) {
@@ -361,6 +362,11 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
+  private static String presentableName(TemplateContextType type) {
+    return UIUtil.removeMnemonic(type.getPresentableName());
+  }
+
   private boolean disposeContextPopup() {
     if (myContextPopup != null && myContextPopup.isVisible()) {
       myContextPopup.cancel();
@@ -406,13 +412,13 @@ public class LiveTemplateSettingsEditor extends JPanel {
       }
     };
 
-    for (TemplateContextType type : hierarchy.get(null)) {
+    for (TemplateContextType type : sortContexts(hierarchy.get(null))) {
       addContextNode(hierarchy, root, type, context);
     }
 
     ((DefaultTreeModel)checkboxTree.getModel()).nodeStructureChanged(root);
 
-    TreeUtil.traverse(root, _node -> {
+    TreeUtil.treeNodeTraverser(root).traverse(TreeTraversal.POST_ORDER_DFS).consumeEach(_node -> {
       final CheckedTreeNode node = (CheckedTreeNode)_node;
       if (node.isChecked()) {
         final TreeNode[] path = node.getPath();
@@ -420,8 +426,8 @@ public class LiveTemplateSettingsEditor extends JPanel {
           checkboxTree.expandPath(new TreePath(path).getParentPath());
         }
       }
-      return true;
     });
+    TreeUtil.expand(checkboxTree, 2);
 
     panel.add(ScrollPaneFactory.createScrollPane(checkboxTree));
     final Dimension size = checkboxTree.getPreferredSize();
@@ -430,25 +436,28 @@ public class LiveTemplateSettingsEditor extends JPanel {
     return panel;
   }
 
+  @NotNull
+  private static List<TemplateContextType> sortContexts(Collection<TemplateContextType> contextTypes) {
+    return ContainerUtil.sorted(contextTypes, (o1, o2) -> StringUtil.compare(presentableName(o1), presentableName(o2), true));
+  }
+
   private static void addContextNode(MultiMap<TemplateContextType, TemplateContextType> hierarchy,
                                      CheckedTreeNode parent,
                                      TemplateContextType type, TemplateContext context) {
-    final Collection<TemplateContextType> children = hierarchy.get(type);
-    final String name = UIUtil.removeMnemonic(type.getPresentableName());
-    final CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
+    Collection<TemplateContextType> children = hierarchy.get(type);
+    String name = presentableName(type);
+    CheckedTreeNode node = new CheckedTreeNode(Pair.create(children.isEmpty() ? type : null, name));
     parent.add(node);
 
-    if (children.isEmpty()) {
-      node.setChecked(context.isEnabled(type));
-    }
-    else {
-      for (TemplateContextType child : children) {
+    if (!children.isEmpty()) {
+      for (TemplateContextType child : sortContexts(children)) {
         addContextNode(hierarchy, node, child, context);
       }
       final CheckedTreeNode other = new CheckedTreeNode(Pair.create(type, "Other"));
       other.setChecked(context.isEnabled(type));
       node.add(other);
     }
+    node.setChecked(context.isEnabled(type));
   }
 
   private boolean isExpandableFromEditor() {

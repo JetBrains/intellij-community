@@ -155,9 +155,7 @@ public class EnumerationCanBeIterationInspection extends EnumerationCanBeIterati
                                                   PsiType parameterType) {
       @NonNls final StringBuilder newStatementText = new StringBuilder();
       final Project project = methodCallExpression.getProject();
-      final CodeStyleSettings codeStyleSettings =
-        CodeStyleSettingsManager.getSettings(project);
-      if (codeStyleSettings.getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS) {
+      if (JavaCodeStyleSettings.getInstance(methodCallExpression.getContainingFile()).GENERATE_FINAL_LOCALS) {
         newStatementText.append("final ");
       }
       newStatementText.append(CommonClassNames.JAVA_UTIL_ITERATOR);

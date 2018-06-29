@@ -69,6 +69,11 @@
   <item name="javax.swing.JEditorPane JEditorPane(java.lang.String, java.lang.String) 0">
     <annotation name="org.jetbrains.annotations.NonNls" />
   </item>
+  <item name='javax.swing.JFrame void setDefaultCloseOperation(int) 0'>
+    <annotation name="org.intellij.lang.annotations.MagicConstant">
+      <val name="intValues" val="{javax.swing.WindowConstants.DO_NOTHING_ON_CLOSE, javax.swing.WindowConstants.HIDE_ON_CLOSE, javax.swing.WindowConstants.DISPOSE_ON_CLOSE, javax.swing.WindowConstants.EXIT_ON_CLOSE, javax.swing.JFrame.EXIT_ON_CLOSE}" />
+    </annotation>
+  </item>
   <item name="javax.swing.JLabel JLabel(java.lang.String, int) 1">
     <annotation name="org.intellij.lang.annotations.MagicConstant">
       <val name="intValues" val="{javax.swing.SwingConstants.LEFT, javax.swing.SwingConstants.CENTER, javax.swing.SwingConstants.RIGHT, javax.swing.SwingConstants.LEADING, javax.swing.SwingConstants.TRAILING}" />

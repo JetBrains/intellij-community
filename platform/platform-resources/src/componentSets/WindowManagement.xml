@@ -20,7 +20,6 @@
     </component>
     <component>
       <implementation-class>com.intellij.openapi.wm.impl.WindowDressing</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 

@@ -1,3 +1,6 @@
+from abc import abstractmethod
+
+
 class Abstract(object):
 
   @abstractmethod

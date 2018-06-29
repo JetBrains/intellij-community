@@ -15,10 +15,7 @@
  */
 package com.jetbrains.jsonSchema.impl;
 
-import com.intellij.json.psi.JsonArray;
-import com.intellij.json.psi.JsonObject;
-import com.intellij.json.psi.JsonProperty;
-import com.intellij.json.psi.JsonValue;
+import com.intellij.json.psi.*;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -27,7 +24,10 @@ import com.jetbrains.jsonSchema.extension.adapters.JsonValueAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.jsonSchema.impl.JsonSchemaAnnotatorChecker.areSchemaTypesCompatible;
@@ -61,7 +61,7 @@ public class JsonSchemaResolver {
   public Collection<JsonSchemaObject> resolve() {
     final MatchResult result = detailedResolve();
     final List<JsonSchemaObject> list = new ArrayList<>(result.mySchemas);
-    list.addAll(result.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
+    list.addAll(result.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
     return list;
   }
 
@@ -79,7 +79,7 @@ public class JsonSchemaResolver {
                                                @Nullable final JsonValue element, boolean topLevelSchema) {
     final MatchResult matchResult = MatchResult.create(resolveRoot);
     List<JsonSchemaObject> schemas = new ArrayList<>(matchResult.mySchemas);
-    schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Set::stream).collect(Collectors.toSet()));
+    schemas.addAll(matchResult.myExcludingSchemas.stream().flatMap(Collection::stream).collect(Collectors.toList()));
 
     final JsonSchemaObject firstSchema = getFirstValidSchema(schemas);
     if (element == null || schemas.size() == 1 || firstSchema == null) {
@@ -135,7 +135,7 @@ public class JsonSchemaResolver {
   @Nullable
   private static JsonValue getSchemaNavigationItem(@Nullable final JsonSchemaObject schema) {
     if (schema == null) return null;
-    final JsonObject jsonObject = schema.getJsonObject();
+    final JsonContainer jsonObject = schema.getJsonObject();
     if (jsonObject.getParent() instanceof JsonProperty) {
       return ((JsonProperty)jsonObject.getParent()).getNameElement();
     }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
@@ -236,7 +236,8 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
 
   @Override
   public void setText(@Nullable final String text) {
-    ApplicationManager.getApplication().runWriteAction(() -> CommandProcessor.getInstance().executeCommand(getProject(), () -> {
+    CommandProcessor.getInstance().executeCommand(getProject(), () ->
+      ApplicationManager.getApplication().runWriteAction(() -> {
       myDocument.replaceString(0, myDocument.getTextLength(), StringUtil.notNullize(text));
       if (myEditor != null) {
         final CaretModel caretModel = myEditor.getCaretModel();
@@ -244,7 +245,7 @@ public class EditorTextField extends NonOpaquePanel implements DocumentListener,
           caretModel.moveToOffset(myDocument.getTextLength());
         }
       }
-    }, null, null, UndoConfirmationPolicy.DEFAULT, getDocument()));
+    }), null, null, UndoConfirmationPolicy.DEFAULT, getDocument());
   }
 
   /**

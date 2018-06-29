@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util.gotoByName;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.navigation.ChooseByNameContributorEx;
 import com.intellij.navigation.GotoClassContributor;
 import com.intellij.navigation.NavigationItem;
@@ -124,6 +126,12 @@ public class DefaultClassNavigationContributor implements ChooseByNameContributo
         return processor.process(aClass);
       }
     }, parameters.getSearchScope(), parameters.getIdFilter());
+  }
+
+  @Nullable
+  @Override
+  public Language getElementLanguage() {
+    return JavaLanguage.INSTANCE;
   }
 
   private static boolean isPhysical(PsiClass aClass) {

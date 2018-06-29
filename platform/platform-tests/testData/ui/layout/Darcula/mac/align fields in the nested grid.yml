@@ -1,0 +1,80 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: -1, value: 0.0}
+  - {}
+  - gapAfter:
+      max: &id003 {horizontal: true, value: 6.0}
+      min: *id003
+      preferred: *id003
+  - {}
+  count: 4
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id004 {horizontal: true, value: 6.0}
+      min: *id004
+      preferred: *id004
+    grow: 0.0
+  - {}
+  count: 2
+componentConstrains:
+  In KeePass: {spanX: 2097051, wrap: true}
+  'Database:':
+    horizontal:
+      gapBefore:
+        min: &id005 {horizontal: true, value: 23.0}
+        preferred: *id005
+  'JTextField #2':
+    horizontal: {grow: 100.0}
+    split: 2
+  'JLabel #3':
+    horizontal:
+      gapBefore:
+        min: &id006 {horizontal: true, value: 4.0}
+        preferred: *id006
+    spanX: 2097051
+    wrap: true
+  'Master Password:':
+    horizontal:
+      gapBefore:
+        min: &id007 {horizontal: true, value: 23.0}
+        preferred: *id007
+  'JBPasswordField #5': {spanX: 2097051, wrap: true}
+  Stored using weak encryption.:
+    horizontal:
+      gapBefore:
+        min: &id008 {horizontal: true, value: 1.0}
+        preferred: *id008
+    skip: 1
+    spanX: 2097051
+    wrap: true
+cellBounds:
+- [0, 0, 480, 15]
+- [0, 25, 131, 24]
+- [137, 25, 343, 24]
+- [137, 25, 343, 24]
+- [0, 59, 131, 24]
+- [137, 59, 343, 24]
+- [137, 89, 343, 13]
+componentBounds:
+  In KeePass: [-2, -2, 90, 19]
+  'Database:': [23, 29, 61, 15]
+  'JTextField #2': [134, 22, 324, 30]
+  'JLabel #3': [459, 29, 21, 16]
+  'Master Password:': [23, 63, 108, 15]
+  'JBPasswordField #5': [134, 56, 256, 30]
+  Stored using weak encryption.: [138, 89, 158, 13]

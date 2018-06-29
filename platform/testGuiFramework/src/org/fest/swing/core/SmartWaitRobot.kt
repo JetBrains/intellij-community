@@ -21,7 +21,7 @@ import org.fest.swing.edt.GuiActionRunner
 import org.fest.swing.edt.GuiTask
 import org.fest.swing.hierarchy.ExistingHierarchy
 import org.fest.swing.keystroke.KeyStrokeMap
-import org.fest.swing.timing.Pause
+import org.fest.swing.timing.Pause.pause
 import org.fest.swing.util.Modifiers
 import org.fest.util.Preconditions
 import java.awt.Component
@@ -29,51 +29,46 @@ import java.awt.MouseInfo
 import java.awt.Point
 import java.awt.Window
 import java.util.concurrent.CountDownLatch
+import java.util.concurrent.Executors
 import java.util.concurrent.TimeUnit
 import javax.swing.KeyStroke
 import javax.swing.SwingUtilities
 
-/**
- * @author Sergey Karashevich
- */
-class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
+class SmartWaitRobot : BasicRobot(null, ExistingHierarchy()) {
 
   init {
     settings().delayBetweenEvents(10)
   }
 
-  val waitConst = 30L
-  var myAwareClick: Boolean = false
-  val fastRobot: java.awt.Robot = java.awt.Robot()
-
-  fun superWaitForIdle() {
-    super.waitForIdle()
-  }
+  private val waitConst = 30L
+  private var myAwareClick: Boolean = false
+  private val fastRobot: java.awt.Robot = java.awt.Robot()
 
   override fun waitForIdle() {
     if (myAwareClick) {
       Thread.sleep(50)
     }
     else {
-      Pause.pause(waitConst)
+      pause(waitConst)
       if (!SwingUtilities.isEventDispatchThread()) EdtInvocationManager.getInstance().invokeAndWait({ })
     }
   }
 
   override fun close(w: Window) {
     super.close(w)
-    superWaitForIdle()
+    super.waitForIdle()
   }
 
   //smooth mouse move
   override fun moveMouse(x: Int, y: Int) {
+    val pauseConstMs = settings().delayBetweenEvents().toLong()
     val n = 20
     val start = MouseInfo.getPointerInfo().location
     val dx = (x - start.x) / n.toDouble()
     val dy = (y - start.y) / n.toDouble()
     for (step in 1..n) {
       try {
-        Pause.pause(10L)
+        pause(pauseConstMs)
       }
       catch (e: InterruptedException) {
         e.printStackTrace()
@@ -93,14 +88,19 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
 
   //smooth mouse move for find and click actions
   override fun click(c: Component, where: Point, button: MouseButton, times: Int) {
-    moveMouse(c, where.x, where.y)
-    myEdtAwareClick(button, times, where, c)
+    moveMouseAndClick(c, where, button, times)
   }
 
   //we are replacing BasicRobot click with our click because the original one cannot handle double click rightly (BasicRobot creates unnecessary move event between click event which breaks clickCount from 2 to 1)
   override fun click(where: Point, button: MouseButton, times: Int) {
-    moveMouse(where.x, where.y)
-    myEdtAwareClick(button, times, where, null)
+    moveMouseAndClick(null, where, button, times)
+  }
+
+  private fun moveMouseAndClick(c: Component? = null, where: Point, button: MouseButton, times: Int) {
+    if (c != null) moveMouse(c, where.x, where.y) else moveMouse(where.x, where.y)
+    //pause between moving cursor and performing a click.
+    pause(waitConst)
+    myEdtAwareClick(button, times, where, c)
   }
 
 
@@ -124,20 +124,13 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
   private fun waitFor(condition: () -> Boolean) {
     val timeout = 5000 //5 sec
     val cdl = CountDownLatch(1)
-    val timeStart = System.currentTimeMillis()
-    invokeWithCondition(timeStart, timeout, cdl, condition)
-    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
-  }
-
-  private fun invokeWithCondition(timeStart: Long, timeout: Int, cdl: CountDownLatch, condition: () -> Boolean) {
-    EdtInvocationManager.getInstance().invokeLater {
-      if (condition.invoke()) {
+    val executor = Executors.newSingleThreadScheduledExecutor().scheduleWithFixedDelay(Runnable {
+      if(condition()){
         cdl.countDown()
       }
-      else {
-        if (System.currentTimeMillis() - timeStart < timeout) invokeWithCondition(timeStart, timeout, cdl, condition)
-      }
-    }
+    }, 0, 100, TimeUnit.MILLISECONDS)
+    cdl.await(timeout.toLong(), TimeUnit.MILLISECONDS)
+    executor.cancel(true)
   }
 
   fun fastPressAndReleaseKey(keyCode: Int, vararg modifiers: Int) {
@@ -151,38 +144,41 @@ class SmartWaitRobot() : BasicRobot(null, ExistingHierarchy()) {
     fastReleaseModifiers(updatedModifiers)
   }
 
+  fun fastPressAndReleaseModifiers(vararg modifiers: Int) {
+    val unifiedModifiers = InputModifiers.unify(*modifiers)
+    fastPressModifiers(unifiedModifiers)
+    pause(50)
+    fastReleaseModifiers(unifiedModifiers)
+  }
+
   fun fastPressAndReleaseKeyWithoutModifiers(keyCode: Int) {
     fastPressKey(keyCode)
     fastReleaseKey(keyCode)
   }
 
-  fun fastType(character: Char) {
-    val keyStroke = KeyStrokeMap.keyStrokeFor(character) ?: throw Exception("Unable to get keystroke for char '$character'")
-    fastPressAndReleaseKey(keyStroke.keyCode)
-  }
-
-  fun preparedFastTypeWithoutModifiers(string: String) {
-    val keyCodeArray = string
-      .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
-      .toIntArray()
-    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it) }
+  fun shortcut(keyStoke: KeyStroke) {
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
   }
 
   fun shortcutAndTypeString(keyStoke: KeyStroke, string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
-    val keyCodeArray = string
+    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
+    fastTyping(string, delayBetweenShortcutAndTypingMs)
+  }
+
+  fun fastTyping(string: String, delayBetweenShortcutAndTypingMs: Int = 0) {
+    val keyCodeArray: IntArray = string
       .map { KeyStrokeMap.keyStrokeFor(it)?.keyCode ?: throw Exception("Unable to get keystroke for char '$it'") }
       .toIntArray()
-    fastPressAndReleaseKey(keyStoke.keyCode, keyStoke.modifiers)
-    if (delayBetweenShortcutAndTypingMs > 0) Pause.pause(delayBetweenShortcutAndTypingMs.toLong())
-    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); Pause.pause(10) }
+    if (delayBetweenShortcutAndTypingMs > 0) pause(delayBetweenShortcutAndTypingMs.toLong())
+    keyCodeArray.forEach { fastPressAndReleaseKeyWithoutModifiers(keyCode = it); pause(50) }
   }
 
   private fun fastPressKey(keyCode: Int) {
-    fastRobot.keyPress(keyCode);
+    fastRobot.keyPress(keyCode)
   }
 
   private fun fastReleaseKey(keyCode: Int) {
-    fastRobot.keyRelease(keyCode);
+    fastRobot.keyRelease(keyCode)
   }
 
   private fun fastPressModifiers(modifierMask: Int) {

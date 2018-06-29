@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
@@ -117,6 +103,15 @@ public abstract class FileEditorManager {
   public abstract FileEditor[] getSelectedEditors();
 
   /**
+   * @return currently selected file editor or {@code null} if there is no selected editor at all.
+   */
+  @Nullable
+  public FileEditor getSelectedEditor() {
+    VirtualFile[] files = getSelectedFiles();
+    return files.length == 0 ? null : getSelectedEditor(files[0]);
+  }
+
+  /**
    * @param file cannot be null
    *
    * @return editor which is currently selected in the currently selected file.
@@ -150,11 +145,13 @@ public abstract class FileEditorManager {
   /**
    * @deprecated use addTopComponent
    */
-  public abstract void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
+  @Deprecated
+  public void showEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {}
   /**
    * @deprecated use removeTopComponent
    */
-  public abstract void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent);
+  @Deprecated
+  public void removeEditorAnnotation(@NotNull FileEditor editor, @NotNull JComponent annotationComponent) {}
 
   /**
    * Adds the specified component above the editor and paints a separator line below it.
@@ -190,13 +187,15 @@ public abstract class FileEditorManager {
   /**
    * Adds specified {@code listener}
    * @param listener listener to be added
-   * @deprecated Use MessageBus instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
+   * @deprecated Use {@link com.intellij.util.messages.MessageBus} instead: see {@link FileEditorManagerListener#FILE_EDITOR_MANAGER}
    */
+  @Deprecated
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
+  @Deprecated
   public abstract void addFileEditorManagerListener(@NotNull FileEditorManagerListener listener, @NotNull Disposable parentDisposable);
 
   /**
@@ -205,6 +204,7 @@ public abstract class FileEditorManager {
    * @param listener listener to be removed
    * @deprecated Use {@link FileEditorManagerListener#FILE_EDITOR_MANAGER} instead
    */
+  @Deprecated
   public abstract void removeFileEditorManagerListener(@NotNull FileEditorManagerListener listener);
 
   /**

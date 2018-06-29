@@ -2,8 +2,10 @@
 package com.intellij.codeInsight.template.postfix.templates;
 
 
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateEditor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiFile;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,4 +71,29 @@ public interface PostfixTemplateProvider {
    */
   @NotNull
   PsiFile preCheck(@NotNull PsiFile copyFile, @NotNull Editor realEditor, int currentOffset);
+
+  /**
+   * Return the editor that it able to represent template in UI
+   * and create the template from the settings that users set in UI.
+   * <p>
+   * If templateToEdit is null, it's considered like an editor for a new template.
+   */
+  @Nullable
+  default PostfixTemplateEditor createEditor(@Nullable PostfixTemplate templateToEdit) {
+    return null;
+  }
+
+  /**
+   * Instantiates the template that was serialized by the provider to XML.
+   */
+  @Nullable
+  default PostfixTemplate readExternalTemplate(@NotNull String id, @NotNull String name, @NotNull Element template) {
+    return null;
+  }
+
+  /**
+   * Serialized to XML the template that was created by the provider.
+   */
+  default void writeExternalTemplate(@NotNull PostfixTemplate template, @NotNull Element parentElement) {
+  }
 }

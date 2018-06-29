@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.refactoring.typeMigration.inspections;
 
 import com.intellij.codeInsight.intention.impl.AddOnDemandStaticImportAction;
@@ -169,7 +169,7 @@ public class MigrateAssertToMatcherAssertInspection extends AbstractBaseJavaLoca
         return null;
       }
       final boolean hasMessage = hasMessage(method);
-      final String searchTemplate = "'Assert*." + method.getName() + "(" + (hasMessage ? "$msg$, " : "") + templatePair.getFirst() + ")";
+      final String searchTemplate = "'_Assert?." + method.getName() + "(" + (hasMessage ? "$msg$, " : "") + templatePair.getFirst() + ")";
       final PsiClass containingClass = method.getContainingClass();
       LOG.assertTrue(containingClass != null);
       final String qualifier = containingClass.getQualifiedName();

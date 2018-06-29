@@ -20,6 +20,7 @@ import com.intellij.lang.java.JavaLanguage
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.psi.codeStyle.CodeStyleSettings
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager
+import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.statistics.StatisticsManager
 import com.intellij.psi.statistics.impl.StatisticsManagerImpl
@@ -28,7 +29,7 @@ import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 import com.siyeh.ig.style.UnnecessaryFullyQualifiedNameInspection
 
 class AddImportActionTest extends LightCodeInsightFixtureTestCase {
-  private CodeStyleSettings settings
+  private CommonCodeStyleSettings settings
 
   void testMap15() {
     IdeaTestUtil.withLevel(myModule, LanguageLevel.JDK_1_5, {
@@ -508,9 +509,22 @@ package com.rocket.test;
     assert myFixture.filterAvailableIntentions('Replace qualified name').isEmpty()
   }
 
+  void "test do not allow to add import on inaccessible class"() {
+    myFixture.addClass("package foo; class Foo {}")
+    myFixture.configureByText 'A.java', '''
+package a;
+/**
+ * {@link foo.Fo<caret>o}
+ */
+class A {}
+'''
+    myFixture.enableInspections(new UnnecessaryFullyQualifiedNameInspection())
+    assert myFixture.filterAvailableIntentions('Replace qualified name').isEmpty()
+  }
+
 
   void "test keep methods formatting on add import"() {
-    settings.getCommonSettings(JavaLanguage.INSTANCE).ALIGN_GROUP_FIELD_DECLARATIONS = true
+    settings.ALIGN_GROUP_FIELD_DECLARATIONS = true
 
     myFixture.configureByText 'Tq.java', '''
 class Tq {
@@ -549,15 +563,13 @@ class Tq {
   @Override
   void setUp() throws Exception {
     super.setUp()
-    settings = new CodeStyleSettings()
-    JavaCodeStyleSettings javaSettings = settings.getCustomSettings(JavaCodeStyleSettings.class);
+    settings = CodeStyleSettingsManager.getSettings(getProject()).getCommonSettings(JavaLanguage.INSTANCE)
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(getProject());
     javaSettings.CLASS_NAMES_IN_JAVADOC = JavaCodeStyleSettings.SHORTEN_NAMES_ALWAYS_AND_ADD_IMPORT
-    CodeStyleSettingsManager.getInstance(myFixture.project).setTemporarySettings(settings)
   }
 
   @Override
   void tearDown() throws Exception {
-    CodeStyleSettingsManager.getInstance(myFixture.project).dropTemporarySettings()
     settings = null
     super.tearDown()
   }
@@ -636,5 +648,35 @@ public class Foo {
     myFixture.configureByText 'b.java', textBefore
     importClass()
     myFixture.checkResult textAfter
+  }
+
+  void "test incomplete method returning its type parameter"() {
+    myFixture.addClass('package foo; public class Context {}')
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  <Context> java.util.ArrayList<Contex<caret>t> abc
+}  
+'''
+    assert myFixture.filterAvailableIntentions("Import class").empty
+  }
+
+  void "test even more incomplete method returning its type parameter"() {
+    myFixture.addClass('package foo; public class Context {}')
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  <Context> Contex<caret>t
+}  
+'''
+    assert myFixture.filterAvailableIntentions("Import class").empty
+  }
+
+  void "test inaccessible class from the project"() {
+    myFixture.addClass('package foo; class Foo {}')
+    myFixture.configureByText 'a.java', '''
+class Bar {
+  F<caret>oo abc;
+}  
+'''
+    assert !myFixture.filterAvailableIntentions("Import class").empty
   }
 }

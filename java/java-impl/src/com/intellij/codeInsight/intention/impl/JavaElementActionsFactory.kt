@@ -13,8 +13,10 @@ import com.intellij.lang.jvm.actions.*
 import com.intellij.lang.jvm.types.JvmType
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.psi.*
-import com.intellij.psi.impl.beanProperties.CreateJavaBeanPropertyFix
+import com.intellij.psi.PsiAnnotation
+import com.intellij.psi.PsiModifier
+import com.intellij.psi.PsiModifierListOwner
+import com.intellij.psi.PsiType
 import com.intellij.psi.util.PsiUtil
 
 class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : JvmElementActionsFactory() {
@@ -26,40 +28,22 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     listOf(ModifierFix(declaration.modifierList, renderer.render(modifier), shouldPresent, false))
   }
 
-  override fun createAddPropertyActions(targetClass: JvmClass, request: MemberRequest.Property): List<IntentionAction> {
-    with(request) {
-      val psiClass = targetClass.toJavaClassOrNull() ?: return emptyList()
-      val helper = JvmPsiConversionHelper.getInstance(psiClass.project)
-      val propertyType = helper.convertType(propertyType)
-      if (getterRequired && setterRequired)
-        return listOf<IntentionAction>(
-          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                    true),
-          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                    false))
-      if (getterRequired || setterRequired)
-        return listOf<IntentionAction>(
-          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                    true),
-          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired,
-                                    false),
-          CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, true, true, true))
-
-      return listOf<IntentionAction>(
-        CreateJavaBeanPropertyFix(psiClass, propertyName, propertyType, getterRequired, setterRequired, true))
-    }
+  override fun createAddAnnotationActions(target: JvmModifiersOwner, request: AnnotationRequest): List<IntentionAction> {
+    val declaration = target as? PsiModifierListOwner ?: return emptyList()
+    if (declaration.language != JavaLanguage.INSTANCE) return emptyList()
+    return listOf(CreateAnnotationAction(declaration, request))
   }
 
   override fun createAddFieldActions(targetClass: JvmClass, request: CreateFieldRequest): List<IntentionAction> {
     val javaClass = targetClass.toJavaClassOrNull() ?: return emptyList()
 
-    val constantRequested = request.constant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
+    val constantRequested = request.isConstant || javaClass.isInterface || request.modifiers.containsAll(constantModifiers)
     val result = ArrayList<IntentionAction>()
     if (constantRequested || StringUtil.isCapitalized(request.fieldName)) {
-      result += CreateFieldAction(javaClass, request, true)
+      result += CreateConstantAction(javaClass, request)
     }
     if (!constantRequested) {
-      result += CreateFieldAction(javaClass, request, false)
+      result += CreateFieldAction(javaClass, request)
     }
     if (canCreateEnumConstant(javaClass, request)) {
       result += CreateEnumConstantAction(javaClass, request)
@@ -84,6 +68,11 @@ class JavaElementActionsFactory(private val renderer: JavaElementRenderer) : Jvm
     result += CreateMethodAction(javaClass, request, false)
     if (!staticMethodRequested && javaClass.hasModifierProperty(PsiModifier.ABSTRACT) && !javaClass.isInterface) {
       result += CreateMethodAction(javaClass, request, true)
+    }
+    if (!javaClass.isInterface) {
+      result += CreatePropertyAction(javaClass, request)
+      result += CreateGetterWithFieldAction(javaClass, request)
+      result += CreateSetterWithFieldAction(javaClass, request)
     }
     return result
   }

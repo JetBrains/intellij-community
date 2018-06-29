@@ -30,8 +30,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Expirable;
-import com.intellij.openapi.wm.IdeFocusManager;
 
 /**
  * @author peter
@@ -46,6 +44,11 @@ class ActionTracker {
     myEditor = editor;
     myProject = editor.getProject();
     ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void beforeEditorTyping(char c, DataContext dataContext) {
+        myActionsHappened = true;
+      }
+
       @Override
       public void beforeActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
         myActionsHappened = true;

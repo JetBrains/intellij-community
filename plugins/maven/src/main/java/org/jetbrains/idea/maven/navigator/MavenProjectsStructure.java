@@ -12,6 +12,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.pom.Navigatable;
@@ -19,10 +20,8 @@ import com.intellij.pom.NavigatableAdapter;
 import com.intellij.psi.xml.XmlElement;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.ui.treeStructure.*;
 import com.intellij.util.ObjectUtils;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -698,27 +697,28 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         return new NavigatableAdapter() {
           @Override
           public void navigate(final boolean requestFocus) {
-            final JBList list = new JBList(profiles);
-            list.setCellRenderer(new DefaultListCellRenderer() {
-              @Override
-              public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
-                XmlElement xmlElement = mavenDomProfile.getXmlElement();
-                if (xmlElement != null) {
-                  setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+            JBPopupFactory.getInstance()
+              .createPopupChooserBuilder(profiles)
+              .setRenderer(new DefaultListCellRenderer() {
+                @Override
+                public Component getListCellRendererComponent(JList list,
+                                                              Object value,
+                                                              int index,
+                                                              boolean isSelected,
+                                                              boolean cellHasFocus) {
+                  Component result = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                  @SuppressWarnings("unchecked") MavenDomProfile mavenDomProfile = (MavenDomProfile)value;
+                  XmlElement xmlElement = mavenDomProfile.getXmlElement();
+                  if (xmlElement != null) {
+                    setText(xmlElement.getContainingFile().getVirtualFile().getPath());
+                  }
+                  return result;
                 }
-                return result;
-              }
-            });
-            JBPopupFactory.getInstance().createListPopupBuilder(list)
+              })
               .setTitle("Choose file to open ")
-              .setItemChoosenCallback(() -> {
-                final Object value = list.getSelectedValue();
-                if (value instanceof MavenDomProfile) {
-                  final Navigatable navigatable = getNavigatable((MavenDomProfile)value);
-                  if (navigatable != null) navigatable.navigate(requestFocus);
-                }
+              .setItemChosenCallback((value) -> {
+                final Navigatable navigatable = getNavigatable(value);
+                if (navigatable != null) navigatable.navigate(requestFocus);
               }).createPopup().showInFocusCenter();
           }
         };
@@ -1362,7 +1362,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
 
     private String getToolTip() {
-      final StringBuilder myToolTip = new StringBuilder("");
+      final StringBuilder myToolTip = new StringBuilder();
       String scope = myArtifactNode.getOriginalScope();
 
       if (StringUtil.isNotEmpty(scope) && !MavenConstants.SCOPE_COMPILE.equals(scope)) {
@@ -1459,14 +1459,14 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
         }
       }
 
-      String directory = PathUtil.getCanonicalPath(mavenProject.getDirectory());
+      String directory = mavenProject.getDirectory();
 
       int oldSize = myChildren.size();
 
       for (RunnerAndConfigurationSettings cfg : settings) {
         MavenRunConfiguration mavenRunConfiguration = (MavenRunConfiguration)cfg.getConfiguration();
 
-        if (directory.equals(PathUtil.getCanonicalPath(mavenRunConfiguration.getRunnerParameters().getWorkingDirPath()))) {
+        if (FileUtil.pathsEqual(directory, mavenRunConfiguration.getRunnerParameters().getWorkingDirPath())) {
           myChildren.add(new RunConfigurationNode(this, cfg));
         }
       }

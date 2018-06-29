@@ -195,7 +195,7 @@ public final class PlainTextView implements AntOutputView {
       }
 
       final String fileName = fileAndLineNumber.substring(0, index);
-      String lineNumberStr = fileAndLineNumber.substring(index + 1, fileAndLineNumber.length()).trim();
+      String lineNumberStr = fileAndLineNumber.substring(index + 1).trim();
       int lineNumber;
       try {
         lineNumber = Integer.parseInt(lineNumberStr);

@@ -10,19 +10,13 @@ import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.callMatcher.CallMatcher;
-import com.siyeh.ig.psiutils.BoolUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.MethodCallUtils;
-import com.siyeh.ig.psiutils.StreamApiUtil;
+import com.siyeh.ig.psiutils.*;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
-/**
- * @author Tagir Valeev
- */
 public class OptionalUtil {
   private static final String OPTIONAL_INT = "java.util.OptionalInt";
   private static final String OPTIONAL_LONG = "java.util.OptionalLong";
@@ -170,7 +164,10 @@ public class OptionalUtil {
               PsiMethod method = mappedStream.resolveMethod();
               if(method != null && method.getContainingClass() != null) {
                 String className = method.getContainingClass().getQualifiedName();
-                if(className != null && className.startsWith("java.util.stream.")) {
+                PsiParameter[] parameters = method.getParameterList().getParameters();
+                if(className != null && className.startsWith("java.util.stream.")
+                   && parameters.length == 1
+                   && !(parameters[0].getType() instanceof PsiArrayType)) {
                   PsiExpression arg = args[0];
                   if(ExpressionUtils.isReferenceTo(arg, var)) {
                     return qualifier + ".stream()";
@@ -196,7 +193,22 @@ public class OptionalUtil {
     if (useOrElseGet && !ExpressionUtils.isSafelyRecomputableExpression(falseExpression)) {
       return qualifier + ".orElseGet(() -> " + falseExpression.getText() + ")";
     } else {
-      return qualifier + ".orElse(" + falseExpression.getText() + ")";
+      PsiType falseType = falseExpression.getType();
+      String falseText = falseExpression.getText();
+      if (falseType instanceof PsiPrimitiveType && targetType instanceof PsiPrimitiveType && !(targetType.equals(falseType))) {
+        Number falseValue = JavaPsiMathUtil.getNumberFromLiteral(falseExpression);
+        if (falseValue != null) {
+          falseText = falseValue.toString();
+          if (targetType.equals(PsiType.FLOAT)) {
+            falseText += "F";
+          } else if(targetType.equals(PsiType.DOUBLE) && !falseText.contains(".")) {
+            falseText += ".0";
+          } else if(targetType.equals(PsiType.LONG)) {
+            falseText += "L";
+          }
+        }
+      }
+      return qualifier + ".orElse(" + falseText + ")";
     }
   }
 

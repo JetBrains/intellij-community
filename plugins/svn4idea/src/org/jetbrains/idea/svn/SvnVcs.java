@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 
 package org.jetbrains.idea.svn;
@@ -38,6 +38,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBus;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.messages.Topic;
+import one.util.streamex.EntryStream;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,11 +73,13 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 import java.util.function.Function;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Collections.emptyList;
+import static java.util.function.Function.identity;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
 public class SvnVcs extends AbstractVcs<CommittedChangeList> {
@@ -413,9 +417,16 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     return mySvnUpdateEnvironment;
   }
 
+  @NotNull
   @Override
   public String getDisplayName() {
     return VCS_DISPLAY_NAME;
+  }
+
+  @NotNull
+  @Override
+  public String getShortName() {
+    return "SVN";
   }
 
   @Override
@@ -711,6 +722,11 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   public <S> List<S> filterUniqueRoots(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
     if (in.size() <= 1) return in;
 
+    return Registry.is("svn.filter.unique.roots.by.url") ? filterUniqueByUrl(in, convertor) : filterUniqueByWorkingCopy(in, convertor);
+  }
+
+  @NotNull
+  private <S> List<S> filterUniqueByUrl(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
     List<MyPair<S>> infos = newArrayList();
     List<S> notMatched = newArrayList();
     for (S s : in) {
@@ -733,6 +749,30 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     // potential bug is here: order is not kept. but seems it only occurs for cases where result is sorted after filtering so ok
     return concat(converted, notMatched);
+  }
+
+  @NotNull
+  private <S> List<S> filterUniqueByWorkingCopy(@NotNull List<S> in, @NotNull Function<S, VirtualFile> convertor) {
+    Map<VirtualFile, S> filesMap = StreamEx.of(in).mapToEntry(convertor, identity()).distinctKeys().toMap();
+    Map<VirtualFile, List<VirtualFile>> byWorkingCopy =
+      StreamEx.of(filesMap.keySet())
+              .mapToEntry(
+                file -> {
+                  RootUrlInfo wcRoot = getSvnFileUrlMapping().getWcRootForFilePath(virtualToIoFile(file));
+                  return wcRoot != null ? wcRoot.getVirtualFile() : SvnUtil.getWorkingCopyRoot(file);
+                },
+                identity())
+              .nonNullKeys()
+              .grouping();
+
+    return EntryStream.of(byWorkingCopy)
+                      .flatMapToValue((workingCopy, files) -> {
+                        FilterDescendantVirtualFiles.filter(files);
+                        return files.stream();
+                      })
+                      .values()
+                      .map(filesMap::get)
+                      .toList();
   }
 
   private static class MyPair<T> implements RootUrlPair {
@@ -763,7 +803,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     }
   }
 
-  private static class MyFrameStateListener extends FrameStateListener.Adapter {
+  private static class MyFrameStateListener implements FrameStateListener {
     private final ChangeListManager myClManager;
     private final VcsDirtyScopeManager myDirtyScopeManager;
 

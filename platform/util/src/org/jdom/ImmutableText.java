@@ -50,12 +50,12 @@ public class ImmutableText extends Text {
   }
 
   @Override
-  public Content detach() {
+  public Text detach() {
     throw ImmutableElement.immutableError(this);
   }
 
   @Override
-  protected Content setParent(Parent parent) {
+  protected Text setParent(Parent parent) {
     throw ImmutableElement.immutableError(this);
     //return null; // to be able to add this to the other element
   }

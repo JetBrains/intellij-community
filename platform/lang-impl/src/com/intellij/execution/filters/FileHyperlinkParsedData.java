@@ -5,6 +5,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @deprecated use {@link FileHyperlinkRawData} instead
  */
+@Deprecated
 public class FileHyperlinkParsedData {
 
   private final String myFilePath;

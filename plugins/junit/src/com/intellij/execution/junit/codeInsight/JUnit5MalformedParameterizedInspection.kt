@@ -14,6 +14,7 @@ import com.intellij.codeInspection.ProblemHighlightType
 import com.intellij.codeInspection.ProblemsHolder
 import com.intellij.execution.junit.JUnitUtil
 import com.intellij.execution.junit.codeInsight.references.MethodSourceReference
+import com.intellij.lang.jvm.JvmModifier
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.JavaSdkVersion
@@ -37,7 +38,7 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
   }
 
   @Nls
-  override fun getDisplayName() = InspectionGadgetsBundle.message("junit5.valid.parameterized.configuration.display.name")
+  override fun getDisplayName(): String = InspectionGadgetsBundle.message("junit5.valid.parameterized.configuration.display.name")
 
 
   override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor {
@@ -86,6 +87,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                   noMultiArgsProvider = false
                 }
               }
+              JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PROVIDER_ARGUMENTS_SOURCES -> {
+                if (source == null) {
+                  val attributes = it.findAttributeValue(PsiAnnotation.DEFAULT_REFERENCED_METHOD_NAME)
+                  noMultiArgsProvider = (attributes as? PsiArrayInitializerMemberValue)?.initializers?.isEmpty() ?: false
+                }
+              }
             }
           }
 
@@ -118,7 +125,12 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
           "strings" to PsiType.getJavaLangString(method.manager, method.resolveScope),
           "ints" to PsiType.INT,
           "longs" to PsiType.LONG,
-          "doubles" to PsiType.DOUBLE)
+          "doubles" to PsiType.DOUBLE,
+          "shorts" to PsiType.SHORT,
+          "bytes" to PsiType.BYTE,
+          "floats" to PsiType.FLOAT,
+          "chars" to PsiType.CHAR,
+          "classes" to PsiType.getJavaLangClass(method.manager, method.resolveScope))
 
         for (valueKey in possibleValues.keys) {
           processArrayInAnnotationParameter(valuesSource.findDeclaredAttributeValue(valueKey),
@@ -252,7 +264,19 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
                 if (psiClass.isEnum && psiClass.findFieldByName((attributeValue as PsiLiteral).value as String?, false) != null) return
                 //implicit java time conversion
                 val qualifiedName = psiClass.qualifiedName
-                if (qualifiedName != null && qualifiedName.startsWith("java.time.")) return
+                if (qualifiedName != null) {
+                  if (qualifiedName.startsWith("java.time.")) return
+                  if (qualifiedName.equals("java.nio.file.Path")) return
+                }
+
+                val factoryMethod: (PsiMethod) -> Boolean = {
+                  !it.hasModifier(JvmModifier.PRIVATE) &&
+                   it.parameterList.parametersCount == 1 &&
+                   it.parameterList.parameters[0].type.equalsToText(CommonClassNames.JAVA_LANG_STRING)
+                }
+
+                if (!psiClass.hasModifier(JvmModifier.ABSTRACT) && psiClass.constructors.find(factoryMethod) != null) return
+                if (psiClass.methods.find { it.hasModifier(JvmModifier.STATIC) && factoryMethod(it) } != null) return
               }
             }
             if (AnnotationUtil.isAnnotated(parameters[0], JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_CONVERTER_CONVERT_WITH, 0)) return
@@ -302,13 +326,13 @@ class JUnit5MalformedParameterizedInspection : AbstractBaseJavaLocalInspectionTo
 
 
 class ChangeAnnotationFix(testAnnotation: PsiAnnotation, val targetAnnotation: String) : LocalQuickFixAndIntentionActionOnPsiElement(testAnnotation) {
-  override fun getFamilyName() = "Replace annotation"
+  override fun getFamilyName(): String = "Replace annotation"
 
   override fun invoke(project: Project, file: PsiFile, editor: Editor?, startElement: PsiElement, endElement: PsiElement) {
-    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@" + targetAnnotation, startElement)
+    val annotation = JavaPsiFacade.getElementFactory(project).createAnnotationFromText("@$targetAnnotation", startElement)
     JavaCodeStyleManager.getInstance(project).shortenClassReferences(startElement.replace(annotation))
   }
 
-  override fun getText() = "Change to " + StringUtil.getShortName(targetAnnotation)
+  override fun getText(): String = "Change to " + StringUtil.getShortName(targetAnnotation)
 
 }

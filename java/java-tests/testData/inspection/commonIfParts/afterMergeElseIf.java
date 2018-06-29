@@ -1,4 +1,4 @@
-// "Merge else if statement" "true"
+// "Merge 'else if' statement" "true"
 
 import java.util.Collection;
 import java.util.List;
@@ -10,8 +10,10 @@ public class IfStatementWithIdenticalBranches {
   }
 
   void work(int i, int j) {
-    if(i != 0) {
-    } else /*5*/ /*7*/ if (i/*1*/ < j || i >/*6*/ j/*2*/) {/*3*/
+      /*5*/
+      /*7*/
+      if(i != 0) {
+    } else if (i/*1*/ < j || i >/*6*/ j/*2*/) {/*3*/
       int x = /*4*/ getX();
     } else {
       int y = 12;

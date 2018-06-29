@@ -59,7 +59,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
-import java.util.Set;
 
 public class PsiImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.PsiImplUtil");
@@ -70,7 +69,7 @@ public class PsiImplUtil {
   public static PsiMethod[] getConstructors(@NotNull PsiClass aClass) {
     List<PsiMethod> result = null;
     for (PsiMethod method : aClass.getMethods()) {
-      if (method.isConstructor()) {
+      if (method.isConstructor() && method.getName().equals(aClass.getName())) {
         if (result == null) result = ContainerUtil.newSmartList();
         result.add(method);
       }
@@ -316,21 +315,19 @@ public class PsiImplUtil {
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiAnnotation, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  @Deprecated
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiAnnotation annotation, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotation, types);
   }
 
   /** @deprecated use {@link AnnotationTargetUtil#findAnnotationTarget(PsiClass, PsiAnnotation.TargetType...)} (to be removed ion IDEA 17) */
+  @Deprecated
   public static PsiAnnotation.TargetType findApplicableTarget(@NotNull PsiClass annotationType, @NotNull PsiAnnotation.TargetType... types) {
     return AnnotationTargetUtil.findAnnotationTarget(annotationType, types);
   }
 
-  /** @deprecated use {@link AnnotationTargetUtil#getAnnotationTargets(PsiClass)} (to be removed ion IDEA 17) */
-  public static Set<PsiAnnotation.TargetType> getAnnotationTargets(@NotNull PsiClass annotationType) {
-    return AnnotationTargetUtil.getAnnotationTargets(annotationType);
-  }
-
   /** @deprecated use {@link AnnotationTargetUtil#getTargetsForLocation(PsiAnnotationOwner)} (to be removed ion IDEA 17) */
+  @Deprecated
   @NotNull
   public static PsiAnnotation.TargetType[] getTargetsForLocation(@Nullable PsiAnnotationOwner owner) {
     return AnnotationTargetUtil.getTargetsForLocation(owner);
@@ -610,7 +607,7 @@ public class PsiImplUtil {
     return element instanceof PsiAnnotation && AnnotationTargetUtil.isTypeAnnotation((PsiAnnotation)element);
   }
 
-  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
+  public static void collectTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<? super PsiAnnotation> annotations) {
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (AnnotationTargetUtil.isTypeAnnotation(annotation)) {
         annotations.add(annotation);
@@ -729,8 +726,6 @@ public class PsiImplUtil {
     if (module instanceof LightJavaModule) {
       return ((LightJavaModule)module).getRootVirtualFile();
     }
-    else {
-      return module.getContainingFile().getVirtualFile();
-    }
+    return module.getContainingFile().getVirtualFile();
   }
 }

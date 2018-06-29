@@ -17,14 +17,12 @@ package com.intellij.testGuiFramework.fixtures;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.*;
-import com.intellij.openapi.editor.impl.EditorComponentImpl;
-import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.keymap.Keymap;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt;
+import com.intellij.testGuiFramework.framework.GuiTestUtil;
+import org.fest.swing.core.ComponentDragAndDrop;
 import org.fest.swing.core.GenericTypeMatcher;
 import org.fest.swing.core.MouseButton;
 import org.fest.swing.core.Robot;
@@ -49,7 +47,6 @@ import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
-import static com.intellij.testGuiFramework.framework.GuiTestUtil.SHORT_TIMEOUT;
 import static org.fest.assertions.Assertions.assertThat;
 import static org.fest.swing.edt.GuiActionRunner.execute;
 import static org.fest.swing.timing.Pause.pause;
@@ -68,12 +65,7 @@ public class EditorFixture {
   public static final String SELECT_BEGIN = "|>";
   public static final String SELECT_END = "<|";
 
-  /**
-   * Performs simulation of user events on <code>{@link #target}</code>
-   */
   public final Robot robot;
-  private final IdeFrameFixture myFrame;
-  private final EditorTabsFixture tabs;
   private Editor myEditor;
 
   /**
@@ -82,8 +74,6 @@ public class EditorFixture {
   public EditorFixture(Robot robot, Editor editor) {
     this.robot = robot;
     myEditor = editor;
-    myFrame = null;
-    tabs = null;
   }
 
   /**
@@ -92,10 +82,9 @@ public class EditorFixture {
    * @return the current 0-based line number, or -1 if there is no current file
    */
   public int getCurrentLineNumber() {
-    //noinspection ConstantConditions
     return execute(new GuiQuery<Integer>() {
+      @NotNull
       @Override
-      @Nullable
       protected Integer executeInEDT() {
         Editor editor = getEditor();
         if (editor != null) {
@@ -137,7 +126,7 @@ public class EditorFixture {
    * file open.
    *
    * @param trim        if true, trim whitespace around the line
-   * @param caretString typically "^" which will insert "^" to indicate the
+   * @param caret typically "^" which will insert "^" to indicate the
    *                    caret position. If null, the caret position is not shown.
    * @param selectBegin the text string to insert at the beginning of the selection boundary
    * @param selectEnd   the text string to insert at the end of the selection boundary
@@ -207,7 +196,7 @@ public class EditorFixture {
     });
   }
 
-  private Editor getEditor() {
+  public Editor getEditor() {
     return myEditor;
   }
 
@@ -239,7 +228,7 @@ public class EditorFixture {
    * Returns the contents of the current file, or null if there is no
    * file open.
    *
-   * @param caretString typically "^" which will insert "^" to indicate the
+   * @param caret typically "^" which will insert "^" to indicate the
    *                    caret position. If null, the caret position is not shown.
    * @param selectBegin the text string to insert at the beginning of the selection boundary
    * @param selectEnd   the text string to insert at the end of the selection boundary
@@ -316,10 +305,7 @@ public class EditorFixture {
    */
   public EditorFixture enterText(@NotNull final String text) {
     Component component = getFocusedEditor();
-    if (component != null) {
-      robot.enterText(text);
-    }
-
+    robot.enterText(text);
     return this;
   }
 
@@ -331,7 +317,7 @@ public class EditorFixture {
    */
   public EditorFixture enterImeText(@NotNull final String text) {
     final Component component = getFocusedEditor();
-    if (component != null && !text.isEmpty()) {
+    if (!text.isEmpty()) {
       execute(new GuiTask() {
         @Override
         protected void executeInEDT() {
@@ -359,9 +345,7 @@ public class EditorFixture {
    */
   public EditorFixture typeKey(int keyCode) {
     Component component = getFocusedEditor();
-    if (component != null) {
-      new ComponentDriver(robot).pressAndReleaseKeys(component, keyCode);
-    }
+    new ComponentDriver<>(robot).pressAndReleaseKeys(component, keyCode);
     return this;
   }
 
@@ -374,9 +358,7 @@ public class EditorFixture {
    */
   public EditorFixture pressKey(int keyCode) {
     Component component = getFocusedEditor();
-    if (component != null) {
-      new ComponentDriver(robot).pressKey(component, keyCode);
-    }
+    new ComponentDriver<>(robot).pressKey(component, keyCode);
     return this;
   }
 
@@ -388,9 +370,7 @@ public class EditorFixture {
    */
   public EditorFixture releaseKey(int keyCode) {
     Component component = getFocusedEditor();
-    if (component != null) {
-      new ComponentDriver(robot).releaseKey(component, keyCode);
-    }
+    new ComponentDriver<>(robot).releaseKey(component, keyCode);
     return this;
   }
 
@@ -405,7 +385,7 @@ public class EditorFixture {
   /**
    * Requests focus in the editor, waits and returns editor component
    */
-  @Nullable
+  @NotNull
   private JComponent getFocusedEditor() {
     Editor editor = getEditor();
     //wait when TextEditor ContentComponent will showing
@@ -414,12 +394,12 @@ public class EditorFixture {
       public boolean test() {
         return editor.getContentComponent().isShowing();
       }
-    }, SHORT_TIMEOUT);
+    }, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
 
     if (editor != null) {
       JComponent contentComponent = editor.getContentComponent();
       new ComponentDriver(robot).focusAndWaitForFocusGain(contentComponent);
-      assertSame(contentComponent, FocusManager.getCurrentManager().getFocusOwner());
+      assertSame(FocusManager.getCurrentManager().getFocusOwner(), contentComponent);
       return contentComponent;
     }
     else {
@@ -439,8 +419,7 @@ public class EditorFixture {
     Integer offset = execute(new GuiQuery<Integer>() {
       @Override
       protected Integer executeInEDT() throws Throwable {
-        FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-        Editor editor = manager.getSelectedTextEditor();
+        Editor editor = getEditor();
         if (editor != null) {
           Document document = editor.getDocument();
           return document.getLineStartOffset(lineNumber - 1);
@@ -463,16 +442,21 @@ public class EditorFixture {
     assertThat(offset).isGreaterThanOrEqualTo(0);
     Editor editor = getEditor();
     assert editor != null;
-    Component editorComponent = GuiTestUtilKt.INSTANCE.findAllWithBFS(editor.getComponent(), EditorComponentImpl.class).get(0);
-    Point pointToClick = execute(new GuiQuery<Point>() {
+    Component editorComponent = editor.getContentComponent();
+    Point pointToClick = getPointToClick(editor, offset);
+    robot.click(editorComponent, pointToClick, button, 1);
+    return this;
+  }
+
+  private static Point getPointToClick(Editor editor, final int offset) {
+    return execute(new GuiQuery<Point>() {
       @Override
       protected Point executeInEDT() {
+        editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(offset), ScrollType.CENTER);
         VisualPosition visualPosition = editor.offsetToVisualPosition(offset);
         return editor.visualPositionToXY(visualPosition);
       }
     });
-    robot.click(editorComponent, pointToClick, button, 1);
-    return this;
   }
 
   public EditorFixture moveTo(final int offset) {
@@ -495,17 +479,16 @@ public class EditorFixture {
    *                     offset than the firstOffset
    */
   public EditorFixture select(final int firstOffset, final int secondOffset) {
-    execute(new GuiTask() {
-      @Override
-      protected void executeInEDT() {
-        // TODO: Do this via mouse drags!
-        Editor editor = getEditor();
-        if (editor != null) {
-          editor.getCaretModel().getPrimaryCaret().setSelection(firstOffset, secondOffset);
-          editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
-        }
-      }
-    });
+    Editor editor = getEditor();
+    assert editor != null;
+    Component editorComponent = editor.getContentComponent();
+
+    Point firstPoint = getPointToClick(editor, firstOffset);
+    Point lastPoint = getPointToClick(editor, secondOffset);
+
+    ComponentDragAndDrop dragAndDrop = new ComponentDragAndDrop(robot);
+    dragAndDrop.drag(editorComponent, firstPoint);
+    dragAndDrop.drop(editorComponent, lastPoint);
 
     return this;
   }
@@ -555,10 +538,9 @@ public class EditorFixture {
    */
   public int findOffset(@Nullable final String prefix, @Nullable final String suffix, final boolean searchFromTop) {
     assertTrue(prefix != null || suffix != null);
-    //noinspection ConstantConditions
     return execute(new GuiQuery<Integer>() {
+      @NotNull
       @Override
-      @Nullable
       protected Integer executeInEDT() {
         Editor editor = getEditor();
         if (editor != null) {
@@ -635,34 +617,13 @@ public class EditorFixture {
 
 
   /**
-   * Selects the editor with a given tab name.
-   */
-  public EditorFixture selectTab(@NotNull final String tabName) {
-    tabs.waitTab(tabName, 30).selectTab(tabName);
-    return this;
-  }
-
-  /**
-   * Closes the editor with a given tab name.
-   */
-  public EditorFixture closeTab(@NotNull final String tabName) {
-    tabs.closeTab(tabName);
-    return this;
-  }
-
-  public Boolean hasTab(@NotNull final String tabName) {
-    return tabs.hasTab(tabName);
-  }
-
-
-  /**
    * Invokes the given action. This will look up the corresponding action's key bindings, if any, and invoke
    * it. It will fail if the action is not enabled, or if it is interactive.
    *
    * @param action the action to invoke
    */
 
-  public EditorFixture invokeAction(@NotNull EditorAction action) {
+  public void invokeAction(@NotNull EditorAction action) {
     switch (action) {
       case DOWN:
         invokeActionViaKeystroke(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN);
@@ -767,7 +728,6 @@ public class EditorFixture {
         fail("Not yet implemented");
         break;
     }
-    return this;
   }
 
   protected void invokeActionViaKeystroke(@NotNull String actionId) {
@@ -784,22 +744,17 @@ public class EditorFixture {
       KeyboardShortcut cs = (KeyboardShortcut)shortcut;
       KeyStroke firstKeyStroke = cs.getFirstKeyStroke();
       Component component = getFocusedEditor();
-      if (component != null) {
-        ComponentDriver driver = new ComponentDriver(robot);
-        System.out.println("Invoking editor action " + actionId + " via shortcut "
-                           + KeyEvent.getKeyModifiersText(firstKeyStroke.getModifiers())
-                           + KeyEvent.getKeyText(firstKeyStroke.getKeyCode()));
-        driver.pressAndReleaseKey(component, firstKeyStroke.getKeyCode(), new int[]{firstKeyStroke.getModifiers()});
-        KeyStroke secondKeyStroke = cs.getSecondKeyStroke();
-        if (secondKeyStroke != null) {
-          System.out.println(" and "
-                             + KeyEvent.getKeyModifiersText(secondKeyStroke.getModifiers())
-                             + KeyEvent.getKeyText(secondKeyStroke.getKeyCode()));
-          driver.pressAndReleaseKey(component, secondKeyStroke.getKeyCode(), new int[]{secondKeyStroke.getModifiers()});
-        }
-      }
-      else {
-        fail("Editor not focused for action");
+      ComponentDriver<Component> driver = new ComponentDriver<>(robot);
+      System.out.println("Invoking editor action " + actionId + " via shortcut "
+                         + KeyEvent.getKeyModifiersText(firstKeyStroke.getModifiers())
+                         + KeyEvent.getKeyText(firstKeyStroke.getKeyCode()));
+      driver.pressAndReleaseKey(component, firstKeyStroke.getKeyCode(), new int[]{firstKeyStroke.getModifiers()});
+      KeyStroke secondKeyStroke = cs.getSecondKeyStroke();
+      if (secondKeyStroke != null) {
+        System.out.println(" and "
+                           + KeyEvent.getKeyModifiersText(secondKeyStroke.getModifiers())
+                           + KeyEvent.getKeyText(secondKeyStroke.getKeyCode()));
+        driver.pressAndReleaseKey(component, secondKeyStroke.getKeyCode(), new int[]{secondKeyStroke.getModifiers()});
       }
     }
     else {
@@ -818,107 +773,10 @@ public class EditorFixture {
   @NotNull
   public EditorFixture invokeIntentionAction(@NotNull String labelPrefix) {
     invokeAction(EditorFixture.EditorAction.SHOW_INTENTION_ACTIONS);
-    JBListPopupFixture.Companion.clickPopupMenuItem(labelPrefix, true, null, robot, SHORT_TIMEOUT);
+    JBListPopupFixture.Companion.clickPopupMenuItem(labelPrefix, true, null, robot, GuiTestUtil.INSTANCE.getSHORT_TIMEOUT());
     return this;
   }
 
-  /**
-   * Returns a fixture around the layout editor, <b>if</b> the currently edited file
-   * is a layout file and it is currently showing the layout editor tab or the parameter
-   * requests that it be opened if necessary
-   *
-   * @param switchToTabIfNecessary if true, switch to the design tab if it is not already showing
-   * @return a layout editor fixture, or null if the current file is not a layout file or the
-   *     wrong tab is showing
-   */
-  //@Nullable
-  //public LayoutEditorFixture getLayoutEditor(boolean switchToTabIfNecessary) {
-  //  VirtualFile currentFile = getCurrentFile();
-  //  if (ResourceHelper.getFolderType(currentFile) != ResourceFolderType.LAYOUT) {
-  //    return null;
-  //  }
-  //
-  //  if (switchToTabIfNecessary) {
-  //    selectEditorView(Tab.DESIGN);
-  //  }
-  //
-  //  return execute(new GuiQuery<LayoutEditorFixture>() {
-  //    @Override
-  //    @Nullable
-  //    protected LayoutEditorFixture executeInEDT() throws Throwable {
-  //      FileEditorManager manager = FileEditorManager.getInstance(myFrame.getProject());
-  //      FileEditor[] editors = manager.getSelectedEditors();
-  //      if (editors.length == 0) {
-  //        return null;
-  //      }
-  //      FileEditor selected = editors[0];
-  //      if (!(selected instanceof AndroidDesignerEditor)) {
-  //        return null;
-  //      }
-  //
-  //      return new LayoutEditorFixture(robot, (AndroidDesignerEditor)selected);
-  //    }
-  //  });
-  //}
-
-  /**
-   * Returns a fixture around the layout preview window, <b>if</b> the currently edited file
-   * is a layout file and it the XML editor tab of the layout is currently showing.
-   *
-   * @param switchToTabIfNecessary if true, switch to the editor tab if it is not already showing
-   * @return a layout preview fixture, or null if the current file is not a layout file or the
-   *     wrong tab is showing
-   */
-  //@Nullable
-  //public LayoutPreviewFixture getLayoutPreview(boolean switchToTabIfNecessary) {
-  //  VirtualFile currentFile = getCurrentFile();
-  //  if (ResourceHelper.getFolderType(currentFile) != ResourceFolderType.LAYOUT) {
-  //    return null;
-  //  }
-  //
-  //  if (switchToTabIfNecessary) {
-  //    selectEditorView(Tab.EDITOR);
-  //  }
-  //
-  //  Boolean visible = GuiActionRunner.execute(new GuiQuery<Boolean>() {
-  //    @Override
-  //    protected Boolean executeInEDT() throws Throwable {
-  //      AndroidLayoutPreviewToolWindowManager manager = AndroidLayoutPreviewToolWindowManager.getInstance(myFrame.getProject());
-  //      return manager.getToolWindowForm() != null;
-  //    }
-  //  });
-  //  if (visible == null || !visible) {
-  //    myFrame.invokeMenuPath("View", "Tool Windows", "Preview");
-  //  }
-  //
-  //  pause(new Condition("Preview window is visible") {
-  //    @Override
-  //    public boolean test() {
-  //      AndroidLayoutPreviewToolWindowManager manager = AndroidLayoutPreviewToolWindowManager.getInstance(myFrame.getProject());
-  //      return manager.getToolWindowForm() != null;
-  //    }
-  //  }, SHORT_TIMEOUT);
-  //
-  //  return new LayoutPreviewFixture(robot, myFrame.getProject());
-  //}
-
-
-  /**
-   * Returns a fixture around the {@link com.android.tools.idea.editors.theme.ThemeEditor} <b>if</b> the currently
-   * displayed editor is a theme editor.
-   */
-  //@NotNull
-  //public ThemeEditorFixture getThemeEditor() {
-  //  final ThemeEditorComponent themeEditorComponent =
-  //    GuiTestUtil.waitUntilFound(robot, new GenericTypeMatcher<ThemeEditorComponent>(ThemeEditorComponent.class) {
-  //      @Override
-  //      protected boolean isMatching(@NotNull ThemeEditorComponent component) {
-  //        return true;
-  //      }
-  //    });
-  //
-  //  return new ThemeEditorFixture(robot, themeEditorComponent);
-  //}
   public EditorNotificationPanelFixture notificationPanel() {
     return EditorNotificationPanelFixture.Companion.findEditorNotificationPanel(robot, 30);
   }
@@ -955,10 +813,6 @@ public class EditorFixture {
     RUN_FROM_CONTEXT
   }
 
-  /**
-   * The different tabs of an editor; used by for example {@link #open(VirtualFile, EditorFixture.Tab)} to indicate which
-   * tab should be opened
-   */
   public enum Tab {
     EDITOR, DESIGN, DEFAULT
   }

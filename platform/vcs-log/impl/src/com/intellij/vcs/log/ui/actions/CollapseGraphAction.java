@@ -16,10 +16,7 @@
 package com.intellij.vcs.log.ui.actions;
 
 import com.intellij.vcs.log.ui.VcsLogUiImpl;
-import icons.VcsLogIcons;
 import org.jetbrains.annotations.NotNull;
-
-import javax.swing.*;
 
 public class CollapseGraphAction extends CollapseOrExpandGraphAction {
   @NotNull private static final String COLLAPSE = "Collapse";
@@ -31,18 +28,6 @@ public class CollapseGraphAction extends CollapseOrExpandGraphAction {
   @Override
   protected void executeAction(@NotNull VcsLogUiImpl vcsLogUi) {
     vcsLogUi.collapseAll();
-  }
-
-  @NotNull
-  @Override
-  protected Icon getMergesIcon() {
-    return VcsLogIcons.CollapseMerges;
-  }
-
-  @NotNull
-  @Override
-  protected Icon getBranchesIcon() {
-    return VcsLogIcons.CollapseMerges;
   }
 
   @NotNull

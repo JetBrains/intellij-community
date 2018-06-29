@@ -7,6 +7,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Objects;
 
@@ -14,11 +15,15 @@ public class PostfixTemplateWrapper extends PostfixTemplate {
   @NotNull private final PostfixTemplate myDelegate;
 
   public PostfixTemplateWrapper(@NotNull PostfixTemplate template) {
-    this(template.getId(), template.getPresentableName(), template.getKey(), template);
+    this(template.getId(), template.getPresentableName(), template.getKey(), template, template.getProvider());
   }
 
-  public PostfixTemplateWrapper(@NotNull String id, @NotNull String name, @NotNull String key, @NotNull PostfixTemplate template) {
-    super(id, name, key, template.getExample(), template.getProvider());
+  public PostfixTemplateWrapper(@NotNull String id,
+                                @NotNull String name,
+                                @NotNull String key,
+                                @NotNull PostfixTemplate template,
+                                @Nullable PostfixTemplateProvider provider) {
+    super(id, name, key, template.getExample(), provider);
     myDelegate = template;
   }
 
@@ -67,6 +72,7 @@ public class PostfixTemplateWrapper extends PostfixTemplate {
   public boolean equals(Object o) {
     if (this == o) return true;
     if (!(o instanceof PostfixTemplateWrapper)) return false;
+    if (!super.equals(o)) return false;
     PostfixTemplateWrapper wrapper = (PostfixTemplateWrapper)o;
     return Objects.equals(myDelegate, wrapper.myDelegate);
   }

@@ -112,7 +112,7 @@ public class StringEqualsEmptyStringInspection extends BaseInspection {
         newExpression.append("!=null&&");
       }
       else {
-        newExpression = new StringBuilder("");
+        newExpression = new StringBuilder();
       }
       final PsiElement parent = call.getParent();
       final PsiExpression expressionToReplace;

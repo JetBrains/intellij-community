@@ -43,6 +43,7 @@ public class FontInfo {
   /**
    * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
    */
+  @Deprecated
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style) {
     this(familyName, size, style, style, false, null);
   }
@@ -50,6 +51,7 @@ public class FontInfo {
   /**
    * @deprecated Use {@link #FontInfo(String, int, int, boolean, FontRenderContext)} instead.
    */
+  @Deprecated
   public FontInfo(final String familyName, final int size, @JdkConstants.FontStyle int style, boolean useLigatures) {
     this(familyName, size, style, useLigatures, null);
   }

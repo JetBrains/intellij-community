@@ -24,6 +24,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
 import com.siyeh.ig.psiutils.StatementExtractor;
 import org.jetbrains.annotations.Nls;
@@ -95,6 +96,8 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     PsiExpression expression = myExpressionPtr.getElement();
     if (expression == null) return;
     List<PsiExpression> sideEffects = SideEffectChecker.extractSideEffectExpressions(expression);
+    CommentTracker ct = new CommentTracker();
+    sideEffects.forEach(ct::markUnchanged);
     PsiStatement[] statements = StatementExtractor.generateStatements(sideEffects, expression);
     if (statements.length > 0) {
       PsiStatement lastAdded = BlockUtils.addBefore(statement, statements);
@@ -102,9 +105,9 @@ public class DeleteSideEffectsAwareFix extends LocalQuickFixAndIntentionActionOn
     }
     PsiElement parent = statement.getParent();
     if (parent instanceof PsiStatement && !(parent instanceof PsiIfStatement && ((PsiIfStatement)parent).getElseBranch() == statement)) {
-      statement.replace(JavaPsiFacade.getElementFactory(project).createStatementFromText("{}", statement));
+      ct.replaceAndRestoreComments(statement, "{}");
     } else {
-      statement.delete();
+      ct.deleteAndRestoreComments(statement);
     }
   }
 }

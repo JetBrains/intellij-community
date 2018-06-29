@@ -17,6 +17,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayFactory;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -24,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
+import java.util.*;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 /**
  * Interface for token types returned from lexical analysis and for types
@@ -53,6 +54,7 @@ public class IElementType {
   private static final short MAX_INDEXED_TYPES = 15000;
 
   private static short size; // guarded by lock
+  @NotNull
   private static volatile IElementType[] ourRegistry = EMPTY_ARRAY; // writes are guarded by lock
   @SuppressWarnings("RedundantStringConstructorCall")
   private static final Object lock = new String("registry lock");
@@ -75,7 +77,9 @@ public class IElementType {
   }
 
   private final short myIndex;
+  @NotNull
   private final String myDebugName;
+  @NotNull
   private final Language myLanguage;
 
   /**
@@ -101,7 +105,13 @@ public class IElementType {
     if (register) {
       synchronized (lock) {
         myIndex = size++;
-        LOG.assertTrue(myIndex < MAX_INDEXED_TYPES, "Too many element types registered. Out of (short) range.");
+        if (myIndex >= MAX_INDEXED_TYPES) {
+          Map<Language, List<IElementType>> byLang = Stream.of(ourRegistry).filter(i->i!=null).collect(Collectors.groupingBy(ie -> ie.myLanguage));
+          Map.Entry<Language, List<IElementType>> max = byLang.entrySet().stream().max(Comparator.comparingInt(e -> e.getValue().size())).get();
+          List<IElementType> types = max.getValue();
+          LOG.error("Too many element types registered. Out of (short) range. Most of element types (" + types.size() + ")" +
+                    " were registered for '" + max.getKey() + "': " + StringUtil.first(StringUtil.join(types, ", "), 300, true));
+        }
         IElementType[] newRegistry =
           myIndex >= ourRegistry.length ? ArrayUtil.realloc(ourRegistry, ourRegistry.length * 3 / 2 + 1, ARRAY_FACTORY) : ourRegistry;
         newRegistry[myIndex] = this;

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixActionRegistrar;
@@ -48,10 +34,11 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       return;
     }
 
+    QuickFixFactory quickFixFactory = QuickFixFactory.getInstance();
     registrar.register(new ImportClassFix(ref));
     registrar.register(new StaticImportConstantFix(ref));
     registrar.register(new QualifyStaticConstantFix(ref));
-    registrar.register(QuickFixFactory.getInstance().createSetupJDKFix());
+    registrar.register(quickFixFactory.createSetupJDKFix());
 
     OrderEntryFix.registerFixes(registrar, ref);
 
@@ -75,6 +62,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
     if (PsiUtil.isLanguageLevel5OrHigher(ref)) {
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ENUM));
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.ANNOTATION));
+      registrar.register(new CreateTypeParameterFromUsageFix(ref));
     }
 
     PsiElement parent = PsiTreeUtil.getParentOfType(ref, PsiNewExpression.class, PsiMethod.class);
@@ -89,22 +77,27 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       registrar.register(new CreateClassFromUsageFix(ref, CreateClassKind.CLASS));
       registrar.register(new CreateInnerClassFromUsageFix(ref, CreateClassKind.CLASS));
     }
+
+    SurroundWithQuotesAnnotationParameterValueFix.register(registrar, ref);
   }
 
   @NotNull
   private static Collection<IntentionAction> createVariableActions(@NotNull PsiReferenceExpression refExpr) {
     final Collection<IntentionAction> result = new ArrayList<>();
 
+    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
+    final VariableKind kind = getKind(styleManager, refExpr) ;
+
     if (JvmElementActionFactories.useInterlaguageActions()) {
       result.addAll(CreateFieldFromUsage.generateActions(refExpr));
       if (!refExpr.isQualified()) {
-        result.add(new CreateLocalFromUsageFix(refExpr));
-        result.add(new CreateParameterFromUsageFix(refExpr));
+        IntentionAction createLocalFix = new CreateLocalFromUsageFix(refExpr);
+        result.add(kind == VariableKind.LOCAL_VARIABLE ? PriorityIntentionActionWrapper.highPriority(createLocalFix) : createLocalFix);
+        IntentionAction createParameterFix = new CreateParameterFromUsageFix(refExpr);
+        result.add(kind == VariableKind.PARAMETER ? PriorityIntentionActionWrapper.highPriority(createParameterFix) : createParameterFix);
       }
       return result;
     }
-
-    final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(refExpr.getProject());
 
     final Map<VariableKind, IntentionAction> map = new EnumMap<>(VariableKind.class);
     map.put(VariableKind.FIELD, new CreateFieldFromUsageFix(refExpr));
@@ -114,7 +107,6 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
       map.put(VariableKind.PARAMETER, new CreateParameterFromUsageFix(refExpr));
     }
 
-    final VariableKind kind = getKind(styleManager, refExpr);
     if (map.containsKey(kind)) {
       map.put(kind, PriorityIntentionActionWrapper.highPriority(map.get(kind)));
     }
@@ -128,11 +120,7 @@ public class DefaultQuickFixProvider extends UnresolvedReferenceQuickFixProvider
   private static VariableKind getKind(@NotNull JavaCodeStyleManager styleManager, @NotNull PsiReferenceExpression refExpr) {
     final String reference = refExpr.getText();
 
-    boolean upperCase = true;
-    for (int i = 0; i < reference.length(); i++) {
-      if (!Character.isUpperCase(reference.charAt(i))) { upperCase = false; break; }
-    }
-    if (upperCase) {
+    if (StringUtil.isUpperCase(reference)) {
       return VariableKind.STATIC_FINAL_FIELD;
     }
 

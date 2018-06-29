@@ -32,25 +32,20 @@ import org.jetbrains.annotations.TestOnly;
 import java.io.File;
 import java.util.*;
 
-/**
- * @author Kirill Likhodedov
- */
 public class MockChangeListManager extends ChangeListManagerEx {
-
-  public static final String DEFAULT_CHANGE_LIST_NAME = "Default";
 
   private final Map<String, MockChangeList> myChangeLists = new HashMap<>();
   private LocalChangeList myActiveChangeList;
   private final MockChangeList myDefaultChangeList;
 
   public MockChangeListManager() {
-    myDefaultChangeList = new MockChangeList(DEFAULT_CHANGE_LIST_NAME);
-    myChangeLists.put(DEFAULT_CHANGE_LIST_NAME, myDefaultChangeList);
+    myDefaultChangeList = new MockChangeList(LocalChangeList.DEFAULT_NAME);
+    myChangeLists.put(LocalChangeList.DEFAULT_NAME, myDefaultChangeList);
     myActiveChangeList = myDefaultChangeList;
   }
 
   public void addChanges(Change... changes) {
-    MockChangeList changeList = myChangeLists.get(DEFAULT_CHANGE_LIST_NAME);
+    MockChangeList changeList = myChangeLists.get(LocalChangeList.DEFAULT_NAME);
     for (Change change : changes) {
       changeList.add(change);
     }
@@ -154,6 +149,18 @@ public class MockChangeListManager extends ChangeListManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull Change change) {
+    throw new UnsupportedOperationException();
+  }
+
+  @NotNull
+  @Override
+  public List<LocalChangeList> getChangeLists(@NotNull VirtualFile file) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public String getChangeListNameIfOnlyOne(Change[] changes) {
     throw new UnsupportedOperationException();
@@ -161,6 +168,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
 
   @Override
   public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list) {
+    scheduleAutomaticEmptyChangeListDeletion(list, false);
+  }
+
+  @Override
+  public void scheduleAutomaticEmptyChangeListDeletion(@NotNull LocalChangeList list, boolean silently) {
     throw new UnsupportedOperationException();
   }
 
@@ -346,6 +358,11 @@ public class MockChangeListManager extends ChangeListManagerEx {
   @Override
   public void setDefaultChangeList(@NotNull LocalChangeList list) {
     myActiveChangeList = list;
+  }
+
+  @Override
+  public void setDefaultChangeList(@NotNull LocalChangeList list, boolean automatic) {
+    throw new UnsupportedOperationException();
   }
 
   @Override

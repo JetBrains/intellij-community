@@ -6,7 +6,6 @@ import com.intellij.codeHighlighting.TextEditorHighlightingPassFactory
 import com.intellij.codeHighlighting.TextEditorHighlightingPassRegistrar
 import com.intellij.openapi.components.AbstractProjectComponent
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.EditorFactory
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Key
 import com.intellij.psi.PsiFile
@@ -21,23 +20,11 @@ class AnnotationHintsPassFactory(project: Project, registrar: TextEditorHighligh
   override fun createHighlightingPass(file: PsiFile, editor: Editor): TextEditorHighlightingPass? {
     if (editor.isOneLineMode ||
         file !is PsiJavaFile ||
-        LAST_PASS_MODIFICATION_TIMESTAMP.get(editor, 0) == ParameterHintsPassFactory.getCurrentModificationStamp(file)) return null
-    return AnnotationHintsPass(file, editor)
+        modificationStampHolder.isNotChanged(editor, file)) return null
+    return AnnotationHintsPass(file, editor, modificationStampHolder)
   }
 
   companion object {
-    val LAST_PASS_MODIFICATION_TIMESTAMP = Key.create<Long>("LAST_PASS_MODIFICATION_TIMESTAMP")
-
-    fun putCurrentModificationStamp(editor: Editor, file: PsiFile) {
-      editor.putUserData<Long>(LAST_PASS_MODIFICATION_TIMESTAMP, ParameterHintsPassFactory.getCurrentModificationStamp(file))
-    }
-
-    private fun forceHintsUpdateOnNextPass(editor: Editor) {
-      editor.putUserData<Long>(LAST_PASS_MODIFICATION_TIMESTAMP, null)
-    }
-
-    fun forceHintsUpdateOnNextPass() {
-      EditorFactory.getInstance().allEditors.forEach { forceHintsUpdateOnNextPass(it) }
-    }
+    val modificationStampHolder: ModificationStampHolder = ModificationStampHolder(Key.create<Long>("LAST_PASS_MODIFICATION_TIMESTAMP"))
   }
 }

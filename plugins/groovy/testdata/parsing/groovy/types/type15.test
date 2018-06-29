@@ -19,10 +19,8 @@ Groovy script
       Reference element
         PsiElement(identifier)('java')
   PsiElement(new line)('\n')
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:';', <statement> or new line expected, got '.'
     PsiElement(.)('.')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   Method call
     Reference expression
       Reference expression

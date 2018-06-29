@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.editor;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.CurrentEditorProvider;
@@ -27,7 +26,6 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.testFramework.TestFileType;
-import org.jetbrains.annotations.NotNull;
 
 public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
   private CurrentEditorProvider mySavedCurrentEditorProvider;
@@ -44,13 +42,8 @@ public class EditorMultiCaretUndoRedoTest extends AbstractEditorTest {
 
   @Override
   // disabling execution of tests in command
-  protected void runTest() {
-    new WriteAction<Void>() {
-      @Override
-      protected void run(@NotNull Result<Void> result) throws Throwable {
-        doRunTest();
-      }
-    }.execute();
+  protected void runTest() throws Throwable {
+    WriteAction.runAndWait(() -> doRunTest());
   }
 
   public void testUndoRedo() {

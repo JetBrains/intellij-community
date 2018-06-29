@@ -28,11 +28,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.ActionCallback;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.ObjectUtils;
 
 import java.awt.*;
 
@@ -90,7 +90,8 @@ public class ShowJavadoc extends AnAction implements IPropertyTableAction {
     ActionCallback callback;
     if (javadocElement == null) {
       callback = new ActionCallback();
-      component.setText(property.getJavadocText(), null, true);
+      component.setText(ObjectUtils.notNull(property.getJavadocText()), null, null);
+      component.clearHistory();
     }
     else {
       callback = documentationManager.queueFetchDocInfo(javadocElement, component);

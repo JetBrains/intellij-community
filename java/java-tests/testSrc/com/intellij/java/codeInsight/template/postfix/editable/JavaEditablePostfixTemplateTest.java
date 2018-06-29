@@ -3,11 +3,13 @@ package com.intellij.java.codeInsight.template.postfix.editable;
 
 import com.intellij.codeInsight.template.postfix.settings.PostfixTemplateStorage;
 import com.intellij.codeInsight.template.postfix.templates.AssertStatementPostfixTemplate;
+import com.intellij.codeInsight.template.postfix.templates.JavaPostfixTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.NotExpressionPostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -17,7 +19,7 @@ import java.util.Collections;
 import java.util.Set;
 
 public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
-  private static final JavaEditablePostfixTemplateProvider PROVIDER = new JavaEditablePostfixTemplateProvider();
+  private static final JavaPostfixTemplateProvider PROVIDER = new JavaPostfixTemplateProvider();
 
   public void testId() {
     JavaEditablePostfixTemplate template = new JavaEditablePostfixTemplate("myId", "myKey", "", "", Collections.emptySet(),
@@ -40,6 +42,19 @@ public class JavaEditablePostfixTemplateTest extends LightPlatformTestCase {
     assertInstanceOf(reloaded, PostfixChangedBuiltinTemplate.class);
     assertEquals("myId", reloaded.getId());
     assertEquals("assert", ((PostfixChangedBuiltinTemplate)reloaded).getBuiltinTemplate().getId());
+    assertTrue(reloaded.isBuiltin());
+  }
+
+  public void testRenamedNonEditableTemplate() {
+    NotExpressionPostfixTemplate builtinTemplate = new NotExpressionPostfixTemplate();
+    PostfixTemplateWrapper customTemplate = new PostfixTemplateWrapper("renamed", "renamed", ".renamed", builtinTemplate, PROVIDER);
+    PostfixChangedBuiltinTemplate template = new PostfixChangedBuiltinTemplate(customTemplate, builtinTemplate);
+    PostfixTemplate reloaded = reloadTemplate(template);
+    assertInstanceOf(reloaded, PostfixChangedBuiltinTemplate.class);
+    assertEquals("renamed", reloaded.getId());
+    assertEquals(".renamed", reloaded.getKey());
+    assertEquals("com.intellij.codeInsight.template.postfix.templates.NotExpressionPostfixTemplate#.not",
+                 ((PostfixChangedBuiltinTemplate)reloaded).getBuiltinTemplate().getId());
     assertTrue(reloaded.isBuiltin());
   }
 

@@ -45,6 +45,5 @@ TestExternalSystemSettingsListener>
 
   @Override
   protected void checkSettings(@NotNull TestExternalProjectSettings old, @NotNull TestExternalProjectSettings current) {
-    throw new UnsupportedOperationException() 
   }
 }

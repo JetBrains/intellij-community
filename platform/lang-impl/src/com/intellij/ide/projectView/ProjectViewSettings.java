@@ -2,6 +2,7 @@
 package com.intellij.ide.projectView;
 
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
+import com.intellij.ide.projectView.impl.nodes.ProjectViewDirectoryHelper;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -87,6 +88,12 @@ public interface ProjectViewSettings extends ViewSettings {
     }
 
     @Override
+    public boolean isFoldersAlwaysOnTop() {
+      ProjectView view = getProjectView();
+      return view != null && view.isFoldersAlwaysOnTop(getPaneID(view));
+    }
+
+    @Override
     public boolean isShowMembers() {
       ProjectView view = getProjectView();
       return view != null && view.isShowMembers(getPaneID(view));
@@ -117,6 +124,8 @@ public interface ProjectViewSettings extends ViewSettings {
 
     @Override
     public boolean isFlattenPackages() {
+      ProjectViewDirectoryHelper helper = getProjectViewDirectoryHelper();
+      if (helper == null || !helper.supportsFlattenPackages()) return false;
       ProjectView view = getProjectView();
       return view != null && view.isFlattenPackages(getPaneID(view));
     }
@@ -129,14 +138,27 @@ public interface ProjectViewSettings extends ViewSettings {
 
     @Override
     public boolean isHideEmptyMiddlePackages() {
+      ProjectViewDirectoryHelper helper = getProjectViewDirectoryHelper();
+      if (helper == null || !helper.supportsHideEmptyMiddlePackages()) return false;
       ProjectView view = getProjectView();
       return view != null && view.isHideEmptyMiddlePackages(getPaneID(view));
+    }
+
+    @Override
+    public boolean isCompactDirectories() {
+      ProjectView view = getProjectView();
+      return view != null && view.isCompactDirectories(getPaneID(view));
     }
 
     @Override
     public boolean isShowLibraryContents() {
       ProjectView view = getProjectView();
       return view != null && view.isShowLibraryContents(getPaneID(view));
+    }
+
+    @Nullable
+    private ProjectViewDirectoryHelper getProjectViewDirectoryHelper() {
+      return project.isDisposed() ? null : ProjectViewDirectoryHelper.getInstance(project);
     }
 
     @Nullable

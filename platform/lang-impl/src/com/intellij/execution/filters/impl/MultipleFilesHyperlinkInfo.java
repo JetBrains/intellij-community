@@ -30,11 +30,11 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -78,13 +78,14 @@ class MultipleFilesHyperlinkInfo extends HyperlinkInfoBase implements FileHyperl
       new OpenFileHyperlinkInfo(myProject, currentFiles.get(0).getVirtualFile(), myLineNumber).navigate(project);
     }
     else {
-      final JBList list = new JBList(currentFiles);
-      int width = WindowManager.getInstance().getFrame(project).getSize().width;
-      list.setCellRenderer(new GotoFileCellRenderer(width));
-      JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JFrame frame = WindowManager.getInstance().getFrame(project);
+      int width = frame != null ? frame.getSize().width : 200;
+      JBPopup popup = JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(currentFiles)
+        .setRenderer(new GotoFileCellRenderer(width))
         .setTitle("Choose Target File")
-        .setItemChoosenCallback(() -> {
-          VirtualFile file = ((PsiFile)list.getSelectedValue()).getVirtualFile();
+        .setItemChosenCallback((selectedValue) -> {
+          VirtualFile file = selectedValue.getVirtualFile();
           new OpenFileHyperlinkInfo(myProject, file, myLineNumber).navigate(project);
         })
         .createPopup();

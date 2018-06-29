@@ -48,7 +48,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   @NonNls public static final String USER_GROUP_NAME = "user";
   @NonNls private static final String TEMPLATE_SET = "templateSet";
   @NonNls private static final String GROUP = "group";
-  @NonNls static final String TEMPLATE = "template";
+  @NonNls public static final String TEMPLATE = "template";
 
   public static final char SPACE_CHAR = ' ';
   public static final char TAB_CHAR = '\t';
@@ -572,7 +572,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
     return result.isEmpty() ? null : result;
   }
 
-  static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
+  public static TemplateImpl readTemplateFromElement(final String groupName, @NotNull Element element, @NotNull ClassLoader classLoader) {
     String name = element.getAttributeValue(NAME);
     String value = element.getAttributeValue(VALUE);
     String description;
@@ -616,7 +616,7 @@ public class TemplateSettings implements PersistentStateComponent<TemplateSettin
   }
 
   @NotNull
-  static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
+  public static Element serializeTemplate(@NotNull TemplateImpl template, @Nullable TemplateImpl defaultTemplate, @NotNull Lazy<Map<String, TemplateContextType>> idToType) {
     Element element = new Element(TEMPLATE);
     final String id = template.getId();
     if (id != null) {

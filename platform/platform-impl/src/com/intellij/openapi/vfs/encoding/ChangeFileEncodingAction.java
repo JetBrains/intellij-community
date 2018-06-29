@@ -143,6 +143,14 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
     EncodingUtil.Magic8 isSafeToReload = EncodingUtil.isSafeToReloadIn(virtualFile, text, bytes, charset);
 
     final Project project = ProjectLocator.getInstance().guessProjectForFile(virtualFile);
+    return changeTo(project, document, editor, virtualFile, charset, isSafeToConvert, isSafeToReload);
+  }
+
+  public static boolean changeTo(Project project, @NotNull Document document,
+                                 Editor editor,
+                                 @NotNull VirtualFile virtualFile,
+                                 @NotNull Charset charset,
+                                 @NotNull EncodingUtil.Magic8 isSafeToConvert, @NotNull EncodingUtil.Magic8 isSafeToReload) {
     final Charset oldCharset = virtualFile.getCharset();
     final Runnable undo;
     final Runnable redo;

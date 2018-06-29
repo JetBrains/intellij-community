@@ -1,58 +1,44 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.actions;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtilRt;
 import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.LineStatusTracker;
+import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import com.intellij.openapi.vcs.ex.Range;
 import com.intellij.openapi.vcs.ex.RangesBuilder;
 import com.intellij.openapi.vcs.impl.LineStatusTrackerManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.ChangedRangesInfo;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.diff.FilesTooBigForDiffException;
+import com.intellij.util.containers.Convertor;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.BitSet;
 import java.util.List;
 
 class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
-
   @Override
   @NotNull
-  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public List<TextRange> getChangedTextRanges(@NotNull Project project, @NotNull PsiFile file) {
     ChangedRangesInfo helper = getChangedRangesInfo(file);
     return helper != null ? helper.allChangedRanges : ContainerUtil.newArrayList();
   }
 
   @Override
   @Nullable
-  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) throws FilesTooBigForDiffException {
+  public ChangedRangesInfo getChangedRangesInfo(@NotNull PsiFile file) {
     Project project = file.getProject();
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     if (document == null) return null;
@@ -80,6 +66,98 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
 
     String contentFromVcs = getRevisionedContentFrom(change);
     return contentFromVcs != null ? calculateChangedRangesInfo(document, contentFromVcs) : null;
+  }
+
+  @NotNull
+  @Override
+  public <T extends PsiElement> List<T> getChangedElements(@NotNull Project project,
+                                                           @NotNull Change[] changes,
+                                                           @NotNull Convertor<VirtualFile, List<T>> elementsConvertor) {
+    List<T> result = ContainerUtil.newSmartList();
+    for (Change change : changes) {
+      if (change.getType() == Change.Type.DELETED) continue;
+      if (!(change.getAfterRevision() instanceof CurrentContentRevision)) continue;
+
+      VirtualFile file = ((CurrentContentRevision)change.getAfterRevision()).getVirtualFile();
+      if (file == null) continue;
+
+      Document document = FileDocumentManager.getInstance().getDocument(file);
+      if (document == null) continue;
+
+      List<T> elements = elementsConvertor.convert(file);
+      if (ContainerUtil.isEmpty(elements)) continue;
+
+      BitSet changedLines = getChangedLines(project, document, change);
+      if (changedLines != null) {
+        for (T element : elements) {
+          if (isElementChanged(element, document, changedLines)) {
+            result.add(element);
+          }
+        }
+      }
+      else {
+        result.addAll(elements);
+      }
+    }
+    return result;
+  }
+
+  @Nullable
+  private static BitSet getChangedLines(@NotNull Project project, @NotNull Document document, @NotNull Change change) {
+    if (change.getType() == Change.Type.NEW) return null;
+
+    List<? extends Range> ranges = getChangedRanges(project, document, change);
+    if (ranges == null) return null;
+
+    BitSet changedLines = new BitSet();
+    for (Range range : ranges) {
+      if (range.getType() == Range.DELETED) {
+        changedLines.set(range.getLine1() - 1, range.getLine1() + 1);
+      }
+      else {
+        changedLines.set(range.getLine1(), range.getLine2());
+      }
+    }
+    return changedLines;
+  }
+
+  @Nullable
+  private static List<? extends Range> getChangedRanges(@NotNull Project project, @NotNull Document document, @NotNull Change change) {
+    LineStatusTracker<?> tracker = LineStatusTrackerManager.getInstance(project).getLineStatusTracker(document);
+    if (tracker != null) {
+      if (change instanceof ChangeListChange && tracker instanceof PartialLocalLineStatusTracker) {
+        String changeListId = ((ChangeListChange)change).getChangeListId();
+        List<PartialLocalLineStatusTracker.LocalRange> ranges = ((PartialLocalLineStatusTracker)tracker).getRanges();
+        if (ranges != null) {
+          return ContainerUtil.filter(ranges, range -> range.getChangelistId().equals(changeListId));
+        }
+        else {
+          return null;
+        }
+      }
+      else {
+        return tracker.getRanges();
+      }
+    }
+    else {
+      String contentFromVcs = getRevisionedContentFrom(change);
+      if (contentFromVcs != null) {
+        return getRanges(document, contentFromVcs);
+      }
+      else {
+        return null;
+      }
+    }
+  }
+
+  private static boolean isElementChanged(@NotNull PsiElement element, @NotNull Document document, @NotNull BitSet changedLines) {
+    TextRange textRange = element.getTextRange();
+    int startLine = document.getLineNumber(textRange.getStartOffset());
+    int endLine = textRange.isEmpty()
+                  ? startLine + 1
+                  : document.getLineNumber(textRange.getEndOffset() - 1) + 1;
+    int nextSetBit = changedLines.nextSetBit(startLine);
+    return nextSetBit != -1 && nextSetBit < endLine;
   }
 
   @Nullable
@@ -111,39 +189,33 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
   }
 
   @NotNull
-  private static ChangedRangesInfo calculateChangedRangesInfo(@NotNull Document document,
-                                                              @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException {
+  private static ChangedRangesInfo calculateChangedRangesInfo(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
     return getChangedTextRanges(document, getRanges(document, contentFromVcs));
   }
 
   @NotNull
   private static List<Range> getRanges(@NotNull Document document,
-                                       @NotNull CharSequence contentFromVcs) throws FilesTooBigForDiffException {
+                                       @NotNull CharSequence contentFromVcs) {
     return RangesBuilder.createRanges(document.getImmutableCharSequence(), StringUtilRt.convertLineSeparators(contentFromVcs, "\n"));
   }
 
   @Override
   public int calculateChangedLinesNumber(@NotNull Document document, @NotNull CharSequence contentFromVcs) {
-    try {
-      List<Range> changedRanges = getRanges(document, contentFromVcs);
-      int linesChanges = 0;
-      for (Range range : changedRanges) {
-        int inserted = range.getLine2() - range.getLine1();
-        int deleted = range.getVcsLine2() - range.getVcsLine1();
-        linesChanges += Math.max(inserted, deleted);
-      }
-      return linesChanges;
-    } catch (FilesTooBigForDiffException e) {
-      LOG.info("File too big, can not calculate changed lines number");
-      return -1;
+    List<Range> changedRanges = getRanges(document, contentFromVcs);
+    int linesChanges = 0;
+    for (Range range : changedRanges) {
+      int inserted = range.getLine2() - range.getLine1();
+      int deleted = range.getVcsLine2() - range.getVcsLine1();
+      linesChanges += Math.max(inserted, deleted);
     }
+    return linesChanges;
   }
 
   @NotNull
   private static ChangedRangesInfo getChangedTextRanges(@NotNull Document document, @NotNull List<? extends Range> changedRanges) {
     final List<TextRange> ranges = ContainerUtil.newArrayList();
     final List<TextRange> insertedRanges = ContainerUtil.newArrayList();
-    
+
     for (Range range : changedRanges) {
       if (range.getType() != Range.DELETED) {
         int changeStartLine = range.getLine1();
@@ -159,7 +231,7 @@ class VcsAwareFormatChangedTextUtil extends FormatChangedTextUtil {
         }
       }
     }
-    
+
     return new ChangedRangesInfo(ranges, insertedRanges);
   }
 

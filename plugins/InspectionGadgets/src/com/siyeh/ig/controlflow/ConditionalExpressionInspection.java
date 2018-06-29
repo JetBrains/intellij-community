@@ -23,14 +23,19 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.JavaPsiConstructorUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
-import com.siyeh.ig.psiutils.*;
+import com.siyeh.ig.psiutils.CommentTracker;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
+import com.siyeh.ig.psiutils.MethodCallUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -76,15 +81,25 @@ public class ConditionalExpressionInspection extends BaseInspection {
     if (!quickFix) {
       return null;
     }
-    return new ReplaceWithIfFix();
+    final boolean changesSemantics = ((Boolean)infos[1]).booleanValue();
+    return new ReplaceWithIfFix(changesSemantics);
   }
 
   private static class ReplaceWithIfFix extends InspectionGadgetsFix {
+
+    private final boolean myChangesSemantics;
+
+    public ReplaceWithIfFix(boolean changesSemantics) {
+      myChangesSemantics = changesSemantics;
+    }
+
     @Nls
     @NotNull
     @Override
     public String getFamilyName() {
-      return InspectionGadgetsBundle.message("conditional.expression.quickfix");
+      return myChangesSemantics
+             ? InspectionGadgetsBundle.message("conditional.expression.semantics.quickfix")
+             : InspectionGadgetsBundle.message("conditional.expression.quickfix");
     }
 
     @Override
@@ -131,6 +146,12 @@ public class ConditionalExpressionInspection extends BaseInspection {
         newStatement.append(name).append('=');
         PsiExpression initializer = variable.getInitializer();
         if (initializer == null) {
+          return;
+        }
+        PsiTypeElement typeElement = variable.getTypeElement();
+        if (typeElement != null && 
+            typeElement.isInferredType() && 
+            PsiTypesUtil.replaceWithExplicitType(typeElement) == null) {
           return;
         }
         if (initializer instanceof PsiArrayInitializerExpression) {
@@ -248,11 +269,19 @@ public class ConditionalExpressionInspection extends BaseInspection {
         // can't be fixed
         return;
       }
-      if (ignoreSimpleAssignmentsAndReturns) {
-        PsiElement parent = expression.getParent();
-        while (parent instanceof PsiParenthesizedExpression) {
-          parent = parent.getParent();
+      PsiElement parent = expression.getParent();
+      while (parent instanceof PsiParenthesizedExpression) {
+        parent = parent.getParent();
+      }
+      
+      if (parent instanceof PsiLocalVariable) {
+        PsiTypeElement typeElement = ((PsiLocalVariable)parent).getTypeElement();
+        if (typeElement.isInferredType() && !PsiTypesUtil.isDenotableType(typeElement.getType(), typeElement)) {
+          return;
         }
+      }
+      
+      if (ignoreSimpleAssignmentsAndReturns) {
         if (parent instanceof PsiAssignmentExpression ||
             parent instanceof PsiReturnStatement ||
             parent instanceof PsiLocalVariable ||
@@ -267,7 +296,9 @@ public class ConditionalExpressionInspection extends BaseInspection {
         if (expressionContext && (ignoreExpressionContext || isVisibleHighlight(expression))) {
           return;
         }
-        registerError(expression, Boolean.valueOf(!expressionContext));
+        boolean nestedConditional = ParenthesesUtils.getParentSkipParentheses(expression) instanceof PsiConditionalExpression;
+        registerError(expression, nestedConditional ? ProblemHighlightType.INFORMATION : ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                      !expressionContext, nestedConditional);
       }
     }
 
@@ -286,7 +317,7 @@ public class ConditionalExpressionInspection extends BaseInspection {
       final PsiMethodCallExpression methodCallExpression =
         PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true,
                                     PsiLambdaExpression.class, PsiStatement.class, PsiMember.class);
-      return ExpressionUtils.isConstructorInvocation(methodCallExpression);
+      return JavaPsiConstructorUtil.isConstructorCall(methodCallExpression);
     }
   }
 }

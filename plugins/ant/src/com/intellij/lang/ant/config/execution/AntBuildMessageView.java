@@ -85,10 +85,11 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private static final Key<AntBuildMessageView> KEY = Key.create("BuildMessageView.KEY");
   private static final String BUILD_CONTENT_NAME = AntBundle.message("ant.build.tab.content.title");
 
-  public static final int PRIORITY_ERR = 0;
-  public static final int PRIORITY_WARN = 1;
-  public static final int PRIORITY_BRIEF = 2;
-  public static final int PRIORITY_VERBOSE = 3;
+  public static final int PRIORITY_ERR = org.apache.tools.ant.Project.MSG_ERR;
+  public static final int PRIORITY_WARN = org.apache.tools.ant.Project.MSG_WARN;
+  public static final int PRIORITY_INFO = org.apache.tools.ant.Project.MSG_INFO;
+  public static final int PRIORITY_VERBOSE = org.apache.tools.ant.Project.MSG_VERBOSE;
+  public static final int PRIORITY_DEBUG = org.apache.tools.ant.Project.MSG_DEBUG;
 
   private OutputParser myParsingThread;
   private final Project myProject;
@@ -96,9 +97,9 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   private final JPanel myContentPanel;
   private final CardLayout myCardLayout;
   private AntBuildFileBase myBuildFile;
-  private final String[] myTargets;
+  private final List<String> myTargets;
   private final List<BuildFileProperty> myAdditionalProperties;
-  private int myPriorityThreshold = PRIORITY_BRIEF;
+  private int myPriorityThreshold = PRIORITY_INFO;
   private volatile int myErrorCount;
   private volatile int myWarningCount;
   private volatile boolean myIsOutputPaused = false;
@@ -147,7 +148,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   };
   @NonNls public static final String FILE_PREFIX = "file:";
 
-  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets, List<BuildFileProperty> additionalProperties) {
+  private AntBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
     super(new BorderLayout(2, 0));
     myProject = project;
     myBuildFile = buildFile;
@@ -184,14 +185,14 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
   }
 
   public void setVerboseMode(boolean verbose) {
-    changeDetalizationLevel(verbose ? PRIORITY_VERBOSE : PRIORITY_BRIEF);
+    changeDetalizationLevel(verbose ? PRIORITY_DEBUG : PRIORITY_INFO);
     if (myBuildFile != null) {
       myBuildFile.setVerboseMode(verbose);
     }
   }
 
   public boolean isVerboseMode() {
-    return myPriorityThreshold == PRIORITY_VERBOSE;
+    return myPriorityThreshold == PRIORITY_DEBUG;
   }
 
   private synchronized void changeDetalizationLevel(int priorityThreshold) {
@@ -243,7 +244,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
    * @return can be null if user cancelled operation
    */
   @Nullable
-  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, String[] targets, List<BuildFileProperty> additionalProperties) {
+  public static AntBuildMessageView openBuildMessageView(Project project, AntBuildFileBase buildFile, List<String> targets, List<BuildFileProperty> additionalProperties) {
     final VirtualFile antFile = buildFile.getVirtualFile();
     if (!LOG.assertTrue(antFile != null)) {
       return null;
@@ -487,7 +488,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
       int index = fileAndLineNumber.lastIndexOf(':');
       if (index != -1) {
         String fileName = fileAndLineNumber.substring(0, index);
-        String lineNumberStr = fileAndLineNumber.substring(index + 1, fileAndLineNumber.length()).trim();
+        String lineNumberStr = fileAndLineNumber.substring(index + 1).trim();
         try {
           int line = Integer.parseInt(lineNumberStr);
 
@@ -779,7 +780,7 @@ public final class AntBuildMessageView extends JPanel implements DataProvider, O
     }
   }
 
-  public String[] getTargets() {
+  public List<String> getTargets() {
     return myTargets;
   }
 

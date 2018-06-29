@@ -11,7 +11,9 @@ public interface DocumentationMarkup {
   String SECTIONS_START = "<table class='sections'>";
   String SECTIONS_END = "</table>";
   String SECTION_HEADER_START = "<tr><td valign='top' class='section'><p>";
-  String SECTION_SEPARATOR = "</td><td>";
-  String SECTION_START = "<td>";
+  String SECTION_SEPARATOR = "</td><td valign='top'>";
+  String SECTION_START = "<td valign='top'>";
   String SECTION_END = "</td>";
+  String GRAYED_START = "<span class='grayed'>";
+  String GRAYED_END = "</span>";
 }

@@ -1,14 +1,16 @@
 <component name="libraryTable">
-  <library name="Kryo">
+  <library name="Kryo" type="repository">
+    <properties maven-id="com.esotericsoftware.kryo:kryo:2.24.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/minlog-1.2.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/kryo-2.22.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/reflectasm-1.07.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/objenesis-1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo/2.24.0/kryo-2.24.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/2.1/objenesis-2.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES>
-      <root url="jar://$PROJECT_DIR$/lib/src/kryo-src.zip!/src" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/kryo/kryo/2.24.0/kryo-2.24.0-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/com/esotericsoftware/minlog/minlog/1.2/minlog-1.2-sources.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/objenesis/objenesis/2.1/objenesis-2.1-sources.jar!/" />
     </SOURCES>
   </library>
 </component>

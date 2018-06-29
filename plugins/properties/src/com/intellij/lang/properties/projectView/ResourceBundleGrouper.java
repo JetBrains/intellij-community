@@ -45,7 +45,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
       List<PropertiesFile> dirPropertiesFiles = new SmartList<>();
       for (AbstractTreeNode child : children) {
         Object f = child.getValue();
-        if (f instanceof PsiFile) {
+        if (f instanceof PsiFile && child.getClass() == PsiFileNode.class) { // process raw nodes only
           PropertiesFile propertiesFile = PropertiesImplUtil.getPropertiesFile((PsiFile)f);
           if (propertiesFile != null) {
             dirPropertiesFiles.add(propertiesFile);
@@ -100,8 +100,7 @@ public class ResourceBundleGrouper implements TreeStructureProvider, DumbAware {
   }
 
   @Override
-  public Object getData(Collection<AbstractTreeNode> selected, String dataName) {
-    if (selected == null) return null;
+  public Object getData(@NotNull Collection<AbstractTreeNode> selected, String dataName) {
     if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataName)) {
       for (AbstractTreeNode selectedElement : selected) {
         Object element = selectedElement.getValue();

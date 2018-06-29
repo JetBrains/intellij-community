@@ -125,17 +125,8 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
     }
 
     FileBasedIndexImpl index = (FileBasedIndexImpl)i;
-    
-    if (index.processChangedFiles(project, new Processor<VirtualFile>() {
-      int filesInProjectToBeIndexed;
-      int sizeOfFilesToBeIndexed;
-      @Override
-      public boolean process(VirtualFile file) {
-        ++filesInProjectToBeIndexed;
-        if (file.isValid() && !file.isDirectory()) sizeOfFilesToBeIndexed += file.getLength();
-        return filesInProjectToBeIndexed < ourMinFilesToStartDumMode && sizeOfFilesToBeIndexed < ourMinFilesSizeToStartDumMode;
-      }
-    })) {
+
+    if (!mightHaveManyChangedFilesInProject(project, index)) {
       return null;
     }
 
@@ -181,6 +172,23 @@ public class FileBasedIndexProjectHandler implements IndexableFileSet, Disposabl
         return super.toString() + " [" + project + ", " + sampleOfChangedFilePathsToBeIndexed + "]";
       }
     };
+  }
+
+  private static boolean mightHaveManyChangedFilesInProject(Project project, FileBasedIndexImpl index) {
+    long start = System.currentTimeMillis();
+    return !index.processChangedFiles(project, new Processor<VirtualFile>() {
+      int filesInProjectToBeIndexed;
+      int sizeOfFilesToBeIndexed;
+
+      @Override
+      public boolean process(VirtualFile file) {
+        ++filesInProjectToBeIndexed;
+        if (file.isValid() && !file.isDirectory()) sizeOfFilesToBeIndexed += file.getLength();
+        return filesInProjectToBeIndexed < ourMinFilesToStartDumMode &&
+               sizeOfFilesToBeIndexed < ourMinFilesSizeToStartDumMode &&
+               System.currentTimeMillis() < start + 100;
+      }
+    });
   }
 
   private static void reindexRefreshedFiles(ProgressIndicator indicator,

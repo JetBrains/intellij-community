@@ -21,6 +21,7 @@ import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.TextEditor;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,7 +61,11 @@ public class FileEditorSelectInContext extends SmartSelectInContext {
       PsiElement injectedElementAt = manager.findInjectedElementAt(file, offset);
       if (injectedElementAt != null) return injectedElementAt;
     }
-    return file.findElementAt(offset);
+    PsiElement elementAt = file.findElementAt(offset);
+    if (offset > 0 && (elementAt == null || elementAt instanceof PsiWhiteSpace)) {
+      elementAt = file.findElementAt(offset - 1);
+    }
+    return elementAt;
   }
 
   @Nullable

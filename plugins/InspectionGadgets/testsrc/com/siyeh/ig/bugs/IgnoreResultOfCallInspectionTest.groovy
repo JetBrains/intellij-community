@@ -231,6 +231,27 @@ class C {
 """
   }
 
+  void testPureMethodReturningThis() {
+    doTest """
+import org.jetbrains.annotations.Contract;
+
+class Test {
+  boolean closed;
+  
+  @Contract(pure=true, value="->this")
+  Test validate() {
+    if(closed) throw new IllegalStateException();
+    return this;
+  }
+  
+  void test() {
+    validate();
+    System.out.println("ok");
+  }
+}
+"""
+  }
+
   void testPureMethodInVoidFunctionalExpression() {
     doTest """
 import org.jetbrains.annotations.Contract;
@@ -306,6 +327,22 @@ import java.util.Optional;
 class Test {
   void test(Optional<String> opt) {
     opt.orElseThrow(RuntimeException::new);
+  }
+}"""
+  }
+
+  void testParamContract() {
+    doTest """class X{
+public static int atLeast(int min, int actual, String varName) {
+    if (actual < min) throw new IllegalArgumentException('\\'' + varName + " must be at least " + min + ": " + actual);
+    return actual;
+  }
+
+  public byte[] getMemory(int address, int length) {
+    atLeast(0, address, "address");
+    atLeast(1, length, "length");
+
+    return new byte[length];
   }
 }"""
   }

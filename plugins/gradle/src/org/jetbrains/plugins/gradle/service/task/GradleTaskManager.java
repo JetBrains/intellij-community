@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemProgressEventUnsupportedImpl;
 import com.intellij.openapi.externalSystem.model.task.event.ExternalSystemTaskExecutionEvent;
+import com.intellij.openapi.externalSystem.rt.execution.ForkedDebuggerConfiguration;
 import com.intellij.openapi.externalSystem.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.util.Key;
@@ -36,6 +37,7 @@ import org.gradle.tooling.ProjectConnection;
 import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.JdkVersionDetector;
 import org.jetbrains.plugins.gradle.service.execution.GradleExecutionHelper;
 import org.jetbrains.plugins.gradle.service.execution.UnsupportedCancellationToken;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
@@ -85,6 +87,15 @@ public class GradleTaskManager implements ExternalSystemTaskManager<GradleExecut
 
     GradleExecutionSettings effectiveSettings =
       settings == null ? new GradleExecutionSettings(null, null, DistributionType.BUNDLED, false) : settings;
+
+    ForkedDebuggerConfiguration forkedDebuggerSetup = ForkedDebuggerConfiguration.parse(jvmAgentSetup);
+    if (forkedDebuggerSetup != null) {
+      String javaHome = effectiveSettings.getJavaHome();
+      JdkVersionDetector.JdkVersionInfo jdkVersionInfo =
+        javaHome == null ? null : JdkVersionDetector.getInstance().detectJdkVersionInfo(javaHome);
+      boolean isJdk9orLater = jdkVersionInfo != null && jdkVersionInfo.version.isAtLeast(9);
+      effectiveSettings.withVmOption(forkedDebuggerSetup.getJvmAgentSetup(isJdk9orLater));
+    }
     Function<ProjectConnection, Void> f = connection -> {
       try {
         appendInitScriptArgument(taskNames, jvmAgentSetup, effectiveSettings);

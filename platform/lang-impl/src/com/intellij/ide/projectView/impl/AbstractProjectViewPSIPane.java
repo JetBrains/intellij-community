@@ -77,7 +77,12 @@ public abstract class AbstractProjectViewPSIPane extends AbstractProjectViewPane
 
   @Override
   public JComponent createComponent() {
-    if (myComponent != null) return myComponent;
+    if (myComponent != null) {
+      if (myTree != null) {
+        myTree.updateUI();
+      }
+      return myComponent;
+    }
 
     DefaultMutableTreeNode rootNode = new DefaultMutableTreeNode(null);
     DefaultTreeModel treeModel = new DefaultTreeModel(rootNode);

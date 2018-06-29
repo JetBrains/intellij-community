@@ -67,12 +67,18 @@ from _pydev_imps._pydev_saved_modules import threading
 from _pydev_imps._pydev_saved_modules import socket
 from socket import socket, AF_INET, SOCK_STREAM, SHUT_RD, SHUT_WR, SOL_SOCKET, SO_REUSEADDR, SHUT_RDWR, timeout
 from _pydevd_bundle.pydevd_constants import DebugInfoHolder, get_thread_id, IS_JYTHON, IS_PY2, IS_PY3K, \
-    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC
+    IS_PY36_OR_GREATER, STATE_RUN, dict_keys, ASYNC_EVAL_TIMEOUT_SEC, IS_IRONPYTHON
 
 try:
     from urllib import quote_plus, unquote, unquote_plus
 except:
     from urllib.parse import quote_plus, unquote, unquote_plus  #@Reimport @UnresolvedImport
+    
+if IS_IRONPYTHON:
+    # redefine `unquote` for IronPython, since we use it only for logging messages, but it leads to SOF with IronPython
+    def unquote(s):
+        return s
+
 import pydevconsole
 from _pydevd_bundle import pydevd_vars
 from _pydevd_bundle import pydevd_xml
@@ -1026,12 +1032,14 @@ class InternalGetVariable(InternalThreadCommand):
         try:
             xml = StringIO.StringIO()
             xml.write("<xml>")
-            _typeName, val_dict = pydevd_vars.resolve_compound_variable(self.thread_id, self.frame_id, self.scope, self.attributes)
+            _typeName, val_dict = pydevd_vars.resolve_compound_variable_fields(self.thread_id, self.frame_id, self.scope, self.attributes)
             if val_dict is None:
                 val_dict = {}
 
             keys = dict_keys(val_dict)
-            if _typeName != "OrderedDict" and not IS_PY36_OR_GREATER:
+            # assume properly ordered if resolver returns 'OrderedDict'
+            # check type as string to support OrderedDict backport for older Python
+            if not (_typeName == "OrderedDict" or val_dict.__class__.__name__ == "OrderedDict" or IS_PY36_OR_GREATER):
                 keys.sort(key=compare_object_attrs_key)
 
             for k in keys:
@@ -1164,7 +1172,6 @@ class InternalEvaluateExpression(InternalThreadCommand):
             dbg.writer.add_command(cmd)
         except:
             exc = get_exception_traceback_str()
-            sys.stderr.write('%s\n' % (exc,))
             cmd = dbg.cmd_factory.make_error_message(self.sequence, "Error evaluating expression " + exc)
             dbg.writer.add_command(cmd)
 
@@ -1480,11 +1487,10 @@ class InternalLoadFullValue(InternalThreadCommand):
                     else:
                         scope, attrs = (variable, None)
                         name = scope
-
                     var_obj = pydevd_vars.getVariable(self.thread_id, self.frame_id, scope, attrs)
                     var_objects.append((var_obj, name))
 
-            t = GetValueAsyncThread(dbg, self.thread_id, self.frame_id, self.sequence, var_objects)
+            t = GetValueAsyncThreadDebug(dbg, self.sequence, var_objects)
             t.start()
         except:
             exc = get_exception_traceback_str()
@@ -1493,15 +1499,19 @@ class InternalLoadFullValue(InternalThreadCommand):
             dbg.writer.add_command(cmd)
 
 
-class GetValueAsyncThread(PyDBDaemonThread):
-    def __init__(self, py_db, thread_id, frame_id, seq, var_objects):
+class AbstractGetValueAsyncThread(PyDBDaemonThread):
+    """
+    Abstract class for a thread, which evaluates values for async variables
+    """
+    def __init__(self, frame_accessor, seq, var_objects):
         PyDBDaemonThread.__init__(self)
-        self.py_db = py_db
-        self.thread_id = thread_id
-        self.frame_id = frame_id
+        self.frame_accessor = frame_accessor
         self.seq = seq
         self.var_objs = var_objects
         self.cancel_event = threading.Event()
+
+    def send_result(self, xml):
+        raise NotImplementedError()
 
     def _on_run(self):
         start = time.time()
@@ -1513,9 +1523,29 @@ class GetValueAsyncThread(PyDBDaemonThread):
                 break
             xml.write(pydevd_xml.var_to_xml(var_obj, name, evaluate_full_value=True))
         xml.write("</xml>")
-        cmd = self.py_db.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
+        self.send_result(xml)
         xml.close()
-        self.py_db.writer.add_command(cmd)
+
+
+class GetValueAsyncThreadDebug(AbstractGetValueAsyncThread):
+    """
+    A thread for evaluation async values, which returns result for debugger
+    Create message and send it via writer thread
+    """
+    def send_result(self, xml):
+        if self.frame_accessor is not None:
+            cmd = self.frame_accessor.cmd_factory.make_load_full_value_message(self.seq, xml.getvalue())
+            self.frame_accessor.writer.add_command(cmd)
+
+
+class GetValueAsyncThreadConsole(AbstractGetValueAsyncThread):
+    """
+    A thread for evaluation async values, which returns result for Console
+    Send result directly to Console's server
+    """
+    def send_result(self, xml):
+        if self.frame_accessor is not None:
+            self.frame_accessor.ReturnFullValue(self.seq, xml.getvalue())
 
 
 #=======================================================================================================================

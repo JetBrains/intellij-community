@@ -41,7 +41,7 @@ public class ModificationOfImportedModelWarningComponent {
   public void showWarning(@NotNull String elementDescription, @NotNull ProjectModelExternalSource externalSource) {
     myLabel.setVisible(true);
     myLabel.setBorder(JBUI.Borders.empty(5, 5));
-    myLabel.setIcon(AllIcons.General.Warning);
+    myLabel.setIcon(AllIcons.General.BalloonWarning);
     myLabel.setText(UIUtil.toHtml(getWarningText(elementDescription, externalSource)));
   }
 

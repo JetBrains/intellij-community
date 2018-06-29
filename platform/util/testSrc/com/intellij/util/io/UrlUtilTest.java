@@ -170,7 +170,7 @@ public class UrlUtilTest {
   public void testEncodeURIComponent() {
     assertEquals("Test", URLUtil.encodeURIComponent("Test"));
     assertEquals("%20Test%20%20(~%2Fpath!)", URLUtil.encodeURIComponent(" Test  (~/path!)"));
-    StringBuilder str = new StringBuilder("");
+    StringBuilder str = new StringBuilder();
     for (int i = 1; i < 256; i++) {
       str.append((char)i);
     }

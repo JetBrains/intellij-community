@@ -1,6 +1,8 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.java.codeInsight.daemon.quickFix
 
+
+import com.intellij.codeInsight.ExpectedTypesProvider
 import com.intellij.codeInsight.daemon.quickFix.LightQuickFixTestCase
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -9,9 +11,7 @@ import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.application.ApplicationManager
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
-import com.intellij.psi.PsiDocumentManager
-import com.intellij.psi.PsiMethod
-import com.intellij.psi.PsiModifier
+import com.intellij.psi.*
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings
 import com.intellij.psi.util.PsiTreeUtil
 
@@ -151,48 +151,42 @@ class A {
 
   void "test use fully qualified names with conflicting imports"() {
     final JavaCodeStyleSettings settings = JavaCodeStyleSettings.getInstance(project);
-    def fqClassNames = settings.useFqClassNames
-    try {
-      settings.setUseFqClassNames(true)
-      configureFromFileText "a.java", """
-  import java.awt.List;
-  class A {
-      void m(java.util.List<String> list){
-        fo<caret>o(list);
-      }
-  }
-  """
-      TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
-      doAction("Create method 'foo' in 'A'")
-      def state = TemplateManagerImpl.getTemplateState(getEditor())
-
-      def document = getEditor().getDocument()
-      def offset = getEditor().getCaretModel().getOffset()
-
-      ApplicationManager.application.runWriteAction {
-        def method = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethod.class)
-        method.getModifierList().setModifierProperty(PsiModifier.STATIC, false)
-        PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
-      }
-
-      state.gotoEnd(false)
-
-      checkResultByText """
-  import java.awt.List;
-  class A {
-      void m(java.util.List<String> list){
-        foo(list);
-      }
-
-      private void foo(java.util.List<String> list) {
-          
-      }
-  }
-  """
+    settings.setUseFqClassNames(true)
+    configureFromFileText "a.java", """
+import java.awt.List;
+class A {
+    void m(java.util.List<String> list){
+      fo<caret>o(list);
     }
-    finally {
-      settings.setUseFqClassNames(fqClassNames)
+}
+"""
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable)
+    doAction("Create method 'foo' in 'A'")
+    def state = TemplateManagerImpl.getTemplateState(getEditor())
+
+    def document = getEditor().getDocument()
+    def offset = getEditor().getCaretModel().getOffset()
+
+    ApplicationManager.application.runWriteAction {
+      def method = PsiTreeUtil.getParentOfType(getFile().findElementAt(offset), PsiMethod.class)
+      method.getModifierList().setModifierProperty(PsiModifier.STATIC, false)
+      PsiDocumentManager.getInstance(getFile().project).commitDocument(document)
     }
+
+    state.gotoEnd(false)
+
+    checkResultByText """
+import java.awt.List;
+class A {
+    void m(java.util.List<String> list){
+      foo(list);
+    }
+
+    private void foo(java.util.List<String> list) {
+        
+    }
+}
+"""
   }
 
   void "test format adjusted imports"() {
@@ -254,5 +248,45 @@ class B<T>
     }
 }
 '''
+  }
+
+  void 'test create property in invalid class'() {
+    configureFromFileText 'InvalidClass.java', '''\
+public class InvalidClass {
+    void usage() {
+        <caret>getFoo();
+    }
+'''
+
+    TemplateManagerImpl.setTemplateTesting project, testRootDisposable
+    doAction "Create read-only property 'foo' in 'InvalidClass'"
+    TemplateManagerImpl.getTemplateState editor gotoEnd false
+
+    checkResultByText '''\
+public class InvalidClass {
+    private Object foo;
+
+    void usage() {
+        getFoo();
+    }
+
+    public Object getFoo() {<caret>
+        return foo;
+    }
+'''
+  }
+
+  void 'test deepest super methods are included in expected info when available'() {
+    configureFromFileText 'a.java', '''\
+class A {
+  {
+    new A().get<caret>Bar().toString();
+  }
+}
+'''
+    def expr = PsiTreeUtil.getParentOfType(file.findElementAt(editor.caretModel.offset), PsiExpression.class)
+
+    def types = ExpectedTypesProvider.getExpectedTypes(expr, false)
+    assertNotNull(types.find {it.defaultType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)})
   }
 }

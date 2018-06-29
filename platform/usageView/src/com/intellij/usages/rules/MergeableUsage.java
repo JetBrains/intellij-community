@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface MergeableUsage {
   /**
-   * @param mergeableUsage
    * @return true if merge succeeded
    */
   boolean merge(@NotNull MergeableUsage mergeableUsage);

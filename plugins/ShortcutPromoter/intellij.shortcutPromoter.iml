@@ -11,5 +11,6 @@
     <orderEntry type="module" module-name="intellij.platform.core" />
     <orderEntry type="module" module-name="intellij.platform.editor" />
     <orderEntry type="module" module-name="intellij.platform.ide" />
+    <orderEntry type="library" name="JDOM" level="project" />
   </component>
 </module>

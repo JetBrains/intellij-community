@@ -21,11 +21,11 @@ import com.intellij.ide.util.gotoByName.GotoFileCellRenderer;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.impl.EditorTabbedContainer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -45,7 +45,7 @@ import java.util.LinkedList;
 /**
 * @author Konstantin Bulenkov
 */
-class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
+public class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement> {
 
   private final JList myList;
 
@@ -74,7 +74,7 @@ class SearchEverywherePsiRenderer extends PsiElementListCellRenderer<PsiElement>
     VirtualFile file = element instanceof PsiFile ? PsiUtilCore.getVirtualFile(element) :
                        element instanceof VirtualFile ? (VirtualFile)element : null;
     if (file != null) {
-      return EditorTabbedContainer.calcTabTitle(element.getProject(), file);
+      return VfsPresentationUtil.getPresentableNameForUI(element.getProject(), file);
     }
     String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : null;
     return StringUtil.notNullize(name, "<unnamed>");

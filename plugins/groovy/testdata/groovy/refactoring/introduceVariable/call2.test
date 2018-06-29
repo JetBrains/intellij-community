@@ -4,7 +4,7 @@ foo 1,2,3
 foo 1,2,3
 foo 1,2,3
 -----
-def preved = foo(1, 2, 3)<caret>
+def preved = foo 1,2,3<caret>
 preved
 preved
 preved

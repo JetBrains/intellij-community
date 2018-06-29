@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.popup;
 
 import com.intellij.codeInsight.hint.HintUtil;
@@ -30,11 +30,9 @@ import com.intellij.openapi.wm.impl.IdeGlassPaneImpl;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.ui.speedSearch.SpeedSearch;
-import com.intellij.util.Alarm;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.Processor;
+import com.intellij.util.*;
 import com.intellij.util.containers.WeakList;
 import com.intellij.util.ui.*;
 import com.intellij.util.ui.accessibility.AccessibleContextUtil;
@@ -51,6 +49,12 @@ import java.util.List;
 import java.util.Set;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
+import static java.awt.AWTEvent.MOUSE_EVENT_MASK;
+import static java.awt.AWTEvent.MOUSE_MOTION_EVENT_MASK;
+import static java.awt.event.MouseEvent.MOUSE_ENTERED;
+import static java.awt.event.MouseEvent.MOUSE_MOVED;
+import static java.awt.event.WindowEvent.WINDOW_ACTIVATED;
+import static java.awt.event.WindowEvent.WINDOW_GAINED_FOCUS;
 
 public class AbstractPopup implements JBPopup {
   public static final String SHOW_HINTS = "ShowHints";
@@ -267,7 +271,8 @@ public class AbstractPopup implements JBPopup {
       if (pinCallback != null) {
         myCaption.setButtonComponent(new InplaceButton(
           new IconButton("Open as Tool Window", 
-                         AllIcons.General.AutohideOff, AllIcons.General.AutohideOff, AllIcons.General.AutohideOffInactive),
+                         AllIcons.General.Pin_tab, AllIcons.General.Pin_tab,
+                         IconLoader.getDisabledIcon(AllIcons.General.Pin_tab)),
           e -> pinCallback.process(this)
         ), JBUI.Borders.empty(4));
       }
@@ -454,9 +459,7 @@ public class AbstractPopup implements JBPopup {
 
   @Override
   public void showUnderneathOf(@NotNull Component aComponent) {
-    show(new RelativePoint(aComponent, UIUtil.isUnderWin10LookAndFeel() ?
-              new Point(JBUI.scale(2), aComponent.getHeight()) :
-              new Point(0, aComponent.getHeight())));
+    show(new RelativePoint(aComponent, new Point(JBUI.scale(2), aComponent.getHeight())));
   }
 
   @Override
@@ -656,9 +659,9 @@ public class AbstractPopup implements JBPopup {
       if (myUseDimServiceForXYLocation) {
         final JRootPane root = myComponent.getRootPane();
         if (root != null) {
-          final Container popupWindow = root.getParent();
-          if (popupWindow != null && popupWindow.isShowing()) {
-            storeLocation(fixLocateByContent(popupWindow.getLocationOnScreen(), true));
+          Point location = getLocationOnScreen(root.getParent());
+          if (location != null) {
+            storeLocation(fixLocateByContent(location, true));
           }
         }
       }
@@ -871,7 +874,7 @@ public class AbstractPopup implements JBPopup {
 
       int i = Registry.intValue("ide.popup.resizable.border.sensitivity", 4);
       WindowResizeListener resizeListener = new WindowResizeListener(
-        myContent,
+        myComponent,
         myMovable ? JBUI.insets(i) : JBUI.insets(0, 0, i, i),
         isToDrawMacCorner() ? AllIcons.General.MacCorner : null) {
         private Cursor myCursor;
@@ -881,8 +884,8 @@ public class AbstractPopup implements JBPopup {
           if (myCursor != cursor || myCursor != Cursor.getDefaultCursor()) {
             glass.setCursor(cursor, this);
             myCursor = cursor;
+            super.setCursor(content, cursor);
           }
-          super.setCursor(content, cursor);
         }
       };
       glass.addMousePreprocessor(resizeListener, this);
@@ -926,18 +929,12 @@ public class AbstractPopup implements JBPopup {
 
     window.setFocusableWindowState(myRequestFocus);
     window.setFocusable(myRequestFocus);
-    // temporary w/a (will be brought back in jdk)
-    if ("TRUE".equals(getContent().getClientProperty("BookmarkPopup"))) {
-      window.setType(Window.Type.NORMAL);
-    } else if (SystemInfo.isJetBrainsJvm) {
-      window.setType(Window.Type.POPUP);
-    }
 
     // Swing popup default always on top state is set in true
     window.setAlwaysOnTop(false);
 
     if (myFocusable) {
-      window.setFocusTraversalPolicy(new FocusTraversalPolicy() {
+      FocusTraversalPolicy focusTraversalPolicy = new FocusTraversalPolicy() {
         @Override
         public Component getComponentAfter(Container aContainer, Component aComponent) {
           return getComponent();
@@ -966,16 +963,27 @@ public class AbstractPopup implements JBPopup {
         public Component getDefaultComponent(Container aContainer) {
           return getComponent();
         }
-      });
+      };
+      window.setFocusTraversalPolicy(focusTraversalPolicy);
+      Disposer.register(this, () -> window.setFocusTraversalPolicy(null));
     }
 
     window.setAutoRequestFocus(myRequestFocus);
 
+    final String data = getUserData(String.class);
+    final boolean popupIsSimpleWindow = "TRUE".equals(getContent().getClientProperty("BookmarkPopup"));
+    myContent.getRootPane().putClientProperty("SIMPLE_WINDOW", "SIMPLE_WINDOW".equals(data) || popupIsSimpleWindow);
+
+    myWindow = window;
+    setMinimumSize(myMinSize);
+
+    final Disposable tb = TouchBarsManager.showPopupBar(this, myContent);
+    if (tb != null)
+      Disposer.register(this, tb);
+
     myPopup.show();
 
     WindowAction.setEnabledFor(myPopup.getWindow(), myResizable);
-
-    myWindow = window;
 
     myWindowListener = new MyWindowListener();
     window.addWindowListener(myWindowListener);
@@ -988,8 +996,6 @@ public class AbstractPopup implements JBPopup {
         WindowManager.getInstance().doNotSuggestAsParent(myWindow);
       }
     }
-
-    setMinimumSize(myMinSize);
 
     final Runnable afterShow = () -> {
       if (isDisposed()) {
@@ -1079,15 +1085,14 @@ public class AbstractPopup implements JBPopup {
     final MouseAdapter mouseAdapter = new MouseAdapter() {
       @Override
       public void mousePressed(MouseEvent e) {
-        Point point = (Point)e.getPoint().clone();
-        SwingUtilities.convertPointToScreen(point, e.getComponent());
-
-        final Dimension dimension = myContent.getSize();
-        dimension.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
-        dimension.width += 4;
-        Point locationOnScreen = myContent.getLocationOnScreen();
-        final Rectangle bounds = new Rectangle(new Point(locationOnScreen.x - 2, locationOnScreen.y - 2), dimension);
-        if (!bounds.contains(point)) {
+        Rectangle bounds = getBoundsOnScreen(myContent);
+        if (bounds != null) {
+          bounds.x -= 2;
+          bounds.y -= 2;
+          bounds.width += 4;
+          bounds.height += myResizable && isToDrawMacCorner() ? AllIcons.General.MacCorner.getIconHeight() : 4;
+        }
+        if (bounds == null || !bounds.contains(e.getLocationOnScreen())) {
           cancel();
         }
       }
@@ -1114,8 +1119,8 @@ public class AbstractPopup implements JBPopup {
 
     if (myCancelOnMouseOutCallback != null || myCancelOnWindow) {
       myMouseOutCanceller = new Canceller();
-      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller, AWTEvent.MOUSE_EVENT_MASK | WindowEvent.WINDOW_ACTIVATED |
-                                                                           AWTEvent.MOUSE_MOTION_EVENT_MASK);
+      Toolkit.getDefaultToolkit().addAWTEventListener(myMouseOutCanceller,
+                                                      MOUSE_EVENT_MASK | WINDOW_ACTIVATED | WINDOW_GAINED_FOCUS | MOUSE_MOTION_EVENT_MASK);
     }
 
 
@@ -1312,16 +1317,6 @@ public class AbstractPopup implements JBPopup {
     }
   }
 
-  @Deprecated
-  public void pack() {
-    if (isBusy()) return;
-
-    final Window window = getContentWindow(myContent);
-    if (window != null) {
-      window.pack();
-    }
-  }
-
   public JComponent getComponent() {
     return myComponent;
   }
@@ -1509,32 +1504,32 @@ public class AbstractPopup implements JBPopup {
 
     @Override
     public void eventDispatched(final AWTEvent event) {
-      if (event.getID() == WindowEvent.WINDOW_ACTIVATED) {
-        if (myCancelOnWindow && myPopup != null && !myPopup.isPopupWindow(((WindowEvent)event).getWindow())) {
-          cancel();
-        }
-      }
-      else if (event.getID() == MouseEvent.MOUSE_ENTERED) {
-        if (withinPopup(event)) {
-          myEverEntered = true;
-        }
-      }
-      else if (event.getID() == MouseEvent.MOUSE_MOVED) {
-        if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
-          if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
+      switch (event.getID()) {
+        case WINDOW_ACTIVATED:
+        case WINDOW_GAINED_FOCUS:
+          if (myCancelOnWindow && myPopup != null && !myPopup.isPopupWindow(((WindowEvent)event).getWindow())) {
             cancel();
           }
-        }
+          break;
+        case MOUSE_ENTERED:
+          if (withinPopup(event)) {
+            myEverEntered = true;
+          }
+          break;
+        case MOUSE_MOVED:
+          if (myCancelOnMouseOutCallback != null && myEverEntered && !withinPopup(event)) {
+            if (myCancelOnMouseOutCallback.check((MouseEvent)event)) {
+              cancel();
+            }
+          }
+          break;
       }
     }
 
     private boolean withinPopup(final AWTEvent event) {
-      if (!myContent.isShowing()) return false;
-
       final MouseEvent mouse = (MouseEvent)event;
-      final Point point = mouse.getPoint();
-      SwingUtilities.convertPointToScreen(point, mouse.getComponent());
-      return new Rectangle(myContent.getLocationOnScreen(), myContent.getSize()).contains(point);
+      Rectangle bounds = getBoundsOnScreen(myContent);
+      return bounds != null && bounds.contains(mouse.getLocationOnScreen());
     }
   }
 
@@ -1586,20 +1581,18 @@ public class AbstractPopup implements JBPopup {
   private void setSize(Dimension size, boolean adjustByContent) {
     if (isBusy()) return;
 
-    Dimension toSet = size;
+    Dimension toSet = new Dimension(size);
+    if (adjustByContent) toSet.height += getAdComponentHeight();
     if (myPopup == null) {
       myForcedSize = toSet;
     }
     else {
-      if (adjustByContent) {
-        toSet.height += getAdComponentHeight();
-      }
       updateMaskAndAlpha(setSize(myContent, toSet));
     }
   }
 
   private int getAdComponentHeight() {
-    return myAdComponent != null && myAdComponent.isShowing() ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
+    return myAdComponent != null ? myAdComponent.getPreferredSize().height + JBUI.scale(1) : 0;
   }
 
   @Override
@@ -1638,6 +1631,7 @@ public class AbstractPopup implements JBPopup {
     return popupWindow;
   }
 
+  @Override
   public void setCaption(String title) {
     if (myCaption instanceof TitlePanel) {
       ((TitlePanel)myCaption).setText(title);
@@ -1690,7 +1684,7 @@ public class AbstractPopup implements JBPopup {
   }
 
   public Window getPopupWindow() {
-    return myPopup.getWindow();
+    return myPopup != null ? myPopup.getWindow() : null;
   }
 
   public void setUserData(List<Object> userData) {
@@ -1905,5 +1899,16 @@ public class AbstractPopup implements JBPopup {
       component = component.getParent();
     }
     return null;
+  }
+
+  @Nullable
+  private static Point getLocationOnScreen(@Nullable Component component) {
+    return component == null || !component.isShowing() ? null : component.getLocationOnScreen();
+  }
+
+  @Nullable
+  private static Rectangle getBoundsOnScreen(@Nullable Component component) {
+    Point point = getLocationOnScreen(component);
+    return point == null ? null : new Rectangle(point, component.getSize());
   }
 }

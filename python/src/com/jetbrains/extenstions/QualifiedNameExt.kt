@@ -18,6 +18,9 @@ package com.jetbrains.extenstions
 import com.intellij.openapi.module.Module
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.projectRoots.Sdk
+import com.intellij.openapi.roots.ModuleRootManager
+import com.intellij.openapi.roots.OrderRootType
+import com.intellij.openapi.roots.ProjectRootManager
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDirectory
 import com.intellij.psi.PsiElement
@@ -37,18 +40,29 @@ interface ContextAnchor {
   val project: Project
   val qualifiedNameResolveContext: PyQualifiedNameResolveContext?
   val scope: GlobalSearchScope
+  fun getRoots(): Array<VirtualFile> {
+    return sdk?.rootProvider?.getFiles(OrderRootType.CLASSES) ?: emptyArray()
+  }
 }
 
-class ModuleBasedContextAnchor(module: Module) : ContextAnchor {
-  override val sdk = module.getSdk()
-  override val project = module.project
-  override val qualifiedNameResolveContext = fromModule(module)
-  override val scope = module.moduleContentScope
+class ModuleBasedContextAnchor(val module: Module) : ContextAnchor {
+  override val sdk: Sdk? = module.getSdk()
+  override val project: Project = module.project
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext = fromModule(module)
+  override val scope: GlobalSearchScope = module.moduleContentScope
+  override fun getRoots(): Array<VirtualFile> {
+    val manager = ModuleRootManager.getInstance(module)
+    return super.getRoots() + manager.contentRoots + manager.sourceRoots
+  }
 }
 
 class ProjectSdkContextAnchor(override val project: Project, override val sdk: Sdk?) : ContextAnchor {
-  override val qualifiedNameResolveContext = sdk?.let { fromSdk(project, it) }
-  override val scope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
+  override val qualifiedNameResolveContext: PyQualifiedNameResolveContext? = sdk?.let { fromSdk(project, it) }
+  override val scope: GlobalSearchScope = GlobalSearchScope.projectScope(project) //TODO: Check if project scope includes SDK
+  override fun getRoots(): Array<VirtualFile> {
+    val manager = ProjectRootManager.getInstance(project)
+    return super.getRoots() + manager.contentRoots + manager.contentSourceRoots
+  }
 }
 
 
@@ -124,7 +138,7 @@ fun QualifiedName.getElementAndResolvableName(context: QNameResolveContext, stop
     }
 
     if (element == null) { // Resolve against roots
-      element = resolveQualifiedName(currentName, resolveContext).firstOrNull()
+      element = resolveQualifiedNameWithClasses(currentName, resolveContext).firstOrNull()
     }
 
     if (element != null || stopOnFirstFail) {

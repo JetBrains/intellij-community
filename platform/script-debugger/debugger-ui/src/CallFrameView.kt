@@ -36,7 +36,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
 
   private var evaluator: XDebuggerEvaluator? = null
 
-  override fun getEqualityObject() = callFrame.equalityObject
+  override fun getEqualityObject(): Any = callFrame.equalityObject
 
   override fun computeChildren(node: XCompositeNode) {
     node.setAlreadySorted(true)
@@ -46,12 +46,12 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
   override val evaluateContext: EvaluateContext
     get() = callFrame.evaluateContext
 
-  override fun watchableAsEvaluationExpression() = true
+  override fun watchableAsEvaluationExpression(): Boolean = true
 
   override val memberFilter: Promise<MemberFilter>
     get() = viewSupport.getMemberFilter(this)
 
-  fun getMemberFilter(scope: Scope) = createVariableContext(scope, this, callFrame).memberFilter
+  fun getMemberFilter(scope: Scope): Promise<MemberFilter> = createVariableContext(scope, this, callFrame).memberFilter
 
   override fun getEvaluator(): XDebuggerEvaluator? {
     if (evaluator == null) {
@@ -60,7 +60,7 @@ class CallFrameView @JvmOverloads constructor(val callFrame: CallFrame,
     return evaluator
   }
 
-  override fun getSourcePosition() = sourceInfo
+  override fun getSourcePosition(): SourceInfo? = sourceInfo
 
   override fun customizePresentation(component: ColoredTextContainer) {
     if (sourceInfo == null) {

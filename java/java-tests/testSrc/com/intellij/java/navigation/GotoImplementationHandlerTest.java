@@ -33,8 +33,6 @@ import com.intellij.util.containers.ContainerUtil;
 import java.util.Arrays;
 import java.util.List;
 
-import static org.junit.Assert.assertNotEquals;
-
 public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCase {
   public void testMultipleImplsFromAbstractCall() {
     PsiFile file = myFixture.addFileToProject("Foo.java", "public abstract class Hello {\n" +
@@ -56,53 +54,6 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
 
     final PsiElement[] impls = getTargets(file);
     assertEquals(2, impls.length);
-  }
-
-  public void testUnderInstanceOf() {
-    PsiFile file = myFixture.addFileToProject("Foo.java", "abstract class Hello {\n" +
-                                                          "    abstract void foo();\n" +
-                                                          "\n" +
-                                                          "    void test(Hello h) {\n" +
-                                                          "      if(h instanceof Hello1) h.fo<caret>o();\n" +
-                                                          "    }\n" +
-                                                          "    \n" +
-                                                          "    class Hello1 extends Hello {\n" +
-                                                          "        void foo() {}\n" +
-                                                          "    }\n" +
-                                                          "    class Hello2 extends Hello {\n" +
-                                                          "        void foo() {}\n" +
-                                                          "    }\n" +
-                                                          "}");
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-
-    final PsiElement[] impls = getTargets(file);
-    assertEquals(1, impls.length);
-    assertTrue(impls[0] instanceof PsiMethod);
-    assertEquals("Hello.Hello1", ((PsiMethod)impls[0]).getContainingClass().getQualifiedName());
-  }
-
-  public void testUnderInstanceOfComplexState() {
-    PsiFile file = myFixture.addFileToProject("Foo.java", "abstract class Hello {\n" +
-                                                          "    abstract void foo();\n" +
-                                                          "\n" +
-                                                          "    void test(Hello h) {\n" +
-                                                          "      if(h instanceof Cloneable) h.foo();\n" +
-                                                          "      if(h instanceof Hello1) h.fo<caret>o();\n" +
-                                                          "    }\n" +
-                                                          "    \n" +
-                                                          "    class Hello1 extends Hello {\n" +
-                                                          "        void foo() {}\n" +
-                                                          "    }\n" +
-                                                          "    class Hello2 extends Hello {\n" +
-                                                          "        void foo() {}\n" +
-                                                          "    }\n" +
-                                                          "}");
-    myFixture.configureFromExistingVirtualFile(file.getVirtualFile());
-
-    final PsiElement[] impls = getTargets(file);
-    assertEquals(1, impls.length);
-    assertTrue(impls[0] instanceof PsiMethod);
-    assertEquals("Hello.Hello1", ((PsiMethod)impls[0]).getContainingClass().getQualifiedName());
   }
 
   public void testFromIncompleteCode() {
@@ -401,10 +352,11 @@ public class GotoImplementationHandlerTest extends JavaCodeInsightFixtureTestCas
       PsiClass psiClass = (PsiClass)element;
       String name = psiClass.getName();
       if ("1".equals(name) || "2".equals(name)) {
-        assertEquals(null, psiClass.getModifierList());
+        assertNull(psiClass.getModifierList());
         assertTrue(psiClass.hasModifierProperty(PsiModifier.FINAL));
-      } else if (!"MyInterfaceImplementation".equals(name)) {
-        assertNotEquals(null, psiClass.getModifierList());
+      }
+      else if (!"MyInterfaceImplementation".equals(name)) {
+        assertNotNull(psiClass.getModifierList());
       }
     }
 

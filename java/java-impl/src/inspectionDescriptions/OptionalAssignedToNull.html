@@ -1,8 +1,12 @@
 <html>
 <body>
-<p>This inspection warns when <code>null</code> is assigned to <code>Optional</code> variable or returned from method returning
+This inspection warns when <code>null</code> is assigned to <code>Optional</code> variable or returned from method returning
   <code>Optional</code>. It's recommended to use <code>Optional.empty()</code> (or <code>Optional.absent()</code> for Guava) to denote
-  an empty value.</p>
+  an empty value.
+<p>
+  Use checkbox below to report also comparisons like <b>optional == null</b>. While in rare cases (e.g. lazily initialized optional field)
+  this might be correct, usually optional variable is never null, and probably <b>optional.isPresent()</b> was intended.
+</p>
 <!-- tooltip end -->
 <p>This inspection only reports if the project or module is configured to use a language level of 8 or higher.</p>
 <p><small>New in 2017.2</small>

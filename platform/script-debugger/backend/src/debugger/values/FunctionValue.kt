@@ -41,5 +41,5 @@ interface FunctionValue : ObjectValue {
    * Method could be called (it is normal and expected) for unresolved function.
    * It must return quickly. Return [com.intellij.util.ThreeState.UNSURE] otherwise.
    */
-  fun hasScopes() = ThreeState.UNSURE
+  fun hasScopes(): ThreeState = ThreeState.UNSURE
 }

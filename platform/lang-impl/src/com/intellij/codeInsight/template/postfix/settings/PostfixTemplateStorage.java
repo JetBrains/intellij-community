@@ -5,7 +5,7 @@ import com.intellij.codeInsight.template.postfix.templates.LanguagePostfixTempla
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.PostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.templates.editable.PostfixChangedBuiltinTemplate;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
+import com.intellij.codeInsight.template.postfix.templates.editable.PostfixTemplateWrapper;
 import com.intellij.lang.LanguageExtensionPoint;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -30,17 +30,17 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
   private static final String KEY_ATTR_NAME = "key";
   private static final String BUILTIN_ATTR_NAME = "builtin";
 
-  private final Map<String, PostfixEditableTemplateProvider> myEditableProviders;
+  private final Map<String, PostfixTemplateProvider> myTemplateProviders;
   private final MultiMap<String, PostfixTemplate> myTemplates = MultiMap.createSmart();
   private final List<Element> myUnloadedTemplates = ContainerUtil.newSmartList();
 
   public PostfixTemplateStorage() {
-    myEditableProviders = new HashMap<>();
+    myTemplateProviders = new HashMap<>();
     LanguageExtensionPoint[] extensions = new ExtensionPointName<LanguageExtensionPoint>(LanguagePostfixTemplate.EP_NAME).getExtensions();
     for (LanguageExtensionPoint extension : extensions) {
       Object provider = extension.getInstance();
-      if (provider instanceof PostfixEditableTemplateProvider) {
-        myEditableProviders.put(((PostfixEditableTemplateProvider)provider).getId(), (PostfixEditableTemplateProvider)provider);
+      if (provider instanceof PostfixTemplateProvider) {
+        myTemplateProviders.put(((PostfixTemplateProvider)provider).getId(), (PostfixTemplateProvider)provider);
       }
     }
   }
@@ -51,11 +51,11 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
   }
 
   @NotNull
-  public Set<PostfixTemplate> getTemplates(@NotNull PostfixEditableTemplateProvider provider) {
+  public Set<PostfixTemplate> getTemplates(@NotNull PostfixTemplateProvider provider) {
     return new HashSet<>(myTemplates.get(provider.getId()));
   }
 
-  public void setTemplates(@NotNull PostfixEditableTemplateProvider provider, @NotNull Collection<PostfixTemplate> templates) {
+  public void setTemplates(@NotNull PostfixTemplateProvider provider, @NotNull Collection<PostfixTemplate> templates) {
     Collection<PostfixTemplate> oldTemplates = myTemplates.get(provider.getId());
     if (!templates.equals(oldTemplates)) {
       myTemplates.put(provider.getId(), templates);
@@ -66,27 +66,27 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
   @Override
   public void loadState(@NotNull final Element state) {
     myTemplates.clear();
-    List<Element> templatesElement = state.getChildren(TEMPLATE_TAG);
-    for (Element templateElement : templatesElement) {
-      PostfixEditableTemplateProvider provider = myEditableProviders.get(templateElement.getAttributeValue(PROVIDER_ATTR_NAME, ""));
+    for (Element templateElement : state.getChildren(TEMPLATE_TAG)) {
+      PostfixTemplateProvider provider = myTemplateProviders.get(templateElement.getAttributeValue(PROVIDER_ATTR_NAME, ""));
       if (provider != null) {
         String templateId = templateElement.getAttributeValue(ID_ATTR_NAME, "");
         String templateName = StringUtil.trimStart(StringUtil.notNullize(templateElement.getAttributeValue(KEY_ATTR_NAME)), ".");
         if (StringUtil.isEmpty(templateId) || StringUtil.isEmpty(templateName)) continue;
 
         PostfixTemplate externalTemplate = provider.readExternalTemplate(templateId, templateName, templateElement);
-        if (externalTemplate == null) {
-          myUnloadedTemplates.add(templateElement);
-          continue;
-        }
-
         String builtinId = templateElement.getAttributeValue(BUILTIN_ATTR_NAME);
         PostfixTemplate builtinTemplate = findBuiltinTemplate(builtinId, provider);
         if (builtinTemplate != null) {
-          myTemplates.putValue(provider.getId(), new PostfixChangedBuiltinTemplate(externalTemplate, builtinTemplate));
+          PostfixTemplate delegate = externalTemplate != null
+                                     ? externalTemplate
+                                     : new PostfixTemplateWrapper(templateId, templateName, "." + templateName, builtinTemplate, provider);
+          myTemplates.putValue(provider.getId(), new PostfixChangedBuiltinTemplate(delegate, builtinTemplate));
+        }
+        else if (externalTemplate != null) {
+          myTemplates.putValue(provider.getId(), externalTemplate);
         }
         else {
-          myTemplates.putValue(provider.getId(), externalTemplate);
+          myUnloadedTemplates.add(templateElement);
         }
       }
       else {
@@ -109,14 +109,14 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
     for (Map.Entry<String, Collection<PostfixTemplate>> entry : myTemplates.entrySet()) {
       for (PostfixTemplate template : entry.getValue()) {
         PostfixTemplateProvider provider = template.getProvider();
-        if (provider instanceof PostfixEditableTemplateProvider) {
+        if (provider != null) {
           if (template instanceof PostfixChangedBuiltinTemplate) {
             PostfixChangedBuiltinTemplate changedBuiltinTemplate = (PostfixChangedBuiltinTemplate)template;
             String builtin = changedBuiltinTemplate.getBuiltinTemplate().getId();
-            element.addContent(writeTemplate(changedBuiltinTemplate.getDelegate(), (PostfixEditableTemplateProvider)provider, builtin));
+            element.addContent(writeTemplate(changedBuiltinTemplate.getDelegate(), provider, builtin));
           }
           else {
-            element.addContent(writeTemplate(template, (PostfixEditableTemplateProvider)provider, null));
+            element.addContent(writeTemplate(template, provider, null));
           }
         }
       }
@@ -125,7 +125,7 @@ public class PostfixTemplateStorage extends SimpleModificationTracker implements
   }
 
   private static Element writeTemplate(@NotNull PostfixTemplate template,
-                                       @NotNull PostfixEditableTemplateProvider provider,
+                                       @NotNull PostfixTemplateProvider provider,
                                        @Nullable String builtinId) {
     Element templateElement = new Element(TEMPLATE_TAG);
     templateElement.setAttribute(ID_ATTR_NAME, template.getId());

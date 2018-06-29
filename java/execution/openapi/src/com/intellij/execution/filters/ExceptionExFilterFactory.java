@@ -21,7 +21,6 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -65,8 +64,8 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
                                  final int startOffset,
                                  int startLineNumber,
                                  @NotNull final Consumer<AdditionalHighlight> consumer) {
-      Map<String, Trinity<TextRange, TextRange, TextRange>> visited = new THashMap<>();
-      final Trinity<TextRange, TextRange, TextRange> emptyInfo = Trinity.create(null, null, null);
+      Map<String, ExceptionWorker.ParsedLine> visited = new THashMap<>();
+      ExceptionWorker.ParsedLine emptyInfo = new ExceptionWorker.ParsedLine(TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, TextRange.EMPTY_RANGE, null, -1);
 
       final ExceptionWorker worker = new ExceptionWorker(myCache);
       for (int i = 0; i < copiedFragment.getLineCount(); i++) {
@@ -75,11 +74,11 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
 
         String lineText = copiedFragment.getText(new TextRange(lineStartOffset, lineEndOffset));
         if (!lineText.contains(".java:")) continue;
-        Trinity<TextRange, TextRange, TextRange> info = visited.get(lineText);
+        ExceptionWorker.ParsedLine info = visited.get(lineText);
         if (info == emptyInfo) continue;
 
         if (info == null) {
-          info = ReadAction.compute(() -> doparse(emptyInfo, worker, lineEndOffset, lineText));
+          info = ReadAction.compute(() -> doParse(worker, lineEndOffset, lineText));
           visited.put(lineText, info == null ? emptyInfo : info);
           if (info == null) {
             continue;
@@ -87,7 +86,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
         }
         int off = startOffset + lineStartOffset;
         final Color color = UIUtil.getInactiveTextColor();
-        consumer.consume(new AdditionalHighlight(off + info.first.getStartOffset(), off + info.second.getEndOffset()) {
+        consumer.consume(new AdditionalHighlight(off + info.classFqnRange.getStartOffset(), off + info.methodNameRange.getEndOffset()) {
           @NotNull
           @Override
           public TextAttributes getTextAttributes(@Nullable TextAttributes source) {
@@ -97,9 +96,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       }
     }
 
-    private Trinity<TextRange, TextRange, TextRange> doparse(Trinity<TextRange, TextRange, TextRange> emptyInfo,
-                                                             ExceptionWorker worker,
-                                                             int lineEndOffset, String lineText) {
+    private static ExceptionWorker.ParsedLine doParse(ExceptionWorker worker, int lineEndOffset, String lineText) {
       Result result = worker.execute(lineText, lineEndOffset);
       if (result == null) return null;
       HyperlinkInfo hyperlinkInfo = result.getHyperlinkInfo();
@@ -117,8 +114,7 @@ public class ExceptionExFilterFactory implements ExceptionFilterFactory {
       PsiTryStatement parent = PsiTreeUtil.getParentOfType(element, PsiTryStatement.class, true, PsiClass.class);
       PsiCodeBlock tryBlock = parent != null? parent.getTryBlock() : null;
       if (tryBlock == null || !tryBlock.getTextRange().contains(offset)) return null;
-      Trinity<TextRange, TextRange, TextRange> info = worker.getInfo();
-      return info;
+      return worker.getInfo();
     }
 
     @NotNull

@@ -2,7 +2,6 @@
 package com.intellij.openapi.projectRoots;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.Comparing;
@@ -39,6 +38,7 @@ public abstract class ProjectJdkTable {
   }
 
   /** @deprecated comparing version strings across SDK types makes no sense; use {@link #findMostRecentSdkOfType} (to be removed in IDEA 2019) */
+  @Deprecated
   public Sdk findMostRecentSdk(@NotNull Condition<Sdk> condition) {
     Sdk found = null;
     for (Sdk each : getAllJdks()) {
@@ -55,12 +55,7 @@ public abstract class ProjectJdkTable {
   @TestOnly
   public void addJdk(@NotNull Sdk jdk, @NotNull Disposable parentDisposable) {
     addJdk(jdk);
-    Disposer.register(parentDisposable, () -> new WriteAction() {
-      @Override
-      protected void run(@NotNull Result result) {
-        removeJdk(jdk);
-      }
-    }.execute());
+    Disposer.register(parentDisposable, () -> WriteAction.runAndWait(()-> removeJdk(jdk)));
   }
 
   public abstract void removeJdk(@NotNull Sdk jdk);
@@ -82,11 +77,13 @@ public abstract class ProjectJdkTable {
   /**
    * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
    */
+  @Deprecated
   public abstract void addListener(@NotNull Listener listener);
 
   /**
    * @deprecated use {@link ProjectJdkTable#JDK_TABLE_TOPIC} instead
    */
+  @Deprecated
   public abstract void removeListener(@NotNull Listener listener);
 
   @NotNull

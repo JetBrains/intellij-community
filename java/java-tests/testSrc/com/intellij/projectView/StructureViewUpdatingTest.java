@@ -42,7 +42,7 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
     FileEditor[] fileEditors = fileEditorManager.openFile(virtualFile, false);
     FileEditor fileEditor = fileEditors[0];
     StructureViewComponent svc = (StructureViewComponent)fileEditor.getStructureViewBuilder()
-      .createStructureView(fileEditor, myProject);
+                                                                   .createStructureView(fileEditor, myProject);
     Disposer.register(getTestRootDisposable(), svc);
     fileEditorManager.closeFile(virtualFile);
     Document document = PsiDocumentManager.getInstance(myProject).getDocument(psiClass.getContainingFile());
@@ -66,13 +66,10 @@ public class StructureViewUpdatingTest extends TestSourceBasedTestCase {
       "  myField1: boolean\n" +
       "  myField2: boolean\n");
 
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() {
-        int offset = document.getLineStartOffset(5);
-        document.insertString(offset, "    boolean myNewField = false;\n");
-      }
-    }.execute().throwException();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      int offset = document.getLineStartOffset(5);
+      document.insertString(offset, "    boolean myNewField = false;\n");
+    });
 
     PsiDocumentManager.getInstance(myProject).commitDocument(document);
 

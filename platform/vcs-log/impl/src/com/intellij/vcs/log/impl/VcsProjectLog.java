@@ -48,6 +48,7 @@ public class VcsProjectLog implements Disposable {
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
   @NotNull private final VcsLogTabsProperties myUiProperties;
+  @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull
   private final LazyVcsLogManager myLogManager = new LazyVcsLogManager();
@@ -59,6 +60,7 @@ public class VcsProjectLog implements Disposable {
     myProject = project;
     myMessageBus = messageBus;
     myUiProperties = uiProperties;
+    myTabsManager = new VcsLogTabsManager(project, messageBus, this);
   }
 
   @Nullable
@@ -86,6 +88,11 @@ public class VcsProjectLog implements Disposable {
   @Nullable
   public VcsLogManager getLogManager() {
     return myLogManager.getCached();
+  }
+
+  @NotNull
+  public VcsLogTabsManager getTabsManager() {
+    return myTabsManager;
   }
 
   @CalledInAny
@@ -180,8 +187,11 @@ public class VcsProjectLog implements Disposable {
       if (myValue != null) {
         myMessageBus.syncPublisher(VCS_PROJECT_LOG_CHANGED).logDisposed(myValue);
         myValue.dispose(callback);
+        myValue = null;
       }
-      myValue = null;
+      else if (callback != null) {
+        ApplicationManager.getApplication().executeOnPooledThread(callback);
+      }
     }
 
     @Nullable
@@ -195,9 +205,9 @@ public class VcsProjectLog implements Disposable {
     public void runActivity(@NotNull Project project) {
       if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) return;
 
-      ApplicationManager.getApplication().executeOnPooledThread(() -> {
-        VcsProjectLog projectLog = getInstance(project);
+      VcsProjectLog projectLog = getInstance(project);
 
+      ApplicationManager.getApplication().executeOnPooledThread(() -> {
         MessageBusConnection connection = project.getMessageBus().connect(project);
         connection.subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, projectLog::recreateLog);
         if (projectLog.hasDvcsRoots()) {

@@ -31,16 +31,6 @@ public class PsiSearchScopeUtil {
     return a == null ? b : b == null ? a : a.union(b);
   }
 
-  /**
-   * @deprecated
-   * Use com.intellij.psi.search.SearchScope#union(com.intellij.psi.search.SearchScope)
-   */
-  @Deprecated
-  @NotNull
-  public static SearchScope scopesUnion(@NotNull SearchScope scope1, @NotNull SearchScope scope2) {
-    return scope1.union(scope2);
-  }
-
   public static boolean isInScope(@NotNull SearchScope scope, @NotNull PsiElement element) {
     if (scope instanceof LocalSearchScope) {
       LocalSearchScope local = (LocalSearchScope)scope;

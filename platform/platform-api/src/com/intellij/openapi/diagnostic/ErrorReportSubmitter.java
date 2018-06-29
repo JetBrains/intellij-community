@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.diagnostic;
 
 import com.intellij.openapi.extensions.PluginAware;
@@ -52,6 +38,13 @@ public abstract class ErrorReportSubmitter implements PluginAware {
   public abstract String getReportActionText();
 
   /**
+   * @return a text of a privacy notice to be shown in the dialog (in HTML; links are allowed).
+   */
+  public String getPrivacyNoticeText() {
+    return null;
+  }
+
+  /**
    * This method is called whenever an exception in a plugin code had happened and a user decided to report a problem to the plugin vendor.
    *
    * @param events          a non-empty sequence of error descriptors.
@@ -60,30 +53,35 @@ public abstract class ErrorReportSubmitter implements PluginAware {
    * @param consumer        a callback to be called after sending is finished (or failed).
    * @return {@code true} if reporting was started, {@code false} if a report can't be sent at the moment.
    */
-  @SuppressWarnings("deprecation")
   public boolean submit(@NotNull IdeaLoggingEvent[] events,
                         @Nullable String additionalInfo,
                         @NotNull Component parentComponent,
                         @NotNull Consumer<SubmittedReportInfo> consumer) {
+    //noinspection deprecation
     return trySubmitAsync(events, additionalInfo, parentComponent, consumer);
   }
 
-  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
-  @SuppressWarnings({"deprecation", "unused"})
+  //<editor-fold desc="Deprecated stuff.">
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("ALL")
   public boolean trySubmitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
     submitAsync(events, info, parent, consumer);
     return true;
   }
 
-  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
-  @SuppressWarnings({"deprecation", "unused"})
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("ALL")
   public void submitAsync(IdeaLoggingEvent[] events, String info, Component parent, Consumer<SubmittedReportInfo> consumer) {
     consumer.consume(submit(events, parent));
   }
 
-  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} (to be removed in IDEA 16) */
-  @SuppressWarnings({"deprecation", "unused"})
+  /** @deprecated implement {@link #submit(IdeaLoggingEvent[], String, Component, Consumer)} instead (to be removed in IDEA 2019) */
+  @Deprecated
+  @SuppressWarnings("ALL")
   public SubmittedReportInfo submit(IdeaLoggingEvent[] events, Component parent) {
     throw new UnsupportedOperationException("Deprecated API called");
   }
+  //</editor-fold>
 }

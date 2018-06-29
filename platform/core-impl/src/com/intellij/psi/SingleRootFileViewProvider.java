@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vfs.PersistentFSConstants;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -163,24 +162,7 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
 
   private PsiFile createFile() {
     try {
-      final VirtualFile vFile = getVirtualFile();
-      if (vFile.isDirectory()) return null;
-      if (isIgnored()) return null;
-
-      Project project = getManager().getProject();
-      if (isPhysical() && vFile.isInLocalFileSystem()) { // check directories consistency
-        final VirtualFile parent = vFile.getParent();
-        if (parent == null) return null;
-        final PsiDirectory psiDir = getManager().findDirectory(parent);
-        if (psiDir == null) {
-          FileIndexFacade indexFacade = FileIndexFacade.getInstance(project);
-          if (!indexFacade.isInLibrarySource(vFile) && !indexFacade.isInLibraryClasses(vFile)) {
-            return null;
-          }
-        }
-      }
-
-      return createFile(project, vFile, getFileType());
+      return shouldCreatePsi() ? createFile(getManager().getProject(), getVirtualFile(), getFileType()) : null;
     }
     catch (ProcessCanceledException e) {
       throw e;
@@ -189,11 +171,6 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       LOG.error(e);
       return null;
     }
-  }
-
-  @Deprecated
-  public static boolean isTooLarge(@NotNull VirtualFile vFile) {
-    return isTooLargeForIntelligence(vFile);
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile) {
@@ -206,10 +183,10 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
   }
 
   private static boolean checkFileSizeLimit(@NotNull VirtualFile vFile) {
-    return !Boolean.TRUE.equals(vFile.getUserData(OUR_NO_SIZE_LIMIT_KEY));
+    return !Boolean.TRUE.equals(vFile.getCopyableUserData(OUR_NO_SIZE_LIMIT_KEY));
   }
   public static void doNotCheckFileSizeLimit(@NotNull VirtualFile vFile) {
-    vFile.putUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
+    vFile.putCopyableUserData(OUR_NO_SIZE_LIMIT_KEY, Boolean.TRUE);
   }
 
   public static boolean isTooLargeForIntelligence(@NotNull VirtualFile vFile, final long contentSize) {
@@ -262,15 +239,6 @@ public class SingleRootFileViewProvider extends AbstractFileViewProvider impleme
       ((PsiFileEx)prev).markInvalidated();
     }
     getManager().getFileManager().setViewProvider(getVirtualFile(), this);
-  }
-
-  @Override
-  public final void markInvalidated() {
-    PsiFile psiFile = getCachedPsi(getBaseLanguage());
-    if (psiFile instanceof PsiFileEx) {
-      ((PsiFileEx)psiFile).markInvalidated();
-    }
-    super.markInvalidated();
   }
 
 }

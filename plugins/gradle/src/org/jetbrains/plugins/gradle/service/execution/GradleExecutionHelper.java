@@ -123,7 +123,7 @@ public class GradleExecutionHelper {
 
     final Application application = ApplicationManager.getApplication();
     if (application != null && application.isUnitTestMode()) {
-      if (!settings.getArguments().contains("--quiet")) {
+      if (!settings.getArguments().contains("--quiet") && !settings.getArguments().contains("--debug")) {
         settings.withArgument("--info");
       }
       settings.withArgument("--recompile-scripts");
@@ -214,7 +214,7 @@ public class GradleExecutionHelper {
     catch (Throwable e) {
       LOG.debug("Gradle execution error", e);
       Throwable rootCause = ExceptionUtil.getRootCause(e);
-      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
+      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause), e);
     }
     finally {
       try {
@@ -233,7 +233,8 @@ public class GradleExecutionHelper {
   public void ensureInstalledWrapper(@NotNull ExternalSystemTaskId id,
                                      @NotNull String projectPath,
                                      @NotNull GradleExecutionSettings settings,
-                                     @NotNull ExternalSystemTaskNotificationListener listener) {
+                                     @NotNull ExternalSystemTaskNotificationListener listener,
+                                     @NotNull CancellationToken cancellationToken) {
 
     if (!settings.getDistributionType().isWrapped()) return;
 
@@ -263,6 +264,7 @@ public class GradleExecutionHelper {
         final File tempFile = writeToFileGradleInitScript(StringUtil.join(lines, SystemProperties.getLineSeparator()));
         settings.withArguments(GradleConstants.INIT_SCRIPT_CMD_OPTION, tempFile.getAbsolutePath());
         BuildLauncher launcher = getBuildLauncher(id, connection, settings, listener);
+        launcher.withCancellationToken(cancellationToken);
         launcher.forTasks("wrapper");
         launcher.run();
         String wrapperPropertyFile = FileUtil.loadFile(wrapperPropertyFileLocation);
@@ -274,6 +276,8 @@ public class GradleExecutionHelper {
     }
     catch (Throwable e) {
       LOG.warn("Can't update wrapper", e);
+      Throwable rootCause = ExceptionUtil.getRootCause(e);
+      throw new ExternalSystemException(ExceptionUtil.getMessage(rootCause));
     }
     finally {
       settings.setRemoteProcessIdleTtlInMs(ttlInMs);
@@ -326,6 +330,7 @@ public class GradleExecutionHelper {
     int ttl = -1;
 
     if (settings != null) {
+      File serviceDirectory = settings.getServiceDirectory() == null ? null : new File(settings.getServiceDirectory());
       File gradleHome = settings.getGradleHome() == null ? null : new File(settings.getGradleHome());
       //noinspection EnumSwitchStatementWhichMissesCases
       switch (settings.getDistributionType()) {
@@ -336,15 +341,14 @@ public class GradleExecutionHelper {
           break;
         case WRAPPED:
           if (settings.getWrapperPropertyFile() != null) {
-            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), gradleHome);
+            DistributionFactoryExt.setWrappedDistribution(connector, settings.getWrapperPropertyFile(), serviceDirectory);
           }
           break;
       }
 
       // Setup service directory if necessary.
-      String serviceDirectory = settings.getServiceDirectory();
       if (serviceDirectory != null) {
-        connector.useGradleUserHomeDir(new File(serviceDirectory));
+        connector.useGradleUserHomeDir(serviceDirectory);
       }
 
       // Setup logging if necessary.
@@ -526,7 +530,14 @@ public class GradleExecutionHelper {
   private static String getToolingExtensionsJarPaths(@NotNull Set<Class> toolingExtensionClasses) {
     final Set<String> jarPaths = ContainerUtil.map2SetNotNull(toolingExtensionClasses, aClass -> {
       String path = PathManager.getJarPathForClass(aClass);
-      return path == null ? null : PathUtil.getCanonicalPath(path);
+      if (path != null) {
+        if (FileUtil.getNameWithoutExtension(path).equals("gradle-api-" + GradleVersion.current().getBaseVersion())) {
+          LOG.warn("The gradle api jar shouldn't be added to the gradle daemon classpath: {" + aClass + "," + path + "}");
+          return null;
+        }
+        return PathUtil.getCanonicalPath(path);
+      }
+      return null;
     });
     StringBuilder buf = new StringBuilder();
     buf.append('[');
@@ -546,6 +557,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated {@link #getModelBuilder(Class, ExternalSystemTaskId, GradleExecutionSettings, ProjectConnection, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
@@ -563,6 +575,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated {@link #getBuildLauncher(ExternalSystemTaskId, ProjectConnection, GradleExecutionSettings, ExternalSystemTaskNotificationListener)}
    */
+  @Deprecated
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
   public BuildLauncher getBuildLauncher(@NotNull final ExternalSystemTaskId id,
@@ -598,6 +611,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated to be removed in future version
    */
+  @Deprecated
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
@@ -613,6 +627,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection)}
    */
+  @Deprecated
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,
@@ -629,6 +644,7 @@ public class GradleExecutionHelper {
   /**
    * @deprecated use {@link #prepare(LongRunningOperation, ExternalSystemTaskId, GradleExecutionSettings, ExternalSystemTaskNotificationListener, ProjectConnection, OutputStream, OutputStream)}
    */
+  @Deprecated
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static void prepare(@NotNull LongRunningOperation operation,
                              @NotNull final ExternalSystemTaskId id,

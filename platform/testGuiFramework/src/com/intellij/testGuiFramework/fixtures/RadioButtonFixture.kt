@@ -21,6 +21,6 @@ import javax.swing.JRadioButton
 
 class RadioButtonFixture(robot: Robot, radioButton: JRadioButton): JRadioButtonFixture(robot, radioButton) {
 
-  fun isSelected() = target().isSelected
+  fun isSelected(): Boolean = target().isSelected
 
 }

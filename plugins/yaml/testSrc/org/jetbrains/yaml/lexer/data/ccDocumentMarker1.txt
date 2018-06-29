@@ -1,0 +1,7 @@
+text ('---:d')
+Eol ('\n')
+Eol ('\n')
+text ('...:r')
+Eol ('\n')
+Eol ('\n')
+comment ('# cc - corner case')

@@ -29,7 +29,6 @@ import com.intellij.problems.Problem;
 import com.intellij.problems.WolfTheProblemSolver;
 import com.intellij.rt.ant.execution.IdeaAntLogger2;
 import com.intellij.util.text.StringTokenizer;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
 import java.lang.ref.WeakReference;
@@ -39,8 +38,7 @@ import java.util.List;
 
 public class OutputParser{
 
-  @NonNls private static final String JAVAC = "javac";
-  @NonNls private static final String ECHO = "echo";
+  private static final String JAVAC = "javac";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ant.execution.OutputParser");
   private final Project myProject;
@@ -52,7 +50,6 @@ public class OutputParser{
   private List<String> myJavacMessages;
   private boolean myFirstLineProcessed;
   private boolean myStartedSuccessfully;
-  private boolean myIsEcho;
 
   public OutputParser(Project project,
                       OSProcessHandler processHandler,
@@ -134,9 +131,6 @@ public class OutputParser{
       if (JAVAC.equals(tagValue)) {
         myJavacMessages = new ArrayList<>();
       }
-      else if (ECHO.equals(tagValue)) {
-        myIsEcho = true;
-      }
     }
 
     if (myJavacMessages != null && (IdeaAntLogger2.MESSAGE == tagName || IdeaAntLogger2.ERROR == tagName)) {
@@ -145,12 +139,7 @@ public class OutputParser{
     }
 
     if (IdeaAntLogger2.MESSAGE == tagName) {
-      if (myIsEcho) {
-        myMessageView.outputMessage(tagValue, AntBuildMessageView.PRIORITY_VERBOSE);
-      }
-      else {
-        myMessageView.outputMessage(tagValue, priority);
-      }
+      myMessageView.outputMessage(tagValue, fixPriority(priority));
     }
     else if (IdeaAntLogger2.TARGET == tagName) {
       myMessageView.startTarget(tagValue);
@@ -172,7 +161,6 @@ public class OutputParser{
       final List<String> javacMessages = myJavacMessages;
       myJavacMessages = null;
       processJavacMessages(javacMessages, myMessageView, myProject);
-      myIsEcho = false;
       if (IdeaAntLogger2.TARGET_END == tagName) {
         myMessageView.finishTarget();
       }
@@ -182,18 +170,15 @@ public class OutputParser{
     }
   }
 
-  private static int getNextTwoPoints(int offset, String message) {
-    for (int i = offset + 1; i < message.length(); i++) {
-      char c = message.charAt(i);
-      if (c == ':') {
-        return i;
-      }
-      if (Character.isDigit(c)) {
-        continue;
-      }
-      return -1;
+  private static int fixPriority(int priority) {
+    if (priority == AntBuildMessageView.PRIORITY_ERR ||
+        priority == AntBuildMessageView.PRIORITY_WARN ||
+        priority == AntBuildMessageView.PRIORITY_INFO ||
+        priority == AntBuildMessageView.PRIORITY_VERBOSE ||
+        priority == AntBuildMessageView.PRIORITY_DEBUG) {
+      return priority;
     }
-    return -1;
+    return AntBuildMessageView.PRIORITY_VERBOSE; // fallback value for unknown priority value
   }
 
   private static void processJavacMessages(final List<String> javacMessages, final AntBuildMessageView messageView, final Project project) {

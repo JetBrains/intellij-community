@@ -46,7 +46,7 @@ public class StatusBarUpdater implements Disposable {
   };
   private final Alarm updateStatusAlarm = new Alarm();
 
-  public StatusBarUpdater(Project project) {
+  StatusBarUpdater(Project project) {
     myProject = project;
 
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
@@ -56,7 +56,7 @@ public class StatusBarUpdater implements Disposable {
       }
     });
 
-    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListenerAdapter() {
+    project.getMessageBus().connect(this).subscribe(DaemonCodeAnalyzer.DAEMON_EVENT_TOPIC, new DaemonCodeAnalyzer.DaemonListener() {
       @Override
       public void daemonFinished() {
         updateLater();

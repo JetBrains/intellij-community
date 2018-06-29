@@ -52,7 +52,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     List<MutableAccessor> accessors = getAccessors(myBeanClass);
     myBindings = new Binding[accessors.size()];
     for (int i = 0, size = accessors.size(); i < size; i++) {
-      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OLD : classAnnotation.style());
+      Binding binding = createBinding(accessors.get(i), serializer, classAnnotation == null ? Property.Style.OPTION_TAG : classAnnotation.style());
       binding.init(originalType, serializer);
       myBindings[i] = binding;
     }
@@ -368,7 +368,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
 
     if (setter == null) {
       // check hasStoreAnnotations to ensure that this addition will not lead to regression (since there is a chance that there is some existing not-annotated list getters without setter)
-      return (List.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) && hasStoreAnnotations(getter);
+      return (Collection.class.isAssignableFrom(getter.getReturnType()) || Map.class.isAssignableFrom(getter.getReturnType())) && hasStoreAnnotations(getter);
     }
 
     if (setter.getAnnotation(Transient.class) != null || !getter.getReturnType().equals(setter.getParameterTypes()[0])) {
@@ -430,13 +430,13 @@ public class BeanBinding extends NotNullDeserializeBinding {
     String part = "";
     boolean isSetter = false;
     if (methodName.startsWith("get")) {
-      part = methodName.substring(3, methodName.length());
+      part = methodName.substring(3);
     }
     else if (methodName.startsWith("is")) {
-      part = methodName.substring(2, methodName.length());
+      part = methodName.substring(2);
     }
     else if (methodName.startsWith("set")) {
-      part = methodName.substring(3, methodName.length());
+      part = methodName.substring(3);
       isSetter = true;
     }
 
@@ -479,7 +479,7 @@ public class BeanBinding extends NotNullDeserializeBinding {
     }
 
     if (binding instanceof CompactCollectionBinding) {
-      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OLD);
+      return new AccessorBindingWrapper(accessor, binding, false, Property.Style.OPTION_TAG);
     }
 
     boolean surroundWithTag = true;

@@ -56,15 +56,15 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
   }
 
 
-  protected LocalQuickFix createFix(String paramName, Object value) {
+  protected LocalQuickFix createFix(String paramName, String value) {
     return new InlineParameterValueFix(paramName, value);
   }
 
   public static class InlineParameterValueFix implements LocalQuickFix {
-    private final Object myValue;
+    private final String myValue;
     private final String myParameterName;
 
-    private InlineParameterValueFix(String parameterName, Object value) {
+    private InlineParameterValueFix(String parameterName, String value) {
       myValue = value;
       myParameterName = parameterName;
     }
@@ -78,7 +78,7 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
     @NotNull
     public String getName() {
       return InspectionsBundle
-        .message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(String.valueOf(myValue)));
+        .message("inspection.same.parameter.fix.name", myParameterName, StringUtil.unquoteString(myValue));
     }
 
     @Override
@@ -107,7 +107,8 @@ public class SameParameterValueInspection extends SameParameterValueInspectionBa
 
       final PsiExpression defToInline;
       try {
-        defToInline = JavaPsiFacade.getInstance(project).getElementFactory().createExpressionFromText(String.valueOf(myValue), parameter);
+        defToInline = JavaPsiFacade.getInstance(project).getElementFactory()
+                                   .createExpressionFromText(myValue, parameter);
       }
       catch (IncorrectOperationException e) {
         return;

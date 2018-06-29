@@ -19,6 +19,7 @@ import com.intellij.execution.Location;
 import com.intellij.execution.PsiLocation;
 import com.intellij.execution.junit2.PsiMemberParameterizedLocation;
 import com.intellij.execution.junit2.info.MethodLocation;
+import com.intellij.execution.stacktrace.StackTraceLine;
 import com.intellij.execution.testframework.sm.runner.SMTestLocator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
@@ -35,6 +36,15 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collections;
 import java.util.List;
 
+/**
+ * Protocol format as follows:
+ * 
+ * java:suite://className
+ * java:test://className/methodName
+ * 
+ * <p/>
+ * "/" can't appear as part of package name and thus can be used as a valid separator between fully qualified class name and method name
+ */
 public class JavaTestLocator implements SMTestLocator {
   public static final String SUITE_PROTOCOL = "java:suite";
   public static final String TEST_PROTOCOL = "java:test";
@@ -84,7 +94,7 @@ public class JavaTestLocator implements SMTestLocator {
       for (Location location : locations) {
         PsiElement element = location.getPsiElement();
         if (element instanceof PsiMethod) {
-          if (metainfo.equals(ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
+          if (StringUtil.equalsIgnoreWhitespaces(metainfo, ClassUtil.getVMParametersMethodSignature((PsiMethod)element))) {
             return Collections.singletonList(location);
           }
         }
@@ -93,27 +103,52 @@ public class JavaTestLocator implements SMTestLocator {
     return locations;
   }
 
+  @NotNull
+  @Override
+  public List<Location> getLocation(@NotNull String stacktraceLine, @NotNull Project project, @NotNull GlobalSearchScope scope) {
+    StackTraceLine line = new StackTraceLine(project, stacktraceLine);
+    return getLocation(TEST_PROTOCOL, line.getClassName() + "/" + line.getMethodName(), project, scope);
+  }
+
   private static List<Location> collectMethodNavigatables(@NotNull String path,
                                                           @NotNull Project project,
                                                           @NotNull GlobalSearchScope scope,
                                                           String paramName) {
-    List<Location> results = Collections.emptyList();
-    String className = StringUtil.getPackageName(path);
-    if (!StringUtil.isEmpty(className)) {
+    int classSeparatorIdx = path.indexOf('/');
+    if (classSeparatorIdx > 0) {
+      String className = path.substring(0, classSeparatorIdx);
+      String methodName = path.substring(classSeparatorIdx + 1);
+      return collectMethodNavigatables(project, scope, paramName, methodName, className);
+    }
+    else {
+      //fallback to the old protocol format : java:test://className.methodName
+      String className = StringUtil.getPackageName(path);
       String methodName = StringUtil.getShortName(path);
-      PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
-      if (aClass != null) {
-        results = ContainerUtil.newSmartList();
-        if (methodName.trim().equals(aClass.getName())) {
-          results.add(createClassNavigatable(paramName, aClass));
-        }
-        else {
-          PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
-          if (methods.length > 0) {
-            for (PsiMethod method : methods) {
-              results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
-                                            : MethodLocation.elementInClass(method, aClass));
-            }
+      if (!className.isEmpty()) {
+        return collectMethodNavigatables(project, scope, paramName, methodName, className);
+      }
+    }
+    return Collections.emptyList();
+  }
+
+  private static List<Location> collectMethodNavigatables(@NotNull Project project,
+                                                          @NotNull GlobalSearchScope scope,
+                                                          String paramName,
+                                                          String methodName,
+                                                          String className) {
+    List<Location> results = Collections.emptyList();
+    PsiClass aClass = ClassUtil.findPsiClass(PsiManager.getInstance(project), className, null, true, scope);
+    if (aClass != null) {
+      results = ContainerUtil.newSmartList();
+      if (methodName.trim().equals(aClass.getName())) {
+        results.add(createClassNavigatable(paramName, aClass));
+      }
+      else {
+        PsiMethod[] methods = aClass.findMethodsByName(methodName.trim(), true);
+        if (methods.length > 0) {
+          for (PsiMethod method : methods) {
+            results.add(paramName != null ? new PsiMemberParameterizedLocation(project, method, aClass, paramName)
+                                          : MethodLocation.elementInClass(method, aClass));
           }
         }
       }

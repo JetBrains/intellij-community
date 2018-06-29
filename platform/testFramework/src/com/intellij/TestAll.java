@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij;
 
@@ -275,6 +273,7 @@ public class TestAll implements Test {
   }
 
   private static TestListener loadDiscoveryListener() {
+    // com.intellij.InternalTestDiscoveryListener
     final String discoveryListener = System.getProperty("test.discovery.listener");
     if (discoveryListener != null) {
       try {

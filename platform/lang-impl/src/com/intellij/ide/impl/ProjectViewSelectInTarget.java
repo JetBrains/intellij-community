@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.impl;
 
 import com.intellij.ide.CompositeSelectInTarget;
@@ -10,9 +8,9 @@ import com.intellij.ide.projectView.ProjectView;
 import com.intellij.ide.projectView.SelectableTreeStructureProvider;
 import com.intellij.ide.projectView.TreeStructureProvider;
 import com.intellij.ide.projectView.impl.AbstractProjectViewPane;
-import com.intellij.ide.projectView.impl.ProjectViewPane;
-import com.intellij.ide.scratch.ScratchFileType;
+import com.intellij.ide.projectView.impl.ProjectViewImpl;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbService;
@@ -63,7 +61,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     if (projectView == null) return ActionCallback.REJECTED;
 
     if (ApplicationManager.getApplication().isUnitTestMode()) {
-      AbstractProjectViewPane pane = projectView.getProjectViewPaneById(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID));
+      AbstractProjectViewPane pane = projectView.getProjectViewPaneById(ObjectUtils.chooseNotNull(viewId, ProjectViewImpl.getDefaultViewId()));
       pane.select(toSelect, virtualFile, requestFocus);
       return ActionCallback.DONE;
     }
@@ -79,7 +77,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
     ActionCallback result = new ActionCallback();
     final Runnable runnable = () -> {
       Runnable r = () -> projectView.selectCB(toSelectSupplier.get(), virtualFile, requestFocus).notify(result);
-      projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewPane.ID), subviewId).doWhenProcessed(r);
+      projectView.changeViewCB(ObjectUtils.chooseNotNull(viewId, ProjectViewImpl.getDefaultViewId()), subviewId).doWhenProcessed(r);
     };
 
     if (requestFocus) {
@@ -118,7 +116,7 @@ public abstract class ProjectViewSelectInTarget extends SelectInTargetPsiWrapper
            index.isInLibraryClasses(vFile) ||
            index.isInLibrarySource(vFile) ||
            Comparing.equal(vFile.getParent(), myProject.getBaseDir()) ||
-           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && vFile.getFileType() == ScratchFileType.INSTANCE;
+           ScratchProjectViewPane.isScratchesMergedIntoProjectTab() && ScratchUtil.isScratch(vFile);
   }
 
   public String getSubIdPresentableName(String subId) {

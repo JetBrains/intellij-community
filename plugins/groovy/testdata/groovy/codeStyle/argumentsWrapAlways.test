@@ -1,0 +1,10 @@
+<option>CALL_PARAMETERS_WRAP=WRAP_ALWAYS</option>
+foooooooooooooo(a,b,c)
+foooooooooooooo a,b,c
+-----
+foooooooooooooo(a,
+    b,
+    c)
+foooooooooooooo a,
+    b,
+    c

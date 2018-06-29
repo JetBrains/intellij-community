@@ -45,7 +45,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
 
   // indicator -> threads which are running under this indicator. guarded by threadsUnderIndicator.
   // THashMap is avoided here because of tombstones overhead
-  static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>();
+  private static final Map<ProgressIndicator, Set<Thread>> threadsUnderIndicator = new HashMap<>();
   // the active indicator for the thread id
   private static final ConcurrentLongObjectMap<ProgressIndicator> currentIndicators = ContainerUtil.createConcurrentLongObjectMap();
   // top-level indicators for the thread id
@@ -64,7 +64,7 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
   private static final Collection<ProgressIndicator> nonStandardIndicators = ConcurrentHashMultiset.create();
 
   /** true if running in non-cancelable section started with
-   * {@link #startNonCancelableSection()} or {@link #executeNonCancelableSection(Runnable)} in this thread
+   * {@link #executeNonCancelableSection(Runnable)} in this thread
    */
   private static final ThreadLocal<Boolean> isInNonCancelableSection = new ThreadLocal<>(); // do not supply initial value to conserve memory
 
@@ -188,11 +188,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
         isInNonCancelableSection.remove();
       }
     }
-  }
-
-  @Override
-  public void setCancelButtonText(String cancelButtonText) {
-
   }
 
   @Override
@@ -471,14 +466,14 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
       exception = e;
     }
 
+    final boolean finalCanceled = processCanceled || progressIndicator.isCanceled();
+    final Throwable finalException = exception;
+
     if (ApplicationManager.getApplication().isDispatchThread()) {
-      finishTask(task, processCanceled || progressIndicator.isCanceled(), exception);
+      finishTask(task, finalCanceled, finalException);
     }
     else {
-      final boolean finalCanceled = processCanceled;
-      final Throwable finalException = exception;
-      ApplicationManager.getApplication().invokeAndWait(
-        () -> finishTask(task, finalCanceled || progressIndicator.isCanceled(), finalException), modalityState);
+      ApplicationManager.getApplication().invokeAndWait(() -> finishTask(task, finalCanceled, finalException), modalityState);
     }
   }
 
@@ -661,26 +656,6 @@ public class CoreProgressManager extends ProgressManager implements Disposable {
     synchronized (threadsUnderIndicator) {
       return threadsUnderCanceledIndicator.contains(thread);
     }
-  }
-
-  @NotNull
-  @Override
-  public final NonCancelableSection startNonCancelableSection() {
-    LOG.warn("Use executeNonCancelableSection() instead");
-    if (isInNonCancelableSection()) return NonCancelableSection.EMPTY;
-    final ProgressIndicator myOld = getProgressIndicator();
-
-    final Thread currentThread = Thread.currentThread();
-    final NonCancelableIndicator nonCancelor = new NonCancelableIndicator() {
-      @Override
-      public void done() {
-        setCurrentIndicator(currentThread, myOld);
-        isInNonCancelableSection.remove();
-      }
-    };
-    isInNonCancelableSection.set(Boolean.TRUE);
-    setCurrentIndicator(currentThread, nonCancelor);
-    return nonCancelor;
   }
 
   @Override

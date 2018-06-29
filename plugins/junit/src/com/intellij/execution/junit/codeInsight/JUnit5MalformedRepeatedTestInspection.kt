@@ -18,9 +18,9 @@ import org.jetbrains.annotations.Nls
 
 class JUnit5MalformedRepeatedTestInspection : AbstractBaseJavaLocalInspectionTool() {
   object Annotations {
-    val NON_REPEATED_ANNOTATIONS = listOf(JUnitUtil.TEST5_ANNOTATION,
-                                          JUnitUtil.TEST5_FACTORY_ANNOTATION,
-                                          JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
+    val NON_REPEATED_ANNOTATIONS: List<String> = listOf(JUnitUtil.TEST5_ANNOTATION,
+                                                        JUnitUtil.TEST5_FACTORY_ANNOTATION,
+                                                        JUnitCommonClassNames.ORG_JUNIT_JUPITER_PARAMS_PARAMETERIZED_TEST)
   }
 
   @Nls

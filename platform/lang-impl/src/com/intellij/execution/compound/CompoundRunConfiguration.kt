@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.compound
 
 import com.intellij.execution.*
@@ -23,12 +21,11 @@ data class TypeNameTarget(val type: String, val name: String, val targetId: Stri
 
 data class SettingsAndEffectiveTarget(val settings: RunnerAndConfigurationSettings, val target: ExecutionTarget)
 
-class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationType, name: String) : RunConfigurationBase(project,
-                                                                                                                          type.configurationFactories[0],
-                                                                                                                          name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
+class CompoundRunConfiguration @JvmOverloads constructor(project: Project, name: String, factory: ConfigurationFactory = CompoundRunConfigurationType.getInstance().configurationFactories.first()) :
+  RunConfigurationBase(project, factory, name), RunnerIconProvider, WithoutOwnBeforeRunSteps, Cloneable {
   companion object {
     @JvmField
-    val COMPARATOR = Comparator<RunConfiguration> { o1, o2 ->
+    val COMPARATOR: Comparator<RunConfiguration> = Comparator<RunConfiguration> { o1, o2 ->
       val i = o1.type.displayName.compareTo(o2.type.displayName)
       when {
         i != 0 -> i
@@ -87,14 +84,14 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
     isInitialized = true
   }
 
-  override fun getConfigurationEditor() = CompoundRunConfigurationSettingsEditor(project)
+  override fun getConfigurationEditor(): CompoundRunConfigurationSettingsEditor = CompoundRunConfigurationSettingsEditor(project)
 
   override fun checkConfiguration() {
     if (sortedConfigurationsWithTargets.isEmpty()) {
       throw RuntimeConfigurationException("There is nothing to run")
     }
 
-    val temp = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), this, false)
+    val temp = RunnerAndConfigurationSettingsImpl(RunManagerImpl.getInstanceImpl(project), this)
     if (ExecutionTargetManager.getInstance(project).getTargetsFor(temp).isEmpty()) {
       throw RuntimeConfigurationException("No suitable targets to run on; please choose a target for each configuration")
     }
@@ -118,7 +115,7 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
     }
   }
 
-  fun getConfigurationsWithEffectiveRunTargets() : List<SettingsAndEffectiveTarget> {
+  fun getConfigurationsWithEffectiveRunTargets(): List<SettingsAndEffectiveTarget> {
     val runManager = RunManagerImpl.getInstanceImpl(project)
     val activeTarget = ExecutionTargetManager.getActiveTarget(project)
     val defaultTarget = DefaultExecutionTarget.INSTANCE
@@ -190,7 +187,7 @@ class CompoundRunConfiguration(project: Project, type: CompoundRunConfigurationT
           return@getRunningDescriptors true
         }
 
-        val settings = manager.findConfigurationByTypeAndName(configuration.type.id, configuration.name)
+        val settings = manager.findConfigurationByTypeAndName(configuration.type, configuration.name)
         if (settings != null && settings.isSingleton && configuration == s.configuration) {
           return@getRunningDescriptors true
         }

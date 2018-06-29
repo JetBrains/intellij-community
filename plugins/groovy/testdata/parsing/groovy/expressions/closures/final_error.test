@@ -19,8 +19,7 @@ Groovy script
             PsiWhiteSpace(' ')
             PsiElement(final)('final')
             PsiWhiteSpace(' ')
-            PsiErrorElement:Duplicate modifier 'def'
-              PsiElement(def)('def')
+            PsiElement(def)('def')
           PsiWhiteSpace(' ')
           PsiElement(identifier)('i')
           PsiWhiteSpace(' ')

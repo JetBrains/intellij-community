@@ -24,7 +24,7 @@ import java.util.concurrent.atomic.AtomicBoolean
 import java.util.regex.Pattern
 import javax.swing.Icon
 
-fun VariableView(variable: Variable, context: VariableContext) = VariableView(variable.name, variable, context)
+fun VariableView(variable: Variable, context: VariableContext): VariableView = VariableView(variable.name, variable, context)
 
 class VariableView(override val variableName: String, private val variable: Variable, private val context: VariableContext) : XNamedValue(variableName), VariableContext {
   @Volatile private var value: Value? = null
@@ -34,12 +34,12 @@ class VariableView(override val variableName: String, private val variable: Vari
   @Volatile private var remainingChildren: List<Variable>? = null
   @Volatile private var remainingChildrenOffset: Int = 0
 
-  override fun watchableAsEvaluationExpression() = context.watchableAsEvaluationExpression()
+  override fun watchableAsEvaluationExpression(): Boolean = context.watchableAsEvaluationExpression()
 
   override val viewSupport: DebuggerViewSupport
     get() = context.viewSupport
 
-  override val parent = context
+  override val parent: VariableContext = context
 
   override val memberFilter: Promise<MemberFilter>
     get() = context.viewSupport.getMemberFilter(this)
@@ -63,7 +63,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     if (variable !is ObjectProperty || variable.getter == null) {
       // it is "used" expression (WEB-6779 Debugger/Variables: Automatically show used variables)
       evaluateContext.evaluate(variable.name)
-        .done(node) {
+        .onSuccess(node) {
           if (it.wasThrown) {
             setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(it.value, null), null, node)
           }
@@ -72,7 +72,7 @@ class VariableView(override val variableName: String, private val variable: Vari
             computePresentation(it.value, node)
           }
         }
-        .rejected(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
+        .onError(node) { setEvaluatedValue(viewSupport.transformErrorOnGetUsedReferenceValue(null, it.message), it.message, node) }
       return
     }
 
@@ -90,7 +90,7 @@ class VariableView(override val variableName: String, private val variable: Vari
           nonProtoContext = nonProtoContext.parent
         }
         valueModifier!!.evaluateGet(variable, evaluateContext)
-          .done(node) {
+          .onSuccess(node) {
             callback.evaluated("")
             setEvaluatedValue(it, null, node)
           }
@@ -178,7 +178,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     if (hasIndexedProperties == hasNamedProperties || additionalProperties != null) {
-      all(promises).processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
+      promises.all().processed(node) { node.addChildren(XValueChildrenList.EMPTY, true) }
     }
   }
 
@@ -226,7 +226,7 @@ class VariableView(override val variableName: String, private val variable: Vari
 
     if (functionValue != null) {
       // we pass context as variable context instead of this variable value - we cannot watch function scopes variables, so, this variable name doesn't matter
-      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren)
+      node.addChildren(XValueChildrenList.bottomGroup(FunctionScopesValueGroup(functionValue, context)), isLastChildren && remainingChildren == null)
     }
   }
 
@@ -306,21 +306,21 @@ class VariableView(override val variableName: String, private val variable: Vari
             value = null
             callback.valueModified()
           }
-          .rejected { callback.errorOccurred(it.message!!) }
+          .onError { callback.errorOccurred(it.message!!) }
       }
     }
   }
 
-  fun getValue() = variable.value
+  fun getValue(): Value? = variable.value
 
-  override fun canNavigateToSource() = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
+  override fun canNavigateToSource(): Boolean = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
       (value as FunctionValue).resolve()
-        .done { function ->
+        .onSuccess { function ->
           vm!!.scriptManager.getScript(function)
-            .done {
+            .onSuccess {
               navigatable.setSourcePosition(it?.let { viewSupport.getSourceInfo(null, it, function.openParenLine, function.openParenColumn) }?.let {
                 object : XSourcePositionWrapper(it) {
                   override fun createNavigatable(project: Project): Navigatable {
@@ -361,7 +361,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
   }
 
-  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback) = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
+  override fun computeInlineDebuggerData(callback: XInlineDebuggerDataCallback): ThreeState = viewSupport.computeInlineDebuggerData(variableName, variable, context, callback)
 
   override fun getEvaluationExpression(): String? {
     if (!watchableAsEvaluationExpression()) {
@@ -394,12 +394,12 @@ class VariableView(override val variableName: String, private val variable: Vari
 
       val evaluated = AtomicBoolean()
       value.fullString
-        .done {
+        .onSuccess {
           if (!callback.isObsolete && evaluated.compareAndSet(false, true)) {
             callback.evaluated(value.valueString!!)
           }
         }
-        .rejected { callback.errorOccurred(it.message!!) }
+        .onError { callback.errorOccurred(it.message!!) }
     }
   }
 
@@ -425,8 +425,8 @@ class VariableView(override val variableName: String, private val variable: Vari
       }
       else {
         context.evaluateContext.evaluate("a.length", Collections.singletonMap<String, Any>("a", value), false)
-          .done(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
-          .rejected(node) {
+          .onSuccess(node) { node.setPresentation(icon, null, "Array[${it.value.valueString}]", true) }
+          .onError(node) {
             logger<VariableView>().error("Failed to evaluate array length: $it")
             node.setPresentation(icon, null, valueString ?: "Array", true)
           }

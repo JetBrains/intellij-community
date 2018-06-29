@@ -50,7 +50,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
   private static final ID<HMember, Void> NAME = ID.create("bytecodeAnalysis");
   private static final HKeyDescriptor KEY_DESCRIPTOR = new HKeyDescriptor();
 
-  private static final int VERSION = 10; // change when inference algorithm changes
+  private static final int VERSION = 11; // change when inference algorithm changes
   private static final int VERSION_MODIFIER = HardCodedPurity.AGGRESSIVE_HARDCODED_PURITY ? 1 : 0;
   private static final int FINAL_VERSION = VERSION * 2 + VERSION_MODIFIER;
 
@@ -150,7 +150,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
 
     @Override
     public void save(@NotNull DataOutput out, HMember value) throws IOException {
-      out.write(value.myBytes);
+      out.write(value.asBytes());
     }
 
     @Override
@@ -196,10 +196,10 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
       for (DirectionResultPair pair : eqs.results) {
         DataInputOutputUtil.writeINT(out, pair.directionKey);
         Result rhs = pair.result;
-        if (rhs instanceof Final) {
-          Final finalResult = (Final)rhs;
+        if (rhs instanceof Value) {
+          Value finalResult = (Value)rhs;
           out.writeBoolean(true); // final flag
-          DataInputOutputUtil.writeINT(out, finalResult.value.ordinal());
+          DataInputOutputUtil.writeINT(out, finalResult.ordinal());
         }
         else if (rhs instanceof Pending) {
           Pending pendResult = (Pending)rhs;
@@ -247,7 +247,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
           if (isFinal) {
             int ordinal = DataInputOutputUtil.readINT(in);
             Value value = Value.values()[ordinal];
-            results.add(new DirectionResultPair(directionKey, new Final(value)));
+            results.add(new DirectionResultPair(directionKey, value));
           }
           else {
             int sumLength = DataInputOutputUtil.readINT(in);
@@ -279,7 +279,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
     }
 
     private static void writeKey(@NotNull DataOutput out, EKey key, MessageDigest md) throws IOException {
-      out.write(key.member.hashed(md).myBytes);
+      out.write(key.member.hashed(md).asBytes());
       int rawDirKey = key.negated ? -key.dirKey : key.dirKey;
       DataInputOutputUtil.writeINT(out, rawDirKey);
       out.writeBoolean(key.stable);
@@ -381,7 +381,7 @@ public class BytecodeAnalysisIndex extends ScalarIndexExtension<HMember> {
         case -6:
           return new DataValue.ReturnDataValue(readKey(in));
         default:
-          return new DataValue.ParameterDataValue(dataI);
+          return DataValue.ParameterDataValue.create(dataI);
       }
     }
   }

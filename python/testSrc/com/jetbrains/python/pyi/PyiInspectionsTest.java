@@ -117,8 +117,12 @@ public class PyiInspectionsTest extends PyTestCase {
     doPyiTest(PyUnresolvedReferencesInspection.class);
   }
 
-  public void testPyiTopLevelForwardReferencesInAnnotations() {
+  public void testPyiTopLevelUnresolvedForwardReferencesInAnnotations() {
     doPyiTest(PyUnresolvedReferencesInspection.class);
+  }
+
+  public void testPyiTopLevelUnboundForwardReferencesInAnnotations() {
+    doPyiTest(PyUnboundLocalVariableInspection.class);
   }
 
   public void testPyiUnusedImports() {

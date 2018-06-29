@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.terminal
 
 import com.intellij.openapi.components.PersistentStateComponent
@@ -26,7 +12,7 @@ import java.io.File
  * @author traff
  */
 
-@State(name = "TerminalOptionsProvider", storages = arrayOf(Storage("terminal.xml")))
+@State(name = "TerminalOptionsProvider", storages = [(Storage("terminal.xml"))])
 class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider.State> {
   private val myState = State()
 
@@ -85,15 +71,15 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
 
   class State {
     var myShellPath: String? = null
-    var myTabName = "Local"
-    var myCloseSessionOnLogout = true
-    var myReportMouse = true
-    var mySoundBell = true
-    var myCopyOnSelection = true
-    var myPasteOnMiddleMouseButton = true
-    var myOverrideIdeShortcuts = true
-    var myShellIntegration = true
-    var myHighlightHyperlinks = true
+    var myTabName: String = "Local"
+    var myCloseSessionOnLogout: Boolean = true
+    var myReportMouse: Boolean = true
+    var mySoundBell: Boolean = true
+    var myCopyOnSelection: Boolean = true
+    var myPasteOnMiddleMouseButton: Boolean = true
+    var myOverrideIdeShortcuts: Boolean = true
+    var myShellIntegration: Boolean = true
+    var myHighlightHyperlinks: Boolean = true
   }
 
   fun setCloseSessionOnLogout(closeSessionOnLogout: Boolean) {
@@ -125,7 +111,7 @@ class TerminalOptionsProvider : PersistentStateComponent<TerminalOptionsProvider
   }
 
   fun highlightHyperlinks(): Boolean {
-    return myState.myHighlightHyperlinks;
+    return myState.myHighlightHyperlinks
   }
 
   fun setHighlightHyperlinks(highlight: Boolean) {

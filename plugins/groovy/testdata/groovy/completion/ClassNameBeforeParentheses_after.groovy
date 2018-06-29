@@ -3,6 +3,6 @@ class BitImage {
   int width
 
   int getHeight() {
-    Math(data.length / width)
+    java.lang.Math(data.length / width)
   }
 }

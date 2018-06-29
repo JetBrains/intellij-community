@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang
 
 import com.intellij.openapi.command.WriteCommandAction
@@ -28,10 +14,15 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.psi.search.GlobalSearchScope
 import com.intellij.psi.search.PsiShortNamesCache
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.ThrowableRunnable
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import org.jetbrains.plugins.groovy.lang.psi.impl.GrClassReferenceType
+
+import static org.jetbrains.plugins.groovy.util.TestUtils.disableAstLoading
 
 /**
  * @author peter
@@ -59,11 +50,9 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     PsiFileImpl fooFile = (PsiFileImpl) PsiManager.getInstance(project).findFile(vFile)
     final Document fooDocument = fooFile.getViewProvider().getDocument()
     assert !JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
-    new WriteCommandAction.Simple(project, fooFile) {
-      void run() {
+    WriteCommandAction.writeCommandAction(project, fooFile).run ({
         fooDocument.setText("class Fooxx {}")
-      }
-    }.execute()
+    } as ThrowableRunnable)
     PsiDocumentManager.getInstance(project).commitDocument(fooDocument)
     fooFile.setTreeElementPointer(null)
     DumbServiceImpl.getInstance(project).setDumb(true)
@@ -77,4 +66,18 @@ class GroovyStubsTest extends LightCodeInsightFixtureTestCase {
     assert JavaPsiFacade.getInstance(project).findClass("Fooxx", GlobalSearchScope.allScope(project))
   }
 
+  void 'test error in code reference'() {
+    myFixture.tempDirFixture.createFile('A.groovy', 'class A extends foo.B< {}')
+    disableAstLoading project, testRootDisposable
+    def clazz = myFixture.findClass("A")
+    assert clazz != null
+    def extendsTypes = clazz.extendsListTypes
+    assert extendsTypes.size() == 1
+    def type = extendsTypes.first()
+    assert type instanceof GrClassReferenceType
+    def reference = type.reference
+    assert reference instanceof GrCodeReferenceElement
+    assert reference.referenceName == 'B'
+    assert reference.qualifiedReferenceName == 'foo.B'
+  }
 }

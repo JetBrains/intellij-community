@@ -128,7 +128,7 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitUnaryExpression(this);
   }
 
@@ -143,11 +143,13 @@ public class GrUnaryExpressionImpl extends GrExpressionImpl implements GrUnaryEx
     return getFirstChild() instanceof GrExpression;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement opToken = getOperationToken();

@@ -34,10 +34,12 @@ public abstract class ReferenceBase implements PsiReference {
         this.nameNode = nameNode;
     }
 
+    @NotNull
     public XPathElement getElement() {
         return element;
     }
 
+    @NotNull
     public TextRange getRangeInElement() {
         final int outer = element.getTextRange().getStartOffset();
         return TextRange.from(nameNode.getTextRange().getStartOffset() - outer, nameNode.getTextLength());

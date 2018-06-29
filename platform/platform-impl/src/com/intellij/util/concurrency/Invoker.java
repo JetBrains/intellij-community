@@ -1,24 +1,11 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.concurrency;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
-import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.util.ProgressIndicatorUtils;
 import com.intellij.util.containers.TransferToEDTQueue;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Obsolescent;
@@ -125,19 +112,27 @@ public abstract class Invoker implements Disposable {
           // do not care about ReadAction in EDT and in tests without application
           task.run();
         }
-        else if (!ProgressManager.getInstance().runInReadActionWithWriteActionPriority(task, null)) {
-          throw new ProcessCanceledException();
+        else if (getApplication().isReadAccessAllowed()) {
+          if (((ApplicationEx)getApplication()).isWriteActionPending()) throw new ProcessCanceledException();
+          task.run();
+        }
+        else {
+          // try to execute a task until it stops throwing ProcessCanceledException
+          while (!ProgressIndicatorUtils.runInReadActionWithWriteActionPriority(task)) {
+            if (!canInvoke(task)) break; // stop execution of obsolete task
+            ProgressIndicatorUtils.yieldToPendingWriteActions();
+            if (!canRestart(task, attempt)) break;
+            LOG.debug("Task is restarted");
+            attempt++;
+          }
         }
       }
     }
     catch (ProcessCanceledException exception) {
-      LOG.debug("Task is canceled");
-      if (attempt == THRESHOLD) {
-        LOG.warn("Task is always canceled: " + task);
-      }
-      else if (canInvoke(task)) {
+      if (canRestart(task, attempt)) {
         count.incrementAndGet();
-        offer(() -> invokeSafely(task, attempt + 1), 10);
+        int nextAttempt = attempt + 1;
+        offer(() -> invokeSafely(task, nextAttempt), 10);
         LOG.debug("Task is restarted");
       }
     }
@@ -151,6 +146,13 @@ public abstract class Invoker implements Disposable {
     finally {
       count.decrementAndGet();
     }
+  }
+
+  private boolean canRestart(Runnable task, int attempt) {
+    LOG.debug("Task is canceled");
+    if (attempt < THRESHOLD) return canInvoke(task);
+    LOG.warn("Task is always canceled: " + task);
+    return false;
   }
 
   final boolean canInvoke(Runnable task) {

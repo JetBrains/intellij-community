@@ -17,14 +17,12 @@ package com.jetbrains.python.hierarchy;
 
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.ide.hierarchy.HierarchyBrowserBaseEx;
-import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
-import com.intellij.ide.hierarchy.HierarchyTreeStructure;
 import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.codeInsight.hierarchy.HierarchyViewTestFixture;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.hierarchy.call.PyCalleeFunctionTreeStructure;
 import com.jetbrains.python.hierarchy.call.PyCallerFunctionTreeStructure;
 import com.jetbrains.python.psi.PyFunction;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author novokrest
@@ -32,41 +30,6 @@ import org.jetbrains.annotations.Nullable;
 public class PyCallHierarchyTest extends PyTestCase {
   private static final String CALLER_VERIFICATION_SUFFIX = "_caller_verification.xml";
   private static final String CALLEE_VERIFICATION_SUFFIX = "_callee_verification.xml";
-
-  public static String dump(final HierarchyTreeStructure treeStructure, @Nullable HierarchyNodeDescriptor descriptor) {
-    StringBuilder s = new StringBuilder();
-    dump(treeStructure, descriptor, 0, s);
-    return s.toString();
-  }
-
-  private static void dump(final HierarchyTreeStructure treeStructure,
-                           @Nullable HierarchyNodeDescriptor descriptor,
-                           int level,
-                           StringBuilder b) {
-    if (level > 10) {
-      for(int i = 0; i<level; i++) b.append("  ");
-      b.append("<Probably infinite part skipped>\n");
-      return;
-    }
-    if(descriptor==null) descriptor = (HierarchyNodeDescriptor)treeStructure.getRootElement();
-    for(int i = 0; i<level; i++) b.append("  ");
-    descriptor.update();
-    b.append("<node text=\"").append(descriptor.getHighlightedText().getText()).append("\"")
-      .append(treeStructure.getBaseDescriptor() == descriptor ? " base=\"true\"" : "");
-
-    final Object[] children = treeStructure.getChildElements(descriptor);
-    if(children.length>0) {
-      b.append(">\n");
-      for (Object o : children) {
-        HierarchyNodeDescriptor d = (HierarchyNodeDescriptor)o;
-        dump(treeStructure, d, level + 1, b);
-      }
-      for(int i = 0; i<level; i++) b.append("  ");
-      b.append("</node>\n");
-    } else {
-      b.append("/>\n");
-    }
-  }
 
   private String getBasePath() {
     return "hierarchy/call/Static/" + getTestName(false);
@@ -97,10 +60,10 @@ public class PyCallHierarchyTest extends PyTestCase {
   private void checkHierarchyTreeStructure(PyFunction function) {
     final PyCallerFunctionTreeStructure callerStructure = new PyCallerFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    assertSameLinesWithFile(getVerificationCallerFilePath(), dump(callerStructure, null));
+    assertSameLinesWithFile(getVerificationCallerFilePath(), HierarchyViewTestFixture.dump(callerStructure, null, 0));
     final PyCalleeFunctionTreeStructure calleeStructure = new PyCalleeFunctionTreeStructure(myFixture.getProject(), function,
                                                                                             HierarchyBrowserBaseEx.SCOPE_PROJECT);
-    assertSameLinesWithFile(getVerificationCalleeFilePath(), dump(calleeStructure, null));
+    assertSameLinesWithFile(getVerificationCalleeFilePath(), HierarchyViewTestFixture.dump(calleeStructure, null, 0));
   }
 
   private void doTestCallHierarchy(String ... fileNames) {

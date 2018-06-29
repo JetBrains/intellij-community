@@ -24,15 +24,16 @@ import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.intellij.testFramework.propertyBased.*;
 import com.jetbrains.env.PyEnvTestCase;
 import com.jetbrains.env.PyExecutionFixtureTestTask;
-import org.jetbrains.jetCheck.Generator;
-import org.jetbrains.jetCheck.PropertyChecker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jetCheck.Generator;
+import org.jetbrains.jetCheck.PropertyChecker;
 import org.junit.Test;
 
 import java.io.File;
 import java.util.function.Consumer;
 import java.util.function.Function;
+import java.util.function.Supplier;
 
 /**
  * @author Ilya.Kazakevich
@@ -67,16 +68,15 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
   public void testReparse() {
     runSanityTest(pathAndFixture -> {
       final CodeInsightTestFixture fixture = pathAndFixture.second;
-      PropertyChecker.forAll(actionsOnPyFiles(MadTestingUtil::randomEditsWithReparseChecks, fixture,
-                                              new File(fixture.getTestDataPath(), "sanity").getPath()))
-        .shouldHold(FileWithActions::runActions);
+      PropertyChecker.checkScenarios(actionsOnPyFiles(MadTestingUtil::randomEditsWithReparseChecks, fixture,
+                                              new File(fixture.getTestDataPath(), "sanity").getPath()));
     });
   }
 
   @NotNull
-  private static Generator<FileWithActions> actionsOnPyFiles(@NotNull final Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
-                                                             @NotNull final CodeInsightTestFixture fixture,
-                                                             @NotNull final String testDataPath) {
+  private static Supplier<MadTestingAction> actionsOnPyFiles(@NotNull final Function<PsiFile, Generator<? extends MadTestingAction>> fileActions,
+                                                              @NotNull final CodeInsightTestFixture fixture,
+                                                              @NotNull final String testDataPath) {
 
     return MadTestingUtil.actionsOnFileContents(fixture, testDataPath, f -> f.getName().endsWith(".py"), fileActions);
   }
@@ -85,24 +85,24 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
     runSanityTest(pathAndFixture -> {
       final CodeInsightTestFixture fixture = pathAndFixture.second;
       MadTestingUtil.enableAllInspections(fixture.getProject(), fixture.getProject());
-      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions = file ->
-        Generator.anyOf(InvokeIntention.randomIntentions(file, new IntentionPolicy()),
-                        InvokeCompletion.completions(file, new CompletionPolicy()),
-                        Generator.constant(new StripTestDataMarkup(file)),
-                        DeleteRange.psiRangeDeletions(file));
+      Function<PsiFile, Generator<? extends MadTestingAction>> fileActions =
+        file -> Generator.sampledFrom(new InvokeIntention(file, new IntentionPolicy()),
+                                      new InvokeCompletion(file, new CompletionPolicy()),
+                                      new StripTestDataMarkup(file),
+                                      new DeleteRange(file));
 
-      PropertyChecker<FileWithActions> checker = PropertyChecker.forAll(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first));
+      PropertyChecker.Parameters checker = PropertyChecker.customized();
       if (seedToRepeat != null) {
-        checker = checker.rechecking(seedToRepeat.first, seedToRepeat.second);
+        checker = checker.recheckingIteration(seedToRepeat.first, seedToRepeat.second);
       }
-      checker.shouldHold(FileWithActions::runActions);
+      checker.checkScenarios(actionsOnPyFiles(fileActions, fixture, pathAndFixture.first));
     });
   }
 
   private void runSanityTest(@NotNull final Consumer<Pair<String, CodeInsightTestFixture>> test) {
 
     final String subfolder = "sanity";
-    runTest(new PyExecutionFixtureTestTask(subfolder) {
+    runPythonTest(new PyExecutionFixtureTestTask(subfolder) {
       @Override
       public void runTestOn(@NotNull String sdkHome, @Nullable Sdk existingSdk) {
         ApplicationManager.getApplication().invokeAndWait(() -> {
@@ -111,6 +111,6 @@ public class PythonCodeInsightSanityTest extends PyEnvTestCase {
           test.accept(pathAndFixture);
         });
       }
-    }, getTestName(true));
+    });
   }
 }

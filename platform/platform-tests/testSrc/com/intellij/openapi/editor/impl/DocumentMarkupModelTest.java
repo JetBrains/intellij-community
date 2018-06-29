@@ -70,12 +70,9 @@ public class DocumentMarkupModelTest extends LightPlatformCodeInsightFixtureTest
     Document document = new DocumentImpl("line0\nline1\nline2");
     MarkupModelEx model = (MarkupModelEx)DocumentMarkupModel.forDocument(document, getProject(), true);
     RangeHighlighterEx highlighter = model.addPersistentLineHighlighter(2, 0, null);
-    new WriteCommandAction<Void>(getProject()){
-      @Override
-      protected void run(@NotNull Result<Void> result) {
-        document.deleteString(document.getLineStartOffset(1), document.getTextLength());
-      }
-    }.execute();
+    WriteCommandAction.runWriteCommandAction(getProject(), () -> {
+      document.deleteString(document.getLineStartOffset(1), document.getTextLength());
+    });
     assertFalse(highlighter.isValid());
   }
 

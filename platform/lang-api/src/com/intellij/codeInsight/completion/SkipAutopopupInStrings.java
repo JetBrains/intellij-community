@@ -43,19 +43,10 @@ public class SkipAutopopupInStrings extends CompletionConfidence {
 
   public static boolean isInStringLiteral(PsiElement element) {
     ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(PsiUtilCore.findLanguageFromElement(element));
-    if (definition == null) {
-      return false;
-    }
-
-    return isStringLiteral(element, definition) || isStringLiteral(element.getParent(), definition) ||
-            isStringLiteralWithError(element, definition) || isStringLiteralWithError(element.getParent(), definition);
+    return definition != null && (isStringLiteral(element, definition) || isStringLiteral(element.getParent(), definition));
   }
 
   private static boolean isStringLiteral(PsiElement element, ParserDefinition definition) {
     return PlatformPatterns.psiElement().withElementType(definition.getStringLiteralElements()).accepts(element);
-  }
-
-  private static boolean isStringLiteralWithError(PsiElement element, ParserDefinition definition) {
-    return isStringLiteral(element, definition) && PsiTreeUtil.nextLeaf(element) instanceof PsiErrorElement;
   }
 }

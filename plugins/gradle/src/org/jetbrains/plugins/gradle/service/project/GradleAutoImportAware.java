@@ -21,8 +21,12 @@ import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.CompilerModuleExtension;
+import com.intellij.openapi.roots.CompilerProjectExtension;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.gradle.initialization.BuildLayoutParameters;
@@ -38,6 +42,7 @@ import java.io.IOException;
 import java.nio.file.*;
 import java.nio.file.attribute.BasicFileAttributes;
 import java.util.*;
+import java.util.stream.Stream;
 
 /**
  * @author Denis Zhdanov
@@ -49,11 +54,16 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
   @Nullable
   @Override
   public String getAffectedExternalProjectPath(@NotNull String changedFileOrDirPath, @NotNull Project project) {
-    if (!changedFileOrDirPath.endsWith(GradleConstants.EXTENSION)) {
+    if (!changedFileOrDirPath.endsWith("." + GradleConstants.EXTENSION)) {
       return null;
     }
+
+    if (isInsideCompileOutput(changedFileOrDirPath, project)) {
+      return null;
+    }
+
     File file = new File(changedFileOrDirPath);
-    if(file.isDirectory()) {
+    if (file.isDirectory()) {
       return null;
     }
 
@@ -80,6 +90,28 @@ public class GradleAutoImportAware implements ExternalSystemAutoImportAware {
       }
     }
     return null;
+  }
+
+  private static boolean isInsideCompileOutput(@NotNull String path, @NotNull Project project) {
+    final String url = VfsUtilCore.pathToUrl(path);
+
+    boolean isInsideProjectCompile =
+      Optional.ofNullable(CompilerProjectExtension.getInstance(project))
+              .map(CompilerProjectExtension::getCompilerOutputUrl)
+              .filter(outputUrl -> VfsUtilCore.isEqualOrAncestor(outputUrl, url))
+              .isPresent();
+
+    if (isInsideProjectCompile) {
+      return true;
+    }
+
+    return
+      Arrays.stream(ModuleManager.getInstance(project).getModules())
+                                                  .map(CompilerModuleExtension::getInstance)
+                                                  .filter(Objects::nonNull)
+                                                  .flatMap(ex -> Stream.of(ex.getCompilerOutputUrl(), ex.getCompilerOutputUrlForTests()))
+                                                  .filter(Objects::nonNull)
+                                                  .anyMatch(outputUrl -> VfsUtilCore.isEqualOrAncestor(outputUrl, url));
   }
 
   @Override

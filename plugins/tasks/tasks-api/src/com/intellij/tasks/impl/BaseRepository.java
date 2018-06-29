@@ -171,14 +171,19 @@ public abstract class BaseRepository extends TaskRepository {
     super.setUrl(addSchemeIfNoneSpecified(url));
   }
 
+  @NotNull
+  protected String getDefaultScheme() {
+    return "http";
+  }
+
   @Nullable
-  private static String addSchemeIfNoneSpecified(@Nullable String url) {
+  private String addSchemeIfNoneSpecified(@Nullable String url) {
     if (StringUtil.isNotEmpty(url)) {
       try {
         final String scheme = new URI(url).getScheme();
         // For URL like "foo.bar:8080" host name will be parsed as scheme
-        if (scheme == null || !scheme.startsWith("http")) {
-          url = "http://" + url;
+        if (scheme == null) {
+          url = getDefaultScheme() + "://" + url;
         }
       }
       catch (URISyntaxException ignored) {

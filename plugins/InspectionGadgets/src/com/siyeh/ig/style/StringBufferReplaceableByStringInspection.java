@@ -1,13 +1,13 @@
 // Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.siyeh.ig.style;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -17,6 +17,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.PsiReplacementUtil;
 import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -31,27 +32,25 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
 
   @Override
   protected InspectionGadgetsFix buildFix(Object... infos) {
-    final String typeText = ((PsiType)infos[1]).getCanonicalText();
-    return new StringBufferReplaceableByStringFix(CommonClassNames.JAVA_LANG_STRING_BUILDER.equals(typeText));
+    final String typeText = ((PsiType)infos[1]).getPresentableText();
+    return new StringBufferReplaceableByStringFix(typeText);
   }
 
   private static class StringBufferReplaceableByStringFix extends InspectionGadgetsFix {
 
-    private final boolean isStringBuilder;
     private final List<PsiComment> leadingComments = new SmartList<>();
     private final List<PsiComment> comments = new SmartList<>();
+    private final String myType;
     private int currentLine = -1;
 
-    StringBufferReplaceableByStringFix(boolean isStringBuilder) {
-      this.isStringBuilder = isStringBuilder;
+    StringBufferReplaceableByStringFix(String type) {
+      myType = type;
     }
 
     @NotNull
     @Override
     public String getName() {
-      return isStringBuilder
-             ? InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix")
-             : InspectionGadgetsBundle.message("string.buffer.replaceable.by.string.quickfix");
+      return InspectionGadgetsBundle.message("string.builder.replaceable.by.string.quickfix", myType);
     }
 
     @NotNull
@@ -66,7 +65,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       final PsiElement parent = element.getParent();
       if (!(parent instanceof PsiVariable)) {
         if (parent instanceof PsiNewExpression) {
-          final PsiExpression stringBuilderExpression = getCompleteExpression(parent);
+          final PsiExpression stringBuilderExpression = getCompleteExpression((PsiExpression)parent);
           collectComments(stringBuilderExpression);
           final StringBuilder stringExpression = buildStringExpression(stringBuilderExpression, new StringBuilder());
           if (stringExpression != null && stringBuilderExpression != null) {
@@ -104,7 +103,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
           return;
         }
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length == 0) {
+        if (arguments.length == 0 || TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           builder = new StringBuilder();
         }
         else {
@@ -140,8 +139,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
       }
       final boolean useVariable = expressionText.contains("\n") && !isVariableInitializer(lastExpression);
       if (useVariable) {
-        final String modifier =
-          CodeStyleSettingsManager.getSettings(project).getCustomSettings(JavaCodeStyleSettings.class).GENERATE_FINAL_LOCALS ? "final " : "";
+        final String modifier = JavaCodeStyleSettings.getInstance(element.getContainingFile()).GENERATE_FINAL_LOCALS ? "final " : "";
         final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
         final StringBuilder statementText =
           new StringBuilder(modifier).append(CommonClassNames.JAVA_LANG_STRING).append(' ').append(variableName).append("=");
@@ -192,7 +190,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
         }
         addCommentsBefore(argumentList, false, result);
         final PsiExpression[] arguments = argumentList.getExpressions();
-        if (arguments.length == 1) {
+        if (arguments.length == 1 && !TypeUtils.typeEquals(STRING_JOINER, newExpression.getType())) {
           final PsiExpression argument = arguments[0];
           final PsiType type = argument.getType();
           if (!PsiType.INT.equals(type)) {
@@ -228,7 +226,7 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
             result.append("\"\"");
           }
         }
-        else if ("append".equals(referenceName)){
+        else if ("append".equals(referenceName) || "add".equals(referenceName)){
           final PsiExpression[] arguments = argumentList.getExpressions();
           if (arguments.length == 0) {
             return null;
@@ -300,39 +298,43 @@ public class StringBufferReplaceableByStringInspection extends StringBufferRepla
     }
 
     private void addCommentsBefore(PsiElement anchor, boolean insertPlus, StringBuilder out) {
-      final boolean operationSignOnNextLine = CodeStyleSettingsManager.getSettings(anchor.getProject())
-        .getCommonSettings(JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
+      final boolean operationSignOnNextLine =
+        CodeStyle.getLanguageSettings(anchor.getContainingFile(), JavaLanguage.INSTANCE).BINARY_OPERATION_SIGN_ON_NEXT_LINE;
       final int lineNumber = getLineNumber(anchor);
-      final boolean insertNewLine = currentLine != lineNumber;
+      boolean insertNewLine = currentLine != lineNumber;
       currentLine = lineNumber;
       final int offset = anchor.getTextOffset();
       if (insertPlus && !operationSignOnNextLine) {
         out.append('+');
       }
+      List<PsiComment> commentsToInsert = new SmartList<>();
       for (final Iterator<PsiComment> iterator = comments.iterator(); iterator.hasNext(); ) {
-        final PsiElement element = iterator.next();
-        if (element.getTextOffset() >= offset) {
+        final PsiComment comment = iterator.next();
+        if (comment.getTextOffset() >= offset) {
           break;
         }
-        final PsiComment comment = (PsiComment)element;
         if (out.length() == 0) {
           leadingComments.add(comment);
         }
         else {
-          final PsiElement prev = comment.getPrevSibling();
-          if (prev instanceof PsiWhiteSpace) {
-            out.append(prev.getText());
-          }
-          out.append(comment.getText());
-          final PsiElement next = comment.getNextSibling();
-          if (next instanceof PsiWhiteSpace) {
-            final String text = next.getText();
-            if (!text.contains("\n")) {
-              out.append(text);
-            }
-          }
+          commentsToInsert.add(comment);
         }
         iterator.remove();
+      }
+      for (int i = 0; i < commentsToInsert.size(); i++) {
+        PsiComment comment = commentsToInsert.get(i);
+        final PsiElement prev = comment.getPrevSibling();
+        if (prev instanceof PsiWhiteSpace) {
+          out.append(prev.getText());
+        }
+        out.append(comment.getText());
+        final PsiElement next = comment.getNextSibling();
+        if (next instanceof PsiWhiteSpace) {
+          final String text = next.getText();
+          if (!text.contains("\n") || i < commentsToInsert.size() - 1) {
+            out.append(text);
+          }
+        }
       }
       if (insertNewLine && out.length() > 0) {
         out.append('\n');

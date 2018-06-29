@@ -15,13 +15,7 @@
  */
 package com.intellij.ui;
 
-import com.intellij.icons.AllIcons;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
-import com.intellij.openapi.ui.LabeledComponent;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.fields.ExpandableTextField;
 import com.intellij.util.Function;
@@ -31,15 +25,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.text.Document;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.util.List;
 
 public class RawCommandLineEditor extends JPanel implements TextAccessor {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.ui.RawCommandLineEditor");
-
-  private final JTextField myEditor;
-  private final TextFieldWithBrowseButton myTextField;
+  private final ExpandableTextField myEditor;
   private String myDialogCaption = "";
 
   public RawCommandLineEditor() {
@@ -48,41 +37,25 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
 
   public RawCommandLineEditor(final Function<String, List<String>> lineParser, final Function<List<String>, String> lineJoiner) {
     super(new BorderLayout());
-    if (Registry.is("raw.command.line.editor.dialog")) {
-      myTextField = new TextFieldWithBrowseButton(new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myDialogCaption == null) {
-            Container parent = getParent();
-            if (parent instanceof LabeledComponent) {
-              parent = parent.getParent();
-            }
-            LOG.error("Did not call RawCommandLineEditor.setDialogCaption() in " + parent);
-            myDialogCaption = "Parameters";
-          }
-          Messages.showTextAreaDialog(myTextField.getTextField(), myDialogCaption, "EditParametersPopupWindow", lineParser, lineJoiner);
-        }
-      });
-      myEditor = myTextField.getTextField();
-      myTextField.setButtonIcon(AllIcons.Actions.ShowViewer);
-      add(myTextField, BorderLayout.CENTER);
-    }
-    else {
-      myTextField = null;
-      myEditor = new ExpandableTextField(lineParser, lineJoiner);
-      add(myEditor, BorderLayout.CENTER);
-    }
+    myEditor = new ExpandableTextField(lineParser, lineJoiner);
+    add(myEditor, BorderLayout.CENTER);
     setDescriptor(null);
   }
 
   public void setDescriptor(FileChooserDescriptor descriptor) {
-    InsertPathAction.addTo(myEditor, descriptor);
+    setDescriptor(descriptor, true);
+  }
+  
+  public void setDescriptor(FileChooserDescriptor descriptor, boolean insertSystemDependentPaths) {
+    InsertPathAction.addTo(myEditor, descriptor, insertSystemDependentPaths);
   }
 
+  @Deprecated
   public String getDialogCaption() {
     return myDialogCaption;
   }
 
+  @Deprecated
   public void setDialogCaption(String dialogCaption) {
     myDialogCaption = dialogCaption != null ? dialogCaption : "";
   }
@@ -112,6 +85,6 @@ public class RawCommandLineEditor extends JPanel implements TextAccessor {
   @Override
   public void setEnabled(boolean enabled) {
     super.setEnabled(enabled);
-    (myTextField != null ? myTextField : myEditor).setEnabled(enabled);
+    myEditor.setEnabled(enabled);
   }
 }

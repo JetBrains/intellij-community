@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClaus
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
+import org.jetbrains.plugins.groovy.lang.psi.util.isDefUnnecessary
 import javax.swing.JComponent
 
 class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), CleanupLocalInspectionTool {
@@ -50,7 +51,7 @@ class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), C
     addCheckbox(GroovyInspectionBundle.message("unnecessary.def.explicitly.typed.only"), "reportExplicitTypeOnly")
   }
 
-  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean) = object : PsiElementVisitor() {
+  override fun buildVisitor(holder: ProblemsHolder, isOnTheFly: Boolean): PsiElementVisitor = object : PsiElementVisitor() {
 
     override fun visitElement(modifier: PsiElement) {
       if (modifier.node.elementType !== kDEF) return
@@ -78,17 +79,7 @@ class GrUnnecessaryDefModifierInspection : GroovySuppressableInspectionTool(), C
         if (owner.typeElementGroovy != null) return true
         !reportExplicitTypeOnly && (parent is GrParameterList || parent is GrForInClause && parent.delimiter.node.elementType == kIN)
       }
-      is GrMethod -> {
-        return if (owner.isConstructor) {
-          true
-        }
-        else if (owner.hasTypeParameters()) {
-          modifierList.hasOtherModifiers()
-        }
-        else {
-          owner.returnTypeElementGroovy != null
-        }
-      }
+      is GrMethod -> isDefUnnecessary(owner)
       is GrVariable -> owner.typeElementGroovy != null
       is GrVariableDeclaration -> owner.typeElementGroovy != null
       else -> false

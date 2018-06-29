@@ -67,6 +67,8 @@ public abstract class Node extends DefaultMutableTreeNode {
   protected abstract boolean isDataReadOnly();
   protected abstract boolean isDataExcluded();
 
+  protected void updateCachedPresentation() {}
+
   @NotNull
   protected abstract String getText(@NotNull UsageView view);
 
@@ -92,13 +94,20 @@ public abstract class Node extends DefaultMutableTreeNode {
     return isFlagSet(EXCLUDED_MASK);
   }
 
-  final synchronized void update(@NotNull UsageView view, @NotNull Consumer<Node> edtNodeChangedQueue) {
+  final void update(@NotNull UsageView view, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
     // performance: always update in background because smart pointer' isValid() can cause PSI chameleons expansion which is ridiculously expensive in cpp
     assert !ApplicationManager.getApplication().isDispatchThread();
     boolean isDataValid = isDataValid();
     boolean isReadOnly = isDataReadOnly();
     String text = getText(view);
+    updateCachedPresentation();
+    doUpdate(edtNodeChangedQueue, isDataValid, isReadOnly, text);
+  }
 
+  private synchronized void doUpdate(@NotNull Consumer<? super Node> edtNodeChangedQueue,
+                                     boolean isDataValid,
+                                     boolean isReadOnly,
+                                     String text) {
     boolean cachedValid = isValid();
     boolean cachedReadOnly = isFlagSet(CACHED_READ_ONLY_MASK);
 
@@ -138,7 +147,7 @@ public abstract class Node extends DefaultMutableTreeNode {
     children.insertElementAt(newChild, childIndex);
   }
 
-  void setExcluded(boolean excluded, @NotNull Consumer<Node> edtNodeChangedQueue) {
+  void setExcluded(boolean excluded, @NotNull Consumer<? super Node> edtNodeChangedQueue) {
     setFlag(EXCLUDED_MASK, excluded);
     edtNodeChangedQueue.consume(this);
   }

@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GrModifierListUtil")
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers
@@ -21,10 +19,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefini
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrModifierListImpl.NAME_TO_MODIFIER_FLAG_MAP
 import org.jetbrains.plugins.groovy.lang.psi.impl.findDeclaredDetachedValue
 import org.jetbrains.plugins.groovy.lang.psi.util.GrTraitUtil.isInterface
+import org.jetbrains.plugins.groovy.transformations.immutable.hasImmutableAnnotation
 
 private val visibilityModifiers = setOf(PsiModifier.PUBLIC, PsiModifier.PROTECTED, PsiModifier.PACKAGE_LOCAL, PsiModifier.PRIVATE)
 private val explicitVisibilityModifiersMask = GrModifierFlags.PUBLIC_MASK or GrModifierFlags.PRIVATE_MASK or GrModifierFlags.PROTECTED_MASK
@@ -81,6 +79,7 @@ private fun GrModifierList.isFinal(): Boolean {
   return when (owner) {
     is GrTypeDefinition -> owner.isFinalClass()
     is GrVariableDeclaration -> owner.isFinalField(this)
+    is GrEnumConstant -> true
     else -> false
   }
 }
@@ -93,7 +92,7 @@ private fun GrVariableDeclaration.isFinalField(modifierList: GrModifierList): Bo
   val containingClass = containingClass
   return isInterface(containingClass)
          || !modifierList.hasExplicitVisibilityModifiers()
-         && (containingClass?.modifierList?.let(PsiImplUtil::hasImmutableAnnotation) ?: false)
+         && (containingClass?.let(::hasImmutableAnnotation) ?: false)
 }
 
 private fun GrModifierList.isStatic(): Boolean {
@@ -101,6 +100,7 @@ private fun GrModifierList.isStatic(): Boolean {
   val containingClass = when (owner) {
     is GrTypeDefinition -> owner.containingClass
     is GrVariableDeclaration -> owner.containingClass
+    is GrEnumConstant -> return true
     else -> null
   }
   return containingClass != null && (owner is GrEnumTypeDefinition || isInterface(containingClass))
@@ -122,6 +122,7 @@ private fun GrModifierList.getImplicitVisiblity(): String? {
       if (isInterface(containingClass)) return PsiModifier.PUBLIC
       return if (hasPackageScope(containingClass, "FIELDS")) PsiModifier.PACKAGE_LOCAL else PsiModifier.PRIVATE
     }
+    is GrEnumConstant -> return PsiModifier.PUBLIC
     else -> return null
   }
 }

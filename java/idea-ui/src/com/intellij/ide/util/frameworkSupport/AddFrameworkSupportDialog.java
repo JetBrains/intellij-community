@@ -19,7 +19,6 @@ import com.intellij.facet.impl.DefaultFacetsProvider;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.newProjectWizard.AddSupportForFrameworksPanel;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.ProjectBundle;
@@ -87,13 +86,11 @@ public class AddFrameworkSupportDialog extends DialogWrapper {
       if (!myAddSupportPanel.validate()) return;
       if (!myAddSupportPanel.downloadLibraries(myAddSupportPanel.getMainPanel())) return;
 
-      new WriteAction() {
-        protected void run(@NotNull final Result result) {
-          ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-          myAddSupportPanel.addSupport(myModule, model);
-          model.commit();
-        }
-      }.execute();
+      WriteAction.run(() -> {
+        ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
+        myAddSupportPanel.addSupport(myModule, model);
+        model.commit();
+      });
     }
     super.doOKAction();
   }

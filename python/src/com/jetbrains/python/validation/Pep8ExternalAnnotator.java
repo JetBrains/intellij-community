@@ -17,6 +17,7 @@ package com.jetbrains.python.validation;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.Lists;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -47,9 +48,9 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonHelper;
@@ -181,8 +182,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       return null;
     }
     final PyPep8Inspection inspection = (PyPep8Inspection)profile.getUnwrappedTool(PyPep8Inspection.KEY.toString(), file);
-    final CodeStyleSettings commonSettings = CodeStyleSettingsManager.getInstance(file.getProject()).getCurrentSettings();
-    final PyCodeStyleSettings customSettings = commonSettings.getCustomSettings(PyCodeStyleSettings.class);
+    final CodeStyleSettings commonSettings = CodeStyle.getSettings(file);
+    final PyCodeStyleSettings customSettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
 
     final List<String> ignoredErrors = Lists.newArrayList(inspection.ignoredErrors);
     if (!customSettings.SPACE_AFTER_NUMBER_SIGN) {
@@ -194,9 +195,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       ignoredErrors.add("E261"); // At least two spaces before inline comment
     }
 
-    final int margin = commonSettings.getRightMargin(file.getLanguage());
-    return new State(homePath, file.getText(), profile.getErrorLevel(key, file), 
-                     ignoredErrors, margin, customSettings.HANG_CLOSING_BRACKETS);
+    return new State(homePath, file.getText(), profile.getErrorLevel(key, file),
+                     ignoredErrors, commonSettings.getRightMargin(PythonLanguage.getInstance()), customSettings.HANG_CLOSING_BRACKETS);
   }
 
   private static void reportMissingInterpreter() {
@@ -234,17 +234,13 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     Results results = new Results(collectedInfo.level);
     if (output.isTimeout()) {
       LOG.info("Timeout running pycodestyle.py");
+      return results;
     }
-    else if (output.getStderrLines().isEmpty()) {
-      for (String line : output.getStdoutLines()) {
-        final Problem problem = parseProblem(line);
-        if (problem != null) {
-          results.problems.add(problem);
-        }
-      }
-    }
-    else if (((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
+    if (!output.getStderr().isEmpty() && ((ApplicationInfoImpl) ApplicationInfo.getInstance()).isEAP()) {
       LOG.info("Error running pycodestyle.py: " + output.getStderr());
+    }
+    for (String line : output.getStdoutLines()) {
+      ContainerUtil.addIfNotNull(results.problems, parseProblem(line));
     }
     return results;
   }
@@ -279,7 +275,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
         problemElement = file.findElementAt(Math.max(0, offset - 1));
       }
 
-      if (ignoreDueToSettings(project, problem, problemElement) || ignoredDueToProblemSuppressors(problem, file, problemElement)) {
+      if (ignoreDueToSettings(file, problem, problemElement) || ignoredDueToProblemSuppressors(problem, file, problemElement)) {
         continue;
       }
 
@@ -355,7 +351,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     return StringUtil.offsetToLineNumber(text, start) != StringUtil.offsetToLineNumber(text, end);
   }
 
-  private static boolean ignoreDueToSettings(Project project, Problem problem, @Nullable PsiElement element) {
+  private static boolean ignoreDueToSettings(PsiFile file, Problem problem, @Nullable PsiElement element) {
     final EditorSettingsExternalizable editorSettings = EditorSettingsExternalizable.getInstance();
     if (!editorSettings.getStripTrailingSpaces().equals(EditorSettingsExternalizable.STRIP_TRAILING_SPACES_NONE)) {
       // ignore trailing spaces errors if they're going to disappear after save
@@ -364,9 +360,8 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
       }
     }
 
-    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
-    final CommonCodeStyleSettings commonSettings = codeStyleSettings.getCommonSettings(PythonLanguage.getInstance());
-    final PyCodeStyleSettings pySettings = codeStyleSettings.getCustomSettings(PyCodeStyleSettings.class);
+    final CommonCodeStyleSettings commonSettings = CodeStyle.getLanguageSettings(file, PythonLanguage.getInstance());
+    final PyCodeStyleSettings pySettings = CodeStyle.getCustomSettings(file, PyCodeStyleSettings.class);
     
     if (element instanceof PsiWhiteSpace) {
       // E303 too many blank lines (num)
@@ -405,7 +400,7 @@ public class Pep8ExternalAnnotator extends ExternalAnnotator<Pep8ExternalAnnotat
     }
     // W191 (indentation contains tabs) is reported also for indents inside multiline string literals, 
     // thus underlying PSI element is not necessarily a whitespace
-    if (problem.myCode.equals("W191") && codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE)) {
+    if (problem.myCode.equals("W191") && CodeStyle.getIndentOptions(file).USE_TAB_CHARACTER) {
       return true;
     }
     return false;

@@ -23,6 +23,7 @@ import com.intellij.testFramework.IdeaTestCase;
 import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.io.IOException;
 import java.util.*;
 
 /**
@@ -50,9 +51,8 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
   }
 
   protected void addSupport() {
-    new WriteCommandAction.Simple(getProject()) {
-      @Override
-      protected void run() throws Throwable {
+    try {
+      WriteCommandAction.writeCommandAction(getProject()).run(() -> {
         final VirtualFile root = getVirtualFile(createTempDir("contentRoot"));
         PsiTestUtil.addContentRoot(myModule, root);
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
@@ -64,7 +64,8 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
               final FrameworkSupportInModuleConfigurable configurable = getOrCreateConfigurable(node.getUserObject());
               configurable.addSupport(myModule, model, modelsProvider);
               if (configurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
-                selectedConfigurables.add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());
+                selectedConfigurables
+                  .add(((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)configurable).getConfigurable());
               }
             }
           }
@@ -78,8 +79,11 @@ public abstract class FrameworkSupportProviderTestCase extends IdeaTestCase {
         for (FrameworkSupportInModuleConfigurable configurable : myConfigurables.values()) {
           Disposer.dispose(configurable);
         }
-      }
-    }.execute().throwException();
+      });
+    }
+    catch (IOException e) {
+      throw new RuntimeException(e);
+    }
   }
 
   protected FrameworkSupportInModuleConfigurable selectFramework(@NotNull FacetTypeId<?> id) {

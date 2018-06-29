@@ -22,7 +22,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.ByteBackedContentRevision;
 import com.intellij.openapi.vcs.changes.ContentRevision;
+import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,11 +35,17 @@ public class Difference {
   private final boolean myIsFile;
   private final Entry myLeft;
   private final Entry myRight;
+  private final boolean myRightContentCurrent;
 
   public Difference(boolean isFile, Entry left, Entry right) {
+    this(isFile, left, right, false);
+  }
+
+  public Difference(boolean isFile, @Nullable Entry left, @Nullable Entry right, boolean isRightContentCurrent) {
     myIsFile = isFile;
     myLeft = left;
     myRight = right;
+    myRightContentCurrent = isRightContentCurrent;
   }
 
   public boolean isFile() {
@@ -57,10 +65,15 @@ public class Difference {
   }
 
   public ContentRevision getRightContentRevision(IdeaGateway gw) {
-    return createContentRevision(getRight(), gw);
+    Entry entry = getRight();
+    if (myRightContentCurrent && entry != null) {
+      VirtualFile file = gw.findVirtualFile(entry.getPath());
+      if (file != null) return new CurrentContentRevision(VcsUtil.getFilePath(file));
+    }
+    return createContentRevision(entry, gw);
   }
 
-  private ContentRevision createContentRevision(final Entry e, final IdeaGateway gw) {
+  private static ContentRevision createContentRevision(@Nullable Entry e, final IdeaGateway gw) {
     if (e == null) return null;
 
     return new ByteBackedContentRevision() {

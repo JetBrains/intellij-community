@@ -244,6 +244,8 @@ public class ActionCallback implements Disposable {
 
     @NotNull
     public ActionCallback getWhenProcessed() {
+      if (myCallbacks.isEmpty()) return DONE;
+      
       final ActionCallback result = new ActionCallback(myCallbacks.size());
       Runnable setDoneRunnable = result.createSetDoneRunnable();
       for (ActionCallback each : myCallbacks) {
@@ -260,15 +262,6 @@ public class ActionCallback implements Disposable {
   @NotNull
   public Runnable createSetDoneRunnable() {
     return () -> setDone();
-  }
-
-  /**
-   * @deprecated use {@link #notifyWhenRejected(ActionCallback)}
-   */
-  @NotNull
-  @Deprecated
-  public Runnable createSetRejectedRunnable() {
-    return () -> setRejected();
   }
 
   public boolean waitFor(long msTimeout) {

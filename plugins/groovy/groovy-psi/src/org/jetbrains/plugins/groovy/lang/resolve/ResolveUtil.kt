@@ -25,9 +25,9 @@ import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolveKind
 import org.jetbrains.plugins.groovy.lang.resolve.processors.GroovyResolverProcessor
 
 @JvmField
-val NON_CODE = Key.create<Boolean?>("groovy.process.non.code.members")
+val NON_CODE: Key<Boolean?> = Key.create<Boolean?>("groovy.process.non.code.members")
 
-fun initialState(processNonCodeMembers: Boolean) = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
+fun initialState(processNonCodeMembers: Boolean): ResolveState = ResolveState.initial().put(NON_CODE, processNonCodeMembers)
 
 fun ResolveState.processNonCodeMembers(): Boolean = get(NON_CODE).let { it == null || it }
 
@@ -94,8 +94,6 @@ fun PsiScopeProcessor.shouldProcessProperties(): Boolean {
   return this is GroovyResolverProcessor && isPropertyResolve
 }
 
-fun PsiScopeProcessor.shouldProcessPackages(): Boolean = shouldProcess(GroovyResolveKind.PACKAGE)
-
 private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   val resolveKindHint = getHint(GroovyResolveKind.HINT_KEY)
   if (resolveKindHint != null) return resolveKindHint.shouldProcess(kind)
@@ -104,7 +102,7 @@ private fun PsiScopeProcessor.shouldProcess(kind: GroovyResolveKind): Boolean {
   return kind.declarationKinds.any(elementClassHint::shouldProcess)
 }
 
-fun wrapClassType(type: PsiType, context: PsiElement) = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
+fun wrapClassType(type: PsiType, context: PsiElement): PsiType? = TypesUtil.createJavaLangClassType(type, context.project, context.resolveScope)
 
 fun getDefaultConstructor(clazz: PsiClass): PsiMethod {
   return getCachedValue(clazz) {

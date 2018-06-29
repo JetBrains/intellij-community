@@ -10,7 +10,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.SmartList;
-import com.intellij.util.concurrency.BoundedTaskExecutor;
+import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.Predicate;
@@ -28,6 +28,7 @@ import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildOutputConsumerImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
 import org.jetbrains.jps.builders.impl.DirtyFilesHolderBase;
+import org.jetbrains.jps.builders.java.JavaBuilderExtension;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
@@ -50,6 +51,7 @@ import org.jetbrains.jps.javac.JavacMain;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.service.SharedThreadPool;
 import org.jetbrains.jps.util.JpsPathUtil;
 
@@ -91,7 +93,7 @@ public class IncProjectBuilder {
   private final BuilderRegistry myBuilderRegistry;
   private final Map<String, String> myBuilderParams;
   private final CanceledStatus myCancelStatus;
-  @Nullable private final Callbacks.ConstantAffectionResolver myConstantSearch;
+  @Nullable private final Callbacks.ConstantAffectionResolver myJavaConstantResolver;
   private final List<MessageHandler> myMessageHandlers = new ArrayList<>();
   private final MessageHandler myMessageDispatcher = new MessageHandler() {
     public void processMessage(BuildMessage msg) {
@@ -110,12 +112,12 @@ public class IncProjectBuilder {
   private final ConcurrentMap<Builder, AtomicInteger> myNumberOfSourcesProcessedByBuilder = ContainerUtil.newConcurrentMap();
 
   public IncProjectBuilder(ProjectDescriptor pd, BuilderRegistry builderRegistry, Map<String, String> builderParams, CanceledStatus cs,
-                           @Nullable Callbacks.ConstantAffectionResolver constantSearch, final boolean isTestMode) {
+                           @Nullable Callbacks.ConstantAffectionResolver javaConstantResolver, final boolean isTestMode) {
     myProjectDescriptor = pd;
     myBuilderRegistry = builderRegistry;
     myBuilderParams = builderParams;
     myCancelStatus = cs;
-    myConstantSearch = constantSearch;
+    myJavaConstantResolver = javaConstantResolver;
     myTotalTargetsWork = pd.getBuildTargetIndex().getAllTargets().size();
     myTotalModuleLevelBuilderCount = builderRegistry.getModuleLevelBuilderCount();
     myIsTestMode = isTestMode;
@@ -168,6 +170,7 @@ public class IncProjectBuilder {
   public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(() -> {
+      myProjectDescriptor.getFSCache().clear();
       JavacMain.clearCompilerZipFileCache();
       myProjectDescriptor.dataManager.flush(false);
       myProjectDescriptor.timestamps.getStorage().force();
@@ -426,14 +429,33 @@ public class IncProjectBuilder {
   }
 
   private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
-    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher,
-                                                              myBuilderParams, myCancelStatus);
+    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher, myBuilderParams, myCancelStatus);
 
     // in project rebuild mode performance gain is hard to observe, so it is better to save memory
     // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
     myProjectDescriptor.setFSCache(context.isProjectRebuild() ? FSCache.NO_CACHE : new FSCache());
-    JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
+    
+    final Callbacks.ConstantAffectionResolver javaResolver = myJavaConstantResolver;
+    if (javaResolver == null) {
+      JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, null);
+    }
+    else {
+      final List<Callbacks.ConstantAffectionResolver> resolvers = getResolvers();
+      resolvers.add(javaResolver);
+      for (JavaBuilderExtension provider : JpsServiceManager.getInstance().getExtensions(JavaBuilderExtension.class)) {
+        final Callbacks.ConstantAffectionResolver extResolver = provider.getConstantSearch(context);
+        if (extResolver != null) {
+          resolvers.add(extResolver);
+        }
+      }
+      JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, resolvers.size() == 1? resolvers.get(0) : new CompositeConstantResolver(resolvers));
+    }
     return context;
+  }
+
+  @NotNull
+  private SmartList<Callbacks.ConstantAffectionResolver> getResolvers() {
+    return new SmartList<>();
   }
 
   private void cleanOutputRoots(CompileContext context, boolean cleanCaches) throws ProjectBuildException {
@@ -815,7 +837,8 @@ public class IncProjectBuilder {
   }
 
   private class BuildParallelizer {
-    private final BoundedTaskExecutor myParallelBuildExecutor = new BoundedTaskExecutor("IncProjectBuilder executor pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
+    private final ExecutorService myParallelBuildExecutor = AppExecutorUtil.createBoundedApplicationPoolExecutor(
+      "IncProjectBuilder Executor Pool", SharedThreadPool.getInstance(), MAX_BUILDER_THREADS);
     private final CompileContext myContext;
     private final AtomicReference<Throwable> myException = new AtomicReference<>();
     private final Object myQueueLock = new Object();
@@ -1274,77 +1297,82 @@ public class IncProjectBuilder {
           }
         }
 
-        BUILDER_CATEGORY_LOOP:
-        for (BuilderCategory category : BuilderCategory.values()) {
-          final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
-          if (category == BuilderCategory.CLASS_POST_PROCESSOR) {
-            // ensure changes from instrumenters are visible to class post-processors
-            saveInstrumentedClasses(outputConsumer);
-          }
-          if (builders.isEmpty()) {
-            continue;
-          }
+        try {
+          BUILDER_CATEGORY_LOOP:
+          for (BuilderCategory category : BuilderCategory.values()) {
+            final List<ModuleLevelBuilder> builders = myBuilderRegistry.getBuilders(category);
+            if (category == BuilderCategory.CLASS_POST_PROCESSOR) {
+              // ensure changes from instrumenters are visible to class post-processors
+              saveInstrumentedClasses(outputConsumer);
+            }
+            if (builders.isEmpty()) {
+              continue;
+            }
 
-          try {
-            for (ModuleLevelBuilder builder : builders) {
-              processDeletedPaths(context, chunk.getTargets());
-              long start = System.nanoTime();
-              int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
-              final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
-              storeBuilderStatistics(builder, System.nanoTime() - start,
-                                     outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
-  
-              doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
-  
-              if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-                throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
+            try {
+              for (ModuleLevelBuilder builder : builders) {
+                processDeletedPaths(context, chunk.getTargets());
+                long start = System.nanoTime();
+                int processedSourcesBefore = outputConsumer.getNumberOfProcessedSources();
+                final ModuleLevelBuilder.ExitCode buildResult = builder.build(context, chunk, dirtyFilesHolder, outputConsumer);
+                storeBuilderStatistics(builder, System.nanoTime() - start,
+                                       outputConsumer.getNumberOfProcessedSources() - processedSourcesBefore);
+
+                doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
+
+                if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
+                  throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
+                }
+                context.checkCanceled();
+                if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+                  nextPassRequired = true;
+                }
+                else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
+                  if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
+                    notifyChunkRebuildRequested(context, chunk, builder);
+                    // allow rebuild from scratch only once per chunk
+                    rebuildFromScratchRequested = true;
+                    try {
+                      // forcibly mark all files in the chunk dirty
+                      context.getProjectDescriptor().fsState.clearContextRoundData(context);
+                      FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
+                      // reverting to the beginning
+                      myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                      stageCount = myTotalModuleLevelBuilderCount;
+                      buildersPassed = 0;
+                      nextPassRequired = true;
+                      outputConsumer.clear();
+                      break BUILDER_CATEGORY_LOOP;
+                    }
+                    catch (Exception e) {
+                      throw new ProjectBuildException(e);
+                    }
+                  }
+                  else {
+                    LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
+                  }
+                }
+
+                buildersPassed++;
+                updateDoneFraction(context, modulesInChunk / (stageCount));
               }
-              context.checkCanceled();
-              if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {
+            }
+            finally {
+              final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
+              if (moreToCompile) {
                 nextPassRequired = true;
               }
-              else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-                if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
-                  notifyChunkRebuildRequested(context, chunk, builder);
-                  // allow rebuild from scratch only once per chunk
-                  rebuildFromScratchRequested = true;
-                  try {
-                    // forcibly mark all files in the chunk dirty
-                    context.getProjectDescriptor().fsState.clearContextRoundData(context);
-                    FSOperations.markDirty(context, CompilationRound.NEXT, chunk, null);
-                    // reverting to the beginning
-                    myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-                    stageCount = myTotalModuleLevelBuilderCount;
-                    buildersPassed = 0;
-                    nextPassRequired = true;
-                    outputConsumer.clear();
-                    break BUILDER_CATEGORY_LOOP;
-                  }
-                  catch (Exception e) {
-                    throw new ProjectBuildException(e);
-                  }
-                }
-                else {
-                  LOG.debug("Builder " + builder.getPresentableName() + " requested second chunk rebuild");
-                }
+              if (nextPassRequired && !rebuildFromScratchRequested) {
+                // recalculate basis
+                myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
+                stageCount += myTotalModuleLevelBuilderCount;
+                myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
               }
-  
-              buildersPassed++;
-              updateDoneFraction(context, modulesInChunk / (stageCount));
             }
           }
-          finally {
-            final boolean moreToCompile = JavaBuilderUtil.updateMappingsOnRoundCompletion(context, dirtyFilesHolder, chunk);
-            if (moreToCompile) {
-              nextPassRequired = true;
-            }
-            if (nextPassRequired && !rebuildFromScratchRequested) {
-              // recalculate basis
-              myTargetsProcessed -= (buildersPassed * modulesInChunk) / stageCount;
-              stageCount += myTotalModuleLevelBuilderCount;
-              myTargetsProcessed += (buildersPassed * modulesInChunk) / stageCount;
-            }
-          }
+        }
+        finally {
+          JavaBuilderUtil.clearDataOnRoundCompletion(context);
         }
       }
       while (nextPassRequired);
@@ -1379,15 +1407,8 @@ public class IncProjectBuilder {
   }
 
   private void storeBuilderStatistics(Builder builder, long elapsedTime, int processedFiles) {
-    if (!myElapsedTimeNanosByBuilder.containsKey(builder)) {
-      myElapsedTimeNanosByBuilder.putIfAbsent(builder, new AtomicLong());
-    }
-    myElapsedTimeNanosByBuilder.get(builder).addAndGet(elapsedTime);
-
-    if (!myNumberOfSourcesProcessedByBuilder.containsKey(builder)) {
-      myNumberOfSourcesProcessedByBuilder.putIfAbsent(builder, new AtomicInteger());
-    }
-    myNumberOfSourcesProcessedByBuilder.get(builder).addAndGet(processedFiles);
+    myElapsedTimeNanosByBuilder.computeIfAbsent(builder, b -> new AtomicLong()).addAndGet(elapsedTime);
+    myNumberOfSourcesProcessedByBuilder.computeIfAbsent(builder, b -> new AtomicInteger()).addAndGet(processedFiles);
   }
 
   private static void saveInstrumentedClasses(ChunkBuildOutputConsumerImpl outputConsumer) throws IOException {

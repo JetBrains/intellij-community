@@ -6,10 +6,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.actions.ActionsCollector;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.idea.ActionsBundle;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -21,6 +23,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
@@ -32,6 +35,7 @@ import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.NonOpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.Alarm;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -139,7 +143,6 @@ public abstract class DialogWrapper {
    */
   private int myButtonAlignment = SwingConstants.RIGHT;
   private boolean myCrossClosesWindow = true;
-  private Insets myButtonMargins = JBUI.insets(2, 16);
 
   protected Action myOKAction;
   protected Action myCancelAction;
@@ -370,7 +373,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty());
+        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
       });
     }
   }
@@ -426,6 +429,7 @@ public abstract class DialogWrapper {
   }
 
   public final void close(int exitCode) {
+    logCloseDialogEvent(exitCode);
     close(exitCode, exitCode != CANCEL_EXIT_CODE);
   }
 
@@ -512,14 +516,16 @@ public abstract class DialogWrapper {
     List<JButton> leftSideButtons = createButtons(leftSideActions);
     List<JButton> rightSideButtons = createButtons(actions);
 
+    int index = 0;
     myButtonMap.clear();
     for (JButton button : ContainerUtil.concat(leftSideButtons, rightSideButtons)) {
       myButtonMap.put(button.getAction(), button);
       if (button instanceof JBOptionButton) {
         myOptionsButtons.add((JBOptionButton)button);
       }
+      final boolean isLeft = index < leftSideButtons.size();
+      TouchbarDataKeys.putClientPropertyDialogButton(button, !isLeft, false, index++);
     }
-
 
     return createSouthPanel(leftSideButtons, rightSideButtons, hasHelpToMoveToLeftSide);
   }
@@ -599,11 +605,8 @@ public abstract class DialogWrapper {
     }
     JComponent doNotAskCheckbox = createDoNotAskCheckbox();
 
-    final JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
-    //noinspection UseDPIAwareInsets
-    final Insets insets = SystemInfo.isMacOSLeopard ?
-                          UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets() :
-                          UIUtil.isUnderWin10LookAndFeel() ? JBUI.emptyInsets() : new Insets(8, 0, 0, 0); //don't wrap to JBInsets
+    JPanel lrButtonsPanel = new NonOpaquePanel(new GridBagLayout());
+    Insets insets = SystemInfo.isMacOSLeopard && UIUtil.isUnderIntelliJLaF() ? JBUI.insets(0, 8) : JBUI.emptyInsets();
 
     if (rightSideButtons.size() > 0 || leftSideButtons.size() > 0) {
       GridBag bag = new GridBag().setDefaultInsets(insets);
@@ -634,7 +637,9 @@ public abstract class DialogWrapper {
       helpButton = createHelpButton(insets);
     }
 
-    if (helpButton != null || doNotAskCheckbox != null) {
+    JPanel eastPanel = createSouthAdditionalPanel();
+
+    if (helpButton != null || doNotAskCheckbox != null || eastPanel != null) {
       JPanel leftPanel = new JPanel(new BorderLayout());
 
       if (helpButton != null) leftPanel.add(helpButton, BorderLayout.WEST);
@@ -642,6 +647,11 @@ public abstract class DialogWrapper {
       if (doNotAskCheckbox != null) {
         doNotAskCheckbox.setBorder(JBUI.Borders.emptyRight(20));
         leftPanel.add(doNotAskCheckbox, BorderLayout.CENTER);
+      }
+
+
+      if(eastPanel != null) {
+        leftPanel.add(eastPanel, BorderLayout.EAST);
       }
 
       panel.add(leftPanel, BorderLayout.WEST);
@@ -665,14 +675,35 @@ public abstract class DialogWrapper {
     return myCheckBoxDoNotShowDialog != null && myCheckBoxDoNotShowDialog.isVisible() ? myCheckBoxDoNotShowDialog : null;
   }
 
+  private final JBValue BASE_BUTTON_GAP = new JBValue.Float(UIUtil.isUnderWin10LookAndFeel() ? 8 : 12);
+
   @NotNull
-  private JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
-    int hgap = SystemInfo.isMacOSLeopard ? UIUtil.isUnderIntelliJLaF() ? 8 : 0 : 5;
-    JPanel buttonsPanel = new NonOpaquePanel(new DialogWrapperButtonLayout(buttons.size(), hgap));
-    for (final JButton button : buttons) {
+  protected JPanel createButtonsPanel(@NotNull List<JButton> buttons) {
+    JPanel buttonsPanel = new NonOpaquePanel();
+    buttonsPanel.setLayout(new BoxLayout(buttonsPanel, BoxLayout.X_AXIS));
+
+    for (int i = 0; i < buttons.size(); i++) {
+      JComponent button = buttons.get(i);
+      Insets insets = button.getInsets();
+
       buttonsPanel.add(button);
+      if (i < buttons.size() - 1) {
+        int gap = UIUtil.isUnderDarcula() || UIUtil.isUnderIntelliJLaF() ? BASE_BUTTON_GAP.get() - insets.left - insets.right : JBUI.scale(8);
+        buttonsPanel.add(Box.createRigidArea(new Dimension(gap, 0)));
+      }
     }
+
     return buttonsPanel;
+  }
+
+  /**
+   * Additional panel in the lower left part of dialog to the left from additional buttons
+   *
+   * @return panel to be shown or null if it's not required
+   */
+  @Nullable
+  protected JPanel createSouthAdditionalPanel() {
+    return null;
   }
 
   /**
@@ -725,7 +756,6 @@ public abstract class DialogWrapper {
       myNoAction = action;
     }
 
-    setMargin(button);
     if (action.getValue(DEFAULT_ACTION) != null) {
       if (!myPeer.isHeadless()) {
         getRootPane().setDefaultButton(button);
@@ -750,7 +780,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  private static Pair<Integer, String> extractMnemonic(@Nullable String text) {
+  public static Pair<Integer, String> extractMnemonic(@Nullable String text) {
     if (text == null) return Pair.create(0, null);
 
     int mnemonic = 0;
@@ -776,17 +806,6 @@ public abstract class DialogWrapper {
       plainText.append(ch);
     }
     return Pair.create(mnemonic, plainText.toString());
-  }
-
-  private void setMargin(@NotNull JButton button) {
-    // Aqua LnF does a good job of setting proper margin between buttons. Setting them specifically causes them be 'square' style instead of
-    // 'rounded', which is expected by apple users.
-    if (!SystemInfo.isMac) {
-      if (myButtonMargins == null) {
-        return;
-      }
-      button.setMargin(myButtonMargins);
-    }
   }
 
   @NotNull
@@ -1277,16 +1296,20 @@ public abstract class DialogWrapper {
     JComponent centerSection = new JPanel(new BorderLayout());
     root.add(centerSection, BorderLayout.CENTER);
 
-    root.setBorder(createContentPaneBorder());
-
     final JComponent n = createNorthPanel();
     if (n != null) {
       centerSection.add(n, BorderLayout.NORTH);
     }
 
-    final JComponent c = createCenterPanel();
-    if (c != null) {
-      centerSection.add(c, BorderLayout.CENTER);
+    final JComponent centerPanel = createCenterPanel();
+    if (centerPanel != null) {
+      centerSection.add(centerPanel, BorderLayout.CENTER);
+    }
+
+    boolean isVisualPaddingCompensatedOnComponentLevel = centerPanel == null || centerPanel.getClientProperty("isVisualPaddingCompensatedOnComponentLevel") == null;
+    if (isVisualPaddingCompensatedOnComponentLevel) {
+      // see comment about visual paddings in the MigLayoutBuilder.build
+      root.setBorder(createContentPaneBorder());
     }
 
     final JPanel southSection = new JPanel(new BorderLayout());
@@ -1295,6 +1318,9 @@ public abstract class DialogWrapper {
     southSection.add(myErrorText, BorderLayout.CENTER);
     final JComponent south = createSouthPanel();
     if (south != null) {
+      if (!isVisualPaddingCompensatedOnComponentLevel) {
+        south.setBorder(JBUI.Borders.empty(0, 12, 8, 12));
+      }
       southSection.add(south, BorderLayout.SOUTH);
     }
 
@@ -1313,7 +1339,7 @@ public abstract class DialogWrapper {
   }
 
   @NotNull
-  LayoutManager createRootLayout() {
+  protected LayoutManager createRootLayout() {
     return new BorderLayout();
   }
 
@@ -1345,7 +1371,7 @@ public abstract class DialogWrapper {
     }
   }
 
-  void startTrackingValidation() {
+  protected void startTrackingValidation() {
     SwingUtilities.invokeLater(() -> {
       if (!myValidationStarted && !myDisposed) {
         myValidationStarted = true;
@@ -1429,11 +1455,11 @@ public abstract class DialogWrapper {
   /**
    * Sets margin for command buttons ("OK", "Cancel", "Help").
    *
+   * @Deprecated Button margins aren't used anymore. Button style is standardized.
    * @param insets buttons margin
    */
-  public final void setButtonsMargin(@Nullable Insets insets) {
-    myButtonMargins = insets;
-  }
+  @Deprecated
+  public final void setButtonsMargin(@Nullable Insets insets) {}
 
   public final void setCrossClosesWindow(boolean crossClosesWindow) {
     myCrossClosesWindow = crossClosesWindow;
@@ -1486,6 +1512,10 @@ public abstract class DialogWrapper {
 
   protected final void setOKButtonMnemonic(int c) {
     myOKAction.putValue(Action.MNEMONIC_KEY, c);
+  }
+
+  protected final void setOKButtonTooltip(String text) {
+    myOKAction.putValue(Action.SHORT_DESCRIPTION, text);
   }
 
   /**
@@ -1607,6 +1637,7 @@ public abstract class DialogWrapper {
    * @see #showAndGetOk()
    */
   public void show() {
+    logShowDialogEvent();
     invokeShow();
   }
 
@@ -1761,6 +1792,30 @@ public abstract class DialogWrapper {
     return false;
   }
 
+  private void logCloseDialogEvent(int exitCode) {
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logCloseDialog(dialogId, exitCode, getClass());
+    }
+  }
+
+  private void logShowDialogEvent() {
+    final String dialogId = getLoggedDialogId();
+    if (StringUtil.isNotEmpty(dialogId)) {
+      FeatureUsageUiEventsKt.getUiEventLogger().logShowDialog(dialogId, getClass());
+    }
+  }
+
+  /**
+   * The ID will be recorded in user event log, it can be used to understand how often this dialog is used.
+   *
+   * @return null if we shouldn't record the dialog.
+   */
+  @Nullable
+  protected String getLoggedDialogId() {
+    return getClass().getName();
+  }
+
   /**
    * Base class for dialog wrapper actions that need to ensure that only
    * one action for the dialog is running.
@@ -1822,7 +1877,7 @@ public abstract class DialogWrapper {
         }
 
         startTrackingValidation();
-        return;
+        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
       }
       doOKAction();
     }
@@ -1833,9 +1888,9 @@ public abstract class DialogWrapper {
   }
 
   private void recordAction(String name, AWTEvent event) {
-    if (event instanceof KeyEvent) {
+    if (event instanceof KeyEvent && ApplicationManager.getApplication() != null) {
       String shortcut = getKeystrokeText(KeyStroke.getKeyStrokeForEvent((KeyEvent)event));
-      ActionsCollector.getInstance().record(name + " " + shortcut);
+      ActionsCollector.getInstance().record(name + " " + shortcut, getClass());
     }
   }
 
@@ -1911,12 +1966,21 @@ public abstract class DialogWrapper {
   protected void setErrorInfoAll(@NotNull List<ValidationInfo> info) {
     if (myInfo.equals(info)) return;
 
+    Application application = ApplicationManager.getApplication();
+    boolean headless = application != null && application.isHeadlessEnvironment();
+
     myErrorTextAlarm.cancelAllRequests();
-    SwingUtilities.invokeLater(() -> {
+    Runnable clearErrorRunnable = () -> {
       if (myErrorText != null) {
         myErrorText.clearError();
       }
-    });
+    };
+    if (headless) {
+      clearErrorRunnable.run();
+    }
+    else {
+      SwingUtilities.invokeLater(clearErrorRunnable);
+    }
 
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
     if (Registry.is("ide.inplace.errors.outline")) {
@@ -1990,12 +2054,25 @@ public abstract class DialogWrapper {
         }
       }
     } else if (!myInfo.isEmpty()) {
-      myErrorTextAlarm.addRequest(() -> {
-        for (ValidationInfo vi : myInfo) {
+      Runnable updateErrorTextRunnable = () -> {
+        for (ValidationInfo vi: myInfo) {
           myErrorText.appendError(vi.message);
         }
-      }, 300, null);
+      };
+      if (headless) {
+        updateErrorTextRunnable.run();
+      }
+      else {
+        myErrorTextAlarm.addRequest(updateErrorTextRunnable, 300, null);
+      }
     }
+  }
+
+  /**
+   * Check if component is in error state validation-wise
+   */
+  protected boolean hasErrors(@NotNull JComponent component) {
+    return myInfo.stream().anyMatch(i -> component.equals(i.component));
   }
 
   private void setErrorTipText(JComponent component, JLabel label, String text) {
@@ -2325,7 +2402,7 @@ public abstract class DialogWrapper {
         }
       };
 
-      balloon.addListener(new JBPopupListener.Adapter() {
+      balloon.addListener(new JBPopupListener() {
         @Override public void onClosed(LightweightWindowEvent event) {
           JRootPane rootPane = getRootPane();
           if (rootPane != null) {

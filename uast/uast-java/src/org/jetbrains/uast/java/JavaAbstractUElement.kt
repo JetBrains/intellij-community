@@ -34,13 +34,13 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
     return if (this.psi != null) this.psi == other.psi else this === other
   }
 
-  override fun hashCode() = psi?.hashCode() ?: System.identityHashCode(this)
+  override fun hashCode(): Int = psi?.hashCode() ?: System.identityHashCode(this)
 
   override fun asSourceString(): String {
     return this.psi?.text ?: super<JavaUElementWithComments>.asSourceString()
   }
 
-  override fun toString() = asRenderString()
+  override fun toString(): String = asRenderString()
 
   override val uastParent: UElement? by lz { givenParent ?: convertParent() }
 
@@ -54,7 +54,7 @@ abstract class JavaAbstractUElement(givenParent: UElement?) : JavaUElementWithCo
           throw IllegalStateException("lazy parent loop: psi ${this.psi}(${this.psi?.javaClass}) for $this of ${this.javaClass}")
       }
 
-  protected open fun getPsiParentForLazyConversion() = this.psi?.parent
+  protected open fun getPsiParentForLazyConversion(): PsiElement? = this.psi?.parent
 
   //explicitly overridden in abstract class to be binary compatible with Kotlin
   override val comments: List<UComment>
@@ -126,6 +126,7 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
   override fun getPsiParentForLazyConversion(): PsiElement? = super.getPsiParentForLazyConversion()?.let {
     when (it) {
       is PsiResourceExpression -> it.parent
+      is PsiReferenceExpression -> (it.parent as? PsiMethodCallExpression) ?: it
       else -> it
     }
   }
@@ -135,5 +136,5 @@ abstract class JavaAbstractUExpression(givenParent: UElement?) : JavaAbstractUEl
       is UAnonymousClass -> uParent.uastParent
       else -> uParent
     }
-  }
+  }.let(this::unwrapCompositeQualifiedReference)
 }

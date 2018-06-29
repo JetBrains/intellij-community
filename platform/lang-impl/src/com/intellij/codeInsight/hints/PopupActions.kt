@@ -145,7 +145,7 @@ class BlacklistCurrentMethodIntention : IntentionAction, LowPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }
 
 
@@ -188,7 +188,7 @@ class DisableCustomHintsOption: IntentionAction, LowPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 }
 
 class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
@@ -236,7 +236,7 @@ class EnableCustomHintsOption: IntentionAction, HighPriorityAction {
     refreshAllOpenEditors()
   }
 
-  override fun startInWriteAction() = false
+  override fun startInWriteAction(): Boolean = false
 
 }
 
@@ -322,7 +322,7 @@ fun PsiElement.isOwnsInlayInEditor(editor: Editor): Boolean {
 }
 
 
-fun MethodInfo.toPattern() = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
+fun MethodInfo.toPattern(): String = this.fullyQualifiedName + '(' + this.paramNames.joinToString(",") + ')'
 
 
 private fun String.capitalize() = StringUtil.capitalizeWords(this, true)

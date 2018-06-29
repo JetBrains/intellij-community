@@ -58,11 +58,6 @@ public final class TestWindowManager extends WindowManagerEx {
   public final void doNotSuggestAsParent(final Window window) { }
 
   @Override
-  public StatusBar getStatusBar(@NotNull Component c) {
-    return null;
-  }
-
-  @Override
   public final Window suggestParentWindow(@Nullable final Project project) {
     return null;
   }
@@ -171,11 +166,6 @@ public final class TestWindowManager extends WindowManagerEx {
 
   @Override
   public final boolean isInsideScreenBounds(final int x, final int y, final int width) {
-    throw new UnsupportedOperationException();
-  }
-
-  @Override
-  public final boolean isInsideScreenBounds(final int x, final int y) {
     throw new UnsupportedOperationException();
   }
 

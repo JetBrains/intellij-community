@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testframework.actions;
 
 import com.intellij.execution.ExecutionException;
@@ -32,7 +30,7 @@ import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -176,33 +174,34 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       performAction(environmentBuilder.runner(availableRunners.get(environment.getExecutor())));
     }
     else {
-      final JBList list = new JBList(availableRunners.keySet());
-      list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-      list.setSelectedValue(environment.getExecutor(), true);
-      list.setCellRenderer(new DefaultListCellRenderer() {
-        @NotNull
-        @Override
-        public Component getListCellRendererComponent(@NotNull JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-          if (value instanceof Executor) {
-            setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
-            setIcon(((Executor)value).getIcon());
-          }
-          return component;
-        }
-      });
+      ArrayList<Executor> model = ContainerUtil.newArrayList(availableRunners.keySet());
       //noinspection ConstantConditions
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+      JBPopupFactory.getInstance().createPopupChooserBuilder(model)
+        .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+        .setSelectedValue(environment.getExecutor(), true)
+        .setRenderer(new DefaultListCellRenderer() {
+          @NotNull
+          @Override
+          public Component getListCellRendererComponent(@NotNull JList list,
+                                                        Object value,
+                                                        int index,
+                                                        boolean isSelected,
+                                                        boolean cellHasFocus) {
+            final Component component = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+            if (value instanceof Executor) {
+              setText(UIUtil.removeMnemonic(((Executor)value).getStartActionText()));
+              setIcon(((Executor)value).getIcon());
+            }
+            return component;
+          }
+        })
         .setTitle("Restart Failed Tests")
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(() -> {
-          final Object value = list.getSelectedValue();
-          if (value instanceof Executor) {
-            //noinspection ConstantConditions
-            performAction(environmentBuilder.runner(availableRunners.get(value)).executor((Executor)value));
-          }
+        .setItemChosenCallback((value) -> {
+          //noinspection ConstantConditions
+          performAction(environmentBuilder.runner(availableRunners.get(value)).executor(value));
         }).createPopup().showUnderneathOf(event.getComponent());
     }
   }
@@ -282,12 +281,6 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
     }
 
     @Override
-    @NotNull
-    public ConfigurationType getType() {
-      return myConfiguration.getType();
-    }
-
-    @Override
     public ConfigurationPerRunnerSettings createRunnerSettings(final ConfigurationInfoProvider provider) {
       return myConfiguration.createRunnerSettings(provider);
     }
@@ -302,6 +295,7 @@ public class AbstractRerunFailedTestsAction extends AnAction implements AnAction
       return myConfiguration.clone();
     }
 
+    @SuppressWarnings("deprecation")
     @Override
     public int getUniqueID() {
       return myConfiguration.getUniqueID();

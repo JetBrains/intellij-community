@@ -145,7 +145,7 @@ class WriterThreadCaseDjango(AbstractWriterThreadCaseDjango):
         self.write_make_initial_run()
 
         t = self.create_request_thread('my_app')
-        time.sleep(2) # Give django some time to get to startup before requesting the page
+        time.sleep(5)  # Give django some time to get to startup before requesting the page
         t.start()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
@@ -192,14 +192,14 @@ class WriterThreadCaseDjango2(AbstractWriterThreadCaseDjango):
         self.write_make_initial_run()
 
         t = self.create_request_thread('my_app/name')
-        time.sleep(2) # Give django some time to get to startup before requesting the page
+        time.sleep(5)  # Give django some time to get to startup before requesting the page
         t.start()
 
         thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
         assert line == 4, 'Expected return to be in line 4, was: %s' % line
 
         self.write_get_frame(thread_id, frame_id)
-        self.wait_for_var('<var name="form" type="NameForm" qualifier="my_app.forms" value="NameForm%253A %253Cmy_app.forms.NameForm object')
+        self.wait_for_var('<var name="form" type="NameForm" qualifier="my_app.forms" value="NameForm%253A')
         self.write_run_thread(thread_id)
         self.finished_ok = True
 
@@ -226,6 +226,23 @@ class WriterThreadCase19(debugger_unittest.AbstractWriterThread):
 
         self.finished_ok = True
 
+#=======================================================================================================================
+# WriterThreadCase20 - [Test Case]: Breakpoint on line with exception
+#======================================================================================================================
+class WriterThreadCase20(debugger_unittest.AbstractWriterThread):
+
+    TEST_FILE = debugger_unittest._get_debugger_test_file('_debugger_case20.py')
+
+    def run(self):
+        self.start_socket()
+        self.write_add_breakpoint(3, 'fn_with_except')
+        self.write_make_initial_run()
+        for i in range(2):
+            thread_id, frame_id, line = self.wait_for_breakpoint_hit('111', True)
+            assert line == 3, 'Expected return to be in line 3, was: %s' % line
+            self.write_run_thread(thread_id)
+
+        self.finished_ok = True
 
 #=======================================================================================================================
 # WriterThreadCase18 - [Test Case]: change local variable
@@ -323,9 +340,9 @@ class WriterThreadCase16(debugger_unittest.AbstractWriterThread):
         # First pass check is that we have all three expected variables defined
         self.write_get_frame(thread_id, frame_id)
         self.wait_for_multiple_vars((
-            '<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B  0.%252B1.j   1.%252B1.j   2.%252B1.j   3.%252B1.j   4.%252B1.j   5.%252B1.j   6.%252B1.j   7.%252B1.j%250A   8.%252B1.j   9.%252B1.j  10.%252B1.j  11.%252B1.j  12.%252B1.j  13.%252B1.j  14.%252B1.j  15.%252B1.j%250A  16.%252B1.j  17.%252B1.j  18.%252B1.j  19.%252B1.j  20.%252B1.j  21.%252B1.j  22.%252B1.j  23.%252B1.j%250A  24.%252B1.j  25.%252B1.j  26.%252B1.j  27.%252B1.j  28.%252B1.j  29.%252B1.j  30.%252B1.j  31.%252B1.j%250A  32.%252B1.j  33.%252B1.j  34.%252B1.j  35.%252B1.j  36.%252B1.j  37.%252B1.j  38.%252B1.j  39.%252B1.j%250A  40.%252B1.j  41.%252B1.j  42.%252B1.j  43.%252B1.j  44.%252B1.j  45.%252B1.j  46.%252B1.j  47.%252B1.j%250A  48.%252B1.j  49.%252B1.j  50.%252B1.j  51.%252B1.j  52.%252B1.j  53.%252B1.j  54.%252B1.j  55.%252B1.j%250A  56.%252B1.j  57.%252B1.j  58.%252B1.j  59.%252B1.j  60.%252B1.j  61.%252B1.j  62.%252B1.j  63.%252B1.j%250A  64.%252B1.j  65.%252B1.j  66.%252B1.j  67.%252B1.j  68.%252B1.j  69.%252B1.j  70.%252B1.j  71.%252B1.j%250A  72.%252B1.j  73.%252B1.j  74.%252B1.j  75.%252B1.j  76.%252B1.j  77.%252B1.j  78.%252B1.j  79.%252B1.j%250A  80.%252B1.j  81.%252B1.j  82.%252B1.j  83.%252B1.j  84.%252B1.j  85.%252B1.j  86.%252B1.j  87.%252B1.j%250A  88.%252B1.j  89.%252B1.j  90.%252B1.j  91.%252B1.j  92.%252B1.j  93.%252B1.j  94.%252B1.j  95.%252B1.j%250A  96.%252B1.j  97.%252B1.j  98.%252B1.j  99.%252B1.j%255D" isContainer="True" />',
-            '<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...%252C  9997  9998  9999%255D%250A %255B10000 10001 10002 ...%252C 19997 19998 19999%255D%250A %255B20000 20001 20002 ...%252C 29997 29998 29999%255D%250A ...%252C %250A %255B70000 70001 70002 ...%252C 79997 79998 79999%255D%250A %255B80000 80001 80002 ...%252C 89997 89998 89999%255D%250A %255B90000 90001 90002 ...%252C 99997 99998 99999%255D%255D" isContainer="True" />',
-            '<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ...%252C 9999997 9999998 9999999%255D" isContainer="True" />',
+            '<var name="smallarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B 0.%252B1.j  1.%252B1.j  2.%252B1.j  3.%252B1.j  4.%252B1.j  5.%252B1.j  6.%252B1.j  7.%252B1.j  8.%252B1.j%250A  9.%252B1.j 10.%252B1.j 11.%252B1.j 12.%252B1.j 13.%252B1.j 14.%252B1.j 15.%252B1.j 16.%252B1.j 17.%252B1.j%250A 18.%252B1.j 19.%252B1.j 20.%252B1.j 21.%252B1.j 22.%252B1.j 23.%252B1.j 24.%252B1.j 25.%252B1.j 26.%252B1.j%250A 27.%252B1.j 28.%252B1.j 29.%252B1.j 30.%252B1.j 31.%252B1.j 32.%252B1.j 33.%252B1.j 34.%252B1.j 35.%252B1.j%250A 36.%252B1.j 37.%252B1.j 38.%252B1.j 39.%252B1.j 40.%252B1.j 41.%252B1.j 42.%252B1.j 43.%252B1.j 44.%252B1.j%250A 45.%252B1.j 46.%252B1.j 47.%252B1.j 48.%252B1.j 49.%252B1.j 50.%252B1.j 51.%252B1.j 52.%252B1.j 53.%252B1.j%250A 54.%252B1.j 55.%252B1.j 56.%252B1.j 57.%252B1.j 58.%252B1.j 59.%252B1.j 60.%252B1.j 61.%252B1.j 62.%252B1.j%250A 63.%252B1.j 64.%252B1.j 65.%252B1.j 66.%252B1.j 67.%252B1.j 68.%252B1.j 69.%252B1.j 70.%252B1.j 71.%252B1.j%250A 72.%252B1.j 73.%252B1.j 74.%252B1.j 75.%252B1.j 76.%252B1.j 77.%252B1.j 78.%252B1.j 79.%252B1.j 80.%252B1.j%250A 81.%252B1.j 82.%252B1.j 83.%252B1.j 84.%252B1.j 85.%252B1.j 86.%252B1.j 87.%252B1.j 88.%252B1.j 89.%252B1.j%250A 90.%252B1.j 91.%252B1.j 92.%252B1.j 93.%252B1.j 94.%252B1.j 95.%252B1.j 96.%252B1.j 97.%252B1.j 98.%252B1.j%250A 99.%252B1.j%255D" isContainer="True" />',
+            '<var name="bigarray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B%255B    0     1     2 ...  9997  9998  9999%255D%250A %255B10000 10001 10002 ... 19997 19998 19999%255D%250A %255B20000 20001 20002 ... 29997 29998 29999%255D%250A ...%250A %255B70000 70001 70002 ... 79997 79998 79999%255D%250A %255B80000 80001 80002 ... 89997 89998 89999%255D%250A %255B90000 90001 90002 ... 99997 99998 99999%255D%255D" isContainer="True" />',
+            '<var name="hugearray" type="ndarray" qualifier="numpy" value="ndarray%253A %255B      0       1       2 ... 9999997 9999998 9999999%255D" isContainer="True" />',
         ))
 
         # For each variable, check each of the resolved (meta data) attributes...
@@ -1346,6 +1363,10 @@ class Test(unittest.TestCase, debugger_unittest.DebuggerRunner):
 
     def test_case_19(self):
         self.check_case(WriterThreadCase19)
+
+    # PY-29051
+    def test_case_20(self):
+        self.check_case(WriterThreadCase20)
 
     if TEST_DJANGO:
         def test_case_django(self):

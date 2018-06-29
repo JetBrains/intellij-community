@@ -20,39 +20,37 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class CustomisedActionGroup extends ActionGroup {
-  private boolean myForceUpdate;
   private final ActionGroup myGroup;
   private AnAction[] myChildren;
   private final CustomActionsSchema mySchema;
   private final String myDefaultGroupName;
   private final String myRootGroupName;
 
+  private int mySchemeModificationStamp = -1;
+
   public CustomisedActionGroup(String shortName,
-                               boolean popup,
                                final ActionGroup group,
                                CustomActionsSchema schema,
                                String defaultGroupName, 
                                String name) {
-    super(shortName, popup);
+    copyFrom(group);
+    getTemplatePresentation().setText(shortName);
+    setPopup(group.isPopup());
+
     myGroup = group;
     mySchema = schema;
     myDefaultGroupName = defaultGroupName;
     myRootGroupName = name;
-    myForceUpdate = true;
   }
 
   @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
-    if (myForceUpdate){
+    int currentStamp = CustomActionsSchema.getInstance().getModificationStamp();
+    if (mySchemeModificationStamp < currentStamp || myChildren == null || !(myGroup instanceof DefaultActionGroup)) {
       myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
-      myForceUpdate = false;
-      return myChildren;
-    } else {
-      if (!(myGroup instanceof DefaultActionGroup) || myChildren == null){
-        myChildren = CustomizationUtil.getReordableChildren(myGroup, mySchema, myDefaultGroupName, myRootGroupName, e);
-      }
-      return myChildren;
+      mySchemeModificationStamp = currentStamp;
     }
+    return myChildren;
   }
 
   @Override
@@ -84,4 +82,6 @@ public class CustomisedActionGroup extends ActionGroup {
     final AnAction[] children = getChildren(null);
     return children.length > 0 ? children[0] : null;
   }
+
+  public ActionGroup getOrigin() { return myGroup; }
 }

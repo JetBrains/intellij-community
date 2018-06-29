@@ -1,27 +1,22 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.env;
 
 import com.google.common.collect.Lists;
-import com.intellij.execution.ExecutionException;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.LoggedErrorProcessor;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import com.jetbrains.LoggingRule;
 import com.jetbrains.TestEnv;
-import com.jetbrains.python.packaging.PyPackage;
-import com.jetbrains.python.packaging.PyPackageManager;
-import com.jetbrains.python.packaging.PyPackageUtil;
-import org.hamcrest.Matchers;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.junit.*;
@@ -34,6 +29,8 @@ import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.*;
 import java.util.stream.Collectors;
+
+import static com.intellij.testFramework.assertions.Assertions.assertThat;
 
 /**
  * @author traff
@@ -49,6 +46,15 @@ public abstract class PyEnvTestCase {
 
   @NotNull
   protected static final PyEnvTestSettings SETTINGS = new PyEnvTestSettings();
+
+
+  /**
+   * Rule used to capture debug logging and display it if test failed.
+   * See also {@link PyExecutionFixtureTestTask#getClassesToEnableDebug()} and
+   * {@link PyEnvTaskRunner}
+   */
+  @Rule
+  public LoggingRule myLoggingRule = new LoggingRule();
 
 
   /**
@@ -99,9 +105,7 @@ public abstract class PyEnvTestCase {
       }
       else {
         for (StagingOn so : description.getTestClass().getMethod(description.getMethodName()).getAnnotationsByType(StagingOn.class)) {
-          if (so.os() == TestEnv.WINDOWS && SystemInfo.isWindows ||
-              so.os() == TestEnv.LINUX && SystemInfo.isLinux ||
-              so.os() == TestEnv.MAC && SystemInfo.isMac) {
+          if (so.os().isThisOs()) {
             return true;
           }
         }
@@ -132,11 +136,9 @@ public abstract class PyEnvTestCase {
   @Before
   public void setUp() {
     if (myRequiredTags != null) { // Ensure all tags exist between available interpreters
-      Assume.assumeThat(
-        "Can't find some tags between all available interpreter, test (all methods) will be skipped",
-        getAvailableTags(),
-        Matchers.hasItems(myRequiredTags)
-      );
+      assertThat(getAvailableTags())
+        .describedAs("Can't find some tags between all available interpreter, test (all methods) will be skipped")
+        .contains(myRequiredTags);
     }
   }
 
@@ -171,15 +173,30 @@ public abstract class PyEnvTestCase {
     return false;
   }
 
+  /**
+   * Runs task on several envs. If you care about exception thrown from task use {@link #runPythonTestWithException(PyTestTask)}
+   */
   public void runPythonTest(final PyTestTask testTask) {
     runTest(testTask, getTestName(false));
+  }
+
+  /**
+   * Like {@link #runPythonTest(PyTestTask)} but for tasks that may throw exception
+   */
+  protected final void runPythonTestWithException(final PyTestTask testTask) throws Exception {
+    try {
+      runPythonTest(testTask);
+    }
+    catch (final PyEnvWrappingException ex) {
+      throw ex.getCauseException();
+    }
   }
 
   protected String getTestName(boolean lowercaseFirstLetter) {
     return UsefulTestCase.getTestName(myTestName.getMethodName(), lowercaseFirstLetter);
   }
 
-  public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
+  private void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     Assume.assumeFalse("Running under teamcity but not by Env configuration. Test seems to be launched by accident, skip it.",
                        UsefulTestCase.IS_UNDER_TEAMCITY && !SETTINGS.isEnvConfiguration());
     checkStaging();
@@ -206,6 +223,7 @@ public abstract class PyEnvTestCase {
     Assume.assumeFalse(testName +
                        ": environments are not defined. Skipping. \nChecks logs for settings that lead to this situation",
                        roots.isEmpty());
+
     doRunTests(testTask, testName, roots);
   }
 
@@ -220,7 +238,7 @@ public abstract class PyEnvTestCase {
   protected void doRunTests(PyTestTask testTask, String testName, List<String> roots) {
     Assume.assumeFalse("Tests launched in remote SDK mode, and this test is not remote", SETTINGS.useRemoteSdk());
 
-    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots);
+    PyEnvTaskRunner taskRunner = new PyEnvTaskRunner(roots, myLoggingRule);
 
     final EnvTestTagsRequired classAnnotation = getClass().getAnnotation(EnvTestTagsRequired.class);
     EnvTestTagsRequired methodAnnotation = null;
@@ -231,10 +249,24 @@ public abstract class PyEnvTestCase {
     catch (final NoSuchMethodException e) {
       throw new AssertionError("No such method", e);
     }
+    final Class<? extends PythonSdkFlavor>[] skipOnFlavors;
+
+
+    final EnvTestTagsRequired firstAnnotation = (methodAnnotation != null ? methodAnnotation : classAnnotation);
+
+
+    if (firstAnnotation != null) {
+      Assume.assumeFalse("Test skipped on this os", Arrays.stream(firstAnnotation.skipOnOSes()).anyMatch(TestEnv::isThisOs));
+      skipOnFlavors = firstAnnotation.skipOnFlavors();
+    }
+    else {
+      skipOnFlavors = null;
+    }
+
     final String[] classTags = getTags(classAnnotation);
     final String[] methodTags = getTags(methodAnnotation);
 
-    taskRunner.runTask(testTask, testName, ArrayUtil.mergeArrays(methodTags, classTags));
+    taskRunner.runTask(testTask, testName, skipOnFlavors, ArrayUtil.mergeArrays(methodTags, classTags));
   }
 
   @NotNull
@@ -266,10 +298,6 @@ public abstract class PyEnvTestCase {
       envTags = Lists.newArrayList();
     }
     return envTags;
-  }
-
-  public static String joinStrings(Collection<String> roots, String rootsName) {
-    return roots.size() > 0 ? rootsName + StringUtil.join(roots, ", ") + "\n" : "";
   }
 
   /**

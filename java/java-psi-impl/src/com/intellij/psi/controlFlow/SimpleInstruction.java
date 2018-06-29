@@ -17,6 +17,7 @@
 package com.intellij.psi.controlFlow;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class SimpleInstruction extends InstructionBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.controlFlow.SimpleInstruction");
@@ -31,7 +32,7 @@ public abstract class SimpleInstruction extends InstructionBase {
   }
 
   @Override
-  public void accept(ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
+  public void accept(@NotNull ControlFlowInstructionVisitor visitor, int offset, int nextOffset) {
     visitor.visitSimpleInstruction(this, offset, nextOffset);
   }
 }

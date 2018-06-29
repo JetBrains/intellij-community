@@ -16,7 +16,6 @@
 package com.intellij.testGuiFramework.launcher
 
 import com.intellij.openapi.application.PathManager
-import com.intellij.openapi.diagnostic.Logger
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.vfs.VfsUtilCore
 import com.intellij.testGuiFramework.impl.GuiTestStarter
@@ -25,6 +24,8 @@ import com.intellij.testGuiFramework.launcher.classpath.PathUtils
 import com.intellij.testGuiFramework.launcher.ide.CommunityIde
 import com.intellij.testGuiFramework.launcher.ide.Ide
 import com.intellij.testGuiFramework.launcher.system.SystemInfo
+import com.intellij.testGuiFramework.remote.IdeProcessControlManager
+import org.apache.log4j.Logger
 import org.jetbrains.jps.model.JpsElementFactory
 import org.jetbrains.jps.model.JpsProject
 import org.jetbrains.jps.model.java.JpsJavaExtensionService
@@ -51,11 +52,9 @@ import kotlin.concurrent.thread
  */
 object GuiTestLocalLauncher {
 
-  private val LOG = Logger.getInstance("#com.intellij.testGuiFramework.launcher.GuiTestLocalLauncher")
+  private val LOG: Logger = org.apache.log4j.Logger.getLogger("#com.intellij.testGuiFramework.framework.GuiTestSuiteRunner")!!
 
-  var process: Process? = null
-
-  private val TEST_GUI_FRAMEWORK_MODULE_NAME = "intellij.platform.testGuiFramework"
+  private const val TEST_GUI_FRAMEWORK_MODULE_NAME = "intellij.platform.testGuiFramework"
 
   val project: JpsProject by lazy {
     val home = PathManager.getHomePath()
@@ -71,15 +70,6 @@ object GuiTestLocalLauncher {
   }
   private val testGuiFrameworkModule: JpsModule by lazy {
     modulesList.module(TEST_GUI_FRAMEWORK_MODULE_NAME) ?: throw Exception("Unable to find module '$TEST_GUI_FRAMEWORK_MODULE_NAME'")
-  }
-
-  private fun killProcessIfPossible() {
-    try {
-      if (process?.isAlive == true) process!!.destroyForcibly()
-    }
-    catch (e: KotlinNullPointerException) {
-      LOG.error("Seems that process has already destroyed, right after condition")
-    }
   }
 
   fun runIdeLocally(ide: Ide = Ide(CommunityIde(), 0, 0), port: Int = 0, testClassNames: List<String> = emptyList()) {
@@ -104,29 +94,29 @@ object GuiTestLocalLauncher {
                        timeOut: Long = 0,
                        timeOutUnit: TimeUnit = TimeUnit.SECONDS,
                        args: List<String>) {
-    LOG.info("Running $ide locally \n with args: $args")
+    LOG.info("Running $ide locally \n with args: ${args.joinToString(" ")}")
     //do not limit IDE starting if we are using debug mode to not miss the debug listening period
     val conditionalTimeout = if (GuiTestOptions.isDebug()) 0 else timeOut
     val startLatch = CountDownLatch(1)
-    thread(start = true, name = "IdeaTestThread") {
+    thread(start = true, name = "IdeaThread") {
       val ideaStartTest = ProcessBuilder().inheritIO().command(args)
-      process = ideaStartTest.start()
+      IdeProcessControlManager.submitIdeProcess(ideaStartTest.start())
       startLatch.countDown()
     }
     if (needToWait) {
       startLatch.await()
       if (conditionalTimeout != 0L)
-        process!!.waitFor(conditionalTimeout, timeOutUnit)
+        IdeProcessControlManager.waitForCurrentProcess(conditionalTimeout, timeOutUnit)
       else
-        process!!.waitFor()
+        IdeProcessControlManager.waitForCurrentProcess()
       try {
-        if (process!!.exitValue() == 0) {
+        if (IdeProcessControlManager.exitValue() == 0) {
           println("${ide.ideType} process completed successfully")
           LOG.info("${ide.ideType} process completed successfully")
         }
         else {
           System.err.println("${ide.ideType} process execution error:")
-          val collectedError = BufferedReader(InputStreamReader(process!!.errorStream)).lines().collect(Collectors.joining("\n"))
+          val collectedError = BufferedReader(InputStreamReader(IdeProcessControlManager.getErrorStream())).lines().collect(Collectors.joining("\n"))
           System.err.println(collectedError)
           LOG.error("${ide.ideType} process execution error:")
           LOG.error(collectedError)
@@ -134,7 +124,7 @@ object GuiTestLocalLauncher {
         }
       }
       catch (e: IllegalThreadStateException) {
-        killProcessIfPossible()
+        IdeProcessControlManager.killIdeProcess()
         throw e
       }
     }
@@ -181,7 +171,7 @@ object GuiTestLocalLauncher {
 
     if (commandName != null) resultingArgs = resultingArgs.plus(commandName)
     if (port != 0) resultingArgs = resultingArgs.plus("port=$port")
-    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
 
     return resultingArgs
   }
@@ -194,7 +184,7 @@ object GuiTestLocalLauncher {
     )
     if (SystemInfo.isMac()) resultingArgs.add(0, "open")
     if (port != 0) resultingArgs.add("port=$port")
-    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
+//    LOG.info("Running with args: ${resultingArgs.joinToString(" ")}")
     return resultingArgs
   }
 
@@ -233,7 +223,7 @@ object GuiTestLocalLauncher {
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
-      .plus("-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plus(if (ide.ideType.platformPrefix.isNullOrEmpty()) "" else "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(customVmOptions)
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")

@@ -18,6 +18,7 @@ package org.jetbrains.jps.gant;
 /**
  * @deprecated see {@link JpsGantProjectBuilder} for details
  */
+@Deprecated
 public interface BuildInfoPrinter {
 
   void printProgressMessage(JpsGantProjectBuilder builder, String message);

@@ -17,7 +17,6 @@ package com.siyeh.ig.fixes.bugs;
 
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.IGQuickFixesTestCase;
-import com.siyeh.ig.bugs.CastConflictsWithInstanceofInspection;
 import com.siyeh.ig.bugs.StaticCallOnSubclassInspection;
 
 public class StaticCallOnSubclassTest extends IGQuickFixesTestCase {
@@ -29,6 +28,14 @@ public class StaticCallOnSubclassTest extends IGQuickFixesTestCase {
 
   public void testPreserveTypeArgs() {
     doTest("preserveTypeArgs", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
+  }
+
+  public void testMethodReference() {
+    doTest("methodRef", InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
+  }
+  
+  public void testOnInterface() {
+    assertQuickfixNotAvailable(InspectionGadgetsBundle.message("static.method.via.subclass.rationalize.quickfix"));
   }
 
   @Override

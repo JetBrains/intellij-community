@@ -9,8 +9,8 @@ import com.intellij.util.ArrayUtil
 import com.intellij.util.SystemProperties
 import com.intellij.util.isEmpty
 import gnu.trove.THashMap
-import org.iq80.snappy.SnappyFramedInputStream
-import org.iq80.snappy.SnappyFramedOutputStream
+import net.jpountz.lz4.LZ4BlockInputStream
+import net.jpountz.lz4.LZ4BlockOutputStream
 import org.jdom.Element
 import java.io.ByteArrayInputStream
 import java.util.*
@@ -18,13 +18,13 @@ import java.util.concurrent.atomic.AtomicReferenceArray
 
 fun archiveState(state: Element): BufferExposingByteArrayOutputStream {
   val byteOut = BufferExposingByteArrayOutputStream()
-  SnappyFramedOutputStream(byteOut).use {
+  LZ4BlockOutputStream(byteOut).use {
     serializeElementToBinary(state, it)
   }
   return byteOut
 }
 
-private fun unarchiveState(state: ByteArray) = SnappyFramedInputStream(ByteArrayInputStream(state), false).use { deserializeElementFromBinary(it) }
+private fun unarchiveState(state: ByteArray) = LZ4BlockInputStream(ByteArrayInputStream(state)).use { deserializeElementFromBinary(it) }
 
 fun getNewByteIfDiffers(key: String, newState: Any, oldState: ByteArray): ByteArray? {
   val newBytes: ByteArray
@@ -69,10 +69,10 @@ fun stateToElement(key: String, state: Any?, newLiveStates: Map<String, Element>
 }
 
 class StateMap private constructor(private val names: Array<String>, private val states: AtomicReferenceArray<Any?>) {
-  override fun toString() = if (this == EMPTY) "EMPTY" else states.toString()
+  override fun toString(): String = if (this == EMPTY) "EMPTY" else states.toString()
 
   companion object {
-    val EMPTY = StateMap(emptyArray(), AtomicReferenceArray(0))
+    val EMPTY: StateMap = StateMap(emptyArray(), AtomicReferenceArray(0))
 
     fun fromMap(map: Map<String, Any>): StateMap {
       if (map.isEmpty()) {
@@ -103,18 +103,18 @@ class StateMap private constructor(private val names: Array<String>, private val
   /**
    * Sorted by name.
    */
-  fun keys() = names
+  fun keys(): Array<String> = names
 
   fun get(key: String): Any? {
     val index = Arrays.binarySearch(names, key)
     return if (index < 0) null else states.get(index)
   }
 
-  fun getElement(key: String, newLiveStates: Map<String, Element>? = null) = stateToElement(key, get(key), newLiveStates)
+  fun getElement(key: String, newLiveStates: Map<String, Element>? = null): Element? = stateToElement(key, get(key), newLiveStates)
 
   fun isEmpty(): Boolean = names.isEmpty()
 
-  fun hasState(key: String) = get(key) is Element
+  fun hasState(key: String): Boolean = get(key) is Element
 
   fun hasStates(): Boolean {
     return !isEmpty() && names.indices.any { states.get(it) is Element }

@@ -17,7 +17,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Getter;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
@@ -40,6 +39,7 @@ import com.intellij.xdebugger.impl.XDebuggerUtilImpl;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointBase;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
+import com.intellij.xdebugger.impl.frame.XWatchesView;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTreeState;
 import com.intellij.xdebugger.impl.ui.tree.nodes.XValueNodeImpl;
@@ -52,6 +52,8 @@ import org.jetbrains.concurrency.Promise;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.openapi.wm.IdeFocusManager.getGlobalInstance;
@@ -160,7 +162,7 @@ public class DebuggerUIUtil {
     builder.setResizable(true)
       .setMovable(true)
         .setDimensionServiceKey(project, FULL_VALUE_POPUP_DIMENSION_KEY, false)
-        .setRequestFocus(false);
+        .setRequestFocus(true);
       if (callback != null) {
         builder.setCancelCallback(() -> {
           callback.setObsolete();
@@ -223,7 +225,7 @@ public class DebuggerUIUtil {
       }
     };
 
-    balloon.addListener(new JBPopupListener.Adapter() {
+    balloon.addListener(new JBPopupListener() {
       @Override
       public void onClosed(LightweightWindowEvent event) {
         propertiesPanel.saveProperties();
@@ -373,11 +375,20 @@ public class DebuggerUIUtil {
    */
   public static boolean hasEvaluationExpression(@NotNull XValue value) {
     Promise<XExpression> promise = value.calculateEvaluationExpression();
-    if (promise.getState() == Promise.State.PENDING) return true;
-    if (promise instanceof Getter) {
-      return ((Getter)promise).get() != null;
+    try {
+      return promise.getState() == Promise.State.PENDING || promise.blockingGet(0) != null;
     }
-    return true;
+    catch (ExecutionException | TimeoutException e) {
+      return true;
+    }
+  }
+
+  public static void addToWatches(@NotNull XWatchesView watchesView, @NotNull XValueNodeImpl node) {
+    node.getValueContainer().calculateEvaluationExpression().onSuccess(expression -> {
+      if (expression != null) {
+        invokeLater(() -> watchesView.addWatchExpression(expression, -1, false));
+      }
+    });
   }
 
   public static void registerActionOnComponent(String name, JComponent component, Disposable parentDisposable) {

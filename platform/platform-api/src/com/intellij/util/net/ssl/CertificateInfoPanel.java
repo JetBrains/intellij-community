@@ -71,7 +71,7 @@ public class CertificateInfoPanel extends JPanel {
       if (split && i == 32) {
         builder.append('\n');
       }
-      builder.append(hex.substring(i, i + 2));
+      builder.append(hex, i, i + 2);
       builder.append(' ');
     }
     if (hex.length() > 0) {

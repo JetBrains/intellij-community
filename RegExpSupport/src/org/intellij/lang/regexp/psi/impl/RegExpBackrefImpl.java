@@ -73,10 +73,12 @@ public class RegExpBackrefImpl extends RegExpElementImpl implements RegExpBackre
 
     public PsiReference getReference() {
         return new PsiReference() {
+            @NotNull
             public PsiElement getElement() {
                 return RegExpBackrefImpl.this;
             }
 
+            @NotNull
             public TextRange getRangeInElement() {
                 return TextRange.from(0, getElement().getTextLength());
             }

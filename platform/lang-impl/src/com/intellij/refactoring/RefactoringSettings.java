@@ -8,13 +8,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 
-@State(
-  name = "BaseRefactoringSettings",
-  storages = {
-    @Storage("baseRefactoring.xml"),
-    @Storage(value = "other.xml", deprecated = true)
-  }
-)
+@State(name = "BaseRefactoringSettings", storages = @Storage("baseRefactoring.xml"))
 public class RefactoringSettings implements PersistentStateComponent<RefactoringSettings> {
   public static RefactoringSettings getInstance() {
     return ServiceManager.getService(RefactoringSettings.class);

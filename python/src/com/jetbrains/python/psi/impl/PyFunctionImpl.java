@@ -217,6 +217,10 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       }
     }
 
+    if (getProperty() == null && PyKnownDecoratorUtil.hasUnknownOrChangingReturnTypeDecorator(this, context)) {
+      inferredType = PyUnionType.createWeakType(inferredType);
+    }
+
     return PyTypingTypeProvider.toAsyncIfNeeded(this, inferredType);
   }
 
@@ -297,8 +301,9 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       @Override
       public String getLocationString() {
         final PyClass containingClass = getContainingClass();
-        if (containingClass != null) {
-          return "(" + containingClass.getName() + " in " + getPackageForFile(getContainingFile()) + ")";
+        final String packageForFile = getPackageForFile(getContainingFile());
+        if (containingClass != null && packageForFile != null) {
+          return String.format("(%s in %s)", containingClass.getName(), packageForFile);
         }
         return super.getLocationString();
       }
@@ -672,6 +677,12 @@ public class PyFunctionImpl extends PyBaseElementImpl<PyFunctionStub> implements
       // implicit classmethod __class_getitem__
       if (PyNames.CLASS_GETITEM.equals(funcName) && level.isAtLeast(LanguageLevel.PYTHON37)) {
         return CLASSMETHOD;
+      }
+
+      final TypeEvalContext context = TypeEvalContext.codeInsightFallback(getProject());
+      for (PyKnownDecoratorUtil.KnownDecorator knownDecorator : PyKnownDecoratorUtil.getKnownDecorators(this, context)) {
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTCLASSMETHOD) return CLASSMETHOD;
+        if (knownDecorator == PyKnownDecoratorUtil.KnownDecorator.ABC_ABSTRACTSTATICMETHOD) return STATICMETHOD;
       }
     }
 

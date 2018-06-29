@@ -16,12 +16,9 @@
 package com.intellij.testGuiFramework.testCases
 
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
-import com.intellij.testGuiFramework.impl.GuiTestCase
-import com.intellij.testGuiFramework.impl.GuiTestThread
-import com.intellij.testGuiFramework.impl.GuiTestUtilKt
+import com.intellij.testGuiFramework.impl.*
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.waitProgressDialogUntilGone
 import com.intellij.testGuiFramework.launcher.GuiTestOptions
-import com.intellij.testGuiFramework.launcher.system.SystemInfo
 import com.intellij.testGuiFramework.remote.transport.MessageType
 import com.intellij.testGuiFramework.remote.transport.TransportMessage
 import org.fest.swing.exception.WaitTimedOutError
@@ -30,23 +27,12 @@ import javax.swing.JDialog
 
 open class PluginTestCase : GuiTestCase() {
 
-
-  private val MAC_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
-  private val WIN_PLUGIN_HOME = "C:\\WS-Plugins"
-  private val LINUX_PLUGIN_HOME = "/Users/jetbrains/Documents/plugins/"
-
-  private fun getPluginHomePath(): String {
-    return when {
-      SystemInfo.isMac() -> MAC_PLUGIN_HOME
-      SystemInfo.isWin() -> WIN_PLUGIN_HOME
-      else -> {
-        LINUX_PLUGIN_HOME
-      }
-    }
+  val getEnv: String by lazy {
+    File(System.getenv("WEBSTORM_PLUGINS") ?: throw IllegalArgumentException("WEBSTORM_PLUGINS env variable isn't specified")).absolutePath
   }
 
   fun findPlugin(pluginName: String): String {
-    val f = File(getPluginHomePath())
+    val f = File(getEnv)
     return f.listFiles { _, name ->
       name.startsWith(pluginName)
     }[0].toString()

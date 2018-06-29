@@ -18,7 +18,6 @@ package com.intellij.ide.util.projectWizard;
 import com.intellij.ide.RecentProjectsManager;
 import com.intellij.ide.util.projectWizard.actions.ProjectSpecificAction;
 import com.intellij.idea.ActionsBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
@@ -159,18 +158,9 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
       final Project projectToClose = frame != null ? frame.getProject() : null;
       final DirectoryProjectGenerator generator = settings.getProjectGenerator();
 
-      //backward compatibility
-      final Object projectSettings = getProjectSettings(generator);
-      Object actualSettings = projectSettings != null ? projectSettings : projectGeneratorPeer.getSettings();
+      Object actualSettings = projectGeneratorPeer.getSettings();
 
       doGenerateProject(projectToClose, settings.getProjectLocation(), generator, actualSettings);
-    }
-
-    // use createLazyPeer and get settings from it instead
-    @Deprecated
-    @Nullable
-    protected Object getProjectSettings(@NotNull DirectoryProjectGenerator generator) {
-      return null;
     }
   }
 
@@ -202,7 +192,6 @@ public class AbstractNewProjectStep<T> extends DefaultActionGroup implements Dum
     }
 
     String generatorName = generator == null ? "empty" : ConvertUsagesUtil.ensureProperKey(generator.getName());
-    UsageTrigger.trigger("AbstractNewProjectStep." + generatorName);
 
     RecentProjectsManager.getInstance().setLastProjectCreationLocation(PathUtil.toSystemIndependentName(location.getParent()));
 

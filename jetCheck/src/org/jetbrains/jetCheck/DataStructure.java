@@ -2,18 +2,11 @@ package org.jetbrains.jetCheck;
 
 import org.jetbrains.annotations.NotNull;
 
-import java.util.function.Predicate;
-
 /**
- * @author peter
+ * A context for {@link Generator}s. Primitive generators (e.g. {@link Generator#integers} know how to obtain
+ * random data from it, other generators build more complex values on top of that, by running {@link #generate(Generator)} recursively.
  */
 public interface DataStructure {
-
-  default int drawInt() {
-    return drawInt(BoundedIntDistribution.ALL_INTS);
-  }
-  
-  int drawInt(@NotNull IntDistribution distribution);
 
   /**
    * @return a non-negative number used by various generators to guide the sizes of structures (e.g. collections) they create.
@@ -22,16 +15,7 @@ public interface DataStructure {
    */
   int getSizeHint();
   
-  default int suggestCollectionSize() {
-    return drawInt(IntDistribution.uniform(0, getSizeHint()));
-  }
-
-  /** Runs the given generator on this data structure and returns the result */
+  /** Runs the given generator on a data sub-structure of this structure and returns the result */
   <T> T generate(@NotNull Generator<T> generator);
   
-  /** @see Generator#noShrink() */
-  <T> T generateNonShrinkable(@NotNull Generator<T> generator);
-
-  /** @see Generator#suchThat */
-  <T> T generateConditional(@NotNull Generator<T> generator, @NotNull Predicate<T> condition);
 }

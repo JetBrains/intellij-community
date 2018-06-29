@@ -8,10 +8,20 @@ import com.intellij.util.xmlb.Converter
 import com.intellij.util.xmlb.annotations.Attribute
 import com.intellij.util.xmlb.annotations.Property
 import com.intellij.util.xmlb.annotations.Tag
-import org.jdom.Element
+import com.intellij.util.xmlb.annotations.Transient
 import java.awt.Rectangle
 
 private val LOG = logger<WindowInfoImpl>()
+
+private fun canActivateOnStart(id: String?): Boolean {
+  for (ep in ToolWindowEP.EP_NAME.extensions) {
+    if (id == ep.id) {
+      val factory = ep.toolWindowFactory
+      return !factory!!.isDoNotActivateOnStart
+    }
+  }
+  return true
+}
 
 @Suppress("EqualsOrHashCode")
 @Tag("window_info")
@@ -19,38 +29,30 @@ private val LOG = logger<WindowInfoImpl>()
 class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   companion object {
     internal const val TAG = "window_info"
-    const val DEFAULT_WEIGHT = 0.33f
-
-    private fun canActivateOnStart(id: String?): Boolean {
-      for (ep in ToolWindowEP.EP_NAME.extensions) {
-        if (id == ep.id) {
-          val factory = ep.toolWindowFactory
-          return !factory!!.isDoNotActivateOnStart
-        }
-      }
-      return true
-    }
+    const val DEFAULT_WEIGHT: Float = 0.33f
   }
 
-  override var isActive by property(false)
+  @get:Transient
+  var isRegistered: Boolean = false
+
+  override var isActive: Boolean by property(false)
 
   @get:Attribute(converter = ToolWindowAnchorConverter::class)
   override var anchor: ToolWindowAnchor by property(ToolWindowAnchor.LEFT) { it == ToolWindowAnchor.LEFT }
 
   @get:Attribute("auto_hide")
-  override var isAutoHide by property(false)
+  override var isAutoHide: Boolean by property(false)
 
   /**
-   * Bounds of window in "floating" mode. It equals to `null` if
-   * floating bounds are undefined.
+   * Bounds of window in "floating" mode. It equals to `null` if floating bounds are undefined.
    */
   @get:Property(flat = true, style = Property.Style.ATTRIBUTE)
-  override var floatingBounds by property<Rectangle?>()
+  override var floatingBounds: Rectangle? by property<Rectangle?>()
 
   /**
-   * @return `ID` of the tool window
+   * ID of the tool window
    */
-  var id by string()
+  var id: String? by string()
 
   /**
    * @return type of the tool window in internal (docked or sliding) mode. Actually the tool
@@ -58,41 +60,39 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
    * tool window had when it was internal one.
    */
   @get:Attribute("internal_type")
-  var internalType by property(ToolWindowType.DOCKED)
+  var internalType: ToolWindowType by property(ToolWindowType.DOCKED)
 
-  override var type by property(ToolWindowType.DOCKED)
+  override var type: ToolWindowType by property(ToolWindowType.DOCKED)
 
   @get:Attribute("visible")
-  var isVisible by property(false)
+  var isVisible: Boolean by property(false)
 
   @get:Attribute("show_stripe_button")
-  override var isShowStripeButton by property(true)
+  override var isShowStripeButton: Boolean by property(true)
 
   /**
    * Internal weight of tool window. "weight" means how much of internal desktop
    * area the tool window is occupied. The weight has sense if the tool window is docked or
    * sliding.
    */
-  var weight by property(DEFAULT_WEIGHT) { Math.max(0f, Math.min(1f, it)) }
+  var weight: Float by property(DEFAULT_WEIGHT) { Math.max(0f, Math.min(1f, it)) }
 
-  var sideWeight by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
+  var sideWeight: Float by property(0.5f) { Math.max(0f, Math.min(1f, it)) }
 
   @get:Attribute("side_tool")
-  override var isSplit by property(false)
+  override var isSplit: Boolean by property(false)
 
   @get:Attribute("content_ui", converter = ContentUiTypeConverter::class)
-  override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED, { it == ToolWindowContentUiType.TABBED })
+  override var contentUiType: ToolWindowContentUiType by property(ToolWindowContentUiType.TABBED) { it == ToolWindowContentUiType.TABBED }
 
   /**
    * Defines order of tool window button inside the stripe.
    */
-  var order by property(-1)
+  var order: Int by property(-1)
 
-  private var wasRead: Boolean = false
-
-  init {
-    this.id = id
-  }
+  @get:Transient
+  var isWasRead: Boolean = false
+    private set
 
   fun copy(): WindowInfoImpl {
     val info = WindowInfoImpl()
@@ -112,14 +112,10 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
   override val isSliding: Boolean
     get() = type == ToolWindowType.SLIDING
 
-  fun readExternal(element: Element) {
-    wasRead = true
+  fun normalizeAfterRead() {
+    isWasRead = true
 
-    try {
-      setTypeAndCheck(ToolWindowType.valueOf(element.getAttributeValue("type")))
-    }
-    catch (ignored: IllegalArgumentException) {
-    }
+    setTypeAndCheck(type)
 
     if (isVisible && !canActivateOnStart(id)) {
       isVisible = false
@@ -142,11 +138,7 @@ class WindowInfoImpl : Cloneable, WindowInfo, BaseState() {
     return anchor.hashCode() + id!!.hashCode() + type.hashCode() + order
   }
 
-  fun wasRead() = wasRead
-
-  override fun toString(): String {
-    return "id: $id, ${super.toString()}"
-  }
+  override fun toString(): String = "id: $id, ${super.toString()}"
 }
 
 private class ContentUiTypeConverter : Converter<ToolWindowContentUiType>() {

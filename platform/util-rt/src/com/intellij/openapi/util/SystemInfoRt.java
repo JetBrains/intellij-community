@@ -38,8 +38,4 @@ public class SystemInfoRt {
   public static final boolean isFileSystemCaseSensitive =
     isUnix && !isMac || "true".equalsIgnoreCase(System.getProperty("idea.case.sensitive.fs"));
 
-  //<editor-fold desc="Deprecated stuff.">
-  /** @deprecated outdated (to be removed in IDEA 2018) */
-  public static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
-  //</editor-fold>
 }

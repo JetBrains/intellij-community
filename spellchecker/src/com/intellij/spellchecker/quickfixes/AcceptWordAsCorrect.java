@@ -26,7 +26,12 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 
-
+/**
+ * General quickfix that accepts word as correct
+ * (not undoable, no possibility to choose dictionary)
+ *
+ * @see SaveTo for undoable quickfix with dictionary chooser
+ */
 public class AcceptWordAsCorrect implements SpellCheckerQuickFix {
   private String myWord;
 

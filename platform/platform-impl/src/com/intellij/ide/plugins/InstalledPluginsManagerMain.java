@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.CommonBundle;
@@ -21,7 +7,6 @@ import com.intellij.ide.CopyProvider;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.actions.ShowSettingsUtilImpl;
 import com.intellij.ide.dnd.FileCopyPasteUtil;
-import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.ide.ui.search.ActionFromOptionDescriptorProvider;
 import com.intellij.ide.ui.search.OptionDescription;
 import com.intellij.ide.util.PropertiesComponent;
@@ -116,9 +101,9 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
     emptyText.appendText("Search in repositories", SimpleTextAttributes.LINK_ATTRIBUTES, new BrowseRepoListener(null));
   }
 
-  private static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
-                                       @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
-                                       @Nullable final Component parent) {
+  public static void chooseAndInstall(@NotNull final InstalledPluginsTableModel model,
+                                      @NotNull final Consumer<Pair<File, IdeaPluginDescriptor>> callback,
+                                      @Nullable final Component parent) {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, false, true, true, false, false) {
       @Override
       public boolean isFileSelectable(VirtualFile file) {
@@ -160,15 +145,13 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
         return false;
       }
 
+      File oldFile = null;
       IdeaPluginDescriptor installedPlugin = PluginManager.getPlugin(pluginDescriptor.getPluginId());
       if (installedPlugin != null && !installedPlugin.isBundled()) {
-        File oldFile = installedPlugin.getPath();
-        if (oldFile != null) {
-          StartupActionScriptManager.addActionCommand(new StartupActionScriptManager.DeleteCommand(oldFile));
-        }
+        oldFile = installedPlugin.getPath();
       }
 
-      PluginInstaller.install(file, file.getName(), false, pluginDescriptor);
+      PluginInstaller.install(file, false, oldFile, pluginDescriptor);
       ourState.onPluginInstall(pluginDescriptor);
       checkInstalledPluginDependencies(model, pluginDescriptor, parent);
       callback.consume(pair(file, pluginDescriptor));
@@ -522,7 +505,7 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
       chooseAndInstall(new InstalledPluginsTableModel(), pair -> PluginManagerConfigurable.shutdownOrRestartApp(), null);
     }
   }
-  
+
   public static class PluginDropHandler extends CustomFileDropHandler {
     @Override
     public boolean canHandle(@NotNull Transferable t, @Nullable Editor editor) {

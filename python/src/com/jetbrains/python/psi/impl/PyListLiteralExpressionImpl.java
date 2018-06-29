@@ -41,7 +41,7 @@ public class PyListLiteralExpressionImpl extends PySequenceExpressionImpl implem
     PyExpression element = (PyExpression)psiElement;
     PyExpression[] els = getElements();
     PyExpression lastArg = els.length == 0 ? null : els[els.length - 1];
-    return PyElementGenerator.getInstance(getProject()).insertItemIntoList(this, lastArg, element);
+    return PyElementGenerator.getInstance(getProject()).insertItemIntoListRemoveRedundantCommas(this, lastArg, element);
   }
 
   private static void checkPyExpression(PsiElement psiElement) throws IncorrectOperationException {

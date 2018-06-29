@@ -26,6 +26,7 @@ import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
+import com.siyeh.ig.psiutils.CommentTracker;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,7 +123,7 @@ public class MissortedModifiersInspection extends BaseInspection implements Clea
       final String text = buffer.toString();
       final PsiMethod method = JavaPsiFacade.getElementFactory(project).createMethodFromText(text, modifierList);
       final PsiModifierList newModifierList = method.getModifierList();
-      modifierList.replace(newModifierList);
+      new CommentTracker().replaceAndRestoreComments(modifierList, newModifierList);
     }
   }
 

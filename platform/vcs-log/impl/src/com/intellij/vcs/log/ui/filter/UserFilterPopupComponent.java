@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.vcs.ui.FlatSpeedSearchPopup;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.JBDimension;
 import com.intellij.vcs.log.VcsLogUserFilter;
 import com.intellij.vcs.log.data.VcsLogData;
 import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
@@ -125,6 +126,7 @@ class UserFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogU
   private static class UserLogSpeedSearchPopup extends FlatSpeedSearchPopup {
     public UserLogSpeedSearchPopup(@NotNull DefaultActionGroup actionGroup, @NotNull DataContext dataContext) {
       super(null, actionGroup, dataContext, null, false);
+      setMinimumSize(new JBDimension(200, 0));
     }
 
     @Override

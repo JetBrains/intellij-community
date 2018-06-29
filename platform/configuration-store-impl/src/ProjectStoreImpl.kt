@@ -48,16 +48,17 @@ val IProjectStore.nameFile: Path
 internal val PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, false)
 internal val DEPRECATED_PROJECT_FILE_STORAGE_ANNOTATION = FileStorageAnnotation(PROJECT_FILE, true)
 
-internal abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreImpl(), IProjectStore {
+// cannot be `internal`, used in Upsource
+abstract class ProjectStoreBase(override final val project: ProjectImpl) : ComponentStoreWithExtraComponents(), IProjectStore {
   // protected setter used in upsource
   // Zelix KlassMaster - ERROR: Could not find method 'getScheme()'
-  var scheme = StorageScheme.DEFAULT
+  var scheme: StorageScheme = StorageScheme.DEFAULT
 
-  override final var loadPolicy = StateLoadPolicy.LOAD
+  override final var loadPolicy: StateLoadPolicy = StateLoadPolicy.LOAD
 
-  override final fun isOptimiseTestLoadSpeed() = loadPolicy != StateLoadPolicy.LOAD
+  override final fun isOptimiseTestLoadSpeed(): Boolean = loadPolicy != StateLoadPolicy.LOAD
 
-  override final fun getStorageScheme() = scheme
+  override final fun getStorageScheme(): StorageScheme = scheme
 
   override abstract val storageManager: StateStorageManagerImpl
 
@@ -71,14 +72,14 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
     loadPolicy = if (value) StateLoadPolicy.NOT_LOAD else StateLoadPolicy.LOAD
   }
 
-  override fun getProjectFilePath() = storageManager.expandMacro(PROJECT_FILE)
+  override fun getProjectFilePath(): String = storageManager.expandMacro(PROJECT_FILE)
 
   /**
    * `null` for default or non-directory based project.
    */
-  override fun getProjectConfigDir() = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
+  override fun getProjectConfigDir(): String? = if (isDirectoryBased) storageManager.expandMacro(PROJECT_CONFIG_DIR) else null
 
-  override final fun getWorkspaceFilePath() = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
+  override final fun getWorkspaceFilePath(): String = storageManager.expandMacro(StoragePathMacros.WORKSPACE_FILE)
 
   override final fun clearStorages() {
     storageManager.clearStorages()
@@ -234,11 +235,11 @@ internal abstract class ProjectStoreBase(override final val project: ProjectImpl
     return FileUtil.isAncestor(PathUtilRt.getParentPath(projectFilePath), filePath, false)
   }
 
-  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean) = if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
+  override fun getDirectoryStorePath(ignoreProjectStorageScheme: Boolean): String? = if (!ignoreProjectStorageScheme && !isDirectoryBased) null else PathUtilRt.getParentPath(projectFilePath).nullize()
 
-  override fun getDirectoryStoreFile() = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
+  override fun getDirectoryStoreFile(): VirtualFile? = directoryStorePath?.let { LocalFileSystem.getInstance().findFileByPath(it) }
 
-  override fun getDirectoryStorePathOrBase() = PathUtilRt.getParentPath(projectFilePath)
+  override fun getDirectoryStorePathOrBase(): String = PathUtilRt.getParentPath(projectFilePath)
 }
 
 private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroManager: PathMacroManager) : ProjectStoreBase(project) {
@@ -301,7 +302,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     }
   }
 
-  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, prevErrors: MutableList<Throwable>?): MutableList<Throwable>? {
+  override fun doSave(saveSessions: List<SaveSession>, readonlyFiles: MutableList<SaveSessionAndFile>, errors: MutableList<Throwable>) {
     try {
       saveProjectName()
     }
@@ -309,17 +310,16 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       LOG.error("Unable to store project name", e)
     }
 
-    var errors = prevErrors
     beforeSave(readonlyFiles)
 
-    errors = super.doSave(saveSessions, readonlyFiles, errors)
+    super.doSave(saveSessions, readonlyFiles, errors)
 
     val notifications = NotificationsManager.getNotificationsManager().getNotificationsOfType(UnableToSaveProjectNotification::class.java, project)
     if (readonlyFiles.isEmpty()) {
       for (notification in notifications) {
         notification.expire()
       }
-      return errors
+      return
     }
 
     if (!notifications.isEmpty()) {
@@ -335,7 +335,7 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
     val oldList = readonlyFiles.toTypedArray()
     readonlyFiles.clear()
     for (entry in oldList) {
-      errors = executeSave(entry.session, readonlyFiles, errors)
+      executeSave(entry.session, readonlyFiles, errors)
     }
 
     CompoundRuntimeException.throwIfNotEmpty(errors)
@@ -344,8 +344,6 @@ private open class ProjectStoreImpl(project: ProjectImpl, private val pathMacroM
       dropUnableToSaveProjectNotification(project, getFilesList(readonlyFiles))
       throw IComponentStore.SaveCancelledException()
     }
-
-    return errors
   }
 
   protected open fun beforeSave(readonlyFiles: MutableList<SaveSessionAndFile>) {

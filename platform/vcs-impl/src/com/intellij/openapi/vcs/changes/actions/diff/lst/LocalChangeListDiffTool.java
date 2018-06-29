@@ -7,13 +7,14 @@ import com.intellij.diff.FrameDiffTool;
 import com.intellij.diff.impl.DiffToolSubstitutor;
 import com.intellij.diff.requests.DiffRequest;
 import com.intellij.diff.tools.simple.SimpleDiffTool;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.LocalChangeListDiffRequest;
-import com.intellij.openapi.vcs.changes.actions.diff.lst.SimpleLocalChangeListDiffViewer;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.vcs.ex.PartialLocalLineStatusTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class LocalChangeListDiffTool implements FrameDiffTool, DiffToolSubstitutor {
+  public static final Key<Boolean> ALLOW_EXCLUDE_FROM_COMMIT = Key.create("Diff.LocalChangeListDiffTool.ALLOW_EXCLUDE_FROM_COMMIT");
+
   @NotNull
   @Override
   public DiffViewer createComponent(@NotNull DiffContext context, @NotNull DiffRequest request) {

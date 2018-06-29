@@ -53,6 +53,11 @@ public class ReplaceExpressionUtil {
       if (priority < parentPriority) return true;
       PsiElement element = SourceTreeToPsiMap.treeElementToPsi(oldParent);
       IElementType opType = ((PsiPolyadicExpression)element).getOperationTokenType();
+      IElementType newI = newExpr.getElementType();
+      if (newI == JavaElementType.BINARY_EXPRESSION || newI == JavaElementType.POLYADIC_EXPRESSION) {
+        IElementType newType = ((PsiPolyadicExpression)newExpr).getOperationTokenType();
+        if (newType == JavaTokenType.DIV || newExpr == JavaTokenType.PERC) return true;
+      }
       return ((CompositeElement)oldParent).getChildRole(oldExpr) != ChildRole.LOPERAND &&
              opType != JavaTokenType.PLUS &&
              opType != JavaTokenType.ASTERISK &&

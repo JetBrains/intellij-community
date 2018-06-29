@@ -180,6 +180,10 @@ public class ExpressionCompatibilityConstraint extends InputOutputConstraintForm
             callSession.registerReturnTypeConstraints(siteSubstitutor.substitute(returnType), targetType, expression);
           }
           if (callSession.repeatInferencePhases()) {
+            if (callSession.isErased() && 
+                !JavaGenericsUtil.isReifiableType(targetType) && session.getInferenceVariable(targetType) == null) {
+              session.setErased();
+            }
             return callSession;
           }
         }

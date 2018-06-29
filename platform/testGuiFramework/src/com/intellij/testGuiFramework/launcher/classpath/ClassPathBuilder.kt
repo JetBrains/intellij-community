@@ -23,7 +23,7 @@ class ClassPathBuilder(val ideaLibPath: String,
   val isFestJar: (String) -> Boolean = { path -> path.endsWith(".jar") && path.toLowerCase().contains("fest") }
   val toPath: (File) -> String = { file -> file.path }
 
-  fun build(guiTestPath: String) = build(listOf(guiTestPath))
+  fun build(guiTestPath: String): String = build(listOf(guiTestPath))
 
   fun build(guiTestPaths: List<String>): String {
     val ideaLibJars = File(ideaLibPath).listFiles().map(toPath).filter(isJar)
@@ -54,19 +54,19 @@ class ClassPathBuilder(val ideaLibPath: String,
       if (isWin()) this.buildForWin()
       else this.buildForUnix()
 
-    fun isWin() = System.getProperty("os.name").toLowerCase().contains("win")
+    fun isWin(): Boolean = System.getProperty("os.name").toLowerCase().contains("win")
 
     private fun String.quoted() = "\"$this\""
     private fun List<String>.buildForUnix(): String = this.joinToString(separator = ":")
     private fun List<String>.buildForWin(): String = createClasspathJar(this).path
 
-    fun buildOsSpecific(paths: List<String>) = paths.buildOsSpec()
+    fun buildOsSpecific(paths: List<String>): String = paths.buildOsSpec()
 
     private fun createClasspathJar(paths: List<String>): File {
 
       val resultCP = StringBuilder()
       resultCP.append("Class-Path:")
-      paths.forEach { resultCP.append(" ${File(it).toURI().toURL().toString()} \n") }
+      paths.forEach { resultCP.append(" ${File(it).toURI().toURL()} \n") }
 
       val tempDir = FileUtilRt.createTempDirectory("forclasspath", null)
       val manifest = File(tempDir, "Manifest.mf")

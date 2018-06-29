@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.duplicatePropertyInspection;
 
 import com.intellij.codeInspection.*;
@@ -139,7 +125,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
                          final ProblemDescriptionsProcessor processor) {
     if (!(file instanceof PropertiesFile)) return;
     if (!context.isToCheckFile(file, this) || SuppressionUtil.inspectionResultSuppressed(file, this)) return;
-    final PsiSearchHelper searchHelper = PsiSearchHelper.SERVICE.getInstance(file.getProject());
+    final PsiSearchHelper searchHelper = PsiSearchHelper.getInstance(file.getProject());
     final PropertiesFile propertiesFile = (PropertiesFile)file;
     final List<IProperty> properties = propertiesFile.getProperties();
     Module module = ModuleUtilCore.findModuleForPsiElement(file);
@@ -154,7 +140,7 @@ public class DuplicatePropertyInspection extends GlobalSimpleInspectionTool {
     final ProgressIndicator original = ProgressManager.getInstance().getProgressIndicator();
     final ProgressIndicator progress = ProgressWrapper.wrap(original);
     ProgressManager.getInstance().runProcess(() -> {
-      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(properties, progress, false, property -> {
+      if (!JobLauncher.getInstance().invokeConcurrentlyUnderProgress(properties, progress, property -> {
         if (original != null) {
           if (original.isCanceled()) return false;
           original.setText2(PropertiesBundle.message("searching.for.property.key.progress.text", property.getUnescapedKey()));

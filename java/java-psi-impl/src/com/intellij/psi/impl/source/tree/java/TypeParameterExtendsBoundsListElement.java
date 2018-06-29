@@ -22,6 +22,7 @@ import com.intellij.psi.impl.source.tree.ChildRole;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.tree.ChildRoleBase;
 import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.NotNull;
 
 public class TypeParameterExtendsBoundsListElement extends ReferenceListElement {
   public TypeParameterExtendsBoundsListElement() {
@@ -29,7 +30,7 @@ public class TypeParameterExtendsBoundsListElement extends ReferenceListElement 
   }
 
   @Override
-  public int getChildRole(ASTNode child) {
+  public int getChildRole(@NotNull ASTNode child) {
     assert child.getTreeParent() == this : child;
     IElementType childType = child.getElementType();
     if (childType == JavaTokenType.AND) return ChildRole.AMPERSAND_IN_BOUNDS_LIST;

@@ -4,15 +4,17 @@ package com.intellij.openapi.application.impl;
 import com.intellij.BundleBase;
 import com.intellij.CommonBundle;
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.diagnostic.LogEventException;
 import com.intellij.diagnostic.PerformanceWatcher;
 import com.intellij.diagnostic.ThreadDumper;
 import com.intellij.execution.process.ProcessIOExecutorService;
+import com.intellij.featureStatistics.fusCollectors.AppLifecycleUsageTriggerCollector;
 import com.intellij.ide.*;
 import com.intellij.ide.plugins.PluginManagerCore;
 import com.intellij.idea.IdeaApplication;
 import com.intellij.idea.Main;
 import com.intellij.idea.StartupUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageLogger;
+import com.intellij.internal.statistic.service.fus.collectors.FUSApplicationUsageTrigger;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.application.*;
@@ -25,6 +27,7 @@ import com.intellij.openapi.components.impl.ServiceManagerImpl;
 import com.intellij.openapi.components.impl.stores.StoreUtil;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.diagnostic.RuntimeExceptionWithAttachments;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.*;
@@ -69,6 +72,8 @@ import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.Callable;
 import java.util.concurrent.ExecutorService;
@@ -97,7 +102,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   private int myWriteStackBase;
   private volatile Thread myWriteActionThread;
 
-  private int myInEditorPaintCounter; // EDT only
   private final long myStartTime;
   @Nullable
   private Splash mySplash;
@@ -128,6 +132,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     getPicoContainer().registerComponentInstance(Application.class, this);
     getPicoContainer().registerComponentInstance(TransactionGuard.class.getName(), myTransactionGuard);
 
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
     BundleBase.assertKeyIsFound = IconLoader.STRICT = isUnitTestMode || isInternal;
 
     AWTExceptionHandler.register(); // do not crash AWT on exceptions
@@ -165,15 +170,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
         }
       }));
 
-      WindowsCommandLineProcessor.LISTENER = (currentDirectory, commandLine) -> {
-        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + commandLine);
+      //noinspection AssignmentToStaticFieldFromInstanceMethod
+      WindowsCommandLineProcessor.LISTENER = (currentDirectory, args) -> {
+        List<String> argsList = Arrays.asList(args);
+        LOG.info("Received external Windows command line: current directory " + currentDirectory + ", command line " + argsList);
         invokeLater(() -> {
-          final List<String> args = StringUtil.splitHonorQuotes(commandLine, ' ');
-          args.remove(0);   // process name
-          CommandLineProcessor.processExternalCommandLine(args, currentDirectory);
+          CommandLineProcessor.processExternalCommandLine(argsList, currentDirectory);
         });
       };
     }
+
     if (isUnitTestMode && IdeaApplication.getInstance() == null) {
       String[] args = {"inspect", "", "", ""};
       Main.setFlags(args); // set both isHeadless and isCommandLine to true
@@ -207,6 +213,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
    * would fail (i.e. throw {@link ApplicationUtil.CannotRunReadActionException})
    * if there is a pending write action.
    */
+  @Override
   public void executeByImpatientReader(@NotNull Runnable runnable) throws ApplicationUtil.CannotRunReadActionException {
     if (isDispatchThread()) {
       runnable.run();
@@ -214,6 +221,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     else {
       myLock.executeByImpatientReader(runnable);
     }
+  }
+
+  @Override
+  public boolean isInImpatientReader() {
+    return myLock.isInImpatientReader();
   }
 
   private boolean disposeSelf(final boolean checkCanCloseProject) {
@@ -697,7 +709,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public long getIdleTime() {
-    assertIsDispatchThread();
     return IdeEventQueue.getInstance().getIdleTime();
   }
 
@@ -722,6 +733,16 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   /**
+   * Restarts the IDE with optional process elevation (on Windows).
+   *
+   * @param exitConfirmed if true, the IDE does not ask for exit confirmation.
+   * @param elevate if true and the IDE is running on Windows, the IDE is restarted in elevated mode (with admin privileges)
+   */
+  public void restart(boolean exitConfirmed, boolean elevate) {
+    exit(false, exitConfirmed, true, elevate, ArrayUtil.EMPTY_STRING_ARRAY);
+  }
+
+  /**
    * There are two ways we can get an exit notification.
    *  1. From user input i.e. ExitAction
    *  2. From the native system.
@@ -735,6 +756,10 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   public void exit(boolean force, boolean exitConfirmed, boolean restart, @NotNull String[] beforeRestart) {
+    exit(force, exitConfirmed, restart, false, beforeRestart);
+  }
+
+  private void exit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, @NotNull String[] beforeRestart) {
     if (!force) {
       if (myExitInProgress) return;
       if (!exitConfirmed && getDefaultModalityState() != ModalityState.NON_MODAL) return;
@@ -742,14 +767,14 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
     myExitInProgress = true;
     if (isDispatchThread()) {
-      doExit(force, exitConfirmed, restart, beforeRestart);
+      doExit(force, exitConfirmed, restart, elevate, beforeRestart);
     }
     else {
-      invokeLater(() -> doExit(force, exitConfirmed, restart, beforeRestart), ModalityState.NON_MODAL);
+      invokeLater(() -> doExit(force, exitConfirmed, restart, elevate, beforeRestart), ModalityState.NON_MODAL);
     }
   }
 
-  private void doExit(boolean force, boolean exitConfirmed, boolean restart, String[] beforeRestart) {
+  private void doExit(boolean force, boolean exitConfirmed, boolean restart, boolean elevate, String[] beforeRestart) {
     try {
       if (!force && !confirmExitIfNeeded(exitConfirmed)) {
         return;
@@ -766,6 +791,12 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
       lifecycleListener.appWillBeClosed(restart);
 
+      FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close");
+      if (restart) {
+        FUSApplicationUsageTrigger.getInstance().trigger(AppLifecycleUsageTriggerCollector.class, "ide.close.restart");
+      }
+      FeatureUsageLogger.INSTANCE.log("lifecycle", "app.closed", Collections.singletonMap("restart", restart));
+
       boolean success = disposeSelf(!force);
       if (!success || isUnitTestMode() || Boolean.getBoolean("idea.test.guimode")) {
         if (Boolean.getBoolean("idea.test.guimode")) {
@@ -777,7 +808,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
       int exitCode = 0;
       if (restart && Restarter.isSupported()) {
         try {
-          Restarter.scheduleRestart(beforeRestart);
+          Restarter.scheduleRestart(elevate, beforeRestart);
         }
         catch (Throwable t) {
           LOG.error("Restart failed", t);
@@ -941,25 +972,26 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  public boolean runWriteActionWithNonCancellableProgressInDispatchThread(@NotNull String title,
+                                                                          @Nullable Project project,
+                                                                          @Nullable JComponent parentComponent,
+                                                                          @NotNull Consumer<ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, null, action);
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithCancellableProgressInDispatchThread(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, 
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  public boolean runWriteActionWithCancellableProgressInDispatchThread(@NotNull String title,
+                                                                       @Nullable Project project,
+                                                                       @Nullable JComponent parentComponent,
+                                                                       @NotNull Consumer<ProgressIndicator> action) {
     return runEdtProgressWriteAction(title, project, parentComponent, IdeBundle.message("action.stop"), action);
   }
 
-  private boolean runEdtProgressWriteAction(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  private boolean runEdtProgressWriteAction(@NotNull String title,
+                                            @Nullable Project project,
+                                            @Nullable JComponent parentComponent,
+                                            @Nullable String cancelText,
+                                            @NotNull Consumer<ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
@@ -973,10 +1005,11 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   @ApiStatus.Experimental
-  public boolean runWriteActionWithProgressInBackgroundThread(
-    @NotNull String title, @Nullable Project project, @Nullable JComponent parentComponent, @Nullable String cancelText,
-    @NotNull Consumer<ProgressIndicator> action
-  ) {
+  public boolean runWriteActionWithProgressInBackgroundThread(@NotNull String title,
+                                                              @Nullable Project project,
+                                                              @Nullable JComponent parentComponent,
+                                                              @Nullable String cancelText,
+                                                              @NotNull Consumer<ProgressIndicator> action) {
     Class<?> clazz = action.getClass();
     startWrite(clazz);
     try {
@@ -1056,8 +1089,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
   }
 
   private static String describe(Thread o) {
-    if (o == null) return "null";
-    return o + " " + System.identityHashCode(o);
+    return o == null ? "null" : o + " " + System.identityHashCode(o);
   }
 
   private static Thread getEventQueueThread() {
@@ -1080,15 +1112,15 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     assertIsDispatchThread("Access is allowed from event dispatch thread only.");
   }
 
-  private void assertIsDispatchThread(@NotNull String message) {
+  private void assertIsDispatchThread(String message) {
     if (isDispatchThread()) return;
-    final Attachment dump = new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString());
-    throw new LogEventException(message,
-              " EventQueue.isDispatchThread()="+EventQueue.isDispatchThread()+
-              " isDispatchThread()="+isDispatchThread()+
-              " Toolkit.getEventQueue()="+Toolkit.getDefaultToolkit().getSystemEventQueue()+
-              " Current thread: " + describe(Thread.currentThread())+
-              " SystemEventQueueThread: " + describe(getEventQueueThread()), dump);
+    throw new RuntimeExceptionWithAttachments(
+      message,
+      "EventQueue.isDispatchThread()=" + EventQueue.isDispatchThread() +
+      " Toolkit.getEventQueue()=" + Toolkit.getDefaultToolkit().getSystemEventQueue() +
+      "\nCurrent thread: " + describe(Thread.currentThread()) +
+      "\nSystemEventQueueThread: " + describe(getEventQueueThread()),
+      new Attachment("threadDump.txt", ThreadDumper.dumpThreadsToString()));
   }
 
   @Override
@@ -1349,15 +1381,6 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     });
   }
 
-  public void editorPaintStart() {
-    myInEditorPaintCounter++;
-  }
-
-  public void editorPaintFinish() {
-    myInEditorPaintCounter--;
-    LOG.assertTrue(myInEditorPaintCounter >= 0);
-  }
-
   @Override
   public void addApplicationListener(@NotNull ApplicationListener l) {
     myDispatcher.addListener(l);
@@ -1415,14 +1438,7 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
 
   @Override
   public void saveAll() {
-    saveAll(false);
-  }
-
-  @Override
-  public void saveAll(boolean isForce) {
-    if (mySaveAllowed) {
-      StoreUtil.saveDocumentsAndProjectsAndApp(isForce);
-    }
+    StoreUtil.saveDocumentsAndProjectsAndApp(false);
   }
 
   @Override
@@ -1477,4 +1493,5 @@ public class ApplicationImpl extends PlatformComponentManagerImpl implements App
     myDispatcher.getListeners().removeAll(listeners);
     Disposer.register(disposable, () -> myDispatcher.getListeners().addAll(listeners));
   }
+
 }

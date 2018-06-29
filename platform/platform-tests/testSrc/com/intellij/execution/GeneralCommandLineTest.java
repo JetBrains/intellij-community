@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution;
 
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -7,9 +7,11 @@ import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.util.ExecUtil;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.rules.TempDirectory;
@@ -24,6 +26,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.net.URL;
+import java.nio.file.Files;
 import java.util.*;
 
 import static com.intellij.openapi.util.Pair.pair;
@@ -76,6 +79,8 @@ public class GeneralCommandLineTest {
     " \" ^ \" \" ^ ^\" ^^^ ",
     " \" ^ &< >( \" ) @ ^ | \" ",
     " < \" > ",
+    "\\<\"\\>\\",
+    "\\<\"\\>",
     "*",
     "\\*",
     "\"*\"",
@@ -107,22 +112,6 @@ public class GeneralCommandLineTest {
     "C:\\cygwin{,64}\\printf.e[x]e",
     "\\\\dos\\path\\{1,2}{a,b}",
   };
-
-  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_RU = "Юникоде";
-  @SuppressWarnings("SpellCheckingInspection") private static final String UNICODE_EU = "Úñíçødê";
-
-  private static final String UNICODE;
-  static {
-    if (SystemInfo.isWindows) {
-      String jnuEncoding = System.getProperty("sun.jnu.encoding");
-      if ("Cp1251".equalsIgnoreCase(jnuEncoding)) UNICODE = UNICODE_RU;
-      else if ("Cp1252".equalsIgnoreCase(jnuEncoding)) UNICODE = UNICODE_EU;
-      else UNICODE = null;
-    }
-    else {
-      UNICODE = UNICODE_RU + "_" + UNICODE_EU;
-    }
-  }
 
   @Rule public TempDirectory tempDir = new TempDirectory();
 
@@ -165,9 +154,14 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void unicodePath() throws Exception {
+    // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
+    String uni = IoTestUtil.getUnicodeName();
+    assumeTrue(uni != null);
+    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
+
     String mark = String.valueOf(new Random().nextInt());
     String command = SystemInfo.isWindows ? "@echo " + mark + '\n' : "#!/bin/sh\necho " + mark + '\n';
-    File script = ExecUtil.createTempExecutableScript("spaces 'and quotes' and " + UNICODE_RU + "_" + UNICODE_EU + " ", ".cmd", command);
+    File script = ExecUtil.createTempExecutableScript("spaces 'and quotes' and " + uni + " ", ".cmd", command);
     try {
       String output = execAndGetOutput(createCommandLine(script.getPath()));
       assertEquals(mark + '\n', StringUtil.convertLineSeparators(output));
@@ -179,9 +173,13 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void unicodeClassPath() throws Exception {
-    assumeTrue(UNICODE != null);
+    // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
+    // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
+    String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
+    assumeTrue(uni != null);
+    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
-    File dir = tempDir.newFolder("spaces 'and quotes' and " + UNICODE);
+    File dir = tempDir.newFolder("spaces 'and quotes' and " + uni);
     Pair<GeneralCommandLine, File> command = makeHelperCommand(dir, CommandTestHelper.ARG, "test");
     String output = execHelper(command);
     assertEquals("test\n", StringUtil.convertLineSeparators(output));
@@ -285,9 +283,13 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void unicodeParameters() throws Exception {
-    assumeTrue(UNICODE != null);
+    // on Unix, JRE uses "sun.jnu.encoding" for paths and "file.encoding" for forking; they should be the same for the test to pass
+    // on Windows, JRE receives arguments in ANSI variant and decodes using "sun.jnu.encoding"
+    String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName(System.getProperty("sun.jnu.encoding")) : IoTestUtil.getUnicodeName();
+    assumeTrue(uni != null);
+    assumeTrue(SystemInfo.isWindows || Comparing.equal(System.getProperty("sun.jnu.encoding"), System.getProperty("file.encoding")));
 
-    String[] args = {"some", UNICODE, "parameters"};
+    String[] args = {"some", uni, "parameters"};
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ARG, args);
     String output = execHelper(command);
     checkParamPassing(output, args);
@@ -363,7 +365,7 @@ public class GeneralCommandLineTest {
     catch (AssertionError ignored) { }
 
     try {
-      Map<String, String> indirect = newHashMap(pair("key2", (String)null));
+      Map<String, String> indirect = newHashMap(pair("key2", null));
       env.putAll(indirect);
       fail("null values should be rejected");
     }
@@ -383,9 +385,11 @@ public class GeneralCommandLineTest {
 
   @Test(timeout = 60000)
   public void unicodeEnvironment() throws Exception {
-    assumeTrue("UTF-8".equals(System.getProperty("file.encoding")));
+    // on Unix, JRE uses "file.encoding" to encode and decode environment; on Windows, JRE uses wide characters
+    String uni = SystemInfo.isWindows ? IoTestUtil.getUnicodeName() : IoTestUtil.getUnicodeName(System.getProperty("file.encoding"));
+    assumeTrue(uni != null);
 
-    Map<String, String> testEnv = newHashMap(pair("VALUE_1", UNICODE_RU), pair("VALUE_2", UNICODE_EU));
+    Map<String, String> testEnv = newHashMap(pair("VALUE_1", uni + "_1"), pair("VALUE_2", uni + "_2"));
     Pair<GeneralCommandLine, File> command = makeHelperCommand(null, CommandTestHelper.ENV);
     checkEnvPassing(command, testEnv, true);
     checkEnvPassing(command, testEnv, false);
@@ -463,7 +467,8 @@ public class GeneralCommandLineTest {
     else {
       File dir = copyTo;
       for (int i = 0; i < packages.length - 1; i++) dir = new File(dir, packages[i]);
-      FileUtil.copy(classFile, new File(dir, classFile.getName()));
+      Files.createDirectories(dir.toPath());
+      Files.copy(classFile.toPath(), dir.toPath().resolve(classFile.getName()));
       commandLine.addParameter(copyTo.getPath());
     }
 

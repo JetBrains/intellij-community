@@ -16,28 +16,21 @@ import javax.swing.JList
 class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture) {
 
   private val EDIT_CONFIGURATIONS: String = "Edit Configurations..."
-  var entryButton = JButtonFixture(myRobot, getRunConfigurationListButton())
-
-  companion object {
-    fun createRCListFixture(robot: Robot, ideFrame: IdeFrameFixture): RunConfigurationListFixture {
-      return RunConfigurationListFixture(robot, ideFrame)
-    }
-  }
-
 
   /**
    * Returns a list of available run configurations
    * except for "Edit configuration" and "save configuration"
    */
   fun getRunConfigurationList(): List<String> {
-    entryButton.click()
+    showPopup()
     val list = myRobot.finder()
       .find(myIde.target()) { it is JList<*> } as JList<*>
     val returnList: MutableList<String> = mutableListOf()
     for (i in 0 until list.model.size) {
       returnList.add(i, list.model.getElementAt(i).toString())
     }
-    entryButton.click()
+    //Close popup
+    showPopup()
     return returnList.filter { it != EDIT_CONFIGURATIONS && !it.contains("Save ") }
   }
 
@@ -46,26 +39,29 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
    * Opens up run configuration popup and chooses given RC
    * @param name
    */
-  fun configuration(name: String): RunAction {
-    entryButton.click()
+  fun configuration(name: String): RunActionFixture {
+    showPopup()
     JBListPopupFixture.clickPopupMenuItem(name, false, null, myRobot, GuiTestUtil.SHORT_TIMEOUT)
-    setConfigurationButton()
-    return RunAction()
+    return RunActionFixture()
   }
 
+  /**
+   * Trying to click on Edit Configurations attempt times.
+   */
   fun editConfigurations(attempts: Int = 5) {
     for (i in 0 until attempts) {
-      entryButton.click()
+      showPopup()
       Pause.pause(1000)
       if (getEditConfigurationsState()) {
         break
       }
-      entryButton.click()
+      //Close popup
+      showPopup()
     }
     JBListPopupFixture.clickPopupMenuItem(EDIT_CONFIGURATIONS, false, null, myRobot, GuiTestUtil.THIRTY_SEC_TIMEOUT)
   }
 
-  inner class RunAction {
+  inner class RunActionFixture {
     fun run() {
       ActionButtonFixture.findByText("Run", myRobot, myIde.target()).click()
     }
@@ -84,6 +80,10 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
     }
   }
 
+  private fun showPopup() {
+    JButtonFixture(myRobot, getRunConfigurationListButton()).click()
+  }
+
   private fun getRunConfigurationListButton(): JButton {
     return myRobot.finder()
       .find(myIde.target()) {
@@ -91,11 +91,6 @@ class RunConfigurationListFixture(val myRobot: Robot, val myIde: IdeFrameFixture
         && it.parent.parent is ActionToolbarImpl && it.text != ""
       } as JButton
   }
-
-  private fun setConfigurationButton() {
-    entryButton = JButtonFixture(myRobot, getRunConfigurationListButton())
-  }
-
 
   private fun getEditConfigurationsState(): Boolean {
     val list = myRobot.finder()

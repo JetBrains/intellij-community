@@ -166,7 +166,12 @@ public class GitBinaryHandler extends GitHandler {
       vcsConsoleWriter.showCommandLine("[" + GitImpl.stringifyWorkingDir(project.getBasePath(), getWorkingDirectory()) + "] "
                                        + printableCommandLine());
     }
-    runInCurrentThread();
+    try {
+      runInCurrentThread();
+    }
+    catch (IOException e) {
+      throw new VcsException(e.getMessage(), e);
+    }
     //noinspection ThrowableResultOfMethodCallIgnored
     if (myException.get() != null) {
       throw myException.get();

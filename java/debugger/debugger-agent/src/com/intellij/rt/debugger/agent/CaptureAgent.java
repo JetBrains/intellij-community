@@ -1,7 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.rt.debugger.agent;
 
-import org.jetbrains.org.objectweb.asm.*;
+import org.jetbrains.capture.org.objectweb.asm.*;
 
 import java.io.File;
 import java.io.FileOutputStream;
@@ -10,9 +10,9 @@ import java.io.IOException;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
+import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
-import java.util.jar.JarFile;
 
 /**
  * @author egor
@@ -22,32 +22,13 @@ public class CaptureAgent {
   private static Instrumentation ourInstrumentation;
   private static boolean DEBUG = false;
 
-  private static Map<String, List<CapturePoint>> myCapturePoints = new HashMap<String, List<CapturePoint>>();
-  private static final Map<String, List<InsertPoint>> myInsertPoints = new HashMap<String, List<InsertPoint>>();
+  private static Map<String, List<InstrumentPoint>> myCapturePoints = new HashMap<String, List<InstrumentPoint>>();
+  private static final Map<String, List<InstrumentPoint>> myInsertPoints = new HashMap<String, List<InstrumentPoint>>();
 
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
-      String asmPath = readSettings(args);
-
-      if (asmPath == null) {
-        return;
-      }
-
-      try {
-        instrumentation.appendToSystemClassLoaderSearch(new JarFile(asmPath));
-      }
-      catch (Exception e) {
-        String report = "Capture agent: unable to use the provided asm lib";
-        try {
-          Class.forName("org.jetbrains.org.objectweb.asm.MethodVisitor");
-          System.out.println(report + ", will use asm from the classpath");
-        }
-        catch (ClassNotFoundException e1) {
-          System.out.println(report + ", exiting");
-          return;
-        }
-      }
+      readSettings(args);
 
       instrumentation.addTransformer(new CaptureTransformer());
 
@@ -87,62 +68,57 @@ public class CaptureAgent {
     System.setProperty(modulesKey, property);
   }
 
-  private static String readSettings(String path) {
-    FileReader reader = null;
+  private static void readSettings(String uri) {
+    if (uri == null || uri.isEmpty()) {
+      return;
+    }
+
+    Properties properties = new Properties();
+    File file;
     try {
-      reader = new FileReader(path);
-      Properties properties = new Properties();
-      properties.load(reader);
-
-      DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
-      if (DEBUG) {
-        CaptureStorage.setDebug(true);
+      FileReader reader = null;
+      try {
+        file = new File(new URI(uri));
+        reader = new FileReader(file);
+        properties.load(reader);
       }
-
-      if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
-        CaptureStorage.setEnabled(false);
-      }
-
-      boolean deleteSettings = Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"));
-
-      String asmPath = properties.getProperty("asm-lib");
-      if (asmPath == null) {
-        System.out.println("Capture agent: asm path is not specified, exiting");
-        return null;
-      }
-
-      Enumeration<?> propNames = properties.propertyNames();
-      while (propNames.hasMoreElements()) {
-        String propName = (String)propNames.nextElement();
-        if (propName.startsWith("capture")) {
-          addPoint(true, properties.getProperty(propName));
-        }
-        else if (propName.startsWith("insert")) {
-          addPoint(false, properties.getProperty(propName));
-        }
-      }
-
-      // delete settings file only if it was read correctly
-      if (deleteSettings) {
-        new File(path).delete();
-      }
-      return asmPath;
-    }
-    catch (IOException e) {
-      System.out.println("Capture agent: unable to read settings");
-      e.printStackTrace();
-    }
-    finally {
-      if (reader != null) {
-        try {
+      finally {
+        if (reader != null) {
           reader.close();
         }
-        catch (IOException e) {
-          e.printStackTrace();
-        }
       }
     }
-    return null;
+    catch (Exception e) {
+      System.out.println("Capture agent: unable to read settings");
+      e.printStackTrace();
+      return;
+    }
+
+    DEBUG = Boolean.parseBoolean(properties.getProperty("debug", "false"));
+    if (DEBUG) {
+      CaptureStorage.setDebug(true);
+    }
+
+    if (Boolean.parseBoolean(properties.getProperty("disabled", "false"))) {
+      CaptureStorage.setEnabled(false);
+    }
+
+    Enumeration<?> propNames = properties.propertyNames();
+    while (propNames.hasMoreElements()) {
+      String propName = (String)propNames.nextElement();
+      if (propName.startsWith("capture")) {
+        addPoint(true, properties.getProperty(propName));
+      }
+      else if (propName.startsWith("insert")) {
+        addPoint(false, properties.getProperty(propName));
+      }
+    }
+
+    // delete settings file only if it was read correctly
+    if (Boolean.parseBoolean(properties.getProperty("deleteSettings", "true"))) {
+      //noinspection ResultOfMethodCallIgnored
+      file.delete();
+    }
   }
 
   private static <T> List<T> getNotNull(List<T> list) {
@@ -157,8 +133,8 @@ public class CaptureAgent {
                             ProtectionDomain protectionDomain,
                             byte[] classfileBuffer) {
       if (className != null) {
-        List<CapturePoint> capturePoints = getNotNull(myCapturePoints.get(className));
-        List<InsertPoint> insertPoints = getNotNull(myInsertPoints.get(className));
+        List<InstrumentPoint> capturePoints = getNotNull(myCapturePoints.get(className));
+        List<InstrumentPoint> insertPoints = getNotNull(myInsertPoints.get(className));
         if (!capturePoints.isEmpty() || !insertPoints.isEmpty()) {
           try {
             ClassReader reader = new ClassReader(classfileBuffer);
@@ -185,6 +161,7 @@ public class CaptureAgent {
             return bytes;
           }
           catch (Exception e) {
+            System.out.println("Capture agent: failed to instrument " + className);
             e.printStackTrace();
           }
         }
@@ -194,19 +171,19 @@ public class CaptureAgent {
   }
 
   private static class CaptureInstrumentor extends ClassVisitor {
-    private final List<CapturePoint> myCapturePoints;
-    private final List<InsertPoint> myInsertPoints;
+    private final List<InstrumentPoint> myCapturePoints;
+    private final List<InstrumentPoint> myInsertPoints;
     private final Map<String, String> myFields = new HashMap<String, String>();
     private String mySuperName;
 
-    public CaptureInstrumentor(int api, ClassVisitor cv, List<CapturePoint> capturePoints, List<InsertPoint> insertPoints) {
+    public CaptureInstrumentor(int api, ClassVisitor cv, List<InstrumentPoint> capturePoints, List<InstrumentPoint> insertPoints) {
       super(api, cv);
       this.myCapturePoints = capturePoints;
       this.myInsertPoints = insertPoints;
     }
 
     private static String getNewName(String name) {
-      return name + "$$$capture";
+      return name + CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX;
     }
 
     private static String getMethodDisplayName(String className, String methodName, String desc) {
@@ -228,8 +205,8 @@ public class CaptureAgent {
     @Override
     public MethodVisitor visitMethod(final int access, String name, final String desc, String signature, String[] exceptions) {
       if ((access & Opcodes.ACC_BRIDGE) == 0) {
-        for (final CapturePoint capturePoint : myCapturePoints) {
-          if (capturePoint.myMethodName.equals(name)) {
+        for (final InstrumentPoint capturePoint : myCapturePoints) {
+          if (capturePoint.matchesMethod(name, desc)) {
             final String methodDisplayName = getMethodDisplayName(capturePoint.myClassName, name, desc);
             if (DEBUG) {
               System.out.println("Capture agent: instrumented capture point at " + methodDisplayName);
@@ -263,8 +240,8 @@ public class CaptureAgent {
           }
         }
 
-        for (InsertPoint insertPoint : myInsertPoints) {
-          if (insertPoint.myMethodName.equals(name)) {
+        for (InstrumentPoint insertPoint : myInsertPoints) {
+          if (insertPoint.matchesMethod(name, desc)) {
             String methodDisplayName = getMethodDisplayName(insertPoint.myClassName, name, desc);
             if (DEBUG) {
               System.out.println("Capture agent: instrumented insert point at " + methodDisplayName);
@@ -282,7 +259,7 @@ public class CaptureAgent {
                                  String desc,
                                  String signature,
                                  String[] exceptions,
-                                 InsertPoint insertPoint,
+                                 InstrumentPoint insertPoint,
                                  String methodDisplayName) {
       MethodVisitor mv = super.visitMethod(access, name, desc, signature, exceptions);
 
@@ -361,27 +338,26 @@ public class CaptureAgent {
     }
   }
 
-  static class CapturePoint {
+  private static class InstrumentPoint {
+    final static String ANY_DESC = "*";
+
     final String myClassName;
     final String myMethodName;
+    final String myMethodDesc;
     final KeyProvider myKeyProvider;
 
-    public CapturePoint(String className, String methodName, KeyProvider keyProvider) {
-      this.myClassName = className;
-      this.myMethodName = methodName;
-      this.myKeyProvider = keyProvider;
+    public InstrumentPoint(String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+      myClassName = className;
+      myMethodName = methodName;
+      myMethodDesc = methodDesc;
+      myKeyProvider = keyProvider;
     }
-  }
 
-  static class InsertPoint {
-    final String myClassName;
-    final String myMethodName;
-    final KeyProvider myKeyProvider;
-
-    public InsertPoint(String className, String methodName, KeyProvider keyProvider) {
-      this.myClassName = className;
-      this.myMethodName = methodName;
-      this.myKeyProvider = keyProvider;
+    boolean matchesMethod(String name, String desc) {
+      if (!myMethodName.equals(name)) {
+        return false;
+      }
+      return myMethodDesc.equals(ANY_DESC) || myMethodDesc.equals(desc);
     }
   }
 
@@ -390,13 +366,13 @@ public class CaptureAgent {
   public static void setCapturePoints(Object[][] capturePoints) throws UnmodifiableClassException {
     Set<String> classNames = new HashSet<String>(myCapturePoints.keySet());
 
-    Map<String, List<CapturePoint>> points = new HashMap<String, List<CapturePoint>>();
+    Map<String, List<InstrumentPoint>> points = new HashMap<String, List<InstrumentPoint>>();
     for (Object[] capturePoint : capturePoints) {
       String className = (String)capturePoint[0];
       classNames.add(className);
-      List<CapturePoint> currentPoints = points.get(className);
+      List<InstrumentPoint> currentPoints = points.get(className);
       if (currentPoints == null) {
-        currentPoints = new ArrayList<CapturePoint>();
+        currentPoints = new ArrayList<InstrumentPoint>();
         points.put(className, currentPoints);
       }
       //currentPoints.add(new CapturePoint(className, (String)capturePoint[1], (int)capturePoint[2]));
@@ -418,32 +394,21 @@ public class CaptureAgent {
 
   private static void addPoint(boolean capture, String line) {
     String[] split = line.split(" ");
-    KeyProvider keyProvider = createKeyProvider(Arrays.copyOfRange(split, 2, split.length));
-    if (capture) {
-      addCapturePoint(split[0], split[1], keyProvider);
-    }
-    else {
-      addInsertPoint(split[0], split[1], keyProvider);
-    }
+    KeyProvider keyProvider = createKeyProvider(Arrays.copyOfRange(split, 3, split.length));
+    addCapturePoint(capture, split[0], split[1], split[2], keyProvider);
   }
 
-  private static void addCapturePoint(String className, String methodName, KeyProvider keyProvider) {
-    List<CapturePoint> points = myCapturePoints.get(className);
+  private static void addCapturePoint(boolean capture, String className, String methodName, String methodDesc, KeyProvider keyProvider) {
+    Map<String, List<InstrumentPoint>> map = capture ? myCapturePoints : myInsertPoints;
+    List<InstrumentPoint> points = map.get(className);
     if (points == null) {
-      points = new ArrayList<CapturePoint>();
-      myCapturePoints.put(className, points);
+      points = new ArrayList<InstrumentPoint>(1);
+      map.put(className, points);
     }
-    points.add(new CapturePoint(className, methodName, keyProvider));
+    points.add(new InstrumentPoint(className, methodName, methodDesc, keyProvider));
   }
 
-  private static void addInsertPoint(String className, String methodName, KeyProvider keyProvider) {
-    List<InsertPoint> points = myInsertPoints.get(className);
-    if (points == null) {
-      points = new ArrayList<InsertPoint>();
-      myInsertPoints.put(className, points);
-    }
-    points.add(new InsertPoint(className, methodName, keyProvider));
-  }
+  private static final KeyProvider FIRST_PARAM = param(0);
 
   static final KeyProvider THIS_KEY_PROVIDER = new KeyProvider() {
     @Override
@@ -527,10 +492,74 @@ public class CaptureAgent {
         throw new IllegalStateException(
           "Argument with id " + myIdx + " is not available, method " + methodDisplayName + " has only " + argumentTypes.length);
       }
+      int sort = argumentTypes[myIdx].getSort();
+      if (sort != Type.OBJECT && sort != Type.ARRAY) {
+        throw new IllegalStateException(
+          "Argument with id " + myIdx + " in method " + methodDisplayName + " must be an object");
+      }
       for (int i = 0; i < myIdx; i++) {
         index += argumentTypes[i].getSize();
       }
       mv.visitVarInsn(Opcodes.ALOAD, index);
     }
+  }
+
+  private static void addCapture(String className, String methodName, KeyProvider key) {
+    addCapturePoint(true, className, methodName, InstrumentPoint.ANY_DESC, key);
+  }
+
+  private static void addInsert(String className, String methodName, KeyProvider key) {
+    addCapturePoint(false, className, methodName, InstrumentPoint.ANY_DESC, key);
+  }
+
+  private static KeyProvider param(int idx) {
+    return new ParamKeyProvider(idx);
+  }
+
+  // predefined points
+  static {
+    addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/awt/event/InvocationEvent", "dispatch", THIS_KEY_PROVIDER);
+
+    addCapture("java/lang/Thread", "start", THIS_KEY_PROVIDER);
+    addInsert("java/lang/Thread", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$AsyncSupply", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$AsyncSupply", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$AsyncRun", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$AsyncRun", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$UniAccept", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$UniAccept", "tryFire", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$UniRun", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY_PROVIDER);
+
+    // netty
+    addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
+    addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
+
+    // scala
+    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", "<init>", THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/Future$PromiseCompletingRunnable", "run", THIS_KEY_PROVIDER);
+
+    addCapture("scala/concurrent/impl/CallbackRunnable", "<init>", THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY_PROVIDER);
+
+    // akka-scala
+    addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
+    addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
+
+    // JavaFX
+    addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);
+    addInsert("com/sun/glass/ui/InvokeLaterDispatcher$Future", "run",
+              new FieldKeyProvider("com/sun/glass/ui/InvokeLaterDispatcher$Future", "runnable"));
   }
 }

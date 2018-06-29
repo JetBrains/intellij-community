@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import com.intellij.openapi.Disposable;
@@ -21,12 +7,17 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.util.concurrency.Invoker;
 import com.intellij.util.concurrency.InvokerSupplier;
 import com.intellij.util.ui.tree.AbstractTreeModel;
+import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.junit.Test;
 
 import javax.swing.*;
+import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeModelListener;
 import javax.swing.tree.*;
+import java.util.ArrayList;
+import java.util.Iterator;
 import java.util.Objects;
 import java.util.concurrent.TimeoutException;
 import java.util.function.Consumer;
@@ -34,6 +25,7 @@ import java.util.function.Supplier;
 
 import static com.intellij.diagnostic.ThreadDumper.dumpThreadsToString;
 import static com.intellij.util.ArrayUtil.EMPTY_OBJECT_ARRAY;
+import static com.intellij.util.ui.tree.TreeUtil.expandAll;
 import static java.util.concurrent.TimeUnit.SECONDS;
 import static org.junit.Assert.*;
 
@@ -86,7 +78,7 @@ public final class AsyncTreeModelTest {
       -> testRootOnlyUpdate(test, first, ()
       -> test.updateModelAndWait(model -> ((DefaultTreeModel)model).setRoot(second), ()
       -> testPathState1(test.tree, ()
-      -> testRootOnlyUpdate(test, mutable ? first : second, test::done))))));
+      -> testRootOnlyUpdate(test, second, test::done))))));
   }
 
   private static void testRootOnlyUpdate(@NotNull ModelTest test, @NotNull TreeNode expected, @NotNull Runnable task) {
@@ -95,6 +87,64 @@ public final class AsyncTreeModelTest {
     assert expected == actual : "expected node should be the same";
     task.run();
   }
+
+  @Test
+  public void testChildrenUpdate() {
+    ArrayList<TreePath> list = new ArrayList<>();
+    testAsync(AsyncTreeModelTest::createMutableRoot, test
+      -> expandAll(test.tree, ()
+      -> testPathState(test.tree, "   +'root'\n" + MUTABLE_CHILDREN, ()
+      -> collectTreePaths(test.tree, list, ()
+      -> test.updateModelAndWait(model -> ((DefaultTreeModel)model).setRoot(createMutableRoot()), ()
+      -> testPathState(test.tree, "   +'root'\n" + MUTABLE_CHILDREN, ()
+      -> checkTreePaths(test.tree, list, test::done)))))));
+  }
+
+  private static void collectTreePaths(@NotNull JTree tree, @NotNull ArrayList<TreePath> list, @NotNull Runnable task) {
+    list.clear();
+    forEachRow(tree, list::add);
+    task.run();
+  }
+
+  private static void checkTreePaths(@NotNull JTree tree, @NotNull ArrayList<TreePath> list, @NotNull Runnable task) {
+    Iterator<TreePath> iterator = list.iterator();
+    forEachRow(tree, path -> {
+      assertTrue(iterator.hasNext());
+      assertTreePath(path, iterator.next());
+    });
+    assertFalse(iterator.hasNext());
+    task.run();
+  }
+
+  private static void assertTreePath(@NotNull TreePath expected, @NotNull TreePath actual) {
+    assertEquals("expected path should be equal to the actual path", expected, actual);
+    // do no validate root node, because it is not updated in Swing's viewable row list
+    if (expected.getParentPath() == null && actual.getParentPath() == null) return;
+    assertComponent(expected.getLastPathComponent(), actual.getLastPathComponent());
+    assertTreePath(expected.getParentPath(), actual.getParentPath());
+  }
+
+  private static void assertComponent(@NotNull Object expected, @NotNull Object actual) {
+    assertEquals("expected node should be equal to the actual node", expected, actual);
+    assertNotSame(expected, actual);
+  }
+
+  @NotNull
+  private static TreeNode createMutableRoot() {
+    return new Node(true, "root",
+                    new Node(true, "color", "red", "green", "blue"),
+                    new Node(true, "greek", "alpha", "beta", "gamma"));
+  }
+
+  private static final String MUTABLE_CHILDREN
+    = "     +'color'\n" +
+      "        'red'\n" +
+      "        'green'\n" +
+      "        'blue'\n" +
+      "     +'greek'\n" +
+      "        'alpha'\n" +
+      "        'beta'\n" +
+      "        'gamma'\n";
 
   @Test
   public void testChildren() {
@@ -184,6 +234,44 @@ public final class AsyncTreeModelTest {
     })));
   }
 
+  @Test
+  public void testCollapsedNodeUpdateIfChildrenNotLoaded() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root).pathByAddingChild(greek);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.fireStructureChanged(path)));
+  }
+
+  @Test
+  public void testCollapsedNodeUpdateIfChildrenLoaded() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.collapse(path, ()
+      -> testPathState1(test.tree, ()
+      -> test.fireStructureChanged(path)))));
+  }
+
+  @Test
+  public void testExpandedNodeUpdateIfChildrenLoaded() {
+    TreeNode color = createColorNode();
+    TreeNode digit = createDigitNode();
+    TreeNode greek = createGreekNode();
+    TreeNode root = new Node("root", color, digit, greek);
+    TreePath path = new TreePath(root);
+    testAsync(() -> root, test
+      -> testPathState(test.tree, "   +'root'\n" + CHILDREN, ()
+      -> test.fireStructureChanged(path)));
+  }
+
   @NotNull
   private static TreeNode createRoot() {
     return new Node("root");
@@ -219,13 +307,17 @@ public final class AsyncTreeModelTest {
     testPathState(tree, "    'root'\n", task);
   }
 
+  private static void forEachRow(JTree tree, Consumer<TreePath> consumer) {
+    int count = tree.getRowCount();
+    for (int row = 0; row < count; row++) {
+      consumer.accept(tree.getPathForRow(row));
+    }
+  }
+
   @NotNull
   private static String getPathState(JTree tree) {
     StringBuilder sb = new StringBuilder();
-    int count = tree.getRowCount();
-    for (int row = 0; row < count; row++) {
-      addState(sb, tree, tree.getPathForRow(row));
-    }
+    forEachRow(tree, path -> addState(sb, tree, path));
     return sb.toString();
   }
 
@@ -388,6 +480,24 @@ public final class AsyncTreeModelTest {
       runOnSwingThreadWhenProcessingDone(task);
     }
 
+    private void fireStructureChanged(@NotNull TreePath path) {
+      runOnSwingThread(() -> {
+        tree.getModel().addTreeModelListener(new TreeModelAdapter() {
+          @Override
+          protected void process(TreeModelEvent event, EventType type) {
+            assertEquals("unexpected tree path", path, event.getTreePath());
+            //noinspection SSBasedInspection
+            SwingUtilities.invokeLater(ModelTest.this::done);
+          }
+        });
+        runOnModelThread(() -> {
+          TreeModelEvent event = new TreeModelEvent(model, path);
+          TreeModelListener[] listeners = ((DefaultTreeModel)model).getTreeModelListeners();
+          for (TreeModelListener listener : listeners) listener.treeStructureChanged(event);
+        });
+      });
+    }
+
     private void updateModelAndWait(Consumer<TreeModel> consumer, @NotNull Runnable task) {
       runOnModelThread(() -> {
         consumer.accept(model);
@@ -427,12 +537,12 @@ public final class AsyncTreeModelTest {
 
     private void resolve(@NotNull TreePath path, @NotNull Consumer<TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
-      model.resolve(path).rejected(promise::setError).done(consumer::accept);
+      model.resolve(path).onError(promise::setError).onSuccess(consumer);
     }
 
     private void visit(@NotNull TreeVisitor visitor, boolean allowLoading, @NotNull Consumer<TreePath> consumer) {
       AsyncTreeModel model = (AsyncTreeModel)tree.getModel();
-      model.accept(visitor, allowLoading).rejected(promise::setError).done(consumer::accept);
+      model.accept(visitor, allowLoading).onError(promise::setError).onSuccess(consumer);
     }
 
     @Override
@@ -570,21 +680,21 @@ public final class AsyncTreeModelTest {
   private static class Node extends DefaultMutableTreeNode {
     private final boolean mutable;
 
-    private Node(Object content, boolean mutable) {
-      this(content, mutable, EMPTY_OBJECT_ARRAY);
+    private Node(String content, boolean mutable) {
+      this(mutable, content, EMPTY_OBJECT_ARRAY);
     }
 
-    private Node(Object content, Object... children) {
-      this(content, false, children);
+    private Node(String content, Object... children) {
+      this(false, content, children);
     }
 
-    private Node(Object content, boolean mutable, Object... children) {
+    private Node(boolean mutable, Object content, Object... children) {
       super(content);
       this.mutable = mutable;
       for (Object child : children) {
         add(child instanceof MutableTreeNode
             ? (MutableTreeNode)child
-            : new Node(child, mutable, EMPTY_OBJECT_ARRAY));
+            : new Node(mutable, child, EMPTY_OBJECT_ARRAY));
       }
     }
 

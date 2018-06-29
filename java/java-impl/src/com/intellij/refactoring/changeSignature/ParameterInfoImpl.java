@@ -23,6 +23,7 @@ import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -65,10 +66,12 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     this.defaultValue = defaultValue;
   }
 
+  @Override
   public int getOldIndex() {
     return oldParameterIndex;
   }
 
+  @Override
   public void setUseAnySingleVariable(boolean useAnySingleVariable) {
     this.useAnySingleVariable = useAnySingleVariable;
   }
@@ -91,9 +94,7 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     if (oldParameterIndex != parameterInfo.oldParameterIndex) return false;
     if (defaultValue != null ? !defaultValue.equals(parameterInfo.defaultValue) : parameterInfo.defaultValue != null) return false;
     if (!getName().equals(parameterInfo.getName())) return false;
-    if (!getTypeText().equals(parameterInfo.getTypeText())) return false;
-
-    return true;
+    return getTypeText().equals(parameterInfo.getTypeText());
   }
 
   public int hashCode() {
@@ -103,21 +104,14 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return result;
   }
 
+  @Override
   public String getTypeText() {
-    if (getTypeWrapper() != null) {
-      return getTypeWrapper().getTypeText();
-    }
-    else {
-      return "";
-    }
+    return getTypeWrapper() == null ? "" : getTypeWrapper().getTypeText();
   }
 
+  @Override
   public PsiType createType(PsiElement context, final PsiManager manager) throws IncorrectOperationException {
-    if (getTypeWrapper() != null) {
-      return getTypeWrapper().getType(context, manager);
-    } else {
-      return null;
-    }
+    return getTypeWrapper() == null ? null : getTypeWrapper().getType(context, manager);
   }
 
   @Override
@@ -125,23 +119,57 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     myType = CanonicalTypes.createTypeWrapper(type);
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public CanonicalTypes.Type getTypeWrapper() {
     return myType;
   }
 
+  @Override
   public void setName(String name) {
     this.name = name != null ? name : "";
   }
 
+  @Override
   public boolean isVarargType() {
     return getTypeText().endsWith("...");
   }
 
-  public static ParameterInfoImpl[] fromMethod(PsiMethod method) {
+  @Override
+  @Nullable
+  public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
+    if (StringUtil.isEmpty(defaultValue)) return null;
+    final PsiExpression expression =
+      JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
+    return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
+  }
+
+  @Override
+  public boolean isUseAnySingleVariable() {
+    return useAnySingleVariable;
+  }
+
+  @Override
+  public String getDefaultValue() {
+    return defaultValue;
+  }
+
+  public void setDefaultValue(final String defaultValue) {
+    this.defaultValue = defaultValue;
+  }
+
+  /**
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to given method signature.
+   *
+   * @param method method to create an array from
+   * @return an array of ParameterInfoImpl entries
+   */
+  @NotNull
+  public static ParameterInfoImpl[] fromMethod(@NotNull PsiMethod method) {
     List<ParameterInfoImpl> result = new ArrayList<>();
     final PsiParameter[] parameters = method.getParameterList().getParameters();
     for (int i = 0; i < parameters.length; i++) {
@@ -151,23 +179,23 @@ public class ParameterInfoImpl implements JavaParameterInfo {
     return result.toArray(new ParameterInfoImpl[0]);
   }
 
-  @Nullable
-  public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
-    if (StringUtil.isEmpty(defaultValue)) return null;
-    final PsiExpression expression =
-      JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
-    return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
-  }
-
-  public boolean isUseAnySingleVariable() {
-    return useAnySingleVariable;
-  }
-
-  public String getDefaultValue() {
-    return defaultValue;
-  }
-
-  public void setDefaultValue(final String defaultValue) {
-    this.defaultValue = defaultValue;
+  /**
+   * Returns an array of {@code ParameterInfoImpl} entries which correspond to given method signature with given parameter removed.
+   *
+   * @param method method to create an array from
+   * @param parameterToRemove parameter to remove from method signature
+   * @return an array of ParameterInfoImpl entries
+   */
+  @NotNull
+  public static ParameterInfoImpl[] fromMethodExceptParameter(@NotNull PsiMethod method, @NotNull PsiParameter parameterToRemove) {
+    List<ParameterInfoImpl> result = new ArrayList<>();
+    PsiParameter[] parameters = method.getParameterList().getParameters();
+    for (int i = 0; i < parameters.length; i++) {
+      PsiParameter parameter = parameters[i];
+      if (!parameterToRemove.equals(parameter)) {
+        result.add(new ParameterInfoImpl(i, parameter.getName(), parameter.getType()));
+      }
+    }
+    return result.toArray(new ParameterInfoImpl[0]);
   }
 }

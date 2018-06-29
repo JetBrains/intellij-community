@@ -19,7 +19,6 @@ package com.intellij.util.xml.ui.actions;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.psi.SmartPointerManager;
 import com.intellij.psi.SmartPsiElementPointer;
@@ -76,38 +75,35 @@ public abstract class DefaultAddAction<T extends DomElement> extends AnAction {
     final DomManager domManager = parent.getManager();
     final TypeChooser[] oldChoosers = new TypeChooser[]{null};
     final Type[] aClass = new Type[]{null};
-    final StableElement<T> result = new WriteCommandAction<StableElement<T>>(domManager.getProject(), DomUtil.getFile(parent)) {
-      @Override
-      protected void run(@NotNull Result<StableElement<T>> result) throws Throwable {
-        final DomElement parentDomElement = getParentDomElement();
-        final T t = (T)getDomCollectionChildDescription().addValue(parentDomElement, getElementType());
-        tuneNewValue(t);
-        aClass[0] = parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType();
-        oldChoosers[0] = domManager.getTypeChooserManager().getTypeChooser(aClass[0]);
-        final SmartPsiElementPointer pointer =
-          SmartPointerManager.getInstance(getProject()).createSmartPsiElementPointer(t.getXmlTag());
-        domManager.getTypeChooserManager().registerTypeChooser(aClass[0], new TypeChooser() {
-          @Override
-          public Type chooseType(final XmlTag tag) {
-            if (tag == pointer.getElement()) {
-              return getElementType();
-            }
-            return oldChoosers[0].chooseType(tag);
+    final StableElement<T> result = WriteCommandAction.writeCommandAction(domManager.getProject(), DomUtil.getFile(parent)).compute(() -> {
+      final DomElement parentDomElement = getParentDomElement();
+      final T t = (T)getDomCollectionChildDescription().addValue(parentDomElement, getElementType());
+      tuneNewValue(t);
+      aClass[0] = parent.getGenericInfo().getCollectionChildDescription(t.getXmlElementName()).getType();
+      oldChoosers[0] = domManager.getTypeChooserManager().getTypeChooser(aClass[0]);
+      final SmartPsiElementPointer pointer =
+        SmartPointerManager.getInstance(domManager.getProject()).createSmartPsiElementPointer(t.getXmlTag());
+      domManager.getTypeChooserManager().registerTypeChooser(aClass[0], new TypeChooser() {
+        @Override
+        public Type chooseType(final XmlTag tag) {
+          if (tag == pointer.getElement()) {
+            return getElementType();
           }
+          return oldChoosers[0].chooseType(tag);
+        }
 
-          @Override
-          public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
-            oldChoosers[0].distinguishTag(tag, aClass);
-          }
+        @Override
+        public void distinguishTag(final XmlTag tag, final Type aClass) throws IncorrectOperationException {
+          oldChoosers[0].distinguishTag(tag, aClass);
+        }
 
-          @Override
-          public Type[] getChooserTypes() {
-            return oldChoosers[0].getChooserTypes();
-          }
-        });
-        result.setResult((StableElement<T>)t.createStableCopy());
-      }
-    }.execute().getResultObject();
+        @Override
+        public Type[] getChooserTypes() {
+          return oldChoosers[0].getChooserTypes();
+        }
+      });
+      return (StableElement<T>)t.createStableCopy();
+    });
     if (result != null) {
       domManager.getTypeChooserManager().registerTypeChooser(aClass[0], oldChoosers[0]);
       return result.getWrappedElement();

@@ -27,8 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashSet;
 import java.util.Set;
 
-public class IntegerDivisionInFloatingPointContextInspection
-  extends BaseInspection {
+public class IntegerDivisionInFloatingPointContextInspection extends BaseInspection {
 
   /**
    * @noinspection StaticCollection
@@ -68,8 +67,7 @@ public class IntegerDivisionInFloatingPointContextInspection
     return new IntegerDivisionInFloatingPointContextVisitor();
   }
 
-  private static class IntegerDivisionInFloatingPointContextVisitor
-    extends BaseInspectionVisitor {
+  private static class IntegerDivisionInFloatingPointContextVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
@@ -78,10 +76,8 @@ public class IntegerDivisionInFloatingPointContextInspection
       if (!tokenType.equals(JavaTokenType.DIV)) {
         return;
       }
-      for (PsiExpression operand : expression.getOperands()) {
-        if (!isIntegral(operand.getType())) {
-          return;
-        }
+      if (!hasIntegerDivision(expression)) {
+        return;
       }
       final PsiExpression context = getContainingExpression(expression);
       if (context == null) {
@@ -99,16 +95,21 @@ public class IntegerDivisionInFloatingPointContextInspection
       registerError(expression);
     }
 
+    private static boolean hasIntegerDivision(@NotNull PsiPolyadicExpression expression) {
+      PsiExpression[] operands = expression.getOperands();
+      if (operands.length < 2) return false;
+      return isIntegral(operands[0].getType()) && isIntegral(operands[1].getType());
+    }
+
     private static boolean isIntegral(PsiType type) {
       if (type == null) {
         return false;
       }
       final String text = type.getCanonicalText();
-      return text != null && s_integralTypes.contains(text);
+      return s_integralTypes.contains(text);
     }
 
-    private static PsiExpression getContainingExpression(
-      PsiExpression expression) {
+    private static PsiExpression getContainingExpression(PsiExpression expression) {
       final PsiElement parent = expression.getParent();
       if (parent instanceof PsiBinaryExpression ||
           parent instanceof PsiParenthesizedExpression ||

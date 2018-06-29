@@ -16,8 +16,8 @@
 package com.intellij.refactoring.changeSignature.inplace;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.findUsages.DescriptiveNameUtil;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -32,7 +32,6 @@ import com.intellij.openapi.editor.markup.HighlighterLayer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.editor.markup.TextAttributes;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
@@ -91,7 +90,8 @@ public class InplaceChangeSignature implements DocumentListener {
       if (exitCode == Messages.CANCEL) return;
       PsiElement method = myStableChange.getMethod();
       VirtualFile virtualFile = PsiUtilCore.getVirtualFile(method);
-      new OpenFileDescriptor(project, virtualFile, method.getTextOffset()).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, virtualFile, method.getTextOffset())
+                          .navigate(true);
       return;
     }
 
@@ -198,18 +198,17 @@ public class InplaceChangeSignature implements DocumentListener {
     String methodSignature = myDetector.getMethodSignaturePreview(changeInfo, deleteRanges, newRanges);
 
     myPreview.getMarkupModel().removeAllHighlighters();
-    new WriteCommandAction(null) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
-      }
-    }.execute();
-    TextAttributes deprecatedAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
+    WriteCommandAction.writeCommandAction(null).run(() -> {
+      myPreview.getDocument().replaceString(0, myPreview.getDocument().getTextLength(), methodSignature);
+    });
+    TextAttributes deprecatedAttributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.DEPRECATED_ATTRIBUTES);
     for (TextRange range : deleteRanges) {
       myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
                                                      deprecatedAttributes, HighlighterTargetArea.EXACT_RANGE);
     }
-    TextAttributes todoAttributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
+    TextAttributes todoAttributes =
+      EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES);
     for (TextRange range : newRanges) {
       myPreview.getMarkupModel().addRangeHighlighter(range.getStartOffset(), range.getEndOffset(), HighlighterLayer.ADDITIONAL_SYNTAX,
                                                      todoAttributes, HighlighterTargetArea.EXACT_RANGE);

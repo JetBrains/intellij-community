@@ -7,7 +7,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.LocateLibraryDialog;
 import com.intellij.codeInsight.daemon.impl.quickfix.OrderEntryFix;
 import com.intellij.jarRepository.JarRepositoryManager;
 import com.intellij.jarRepository.RepositoryAttachDialog;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -27,6 +26,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.Promise;
 import org.jetbrains.concurrency.Promises;
+import org.jetbrains.idea.maven.utils.library.RepositoryLibraryDescription;
 import org.jetbrains.idea.maven.utils.library.RepositoryLibraryProperties;
 
 import java.util.Collection;
@@ -54,7 +54,7 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
 
   @Override
   public Promise<Void> addLibraryDependency(@NotNull Module from, @NotNull Library library, @NotNull DependencyScope scope, boolean exported) {
-    OrderEntryUtil.addLibraryToRoots(from, library, scope, exported);
+    WriteAction.run(() -> OrderEntryUtil.addLibraryToRoots(from, library, scope, exported));
     return Promises.resolvedPromise(null);
   }
 
@@ -70,10 +70,10 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
       classesRoots = new LocateLibraryDialog(firstModule, defaultRoots, descriptor.getPresentableName()).showAndGetResult();
     }
     else {
-      String version = descriptor.getMinVersion();
+      String version = descriptor.getPreferredVersion();
       String mavenCoordinates = descriptor.getLibraryGroupId() + ":" +
-                                descriptor.getLibraryArtifactId() +
-                                (version != null ? ":" + version : "");
+                                descriptor.getLibraryArtifactId() + ":" +
+                                (version != null ? version : RepositoryLibraryDescription.ReleaseVersionId);
       RepositoryAttachDialog dialog = new RepositoryAttachDialog(myProject, mavenCoordinates, RepositoryAttachDialog.Mode.DOWNLOAD);
       if (!dialog.showAndGet()) {
         return Promises.rejectedPromise();
@@ -98,20 +98,19 @@ public class IdeaProjectModelModifier extends JavaProjectModelModifier {
         ModuleRootModificationUtil.addModuleLibrary(firstModule, libraryName, urls, Collections.emptyList(), scope);
       }
       else {
-        new WriteAction() {
-          protected void run(@NotNull Result result) {
-            Library library =
-              LibraryUtil.createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable(myProject), descriptor.getPresentableName());
-            Library.ModifiableModel model = library.getModifiableModel();
-            for (String url : urls) {
-              model.addRoot(url, OrderRootType.CLASSES);
-            }
-            model.commit();
-            for (Module module : modules) {
-              ModuleRootModificationUtil.addDependency(module, library, scope, false);
-            }
+        WriteAction.run(() -> {
+          Library library =
+            LibraryUtil.createLibrary(LibraryTablesRegistrar.getInstance().getLibraryTable(myProject), descriptor.getPresentableName());
+          Library.ModifiableModel model = library.getModifiableModel();
+          for (String url : urls) {
+            model.addRoot(url, OrderRootType.CLASSES);
           }
-        }.execute();
+          model.commit();
+          for (Module module : modules) {
+            ModuleRootModificationUtil.addDependency(module, library, scope, false);
+          }
+          ;
+        });
       }
     }
     return Promises.resolvedPromise(null);

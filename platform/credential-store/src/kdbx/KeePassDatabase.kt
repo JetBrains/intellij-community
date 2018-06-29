@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.credentialStore.kdbx
 
 import com.intellij.util.get
@@ -29,7 +30,7 @@ private const val ROOT_ELEMENT_NAME = "Root"
 internal var dateFormatter = DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss'Z'")
 
 class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) {
-  internal val dbMeta: Element
+  private val dbMeta: Element
     get() = rootElement.getChild("Meta") ?: throw IllegalStateException("no meta")
 
   @Volatile var isDirty: Boolean = false
@@ -45,7 +46,7 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
       rootGroup.name = ROOT_ELEMENT_NAME
     }
     else {
-      rootElement!!.removeChild("Group")
+      rootElement.removeChild("Group")
       rootGroup = KdbxGroup(groupElement, this, null)
     }
   }
@@ -69,8 +70,6 @@ class KeePassDatabase(private val rootElement: Element = createEmptyDatabase()) 
     result.title = title
     return result
   }
-
-  fun getDescription() = dbMeta.getChildText("DatabaseDescription")
 
   fun setDescription(description: String) {
     dbMeta.getOrCreate("DatabaseDescription").text = description
@@ -119,8 +118,7 @@ interface ValueCreator {
   val value: String
 }
 
-internal class ConstantValueCreator(override val value: String) : ValueCreator {
-}
+internal class ConstantValueCreator(override val value: String) : ValueCreator
 
 internal class DateValueCreator : ValueCreator {
   override val value: String

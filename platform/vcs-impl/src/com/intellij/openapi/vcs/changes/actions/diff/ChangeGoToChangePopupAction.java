@@ -1,3 +1,4 @@
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.actions.diff;
 
 import com.intellij.diff.actions.impl.GoToChangePopupBuilder;
@@ -10,6 +11,7 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserBase;
+import com.intellij.openapi.vcs.changes.ui.ChangesGroupingPolicyFactory;
 import com.intellij.openapi.vcs.changes.ui.VcsTreeModelData;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,7 +35,7 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
   }
 
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(@NotNull Project project, boolean showFlatten);
+  protected abstract DefaultTreeModel buildTreeModel(@NotNull Project project, @NotNull ChangesGroupingPolicyFactory grouping);
 
   protected abstract void onSelected(@Nullable Object object);
 
@@ -85,13 +87,19 @@ public abstract class ChangeGoToChangePopupAction<Chain extends DiffRequestChain
 
     @NotNull
     @Override
-    protected DefaultTreeModel buildTreeModel(boolean showFlatten) {
-      return ChangeGoToChangePopupAction.this.buildTreeModel(myProject, showFlatten);
+    protected DefaultTreeModel buildTreeModel() {
+      return ChangeGoToChangePopupAction.this.buildTreeModel(myProject, getGrouping());
     }
 
     @NotNull
     @Override
     protected List<AnAction> createToolbarActions() {
+      return Collections.emptyList(); // remove diff action
+    }
+
+    @NotNull
+    @Override
+    protected List<AnAction> createPopupMenuActions() {
       return Collections.emptyList(); // remove diff action
     }
 

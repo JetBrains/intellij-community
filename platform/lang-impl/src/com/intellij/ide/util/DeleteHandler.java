@@ -72,21 +72,21 @@ public class DeleteHandler {
         return false;
       }
       final PsiElement[] elements = getPsiElements(dataContext);
-      return elements != null && shouldEnableDeleteAction(elements);
+      return shouldEnableDeleteAction(elements);
     }
 
     @Nullable
     private static PsiElement[] getPsiElements(DataContext dataContext) {
       PsiElement[] elements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataContext);
       if (elements == null) {
-        final Object data = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
+        final PsiElement data = CommonDataKeys.PSI_ELEMENT.getData(dataContext);
         if (data != null) {
-          elements = new PsiElement[]{(PsiElement)data};
+          elements = new PsiElement[]{data};
         }
         else {
-          final Object data1 = CommonDataKeys.PSI_FILE.getData(dataContext);
+          final PsiFile data1 = CommonDataKeys.PSI_FILE.getData(dataContext);
           if (data1 != null) {
-            elements = new PsiElement[]{(PsiFile)data1};
+            elements = new PsiElement[]{data1};
           }
         }
       }

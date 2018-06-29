@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.impl.smartPointers;
 
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiAnchor;
@@ -25,6 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 class ClsElementInfo extends SmartPointerElementInfo {
+  @NotNull
   private final PsiAnchor.StubIndexReference myStubIndexReference;
 
   ClsElementInfo(@NotNull PsiAnchor.StubIndexReference stubReference) {
@@ -32,7 +32,7 @@ class ClsElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  PsiElement restoreElement() {
+  PsiElement restoreElement(@NotNull SmartPointerManagerImpl manager) {
     return myStubIndexReference.retrieve();
   }
 
@@ -42,34 +42,29 @@ class ClsElementInfo extends SmartPointerElementInfo {
   }
 
   @Override
-  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other) {
+  boolean pointsToTheSameElementAs(@NotNull SmartPointerElementInfo other, @NotNull SmartPointerManagerImpl manager) {
     return other instanceof ClsElementInfo && myStubIndexReference.equals(((ClsElementInfo)other).myStubIndexReference);
   }
 
   @Override
+  @NotNull
   VirtualFile getVirtualFile() {
     return myStubIndexReference.getVirtualFile();
   }
 
   @Override
-  Segment getRange() {
+  Segment getRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
-  }
-
-  @NotNull
-  @Override
-  Project getProject() {
-    return myStubIndexReference.getProject();
   }
 
   @Nullable
   @Override
-  Segment getPsiRange() {
+  Segment getPsiRange(@NotNull SmartPointerManagerImpl manager) {
     return null;
   }
 
   @Override
-  PsiFile restoreFile() {
+  PsiFile restoreFile(@NotNull SmartPointerManagerImpl manager) {
     return myStubIndexReference.getFile();
   }
 

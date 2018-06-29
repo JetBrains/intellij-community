@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -31,16 +17,25 @@ import org.jetbrains.annotations.Nullable;
  * Provides low-level search and find usages services for a project, like finding references
  * to an element, finding overriding / inheriting elements, finding to do items and so on.
  *
- * Use {@link com.intellij.psi.search.PsiSearchHelper.SERVICE#getInstance}() to get a search helper instance.
+ * Use {@link PsiSearchHelper#getInstance(Project)} to get a search helper instance.
  */
 public interface PsiSearchHelper {
   class SERVICE {
     private SERVICE() {
     }
 
+    /**
+     * @deprecated please use {@link PsiSearchHelper#getInstance(Project)}
+     */
+    @Deprecated
     public static PsiSearchHelper getInstance(@NotNull Project project) {
-      return ServiceManager.getService(project, PsiSearchHelper.class);
+      return PsiSearchHelper.getInstance(project);
     }
+  }
+
+  @NotNull
+  static PsiSearchHelper getInstance(@NotNull Project project) {
+    return ServiceManager.getService(project, PsiSearchHelper.class);
   }
 
   /**
@@ -158,10 +153,10 @@ public interface PsiSearchHelper {
    */
   boolean processAllFilesWithWordInLiterals(@NotNull String word, @NotNull GlobalSearchScope scope, @NotNull Processor<PsiFile> processor);
 
-  boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
+  boolean processRequests(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
   @NotNull
-  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<PsiReference> processor);
+  AsyncFuture<Boolean> processRequestsAsync(@NotNull SearchRequestCollector request, @NotNull Processor<? super PsiReference> processor);
 
   boolean processElementsWithWord(@NotNull TextOccurenceProcessor processor,
                                   @NotNull SearchScope searchScope,

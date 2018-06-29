@@ -43,11 +43,13 @@ public class XmlAttributeReference implements PsiReference {
     myAttribute = attribute;
   }
 
+  @NotNull
   @Override
   public XmlAttribute getElement() {
     return myAttribute;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final int parentOffset = myAttribute.getNameElement().getStartOffsetInParent();

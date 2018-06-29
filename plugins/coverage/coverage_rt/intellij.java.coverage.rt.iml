@@ -10,6 +10,7 @@
     <orderEntry type="module" module-name="intellij.testng.rt" />
     <orderEntry type="module" module-name="intellij.junit.rt" />
     <orderEntry type="library" scope="PROVIDED" name="TestNG" level="project" />
-    <orderEntry type="library" name="Coverage" level="project" />
+    <orderEntry type="library" name="intellij-coverage" level="project" />
+    <orderEntry type="library" name="intellij-test-discovery" level="project" />
   </component>
 </module>

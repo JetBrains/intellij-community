@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.ui.impl;
 
 import com.intellij.ide.DataManager;
@@ -8,6 +6,7 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.impl.TypeSafeDataProviderAdapter;
 import com.intellij.ide.ui.AntialiasingType;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -39,8 +38,8 @@ import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
 import com.intellij.util.IJSwingUtilities;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.GraphicsUtil;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.OwnerOptional;
@@ -188,7 +187,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
     else {
       ActionCallback focused = new ActionCallback("DialogFocusedCallback");
       ActionCallback typeAheadDone = new ActionCallback("DialogTypeAheadDone");
-      MyDialog dialog = new MyDialog(owner, wrapper, project, focused, typeAheadDone, typeAhead);
+      MyDialog dialog = new MyDialog(OwnerOptional.fromComponent(owner).get(), wrapper, project, focused, typeAheadDone, typeAhead);
       dialog.setModalityType(ideModalityType.toAwtModality());
       return dialog;
     }
@@ -423,6 +422,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
 
     myDialog.getWindow().setAutoRequestFocus(true);
 
+    final Disposable tb = TouchBarsManager.showDialogWrapperButtons(myDialog.getContentPane());
+    if (tb != null)
+      myDisposeActions.add(() -> Disposer.dispose(tb));
+
     try {
       myDialog.show();
     }
@@ -523,6 +526,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer {
                     @NotNull ActionCallback typeAheadDone,
                     ActionCallback typeAheadCallback) {
       super(owner);
+      UIUtil.markAsTypeAheadAware(this);
       myDialogWrapper = new WeakReference<>(dialogWrapper);
       myProject = project != null ? new WeakReference<>(project) : null;
 

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs;
 
 import com.intellij.openapi.diff.impl.patch.PatchHunk;
+import com.intellij.openapi.diff.impl.patch.PatchLine;
 import com.intellij.openapi.diff.impl.patch.PatchReader;
 import com.intellij.openapi.diff.impl.patch.TextFilePatch;
 import com.intellij.openapi.util.io.FileUtil;
@@ -214,6 +215,57 @@ public class PatchAutoInitTest extends PlatformTestCase {
     TextFilePatch patch = create(prefix + path);
     final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
     checkPath(result, path, Collections.singletonList(root), StringUtil.split(prefix, "/").size());
+  }
+
+  public void testFileAdditionWithMultipleSimilarModules() {
+    final VirtualFile root = myProject.getBaseDir();
+    PsiTestUtil.addContentRoot(myModule, root);
+    VfsTestUtil.createDir(root, "module-1/src/com/intellij/openapi/colors");
+    VfsTestUtil.createDir(root, "module-2/src/com/intellij/openapi/editor");
+    VfsTestUtil.createDir(root, "module-3/src/com/intellij/openapi/modules");
+    VfsTestUtil.createDir(root, "platform-tests/testSrc/com/intellij/openapi/editor");
+
+    TextFilePatch patch = createFileAddition("module-new/src/com/intellij/openapi/tests/SomeNewFile.java");
+
+    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    checkPath(result, "module-new/src/com/intellij/openapi/tests/SomeNewFile.java", Collections.singletonList(root), 0);
+  }
+
+  public void testFileModificationWithMultipleSimilarModules() {
+    final VirtualFile root = myProject.getBaseDir();
+    PsiTestUtil.addContentRoot(myModule, root);
+    VfsTestUtil.createFile(root, "module-1/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+    VfsTestUtil.createFile(root, "module-2/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+    VfsTestUtil.createFile(root, "module-3/folder/.idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+    VfsTestUtil.createFile(root, ".idea/module.xml", "1\n2\n3\n4\n5\n6\n");
+
+    TextFilePatch patch = create(".idea/module.xml");
+    PatchHunk hunk = new PatchHunk(0, 3, 0, 3);
+    hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "1"));
+    hunk.addLine(new PatchLine(PatchLine.Type.REMOVE, "2"));
+    hunk.addLine(new PatchLine(PatchLine.Type.ADD, "New"));
+    hunk.addLine(new PatchLine(PatchLine.Type.CONTEXT, "3"));
+    patch.addHunk(hunk);
+
+    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    checkPath(result, ".idea/module.xml", Collections.singletonList(root), 0);
+  }
+
+  public void testBinaryModificationWithMultipleSimilarModules() {
+    final VirtualFile root = myProject.getBaseDir();
+    PsiTestUtil.addContentRoot(myModule, root);
+    VfsTestUtil.createFile(root, "module-1/.idea/module.bin");
+    VfsTestUtil.createFile(root, "module-2/.idea/module.bin");
+    VfsTestUtil.createFile(root, "module-3/folder/.idea/module.bin");
+    VfsTestUtil.createFile(root, ".idea/module.bin");
+
+    final ShelvedBinaryFilePatch patch = createShelvedBinarySimplePatch(".idea/module.bin");
+
+    final MatchPatchPaths iterator = new MatchPatchPaths(myProject);
+    final List<AbstractFilePatchInProgress> result = iterator.execute(Collections.singletonList(patch));
+    checkPath(result, ".idea/module.bin", Collections.singletonList(root), 0);
   }
 
   private static void checkPath(List<AbstractFilePatchInProgress> filePatchInProgresses, String path, List<VirtualFile> bases, int strip) {

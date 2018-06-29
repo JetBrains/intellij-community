@@ -240,7 +240,7 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testTupleInExcept() {
     PsiElement targetElement = resolve();
     assertTrue(targetElement instanceof PyTargetExpression);
-    assertTrue(PsiTreeUtil.getParentOfType(targetElement, PyExceptPart.class) != null);
+    assertNotNull(PsiTreeUtil.getParentOfType(targetElement, PyExceptPart.class));
   }
 
 
@@ -375,6 +375,12 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testSuperMetaClass() {
     assertResolvesTo(PyFunction.class, "foo");
   }
+
+  //PY-28562
+  public void testSuperMetaClassInheritsObject() {
+    assertResolvesTo(PyFunction.class, "__getattribute__");
+  }
+
 
   public void testSuperDunderClass() {  // PY-1190
     assertResolvesTo(PyFunction.class, "foo");
@@ -531,7 +537,7 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiElement source = ref.getElement();
     final PsiElement target = ref.resolve();
     assertNotNull(target);
-    assertTrue(source != target);
+    assertNotSame(source, target);
     assertTrue(PyPsiUtils.isBefore(target, source));
   }
 
@@ -541,7 +547,7 @@ public class PyResolveTest extends PyResolveTestCase {
     final PsiElement source = ref.getElement();
     final PsiElement target = ref.resolve();
     assertNotNull(target);
-    assertTrue(source == target);
+    assertSame(source, target);
   }
 
   // PY-7970
@@ -602,7 +608,7 @@ public class PyResolveTest extends PyResolveTestCase {
   public void testFormatStringKWArgs() {
     PsiElement target = resolve();
     assertTrue(target instanceof  PyNumericLiteralExpression);
-    assertTrue(12 == ((PyNumericLiteralExpression)target).getLongValue());
+    assertEquals(12, (long)((PyNumericLiteralExpression)target).getLongValue());
   }
 
   //PY-2748
@@ -1263,5 +1269,71 @@ public class PyResolveTest extends PyResolveTestCase {
 
     assertProjectFilesNotParsed(file);
     assertSdkRootsNotParsed(file);
+  }
+
+  // PY-28228
+  public void testReturnAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  // PY-28228
+  public void testParameterAnnotationForwardReference() {
+    runWithLanguageLevel(
+      LanguageLevel.PYTHON37,
+      () -> assertResolvesTo(PyClass.class, "A")
+    );
+  }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsTarget() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsMethod() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsClass() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsImport() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  // PY-19890
+  public void testUnboundVariableOnClassLevelDeclaredBelowAsImportWithAs() {
+    final PyTargetExpression foo = assertResolvesTo(PyTargetExpression.class, "foo");
+
+    final PyExpression value = foo.findAssignedValue();
+    assertInstanceOf(value, PyStringLiteralExpression.class);
+    assertEquals("global", ((PyStringLiteralExpression)value).getStringValue());
+  }
+
+  // PY-29975
+  public void testUnboundVariableOnClassLevelNotDeclaredBelow() {
+    assertResolvesTo(PyNamedParameter.class, "foo");
   }
 }

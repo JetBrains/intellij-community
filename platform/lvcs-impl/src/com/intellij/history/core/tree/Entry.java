@@ -207,19 +207,23 @@ public abstract class Entry {
   }
 
   public static List<Difference> getDifferencesBetween(Entry left, Entry right) {
+    return getDifferencesBetween(left, right, false);
+  }
+
+  public static List<Difference> getDifferencesBetween(Entry left, Entry right, boolean isRightContentCurrent) {
     List<Difference> result = new SmartList<>();
 
-    if (left == null) right.collectCreatedDifferences(result);
-    else if (right == null) left.collectDeletedDifferences(result);
-    else left.collectDifferencesWith(right, result);
+    if (left == null) right.collectCreatedDifferences(result, isRightContentCurrent);
+    else if (right == null) left.collectDeletedDifferences(result, isRightContentCurrent);
+    else left.collectDifferencesWith(right, result, isRightContentCurrent);
     return result;
   }
 
-  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result);
+  protected abstract void collectDifferencesWith(@NotNull Entry e, @NotNull List<Difference> result, boolean isRightContentCurrent);
 
-  protected abstract void collectCreatedDifferences(@NotNull List<Difference> result);
+  protected abstract void collectCreatedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent);
 
-  protected abstract void collectDeletedDifferences(@NotNull List<Difference> result);
+  protected abstract void collectDeletedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent);
 
   @Override
   public String toString() {

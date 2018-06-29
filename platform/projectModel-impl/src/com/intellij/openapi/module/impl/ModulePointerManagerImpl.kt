@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.module.impl
 
 import com.intellij.ProjectTopics
@@ -37,7 +23,7 @@ import kotlin.concurrent.write
 /**
  * @author nik
  */
-@State(name = "ModuleRenamingHistory", storages = arrayOf(Storage("modules.xml")))
+@State(name = "ModuleRenamingHistory", storages = [(Storage("modules.xml"))])
 class ModulePointerManagerImpl(private val project: Project) : ModulePointerManager(), PersistentStateComponent<ModuleRenamingHistoryState> {
   private val unresolved = MultiMap.createSmart<String, ModulePointerImpl>()
   private val pointers = MultiMap.createSmart<Module, ModulePointerImpl>()
@@ -58,11 +44,13 @@ class ModulePointerManagerImpl(private val project: Project) : ModulePointerMana
         for (module in modules) {
           moduleAppears(module)
         }
+        val renamedOldToNew = modules.associateBy({ oldNameProvider.`fun`(it) }, { it.name })
+        oldToNewName.transformValues { newName -> renamedOldToNew[newName] ?: newName }
       }
     })
   }
 
-  override fun getState() = ModuleRenamingHistoryState().apply {
+  override fun getState(): ModuleRenamingHistoryState = ModuleRenamingHistoryState().apply {
     lock.read {
       oldToNewName.putAll(this@ModulePointerManagerImpl.oldToNewName)
     }

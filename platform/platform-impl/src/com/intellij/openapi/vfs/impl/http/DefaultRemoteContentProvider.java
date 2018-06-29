@@ -29,6 +29,7 @@ import com.intellij.util.Url;
 import com.intellij.util.io.HttpRequests;
 import com.intellij.util.io.RequestBuilder;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.BuiltInServerManager;
 
 import java.io.File;
@@ -36,6 +37,7 @@ import java.io.IOException;
 
 public class DefaultRemoteContentProvider extends RemoteContentProvider {
   private static final Logger LOG = Logger.getInstance(DefaultRemoteContentProvider.class);
+  private static final int DEFAULT_CONNECT_TIMEOUT = 60 * 1000;
 
   @NotNull
   public static RequestBuilder addRequestTuner(@NotNull Url url, @NotNull RequestBuilder requestBuilder) {
@@ -53,20 +55,16 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
 
   @Override
   public void saveContent(@NotNull final Url url, @NotNull final File file, @NotNull final DownloadingCallback callback) {
-    ApplicationManager.getApplication().executeOnPooledThread(() -> downloadContent(url, file, callback));
+    Throwable startTrace = ApplicationManager.getApplication().isUnitTestMode() ? new Throwable() : null;
+    ApplicationManager.getApplication().executeOnPooledThread(() -> downloadContent(url, file, callback, startTrace));
   }
 
-  private static void downloadContent(@NotNull final Url url, final File file, final DownloadingCallback callback) {
+  private void downloadContent(@NotNull Url url, @NotNull File file, @NotNull DownloadingCallback callback, @Nullable Throwable startTrace) {
     LOG.debug("Downloading started: " + url);
     final String presentableUrl = StringUtil.trimMiddle(url.trimParameters().toDecodedForm(), 40);
     callback.setProgressText(VfsBundle.message("download.progress.connecting", presentableUrl), true);
     try {
-      addRequestTuner(url, HttpRequests.request(url.toExternalForm()))
-        .connectTimeout(60 * 1000)
-        .productNameAsUserAgent()
-        .connect(new HttpRequests.RequestProcessor<Object>() {
-          @Override
-          public Object process(@NotNull HttpRequests.Request request) throws IOException {
+      connect(url, HttpRequests.request(url.toExternalForm()), request -> {
             int size = request.getConnection().getContentLength();
             callback.setProgressText(VfsBundle.message("download.progress.downloading", presentableUrl), size == -1);
             request.saveToFile(file, new AbstractProgressIndicatorExBase() {
@@ -76,6 +74,8 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
               }
             });
 
+            saveAdditionalData(request, file);
+
             FileType fileType = RemoteFileUtil.getFileType(request.getConnection().getContentType());
             if (fileType == FileTypes.PLAIN_TEXT) {
               FileType fileTypeByFileName = FileTypeRegistry.getInstance().getFileTypeByFileName(PathUtilRt.getFileName(url.getPath()));
@@ -84,16 +84,41 @@ public class DefaultRemoteContentProvider extends RemoteContentProvider {
               }
             }
 
-            LOG.debug("Downloading finished, " + size + " bytes downloaded");
+            fileType = adjustFileType(fileType, url);
+
+            LOG.debug("Downloading from " + url + " finished, " + size + " bytes downloaded");
+            if (startTrace != null) {
+              LOG.debug("Start trace:", startTrace);
+            }
             callback.finished(fileType);
             return null;
-          }
-        });
+          });
     }
     catch (IOException e) {
       LOG.info(e);
       callback.errorOccurred(VfsBundle.message("cannot.load.remote.file", url, e.getMessage()), false);
     }
+  }
+
+  protected <T> T connect(@NotNull Url url, @NotNull RequestBuilder requestBuilder,
+                         @NotNull HttpRequests.RequestProcessor<T> processor) throws IOException {
+    return addRequestTuner(url, requestBuilder)
+      .connectTimeout(getDefaultConnectionTimeout())
+      .productNameAsUserAgent()
+      .connect(processor);
+  }
+
+  protected int getDefaultConnectionTimeout() {
+    return DEFAULT_CONNECT_TIMEOUT;
+  }
+
+  @Nullable
+  protected FileType adjustFileType(@Nullable FileType type, @NotNull Url url) {
+    return type;
+  }
+
+  protected void saveAdditionalData(@NotNull HttpRequests.Request request, @NotNull File file) throws IOException {
+    // do nothing
   }
 
   @Override

@@ -142,9 +142,9 @@ public class ChangeListViewerDialog extends DialogWrapper implements DataProvide
     myChangesBrowser = new CommittedChangesBrowser(myProject) {
       @NotNull
       @Override
-      protected List<AnAction> createToolbarActions() {
+      protected List<AnAction> createPopupMenuActions() {
         return ContainerUtil.append(
-          super.createToolbarActions(),
+          super.createPopupMenuActions(),
           ActionManager.getInstance().getAction(VcsActions.ACTION_COPY_REVISION_NUMBER)
         );
       }

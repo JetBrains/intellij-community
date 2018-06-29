@@ -18,8 +18,9 @@ package com.intellij.vcs.log.ui.actions;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.vcs.log.VcsLogDataKeys;
 import com.intellij.vcs.log.VcsLogUi;
-import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
+import com.intellij.vcs.log.impl.CommonUiProperties;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
+import com.intellij.vcs.log.ui.AbstractVcsLogUi;
 import org.jetbrains.annotations.NotNull;
 
 public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
@@ -30,13 +31,13 @@ public class ShowRootsColumnAction extends BooleanPropertyToggleAction {
 
   @Override
   protected VcsLogUiProperties.VcsLogUiProperty<Boolean> getProperty() {
-    return MainVcsLogUiProperties.SHOW_ROOT_NAMES;
+    return CommonUiProperties.SHOW_ROOT_NAMES;
   }
 
   @Override
   public void update(@NotNull AnActionEvent e) {
     super.update(e);
     VcsLogUi ui = e.getData(VcsLogDataKeys.VCS_LOG_UI);
-    if (ui == null || !ui.isMultipleRoots()) e.getPresentation().setEnabledAndVisible(false);
+    if (ui == null || !((AbstractVcsLogUi)ui).getColorManager().isMultipleRoots()) e.getPresentation().setEnabledAndVisible(false);
   }
 }

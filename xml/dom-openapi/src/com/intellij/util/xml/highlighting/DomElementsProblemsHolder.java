@@ -26,9 +26,6 @@ public interface DomElementsProblemsHolder {
 
   List<DomElementProblemDescriptor> getProblems(DomElement domElement);
 
-  @Deprecated
-  List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems);
-
   /**
    *
    * @param domElement domElement
@@ -37,12 +34,6 @@ public interface DomElementsProblemsHolder {
    * @return problems
    */
   List<DomElementProblemDescriptor> getProblems(DomElement domElement, boolean includeXmlProblems, boolean withChildren);
-
-  @Deprecated
-  List<DomElementProblemDescriptor> getProblems(DomElement domElement,
-                                                final boolean includeXmlProblems,
-                                                final boolean withChildren,
-                                                HighlightSeverity minSeverity);
 
   List<DomElementProblemDescriptor> getProblems(DomElement domElement,
                                                 final boolean withChildren,

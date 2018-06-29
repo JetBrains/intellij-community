@@ -7,19 +7,21 @@ abstract class ObviousNullCheck {
   abstract String getBar();
 
   void test(String param) {
-    assertNotNull(<warning descr="Useless null-check: a value of primitive type is never null">5 + 6</warning>);
+    assertNotNull(<warning descr="Redundant null-check: a value of primitive type is never null">5 + 6</warning>);
 
     assertNull("Null!", param);
     assertNull(param, <warning descr="Null-check will always fail: literal is never null">"Null!"</warning>);
 
     Objects.requireNonNull(null);
-    Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">"xyz"</warning>, "xyz");
-    Objects.requireNonNull((<warning descr="Useless null-check: concatenation is never null">getFoo() + getBar()</warning>));
-    Objects.requireNonNull(<warning descr="Useless null-check: newly created object is never null">new ArrayList()</warning>, "new returned null");
-    Objects.requireNonNull(<warning descr="Useless null-check: this object is never null">this</warning>);
+    Objects.requireNonNull(<warning descr="Redundant null-check: literal is never null">"xyz"</warning>, "xyz");
+    Objects.requireNonNull((<warning descr="Redundant null-check: concatenation is never null">getFoo() + getBar()</warning>));
+    Objects.requireNonNull(<warning descr="Redundant null-check: newly created object is never null">new ArrayList()</warning>, "new returned null");
+    Objects.requireNonNull(<warning descr="Redundant null-check: this object is never null">this</warning>);
 
-    String s = Objects.requireNonNull(<warning descr="Useless null-check: literal is never null">" x "</warning>);
+    String s = Objects.requireNonNull(<warning descr="Redundant null-check: literal is never null">" x "</warning>);
     String s1 = trim(" x ");
+
+    System.out.println(inferred(<warning descr="Redundant null-check: literal is never null">"foo"</warning>));
   }
 
   @Contract(value="null -> fail", pure=true)
@@ -37,4 +39,8 @@ abstract class ObviousNullCheck {
     if(obj != null) throw new NullPointerException(msg);
   }
 
+  static String inferred(String str) {
+    if(str == null) throw new IllegalArgumentException();
+    return str;
+  }
 }

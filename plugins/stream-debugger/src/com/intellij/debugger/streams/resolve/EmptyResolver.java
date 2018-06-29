@@ -25,6 +25,6 @@ public class EmptyResolver implements ValuesOrderResolver {
 
   @NotNull
   private static Map<TraceElement, List<TraceElement>> toEmptyMap(@NotNull Map<Integer, TraceElement> order) {
-    return order.keySet().stream().sorted().collect(Collectors.toMap(order::get, x -> Collections.emptyList()));
+    return order.keySet().stream().collect(Collectors.toMap(order::get, x -> Collections.emptyList()));
   }
 }

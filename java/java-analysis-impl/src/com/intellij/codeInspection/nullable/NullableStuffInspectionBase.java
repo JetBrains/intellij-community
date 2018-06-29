@@ -1,23 +1,22 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.nullable;
 
-import com.intellij.codeInsight.AnnotationTargetUtil;
-import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.*;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
-import com.intellij.codeInsight.intention.impl.AddNotNullAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.dataFlow.DfaPsiUtil;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.codeInspection.dataFlow.instructions.MethodCallInstruction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.GeneratedSourcesFilter;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.VariableKind;
@@ -30,6 +29,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -208,7 +208,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
           if (typeParameters.length > 0 && typeParameters.length == typeArguments.length && !(typeArguments[0].getType() instanceof PsiDiamondType)) {
             for (int i = 0; i < typeParameters.length; i++) {
               if (DfaPsiUtil.getTypeNullability(JavaPsiFacade.getElementFactory(element.getProject()).createType(typeParameters[i])) ==
-                  Nullness.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArguments[i].getType()) != Nullness.NOT_NULL) {
+                  Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(typeArguments[i].getType()) != Nullability.NOT_NULL) {
                 holder.registerProblem(typeArguments[i],
                                        "Non-null type argument is expected",
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
@@ -294,7 +294,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       private boolean isNullableNotNullCollectionConflict(PsiElement place,
                                                           @Nullable PsiType expectedType,
                                                           @Nullable PsiType assignedType,
-                                                          @NotNull Set<Couple<PsiType>> visited) {
+                                                          @NotNull Set<? super Couple<PsiType>> visited) {
         if (!visited.add(Couple.of(expectedType, assignedType))) return false;
 
         if (isNullityConflict(JavaGenericsUtil.getCollectionItemType(expectedType, place.getResolveScope()),
@@ -315,7 +315,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
 
       private boolean isNullityConflict(PsiType expected, PsiType assigned) {
-        return DfaPsiUtil.getTypeNullability(expected) == Nullness.NOT_NULL && DfaPsiUtil.getTypeNullability(assigned) == Nullness.NULLABLE;
+        return DfaPsiUtil.getTypeNullability(expected) == Nullability.NOT_NULL && DfaPsiUtil.getTypeNullability(assigned) == Nullability.NULLABLE;
       }
     };
   }
@@ -476,9 +476,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       LOG.assertTrue(parameter != null, setter.getText());
       AddAnnotationPsiFix addAnnoFix = createAddAnnotationFix(anno, annoToRemove, parameter);
       if (REPORT_NOT_ANNOTATED_GETTER && !manager.hasNullability(parameter) && !TypeConversionUtil.isPrimitiveAndNotNull(parameter.getType())) {
-        final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-        assertValidElement(setter, parameter, nameIdentifier1);
-        holder.registerProblem(nameIdentifier1,
+        final PsiIdentifier parameterName = parameter.getNameIdentifier();
+        assertValidElement(setter, parameter, parameterName);
+        holder.registerProblem(parameterName,
                                InspectionsBundle.message("inspection.nullable.problems.annotated.field.setter.parameter.not.annotated",
                                                          getPresentableAnnoName(field)),
                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -486,9 +486,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       }
       if (PropertyUtil.isSimpleSetter(setter)) {
         if (annotated.isDeclaredNotNull && isNullableNotInferred(parameter, false)) {
-          final PsiIdentifier nameIdentifier1 = parameter.getNameIdentifier();
-          assertValidElement(setter, parameter, nameIdentifier1);
-          holder.registerProblem(nameIdentifier1, InspectionsBundle.message(
+          final PsiIdentifier parameterName = parameter.getNameIdentifier();
+          assertValidElement(setter, parameter, parameterName);
+          holder.registerProblem(parameterName, InspectionsBundle.message(
                                    "inspection.nullable.problems.annotated.field.setter.parameter.conflict",
                                    getPresentableAnnoName(field), getPresentableAnnoName(parameter)),
                                  ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
@@ -503,16 +503,22 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     return new AddAnnotationPsiFix(anno, parameter, PsiNameValuePair.EMPTY_ARRAY, ArrayUtil.toStringArray(annoToRemove));
   }
 
+  @Contract("_,_,null -> fail")
   private static void assertValidElement(PsiMethod setter, PsiParameter parameter, PsiIdentifier nameIdentifier1) {
     LOG.assertTrue(nameIdentifier1 != null && nameIdentifier1.isPhysical(), setter.getText());
     LOG.assertTrue(parameter.isPhysical(), setter.getText());
   }
 
   private static void checkNotNullFieldsInitialized(PsiField field, NullableNotNullManager manager, @NotNull ProblemsHolder holder) {
-    PsiAnnotation annotation = manager.getNotNullAnnotation(field, false);
-    if (annotation == null || HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) return;
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(field);
+    if (info == null ||
+        info.getNullability() != Nullability.NOT_NULL ||
+        HighlightControlFlowUtil.isFieldInitializedAfterObjectConstruction(field)) {
+      return;
+    }
 
-    boolean byDefault = manager.isContainerAnnotation(annotation);
+    boolean byDefault = info.isContainer();
+    PsiAnnotation annotation = info.getAnnotation();
     PsiJavaCodeReferenceElement name = annotation.getNameReferenceElement();
     holder.registerProblem(annotation.isPhysical() && !byDefault ? annotation : field.getNameIdentifier(),
                            (byDefault && name != null ? "@" + name.getReferenceName() : "Not-null") + " fields must be initialized");
@@ -563,7 +569,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     PsiIdentifier nameIdentifier = field.getNameIdentifier();
     if (nameIdentifier.isPhysical()) {
       holder.registerProblem(nameIdentifier, "@" + getPresentableAnnoName(field) + " field is always initialized not-null",
-                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new AddNotNullAnnotationFix(field));
+                             ProblemHighlightType.GENERIC_ERROR_OR_WARNING, AddAnnotationPsiFix.createAddNotNullFix(field));
     }
   }
 
@@ -574,14 +580,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   @NotNull
   private static String getPresentableAnnoName(@NotNull PsiModifierListOwner owner) {
     NullableNotNullManager manager = NullableNotNullManager.getInstance(owner.getProject());
-    Set<String> names = ContainerUtil.newHashSet(manager.getNullables());
-    names.addAll(manager.getNotNulls());
-
-    PsiAnnotation annotation = AnnotationUtil.findAnnotationInHierarchy(owner, names);
-    if (annotation != null) return getPresentableAnnoName(annotation);
-
-    String anno = manager.getNotNull(owner);
-    return StringUtil.getShortName(anno != null ? anno : StringUtil.notNullize(manager.getNullable(owner), "???"));
+    NullabilityAnnotationInfo info = manager.findEffectiveNullabilityInfo(owner);
+    String name = info == null ? null : info.getAnnotation().getQualifiedName();
+    if (name == null) {
+      return "???";
+    }
+    return StringUtil.getShortName(name);
   }
 
   public static String getPresentableAnnoName(@NotNull PsiAnnotation annotation) {
@@ -630,12 +634,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
-  private static void checkLoopParameterNullability(ProblemsHolder holder, @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, Nullness expectedNullability) {
-    if (notNull != null && expectedNullability == Nullness.NULLABLE) {
+  private static void checkLoopParameterNullability(ProblemsHolder holder, @Nullable PsiAnnotation notNull, @Nullable PsiAnnotation nullable, Nullability expectedNullability) {
+    if (notNull != null && expectedNullability == Nullability.NULLABLE) {
       holder.registerProblem(notNull, "Parameter can be null",
                              new RemoveAnnotationQuickFix(notNull, null));
     }
-    else if (nullable != null && expectedNullability == Nullness.NOT_NULL) {
+    else if (nullable != null && expectedNullability == Nullability.NOT_NULL) {
       holder.registerProblem(nullable, "Parameter is always not-null",
                              new RemoveAnnotationQuickFix(nullable, null));
     }
@@ -670,7 +674,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     Annotated annotated = check(method, holder, method.getReturnType());
 
     List<PsiMethod> superMethods = ContainerUtil.map(
-      method.findSuperMethodSignaturesIncludingStatic(true), signature -> signature.getMethod());
+      method.findSuperMethodSignaturesIncludingStatic(true), MethodSignatureBackedByPsiMethod::getMethod);
 
     final NullableNotNullManager nullableManager = NullableNotNullManager.getInstance(holder.getProject());
 
@@ -708,11 +712,12 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     return NullableNotNullManager.getInstance(method.getProject());
   }
 
+  @Nullable
   private static LocalQuickFix createFixForNonAnnotatedOverridesNotNull(PsiMethod method,
                                                                         PsiMethod superMethod) {
     NullableNotNullManager nullableManager = getNullityManager(method);
     return AnnotationUtil.isAnnotatingApplicable(method, nullableManager.getDefaultNotNull())
-                              ? new AddNotNullAnnotationFix(method)
+                              ? AddAnnotationPsiFix.createAddNotNullFix(method)
                               : createChangeDefaultNotNullFix(nullableManager, superMethod);
   }
 
@@ -762,7 +767,7 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
       PsiParameter notNullSuper = findNotNullSuperForNonAnnotatedParameter(nullableManager, parameter, superParameters);
       if (notNullSuper != null) {
         LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull())
-                            ? new AddNotNullAnnotationFix(parameter)
+                            ? AddAnnotationPsiFix.createAddNotNullFix(parameter)
                             : createChangeDefaultNotNullFix(nullableManager, notNullSuper);
         holder.registerProblem(parameter.getNameIdentifier(),
                                InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull", getPresentableAnnoName(notNullSuper)),
@@ -770,8 +775,9 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                fix);
       }
       if (isNotNullParameterOverridingNonAnnotated(nullableManager, parameter, superParameters)) {
-        PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
-        assert notNullAnnotation != null;
+        NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
+        assert info != null;
+        PsiAnnotation notNullAnnotation = info.getAnnotation();
         boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
         final LocalQuickFix fix = physical ? new RemoveAnnotationQuickFix(notNullAnnotation, parameter) : null;
         holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),
@@ -804,9 +810,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   private boolean isNotNullParameterOverridingNonAnnotated(NullableNotNullManager nullableManager,
                                                            PsiParameter parameter,
                                                            List<PsiParameter> superParameters) {
-    return REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED 
-           && isNotNullNotInferred(parameter, false, false) 
-           && ContainerUtil.exists(superParameters, sp -> !nullableManager.hasNullability(sp));
+    if (!REPORT_NOTNULL_PARAMETERS_OVERRIDES_NOT_ANNOTATED) return false;
+    NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
+    return info != null && info.getNullability() == Nullability.NOT_NULL && !info.isInferred() &&
+           ContainerUtil.exists(superParameters, sp -> !nullableManager.hasNullability(sp));
   }
 
   private void checkNullLiteralArgumentOfNotNullParameterUsages(PsiMethod method,
@@ -815,16 +822,26 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                                                 boolean isOnFly,
                                                                 int parameterIdx,
                                                                 PsiParameter parameter) {
-    if (REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER && isOnFly && isNotNullNotInferred(parameter, false, false)) {
-      PsiAnnotation notNullAnnotation = nullableManager.getNotNullAnnotation(parameter, false);
-      if (JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) {
-        boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
-        holder.registerProblem(physical ? notNullAnnotation : parameter.getNameIdentifier(),
-                               InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.receives.null.literal", getPresentableAnnoName(parameter)),
-                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                               createNavigateToNullParameterUsagesFix(parameter));
-      }
+    if (!REPORT_NULLS_PASSED_TO_NOT_NULL_PARAMETER || !isOnFly) return;
+
+    PsiElement elementToHighlight;
+    if (DfaPsiUtil.getTypeNullability(getMemberType(parameter)) == Nullability.NOT_NULL) {
+      elementToHighlight = parameter.getNameIdentifier();
     }
+    else {
+      NullabilityAnnotationInfo info = nullableManager.findOwnNullabilityInfo(parameter);
+      if (info == null || info.getNullability() != Nullability.NOT_NULL || info.isInferred()) return;
+      PsiAnnotation notNullAnnotation = info.getAnnotation();
+      boolean physical = PsiTreeUtil.isAncestor(parameter, notNullAnnotation, true);
+      elementToHighlight = physical ? notNullAnnotation : parameter.getNameIdentifier();
+    }
+    if (elementToHighlight == null || !JavaNullMethodArgumentUtil.hasNullArgument(method, parameterIdx)) return;
+
+    holder.registerProblem(elementToHighlight,
+                           InspectionsBundle.message("inspection.nullable.problems.NotNull.parameter.receives.null.literal",
+                                                     getPresentableAnnoName(parameter)),
+                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                           createNavigateToNullParameterUsagesFix(parameter));
   }
 
   private void checkOverriders(@NotNull PsiMethod method,
@@ -842,33 +859,26 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
         hasAnnotatedParameter |= parameterAnnotated[i];
       }
       if (hasAnnotatedParameter || annotated.isDeclaredNotNull && !hasInheritableNotNull(method)) {
-        PsiManager manager = method.getManager();
         final String defaultNotNull = nullableManager.getDefaultNotNull();
         final boolean superMethodApplicable = AnnotationUtil.isAnnotatingApplicable(method, defaultNotNull);
         PsiMethod[] overridings =
           OverridingMethodsSearch.search(method).toArray(PsiMethod.EMPTY_ARRAY);
         boolean methodQuickFixSuggested = false;
         for (PsiMethod overriding : overridings) {
-          if (!manager.isInProject(overriding)) continue;
+          if (shouldSkipOverriderAsGenerated(overriding)) continue;
 
-          final boolean applicable = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull);
-          boolean ableToAddNotNullAnnotation = AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull);
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
               && !isNotNullNotInferred(overriding, false, false)
               && (isNullableNotInferred(overriding, false) || !isNullableNotInferred(overriding, true))
-              && ableToAddNotNullAnnotation) {
+              && AddAnnotationPsiFix.isAvailable(overriding, defaultNotNull)) {
             PsiIdentifier identifier = method.getNameIdentifier();//load tree
             PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
             final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
 
-            final LocalQuickFix fix;
-            if (applicable) {
-              fix = new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove);
-            }
-            else {
-              fix = superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
-            }
+            LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull)
+                                ? new MyAnnotateMethodFix(defaultNotNull, annotationsToRemove)
+                                : superMethodApplicable ? null : createChangeDefaultNotNullFix(nullableManager, method);
 
             PsiElement psiElement = annotation;
             if (!annotation.isPhysical()) {
@@ -880,12 +890,15 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                                    fix);
             methodQuickFixSuggested = true;
           }
-          if (hasAnnotatedParameter && ableToAddNotNullAnnotation) {
+          if (hasAnnotatedParameter) {
             PsiParameter[] psiParameters = overriding.getParameterList().getParameters();
             for (int i = 0; i < psiParameters.length; i++) {
               if (parameterQuickFixSuggested[i]) continue;
               PsiParameter parameter = psiParameters[i];
-              if (parameterAnnotated[i] && !isNotNullNotInferred(parameter, false, false) && !isNullableNotInferred(parameter, false)) {
+              if (parameterAnnotated[i] && 
+                  !isNotNullNotInferred(parameter, false, false) &&
+                  !isNullableNotInferred(parameter, false) &&
+                  AddAnnotationPsiFix.isAvailable(parameter, defaultNotNull)) {
                 PsiIdentifier identifier = parameters[i].getNameIdentifier(); //be sure that corresponding tree element available
                 PsiAnnotation annotation = AnnotationUtil.findAnnotation(parameters[i], nullableManager.getNotNulls());
                 PsiElement psiElement = annotation;
@@ -893,13 +906,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
                   psiElement = identifier;
                   if (psiElement == null) continue;
                 }
+                LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, defaultNotNull)
+                                    ? new AnnotateOverriddenMethodParameterFix(defaultNotNull, nullableManager.getDefaultNullable())
+                                    : createChangeDefaultNotNullFix(nullableManager, parameters[i]);
                 holder.registerProblem(psiElement,
                                        InspectionsBundle.message("nullable.stuff.problems.overridden.method.parameters.are.not.annotated"),
                                        ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                                       !applicable
-                                       ? createChangeDefaultNotNullFix(nullableManager, parameters[i])
-                                       : new AnnotateOverriddenMethodParameterFix(defaultNotNull,
-                                                                                  nullableManager.getDefaultNullable()));
+                                       fix);
                 parameterQuickFixSuggested[i] = true;
               }
             }
@@ -909,11 +922,19 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     }
   }
 
+  public static boolean shouldSkipOverriderAsGenerated(PsiMethod overriding) {
+    if (Registry.is("idea.report.nullity.missing.in.generated.overriders")) return false;
+    
+    PsiFile file = overriding.getContainingFile();
+    VirtualFile virtualFile = file != null ? file.getVirtualFile() : null;
+    return virtualFile != null && GeneratedSourcesFilter.isGeneratedSourceByAnyFilter(virtualFile, overriding.getProject());
+  }
+
   private static boolean isNotNullNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases, boolean skipExternal) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
     if (!manager.isNotNull(owner, checkBases)) return false;
-    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullness.NOT_NULL) return true;
+    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullability.NOT_NULL) return true;
 
     PsiAnnotation anno = manager.getNotNullAnnotation(owner, checkBases);
     if (anno == null || AnnotationUtil.isInferredAnnotation(anno)) return false;
@@ -924,11 +945,10 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
   public static boolean isNullableNotInferred(@NotNull PsiModifierListOwner owner, boolean checkBases) {
     Project project = owner.getProject();
     NullableNotNullManager manager = NullableNotNullManager.getInstance(project);
-    if (!manager.isNullable(owner, checkBases)) return false;
-    if (DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullness.NULLABLE) return true;
-
     PsiAnnotation anno = manager.getNullableAnnotation(owner, checkBases);
-    return !(anno != null && AnnotationUtil.isInferredAnnotation(anno));
+    if (anno == null) return false;
+
+    return DfaPsiUtil.getTypeNullability(getMemberType(owner)) == Nullability.NULLABLE || !AnnotationUtil.isInferredAnnotation(anno);
   }
 
   private static PsiType getMemberType(@NotNull PsiModifierListOwner owner) {
@@ -939,8 +959,13 @@ public class NullableStuffInspectionBase extends AbstractBaseJavaLocalInspection
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
     if (annotation != null) {
       final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
-      if (referenceElement != null && referenceElement.resolve() != null) {
-        return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+      if (referenceElement != null) {
+        JavaResolveResult resolveResult = referenceElement.advancedResolve(false);
+        if (resolveResult.getElement() != null &&
+            resolveResult.isValidResult() &&
+            !nullableManager.getDefaultNotNull().equals(annotation.getQualifiedName())) {
+          return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+        }
       }
     }
     return null;

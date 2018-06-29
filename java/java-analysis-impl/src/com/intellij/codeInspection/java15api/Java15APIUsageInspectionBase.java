@@ -5,7 +5,10 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.QuickFixFactory;
-import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.AbstractBaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.InspectionsBundle;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -53,7 +56,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
   private static final Set<String> ourIgnored16ClassesAPI = new THashSet<>(10);
   private static final Map<LanguageLevel, String> ourPresentableShortMessage = ContainerUtil.newEnumMap(LanguageLevel.class);
 
-  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_1_9;
+  private static final LanguageLevel ourHighestKnownLanguage = LanguageLevel.JDK_10;
 
   static {
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_3, "1.4");
@@ -62,6 +65,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_6, "1.7");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_7, "1.8");
     ourPresentableShortMessage.put(LanguageLevel.JDK_1_8, "1.9");
+    ourPresentableShortMessage.put(LanguageLevel.JDK_1_9, "10");
 
     loadForbiddenApi("ignore16List.txt", ourIgnored16ClassesAPI);
   }
@@ -93,7 +97,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
     return result;
   }
 
-  private static void loadForbiddenApi(String fileName, Set<String> set) {
+  private static void loadForbiddenApi(String fileName, Set<? super String> set) {
     URL resource = Java15APIUsageInspectionBase.class.getResource(fileName);
     if (resource == null) {
       Logger.getInstance(Java15APIUsageInspectionBase.class).warn("not found: " + fileName);
@@ -273,7 +277,7 @@ public class Java15APIUsageInspectionBase extends AbstractBaseJavaLocalInspectio
       }
     }
 
-    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<PsiClass> visited) {
+    private boolean isRawInheritance(String generifiedClassQName, PsiClass currentClass, Set<? super PsiClass> visited) {
       for (PsiClassType classType : currentClass.getSuperTypes()) {
         if (classType.isRaw()) {
           return true;

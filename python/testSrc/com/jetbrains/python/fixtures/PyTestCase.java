@@ -16,6 +16,7 @@
 package com.jetbrains.python.fixtures;
 
 import com.google.common.base.Joiner;
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.execution.actions.ConfigurationContext;
@@ -37,6 +38,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.impl.FilePropertyPusher;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -46,11 +48,11 @@ import com.intellij.platform.DirectoryProjectConfigurator;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.testFramework.LightProjectDescriptor;
+import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.TestDataPath;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.*;
@@ -186,11 +188,13 @@ public abstract class PyTestCase extends UsefulTestCase {
     return ourPyDescriptor;
   }
 
+  @Nullable
   protected PsiReference findReferenceBySignature(final String signature) {
     int pos = findPosBySignature(signature);
     return findReferenceAt(pos);
   }
 
+  @Nullable
   protected PsiReference findReferenceAt(int pos) {
     return myFixture.getFile().findReferenceAt(pos);
   }
@@ -203,10 +207,10 @@ public abstract class PyTestCase extends UsefulTestCase {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
   }
 
-  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable action) {
+  protected void runWithLanguageLevel(@NotNull LanguageLevel languageLevel, @NotNull Runnable runnable) {
     setLanguageLevel(languageLevel);
     try {
-      action.run();
+      runnable.run();
     }
     finally {
       setLanguageLevel(null);
@@ -222,6 +226,16 @@ public abstract class PyTestCase extends UsefulTestCase {
     }
     finally {
       settings.setFormat(oldFormat);
+    }
+  }
+
+  protected void runWithSourceRoots(@NotNull List<VirtualFile> sourceRoots, @NotNull Runnable runnable) {
+    final Module module = myFixture.getModule();
+    sourceRoots.forEach(root -> PsiTestUtil.addSourceRoot(module, root));
+    try {
+      runnable.run();
+    } finally {
+      sourceRoots.forEach(root -> PsiTestUtil.removeSourceRoot(module, root));
     }
   }
 
@@ -421,7 +435,7 @@ public abstract class PyTestCase extends UsefulTestCase {
 
   @NotNull
   protected CodeStyleSettings getCodeStyleSettings() {
-    return CodeStyleSettingsManager.getSettings(myFixture.getProject());
+    return CodeStyle.getSettings(myFixture.getProject());
   }
 
   @NotNull
@@ -473,6 +487,14 @@ public abstract class PyTestCase extends UsefulTestCase {
     final PyType actual = context.getType(element);
     final String actualType = PythonDocumentationProvider.getTypeName(actual, context);
     assertEquals(message, expectedType, actualType);
+  }
+
+  public void addExcludedRoot(String rootPath) {
+    final VirtualFile dir = myFixture.findFileInTempDir(rootPath);
+    final Module module = myFixture.getModule();
+    assertNotNull(dir);
+    PsiTestUtil.addExcludedRoot(module, dir);
+    Disposer.register(myFixture.getProjectDisposable(), () -> PsiTestUtil.removeExcludedRoot(module, dir));
   }
   
 }

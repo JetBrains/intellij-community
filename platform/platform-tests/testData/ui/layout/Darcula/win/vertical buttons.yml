@@ -1,0 +1,56 @@
+layoutConstraints:
+  fillX: true
+  gridGapX:
+    min: &id001 {horizontal: true, unit: 0, value: 0.0}
+    preferred: *id001
+  gridGapY:
+    min: &id002 {horizontal: false, value: 10.0}
+    preferred: *id002
+  hideMode: 3
+  insets:
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+  - {horizontal: false, unit: 0, value: 0.0}
+  - {horizontal: true, unit: 0, value: 0.0}
+rowConstraints:
+  constraints:
+  - align: {horizontal: false, unit: -1, value: 0.0}
+columnConstraints:
+  constraints:
+  - gapAfter:
+      max: &id003 {horizontal: true, value: 8.0}
+      min: *id003
+      preferred: *id003
+  - {}
+  count: 2
+componentConstrains:
+  Merging branch foo into bar: {spanX: 2097051, wrap: true}
+  'JBScrollPane #1':
+    horizontal: {grow: 100.0}
+    pushX: 100.0
+    pushY: 100.0
+    vertical: {grow: 100.0}
+  Accept Yours:
+    flowX: false
+    horizontal: {grow: 1000.0}
+    split: 3
+    vertical:
+      align: {horizontal: false, unit: 6, value: 0.0}
+  Accept Theirs:
+    horizontal: {grow: 1000.0}
+  Merge ...:
+    horizontal: {grow: 1000.0}
+    spanX: 2097051
+    wrap: true
+cellBounds:
+- [0, 0, 480, 16]
+- [0, 26, 373, 284]
+- [381, 26, 99, 284]
+- [381, 26, 99, 284]
+- [381, 26, 99, 284]
+componentBounds:
+  Merging branch foo into bar: [0, 0, 152, 16]
+  'JBScrollPane #1': [0, 26, 373, 284]
+  Accept Yours: [378, 23, 105, 30]
+  Accept Theirs: [378, 57, 105, 30]
+  Merge ...: [378, 91, 105, 30]

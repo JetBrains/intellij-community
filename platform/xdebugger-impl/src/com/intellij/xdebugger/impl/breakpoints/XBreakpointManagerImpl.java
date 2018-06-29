@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.openapi.Disposable;
@@ -49,6 +47,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
   private final XDependentBreakpointManager myDependentBreakpointManager;
   private long myTime;
   private String myDefaultGroup;
+  private RemovedBreakpointData myLastRemovedBreakpoint = null;
 
   public XBreakpointManagerImpl(final Project project, final XDebuggerManagerImpl debuggerManager) {
     myProject = project;
@@ -105,7 +104,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                       boolean defaultBreakpoint) {
     BreakpointState<?,T,?> state = new BreakpointState<>(enabled,
                                                          type.getId(),
-                                                         defaultBreakpoint ? 0 : myTime++, type.getDefaultSuspendPolicy());
+                                                         defaultBreakpoint ? 0 : ++myTime, type.getDefaultSuspendPolicy());
     getBreakpointDefaults(type).applyDefaults(state);
     state.setGroup(myDefaultGroup);
     return new XBreakpointBase<XBreakpoint<T>,T, BreakpointState<?,T,?>>(type, this, properties, state);
@@ -120,6 +119,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     }
     else {
       myBreakpoints.put(type, breakpoint);
+      if (initUI) {
+        BreakpointsUsageCollector.reportUsage(myProject, "new.breakpoint");
+        BreakpointsUsageCollector.reportUsage(myProject, "new." + type.getId());
+        if (myDebuggerManager.getCurrentSession() != null) {
+          BreakpointsUsageCollector.reportUsage(myProject, "new.within.session");
+        }
+      }
     }
     myAllBreakpoints.add(breakpoint);
     if (breakpoint instanceof XLineBreakpointImpl) {
@@ -201,7 +207,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
                                                                                 boolean temporary) {
     ApplicationManager.getApplication().assertWriteAccessAllowed();
     LineBreakpointState<T> state = new LineBreakpointState<>(true, type.getId(), fileUrl, line, temporary,
-                                                             myTime++, type.getDefaultSuspendPolicy());
+                                                             ++myTime, type.getDefaultSuspendPolicy());
     getBreakpointDefaults(type).applyDefaults(state);
     state.setGroup(myDefaultGroup);
     XLineBreakpointImpl<T> breakpoint = new XLineBreakpointImpl<>(type, this, properties,
@@ -348,7 +354,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
 
     List<BreakpointState<?, ?, ?>> breakpointsDefaults = new SmartList<>();
     for (Map.Entry<XBreakpointType, BreakpointState<?,?,?>> entry : myBreakpointsDefaults.entrySet()) {
-      if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()))) {
+      if (statesAreDifferent(entry.getValue(), createBreakpointDefaults(entry.getKey()), false)) {
         breakpointsDefaults.add(entry.getValue());
       }
     }
@@ -358,7 +364,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     state.setBreakpointsDefaults(breakpointsDefaults);
 
     state.setBreakpointsDialogProperties(myBreakpointsDialogSettings);
-    state.setTime(myTime);
     state.setDefaultGroup(myDefaultGroup);
     return state;
   }
@@ -370,13 +375,24 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     }
 
     BreakpointState defaultState = ((XBreakpointBase)defaultBreakpoint).getState();
-    return statesAreDifferent(state, defaultState);
+    return statesAreDifferent(state, defaultState, false);
   }
 
-  private static boolean statesAreDifferent(BreakpointState state1, BreakpointState state2) {
+  public static boolean statesAreDifferent(BreakpointState state1, BreakpointState state2, boolean ignoreTimestamp) {
+    long timeStamp1 = state1.getTimeStamp();
+    long timeStamp2 = state2.getTimeStamp();
+    if (ignoreTimestamp) {
+      state1.setTimeStamp(timeStamp2);
+    }
+
     Element elem1 = XmlSerializer.serialize(state1, SERIALIZATION_FILTER);
     Element elem2 = XmlSerializer.serialize(state2, SERIALIZATION_FILTER);
-    return !JDOMUtil.areElementsEqual(elem1, elem2);
+    boolean res = !JDOMUtil.areElementsEqual(elem1, elem2);
+
+    if (ignoreTimestamp) {
+      state1.setTimeStamp(timeStamp1);
+    }
+    return res;
   }
 
   public void loadState(@NotNull BreakpointManagerState state) {
@@ -408,7 +424,6 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
       myDependentBreakpointManager.loadState();
     });
     myLineBreakpointManager.updateBreakpointsUI();
-    myTime = state.getTime();
     myDefaultGroup = state.getDefaultGroup();
   }
 
@@ -432,6 +447,7 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     if (breakpoint != null) {
       addBreakpoint(breakpoint, defaultBreakpoint, false);
     }
+    myTime = Math.max(myTime, breakpointState.getTimeStamp());
   }
 
   public XBreakpointsDialogState getBreakpointsDialogSettings() {
@@ -505,5 +521,55 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     state.setTypeId(type.getId());
     state.setSuspendPolicy(type.getDefaultSuspendPolicy());
     return state;
+  }
+
+  public void rememberRemovedBreakpoint(XBreakpointBase breakpoint) {
+    myLastRemovedBreakpoint = new RemovedBreakpointData(breakpoint);
+  }
+
+  @Nullable
+  public XBreakpointBase getLastRemovedBreakpoint() {
+    return myLastRemovedBreakpoint != null ? myLastRemovedBreakpoint.myBreakpoint : null;
+  }
+
+  @Nullable
+  public XBreakpoint restoreLastRemovedBreakpoint() {
+    if (myLastRemovedBreakpoint != null) {
+      XBreakpointBase breakpoint = myLastRemovedBreakpoint.myBreakpoint;
+      if (breakpoint instanceof XLineBreakpointImpl) {
+        XLineBreakpoint existingBreakpoint = findBreakpointAtLine(((XLineBreakpointImpl)breakpoint).getType(),
+                                                                  ((XLineBreakpointImpl)breakpoint).getFile(),
+                                                                  ((XLineBreakpointImpl)breakpoint).getLine());
+        if (existingBreakpoint != null) {
+          removeBreakpoint(existingBreakpoint);
+        }
+      }
+      XBreakpoint res = myLastRemovedBreakpoint.restore();
+      myLastRemovedBreakpoint = null;
+      return res;
+    }
+    return null;
+  }
+
+  private class RemovedBreakpointData {
+    private final XBreakpointBase myBreakpoint;
+    private final XDependentBreakpointManager.DependenciesData myDependenciesData;
+
+    private RemovedBreakpointData(XBreakpointBase breakpoint) {
+      myBreakpoint = breakpoint;
+      myDependenciesData = myDependentBreakpointManager.new DependenciesData(breakpoint);
+    }
+
+    @Nullable
+    XBreakpoint restore() {
+      XBreakpointBase<?,?,?> breakpoint = createBreakpoint(myBreakpoint.getState());
+      myLastRemovedBreakpoint = null;
+      if (breakpoint != null) {
+        addBreakpoint(breakpoint, false, true);
+        myDependenciesData.restore(breakpoint);
+        return breakpoint;
+      }
+      return null;
+    }
   }
 }

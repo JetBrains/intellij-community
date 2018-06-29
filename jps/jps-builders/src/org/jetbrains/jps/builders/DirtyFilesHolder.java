@@ -21,6 +21,11 @@ import java.io.IOException;
 import java.util.Collection;
 
 /**
+ * Provides list of files under {@link BuildTarget#computeRootDescriptors source roots} of a target which were modified or deleted since the
+ * previous build.
+ *
+ * @see org.jetbrains.jps.incremental.TargetBuilder#build
+ * @see org.jetbrains.jps.incremental.ModuleLevelBuilder#build
  * @author nik
  */
 public interface DirtyFilesHolder<R extends BuildRootDescriptor, T extends BuildTarget<R>> {

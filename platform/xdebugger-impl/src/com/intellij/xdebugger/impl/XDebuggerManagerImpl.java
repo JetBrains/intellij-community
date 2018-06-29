@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl;
 
 import com.intellij.AppTopics;
@@ -22,7 +20,7 @@ import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerListener;
 import com.intellij.openapi.project.Project;
@@ -76,7 +74,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
 
     MessageBusConnection messageBusConnection = messageBus.connect();
-    messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerAdapter() {
+    messageBusConnection.subscribe(AppTopics.FILE_DOCUMENT_SYNC, new FileDocumentManagerListener() {
       @Override
       public void fileContentLoaded(@NotNull VirtualFile file, @NotNull Document document) {
         updateExecutionPoint(file, true);
@@ -227,7 +225,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
                                                                                  sessionTab.getRunContentDescriptor());
     }
     if (myActiveSession.compareAndSet(session, null)) {
-      onActiveSessionChanged();
+      onActiveSessionChanged(session, null);
     }
   }
 
@@ -240,12 +238,15 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
     }
   }
 
-  private void onActiveSessionChanged() {
+  private void onActiveSessionChanged(@Nullable XDebugSession previousSession, @Nullable XDebugSession currentSession) {
     myBreakpointManager.getLineBreakpointManager().queueAllBreakpointsUpdate();
     ApplicationManager.getApplication().invokeLater(() -> {
       ValueLookupManager.getInstance(myProject).hideHint();
       DebuggerUIUtil.repaintCurrentEditor(myProject); // to update inline debugger data
     }, myProject.getDisposed());
+    if (!myProject.isDisposed()) {
+      myProject.getMessageBus().syncPublisher(TOPIC).currentSessionChanged(previousSession, currentSession);
+    }
   }
 
   @Override
@@ -287,7 +288,8 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
   }
 
   void setCurrentSession(@Nullable XDebugSessionImpl session) {
-    boolean sessionChanged = myActiveSession.getAndSet(session) != session;
+    XDebugSessionImpl previousSession = myActiveSession.getAndSet(session);
+    boolean sessionChanged = previousSession != session;
     if (sessionChanged) {
       if (session != null) {
         XDebugSessionTab tab = session.getSessionTab();
@@ -298,7 +300,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager implements Persistent
       else {
         myExecutionPointHighlighter.hide();
       }
-      onActiveSessionChanged();
+      onActiveSessionChanged(previousSession, session);
     }
   }
 

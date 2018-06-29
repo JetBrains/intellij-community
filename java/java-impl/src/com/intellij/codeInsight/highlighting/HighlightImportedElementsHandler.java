@@ -19,12 +19,10 @@ import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.ide.util.NavigationItemListCellRenderer;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -39,7 +37,7 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
   private final PsiElement myTarget;
   private final PsiImportStatementBase myImportStatement;
   private final boolean myImportStatic;
-  private Map<PsiMember,List<PsiElement>> myClassReferenceListMap;
+  private Map<PsiMember, List<PsiElement>> myClassReferenceListMap;
 
   public HighlightImportedElementsHandler(Editor editor, PsiFile file, PsiElement target, PsiImportStatementBase importStatement) {
     super(editor, file);
@@ -92,36 +90,32 @@ public class HighlightImportedElementsHandler extends HighlightUsagesHandlerBase
     }
     Collections.sort(targets, new PsiMemberComparator());
     final List<Object> model = new ArrayList<>();
-    model.add(CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry"));
+    String allListed = CodeInsightBundle.message("highlight.thrown.exceptions.chooser.all.entry");
+    model.add(allListed);
     model.addAll(targets);
-    final JList list = new JBList(model);
-    list.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
-    final ListCellRenderer renderer = new NavigationItemListCellRenderer();
-    list.setCellRenderer(renderer);
-    final PopupChooserBuilder builder = new PopupChooserBuilder(list);
-    builder.setFilteringEnabled(o -> {
-      if (o instanceof PsiMember) {
-        final PsiMember member = (PsiMember)o;
-        return member.getName();
-      }
-      return o.toString();
-    });
-    if (myImportStatic) {
-      builder.setTitle(CodeInsightBundle.message("highlight.imported.members.chooser.title"));
-    } else {
-      builder.setTitle(CodeInsightBundle.message("highlight.imported.classes.chooser.title"));
-    }
-    builder.setItemChoosenCallback(() -> {
-      final int index= list.getSelectedIndex();
-      if (index == 0) {
-        selectionConsumer.consume(targets);
-      }
-      else {
-        selectionConsumer.consume(Collections.singletonList(targets.get(index - 1)));
-      }
-    });
-    final JBPopup popup = builder.createPopup();
-    popup.showInBestPositionFor(myEditor);
+    final ListCellRenderer<Object> renderer = new NavigationItemListCellRenderer();
+    JBPopupFactory.getInstance()
+      .createPopupChooserBuilder(model)
+      .setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+      .setRenderer(renderer)
+      .setNamerForFiltering(o -> {
+        if (o instanceof PsiMember) {
+          final PsiMember member = (PsiMember)o;
+          return member.getName();
+        }
+        return o.toString();
+      })
+      .setTitle(myImportStatic ?
+                CodeInsightBundle.message("highlight.imported.members.chooser.title") :
+                CodeInsightBundle.message("highlight.imported.classes.chooser.title"))
+      .setItemChosenCallback((selectedValue) -> {
+        if (selectedValue.equals(allListed)) {
+          selectionConsumer.consume(targets);
+        }
+        else {
+          selectionConsumer.consume(Collections.singletonList((PsiMember)selectedValue));
+        }
+    }).createPopup().showInBestPositionFor(myEditor);
   }
 
   @Override

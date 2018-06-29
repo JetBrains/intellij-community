@@ -142,7 +142,7 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
                                     @Nullable String executionName,
                                     @NotNull String tasksPrefix,
                                     @NotNull String tasksPostfix) {
-
+    boolean isTasksAbsent = taskNames.isEmpty();
     String rootProjectPath = null;
     if (externalProjectPath != null) {
       final ExternalProjectInfo projectInfo = ExternalSystemUtil.getExternalProjectInfo(project, externalSystemId, externalProjectPath);
@@ -166,17 +166,19 @@ public abstract class AbstractExternalSystemTaskConfigurationType implements Con
       buffer.append(externalProjectPath);
     }
 
-    buffer.append(tasksPrefix);
+    if (!isTasksAbsent) buffer.append(tasksPrefix);
     if (!StringUtil.isEmpty(executionName)) {
       buffer.append(executionName);
     }
-    else if (!taskNames.isEmpty()) {
-      for (String taskName : taskNames) {
-        buffer.append(taskName).append(' ');
+    else {
+      if (!isTasksAbsent) {
+        for (String taskName : taskNames) {
+          buffer.append(taskName).append(' ');
+        }
+        buffer.setLength(buffer.length() - 1);
       }
-      buffer.setLength(buffer.length() - 1);
     }
-    buffer.append(tasksPostfix);
+    if (!isTasksAbsent) buffer.append(tasksPostfix);
 
     return buffer.toString();
   }

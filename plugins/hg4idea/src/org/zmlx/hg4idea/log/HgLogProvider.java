@@ -65,7 +65,7 @@ public class HgLogProvider implements VcsLogProvider {
   public HgLogProvider(@NotNull Project project, @NotNull HgRepositoryManager repositoryManager, @NotNull VcsLogObjectsFactory factory) {
     myProject = project;
     myRepositoryManager = repositoryManager;
-    myRefSorter = new HgRefManager();
+    myRefSorter = new HgRefManager(project, repositoryManager);
     myVcsObjectsFactory = factory;
   }
 
@@ -99,11 +99,11 @@ public class HgLogProvider implements VcsLogProvider {
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean fast)
+                              boolean isForIndexing)
     throws VcsException {
-    // parameter fast is currently not used
+    // parameter isForIndexing is currently not used
     // since this method is not called from index yet, fast always is false
-    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when fast = true
+    // but when implementing indexing mercurial commits, we'll need to avoid rename/move detection when isForIndexing = true
 
     HgVcs hgvcs = HgVcs.getInstance(myProject);
     assert hgvcs != null;

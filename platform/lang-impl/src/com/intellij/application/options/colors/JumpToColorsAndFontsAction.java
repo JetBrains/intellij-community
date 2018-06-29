@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.application.options.colors;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -46,7 +32,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleTextAttributes;
-import com.intellij.ui.components.JBList;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -87,9 +72,10 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
     if (project == null || editor == null) return;
     Map<TextAttributesKey, Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> keyMap = ContainerUtil.newHashMap();
     Processor<RangeHighlighterEx> processor = r -> {
-      Object tt = r.getErrorStripeTooltip();
-      TextAttributesKey key = tt instanceof HighlightInfo ? ObjectUtils.chooseNotNull(
-        ((HighlightInfo)tt).forcedTextAttributesKey, ((HighlightInfo)tt).type.getAttributesKey()) : null;
+      HighlightInfo info = HighlightInfo.fromRangeHighlighter(r);
+      TextAttributesKey key = info != null
+                              ? ObjectUtils.chooseNotNull(info.forcedTextAttributesKey, info.type.getAttributesKey())
+                              : null;
       Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p =
         key == null ? null : ColorSettingsPages.getInstance().getAttributeDescriptor(key);
       if (p != null) keyMap.put(key, p);
@@ -134,49 +120,50 @@ public class JumpToColorsAndFontsAction extends DumbAwareAction {
         o1.first.getDisplayName() + o1.second.getDisplayName(), o2.first.getDisplayName() + o2.second.getDisplayName()));
 
       EditorColorsScheme colorsScheme = editor.getColorsScheme();
-      JBList<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list = new JBList<>(attrs);
-      list.setCellRenderer(new ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>>() {
-        @Override
-        protected void customizeCellRenderer(@NotNull JList<? extends Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list,
-                                             Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> value,
-                                             int index,
-                                             boolean selected,
-                                             boolean hasFocus) {
-          TextAttributes ta = colorsScheme.getAttributes(value.second.getKey());
-          Color fg = ObjectUtils.chooseNotNull(ta.getForegroundColor(), colorsScheme.getDefaultForeground());
-          Color bg = ObjectUtils.chooseNotNull(ta.getBackgroundColor(), colorsScheme.getDefaultBackground());
-          SimpleTextAttributes sa = fromTextAttributes(ta);
-          SimpleTextAttributes saOpaque = sa.derive(STYLE_OPAQUE | sa.getStyle(), fg, bg, null);
-          SimpleTextAttributes saSelected = REGULAR_ATTRIBUTES.derive(sa.getStyle(), null, null, null);
-          SimpleTextAttributes saCur = REGULAR_ATTRIBUTES;
-          List<String> split = StringUtil.split(value.first.getDisplayName() + "//" + value.second.getDisplayName(), "//");
-          for (int i = 0, len = split.size(); i < len; i++) {
-            boolean last = i == len - 1;
-            saCur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
-            if (last) append(" ", saCur);
-            append(split.get(i), saCur);
-            if (last) append(" ", saCur);
-            else append(" > ", GRAYED_ATTRIBUTES);
+      ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> renderer =
+        new ColoredListCellRenderer<Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>>() {
+          @Override
+          protected void customizeCellRenderer(@NotNull JList<? extends Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor>> list,
+                                               Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> value,
+                                               int index,
+                                               boolean selected,
+                                               boolean hasFocus) {
+            TextAttributes ta = colorsScheme.getAttributes(value.second.getKey());
+            Color fg = ObjectUtils.chooseNotNull(ta.getForegroundColor(), colorsScheme.getDefaultForeground());
+            Color bg = ObjectUtils.chooseNotNull(ta.getBackgroundColor(), colorsScheme.getDefaultBackground());
+            SimpleTextAttributes sa = fromTextAttributes(ta);
+            SimpleTextAttributes saOpaque = sa.derive(STYLE_OPAQUE | sa.getStyle(), fg, bg, null);
+            SimpleTextAttributes saSelected = REGULAR_ATTRIBUTES.derive(sa.getStyle(), null, null, null);
+            SimpleTextAttributes saCur = REGULAR_ATTRIBUTES;
+            List<String> split = StringUtil.split(value.first.getDisplayName() + "//" + value.second.getDisplayName(), "//");
+            for (int i = 0, len = split.size(); i < len; i++) {
+              boolean last = i == len - 1;
+              saCur = !last ? REGULAR_ATTRIBUTES : selected ? saSelected : saOpaque;
+              if (last) append(" ", saCur);
+              append(split.get(i), saCur);
+              if (last) append(" ", saCur);
+              else append(" > ", GRAYED_ATTRIBUTES);
+            }
+            Color stripeColor = ta.getErrorStripeColor();
+            boolean addStripe = stripeColor != null && stripeColor != saCur.getBgColor();
+            boolean addBoxed = ta.getEffectType() == EffectType.BOXED && ta.getEffectColor() != null;
+            if (addBoxed) {
+              append("\u25A2" + (addStripe ? "" : " "), saCur.derive(-1, ta.getEffectColor(), null, null));
+            }
+            if (addStripe) {
+              append(" ", saCur.derive(STYLE_OPAQUE, null, stripeColor, null));
+            }
           }
-          Color stripeColor = ta.getErrorStripeColor();
-          boolean addStripe = stripeColor != null && stripeColor != saCur.getBgColor();
-          boolean addBoxed = ta.getEffectType() == EffectType.BOXED && ta.getEffectColor() != null;
-          if (addBoxed) {
-            append("\u25A2" + (addStripe ? "" : " "), saCur.derive(-1, ta.getEffectColor(), null, null));
-          }
-          if (addStripe) {
-            append(" ", saCur.derive(STYLE_OPAQUE, null, stripeColor, null));
-          }
-        }
-      });
-      JBPopupFactory.getInstance().createListPopupBuilder(list)
+        };
+      JBPopupFactory.getInstance()
+        .createPopupChooserBuilder(attrs)
+        .setRenderer(renderer)
         .setTitle(StringUtil.notNullize(e.getPresentation().getText()))
         .setMovable(false)
         .setResizable(false)
         .setRequestFocus(true)
-        .setItemChoosenCallback(() -> {
-          Pair<ColorAndFontDescriptorsProvider, AttributesDescriptor> p = list.getSelectedValue();
-          if (p != null && !openSettingsAndSelectKey(project, p.first, p.second)) {
+        .setItemChosenCallback((p) -> {
+          if (!openSettingsAndSelectKey(project, p.first, p.second)) {
             HintManager.getInstance().showErrorHint(editor, "No appropriate settings page found");
           }
         })

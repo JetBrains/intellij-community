@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.xdebugger.impl.evaluate.quick.common;
 
 import com.intellij.codeInsight.hint.HintManager;
@@ -11,8 +9,6 @@ import com.intellij.ide.TooltipEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.event.EditorMouseEvent;
 import com.intellij.openapi.editor.ex.MarkupModelEx;
@@ -28,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -145,7 +142,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint()) {
+    if (!canShowHint() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
       hideHint();
       return;
     }
@@ -168,10 +165,9 @@ public abstract class AbstractValueHint {
   }
 
   private void createHighlighter() {
-    EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
     TextAttributes attributes;
     if (myType == ValueHintType.MOUSE_ALT_OVER_HINT) {
-      attributes = scheme.getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
+      attributes = myEditor.getColorsScheme().getAttributes(EditorColors.REFERENCE_HYPERLINK_COLOR);
       attributes = NavigationUtil.patchAttributesColor(attributes, myCurrentRange, myEditor);
     }
     else {
@@ -199,7 +195,7 @@ public abstract class AbstractValueHint {
         h -> !ExecutionPointHighlighter.EXECUTION_POINT_HIGHLIGHTER_TOP_FRAME_KEY.get(h, false))) {
         attributesKey = DebuggerColors.EVALUATED_EXPRESSION_EXECUTION_LINE_ATTRIBUTES;
       }
-      myHighlighter.putUserData(HINT_TEXT_ATTRIBUTES, scheme.getAttributes(attributesKey));
+      myHighlighter.putUserData(HINT_TEXT_ATTRIBUTES, myEditor.getColorsScheme().getAttributes(attributesKey));
     }
   }
 
@@ -332,6 +328,11 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
+    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+      hideHint();
+      return;
+    }
+
     createHighlighter();
     setHighlighterAttributes();
 

@@ -57,11 +57,13 @@ public class URLReference implements PsiReference, EmptyResolveMessageProvider {
     mySoft = soft;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return myElement;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     return myRange != null ? myRange : ElementManipulators.getValueTextRange(myElement);

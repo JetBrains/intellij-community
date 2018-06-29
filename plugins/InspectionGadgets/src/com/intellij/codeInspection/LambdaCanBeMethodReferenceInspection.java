@@ -9,7 +9,6 @@ import com.intellij.openapi.util.Conditions;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.codeStyle.JavaCodeStyleSettings;
 import com.intellij.psi.impl.source.resolve.graphInference.FunctionalInterfaceParameterizationUtil;
@@ -251,28 +250,42 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
       return null;
     }
     if (expression instanceof PsiNewExpression) {
-      PsiExpression qualifier = ((PsiNewExpression)expression).getQualifier();
-      if (qualifier != null) return null;
+      PsiNewExpression newExpression = (PsiNewExpression)expression;
+      if (newExpression.getQualifier() != null ||
+          newExpression.getAnonymousClass() != null ||
+          newExpression.getArrayInitializer() != null) {
+        return null;
+      }
+      PsiExpressionList argumentList = newExpression.getArgumentList();
+      if (argumentList != null) {
+        for (PsiExpression arg : argumentList.getExpressions()) {
+          if (!isMethodReferenceArgCandidate(arg)) return null;
+        }
+      }
       return new MethodReferenceCandidate(expression, true, true);
     }
     else if (expression instanceof PsiMethodCallExpression) {
+      for (PsiExpression arg : ((PsiMethodCallExpression)expression).getArgumentList().getExpressions()) {
+        if (!isMethodReferenceArgCandidate(arg)) return null;
+      }
       return new MethodReferenceCandidate(expression,
                                           checkQualifier(((PsiMethodCallExpression)expression).getMethodExpression().getQualifier()), true);
     }
 
-    JavaCodeStyleSettings javaSettings =
-      CodeStyleSettingsManager.getSettings(expression.getProject()).getCustomSettings(JavaCodeStyleSettings.class);
+    JavaCodeStyleSettings javaSettings = JavaCodeStyleSettings.getInstance(expression.getContainingFile());
     if (expression instanceof PsiInstanceOfExpression) {
-      return new MethodReferenceCandidate(expression, true,
-                                          javaSettings.REPLACE_INSTANCEOF);
+      if (!isMethodReferenceArgCandidate(((PsiInstanceOfExpression)expression).getOperand())) return null;
+      return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_INSTANCEOF);
     }
     else if (expression instanceof PsiBinaryExpression) {
-      if (ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression) != null) {
-        return new MethodReferenceCandidate(expression, true,
-                                            javaSettings.REPLACE_NULL_CHECK);
+      PsiExpression comparedWithNull =
+        PsiUtil.skipParenthesizedExprDown(ExpressionUtils.getValueComparedWithNull((PsiBinaryExpression)expression));
+      if (isMethodReferenceArgCandidate(comparedWithNull)) {
+        return new MethodReferenceCandidate(expression, true, javaSettings.REPLACE_NULL_CHECK);
       }
     }
     else if (expression instanceof PsiTypeCastExpression) {
+      if (!isMethodReferenceArgCandidate(((PsiTypeCastExpression)expression).getOperand())) return null;
       PsiTypeElement typeElement = ((PsiTypeCastExpression)expression).getCastType();
       if (typeElement != null) {
         PsiJavaCodeReferenceElement refs = typeElement.getInnermostComponentReferenceElement();
@@ -287,6 +300,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     return null;
   }
 
+  private static boolean isMethodReferenceArgCandidate(PsiExpression arg) {
+    arg = PsiUtil.skipParenthesizedExprDown(arg);
+    return arg instanceof PsiReferenceExpression && ((PsiReferenceExpression)arg).getQualifier() == null;
+  }
+
   public static void replaceAllLambdasWithMethodReferences(PsiElement root) {
     Collection<PsiLambdaExpression> lambdas = PsiTreeUtil.findChildrenOfType(root, PsiLambdaExpression.class);
     if(!lambdas.isEmpty()) {
@@ -298,8 +316,11 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
 
   @NotNull
   public static PsiExpression replaceLambdaWithMethodReference(@NotNull PsiLambdaExpression lambda) {
-    PsiElement body = LambdaUtil.extractSingleExpressionFromBody(lambda.getBody());
-    final PsiExpression candidate = canBeMethodReferenceProblem(body, lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda);
+    MethodReferenceCandidate methodRefCandidate = extractMethodReferenceCandidateExpression(lambda.getBody());
+    if (methodRefCandidate == null || !methodRefCandidate.mySafeQualifier || !methodRefCandidate.myConformsCodeStyle) return lambda;
+    PsiExpression candidate =
+      canBeMethodReferenceProblem(lambda.getParameterList().getParameters(), lambda.getFunctionalInterfaceType(), lambda,
+                                  methodRefCandidate.myExpression);
     return tryConvertToMethodReference(lambda, candidate);
   }
 
@@ -309,7 +330,7 @@ public class LambdaCanBeMethodReferenceInspection extends AbstractBaseJavaLocalI
     }
     final Condition<PsiElement> callExpressionCondition = Conditions.instanceOf(PsiCallExpression.class, PsiArrayAccessExpression.class);
     final Condition<PsiElement> nonFinalFieldRefCondition = expression -> {
-      if (expression instanceof PsiReferenceExpression) {
+      if (expression instanceof PsiReferenceExpression && !(expression.getParent() instanceof PsiCallExpression)) {
         PsiElement element = ((PsiReferenceExpression)expression).resolve();
         if (element instanceof PsiField && !((PsiField)element).hasModifierProperty(PsiModifier.FINAL)) {
           return true;

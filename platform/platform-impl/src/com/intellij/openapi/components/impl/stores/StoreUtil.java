@@ -105,10 +105,19 @@ public final class StoreUtil {
     return null;
   }
 
-  public static void saveDocumentsAndProjectsAndApp(boolean isForce) {
+  /**
+   * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
+   */
+  public static void saveDocumentsAndProjectsAndApp(boolean isForceSavingAllSettings) {
     FileDocumentManager.getInstance().saveAllDocuments();
+    saveProjectsAndApp(isForceSavingAllSettings);
+  }
 
-    ApplicationManager.getApplication().saveSettings(isForce);
+  /**
+   * @param isForceSavingAllSettings Whether to force save non-roamable component configuration.
+   */
+  public static void saveProjectsAndApp(boolean isForceSavingAllSettings) {
+    ApplicationManager.getApplication().saveSettings(isForceSavingAllSettings);
 
     ProjectManager projectManager = ProjectManager.getInstance();
     if (projectManager instanceof ProjectManagerEx) {
@@ -116,7 +125,7 @@ public final class StoreUtil {
     }
 
     for (Project project : projectManager.getOpenProjects()) {
-      saveProject(project, isForce);
+      saveProject(project, isForceSavingAllSettings);
     }
   }
 

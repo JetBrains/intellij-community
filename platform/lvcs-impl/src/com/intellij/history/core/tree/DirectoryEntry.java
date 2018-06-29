@@ -136,11 +136,11 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<Difference> result) {
+  public void collectDifferencesWith(@NotNull Entry right, @NotNull List<Difference> result, boolean isRightContentCurrent) {
     DirectoryEntry e = (DirectoryEntry)right;
 
     if (!getPath().equals(e.getPath())) {
-      result.add(new Difference(false, this, e));
+      result.add(new Difference(false, this, e, isRightContentCurrent));
     }
 
     // most often we have the same children, so try processing it directly
@@ -154,7 +154,7 @@ public class DirectoryEntry extends Entry {
       Entry rightChildEntry = e.myChildren.get(commonIndex);
 
       if (childEntry.getNameId() == rightChildEntry.getNameId() && childEntry.isDirectory() == rightChildEntry.isDirectory()) {
-        childEntry.collectDifferencesWith(rightChildEntry, result);
+        childEntry.collectDifferencesWith(rightChildEntry, result, isRightContentCurrent);
       } else {
         break;
       }
@@ -206,16 +206,16 @@ public class DirectoryEntry extends Entry {
 
     for (Entry child : e.myChildren) {
       if (uniqueNameIdToRightChildEntries.containsKey(child.getNameId())) {
-        child.collectCreatedDifferences(result);
+        child.collectCreatedDifferences(result, isRightContentCurrent);
       }
     }
 
     for (Entry child : myChildren) {
       if (uniqueNameIdToMyChildEntries.containsKey(child.getNameId())) {
-        child.collectDeletedDifferences(result);
+        child.collectDeletedDifferences(result, isRightContentCurrent);
       } else {
         Entry itsChild = myNameIdToRightChildEntries.get(child.getNameId());
-        if (itsChild != null) child.collectDifferencesWith(itsChild, result);
+        if (itsChild != null) child.collectDifferencesWith(itsChild, result, isRightContentCurrent);
       }
     }
   }
@@ -228,20 +228,20 @@ public class DirectoryEntry extends Entry {
   }
 
   @Override
-  protected void collectCreatedDifferences(@NotNull List<Difference> result) {
-    result.add(new Difference(false, null, this));
+  protected void collectCreatedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent) {
+    result.add(new Difference(false, null, this, isRightContentCurrent));
 
     for (Entry child : myChildren) {
-      child.collectCreatedDifferences(result);
+      child.collectCreatedDifferences(result, isRightContentCurrent);
     }
   }
 
   @Override
-  protected void collectDeletedDifferences(@NotNull List<Difference> result) {
-    result.add(new Difference(false, this, null));
+  protected void collectDeletedDifferences(@NotNull List<Difference> result, boolean isRightContentCurrent) {
+    result.add(new Difference(false, this, null, isRightContentCurrent));
 
     for (Entry child : myChildren) {
-      child.collectDeletedDifferences(result);
+      child.collectDeletedDifferences(result, isRightContentCurrent);
     }
   }
 }

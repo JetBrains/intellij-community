@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
 import com.intellij.codeInsight.AnnotationUtil;
@@ -9,6 +7,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.compiled.ClsClassImpl;
+import com.intellij.psi.impl.light.LightMethodBuilder;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.InheritanceUtil;
@@ -20,19 +19,21 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrAnnotationUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightField;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightMethodBuilder;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitFieldsFileIndex.TraitFieldDescriptor;
 import org.jetbrains.plugins.groovy.lang.resolve.GroovyTraitMethodsFileIndex;
 
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 
 import static com.intellij.psi.PsiModifier.ABSTRACT;
 import static org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierFlags.*;
+import static org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.MirrorsKt.withType;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRAIT;
 import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.GROOVY_TRAIT_IMPLEMENTED;
 
@@ -51,11 +52,12 @@ public class GrTraitUtil {
 
   @Contract("null -> false")
   public static boolean isInterface(@Nullable PsiClass aClass) {
-    return aClass != null && aClass.isInterface() && !isTrait(aClass);
+    return aClass != null && aClass.isInterface() && !(aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait());
   }
 
   public static boolean isMethodAbstract(@NotNull PsiMethod method) {
-    return method.getModifierList().hasExplicitModifier(ABSTRACT) || isInterface(method.getContainingClass());
+    return method.getModifierList().hasExplicitModifier(ABSTRACT) ||
+           isInterface(method.getContainingClass()) && !method.hasModifierProperty(PsiModifier.DEFAULT);
   }
 
   public static List<PsiClass> getSelfTypeClasses(@NotNull PsiClass trait) {
@@ -95,7 +97,17 @@ public class GrTraitUtil {
   @Contract("null -> false")
   public static boolean isTrait(@Nullable PsiClass aClass) {
     return aClass instanceof GrTypeDefinition && ((GrTypeDefinition)aClass).isTrait() ||
-           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0);
+           aClass instanceof ClsClassImpl && aClass.isInterface() && AnnotationUtil.isAnnotated(aClass, GROOVY_TRAIT, 0) ||
+           getDefaultMethods(aClass).length != 0;
+
+  }
+
+  public static GrMethod[] getDefaultMethods(@Nullable PsiClass aClass) {
+    if ( !(aClass instanceof GrTypeDefinition) || !aClass.isInterface()) return GrMethod.EMPTY_ARRAY;
+    GrTypeDefinition grTypeDefinition = (GrTypeDefinition) aClass;
+    return Arrays.stream(grTypeDefinition.getCodeMethods())
+                 .filter(m -> m.getModifierList().hasExplicitModifier(PsiModifier.DEFAULT))
+                 .toArray(GrMethod[]::new);
   }
 
   @NotNull
@@ -120,12 +132,12 @@ public class GrTraitUtil {
   }
 
   private static PsiMethod createTraitMethodFromCompiledHelperMethod(PsiMethod compiledMethod, ClsClassImpl trait) {
-    final GrLightMethodBuilder result = new GrLightMethodBuilder(trait.getManager(), compiledMethod.getName());
+    final LightMethodBuilder result = new LightMethodBuilder(trait.getManager(), compiledMethod.getName());
     result.setOriginInfo("via @Trait");
     result.addModifier(PsiModifier.STATIC);
 
     for (PsiTypeParameter parameter : compiledMethod.getTypeParameters()) {
-      result.getTypeParameterList().addParameter(parameter);
+      result.addTypeParameter(parameter);
     }
 
     final PsiTypeVisitor<PsiType> corrector = createCorrector(compiledMethod, trait);
@@ -134,18 +146,16 @@ public class GrTraitUtil {
     for (int i = 1; i < methodParameters.length; i++) {
       final PsiParameter originalParameter = methodParameters[i];
       final PsiType correctedType = originalParameter.getType().accept(corrector);
-      final String name = originalParameter.getName();
-      assert name != null : compiledMethod;
-      result.addParameter(name, correctedType, false);
+      result.addParameter(withType(originalParameter, correctedType));
     }
 
     for (PsiClassType type : compiledMethod.getThrowsList().getReferencedTypes()) {
       final PsiType correctedType = type.accept(corrector);
-      result.getThrowsList().addReference(correctedType instanceof PsiClassType ? (PsiClassType)correctedType : type);
+      result.addException(correctedType instanceof PsiClassType ? (PsiClassType)correctedType : type);
     }
 
     final PsiType originalType = compiledMethod.getReturnType();
-    result.setReturnType(originalType == null ? null : originalType.accept(corrector));
+    result.setMethodReturnType(originalType == null ? null : originalType.accept(corrector));
 
     final PsiClass traitSource = trait.getSourceMirrorClass();
     final PsiMethod sourceMethod = traitSource == null ? null : traitSource.findMethodBySignature(result, false);

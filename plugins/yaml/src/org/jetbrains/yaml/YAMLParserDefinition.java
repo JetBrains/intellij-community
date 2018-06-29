@@ -91,6 +91,12 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
     if (type == SCALAR_QUOTED_STRING) {
       return new YAMLQuotedTextImpl(node);
     }
+    if (type == ANCHOR_NODE) {
+      return new YAMLAnchorImpl(node);
+    }
+    if (type == ALIAS_NODE) {
+      return new YAMLAliasImpl(node);
+    }
     return new YAMLPsiElementImpl(node);
   }
 
@@ -98,7 +104,7 @@ public class YAMLParserDefinition implements ParserDefinition, YAMLElementTypes 
     return new YAMLFileImpl(viewProvider);
   }
 
-  public SpaceRequirements spaceExistanceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
+  public SpaceRequirements spaceExistenceTypeBetweenTokens(final ASTNode left, final ASTNode right) {
     return SpaceRequirements.MAY;
   }
 }

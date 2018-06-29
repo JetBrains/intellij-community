@@ -44,7 +44,7 @@ public class VcsLinkedTextComponent extends JLabel {
     if (aMatcher.find()) {
       myTextBefore = text.substring(0, aMatcher.start());
       myHandledLink = aMatcher.group(2);
-      myTextAfter = text.substring(aMatcher.end(), text.length());
+      myTextAfter = text.substring(aMatcher.end());
     }
     else {
       myTextBefore = text;
@@ -69,13 +69,13 @@ public class VcsLinkedTextComponent extends JLabel {
     SimpleTextAttributes linkTextAttributes = isActive ? SimpleTextAttributes.LINK_ATTRIBUTES : SimpleTextAttributes.SYNTHETIC_ATTRIBUTES;
     isActive = isActive || !myTransparent;
     SimpleTextAttributes wrappedTextAttributes = PushLogTreeUtil
-      .addTransparencyIfNeeded(SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
+      .addTransparencyIfNeeded(renderer, SimpleTextAttributes.REGULAR_ATTRIBUTES, isActive);
     if (!StringUtil.isEmptyOrSpaces(myTextBefore)) {
       renderer.append(myTextBefore, wrappedTextAttributes);
       renderer.append(" ");
     }
     if (!StringUtil.isEmptyOrSpaces(myHandledLink)) {
-      renderer.append(myHandledLink, PushLogTreeUtil.addTransparencyIfNeeded(linkTextAttributes, isActive), this);
+      renderer.append(myHandledLink, PushLogTreeUtil.addTransparencyIfNeeded(renderer, linkTextAttributes, isActive), this);
     }
     renderer.append(myTextAfter, wrappedTextAttributes);
   }

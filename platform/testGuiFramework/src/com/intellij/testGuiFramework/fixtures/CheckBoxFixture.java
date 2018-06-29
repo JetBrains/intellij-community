@@ -52,7 +52,7 @@ public class CheckBoxFixture extends org.fest.swing.fixture.JCheckBoxFixture {
   public static CheckBoxFixture findWithGenericTypeMatcher(@NotNull GenericTypeMatcher matcher, @Nullable Container root, @NotNull Robot robot, boolean waitUntilFound) {
     Component component;
     if (waitUntilFound) {
-      component = GuiTestUtil.waitUntilFound(robot, root, matcher);
+      component = GuiTestUtil.INSTANCE.waitUntilFound(robot, root, matcher);
     } else {
       component = robot.finder().find(matcher);
       if (component == null) throw new ComponentLookupException("JBCheckBox with matcher hasn't been found");

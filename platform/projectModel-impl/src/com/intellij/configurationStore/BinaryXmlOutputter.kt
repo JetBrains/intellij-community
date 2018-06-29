@@ -34,7 +34,7 @@ fun serializeElementToBinary(element: Element, out: OutputStream) {
   BinaryXmlWriter(DataOutputStream(out)).write(element)
 }
 
-fun deserializeElementFromBinary(input: InputStream) = BinaryXmlReader(DataInputStream(input)).read()
+fun deserializeElementFromBinary(input: InputStream): Element = BinaryXmlReader(DataInputStream(input)).read()
 
 private class BinaryXmlReader(private val input: DataInputStream) {
   private val strings = ArrayList<String>()

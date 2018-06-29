@@ -15,11 +15,10 @@
  */
 package org.jetbrains.idea.maven.project.actions;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -73,28 +72,25 @@ public abstract class MavenOpenOrCreateFilesAction extends MavenAction {
     final List<VirtualFile> virtualFiles = collectVirtualFiles(files);
 
     if (files.size() == 1 && virtualFiles.isEmpty()) {
-      new WriteCommandAction(project, e.getPresentation().getText()) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          File file = files.get(0);
-          try {
-            final VirtualFile virtualFile = VfsUtil.createDirectoryIfMissing(file.getParent());
-            if(virtualFile != null) {
-              VirtualFile newFile = virtualFile.createChildData(this, file.getName());
-              virtualFiles.add(newFile);
-              MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
-            }
-          }
-          catch (IOException ex) {
-            MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
+      WriteCommandAction.writeCommandAction(project).withName(e.getPresentation().getText()).run(() -> {
+        File file = files.get(0);
+        try {
+          final VirtualFile virtualFile = VfsUtil.createDirectoryIfMissing(file.getParent());
+          if (virtualFile != null) {
+            VirtualFile newFile = virtualFile.createChildData(this, file.getName());
+            virtualFiles.add(newFile);
+            MavenUtil.runFileTemplate(project, newFile, getFileTemplate());
           }
         }
-      }.execute();
+        catch (IOException ex) {
+          MavenUtil.showError(project, "Cannot create " + file.getName(), ex);
+        }
+      });
       return;
     }
 
     for (VirtualFile each : virtualFiles) {
-      new OpenFileDescriptor(project, each).navigate(true);
+      PsiNavigationSupport.getInstance().createNavigatable(project, each, -1).navigate(true);
     }
   }
 

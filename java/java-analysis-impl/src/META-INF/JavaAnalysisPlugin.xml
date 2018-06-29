@@ -17,7 +17,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.JavaSoftKeywordHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 
@@ -46,9 +45,6 @@
                     interface="com.intellij.codeInspection.inheritance.ImplicitSubclassProvider"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.changeVariableTypeQuickFixProvider"
                     interface="com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider"/>
-    <extensionPoint qualifiedName="com.intellij.codeInsight.intention.jvmCommonIntentionActionsFactory" beanClass="com.intellij.lang.LanguageExtensionPoint">
-      <with attribute="implementationClass" implements="com.intellij.codeInsight.intention.JvmCommonIntentionActionsFactory"/>
-    </extensionPoint>
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
@@ -236,11 +232,28 @@
     <lang.psiTypeAnnotationModifier implementation="com.intellij.codeInsight.NullityAnnotationModifier"/>
     <projectService serviceInterface="com.intellij.codeInsight.guess.GuessManager"
                     serviceImplementation="com.intellij.codeInsight.guess.impl.GuessManagerImpl"/>
+    <projectService serviceInterface="com.intellij.codeInsight.InferredAnnotationsManager"
+                    serviceImplementation="com.intellij.codeInsight.InferredAnnotationsManagerImpl"/>
     <applicationService serviceInterface="com.intellij.codeInsight.intention.QuickFixFactory"
                         serviceImplementation="com.intellij.codeInsight.intention.impl.config.QuickFixFactoryImpl"/>
     <applicationService serviceInterface="com.intellij.codeInspection.reference.RefJavaUtil"
                         serviceImplementation="com.intellij.codeInspection.reference.RefJavaUtilImpl"/>
     <syntaxHighlighter id="java.class" key="CLASS" factoryClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
     <lang.syntaxHighlighterFactory language="JAVA" implementationClass="com.intellij.lang.java.JavaSyntaxHighlighterFactory"/>
+    <moduleExtension implementation="com.intellij.openapi.roots.impl.JavaModuleExternalPathsImpl"/>
+    <localInspection groupPath="Java,Java language level migration aids" language="JAVA" cleanupTool="true"
+                     enabledByDefault="true" level="WARNING" groupBundle="messages.InspectionsBundle" 
+                     groupKey="group.names.language.level.specific.issues.and.migration.aids12" bundle="messages.InspectionsBundle" shortName="RedundantBackticksAroundRawStringLiteral"
+                     implementationClass="com.intellij.codeInspection.RedundantBackticksAroundRawStringLiteralInspection" key="redundant.backticks.around.raw.string.literal.display.name"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="CastCanBeRemovedNarrowingVariableType"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.verbose.or.redundant.code.constructs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.cast.can.be.removed.narrowing.variable.type.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.redundantCast.CastCanBeRemovedNarrowingVariableTypeInspection"/>
+    <localInspection groupPath="Java" language="JAVA" shortName="ClassGetClass"
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.probable.bugs"
+                     enabledByDefault="true" level="WARNING"
+                     key="inspection.class.getclass.display.name" bundle="messages.InspectionsBundle"
+                     implementationClass="com.intellij.codeInspection.ClassGetClassInspection"/>
   </extensions>
 </idea-plugin>

@@ -22,6 +22,10 @@ public interface CommitExecutor {
     return null;
   }
 
+  default boolean supportsPartialCommit() {
+    return false;
+  }
+
   @NotNull
   CommitSession createCommitSession();
 }

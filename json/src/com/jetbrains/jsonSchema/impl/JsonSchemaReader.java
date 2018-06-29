@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.jetbrains.jsonSchema.impl;
 
 import com.intellij.json.psi.*;
 import com.intellij.notification.NotificationGroup;
-import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -25,11 +10,9 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.PairConsumer;
-import com.jetbrains.jsonSchema.ide.JsonSchemaService;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -58,6 +41,7 @@ public class JsonSchemaReader {
   }
 
   public static JsonSchemaObject readFromFile(@NotNull Project project, @NotNull VirtualFile key) throws Exception {
+    if (!key.isValid()) throw new Exception(String.format("Can not load JSON Schema file '%s'", key.getName()));
     final PsiFile psiFile = PsiManager.getInstance(project).findFile(key);
     if (!(psiFile instanceof JsonFile)) throw new Exception(String.format("Can not load PSI for JSON Schema file '%s'", key.getName()));
     final JsonObject value = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
@@ -86,32 +70,31 @@ public class JsonSchemaReader {
     return null;
   }
 
-  @Nullable
-  public static String readSchemaId(@NotNull final Project project, @NotNull final VirtualFile schemaFile) {
-    final PsiFile psiFile = PsiManager.getInstance(project).findFile(schemaFile);
-    if (!(psiFile instanceof JsonFile)) return null;
-
-    final CachedValueProvider<String> provider = () -> {
-      final JsonObject topLevelValue = ObjectUtils.tryCast(((JsonFile)psiFile).getTopLevelValue(), JsonObject.class);
-      if (topLevelValue == null) return null;
-      return CachedValueProvider.Result.create(readId(topLevelValue), psiFile);
-    };
-    return ReadAction.compute(() -> CachedValuesManager.getCachedValue(psiFile, provider));
-  }
-
   public JsonSchemaObject read(@NotNull final JsonObject object) {
     final JsonSchemaObject root = new JsonSchemaObject(object);
     myQueue.add(root);
     while (!myQueue.isEmpty()) {
       final JsonSchemaObject currentSchema = myQueue.removeFirst();
 
-      final JsonObject jsonObject = currentSchema.getJsonObject();
-      final List<JsonProperty> list = jsonObject.getPropertyList();
-      for (JsonProperty property : list) {
-        if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
-        final MyReader reader = READERS_MAP.get(property.getName());
-        if (reader != null) reader.read(property.getValue(), currentSchema, myQueue);
-        else readSingleDefinition(property.getName(), property.getValue(), currentSchema);
+      final JsonContainer jsonObject = currentSchema.getJsonObject();
+      if (jsonObject instanceof JsonObject) {
+        final List<JsonProperty> list = ((JsonObject)jsonObject).getPropertyList();
+        for (JsonProperty property : list) {
+          if (StringUtil.isEmptyOrSpaces(property.getName()) || property.getValue() == null) continue;
+          final MyReader reader = READERS_MAP.get(property.getName());
+          if (reader != null) {
+            reader.read(property.getValue(), currentSchema, myQueue);
+          }
+          else {
+            readSingleDefinition(property.getName(), property.getValue(), currentSchema);
+          }
+        }
+      }
+      else if (jsonObject instanceof JsonArray) {
+        List<JsonValue> values = ((JsonArray)jsonObject).getValueList();
+        for (int i = 0; i < values.size(); i++) {
+          readSingleDefinition(String.valueOf(i), values.get(i), currentSchema);
+        }
       }
 
       if (currentSchema.getId() != null) myIds.put(currentSchema.getId(), currentSchema);
@@ -123,18 +106,9 @@ public class JsonSchemaReader {
     return myIds;
   }
 
-  @Nullable
-  private static String readId(@NotNull final JsonObject object) {
-    final JsonProperty property = object.findProperty("id");
-    if (property != null && property.getValue() instanceof JsonStringLiteral) {
-      return JsonSchemaService.normalizeId(StringUtil.unquoteString(property.getValue().getText()));
-    }
-    return null;
-  }
-
   private void readSingleDefinition(@NotNull String name, @NotNull JsonValue value, @NotNull JsonSchemaObject schema) {
-    if (value instanceof JsonObject) {
-      final JsonSchemaObject defined = new JsonSchemaObject((JsonObject)value);
+    if (value instanceof JsonContainer) {
+      final JsonSchemaObject defined = new JsonSchemaObject((JsonContainer)value);
       myQueue.add(defined);
       Map<String, JsonSchemaObject> definitions = schema.getDefinitionsMap();
       if (definitions == null) schema.setDefinitionsMap(definitions = new HashMap<>());
@@ -143,6 +117,9 @@ public class JsonSchemaReader {
   }
 
   private static void fillMap() {
+    READERS_MAP.put("$id", (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));
+    });
     READERS_MAP.put("id", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setId(StringUtil.unquoteString(element.getText()));
     });
@@ -151,6 +128,9 @@ public class JsonSchemaReader {
     });
     READERS_MAP.put("description", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setDescription(StringUtil.unquoteString(element.getText()));
+    });
+    READERS_MAP.put(JsonSchemaObject.X_INTELLIJ_HTML_DESCRIPTION, (element, object, queue) -> {
+      if (element instanceof JsonStringLiteral) object.setHtmlDescription(StringUtil.unquoteString(element.getText()));
     });
     READERS_MAP.put("title", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setTitle(StringUtil.unquoteString(element.getText()));
@@ -175,9 +155,11 @@ public class JsonSchemaReader {
     });
     READERS_MAP.put("exclusiveMaximum", (element, object, queue) -> {
       if (element instanceof JsonBooleanLiteral) object.setExclusiveMaximum(((JsonBooleanLiteral)element).getValue());
+      if (element instanceof JsonNumberLiteral) object.setExclusiveMaximumNumber(((JsonNumberLiteral)element).getValue());
     });
     READERS_MAP.put("exclusiveMinimum", (element, object, queue) -> {
       if (element instanceof JsonBooleanLiteral) object.setExclusiveMinimum(((JsonBooleanLiteral)element).getValue());
+      if (element instanceof JsonNumberLiteral) object.setExclusiveMinimumNumber(((JsonNumberLiteral)element).getValue());
     });
     READERS_MAP.put("maxLength", (element, object, queue) -> {
       if (element instanceof JsonNumberLiteral) object.setMaxLength((int)((JsonNumberLiteral)element).getValue());
@@ -188,8 +170,9 @@ public class JsonSchemaReader {
     READERS_MAP.put("pattern", (element, object, queue) -> {
       if (element instanceof JsonStringLiteral) object.setPattern(StringUtil.unquoteString(element.getText()));
     });
-    READERS_MAP.put("additionalItems", createAdditionalItems());
-    READERS_MAP.put("items", createItems());
+    READERS_MAP.put(JsonSchemaObject.ADDITIONAL_ITEMS, createAdditionalItems());
+    READERS_MAP.put(JsonSchemaObject.ITEMS, createItems());
+    READERS_MAP.put("contains", createContains());
     READERS_MAP.put("maxItems", (element, object, queue) -> {
       if (element instanceof JsonNumberLiteral) object.setMaxItems((int)((JsonNumberLiteral)element).getValue());
     });
@@ -207,16 +190,53 @@ public class JsonSchemaReader {
     });
     READERS_MAP.put("required", createRequired());
     READERS_MAP.put("additionalProperties", createAdditionalProperties());
+    READERS_MAP.put("propertyNames", createPropertyNames());
     READERS_MAP.put("patternProperties", createPatternProperties());
     READERS_MAP.put("dependencies", createDependencies());
     READERS_MAP.put("enum", createEnum());
+    READERS_MAP.put("const", (element, object, queue) -> {
+      if (element instanceof JsonValue) object.setEnum(ContainerUtil.createMaybeSingletonList(readEnumValue((JsonValue)element)));
+    });
     READERS_MAP.put("type", createType());
     READERS_MAP.put("allOf", createContainer((object, members) -> object.setAllOf(members)));
     READERS_MAP.put("anyOf", createContainer((object, members) -> object.setAnyOf(members)));
     READERS_MAP.put("oneOf", createContainer((object, members) -> object.setOneOf(members)));
     READERS_MAP.put("not", createNot());
+    READERS_MAP.put("if", createIf());
+    READERS_MAP.put("then", createThen());
+    READERS_MAP.put("else", createElse());
     READERS_MAP.put("instanceof", ((element, object, queue) -> object.shouldValidateAgainstJSType()));
     READERS_MAP.put("typeof", ((element, object, queue) -> object.shouldValidateAgainstJSType()));
+  }
+
+  private static MyReader createIf() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject ifSchema = new JsonSchemaObject((JsonObject)element);
+        queue.add(ifSchema);
+        object.setIf(ifSchema);
+      }
+    };
+  }
+
+  private static MyReader createThen() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject ifSchema = new JsonSchemaObject((JsonObject)element);
+        queue.add(ifSchema);
+        object.setThen(ifSchema);
+      }
+    };
+  }
+
+  private static MyReader createElse() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject ifSchema = new JsonSchemaObject((JsonObject)element);
+        queue.add(ifSchema);
+        object.setElse(ifSchema);
+      }
+    };
   }
 
   private static MyReader createNot() {
@@ -267,6 +287,19 @@ public class JsonSchemaReader {
     }
   }
 
+  @Nullable
+  private static Object readEnumValue(JsonValue value) {
+    if (value instanceof JsonStringLiteral) {
+      return "\"" + StringUtil.unquoteString(((JsonStringLiteral)value).getValue()) + "\"";
+    } else if (value instanceof JsonNumberLiteral) {
+      return getNumber((JsonNumberLiteral)value);
+    } else if (value instanceof JsonBooleanLiteral) {
+      return ((JsonBooleanLiteral)value).getValue();
+    } else if (value instanceof JsonNullLiteral) {
+      return "null";
+    }
+    return null;
+  }
 
   private static MyReader createEnum() {
     return (element, object, queue) -> {
@@ -274,15 +307,8 @@ public class JsonSchemaReader {
         final List<Object> objects = new ArrayList<>();
         final List<JsonValue> list = ((JsonArray)element).getValueList();
         for (JsonValue value : list) {
-          if (value instanceof JsonStringLiteral) {
-            objects.add("\"" + StringUtil.unquoteString(((JsonStringLiteral)value).getValue()) + "\"");
-          } else if (value instanceof JsonNumberLiteral) {
-            objects.add(getNumber((JsonNumberLiteral)value));
-          } else if (value instanceof JsonBooleanLiteral) {
-            objects.add(((JsonBooleanLiteral)value).getValue());
-          } else if (value instanceof JsonNullLiteral) {
-            objects.add("null");
-          }
+          Object enumValue = readEnumValue(value);
+          if (enumValue != null) objects.add(enumValue);
         }
         object.setEnum(objects);
       }
@@ -352,6 +378,16 @@ public class JsonSchemaReader {
     };
   }
 
+  private static MyReader createPropertyNames() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject schema = new JsonSchemaObject((JsonObject)element);
+        queue.add(schema);
+        object.setPropertyNamesSchema(schema);
+      }
+    };
+  }
+
   private static MyReader createRequired() {
     return (element, object, queue) -> {
       if (element instanceof JsonArray) {
@@ -379,6 +415,16 @@ public class JsonSchemaReader {
           }
         }
         object.setItemsSchemaList(list);
+      }
+    };
+  }
+
+  private static MyReader createContains() {
+    return (element, object, queue) -> {
+      if (element instanceof JsonObject) {
+        final JsonSchemaObject schema = new JsonSchemaObject((JsonObject)element);
+        queue.add(schema);
+        object.setContainsSchema(schema);
       }
     };
   }

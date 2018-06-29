@@ -1,30 +1,15 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.internal.statistic.UsageTrigger;
 import com.intellij.internal.statistic.beans.ConvertUsagesUtil;
+import com.intellij.internal.statistic.eventLog.FeatureUsageUiEventsKt;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.options.BaseConfigurable;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -34,6 +19,7 @@ import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.RelativeFont;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -42,6 +28,7 @@ import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,18 +71,27 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
       if (myConfigurable != null) {
         ConfigurableCardPanel.reset(myConfigurable);
         updateCurrent(myConfigurable, true);
+        FeatureUsageUiEventsKt.getUiEventLogger().logResetConfigurable(getConfigurableEventId(myConfigurable), myConfigurable.getClass());
       }
     }
   };
   private Configurable myConfigurable;
 
+  ConfigurableEditor(Disposable parent) {
+    super(parent);
+  }
+
   ConfigurableEditor(Disposable parent, Configurable configurable) {
     super(parent);
+    init(configurable, parent instanceof SettingsEditor);
+  }
+
+  protected void init(Configurable configurable, boolean enableError) {
     myApplyAction.setEnabled(false);
     myResetAction.putValue(Action.SHORT_DESCRIPTION, RESET_DESCRIPTION);
     myResetAction.setEnabled(false);
     myErrorLabel.setOpaque(true);
-    myErrorLabel.setEnabled(parent instanceof SettingsEditor);
+    myErrorLabel.setEnabled(enableError);
     myErrorLabel.setVisible(false);
     myErrorLabel.setVerticalTextPosition(SwingConstants.TOP);
     myErrorLabel.setBorder(BorderFactory.createEmptyBorder(10, 15, 15, 15));
@@ -107,7 +103,7 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     getDefaultToolkit().addAWTEventListener(this, AWTEvent.MOUSE_EVENT_MASK | AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.KEY_EVENT_MASK);
     if (configurable != null) {
       myConfigurable = configurable;
-      myCardPanel.select(configurable, true);
+      myCardPanel.select(configurable, true).doWhenDone(() -> postUpdateCurrent(configurable));
     }
     updateCurrent(configurable, false);
   }
@@ -159,11 +155,8 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
 
   @Override
   public JComponent getPreferredFocusedComponent() {
-    if (myConfigurable instanceof BaseConfigurable) {
-      JComponent preferred = ((BaseConfigurable)myConfigurable).getPreferredFocusedComponent();
-      if (preferred != null) return preferred;
-    }
-    return UIUtil.getPreferredFocusedComponent(getContent(myConfigurable));
+    JComponent preferred = myConfigurable.getPreferredFocusedComponent();
+    return preferred == null ? UIUtil.getPreferredFocusedComponent(getContent(myConfigurable)) : preferred;
   }
 
   @Override
@@ -231,6 +224,9 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     }
   }
 
+  void postUpdateCurrent(Configurable configurable) {
+  }
+
   final boolean updateIfCurrent(Configurable configurable) {
     if (myConfigurable != configurable) {
       return false;
@@ -245,6 +241,10 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     callback.doWhenDone(() -> {
       myConfigurable = configurable;
       updateCurrent(configurable, false);
+      postUpdateCurrent(configurable);
+      if (configurable != null) {
+        FeatureUsageUiEventsKt.getUiEventLogger().logSelectConfigurable(getConfigurableEventId(configurable), configurable.getClass());
+      }
     });
     return callback;
   }
@@ -314,12 +314,18 @@ class ConfigurableEditor extends AbstractEditor implements AnActionListener, AWT
     if (configurable != null) {
       try {
         configurable.apply();
-        UsageTrigger.trigger("ide.settings." + ConvertUsagesUtil.escapeDescriptorName(configurable.getDisplayName()));
+        final String key = getConfigurableEventId(configurable);
+        FeatureUsageUiEventsKt.getUiEventLogger().logApplyConfigurable(key, configurable.getClass());
       }
       catch (ConfigurationException exception) {
         return exception;
       }
     }
     return null;
+  }
+
+  @NotNull
+  private static String getConfigurableEventId(@NotNull Configurable configurable) {
+    return "ide.settings." + ConvertUsagesUtil.escapeDescriptorName(StringUtil.notNullize(configurable.getDisplayName()));
   }
 }

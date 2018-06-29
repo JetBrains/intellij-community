@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.ListPopup;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.StatusBar;
@@ -124,13 +123,6 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     return StringUtil.isEmpty(myText) ? "" : myPrefix + ": " + myText;
   }
 
-  @NotNull
-  @Override
-  @Deprecated
-  public String getMaxValue() {
-    return "";
-  }
-
   @Nullable
   @Override
   public String getTooltipText() {
@@ -200,7 +192,7 @@ public abstract class DvcsStatusWidget<T extends Repository> extends EditorBased
     ApplicationManager.getApplication().invokeLater(() -> {
       StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
       if (statusBar != null && !isDisposed()) {
-        statusBar.addWidget(widget, "after " + (SystemInfo.isMac ? "Encoding" : "InsertOverwrite"), project);
+        statusBar.addWidget(widget, StatusBar.Anchors.DEFAULT_ANCHOR, project);
         subscribeToMappingChanged();
         subscribeToRepoChangeEvents(project);
         update();

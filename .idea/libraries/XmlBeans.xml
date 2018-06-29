@@ -1,9 +1,9 @@
 <component name="libraryTable">
-  <library name="XmlBeans">
+  <library name="XmlBeans" type="repository">
+    <properties maven-id="org.apache.xmlbeans:xmlbeans:2.6.0" />
     <CLASSES>
-      <root url="jar://$PROJECT_DIR$/lib/resolver.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/xbean.jar!/" />
-      <root url="jar://$PROJECT_DIR$/lib/jsr173_1.0_api.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/org/apache/xmlbeans/xmlbeans/2.6.0/xmlbeans-2.6.0.jar!/" />
+      <root url="jar://$MAVEN_REPOSITORY$/stax/stax-api/1.0.1/stax-api-1.0.1.jar!/" />
     </CLASSES>
     <JAVADOC />
     <SOURCES />

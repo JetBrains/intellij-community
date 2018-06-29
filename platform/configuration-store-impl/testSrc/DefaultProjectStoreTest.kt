@@ -14,6 +14,7 @@ import com.intellij.openapi.vfs.refreshVfs
 import com.intellij.testFramework.*
 import com.intellij.testFramework.assertions.Assertions.assertThat
 import com.intellij.testFramework.rules.InMemoryFsRule
+import com.intellij.util.SmartList
 import com.intellij.util.io.delete
 import com.intellij.util.io.systemIndependentPath
 import com.intellij.util.isEmpty
@@ -24,24 +25,24 @@ import org.junit.Rule
 import org.junit.Test
 import java.nio.file.Paths
 
+private const val TEST_COMPONENT_NAME = "DefaultProjectStoreTestComponent"
+
+@State(name = TEST_COMPONENT_NAME, storages = [(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class))])
+private class TestComponent : PersistentStateComponent<Element> {
+  private var element = Element("state")
+
+  override fun getState() = element.clone()
+
+  override fun loadState(state: Element) {
+    element = state.clone()
+  }
+}
+
 internal class DefaultProjectStoreTest {
   companion object {
     @JvmField
     @ClassRule
     val projectRule = ProjectRule()
-
-    internal const val TEST_COMPONENT_NAME = "Foo"
-
-    @State(name = TEST_COMPONENT_NAME, storages = arrayOf(Storage(value = "testSchemes", stateSplitter = TestStateSplitter::class)))
-    private class TestComponent: PersistentStateComponent<Element> {
-      private var element = Element("state")
-
-      override fun getState() = element.clone()
-
-      override fun loadState(state: Element) {
-        element = state.clone()
-      }
-    }
   }
 
   @JvmField
@@ -50,7 +51,7 @@ internal class DefaultProjectStoreTest {
 
   private val tempDirManager = TemporaryDirectory()
 
-  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1", "alpha"))
+  private val requiredPlugins = listOf<ProjectExternalDependency>(DependencyOnPlugin("fake", "0", "1"))
 
   private val ruleChain = RuleChain(
     tempDirManager,
@@ -105,6 +106,11 @@ internal class DefaultProjectStoreTest {
       }
     }
     finally {
+      // clear state
+      defaultTestComponent.loadState(Element("empty"))
+      runInEdtAndWait {
+        stateStore.save(SmartList())
+      }
       stateStore.removeComponent(TEST_COMPONENT_NAME)
     }
   }

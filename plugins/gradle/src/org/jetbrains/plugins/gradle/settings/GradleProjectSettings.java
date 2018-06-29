@@ -3,15 +3,19 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemJdkUtil;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.ThreeState;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.*;
+import org.gradle.util.GradleVersion;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.data.BuildParticipant;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 
 import java.util.List;
+import java.util.Optional;
 
 /**
  * @author Denis Zhdanov
@@ -22,7 +26,7 @@ public class GradleProjectSettings extends ExternalProjectSettings {
   @Nullable private String myGradleJvm = ExternalSystemJdkUtil.USE_PROJECT_JDK;
   @Nullable private DistributionType distributionType;
   private boolean disableWrapperSourceDistributionNotification;
-  private boolean resolveModulePerSourceSet = true;
+  private boolean resolveModulePerSourceSet = ExternalSystemApiUtil.isJavaCompatibleIde();
   @Nullable private CompositeBuild myCompositeBuild;
 
   private ThreeState storeProjectFilesExternally = ThreeState.NO;
@@ -101,6 +105,12 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   public void setStoreProjectFilesExternally(@NotNull ThreeState value) {
     storeProjectFilesExternally = value;
+  }
+
+  @NotNull
+  public GradleVersion resolveGradleVersion() {
+    GradleVersion version = GradleInstallationManager.getGradleVersion(this);
+    return Optional.ofNullable(version).orElseGet(GradleVersion::current);
   }
 
   @Tag("compositeBuild")

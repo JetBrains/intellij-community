@@ -199,6 +199,9 @@
         </annotation>
     </item>
     <item name='java.awt.Component java.awt.Dimension getMaximumSize()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Component java.awt.Dimension getSize(java.awt.Dimension)'>
@@ -208,9 +211,15 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='java.awt.Component java.awt.Dimension minimumSize()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Component java.awt.Dimension preferredSize()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Component java.awt.Dimension size()'>
@@ -393,17 +402,17 @@
     </item>
     <item name='java.awt.Container java.awt.Component add(java.awt.Component)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null-&gt;!null;null-&gt;null&quot;"/>
+            <val val="&quot;_-&gt;param1&quot;"/>
         </annotation>
     </item>
     <item name='java.awt.Container java.awt.Component add(java.awt.Component, int)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;!null,_-&gt;!null;null,_-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param1&quot;"/>
         </annotation>
     </item>
     <item name='java.awt.Container java.awt.Component add(java.lang.String, java.awt.Component)'>
         <annotation name='org.jetbrains.annotations.Contract'>
-            <val val="&quot;_,!null-&gt;!null;_,null-&gt;null&quot;"/>
+            <val val="&quot;_,_-&gt;param2&quot;"/>
         </annotation>
     </item>
     <item name='java.awt.Container java.awt.Component findComponentAt(int, int)'>
@@ -653,6 +662,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='java.awt.Window java.awt.Window[] getOwnerlessWindows()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='java.awt.Window java.lang.String constructComponentName()'>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
@@ -662,6 +676,9 @@
         </annotation>
     </item>
     <item name='java.awt.Window java.util.List&lt;java.awt.Image&gt; getIconImages()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='java.awt.Window void adjustDecendantsOnParent(int)'>

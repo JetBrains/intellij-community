@@ -23,12 +23,11 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.reference.SoftReference;
 import com.intellij.testFramework.LightVirtualFile;
-import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +42,7 @@ import java.util.*;
  */
 public abstract class PerFileMappingsBase<T> implements PersistentStateComponent<Element>, PerFileMappings<T>, Disposable {
 
-  private final TreeMap<VirtualFile, T> myMappings = new TreeMap<>(
-    (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
+  private final Map<VirtualFile, T> myMappings = ContainerUtil.newHashMap();
 
   public PerFileMappingsBase() {
     installDeleteUndo();
@@ -214,14 +212,13 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
         return o1.getPath().compareTo(o2.getPath());
       });
       for (VirtualFile file : files) {
-        final T dialect = myMappings.get(file);
-        String value = serialize(dialect);
-        if (value != null) {
-          final Element child = new Element("file");
-          element.addContent(child);
-          child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
-          child.setAttribute(getValueAttribute(), value);
-        }
+        T dialect = myMappings.get(file);
+        String value = dialect == null ? null : serialize(dialect);
+        if (value == null) continue;
+        Element child = new Element("file");
+        element.addContent(child);
+        child.setAttribute("url", file == null ? "PROJECT" : file.getUrl());
+        child.setAttribute(getValueAttribute(), value);
       }
       return element;
     }
@@ -316,42 +313,34 @@ public abstract class PerFileMappingsBase<T> implements PersistentStateComponent
 
       @Nullable
       MyUndoableAction createUndoableAction(@NotNull List<? extends VFileEvent> events) {
+        // NOTE: VFS handles renames, so the code for RENAME events is deleted (see history)
+        List<? extends VFileEvent> eventsFiltered = JBIterable.from(events).filter(VFileDeleteEvent.class).toList();
+        if (eventsFiltered.isEmpty()) return null;
+
         Map<String, T> removed = ContainerUtil.newHashMap();
         Map<String, T> added = ContainerUtil.newHashMap();
+        NavigableSet<VirtualFile> navSet = null;
 
-        for (VFileEvent event : events) {
-          String newName = null;
-          if (event instanceof VFilePropertyChangeEvent) {
-            VFilePropertyChangeEvent propEvent = (VFilePropertyChangeEvent)event;
-            String prop = propEvent.getPropertyName();
-            if (VirtualFile.PROP_NAME.equals(prop)) {
-              // todo VFS handles renames, uncomment for string-based mappings 
-              //Object v0 = propEvent.getOldValue();
-              //Object v1 = propEvent.getNewValue();
-              //if (!Comparing.equal(v0, v1)) newName = (String)v1;
-            }
-          }
-          if (newName == null && !(event instanceof VFileDeleteEvent)) continue;
-          VirtualFile file = event.getFile();
-          if (file == null) continue;
-          synchronized (myMappings) {
+        synchronized (myMappings) {
+          for (VFileEvent event : eventsFiltered) {
+            VirtualFile file = event.getFile();
+            if (file == null) continue;
             String fileUrl = file.getUrl();
             if (!file.isDirectory()) {
               T m = myMappings.get(file);
               if (m != null) removed.put(fileUrl, m);
-              if (newName != null) {
-                added.put(PathUtil.getParentPath(fileUrl) + "/" + newName, m);
-              }
             }
             else {
-              for (VirtualFile child : myMappings.navigableKeySet().tailSet(file)) {
+              if (navSet == null) {
+                navSet = new TreeSet<>(
+                  (f1, f2) -> Comparing.compare(f1 == null ? null : f1.getUrl(), f2 == null ? null : f2.getUrl()));
+                navSet.addAll(myMappings.keySet());
+              }
+              for (VirtualFile child : navSet.tailSet(file)) {
                 if (!VfsUtilCore.isAncestor(file, child, false)) break;
                 String childUrl = child.getUrl();
                 T m = myMappings.get(child);
                 removed.put(childUrl, m);
-                if (newName != null) {
-                  added.put(PathUtil.getParentPath(fileUrl) + "/" + newName + childUrl.substring(fileUrl.length()), m);
-                }
               }
             }
           }

@@ -29,4 +29,33 @@ class Contracts {
     System.out.println(object2.toString());
   }
 
+  private void checkTrue(boolean b) {
+    assertThat("b is true", b, is(true));
+    if(<warning descr="Condition 'b' is always 'true'">b</warning>) {
+      System.out.println("always");
+    }
+    <warning descr="The call to 'assertThat' always fails, according to its method contracts">assertThat</warning>("b is not true", <weak_warning descr="Value 'b' is always 'true'">b</weak_warning>, not(is(true)));
+  }
+
+  private void checkFalse(boolean b) {
+    assertThat("b is false", b, is(equalTo(false)));
+    if(<warning descr="Condition 'b' is always 'false'">b</warning>) {
+      System.out.println("never");
+    }
+  }
+
+  private void testArraySize() {
+    String[] things = retrieveThings();
+    assertThat(things, is(arrayWithSize(1)));
+    assertThat(things[0], is(equalTo("...")));
+  }
+
+  @Nullable
+  private static native String[] retrieveThings();
+
+  private void testNotArraySize() {
+    String[] things = retrieveThings();
+    assertThat(things, not(is(arrayWithSize(2))));
+    assertThat(<warning descr="Array access 'things[0]' may produce 'java.lang.NullPointerException'">things[0]</warning>, is(equalTo("...")));
+  }
 }

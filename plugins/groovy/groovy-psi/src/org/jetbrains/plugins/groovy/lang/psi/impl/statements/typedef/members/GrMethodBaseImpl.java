@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members;
 
 import com.intellij.lang.ASTNode;
@@ -82,7 +82,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitMethod(this);
   }
 
@@ -120,6 +120,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
     getNode().replaceChild(oldBlock.getNode(), newNode);
   }
 
+  @NotNull
   @Override
   public GrParameter[] getParameters() {
     return getParameterList().getParameters();

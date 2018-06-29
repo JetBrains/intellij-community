@@ -52,7 +52,7 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitSafeCastExpression(this);
   }
 
@@ -83,11 +83,13 @@ public class GrSafeCastExpressionImpl extends GrExpressionImpl implements GrSafe
     return this;
   }
 
+  @NotNull
   @Override
   public PsiElement getElement() {
     return this;
   }
 
+  @NotNull
   @Override
   public TextRange getRangeInElement() {
     final PsiElement as = findNotNullChildByType(GroovyTokenTypes.kAS);

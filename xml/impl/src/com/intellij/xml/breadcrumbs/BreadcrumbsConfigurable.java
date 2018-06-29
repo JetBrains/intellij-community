@@ -27,14 +27,10 @@ import com.intellij.ui.components.labels.LinkLabel;
 import com.intellij.ui.components.panels.HorizontalLayout;
 import com.intellij.ui.components.panels.VerticalLayout;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 
-import javax.swing.ButtonGroup;
-import javax.swing.JCheckBox;
-import javax.swing.JComponent;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import javax.swing.JRadioButton;
-import java.awt.GridLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.util.HashMap;
 import java.util.Map.Entry;
 
@@ -91,9 +87,8 @@ final class BreadcrumbsConfigurable implements Configurable {
       group.add(below);
 
       placement = new JLabel(message("label.breadcrumbs.placement"));
-      placement.setBorder(JBUI.Borders.emptyRight(12));
 
-      JPanel placementPanel = new JPanel(new HorizontalLayout(0));
+      JPanel placementPanel = new JPanel(new HorizontalLayout(JBUI.scale(UIUtil.DEFAULT_HGAP)));
       placementPanel.setBorder(JBUI.Borders.emptyLeft(24));
       placementPanel.add(placement);
       placementPanel.add(above);

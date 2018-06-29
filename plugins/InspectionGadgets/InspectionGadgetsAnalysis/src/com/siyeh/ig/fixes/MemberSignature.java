@@ -183,7 +183,7 @@ public class MemberSignature implements Comparable<MemberSignature> {
           }
         }
         if (psiClass != null) {
-          final StringBuilder postFix = new StringBuilder("");
+          final StringBuilder postFix = new StringBuilder();
           PsiClass containingClass = psiClass.getContainingClass();
           while (containingClass != null) {
             // construct name for inner classes

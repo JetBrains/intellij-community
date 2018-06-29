@@ -1,12 +1,10 @@
 package com.intellij.codeInspection.unnecessaryModuleDependency;
 
-import com.intellij.codeInspection.reference.RefElement;
-import com.intellij.codeInspection.reference.RefGraphAnnotator;
-import com.intellij.codeInspection.reference.RefManager;
-import com.intellij.codeInspection.reference.RefModule;
+import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Key;
@@ -76,7 +74,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private static void collectRequiredModulesInHierarchy(PsiElement element, Set<Module> modules) {
+  private void collectRequiredModulesInHierarchy(PsiElement element, Set<? super Module> modules) {
     if (element instanceof PsiClass) {
       processClassHierarchy((PsiClass)element, modules);
     }
@@ -96,16 +94,27 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
     }
   }
 
-  private static void processTypeHierarchy(Set<PsiClass> classes, PsiType returnType, Set<Module> modules) {
+  private void processTypeHierarchy(Set<? super PsiClass> classes, PsiType returnType, Set<? super Module> modules) {
     PsiClass aClass = PsiUtil.resolveClassInType(returnType);
     if (aClass != null && classes.add(aClass)) {
       processClassHierarchy(aClass, modules);
     }
   }
 
-  private static void processClassHierarchy(PsiClass currentClass, Set<Module> modules) {
+  private void processClassHierarchy(PsiClass currentClass, Set<? super Module> modules) {
     LinkedHashSet<PsiClass> superClasses = new LinkedHashSet<>();
-    InheritanceUtil.getSuperClasses(currentClass, superClasses, false);
+    RefElement refClass = myManager.getReference(currentClass);
+    if (!(refClass instanceof RefClass)) {
+      InheritanceUtil.getSuperClasses(currentClass, superClasses, false);
+    }
+    else {
+      for (RefClass aClass : ((RefClass)refClass).getBaseClasses()) {
+        PsiClass superClass = aClass.getElement();
+        if (superClass != null) {
+          superClasses.add(superClass);
+        }
+      }
+    }
     for (PsiClass superClass : superClasses) {
       Set<Module> onModules = getAllPossibleWhatModules(superClass);
       if (onModules != null) modules.addAll(onModules);
@@ -125,8 +134,9 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
       if (orderEntries.isEmpty()) {
         return null;
       }
-      Set<Module> modules = new HashSet<>();
+      Set<Module> modules = new HashSet<>(orderEntries.size());
       for (OrderEntry orderEntry : orderEntries) {
+        if (orderEntry instanceof JdkOrderEntry) return null;
         modules.add(orderEntry.getOwnerModule());
       }
       return modules;

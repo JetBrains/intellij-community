@@ -4,13 +4,13 @@ import java.lang.reflect.ParameterizedType
 import java.lang.reflect.Type
 import java.lang.reflect.WildcardType
 
-val TYPE_FACTORY_NAME_PREFIX = 'F'
+val TYPE_FACTORY_NAME_PREFIX: Char = 'F'
 
-val READER_NAME = "reader"
-val PENDING_INPUT_READER_NAME = "inputReader"
+val READER_NAME: String = "reader"
+val PENDING_INPUT_READER_NAME: String = "inputReader"
 
-val JSON_READER_CLASS_NAME = "JsonReaderEx"
-val JSON_READER_PARAMETER_DEF = "$READER_NAME: $JSON_READER_CLASS_NAME"
+val JSON_READER_CLASS_NAME: String = "JsonReaderEx"
+val JSON_READER_PARAMETER_DEF: String = "$READER_NAME: $JSON_READER_CLASS_NAME"
 
 /**
  * Generate Java type name of the passed type. Type may be parameterized.

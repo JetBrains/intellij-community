@@ -40,16 +40,13 @@ public class GroovyGotoImplementationTest extends JavaCodeInsightFixtureTestCase
     final TempDirTestFixture dirFixture = new TempDirTestFixtureImpl();
     dirFixture.setUp();
 
-    new WriteCommandAction(getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final VirtualFile outside = dirFixture.getFile("").createChildDirectory(this, "outside");
-        PsiTestUtil.addContentRoot(myModule, outside);
-        VirtualFile out = outside.createChildData(this, "Outside.groovy");
-        VfsUtil.saveText(out, "class Bar {}\n class Goo extends Bar {}");
-        PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject()).run(() -> {
+      final VirtualFile outside = dirFixture.getFile("").createChildDirectory(this, "outside");
+      PsiTestUtil.addContentRoot(myModule, outside);
+      VirtualFile out = outside.createChildData(this, "Outside.groovy");
+      VfsUtil.saveText(out, "class Bar {}\n class Goo extends Bar {}");
+      PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
+    });
 
     try {
       PsiFile inProject = myFixture.addFileToProject("Foo.groovy", "class <caret>Foo {}\n class Bar extends Foo {}");

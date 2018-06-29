@@ -1,9 +1,9 @@
 // "Move assignment to field declaration" "true"
 
 class X {
-  String ff = "";
+    //comment
+    String ff = "";
 
   void f() {
-      //comment
   }
 }

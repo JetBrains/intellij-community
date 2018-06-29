@@ -121,10 +121,8 @@ public class RefManagerImpl extends RefManager {
     for (RefElement refElement : getSortedElements()) {
       refElement.accept(visitor);
     }
-    if (myModules != null) {
-      for (RefModule refModule : myModules.values()) {
-        if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
-      }
+    for (RefModule refModule : myModules.values()) {
+      if (myScope.containsModule(refModule.getModule())) refModule.accept(visitor);
     }
     for (RefManagerExtension extension : myExtensions.values()) {
       extension.iterate(visitor);
@@ -361,7 +359,7 @@ public class RefManagerImpl extends RefManager {
     myOfflineView = true;
   }
 
-  boolean isOfflineView() {
+  public boolean isOfflineView() {
     return myOfflineView;
   }
   
@@ -624,14 +622,14 @@ public class RefManagerImpl extends RefManager {
   }
 
   @Nullable
-  <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<T> factory) {
+  <T extends RefElement> T getFromRefTableOrCache(final PsiElement element, @NotNull NullableFactory<? extends T> factory) {
     return getFromRefTableOrCache(element, factory, null); 
   }
   
   @Nullable
   private <T extends RefElement> T getFromRefTableOrCache(@NotNull PsiElement element,
-                                                          @NotNull NullableFactory<T> factory,
-                                                          @Nullable Consumer<T> whenCached) {
+                                                          @NotNull NullableFactory<? extends T> factory,
+                                                          @Nullable Consumer<? super T> whenCached) {
 
     PsiAnchor psiAnchor = createAnchor(element);
     //noinspection unchecked

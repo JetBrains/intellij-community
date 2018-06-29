@@ -129,7 +129,9 @@ RBRACKET="]"
 
 ESCAPE="\\"
 NAME=[:letter:]([:letter:]|_|-|" "|"("|")"|[:digit:])*
-GROUP_NAME=[:letter:]([:letter:]|_|-|" "|[:digit:])*
+GROUP_NAME_START=[:letter:]|_|\$|\\
+GROUP_NAME_PART={GROUP_NAME_START}|-|" "|[:digit:]
+GROUP_NAME={GROUP_NAME_START}({GROUP_NAME_PART})*
 MYSQL_CHAR_NAME=[:letter:](-|[:letter:])*[:digit:]?
 ANY=[^]
 

@@ -107,7 +107,7 @@ public class GradleOrderEnumeratorHandler extends OrderEnumerationHandler {
 
     final String gradleProjectPath = ExternalSystemModulePropertyManager.getInstance(rootModel.getModule()).getRootProjectPath();
     if (gradleProjectPath == null) {
-      LOG.error("Root project path of the Gradle project not found for " + rootModel.getModule());
+      LOG.warn("Root project path of the Gradle project not found for " + rootModel.getModule());
       return false;
     }
 

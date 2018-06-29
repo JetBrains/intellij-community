@@ -1,22 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.vcs.log.ui.frame;
 
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.project.Project;
@@ -65,6 +50,7 @@ import static com.intellij.vcs.log.impl.MainVcsLogUiProperties.SHOW_CHANGES_FROM
  * Change browser for commits in the Log. For merge commits, can display changes to commits parents in separate groups.
  */
 class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
+  @NotNull private static final String EMPTY_SELECTION_TEXT = "Select commit to view details";
   @NotNull private final Project myProject;
   @NotNull private final MainVcsLogUiProperties myUiProperties;
   @NotNull private final Function<CommitId, VcsShortCommitDetails> myDataGetter;
@@ -75,6 +61,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull private final List<Change> myChanges = ContainerUtil.newArrayList();
   @NotNull private final Map<CommitId, Set<Change>> myChangesToParents = ContainerUtil.newHashMap();
   @NotNull private final Wrapper myToolbarWrapper;
+  @Nullable private Runnable myModelUpdateListener;
 
   public VcsLogChangesBrowser(@NotNull Project project,
                               @NotNull MainVcsLogUiProperties uiProperties,
@@ -102,6 +89,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     init();
 
     getViewerScrollPane().setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
+    myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     myViewer.rebuildTree();
   }
 
@@ -115,6 +103,10 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myToolbarWrapper.setVerticalSizeReferent(referent);
   }
 
+  public void setModelUpdateListener(@Nullable Runnable runnable) {
+    myModelUpdateListener = runnable;
+  }
+
   @Override
   public void dispose() {
     myUiProperties.removeChangeListener(myListener);
@@ -123,10 +115,19 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   @NotNull
   @Override
   protected List<AnAction> createToolbarActions() {
-    List<AnAction> result = new ArrayList<>(super.createToolbarActions());
-    ActionGroup group = (ActionGroup)ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_ACTION_GROUP);
-    Collections.addAll(result, group.getChildren(null));
-    return result;
+    return ContainerUtil.append(
+      super.createToolbarActions(),
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_TOOLBAR_ACTION_GROUP)
+    );
+  }
+
+  @NotNull
+  @Override
+  protected List<AnAction> createPopupMenuActions() {
+    return ContainerUtil.append(
+      super.createPopupMenuActions(),
+      ActionManager.getInstance().getAction(VcsLogActionPlaces.CHANGES_BROWSER_POPUP_ACTION_GROUP)
+    );
   }
 
   public void resetSelectedDetails() {
@@ -135,6 +136,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myRoots.clear();
     myViewer.setEmptyText("");
     myViewer.rebuildTree();
+    if (myModelUpdateListener != null) myModelUpdateListener.run();
   }
 
   public void setSelectedDetails(@NotNull List<VcsFullCommitDetails> detailsList) {
@@ -145,7 +147,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     myRoots.addAll(ContainerUtil.map(detailsList, detail -> detail.getRoot()));
 
     if (detailsList.isEmpty()) {
-      myViewer.setEmptyText("No commits selected");
+      myViewer.setEmptyText(EMPTY_SELECTION_TEXT);
     }
     else if (detailsList.size() == 1) {
       VcsFullCommitDetails detail = notNull(getFirstItem(detailsList));
@@ -179,12 +181,13 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     }
 
     myViewer.rebuildTree();
+    if (myModelUpdateListener != null) myModelUpdateListener.run();
   }
 
   @NotNull
   @Override
-  protected DefaultTreeModel buildTreeModel(boolean showFlatten) {
-    MyTreeModelBuilder builder = new MyTreeModelBuilder(showFlatten);
+  protected DefaultTreeModel buildTreeModel() {
+    MyTreeModelBuilder builder = new MyTreeModelBuilder();
     builder.setChanges(myChanges, null);
 
     if (isShowChangesFromParents() && !myChangesToParents.isEmpty()) {
@@ -208,8 +211,18 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   }
 
   @NotNull
-  public List<Change> getAllChanges() {
+  public List<Change> getDirectChanges() {
     return myChanges;
+  }
+
+  @NotNull
+  public List<Change> getSelectedChanges() {
+    return VcsTreeModelData.selected(myViewer).userObjects(Change.class);
+  }
+
+  @NotNull
+  public List<Change> getAllChanges() {
+    return VcsTreeModelData.all(myViewer).userObjects(Change.class);
   }
 
   @Nullable
@@ -228,8 +241,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
     List<AbstractVcs> allVcs = ContainerUtil.mapNotNull(myRoots, root -> ProjectLevelVcsManager.getInstance(myProject).getVcsFor(root));
     if (allVcs.size() == 1) return notNull(getFirstItem(allVcs));
 
-    List<Change> selectedChanges = VcsTreeModelData.selected(myViewer).userObjects(Change.class);
-    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(selectedChanges, myProject);
+    Set<AbstractVcs> selectedVcs = ChangesUtil.getAffectedVcses(getSelectedChanges(), myProject);
     if (selectedVcs.size() == 1) return notNull(getFirstItem(selectedVcs));
 
     return null;
@@ -237,7 +249,7 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
 
   @Nullable
   @Override
-  protected ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
+  public ChangeDiffRequestChain.Producer getDiffRequestProducer(@NotNull Object userObject) {
     if (userObject instanceof MergedChange) {
       MergedChange mergedChange = (MergedChange)userObject;
       if (mergedChange.getSourceChanges().size() == 2) {
@@ -267,8 +279,8 @@ class VcsLogChangesBrowser extends ChangesBrowserBase implements Disposable {
   }
 
   private class MyTreeModelBuilder extends TreeModelBuilder {
-    public MyTreeModelBuilder(boolean showFlatten) {
-      super(VcsLogChangesBrowser.this.myProject, showFlatten);
+    public MyTreeModelBuilder() {
+      super(VcsLogChangesBrowser.this.myProject, VcsLogChangesBrowser.this.getGrouping());
     }
 
     public void addEmptyTextNode(@NotNull String text) {

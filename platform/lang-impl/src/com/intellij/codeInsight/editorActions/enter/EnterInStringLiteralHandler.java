@@ -31,34 +31,39 @@ import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.EditorHighlighter;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.StringEscapesTokenTypes;
+import com.intellij.psi.tree.IElementType;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
   @Override
   public Result preprocessEnter(@NotNull final PsiFile file, @NotNull final Editor editor, @NotNull Ref<Integer> caretOffsetRef,
                                 @NotNull final Ref<Integer> caretAdvanceRef, @NotNull final DataContext dataContext,
                                 final EditorActionHandler originalHandler) {
+    final Language language = EnterHandler.getLanguage(dataContext);
+    if (language == null) return Result.Continue;
+    
     int caretOffset = caretOffsetRef.get().intValue();
-    int caretAdvance = caretAdvanceRef.get().intValue();
-    if (!isInStringLiteral(editor, dataContext, caretOffset)) return Result.Continue;
+    final JavaLikeQuoteHandler quoteHandler = getJavaLikeQuoteHandler(editor, file);
+    if (!isInStringLiteral(editor, quoteHandler, caretOffset)) {
+      return Result.Continue;
+    }
+
     PsiDocumentManager.getInstance(file.getProject()).commitDocument(editor.getDocument());
     PsiElement psiAtOffset = file.findElementAt(caretOffset);
     if (psiAtOffset != null && psiAtOffset.getTextOffset() < caretOffset) {
-      Document document = editor.getDocument();
-      CharSequence text = document.getText();
       ASTNode token = psiAtOffset.getNode();
-      JavaLikeQuoteHandler quoteHandler = getJavaLikeQuoteHandler(editor, psiAtOffset);
-
-      if (quoteHandler != null &&
-          quoteHandler.getConcatenatableStringTokenTypes() != null &&
-          quoteHandler.getConcatenatableStringTokenTypes().contains(token.getElementType())) {
+      if (quoteHandler.getConcatenatableStringTokenTypes().contains(token.getElementType())) {
+        Document document = editor.getDocument();
+        CharSequence text = document.getText();
+        
         TextRange range = token.getTextRange();
         final char literalStart = token.getText().charAt(0);
         final StringLiteralLexer lexer = new StringLiteralLexer(literalStart, token.getElementType());
@@ -74,6 +79,7 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
           lexer.advance();
         }
 
+        int caretAdvance = caretAdvanceRef.get().intValue();        
         if (quoteHandler.needParenthesesAroundConcatenation(psiAtOffset)) {
           document.insertString(psiAtOffset.getTextRange().getEndOffset(), ")");
           document.insertString(psiAtOffset.getTextRange().getStartOffset(), "(");
@@ -97,24 +103,23 @@ public class EnterInStringLiteralHandler extends EnterHandlerDelegateAdapter {
     return Result.Continue;
   }
 
-  protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(Editor editor, PsiElement psiAtOffset) {
+  @Nullable
+  protected JavaLikeQuoteHandler getJavaLikeQuoteHandler(@NotNull Editor editor, @NotNull PsiElement psiAtOffset) {
     final QuoteHandler fileTypeQuoteHandler = TypedHandler.getQuoteHandler(psiAtOffset.getContainingFile(), editor);
-    return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler ?
-                                                     (JavaLikeQuoteHandler) fileTypeQuoteHandler:null;
+    return fileTypeQuoteHandler instanceof JavaLikeQuoteHandler 
+           ? (JavaLikeQuoteHandler)fileTypeQuoteHandler 
+           : null;
   }
-  
-  private static boolean isInStringLiteral(@NotNull Editor editor, @NotNull DataContext dataContext, int offset) {
-    Language language = EnterHandler.getLanguage(dataContext);
-    if (offset > 0 && language != null) {
-      QuoteHandler quoteHandler = TypedHandler.getLanguageQuoteHandler(language);
-      if (quoteHandler == null) {
-        FileType fileType = language.getAssociatedFileType();
-        quoteHandler = fileType != null ? TypedHandler.getQuoteHandlerForType(fileType) : null;
-      }
-      if (quoteHandler != null) {
-        EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
-        HighlighterIterator iterator = highlighter.createIterator(offset - 1);
-        return StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(iterator.getTokenType()) || quoteHandler.isInsideLiteral(iterator);
+
+  @Contract("_,null,_->false")
+  private static boolean isInStringLiteral(@NotNull Editor editor, @Nullable JavaLikeQuoteHandler quoteHandler, int offset) {
+    if (offset > 0 && quoteHandler != null) {
+      EditorHighlighter highlighter = ((EditorEx)editor).getHighlighter();
+      HighlighterIterator iterator = highlighter.createIterator(offset - 1);
+      final IElementType type = iterator.getTokenType();
+      if ((StringEscapesTokenTypes.STRING_LITERAL_ESCAPES.contains(type) || quoteHandler.isInsideLiteral(iterator))
+          && quoteHandler.getConcatenatableStringTokenTypes() != null) {
+        return true;
       }
     }
     return false;

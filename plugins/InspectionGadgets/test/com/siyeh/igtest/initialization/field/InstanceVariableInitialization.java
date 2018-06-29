@@ -100,3 +100,7 @@ class D {
     for (Object o : l = new java.util.ArrayList()) {}
   }
 }
+class WithNullable {
+  @org.jetbrains.annotations.Nullable
+  private String str;
+}

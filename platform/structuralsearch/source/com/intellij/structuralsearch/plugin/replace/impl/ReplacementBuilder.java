@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.structuralsearch.plugin.replace.impl;
 
 import com.intellij.codeInsight.template.Template;
@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 /**
  * @author maxim
@@ -31,46 +32,42 @@ import java.util.Map;
 public final class ReplacementBuilder {
   private final String replacement;
   private final List<ParameterInfo> parameterizations = new SmartList<>();
-  private final Map<String, ScriptSupport> replacementVarsMap;
+  private final Map<String, ScriptSupport> replacementVarsMap = new HashMap<>();
   private final ReplaceOptions options;
   private final Project myProject;
 
-  ReplacementBuilder(final Project project,final ReplaceOptions options) {
+  ReplacementBuilder(Project project, ReplaceOptions options) {
     myProject = project;
-    replacementVarsMap = new HashMap<>();
     this.options = options;
-    String _replacement = options.getReplacement();
-    FileType fileType = options.getMatchOptions().getFileType();
 
-    final Template template = TemplateManager.getInstance(project).createTemplate("","",_replacement);
-
-    final int segmentsCount = template.getSegmentsCount();
+    final Template template = TemplateManager.getInstance(project).createTemplate("", "", options.getReplacement());
     replacement = template.getTemplateText();
 
-    for(int i=0;i<segmentsCount;++i) {
+    int prevOffset = 0;
+    for (int i = 0; i < template.getSegmentsCount(); i++) {
       final int offset = template.getSegmentOffset(i);
       final String name = template.getSegmentName(i);
-
-      final ParameterInfo info = new ParameterInfo();
-      info.setStartIndex(offset);
-      info.setName(name);
-      info.setReplacementVariable(options.getVariableDefinition(name) != null);
+      final ParameterInfo info = new ParameterInfo(name, offset, options.getVariableDefinition(name) != null);
 
       // find delimiter
-      int pos;
-      for(pos = offset-1; pos >=0 && pos < replacement.length() && Character.isWhitespace(replacement.charAt(pos));) {
-        --pos;
+      int pos = offset - 1;
+      while (pos >= prevOffset && pos < replacement.length() && StringUtil.isWhiteSpace(replacement.charAt(pos))) {
+        pos--;
       }
 
       if (pos >= 0) {
         if (replacement.charAt(pos) == ',') {
           info.setHasCommaBefore(true);
         }
+        while (pos > prevOffset && StringUtil.isWhiteSpace(replacement.charAt(pos - 1))) {
+          pos--;
+        }
         info.setBeforeDelimiterPos(pos);
       }
 
-      for(pos = offset; pos < replacement.length() && Character.isWhitespace(replacement.charAt(pos));) {
-        ++pos;
+      pos = offset;
+      while (pos < replacement.length() && StringUtil.isWhiteSpace(replacement.charAt(pos))) {
+        pos++;
       }
 
       if (pos < replacement.length()) {
@@ -85,15 +82,16 @@ public final class ReplacementBuilder {
         }
       }
       info.setAfterDelimiterPos(pos);
-
+      prevOffset = offset;
       parameterizations.add(info);
     }
 
+    FileType fileType = options.getMatchOptions().getFileType();
     final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByFileType(fileType);
     if (profile != null) {
       try {
         final PsiElement[] elements = MatcherImplUtil.createTreeFromText(
-          _replacement,
+          options.getReplacement(),
           PatternTreeContext.Block,
           fileType,
           options.getMatchOptions().getDialect(),
@@ -155,8 +153,10 @@ public final class ReplacementBuilder {
     ScriptSupport scriptSupport = replacementVarsMap.get(info.getName());
 
     if (scriptSupport == null) {
-      String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
-      scriptSupport = new ScriptSupport(myProject, StringUtil.stripQuotesAroundValue(constraint), info.getName());
+      final String constraint = options.getVariableDefinition(info.getName()).getScriptCodeConstraint();
+      final List<String> variableNames =
+        options.getVariableDefinitions().stream().map(o -> o.getName()).collect(Collectors.toList());
+      scriptSupport = new ScriptSupport(myProject, StringUtil.unquoteString(constraint), info.getName(), variableNames);
       replacementVarsMap.put(info.getName(), scriptSupport);
     }
     return scriptSupport.evaluate(match, null);

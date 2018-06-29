@@ -26,6 +26,7 @@ import com.intellij.openapi.actionSystem.ex.QuickList;
 import com.intellij.openapi.actionSystem.ex.QuickListsManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.KeyMapBundle;
 import com.intellij.openapi.keymap.KeyboardSettingsExternalizable;
 import com.intellij.openapi.keymap.Keymap;
@@ -49,6 +50,9 @@ import com.intellij.packageDependencies.ui.TreeExpansionMonitor;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.FilterComponent;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.mac.foundation.NSDefaults;
+import com.intellij.ui.mac.touchbar.TouchBarsManager;
+import com.intellij.ui.mac.touchbar.Utils;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.JBUI;
@@ -58,6 +62,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.event.ChangeEvent;
+import javax.swing.event.ChangeListener;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.InputEvent;
@@ -81,6 +87,9 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
 
   private boolean myQuickListsModified = false;
   private QuickList[] myQuickLists = QuickListsManager.getInstance().getAllQuickLists();
+
+  private boolean myShowFnInitial = false;
+  private JCheckBox myShowFnCheckbox = null;
 
   public KeymapPanel() {
     setLayout(new BorderLayout());
@@ -208,6 +217,22 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
         }
       }
     });
+
+    if (TouchBarsManager.isTouchBarAvailable()) {
+      final String appId = Utils.getAppId();
+      if (appId != null && !appId.isEmpty()) {
+        myShowFnInitial = NSDefaults.isShowFnKeysEnabled(appId);
+        myShowFnCheckbox = new JCheckBox("Show function keys in Touch Bar", myShowFnInitial);
+        myShowFnCheckbox.addChangeListener(new ChangeListener() {
+          public void stateChanged(ChangeEvent e) {
+            NSDefaults.setShowFnKeysEnabled(appId, myShowFnCheckbox.isSelected());
+          }
+        });
+        panel.add(myShowFnCheckbox, BorderLayout.SOUTH);
+      } else
+        Logger.getInstance(KeymapPanel.class).error("can't obtain application id from NSBundle");
+    }
+
     return panel;
   }
 
@@ -220,7 +245,7 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     group.add(commonActionsManager.createExpandAllAction(treeExpander, myActionsTree.getTree()));
     group.add(commonActionsManager.createCollapseAllAction(treeExpander, myActionsTree.getTree()));
 
-    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.ToolbarDecorator.Edit) {
+    group.add(new AnAction("Edit Shortcut", "Edit Shortcut", AllIcons.Actions.Edit) {
       {
         registerCustomShortcutSet(CommonShortcuts.ENTER, myActionsTree.getTree());
       }
@@ -461,11 +486,14 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
     String error = myManager.apply();
     if (error != null) throw new ConfigurationException(error);
     updateAllToolbarsImmediately();
+
+    if (isShowFnModified())
+      Utils.restartTouchBarServer();
   }
 
   @Override
   public boolean isModified() {
-    return myManager.isModified();
+    return myManager.isModified() || isShowFnModified();
   }
 
   public void selectAction(String actionId) {
@@ -614,6 +642,13 @@ public class KeymapPanel extends JPanel implements SearchableConfigurable, Confi
       });
     }
     return group;
+  }
+
+  private boolean isShowFnModified() {
+    if (myShowFnCheckbox == null)
+      return false;
+
+    return myShowFnInitial != myShowFnCheckbox.isSelected();
   }
 
   private static int showConfirmationDialog(Component parent) {

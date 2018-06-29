@@ -35,6 +35,7 @@ import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.Model
 import com.intellij.testFramework.propertyBased.PsiIndexConsistencyTester.RefKind
 import org.jetbrains.jetCheck.Generator
 import org.jetbrains.jetCheck.PropertyChecker
+import org.junit.Assert
 
 /**
  * @author peter
@@ -43,15 +44,17 @@ import org.jetbrains.jetCheck.PropertyChecker
 class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
 
   fun testFuzzActions() {
-    val genAction: Generator<Action> = Generator.anyOf(
-      PsiIndexConsistencyTester.commonActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)),
-      Generator.sampledFrom(AddImport, AddEnum, InvisiblePsiChange),
-      Generator.booleans().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
-      Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
-                                          data.generate(Generator.booleans()),
-                                          data.generate(Generator.booleans())) }
-    )
-    PropertyChecker.forAll(Generator.listsOf(genAction)).withIterationCount(20).shouldHold { actions ->
+    val genAction: Generator<Action> = Generator.frequency(
+      10, Generator.sampledFrom(
+      PsiIndexConsistencyTester.commonActions +
+      PsiIndexConsistencyTester.refActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)) + 
+      listOf(AddImport, AddEnum, InvisiblePsiChange) + 
+      listOf(true, false).map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) }
+    ),
+      1, Generator.from { data -> TextChange(data.generate(Generator.asciiIdentifiers().suchThat { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) }),
+                                                   data.generate(Generator.booleans()),
+                                                   data.generate(Generator.booleans())) })
+    PropertyChecker.customized().forAll(Generator.listsOf(genAction)) { actions ->
       val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
       try {
         PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
@@ -115,12 +118,15 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
   }
 
   private data class TextChange(val newClassName: String, val viaDocument: Boolean, val withImport: Boolean): Action {
+    val newText = (if (withImport) "import zoo.Zoo; "  else "") + "class $newClassName { }"
+
+    override fun toString(): String = "TextChange(via=${if (viaDocument) "document" else "VFS"}, text=\"$newText\")"
+
     override fun performAction(model: Model) {
       model as JavaModel
       PostponedFormatting.performAction(model)
       val counterBefore = PsiManager.getInstance(model.project).modificationTracker.javaStructureModificationCount
       model.docClassName = newClassName
-      val newText = (if (withImport) "import zoo.Zoo; "  else "") + "class $newClassName { }"
       if (viaDocument) {
         model.getDocument().setText(newText)
       } else {
@@ -138,8 +144,20 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
 
   private object ClassRef : RefKind(){
     override fun loadRef(model: Model) = model.findPsiClass()
+    override fun checkDuplicates(oldValue: Any, newValue: Any) {
+      oldValue as PsiClass
+      newValue as PsiClass
+      if (oldValue.isValid && (newValue.containingFile as PsiJavaFile).classes.size == 1) {
+        // if there are >1 classes in the file, it could be that after reparse previously retrieved PsiClass instance is now pointing to a non-first one, and so there's no duplicate 
+        Assert.fail("Duplicate PSI elements: $oldValue and $newValue")
+      }
+    }
   }
 }
 
 private fun Model.findPsiJavaFile() = PsiManager.getInstance(project).findFile(vFile) as PsiJavaFile
-private fun Model.findPsiClass() = JavaPsiFacade.getInstance(project).findClass((this as JavaPsiIndexConsistencyTest.JavaModel).psiClassName, GlobalSearchScope.allScope(project))!!
+private fun Model.findPsiClass(): PsiClass {
+  val name = (this as JavaPsiIndexConsistencyTest.JavaModel).psiClassName
+  return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project)) ?: 
+              error("Expected to find class named \"$name\"")
+}

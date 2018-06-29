@@ -33,6 +33,7 @@ import com.intellij.openapi.application.impl.ApplicationImpl;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageDialogBuilder;
@@ -149,26 +150,35 @@ public class ReplaceInProjectManager {
     }
 
     findManager.showFindDialog(findModel, () -> {
-      if (!findModel.isProjectScope() &&
-          FindInProjectUtil.getDirectory(findModel) == null &&
-          findModel.getModuleName() == null &&
-          findModel.getCustomScope() == null) {
-        return;
+      if (findModel.isReplaceState()) {
+        replaceInPath(findModel);
+      } else {
+        FindInProjectManager.getInstance(myProject).findInPath(findModel);
       }
-
-      UsageViewManager manager = UsageViewManager.getInstance(myProject);
-
-      if (manager == null) return;
-      findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = findModel.clone();
-
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
-      processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
-
-      UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
-      searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
     });
+  }
+
+  public void replaceInPath(@NotNull FindModel findModel) {
+    FindManager findManager = FindManager.getInstance(myProject);
+    if (!findModel.isProjectScope() &&
+        FindInProjectUtil.getDirectory(findModel) == null &&
+        findModel.getModuleName() == null &&
+        findModel.getCustomScope() == null) {
+      return;
+    }
+
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
+
+    if (manager == null) return;
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = findModel.clone();
+
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
+
+    UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
+    searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
   private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {
@@ -233,8 +243,9 @@ public class ReplaceInProjectManager {
       FindBundle.message("find.replace.all.confirmation.title"),
       FindBundle.message("find.replace.all.confirmation", usagesCount, StringUtil.escapeXml(stringToFind), filesCount,
                          StringUtil.escapeXml(stringToReplace)))
-      .yesText(Messages.OK_BUTTON)
-      .noText(Messages.CANCEL_BUTTON).show();
+                                               .yesText(FindBundle.message("find.replace.command"))
+                                               .project(myProject)
+                                               .noText(Messages.CANCEL_BUTTON).show();
   }
 
   private static Set<VirtualFile> getFiles(@NotNull ReplaceContext replaceContext, boolean selectedOnly) {
@@ -267,6 +278,11 @@ public class ReplaceInProjectManager {
 
   private void addReplaceActions(final ReplaceContext replaceContext) {
     final AbstractAction replaceAllAction = new AbstractAction(FindBundle.message("find.replace.all.action")) {
+      {
+        KeyStroke altShiftEnter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK | InputEvent.SHIFT_DOWN_MASK);
+        putValue(ACCELERATOR_KEY, altShiftEnter);
+        putValue(SHORT_DESCRIPTION, KeymapUtil.getKeystrokeText(altShiftEnter));
+      }
       @Override
       public void actionPerformed(ActionEvent e) {
         Set<Usage> usages = replaceContext.getUsageView().getUsages();
@@ -290,7 +306,10 @@ public class ReplaceInProjectManager {
 
     final AbstractAction replaceSelectedAction = new AbstractAction() {
       {
-        putValue(ACCELERATOR_KEY, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK));
+        KeyStroke altEnter = KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, InputEvent.ALT_DOWN_MASK);
+        putValue(ACCELERATOR_KEY, altEnter);
+        putValue(LONG_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
+        putValue(SHORT_DESCRIPTION, KeymapUtil.getKeystrokeText(altEnter));
       }
       
       @Override
@@ -339,7 +358,7 @@ public class ReplaceInProjectManager {
       }
     };
 
-    replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
+    //replaceContext.getUsageView().addButtonToLowerPane(replaceAllInThisFileAction);
 
     final AbstractAction skipThisFileAction = new AbstractAction() {
       @Override
@@ -374,7 +393,7 @@ public class ReplaceInProjectManager {
       }
     };
 
-    replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
+    //replaceContext.getUsageView().addButtonToLowerPane(skipThisFileAction);
   }
 
   private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {

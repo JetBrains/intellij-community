@@ -77,7 +77,7 @@ public class GradleConsoleFilter implements Filter {
 
     final String fileName = fileAndLineNumber.substring(0, linePrefixIndex);
     myFilteredFileName = fileName;
-    String lineNumberStr = fileAndLineNumber.substring(linePrefixIndex + linePrefix.length(), fileAndLineNumber.length()).trim();
+    String lineNumberStr = fileAndLineNumber.substring(linePrefixIndex + linePrefix.length()).trim();
     int lineNumberEndIndex = 0;
     for (int i = 0; i < lineNumberStr.length(); i++) {
       if (Character.isDigit(lineNumberStr.charAt(i))) {

@@ -29,6 +29,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTree;
 import com.intellij.util.containers.ContainerUtil;
@@ -145,6 +146,9 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     }
     if (MavenDataKeys.MAVEN_PROJECTS_TREE.is(dataId)) {
       return myTree;
+    }
+    if (TouchbarDataKeys.ACTIONS_KEY.is(dataId)) {
+      return new DefaultActionGroup(ActionManager.getInstance().getAction("Maven.Reimport"));
     }
 
     return super.getData(dataId);

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.configurations;
 
 import com.intellij.execution.CantRunException;
@@ -21,11 +7,14 @@ import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaSdkVersionUtil;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
 import com.intellij.openapi.vfs.jrt.JrtFileSystem;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.PathsList;
 import com.intellij.util.text.VersionComparatorUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -33,13 +22,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.nio.charset.Charset;
-import java.util.Arrays;
-import java.util.LinkedHashSet;
-import java.util.Set;
+import java.util.*;
 
 public class JavaParameters extends SimpleJavaParameters {
   private static final Logger LOG = Logger.getInstance(JavaParameters.class);
   private static final String JAVA_LIBRARY_PATH_PROPERTY = "java.library.path";
+
+  public static final String JAVA_ENABLE_PREVIEW_PROPERTY = "--enable-preview";
   public static final DataKey<JavaParameters> JAVA_PARAMETERS = DataKey.create("javaParameters");
 
   public String getJdkPath() throws CantRunException {
@@ -64,9 +53,9 @@ public class JavaParameters extends SimpleJavaParameters {
   public static final int CLASSES_AND_TESTS = CLASSES_ONLY | TESTS_ONLY;
   public static final int JDK_AND_CLASSES_AND_PROVIDED = JDK_ONLY | CLASSES_ONLY | INCLUDE_PROVIDED;
 
-  public void configureByModule(final Module module,
-                                @MagicConstant(valuesFromClass = JavaParameters.class) final int classPathType,
-                                final Sdk jdk) throws CantRunException {
+  public void configureByModule(Module module,
+                                @MagicConstant(valuesFromClass = JavaParameters.class) int classPathType,
+                                Sdk jdk) throws CantRunException {
     if ((classPathType & JDK_ONLY) != 0) {
       if (jdk == null) {
         throw CantRunException.noJdkConfigured();
@@ -81,6 +70,25 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(module.getProject());
     configureEnumerator(OrderEnumerator.orderEntries(module).recursively(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(module).recursively());
+    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(module).recursively(), jdk);
+  }
+
+  private void configureJavaEnablePreviewProperty(OrderEnumerator orderEnumerator, Sdk jdk) {
+    ParametersList vmParameters = getVMParametersList();
+    if (vmParameters.hasParameter(JAVA_ENABLE_PREVIEW_PROPERTY) || !JavaSdkVersionUtil.isAtLeast(jdk, JavaSdkVersion.JDK_11)) {
+      return;
+    }
+    orderEnumerator.forEachModule(module -> {
+      LanguageLevelModuleExtension moduleExtension = LanguageLevelModuleExtensionImpl.getInstance(module);
+      if (moduleExtension != null) {
+        LanguageLevel languageLevel = moduleExtension.getLanguageLevel();
+        if (languageLevel != null && languageLevel.isPreview()) {
+          vmParameters.add(JAVA_ENABLE_PREVIEW_PROPERTY);
+          return false;
+        }
+      }
+      return true;
+    });
   }
 
   private void configureJavaLibraryPath(OrderEnumerator enumerator) {
@@ -109,6 +117,7 @@ public class JavaParameters extends SimpleJavaParameters {
   }
 
   /** @deprecated use {@link #getValidJdkToRunModule(Module, boolean)} instead */
+  @Deprecated
   public static Sdk getModuleJdk(final Module module) throws CantRunException {
     return getValidJdkToRunModule(module, false);
   }
@@ -175,6 +184,7 @@ public class JavaParameters extends SimpleJavaParameters {
     setDefaultCharset(project);
     configureEnumerator(OrderEnumerator.orderEntries(project).runtimeOnly(), classPathType, jdk).collectPaths(getClassPath());
     configureJavaLibraryPath(OrderEnumerator.orderEntries(project));
+    configureJavaEnablePreviewProperty(OrderEnumerator.orderEntries(project), jdk);
   }
 
   private static OrderRootsEnumerator configureEnumerator(OrderEnumerator enumerator, int classPathType, Sdk jdk) {

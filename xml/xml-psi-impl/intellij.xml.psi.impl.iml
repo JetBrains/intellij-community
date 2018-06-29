@@ -19,5 +19,6 @@
     <orderEntry type="library" name="XmlBeans" level="project" />
     <orderEntry type="module" module-name="intellij.regexp" exported="" />
     <orderEntry type="module" module-name="intellij.platform.lang" />
+    <orderEntry type="library" name="xml-resolver" level="project" />
   </component>
 </module>

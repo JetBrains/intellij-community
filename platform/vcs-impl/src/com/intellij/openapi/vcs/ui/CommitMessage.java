@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.ui;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
@@ -25,7 +11,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.SpellCheckingEditorCustomizationProvider;
@@ -68,7 +54,7 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   @NotNull private final EditorTextField myEditorField;
   @Nullable private final TitledSeparator mySeparator;
 
-  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with WriteLock
+  @NotNull private List<ChangeList> myChangeLists = Collections.emptyList(); // guarded with this
 
   public CommitMessage(@NotNull Project project) {
     this(project, true, true, true);
@@ -102,12 +88,13 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @NotNull
-  private static JComponent createToolbar(boolean horizontal) {
+  private JComponent createToolbar(boolean horizontal) {
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar("CommitMessage", getToolbarActions(), horizontal);
 
     toolbar.updateActionsImmediately();
     toolbar.setReservePlaceAutoPopupIcon(false);
     toolbar.getComponent().setBorder(createEmptyBorder());
+    toolbar.setTargetComponent(this);
 
     return toolbar.getComponent();
   }
@@ -209,18 +196,14 @@ public class CommitMessage extends JPanel implements Disposable, DataProvider, C
   }
 
   @CalledInAwt
-  public void setChangeList(@NotNull ChangeList value) {
-    setChangeLists(Collections.singletonList(value));
-  }
-
-  @CalledInAwt
-  public void setChangeLists(@NotNull List<ChangeList> value) {
-    WriteAction.run(() -> myChangeLists = value);
+  public synchronized void setChangeList(@NotNull ChangeList value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
+    myChangeLists = Collections.singletonList(value);
   }
 
   @NotNull
   @CalledWithReadLock
-  public List<ChangeList> getChangeLists() {
+  public synchronized List<ChangeList> getChangeLists() {
     return myChangeLists;
   }
 

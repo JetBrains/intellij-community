@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.actions.impl;
 
 import com.intellij.diff.tools.util.SyncScrollSupport;
@@ -30,9 +16,8 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
-
-import static com.intellij.util.ArrayUtil.toObjectArray;
 
 public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull private final TextDiffSettings myTextSettings;
@@ -43,7 +28,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
 
   public SetEditorSettingsAction(@NotNull TextDiffSettings settings,
                                  @NotNull List<? extends Editor> editors) {
-    super("Editor Settings", null, AllIcons.General.SecondaryGroup);
+    super("Editor Settings", null, AllIcons.General.GearPlain);
     setPopup(true);
     myTextSettings = settings;
     myEditors = editors;
@@ -164,19 +149,22 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
   @NotNull
   @Override
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
-    AnAction[] children = ((ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP)).getChildren(e);
     AnAction editorSettingsGroup = ActionManager.getInstance().getAction("Diff.EditorGutterPopupMenu.EditorSettings");
 
-    DefaultActionGroup ourGroup = new DefaultActionGroup();
-    ourGroup.add(Separator.getInstance());
-    ourGroup.addAll(myActions);
-    ourGroup.add(editorSettingsGroup);
-    ourGroup.add(Separator.getInstance());
+    List<AnAction> actions = new ArrayList<>();
+    ContainerUtil.addAll(actions, myActions);
+    actions.add(editorSettingsGroup);
+    actions.add(Separator.getInstance());
 
-    List<AnAction> result = ContainerUtil.newArrayList(children);
-    replaceOrAppend(result, editorSettingsGroup, ourGroup);
+    if (e != null && ActionPlaces.DIFF_TOOLBAR.equals(e.getPlace())) {
+      return actions.toArray(AnAction.EMPTY_ARRAY);
+    }
 
-    return toObjectArray(result, AnAction.class);
+    ActionGroup gutterGroup = (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_DIFF_EDITOR_GUTTER_POPUP);
+    List<AnAction> result = ContainerUtil.newArrayList(gutterGroup.getChildren(e));
+    result.add(Separator.getInstance());
+    replaceOrAppend(result, editorSettingsGroup, new DefaultActionGroup(actions));
+    return result.toArray(AnAction.EMPTY_ARRAY);
   }
 
   private static <T> void replaceOrAppend(List<T> list, T from, T to) {
@@ -218,7 +206,7 @@ public class SetEditorSettingsAction extends ActionGroup implements DumbAware {
     }
   }
 
-  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction {
+  private class EditorHighlightingLayerAction extends ActionGroup implements EditorSettingAction, DumbAware {
     private final AnAction[] myOptions;
 
     public EditorHighlightingLayerAction() {

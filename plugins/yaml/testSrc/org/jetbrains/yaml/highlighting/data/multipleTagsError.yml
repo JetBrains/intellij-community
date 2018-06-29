@@ -1,0 +1,1 @@
+x: !!float <error descr="Multiple tags are not permitted">!!int</error> 10

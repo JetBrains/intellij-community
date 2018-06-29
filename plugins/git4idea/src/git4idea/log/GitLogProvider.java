@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.log;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Attachment;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.ThrowableNotNullFunction;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
@@ -86,7 +71,7 @@ public class GitLogProvider implements VcsLogProvider {
     myProject = project;
     myRepositoryManager = repositoryManager;
     myUserRegistry = userRegistry;
-    myRefSorter = new GitRefManager(myRepositoryManager);
+    myRefSorter = new GitRefManager(myProject, myRepositoryManager);
     myVcsObjectsFactory = factory;
     myVcs = GitVcs.getInstance(project);
   }
@@ -108,7 +93,7 @@ public class GitLogProvider implements VcsLogProvider {
 
     boolean refresh = requirements instanceof VcsLogProviderRequirementsEx && ((VcsLogProviderRequirementsEx)requirements).isRefresh();
 
-    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, params);
+    DetailedLogData data = GitLogUtil.collectMetadata(myProject, root, false, params);
 
     Set<VcsRef> safeRefs = data.getRefs();
     Set<VcsRef> allRefs = new OpenTHashSet<>(safeRefs, DONT_CONSIDER_SHA);
@@ -263,7 +248,7 @@ public class GitLogProvider implements VcsLogProvider {
   private Set<String> readCurrentTagNames(@NotNull VirtualFile root) throws VcsException {
     StopWatch sw = StopWatch.start("reading tags in " + root.getName());
     Set<String> tags = newHashSet();
-    GitTag.listAsStrings(myProject, root, tags, null);
+    tags.addAll(GitBranchUtil.getAllTags(myProject, root));
     sw.report();
     return tags;
   }
@@ -297,7 +282,7 @@ public class GitLogProvider implements VcsLogProvider {
     Set<VcsCommitMetadata> commits = ContainerUtil.newHashSet();
     VcsFileUtil.foreachChunk(new ArrayList<>(unmatchedTags), 1, tagsChunk -> {
       String[] parameters = ArrayUtil.toStringArray(ContainerUtil.concat(params, tagsChunk));
-      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, parameters);
+      DetailedLogData logData = GitLogUtil.collectMetadata(myProject, root, false, parameters);
       refs.addAll(logData.getRefs());
       commits.addAll(logData.getCommits());
     });
@@ -330,7 +315,8 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetails(myProject, root, commitConsumer, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
+    GitLogUtil.readFullDetails(myProject, root, commitConsumer, shouldIncludeRootChanges(root),
+                               false, true, ArrayUtil.toStringArray(GitLogUtil.LOG_ALL));
   }
 
   @Override
@@ -342,35 +328,34 @@ public class GitLogProvider implements VcsLogProvider {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, GitLogUtil.DiffRenameLimit.GIT_CONFIG);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root), false,
+                                        GitLogUtil.DiffRenameLimit.GIT_CONFIG);
   }
 
   @Override
   public void readFullDetails(@NotNull VirtualFile root,
                               @NotNull List<String> hashes,
                               @NotNull Consumer<VcsFullCommitDetails> commitConsumer,
-                              boolean fast) throws VcsException {
+                              boolean isForIndexing) throws VcsException {
     if (!isRepositoryReady(root)) {
       return;
     }
 
-    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes,
-                                        fast ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY);
+    GitLogUtil.readFullDetailsForHashes(myProject, root, myVcs, commitConsumer, hashes, shouldIncludeRootChanges(root), isForIndexing,
+                                        isForIndexing ? GitLogUtil.DiffRenameLimit.REGISTRY : GitLogUtil.DiffRenameLimit.INFINITY);
+  }
+
+  private boolean shouldIncludeRootChanges(@NotNull VirtualFile root) {
+    GitRepository repository = getRepository(root);
+    if (repository == null) return true;
+    return !repository.getInfo().isShallow();
   }
 
   @NotNull
   @Override
   public List<? extends VcsShortCommitDetails> readShortDetails(@NotNull final VirtualFile root, @NotNull List<String> hashes)
     throws VcsException {
-    //noinspection Convert2Lambda
-    return VcsFileUtil.foreachChunk(hashes,
-                                    new ThrowableNotNullFunction<List<String>, List<? extends VcsShortCommitDetails>, VcsException>() {
-                                      @NotNull
-                                      @Override
-                                      public List<? extends VcsShortCommitDetails> fun(@NotNull List<String> hashes) throws VcsException {
-                                        return GitLogUtil.collectShortDetails(myProject, root, hashes);
-                                      }
-                                    });
+    return GitLogUtil.collectShortDetails(myProject, myVcs, root, hashes);
   }
 
   @NotNull

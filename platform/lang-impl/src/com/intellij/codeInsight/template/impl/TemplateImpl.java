@@ -314,7 +314,7 @@ public class TemplateImpl extends Template implements SchemeElement {
     }
 
     mySegments = new SmartList<>();
-    StringBuilder buffer = new StringBuilder("");
+    StringBuilder buffer = new StringBuilder();
     TemplateTextLexer lexer = new TemplateTextLexer();
     lexer.start(myString);
 
@@ -488,6 +488,12 @@ public class TemplateImpl extends Template implements SchemeElement {
 
   public ArrayList<Variable> getVariables() {
     return new ArrayList<>(myVariables);
+  }
+
+  @SuppressWarnings("unused")
+  //used is cases when building templates without PSI and TemplateBuilder
+  public void setPrimarySegment(int segmentNumber) {
+    Collections.swap(mySegments, 0, segmentNumber);
   }
 
   private static class Segment {

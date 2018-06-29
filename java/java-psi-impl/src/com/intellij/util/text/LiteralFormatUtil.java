@@ -115,7 +115,7 @@ public class LiteralFormatUtil {
   private static void appendFromStart(final StringBuilder buffer, final String original, final int groupSize) {
     int pointer = 0;
     while (pointer + groupSize < original.length()) {
-      buffer.append(original.substring(pointer, pointer + groupSize));
+      buffer.append(original, pointer, pointer + groupSize);
       buffer.append('_');
       pointer += groupSize;
     }

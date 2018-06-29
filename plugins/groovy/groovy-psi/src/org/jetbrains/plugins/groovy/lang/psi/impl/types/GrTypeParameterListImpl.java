@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package org.jetbrains.plugins.groovy.lang.psi.impl.types;
 
@@ -57,15 +57,23 @@ public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implem
   }
 
   @Override
-  public void accept(GroovyElementVisitor visitor) {
+  public void accept(@NotNull GroovyElementVisitor visitor) {
     visitor.visitTypeParameterList(this);
+  }
+
+  @Override
+  public PsiElement add(@NotNull PsiElement element) {
+    if (!(element instanceof PsiTypeParameter)) return super.add(element);
+
+    return addInternal(element.getNode(), element.getNode(), null, true).getPsi();
+
   }
 
   @Override
   public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
     appendParenthesesIfNeeded();
 
-    if (first == last && first.getPsi() instanceof GrTypeParameter) {
+    if (first == last && first.getPsi() instanceof PsiTypeParameter) {
       boolean hasParams = getTypeParameters().length > 0;
 
       final ASTNode _anchor;

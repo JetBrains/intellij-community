@@ -84,7 +84,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
           int index1 = projectGoals.indexOf(goal1);
           int index2 = projectGoals.indexOf(goal2);
           if (index1 == index2) return goal1.compareToIgnoreCase(goal2);
-          return (index1 < index2 ? -1 : 1);
+          return index1 < index2 ? -1 : 1;
         });
         projectToActionsMapping.put(mavenProject, actions);
       }
@@ -98,7 +98,7 @@ public class MavenKeymapExtension implements ExternalSystemKeymapExtension.Actio
       }
     }
 
-    Icon icon = SystemInfoRt.isMac ? AllIcons.ToolbarDecorator.Mac.Add : AllIcons.ToolbarDecorator.Add;
+    Icon icon = AllIcons.General.Add;
     ((Group)result).addHyperlink(new Hyperlink(icon, "Choose a phase/goal to assign a shortcut") {
       @Override
       public void onClick(MouseEvent e) {

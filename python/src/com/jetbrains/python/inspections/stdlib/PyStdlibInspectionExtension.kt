@@ -4,8 +4,8 @@ package com.jetbrains.python.inspections.stdlib
 import com.intellij.psi.PsiReference
 import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType
+import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleTypeProvider
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibClassMembersProvider
-import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider
 import com.jetbrains.python.inspections.PyInspectionExtension
 import com.jetbrains.python.psi.PyElement
 import com.jetbrains.python.psi.PyFunction
@@ -38,7 +38,7 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
       val qualifier = node.qualifier
       if (qualifier is PyReferenceExpression) {
         return PyStdlibClassMembersProvider.referenceToMockPatch(qualifier, context) &&
-               PyStdlibClassMembersProvider.MOCK_PATCH_MEMBERS.find { it.name == node.name } != null
+               PyStdlibClassMembersProvider.calcMockPatchMembers(qualifier).any { it.name == node.name }
       }
     }
 
@@ -49,6 +49,6 @@ class PyStdlibInspectionExtension : PyInspectionExtension() {
     val qualifier = expression.qualifier
     return qualifier != null &&
            expression.referencedName in NAMEDTUPLE_SPECIAL_ATTRIBUTES &&
-           PyStdlibTypeProvider.isNamedTuple(context.getType(qualifier), context)
+           PyNamedTupleTypeProvider.isNamedTuple(context.getType(qualifier), context)
   }
 }

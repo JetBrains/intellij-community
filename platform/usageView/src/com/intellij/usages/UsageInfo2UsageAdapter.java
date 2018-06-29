@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.usages;
 
 import com.intellij.ide.SelectInEditorManager;
@@ -180,7 +180,7 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   }
 
   // must iterate in start offset order
-  public boolean processRangeMarkers(@NotNull Processor<Segment> processor) {
+  public boolean processRangeMarkers(@NotNull Processor<? super Segment> processor) {
     for (UsageInfo usageInfo : getMergedInfos()) {
       Segment segment = usageInfo.getSegment();
       if (segment != null && !processor.process(segment)) {
@@ -243,7 +243,10 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
     return offset;
   }
 
-  private Segment getNavigationRange() {
+  /**
+   * Returns the text range of the usage relative to the start of the file.
+   */
+  public Segment getNavigationRange() {
     Document document = getDocument();
     if (document == null) return null;
     Segment range = getUsageInfo().getNavigationRange();
@@ -432,6 +435,22 @@ public class UsageInfo2UsageAdapter implements UsageInModule,
   @Override
   @NotNull
   public TextChunk[] getText() {
+    return doUpdateCachedText();
+  }
+
+  @Nullable
+  @Override
+  public TextChunk[] getCachedText() {
+    return SoftReference.dereference(myTextChunks);
+  }
+
+  @Override
+  public void updateCachedText() {
+    doUpdateCachedText();
+  }
+
+  @NotNull
+  private TextChunk[] doUpdateCachedText() {
     TextChunk[] chunks = SoftReference.dereference(myTextChunks);
     final long currentModificationStamp = getCurrentModificationStamp();
     boolean isModified = currentModificationStamp != myModificationStamp;

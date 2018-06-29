@@ -88,16 +88,16 @@ public class JavaTreeGenerator implements TreeGenerator {
 
         boolean isFQ = false;
         if (original instanceof PsiJavaCodeReferenceElementImpl) {
-          int kind = ((PsiJavaCodeReferenceElementImpl)original).getKind(original.getContainingFile());
+          PsiJavaCodeReferenceElementImpl.Kind kind = ((PsiJavaCodeReferenceElementImpl)original).getKindEnum(original.getContainingFile());
           switch (kind) {
-            case PsiJavaCodeReferenceElementImpl.CLASS_OR_PACKAGE_NAME_KIND:
-            case PsiJavaCodeReferenceElementImpl.CLASS_NAME_KIND:
-            case PsiJavaCodeReferenceElementImpl.CLASS_IN_QUALIFIED_NEW_KIND:
+            case CLASS_OR_PACKAGE_NAME_KIND:
+            case CLASS_NAME_KIND:
+            case CLASS_IN_QUALIFIED_NEW_KIND:
               isFQ = false;
               break;
 
-            case PsiJavaCodeReferenceElementImpl.CLASS_FQ_NAME_KIND:
-            case PsiJavaCodeReferenceElementImpl.CLASS_FQ_OR_PACKAGE_NAME_KIND:
+            case CLASS_FQ_NAME_KIND:
+            case CLASS_FQ_OR_PACKAGE_NAME_KIND:
               isFQ = true;
               break;
 

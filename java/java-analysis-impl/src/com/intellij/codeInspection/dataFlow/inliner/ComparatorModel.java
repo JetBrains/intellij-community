@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInspection.dataFlow.inliner;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInspection.dataFlow.CFGBuilder;
-import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
@@ -103,7 +103,7 @@ abstract class ComparatorModel {
 
     @Override
     void invoke(CFGBuilder builder) {
-      builder.dup().ifNotNull().chain(myDownstream::invoke).elseBranch().pop().endIf();
+      builder.dup().ifNotNull().chain(myDownstream::invoke).elseBranch().pop().end();
     }
   }
 
@@ -125,7 +125,7 @@ abstract class ComparatorModel {
 
     @Override
     void invoke(CFGBuilder builder) {
-      builder.invokeFunction(1, myKeyExtractor, myDownstream.myFailsOnNull ? Nullness.NOT_NULL : Nullness.UNKNOWN)
+      builder.invokeFunction(1, myKeyExtractor, myDownstream.myFailsOnNull ? Nullability.NOT_NULL : Nullability.UNKNOWN)
         .chain(myDownstream::invoke);
     }
   }

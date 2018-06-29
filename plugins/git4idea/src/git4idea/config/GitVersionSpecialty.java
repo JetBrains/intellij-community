@@ -15,7 +15,10 @@
  */
 package git4idea.config;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.SystemInfo;
+import git4idea.GitVcs;
+import git4idea.repo.GitRepository;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,6 +35,7 @@ import org.jetbrains.annotations.NotNull;
  * }
  * }</pre>
  * </p>
+ *
  * @author Kirill Likhodedov
  */
 public enum GitVersionSpecialty {
@@ -114,6 +118,13 @@ public enum GitVersionSpecialty {
     }
   },
 
+  CLONE_RECURSE_SUBMODULES {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(1, 7, 11, 0));
+    }
+  },
+
   /**
    * {@code --no-walk=unsorted} <br/>
    * Before this version {@code --no-walk} didn't take any parameters.
@@ -154,6 +165,7 @@ public enum GitVersionSpecialty {
   },
 
   FULL_HISTORY_SIMPLIFY_MERGES_WORKS_CORRECTLY { // for some reason, even with "simplify-merges", it used to show a lot of merges in history
+
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 9, 0, 0));
@@ -168,6 +180,7 @@ public enum GitVersionSpecialty {
   },
 
   KNOWS_SET_UPSTREAM_TO { // in Git 1.8.0 --set-upstream-to was introduced as a replacement of --set-upstream which became deprecated
+
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       return version.isLaterOrEqual(new GitVersion(1, 8, 0, 0));
@@ -191,14 +204,56 @@ public enum GitVersionSpecialty {
     }
   },
 
+  INCOMING_OUTGOING_BRANCH_INFO {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 9, 0, 0));
+    }
+  },
+
   LF_SEPARATORS_IN_STDIN {
     @Override
     public boolean existsIn(@NotNull GitVersion version) {
       // before 2.8.0 git for windows expects to have LF symbol as line separator in standard input instead of CRLF
       return SystemInfo.isWindows && !version.isLaterOrEqual(new GitVersion(2, 8, 0, 0));
     }
+  },
+
+  ENV_GIT_TRACE_PACK_ACCESS_ALLOWED {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 1, 0, 0));
+    }
+  },
+
+  CACHEINFO_SUPPORTS_SINGLE_PARAMETER_FORM {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 0, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_FILTERS {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 11, 0, 0));
+    }
+  },
+
+  CAT_FILE_SUPPORTS_TEXTCONV {
+    @Override
+    public boolean existsIn(@NotNull GitVersion version) {
+      return version.isLaterOrEqual(new GitVersion(2, 2, 0, 0));
+    }
   };
 
   public abstract boolean existsIn(@NotNull GitVersion version);
 
+  public boolean existsIn(@NotNull Project project) {
+    return existsIn(GitVcs.getInstance(project).getVersion());
+  }
+
+  public boolean existsIn(@NotNull GitRepository repository) {
+    return existsIn(repository.getVcs().getVersion());
+  }
 }

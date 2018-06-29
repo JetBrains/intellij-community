@@ -22,9 +22,12 @@ import com.intellij.openapi.progress.util.AbstractProgressIndicatorBase;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
 import com.intellij.util.concurrency.Semaphore;
 import junit.framework.TestCase;
+import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.function.Predicate;
 
 /**
  * A progress indicator that starts throwing {@link ProcessCanceledException} after n {@link #checkCanceled()} attempts, where
@@ -33,21 +36,34 @@ import java.util.concurrent.Future;
  * @author peter
  */
 public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
+  private final Predicate<StackTraceElement[]> myStackCondition;
   private int myRemainingChecks;
   private volatile Thread myThread;
 
   public BombedProgressIndicator(int checkCanceledCount) {
     myRemainingChecks = checkCanceledCount;
+    myStackCondition = null;
+  }
+
+  private BombedProgressIndicator(@NotNull Predicate<StackTraceElement[]> stackCondition) {
+    myStackCondition = stackCondition;
+    myRemainingChecks = -1;
   }
 
   @Override
   public void checkCanceled() throws ProcessCanceledException {
     if (myThread == Thread.currentThread()) { // to prevent CoreProgressManager future from interfering with its periodical checkCanceled
-      if (myRemainingChecks > 0) {
-        myRemainingChecks--;
-      }
-      else {
-        cancel();
+      if (myStackCondition != null) {
+        if (myStackCondition.test(new Throwable().getStackTrace())) {
+          cancel();
+        }
+      } else {
+        if (myRemainingChecks > 0) {
+          myRemainingChecks--;
+        }
+        else {
+          cancel();
+        }
       }
     }
     super.checkCanceled();
@@ -101,5 +117,13 @@ public class BombedProgressIndicator extends AbstractProgressIndicatorBase {
     }
 
     return isCanceled();
+  }
+
+  public static BombedProgressIndicator explodeOnStack(Predicate<StackTraceElement[]> stackCondition) {
+    return new BombedProgressIndicator(stackCondition);
+  }
+
+  public static BombedProgressIndicator explodeOnStackElement(Predicate<? super StackTraceElement> stackElementCondition) {
+    return explodeOnStack(stack -> Arrays.stream(stack).anyMatch(stackElementCondition));
   }
 }

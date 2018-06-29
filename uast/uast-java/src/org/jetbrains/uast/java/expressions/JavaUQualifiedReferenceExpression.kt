@@ -15,6 +15,7 @@
  */
 package org.jetbrains.uast.java
 
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiJavaCodeReferenceElement
 import com.intellij.psi.PsiNamedElement
 import org.jetbrains.uast.*
@@ -23,15 +24,13 @@ class JavaUQualifiedReferenceExpression(
   override val psi: PsiJavaCodeReferenceElement,
   givenParent: UElement?
 ) : JavaAbstractUExpression(givenParent), UQualifiedReferenceExpression {
-  override val receiver by lz {
+  override val receiver: UExpression by lz {
     psi.qualifier?.let { JavaConverter.convertPsiElement(it, this) as? UExpression } ?: UastEmptyExpression(this)
   }
 
-  override val selector by lz {
+  override val selector: JavaUSimpleNameReferenceExpression by lz {
     JavaUSimpleNameReferenceExpression(psi.referenceNameElement, psi.referenceName ?: "<error>", this, psi)
   }
-
-  override fun convertParent(): UElement? = super.convertParent().let(this::unwrapCompositeQualifiedReference)
 
   override val accessType: UastQualifiedExpressionAccessType
     get() = UastQualifiedExpressionAccessType.SIMPLE
@@ -39,19 +38,14 @@ class JavaUQualifiedReferenceExpression(
   override val resolvedName: String?
     get() = (psi.resolve() as? PsiNamedElement)?.name
 
-  override fun resolve() = psi.resolve()
+  override fun resolve(): PsiElement? = psi.resolve()
 }
 
 internal fun UElement.unwrapCompositeQualifiedReference(uParent: UElement?): UElement? = when (uParent) {
   is UQualifiedReferenceExpression -> {
     if (uParent.receiver == this || uParent.selector == this)
       uParent
-    else {
-      val selector = uParent.selector
-      if (this is JavaUSimpleNameReferenceExpression || (selector is JavaUCallExpression && selector.valueArgumentCount > 0))
-        selector
-      else uParent.uastParent
-    }
+    else uParent.selector as? JavaUCallExpression ?: uParent.uastParent
   }
   else -> uParent
 }

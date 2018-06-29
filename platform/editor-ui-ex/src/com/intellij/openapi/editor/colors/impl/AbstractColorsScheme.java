@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.colors.impl;
 
@@ -29,7 +15,10 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.options.SchemeState;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.InvalidDataException;
+import com.intellij.openapi.util.Ref;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.JdomKt;
 import com.intellij.util.ObjectUtils;
@@ -194,6 +183,19 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   @NotNull
   public Set<ColorKey> getColorKeys() {
     return myColorsMap.keySet();
+  }
+
+  /**
+   * Returns the collection of text attribute keys for which this color scheme defines attributes.
+   */
+  @SuppressWarnings("unused")
+  @NotNull
+  public Set<TextAttributesKey> getAttributeKeys() {
+    HashSet<TextAttributesKey> result = new HashSet<>(myAttributesMap.keySet());
+    if (myParentScheme instanceof DefaultColorsScheme) {
+      result.addAll(((DefaultColorsScheme) myParentScheme).getAttributeKeys());
+    }
+    return result;
   }
 
   @Override
@@ -578,15 +580,12 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
       parentNode.addContent(metaInfoToElement());
     }
 
-    if (getLineSpacing() != FontPreferences.DEFAULT_LINE_SPACING) {
-      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
-    }
-
     // IJ has used a 'single customizable font' mode for ages. That's why we want to support that format now, when it's possible
     // to specify fonts sequence (see getFontPreferences()), there are big chances that many clients still will use a single font.
     // That's why we want to use old format when zero or one font is selected and 'extended' format otherwise.
     boolean useOldFontFormat = myFontPreferences.getEffectiveFontFamilies().size() <= 1;
     if (!(myFontPreferences instanceof DelegatingFontPreferences)) {
+      JdomKt.addOptionTag(parentNode, LINE_SPACING, String.valueOf(getLineSpacing()));
       if (useOldFontFormat) {
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_SIZE, String.valueOf(getEditorFontSize()));
         JdomKt.addOptionTag(parentNode, EDITOR_FONT_NAME, myFontPreferences.getFontFamily());
@@ -609,7 +608,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
         writeFontPreferences(CONSOLE_FONT, parentNode, myConsoleFontPreferences);
       }
       writeLigaturesPreferences(parentNode, myConsoleFontPreferences, CONSOLE_LIGATURES);
-      if (getConsoleLineSpacing() != FontPreferences.DEFAULT_LINE_SPACING) {
+      if ((myFontPreferences instanceof DelegatingFontPreferences) || getConsoleLineSpacing() != getLineSpacing()) {
         JdomKt.addOptionTag(parentNode, CONSOLE_LINE_SPACING, Float.toString(getConsoleLineSpacing()));
       }
     }
@@ -649,7 +648,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     }
   }
 
-  private void writeAttributes(@NotNull Element attrElements) throws WriteExternalException {
+  private void writeAttributes(@NotNull Element attrElements) {
     List<TextAttributesKey> list = new ArrayList<>(myAttributesMap.keySet());
     list.sort(null);
     for (TextAttributesKey key : list) {
@@ -968,7 +967,7 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
     String originalSchemeName = getMetaProperties().getProperty(META_INFO_ORIGINAL);
     if (originalSchemeName != null) {
       EditorColorsScheme originalScheme = EditorColorsManager.getInstance().getScheme(originalSchemeName);
-      if (originalScheme instanceof AbstractColorsScheme) return (AbstractColorsScheme)originalScheme;
+      if (originalScheme instanceof AbstractColorsScheme && originalScheme != this) return (AbstractColorsScheme)originalScheme;
     }
     return null;
   }

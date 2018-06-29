@@ -15,14 +15,20 @@
  */
 package com.intellij.vcs.log.ui.filter;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.ui.popup.ListPopup;
+import com.intellij.openapi.ui.popup.ListPopupStep;
+import com.intellij.openapi.ui.popup.PopupStep;
+import com.intellij.openapi.vcs.ui.PopupListElementRendererWithIcon;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.LayeredIcon;
+import com.intellij.ui.popup.WizardPopup;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.vcs.log.VcsLogBranchFilter;
 import com.intellij.vcs.log.VcsLogDataPack;
 import com.intellij.vcs.log.VcsRef;
@@ -30,6 +36,8 @@ import com.intellij.vcs.log.impl.MainVcsLogUiProperties;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.awt.event.InputEvent;
+import java.awt.event.MouseEvent;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -63,7 +71,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
   @NotNull
   @Override
   protected ListPopup createPopupMenu() {
-    return new BranchLogSpeedSearchPopup(createActionGroup(), DataManager.getInstance().getDataContext(this));
+    return new MyBranchLogSpeedSearchPopup();
   }
 
   @Override
@@ -73,8 +81,8 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     actionGroup.add(createAllAction());
     actionGroup.add(createSelectMultipleValuesAction());
 
-    actionGroup.add(
-      new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(), getRecentValuesFromSettings()).build());
+    actionGroup.add(new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(),
+                                             getRecentValuesFromSettings()).build());
     return actionGroup;
   }
 
@@ -104,24 +112,115 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
     @NotNull
     @Override
-    public AnAction createAction(@NotNull String name) {
-      return new PredefinedValueAction(name) {
-        @Override
-        public void actionPerformed(@NotNull AnActionEvent e) {
-          myFilterModel.setFilter(myFilterModel.createFilter(myValues)); // does not add to recent
-        }
-      };
+    public AnAction createAction(@NotNull String name, @NotNull Collection<VcsRef> refs) {
+      return new BranchFilterAction(name, refs);
     }
 
     @Override
-    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItem) {
-      actionGroup.add(new PredefinedValueAction(recentItem));
+    protected void createRecentAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> recentItems) {
+      actionGroup.add(new PredefinedValueAction(recentItems));
     }
 
     @NotNull
     @Override
-    protected AnAction createCollapsedAction(String actionName) {
-      return new PredefinedValueAction(actionName); // adds to recent
+    protected AnAction createCollapsedAction(@NotNull String actionName, @NotNull Collection<VcsRef> refs) {
+      return new BranchFilterAction(actionName, refs);
+    }
+
+    @Override
+    protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
+      actionGroup.add(new PredefinedValueAction("Favorites", favorites));
+    }
+
+    private class BranchFilterAction extends PredefinedValueAction {
+      @NotNull private final LayeredIcon myIcon;
+      @NotNull private final LayeredIcon myHoveredIcon;
+      @NotNull private final Collection<VcsRef> myReferences;
+      private boolean myIsFavorite;
+
+      public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
+        super(value, true);
+        myReferences = references;
+        myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
+        myHoveredIcon = new LayeredIcon(AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);
+        getTemplatePresentation().setIcon(myIcon);
+        getTemplatePresentation().setSelectedIcon(myHoveredIcon);
+
+        myIsFavorite = isFavorite();
+        updateIcons();
+      }
+
+      private boolean isFavorite() {
+        for (VcsRef ref : myReferences) {
+          if (myDataPack.getLogProviders().get(ref.getRoot()).getReferenceManager().isFavorite(ref)) {
+            return true;
+          }
+        }
+        return false;
+      }
+
+      private void updateIcons() {
+        myIcon.setLayerEnabled(0, myIsFavorite);
+        myHoveredIcon.setLayerEnabled(0, myIsFavorite);
+
+        myIcon.setLayerEnabled(1, !myIsFavorite);
+        myHoveredIcon.setLayerEnabled(1, !myIsFavorite);
+      }
+
+      public void setFavorite(boolean favorite) {
+        for (VcsRef ref : myReferences) {
+          myDataPack.getLogProviders().get(ref.getRoot()).getReferenceManager().setFavorite(ref, favorite);
+        }
+        myIsFavorite = isFavorite();
+        updateIcons();
+      }
+
+      public void toggle() {
+        setFavorite(!myIsFavorite);
+      }
+    }
+  }
+
+  private class MyBranchLogSpeedSearchPopup extends BranchLogSpeedSearchPopup {
+    private PopupListElementRendererWithIcon myListElementRenderer;
+
+    public MyBranchLogSpeedSearchPopup() {
+      super(BranchFilterPopupComponent.this.createActionGroup(), DataManager.getInstance().getDataContext(BranchFilterPopupComponent.this));
+    }
+
+    protected MyBranchLogSpeedSearchPopup(@Nullable WizardPopup parent,
+                                          @NotNull ListPopupStep step,
+                                          @Nullable Object value) {
+      super(parent, step, DataManager.getInstance().getDataContext(BranchFilterPopupComponent.this), value);
+    }
+
+    @Override
+    public void handleSelect(boolean handleFinalChoices, InputEvent e) {
+      MyBranchPopupBuilder.BranchFilterAction branchAction =
+        getSpecificAction(getList().getSelectedValue(), MyBranchPopupBuilder.BranchFilterAction.class);
+      if (branchAction != null && e instanceof MouseEvent && myListElementRenderer.isIconAt(((MouseEvent)e).getPoint())) {
+        branchAction.toggle();
+        getList().repaint();
+      }
+      else {
+        super.handleSelect(handleFinalChoices, e);
+      }
+    }
+
+    @Override
+    protected PopupListElementRendererWithIcon getListElementRenderer() {
+      if (myListElementRenderer == null) {
+        myListElementRenderer = new PopupListElementRendererWithIcon(this);
+      }
+      return myListElementRenderer;
+    }
+
+    @Override
+    protected WizardPopup createPopup(WizardPopup parent, PopupStep step, Object parentValue) {
+      if (step instanceof ListPopupStep) {
+        return new MyBranchLogSpeedSearchPopup(parent, (ListPopupStep)step, parentValue);
+      }
+      return super.createPopup(parent, step, parentValue);
     }
   }
 }

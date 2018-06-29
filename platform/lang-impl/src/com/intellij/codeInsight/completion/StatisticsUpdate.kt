@@ -1,7 +1,8 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion
 
 import com.google.common.annotations.VisibleForTesting
+import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElement
 import com.intellij.codeInsight.lookup.LookupEvent
 import com.intellij.featureStatistics.FeatureUsageTracker
@@ -24,7 +25,7 @@ class StatisticsUpdate
 
   override fun dispose() {}
 
-  fun addSparedChars(indicator: CompletionProgressIndicator, item: LookupElement, context: InsertionContext) {
+  fun addSparedChars(lookup: Lookup, item: LookupElement, context: InsertionContext) {
     val textInserted: String
     if (context.offsetMap.containsOffset(CompletionInitializationContext.START_OFFSET) &&
         context.offsetMap.containsOffset(InsertionContext.TAIL_OFFSET) &&
@@ -35,7 +36,7 @@ class StatisticsUpdate
       textInserted = item.lookupString
     }
     val withoutSpaces = StringUtil.replace(textInserted, listOf(" ", "\t", "\n"), listOf("", "", ""))
-    var spared = withoutSpaces.length - indicator.lookup.itemPattern(item).length
+    var spared = withoutSpaces.length - lookup.itemPattern(item).length
     val completionChar = context.completionChar
     if (!LookupEvent.isSpecialCompletionChar(completionChar) && withoutSpaces.contains(completionChar.toString())) {
       spared--

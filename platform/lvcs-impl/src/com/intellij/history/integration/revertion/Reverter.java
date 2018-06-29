@@ -22,13 +22,11 @@ import com.intellij.history.core.changes.StructuralChange;
 import com.intellij.history.core.revisions.Revision;
 import com.intellij.history.integration.IdeaGateway;
 import com.intellij.history.integration.LocalHistoryBundle;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.diff.FilesTooBigForDiffException;
 import com.intellij.util.text.DateFormatUtil;
-import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.util.*;
@@ -76,16 +74,13 @@ public abstract class Reverter {
     return v;
   }
 
-  public void revert() throws IOException {
+  public void revert() throws Exception {
     try {
-      new WriteCommandAction(myProject, getCommandName()) {
-        @Override
-        protected void run(@NotNull Result objectResult) throws Throwable {
-          myGateway.saveAllUnsavedDocuments();
-          doRevert();
-          myGateway.saveAllUnsavedDocuments();
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
+        myGateway.saveAllUnsavedDocuments();
+        doRevert();
+        myGateway.saveAllUnsavedDocuments();
+      });
     }
     catch (RuntimeException e) {
       Throwable cause = e.getCause();

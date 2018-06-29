@@ -26,7 +26,6 @@ import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.navigation.GotoImplementationHandler;
 import com.intellij.codeInsight.navigation.GotoTargetHandler;
 import com.intellij.codeInsight.template.Template;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateSettings;
 import com.intellij.codeInsight.template.impl.TemplateState;
@@ -37,10 +36,10 @@ import com.intellij.lang.surroundWith.Surrounder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.JBListUpdater;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
@@ -55,7 +54,6 @@ import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.ui.CollectionListModel;
 import com.intellij.ui.components.JBList;
-import com.intellij.ui.popup.AbstractPopup;
 import com.intellij.ui.popup.ComponentPopupBuilderImpl;
 import com.intellij.ui.speedSearch.NameFilteringListModel;
 import com.intellij.util.Function;
@@ -147,12 +145,8 @@ public class CodeInsightTestUtil {
   public static void doSurroundWithTest(@NotNull final CodeInsightTestFixture fixture, @NotNull final Surrounder surrounder,
                                         @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    new WriteCommandAction.Simple(fixture.getProject()) {
-      @Override
-      protected void run() throws Throwable {
-        SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder);
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(fixture.getProject())
+                      .run(() -> SurroundWithHandler.invoke(fixture.getProject(), fixture.getEditor(), fixture.getFile(), surrounder));
     fixture.checkResultByFile(after, false);
   }
 
@@ -170,27 +164,21 @@ public class CodeInsightTestUtil {
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
     final List<SmartEnterProcessor> processors = SmartEnterProcessors.INSTANCE.allForLanguage(fixture.getFile().getLanguage());
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        final Editor editor = fixture.getEditor();
-        for (SmartEnterProcessor processor : processors) {
-          processor.process(getProject(), editor, fixture.getFile());
-        }
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
+      final Editor editor = fixture.getEditor();
+      for (SmartEnterProcessor processor : processors) {
+        processor.process(fixture.getProject(), editor, fixture.getFile());
       }
-    }.execute();
+    });
     fixture.checkResultByFile(after, false);
   }
 
   public static void doFormattingTest(@NotNull final CodeInsightTestFixture fixture,
                                       @NotNull final String before, @NotNull final String after) {
     fixture.configureByFile(before);
-    new WriteCommandAction(fixture.getProject()) {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(fixture.getProject()).run(() -> {
+      CodeStyleManager.getInstance(fixture.getProject()).reformat(fixture.getFile());
+    });
     fixture.checkResultByFile(after, false);
   }
 
@@ -202,9 +190,9 @@ public class CodeInsightTestUtil {
   @TestOnly
   public static void doInlineRename(VariableInplaceRenameHandler handler, final String newName, @NotNull Editor editor, PsiElement elementAtCaret) {
     Project project = editor.getProject();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
+    Disposable disposable = Disposer.newDisposable();
     try {
-      templateManager.setTemplateTesting(true);
+      TemplateManagerImpl.setTemplateTesting(project, disposable);
       handler.doRename(elementAtCaret, editor, DataManager.getInstance().getDataContext(editor.getComponent()));
       if (editor instanceof EditorWindow) {
         editor = ((EditorWindow)editor).getDelegate();
@@ -214,19 +202,15 @@ public class CodeInsightTestUtil {
       final TextRange range = state.getCurrentVariableRange();
       assert range != null;
       final Editor finalEditor = editor;
-      new WriteCommandAction.Simple(project) {
-        @Override
-        protected void run() throws Throwable {
-          finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName);
-        }
-      }.execute().throwException();
+      WriteCommandAction.writeCommandAction(project)
+                        .run(() -> finalEditor.getDocument().replaceString(range.getStartOffset(), range.getEndOffset(), newName));
 
       state = TemplateManagerImpl.getTemplateState(editor);
       assert state != null;
       state.gotoEnd(false);
     }
     finally {
-      templateManager.setTemplateTesting(false);
+      Disposer.dispose(disposable);
     }
   }
 
@@ -267,7 +251,7 @@ public class CodeInsightTestUtil {
       list.setModel(model);
       list.setModel(new NameFilteringListModel(list, Function.ID, Condition.FALSE, String::new));
       JBPopup popup = new ComponentPopupBuilderImpl(list, null).createPopup();
-      data.listUpdaterTask.init((AbstractPopup)popup, list, new Ref<>());
+      data.listUpdaterTask.init(popup, new JBListUpdater(list), new Ref<>());
 
       data.listUpdaterTask.queue();
 

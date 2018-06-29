@@ -30,10 +30,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.search.searches.ReferencesSearch;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiTypesUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.introduceParameter.Util;
@@ -45,7 +42,8 @@ import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
-import java.util.HashMap;
+import com.intellij.util.JavaPsiConstructorUtil;
+import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.MultiMap;
 import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.SideEffectChecker;
@@ -722,7 +720,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     PsiElement callParent = methodCall.getParent();
     if (callParent instanceof PsiLambdaExpression) {
       methodCall.delete();
-    } else if (callParent instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
+    }
+    else if (callParent instanceof PsiExpressionStatement || tailCall == InlineUtil.TailCallType.Return) {
       CommentTracker tracker = new CommentTracker();
       tracker.delete(callParent);
       if (firstAdded != null) {
@@ -732,7 +731,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     else {
       if (blockData.resultVar != null) {
         PsiExpression expr = myFactory.createExpressionFromText(blockData.resultVar.getName(), null);
-        methodCall.replace(expr);
+        new CommentTracker().replaceAndRestoreComments(methodCall, expr);
       }
       else {
         //??
@@ -840,7 +839,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
         final PsiEllipsisType ellipsisType = (PsiEllipsisType)paramType;
         paramType = callSubstitutor.substitute(ellipsisType.toArrayType());
         if (applicabilityLevel == MethodCandidateInfo.ApplicabilityLevel.VARARGS) {
-          defaultValue = "new " + ((PsiArrayType)paramType).getComponentType().getCanonicalText() + "[]{}";
+          PsiType componentType = ((PsiArrayType)paramType).getComponentType();
+          defaultValue = "new " + ObjectUtils.notNull(TypeConversionUtil.erasure(componentType), componentType).getCanonicalText() + "[]{}";
         }
         else {
           defaultValue = PsiTypesUtil.getDefaultValueOfType(paramType);
@@ -1524,14 +1524,14 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
   @Deprecated
   public static String checkCalledInSuperOrThisExpr(PsiCodeBlock methodBody, final PsiElement element) {
     return checkUnableToInsertCodeBlock(methodBody, element,
-                                        expr -> RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element)
+                                        expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)
            ? "Inline cannot be applied to multiline method in constructor call"
            : null;
   }
 
   public static String checkUnableToInsertCodeBlock(PsiCodeBlock methodBody, final PsiElement element) {
     if (checkUnableToInsertCodeBlock(methodBody, element,
-                                     expr -> RefactoringChangeUtil.isSuperOrThisMethodCall(expr) && expr.getMethodExpression() != element)) {
+                                     expr -> JavaPsiConstructorUtil.isConstructorCall(expr) && expr.getMethodExpression() != element)) {
       return "Inline cannot be applied to multiline method in constructor call";
     }
     return checkUnableToInsertCodeBlock(methodBody, element,

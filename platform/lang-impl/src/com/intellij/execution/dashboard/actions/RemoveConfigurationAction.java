@@ -17,13 +17,15 @@ package com.intellij.execution.dashboard.actions;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.RunManager;
+import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.execution.dashboard.RunDashboardManager;
 import com.intellij.execution.dashboard.RunDashboardRunConfigurationNode;
-import com.intellij.execution.dashboard.RunDashboardContent;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
@@ -36,6 +38,16 @@ public class RemoveConfigurationAction extends RunConfigurationTreeAction {
     super(ExecutionBundle.message("run.dashboard.remove.configuration.action.name"),
           ExecutionBundle.message("run.dashboard.remove.configuration.action.description"),
           AllIcons.General.Remove);
+  }
+
+  @Override
+  public void update(@NotNull AnActionEvent e) {
+    super.update(e);
+    if (e.getPresentation().isEnabled()) {
+      RunDashboardContent content = getTreeContent(e);
+      e.getPresentation().setEnabled(content != null && Comparing.equal(content.getBuilder().getTree(),
+                                                                        e.getData(PlatformDataKeys.CONTEXT_COMPONENT)));
+    }
   }
 
   @Override

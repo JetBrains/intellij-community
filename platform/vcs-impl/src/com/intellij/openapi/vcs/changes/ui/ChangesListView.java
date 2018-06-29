@@ -1,37 +1,20 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.changes.ui;
 
-import com.intellij.ide.CopyProvider;
+import com.intellij.ide.TreeExpander;
 import com.intellij.ide.dnd.DnDAware;
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileChooser.actions.VirtualFileDeleteProvider;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsDataKeys;
 import com.intellij.openapi.vcs.changes.*;
-import com.intellij.openapi.vcs.changes.issueLinks.TreeLinkMouseListener;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.SmartExpander;
-import com.intellij.ui.TreeSpeedSearch;
-import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.EditSourceOnDoubleClickHandler;
 import com.intellij.util.EditSourceOnEnterKeyHandler;
 import com.intellij.util.containers.ContainerUtil;
@@ -42,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
@@ -59,11 +43,7 @@ import static com.intellij.util.containers.UtilKt.stream;
 import static java.util.stream.Collectors.toList;
 
 // TODO: Check if we could extend DnDAwareTree here instead of directly implementing DnDAware
-public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAware {
-  private final Project myProject;
-  private boolean myShowFlatten = false;
-  private final CopyProvider myCopyProvider;
-
+public class ChangesListView extends ChangesTree implements DataProvider, DnDAware {
   @NonNls public static final String HELP_ID = "ideaInterface.changes";
   @NonNls public static final DataKey<ChangesListView> DATA_KEY = DataKey.create("ChangeListView");
   @NonNls public static final DataKey<Stream<VirtualFile>> UNVERSIONED_FILES_DATA_KEY = DataKey.create("ChangeListView.UnversionedFiles");
@@ -72,35 +52,34 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   @NonNls public static final DataKey<List<LocallyDeletedChange>> LOCALLY_DELETED_CHANGES = DataKey.create("ChangeListView.LocallyDeletedChanges");
 
   public ChangesListView(@NotNull Project project) {
-    myProject = project;
-
-    setModel(TreeModelBuilder.buildEmpty(project));
-
-    setShowsRootHandles(true);
-    setRootVisible(false);
+    super(project, false, true);
     setDragEnabled(true);
+  }
 
-    myCopyProvider = new ChangesBrowserNodeCopyProvider(this);
+  @Override
+  protected void installEnterKeyHandler() {
+    EditSourceOnEnterKeyHandler.install(this);
+  }
 
-    ChangesBrowserNodeRenderer renderer = new ChangesBrowserNodeRenderer(project, () -> myShowFlatten, true);
-    setCellRenderer(renderer);
+  @Override
+  protected void installDoubleClickHandler() {
+    EditSourceOnDoubleClickHandler.install(this);
+  }
 
-    new TreeSpeedSearch(this, TO_TEXT_CONVERTER);
-    SmartExpander.installOn(this);
-    new TreeLinkMouseListener(renderer).installOn(this);
+  @NotNull
+  @Override
+  protected ChangesGroupingSupport installGroupingSupport() {
+    return new ChangesGroupingSupport(myProject, this, true);
+  }
+
+  @Override
+  public int getToggleClickCount() {
+    return 2;
   }
 
   @Override
   public DefaultTreeModel getModel() {
     return (DefaultTreeModel)super.getModel();
-  }
-
-  public boolean isShowFlatten() {
-    return myShowFlatten;
-  }
-
-  public void setShowFlatten(final boolean showFlatten) {
-    myShowFlatten = showFlatten;
   }
 
   public void updateModel(@NotNull DefaultTreeModel newModel) {
@@ -112,6 +91,11 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     expandPath(new TreePath(newRoot.getPath()));
     state.applyTo(this, newRoot);
     expandDefaultChangeList(oldRoot, newRoot);
+  }
+
+  @Override
+  public void rebuildTree() {
+    // currently not used in ChangesListView code flow
   }
 
   private void expandDefaultChangeList(ChangesBrowserNode oldRoot, ChangesBrowserNode root) {
@@ -135,79 +119,68 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
     expandPath(new TreePath(new Object[]{root, defaultListNode}));
   }
 
+  @Nullable
   @Override
-  public void calcData(DataKey key, DataSink sink) {
-    if (key == DATA_KEY) {
-      sink.put(DATA_KEY, this);
+  public Object getData(String dataId) {
+    if (DATA_KEY.is(dataId)) {
+      return this;
     }
-    else if (key == VcsDataKeys.CHANGES) {
-      sink.put(VcsDataKeys.CHANGES, getSelectedChanges().toArray(Change[]::new));
+    if (VcsDataKeys.CHANGES.is(dataId)) {
+      return getSelectedChanges().toArray(Change[]::new);
     }
-    else if (key == VcsDataKeys.CHANGE_LEAD_SELECTION) {
-      sink.put(VcsDataKeys.CHANGE_LEAD_SELECTION, getLeadSelection().toArray(Change[]::new));
+    if (VcsDataKeys.CHANGE_LEAD_SELECTION.is(dataId)) {
+      return getLeadSelection().toArray(Change[]::new);
     }
-    else if (key == VcsDataKeys.CHANGE_LISTS) {
-      sink.put(VcsDataKeys.CHANGE_LISTS, getSelectedChangeLists().toArray(ChangeList[]::new));
+    if (VcsDataKeys.CHANGE_LISTS.is(dataId)) {
+      return getSelectedChangeLists().toArray(ChangeList[]::new);
     }
-    else if (key == CommonDataKeys.VIRTUAL_FILE_ARRAY) {
-      sink.put(CommonDataKeys.VIRTUAL_FILE_ARRAY, getSelectedFiles().toArray(VirtualFile[]::new));
+    if (CommonDataKeys.VIRTUAL_FILE_ARRAY.is(dataId)) {
+      return getSelectedFiles().toArray(VirtualFile[]::new);
     }
-    else if (key == VcsDataKeys.VIRTUAL_FILE_STREAM) {
-      sink.put(VcsDataKeys.VIRTUAL_FILE_STREAM, getSelectedFiles());
+    if (VcsDataKeys.VIRTUAL_FILE_STREAM.is(dataId)) {
+      return getSelectedFiles();
     }
-    else if (key == CommonDataKeys.NAVIGATABLE) {
+    if (CommonDataKeys.NAVIGATABLE.is(dataId)) {
       VirtualFile file = getIfSingle(getNavigatableFiles());
-      if (file != null && !file.isDirectory()) {
-        sink.put(CommonDataKeys.NAVIGATABLE, new OpenFileDescriptor(myProject, file, 0));
-      }
+      return file != null && !file.isDirectory() ? PsiNavigationSupport.getInstance()
+                                                                       .createNavigatable(myProject, file, 0) : null;
     }
-    else if (key == CommonDataKeys.NAVIGATABLE_ARRAY) {
-      sink.put(CommonDataKeys.NAVIGATABLE_ARRAY, ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles()));
+    if (CommonDataKeys.NAVIGATABLE_ARRAY.is(dataId)) {
+      return ChangesUtil.getNavigatableArray(myProject, getNavigatableFiles());
     }
-    else if (key == PlatformDataKeys.DELETE_ELEMENT_PROVIDER) {
-      if (getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))) {
-        sink.put(PlatformDataKeys.DELETE_ELEMENT_PROVIDER, new VirtualFileDeleteProvider());
-      }
+    if (PlatformDataKeys.DELETE_ELEMENT_PROVIDER.is(dataId)) {
+      return getSelectionObjectsStream().anyMatch(userObject -> !(userObject instanceof ChangeList))
+             ? new VirtualFileDeleteProvider()
+             : null;
     }
-    else if (key == PlatformDataKeys.COPY_PROVIDER) {
-      sink.put(PlatformDataKeys.COPY_PROVIDER, myCopyProvider);
+    if (UNVERSIONED_FILES_DATA_KEY.is(dataId)) {
+      return getSelectedUnversionedFiles();
     }
-    else if (key == UNVERSIONED_FILES_DATA_KEY) {
-      sink.put(UNVERSIONED_FILES_DATA_KEY, getSelectedUnversionedFiles());
+    if (IGNORED_FILES_DATA_KEY.is(dataId)) {
+      return getSelectedIgnoredFiles();
     }
-    else if (key == IGNORED_FILES_DATA_KEY) {
-      sink.put(IGNORED_FILES_DATA_KEY, getSelectedIgnoredFiles());
+    if (VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY.is(dataId)) {
+      return getSelectedModifiedWithoutEditing().collect(toList());
     }
-    else if (key == VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY) {
-      sink.put(VcsDataKeys.MODIFIED_WITHOUT_EDITING_DATA_KEY, getSelectedModifiedWithoutEditing().collect(toList()));
+    if (LOCALLY_DELETED_CHANGES.is(dataId)) {
+      return getSelectedLocallyDeletedChanges().collect(toList());
     }
-    else if (key == LOCALLY_DELETED_CHANGES) {
-      sink.put(LOCALLY_DELETED_CHANGES, getSelectedLocallyDeletedChanges().collect(toList()));
+    if (MISSING_FILES_DATA_KEY.is(dataId)) {
+      return getSelectedMissingFiles().collect(toList());
     }
-    else if (key == MISSING_FILES_DATA_KEY) {
-      sink.put(MISSING_FILES_DATA_KEY, getSelectedMissingFiles().collect(toList()));
+    if (VcsDataKeys.HAVE_LOCALLY_DELETED.is(dataId)) {
+      return getSelectedMissingFiles().findAny().isPresent();
     }
-    else if (VcsDataKeys.HAVE_LOCALLY_DELETED == key) {
-      sink.put(VcsDataKeys.HAVE_LOCALLY_DELETED, getSelectedMissingFiles().findAny().isPresent());
+    if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING.is(dataId)) {
+      return getSelectedModifiedWithoutEditing().findAny().isPresent();
     }
-    else if (VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING == key) {
-      sink.put(VcsDataKeys.HAVE_MODIFIED_WITHOUT_EDITING, getSelectedModifiedWithoutEditing().findAny().isPresent());
+    if (VcsDataKeys.HAVE_SELECTED_CHANGES.is(dataId)) {
+      return haveSelectedChanges();
     }
-    else if (VcsDataKeys.HAVE_SELECTED_CHANGES == key) {
-      sink.put(VcsDataKeys.HAVE_SELECTED_CHANGES, haveSelectedChanges());
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
     }
-    else if (key == PlatformDataKeys.HELP_ID) {
-      sink.put(PlatformDataKeys.HELP_ID, HELP_ID);
-    }
-    else if (key == VcsDataKeys.CHANGES_IN_LIST_KEY) {
-      final TreePath selectionPath = getSelectionPath();
-      if (selectionPath != null && selectionPath.getPathCount() > 1) {
-        ChangesBrowserNode<?> firstNode = (ChangesBrowserNode)selectionPath.getPathComponent(1);
-        if (firstNode instanceof ChangesBrowserChangeListNode) {
-          sink.put(VcsDataKeys.CHANGES_IN_LIST_KEY, firstNode.getAllChangesUnder());
-        }
-      }
-    }
+    return super.getData(dataId);
   }
 
   @NotNull
@@ -349,13 +322,23 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
   }
 
   @NotNull
-  public ChangesBrowserNode<?> getRoot() {
-    return (ChangesBrowserNode<?>)getModel().getRoot();
-  }
-
-  @NotNull
   public Stream<Change> getChanges() {
     return getRoot().getObjectsUnderStream(Change.class);
+  }
+
+  @Nullable
+  public List<Change> getAllChangesFromSameChangelist(@NotNull Change change) {
+    DefaultMutableTreeNode node = TreeUtil.findNodeWithObject(getRoot(), change);
+    while (node != null) {
+      if (node instanceof ChangesBrowserChangeListNode) {
+        return ((ChangesBrowserChangeListNode)node).getAllChangesUnder();
+      }
+      if (node == getRoot() && Registry.is("vcs.skip.single.default.changelist")) {
+        return getRoot().getAllChangesUnder();
+      }
+      node = (DefaultMutableTreeNode)node.getParent();
+    }
+    return null;
   }
 
   @NotNull
@@ -371,14 +354,9 @@ public class ChangesListView extends Tree implements TypeSafeDataProvider, DnDAw
       .distinct();
   }
 
-  public void setMenuActions(final ActionGroup menuGroup) {
-    PopupHandler.installPopupHandler(this, menuGroup, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
-    editSourceRegistration();
-  }
-
-  protected void editSourceRegistration() {
-    EditSourceOnDoubleClickHandler.install(this);
-    EditSourceOnEnterKeyHandler.install(this);
+  @Override
+  public void installPopupHandler(@NotNull ActionGroup group) {
+    PopupHandler.installPopupHandler(this, group, ActionPlaces.CHANGES_VIEW_POPUP, ActionManager.getInstance());
   }
 
   @Override

@@ -137,11 +137,11 @@ public class FieldMayBeFinal {
         private final int j = i++;
     }
 
-    static class AssigmentInForeach {
+    static class AssignmentInForeach {
         private boolean b, c;
         private int j;
 
-        AssigmentInForeach(int[][] is) {
+        AssignmentInForeach(int[][] is) {
             b = false;
             for (int i : is[j]) {
                 b = c = i == 10;
@@ -485,7 +485,7 @@ class T5 {
   }
 }
 class T5a {
-  private int x; // javac accepts if this is final, as x = 2 is never executed, not sure whether this is according to spec
+  private int <warning descr="Field 'x' may be 'final'">x</warning>; // may be final -- javac accepts this
 
   {
     x = 1;
@@ -800,7 +800,7 @@ class T43 {
   }
 }
 class T44 {
-  private int <warning descr="Field 'i' may be 'final'">i</warning>; // may not be final -- false-positive
+  private int i; // may not be final
   {
     for (; true ; i = 1, i = 2) {
       i = 2 ;
@@ -809,7 +809,9 @@ class T44 {
   }
 }
 class T45 {
-  private int <warning descr="Field 'i' may be 'final'">i</warning>; // does not compile in javac (probably javac error)
+  // dubious: does not compile in javac when final. Probably javac error - JDK-8198245, but seems logical
+  // our behavior is consistent with javac now
+  private int i;
   {
     for (; true; i = 1) {
       i = 2;
@@ -848,7 +850,7 @@ class T49 {
   }
 }
 class T50 {
-  private boolean b; // may not be final, but green when it is.
+  private boolean b; // may not be final
   T50(int i) {
     if (false && (b = true)) {
 
@@ -900,7 +902,7 @@ class T55 {
   }
 }
 class T56 {
-  private boolean b; // may not be final, but green when it is
+  private boolean b; // may not be final
   {
     if (false && (b = false)) ;
     if (true && (b = false)) ;
@@ -1069,4 +1071,24 @@ class T74 {
     x = 2;
   }
   int y = x = 3;
+}
+// IDEA-187493
+class T75 {
+  void foo() {
+    new Inner().innerField = 1;
+  }
+
+  private static class Inner {
+    private int innerField;
+
+    private Inner() {innerField = 0;}
+  }
+}
+// IDEA-193896
+class T76 {
+  private T76 a;
+  T76(T76 other) {
+    a = other;
+    other.a = null;
+  }
 }

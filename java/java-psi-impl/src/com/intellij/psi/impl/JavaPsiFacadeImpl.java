@@ -294,9 +294,9 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   }
 
   private static void filterClassesAndAppend(PsiElementFinder finder,
-                                             @Nullable Condition<PsiClass> classesFilter,
+                                             @Nullable Condition<? super PsiClass> classesFilter,
                                              @NotNull PsiClass[] classes,
-                                             @NotNull List<PsiClass> result) {
+                                             @NotNull List<? super PsiClass> result) {
     for (PsiClass psiClass : classes) {
       if (psiClass == null) {
         LOG.error("Finder " + finder + " returned null PsiClass");
@@ -361,9 +361,7 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
       // (the Kotlin plugin can do that), the Java package takes precedence.
       PsiPackage[] packages = finder.getSubPackages(psiPackage, scope);
       for (PsiPackage aPackage : packages) {
-        if (result.get(aPackage.getName()) == null) {
-          result.put(aPackage.getName(), aPackage);
-        }
+        result.putIfAbsent(aPackage.getName(), aPackage);
       }
     }
     return result.values().toArray(PsiPackage.EMPTY_ARRAY);

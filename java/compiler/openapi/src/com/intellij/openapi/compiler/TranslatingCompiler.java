@@ -31,6 +31,7 @@ import java.util.Collection;
  * integrate into 'external build system' instead (https://confluence.jetbrains.com/display/IDEADEV/External+Builder+API+and+Plugins).
  * Since IDEA 13 users cannot switch to the old build system via UI and it will be completely removed in IDEA 14.
  */
+@Deprecated
 public interface TranslatingCompiler extends Compiler {
 
   /**

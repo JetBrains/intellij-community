@@ -17,6 +17,8 @@ package org.jetbrains.jps.maven.model.impl;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.StreamUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.execution.ParametersListUtil;
 import com.intellij.util.xmlb.annotations.MapAnnotation;
 import com.intellij.util.xmlb.annotations.Tag;
@@ -26,9 +28,17 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.*;
+import java.util.concurrent.ConcurrentHashMap;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+
+import static com.intellij.openapi.util.io.FileUtil.toSystemDependentName;
+import static java.util.Collections.emptyMap;
 
 /**
  * @author Eugene Zhuravlev
@@ -127,6 +137,11 @@ public class MavenProjectConfiguration {
       return result;
     }
 
+    result = getMavenAndJvmConfig(selectedConfig).get(propName);
+    if (result != null) {
+      return result;
+    }
+
     result = getSystemProperties().getProperty(propName);
     if (result != null) {
       return result;
@@ -163,7 +178,7 @@ public class MavenProjectConfiguration {
         }
       }
       else {
-        res = Collections.emptyMap();
+        res = emptyMap();
       }
 
       ourPropertiesFromMvnOpts = res;
@@ -201,5 +216,54 @@ public class MavenProjectConfiguration {
       ourSystemProperties = res;
     }
     return res;
+  }
+
+
+  private static final Map<File, Map<String, String>> ourMavenAndJvmConfigs = new ConcurrentHashMap<>();
+
+  // adapted from org.jetbrains.idea.maven.server.Maven3ServerEmbedder
+  private static Map<String, String> getMavenAndJvmConfig(MavenModuleResourceConfiguration moduleResourceConfig) {
+    return ourMavenAndJvmConfigs.computeIfAbsent(getBaseDir(moduleResourceConfig.directory), baseDir -> {
+      Map<String, String> result = new HashMap<>();
+      readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "jvm.config", result);
+      readConfigFile(baseDir, File.separator + ".mvn" + File.separator + "maven.config", result);
+      return result.isEmpty() ? emptyMap() : result;
+    });
+  }
+
+  private static void readConfigFile(File baseDir, String relativePath, Map<String, String> result) {
+    File configFile = new File(baseDir, relativePath);
+
+    if (configFile.exists() && configFile.isFile()) {
+      try (InputStream in = new FileInputStream(configFile)) {
+        for (String parameter : ParametersListUtil.parse(StreamUtil.readText(in, CharsetToolkit.UTF8))) {
+          Matcher matcher = PROPERTY_PATTERN.matcher(parameter);
+          if (matcher.matches()) {
+            result.put(matcher.group(1), matcher.group(2));
+          }
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
+  }
+
+  private static File getBaseDir(String path) {
+    File workingDir = new File(toSystemDependentName(path));
+
+    File baseDir = workingDir;
+    File dir = workingDir;
+    while ((dir = dir.getParentFile()) != null) {
+      if (new File(dir, ".mvn").exists()) {
+        baseDir = dir;
+        break;
+      }
+    }
+    try {
+      return baseDir.getCanonicalFile();
+    }
+    catch (IOException e) {
+      return baseDir.getAbsoluteFile();
+    }
   }
 }

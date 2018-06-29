@@ -53,7 +53,7 @@ public class MethodCandidateInfo extends CandidateInfo{
   private final LanguageLevel myLanguageLevel;
 
   public MethodCandidateInfo(@NotNull PsiElement candidate,
-                             PsiSubstitutor substitutor,
+                             @NotNull PsiSubstitutor substitutor,
                              boolean accessProblem,
                              boolean staticsProblem,
                              PsiElement argumentList,
@@ -128,8 +128,8 @@ public class MethodCandidateInfo extends CandidateInfo{
    * 15.12.2.2 Identify Matching Arity Methods Applicable by Strict Invocation
    */
   @ApplicabilityLevelConstant
-  public int getPertinentApplicabilityLevelInner() {
-    if (myArgumentList == null || !PsiUtil.isLanguageLevel8OrHigher(myArgumentList)) {
+  private int getPertinentApplicabilityLevelInner() {
+    if (myArgumentList == null || !myLanguageLevel.isAtLeast(LanguageLevel.JDK_1_8)) {
       return getApplicabilityLevel();
     }
 
@@ -395,9 +395,7 @@ public class MethodCandidateInfo extends CandidateInfo{
     if (myTypeArguments == null) {
       return inferTypeArguments(policy, arguments, true);
     }
-    else {
-      return getSiteSubstitutor();
-    }
+    return getSiteSubstitutor();
   }
 
   /**
@@ -408,14 +406,14 @@ public class MethodCandidateInfo extends CandidateInfo{
                                            @NotNull final PsiExpression[] arguments,
                                            boolean includeReturnConstraint) {
     return computeForOverloadedCandidate(() -> {
-      final PsiMethod method = this.getElement();
+      final PsiMethod method = getElement();
       PsiTypeParameter[] typeParameters = method.getTypeParameters();
 
-      if (this.isRawSubstitution()) {
+      if (isRawSubstitution()) {
         return JavaPsiFacade.getInstance(method.getProject()).getElementFactory().createRawSubstitutor(mySubstitutor, typeParameters);
       }
 
-      final PsiElement parent = this.getParent();
+      final PsiElement parent = getParent();
       if (parent == null) return PsiSubstitutor.EMPTY;
       Project project = method.getProject();
       JavaPsiFacade javaPsiFacade = JavaPsiFacade.getInstance(project);
@@ -495,8 +493,8 @@ public class MethodCandidateInfo extends CandidateInfo{
   public static class CurrentCandidateProperties {
     private final MethodCandidateInfo myMethod;
     private PsiSubstitutor mySubstitutor;
-    private boolean myVarargs;
-    private boolean myApplicabilityCheck;
+    private final boolean myVarargs;
+    private final boolean myApplicabilityCheck;
 
     private CurrentCandidateProperties(MethodCandidateInfo info, PsiSubstitutor substitutor, boolean varargs, boolean applicabilityCheck) {
       myMethod = info;
@@ -525,16 +523,8 @@ public class MethodCandidateInfo extends CandidateInfo{
       return myVarargs;
     }
 
-    public void setVarargs(boolean varargs) {
-      myVarargs = varargs;
-    }
-
     public boolean isApplicabilityCheck() {
       return myApplicabilityCheck;
-    }
-
-    public void setApplicabilityCheck(boolean applicabilityCheck) {
-      myApplicabilityCheck = applicabilityCheck;
     }
   }
 

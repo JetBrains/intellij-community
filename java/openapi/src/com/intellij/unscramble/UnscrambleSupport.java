@@ -41,6 +41,7 @@ public interface UnscrambleSupport<T extends JComponent> {
   /**
    * @deprecated override {@link #unscramble(Project, String, String, JComponent)} instead
    */
+  @Deprecated
   @Nullable
   default String unscramble(Project project, String text, String logName) {
     return null;

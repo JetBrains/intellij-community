@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger;
 
 import com.intellij.openapi.util.DefaultJDOMExternalizer;
@@ -50,8 +48,12 @@ public class InstanceFilter implements JDOMExternalizable{
     ENABLED = enabled;
   }
 
+  public static InstanceFilter create(long id) {
+    return new InstanceFilter(id, true);
+  }
+
   public static InstanceFilter create(String pattern) {
-    return new InstanceFilter(Long.parseLong(pattern), true);
+    return create(Long.parseLong(pattern));
   }
 
   public static InstanceFilter create(final ClassFilter filter) {

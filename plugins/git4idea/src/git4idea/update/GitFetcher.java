@@ -18,6 +18,7 @@ package git4idea.update;
 import com.intellij.dvcs.MultiRootMessage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.util.BackgroundTaskUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
@@ -48,6 +49,7 @@ import java.util.regex.Pattern;
 
 import static git4idea.GitBranch.REFS_HEADS_PREFIX;
 import static git4idea.GitBranch.REFS_REMOTES_PREFIX;
+import static git4idea.commands.GitAuthenticationListener.GIT_AUTHENTICATION_SUCCESS;
 
 public class GitFetcher {
 
@@ -188,6 +190,7 @@ public class GitFetcher {
 
     GitFetchResult fetchResult;
     if (result.success()) {
+      BackgroundTaskUtil.syncPublisher(repository.getProject(), GIT_AUTHENTICATION_SUCCESS).authenticationSucceeded(repository, remote);
       fetchResult = GitFetchResult.success();
     }
     else if (result.cancelled()) {

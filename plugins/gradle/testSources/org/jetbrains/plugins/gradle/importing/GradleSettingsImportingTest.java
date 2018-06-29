@@ -1,24 +1,7 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.gradle.importing;
 
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
-import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.compiler.CompilerConfigurationImpl;
-import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.execution.BeforeRunTask;
 import com.intellij.execution.RunManager;
 import com.intellij.execution.RunManagerEx;
@@ -35,6 +18,8 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.externalSystem.model.execution.ExternalSystemTaskExecutionSettings;
 import com.intellij.openapi.externalSystem.service.execution.ExternalSystemBeforeRunTask;
 import com.intellij.openapi.externalSystem.service.project.IdeModifiableModelsProvider;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectsManagerImpl;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalSystemTaskActivator;
 import com.intellij.openapi.externalSystem.service.project.settings.FacetConfigurationImporter;
 import com.intellij.openapi.externalSystem.service.project.settings.RunConfigurationImporter;
 import com.intellij.openapi.module.Module;
@@ -47,6 +32,8 @@ import com.intellij.psi.codeStyle.CodeStyleSettings;
 import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSystemRunningSettings;
 import org.junit.After;
 import org.junit.Before;
 import org.junit.Test;
@@ -67,7 +54,7 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   @Parameterized.Parameters(name = "with Gradle-{0}")
   public static Collection<Object[]> data() {
-    return Arrays.asList(new Object[][]{{"4.5"}});
+    return Arrays.asList(new Object[][]{{BASE_GRADLE_VERSION}});
   }
 
   @Before
@@ -125,40 +112,6 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertFalse(scheme.isDefault());
 
     assertEquals(200, settings.getDefaultRightMargin());
-  }
-
-  @Test
-  public void testCompilerConfigurationSettingsImport() throws Exception {
-
-    importProject(
-      withGradleIdeaExtPlugin(
-      "idea {\n" +
-      "  project.settings {\n" +
-      "    compiler {\n" +
-      "      resourcePatterns '!*.java;!*.class'\n" +
-      "      clearOutputDirectory false\n" +
-      "      addNotNullAssertions false\n" +
-      "      autoShowFirstErrorInEditor false\n" +
-      "      displayNotificationPopup false\n" +
-      "      enableAutomake false\n" +
-      "      parallelCompilation true\n" +
-      "      rebuildModuleOnDependencyChange false\n" +
-      "    }\n" +
-      "  }\n" +
-      "}")
-    );
-
-    final CompilerConfigurationImpl compilerConfiguration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(myProject);
-    final CompilerWorkspaceConfiguration workspaceConfiguration = CompilerWorkspaceConfiguration.getInstance(myProject);
-
-    assertSameElements(compilerConfiguration.getResourceFilePatterns(), "!*.class", "!*.java");
-    assertFalse(workspaceConfiguration.CLEAR_OUTPUT_DIRECTORY);
-    assertFalse(compilerConfiguration.isAddNotNullAssertions());
-    assertFalse(workspaceConfiguration.AUTO_SHOW_ERRORS_IN_EDITOR);
-    assertFalse(workspaceConfiguration.DISPLAY_NOTIFICATION_POPUP);
-    assertFalse(workspaceConfiguration.MAKE_PROJECT_ON_SAVE);
-    assertTrue(workspaceConfiguration.PARALLEL_COMPILATION);
-    assertFalse(workspaceConfiguration.REBUILD_ON_DEPENDENCY_CHANGE);
   }
 
   @Test
@@ -363,19 +316,70 @@ public class GradleSettingsImportingTest extends GradleImportingTestCase {
     assertEquals("myParent", childSettings.get("parent"));
   }
 
+  @Test
+  public void testTaskTriggersImport() throws Exception {
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    taskTriggers {\n" +
+        "      beforeSync tasks.getByName('projects'), tasks.getByName('tasks')\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    final List<ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation> activations =
+      ExternalProjectsManagerImpl.getInstance(myProject).getStateProvider().getAllTasksActivation();
+
+    assertSize(1, activations);
+
+    final ExternalProjectsManagerImpl.ExternalProjectsStateProvider.TasksActivation activation = activations.get(0);
+    assertEquals(GradleSettings.getInstance(myProject).getLinkedProjectsSettings().iterator().next().getExternalProjectPath(),
+                 activation.projectPath);
+    final List<String> beforeSyncTasks = activation.state.getTasks(ExternalSystemTaskActivator.Phase.BEFORE_SYNC);
+
+    assertContain(beforeSyncTasks, ":projects", ":tasks");
+  }
+
+  @Test
+  public void testActionDelegationImport() throws Exception {
+    importProject(
+      withGradleIdeaExtPlugin(
+        "import org.jetbrains.gradle.ext.*\n" +
+        "import static org.jetbrains.gradle.ext.ActionDelegationConfig.TestRunner.*\n" +
+        "idea {\n" +
+        "  project.settings {\n" +
+        "    delegateActions {\n" +
+        "      delegateBuildRunToGradle = true\n" +
+        "      testRunner = CHOOSE_PER_TEST\n" +
+        "    }\n" +
+        "  }\n" +
+        "}")
+    );
+
+    GradleSystemRunningSettings settings = GradleSystemRunningSettings.getInstance();
+
+    assertTrue(settings.isUseGradleAwareMake());
+    assertEquals(GradleSystemRunningSettings.PreferredTestRunner.CHOOSE_PER_TEST, settings.getPreferredTestRunner());
+  }
+
   private String getGradlePluginPath() {
     return getClass().getResource("/testCompilerConfigurationSettingsImport/gradle-idea-ext.jar").toString();
   }
 
   @NotNull
-  private String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
+  protected String withGradleIdeaExtPlugin(@NonNls @Language("Groovy") String script) {
     return "buildscript {\n" +
            "  repositories {\n" +
+           "    mavenCentral()\n" +
            "    mavenLocal()\n" +
            "  }\n" +
            "  dependencies {\n" +
            "     classpath files('" + getGradlePluginPath() + "')\n" +
            "     classpath 'com.google.code.gson:gson:2+'\n" +
+           "     classpath 'com.google.guava:guava:25.1-jre'\n" +
            "  }\n" +
            "}\n" +
            "apply plugin: 'org.jetbrains.gradle.plugin.idea-ext'\n" +
@@ -408,14 +412,13 @@ class TestRunConfigurationImporter implements RunConfigurationImporter {
   @NotNull
   @Override
   public ConfigurationFactory getConfigurationFactory() {
-    return UnknownConfigurationType.FACTORY;
+    return UnknownConfigurationType.getFactory();
   }
 
   public Map<String, Map<String, Object>> getConfigs() {
     return myConfigs;
   }
 }
-
 
 class TestFacetConfigurationImporter implements FacetConfigurationImporter<Facet> {
 

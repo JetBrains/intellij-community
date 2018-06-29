@@ -217,6 +217,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "B", 0);
   }
 
+  public void testClearQualifierInsideInnerAnnotation() {
+    doTest("A", "B", 0);
+  }
+
   public void testFromNestedToOuterMethodRef() {
     final LanguageLevelProjectExtension projectExtension = LanguageLevelProjectExtension.getInstance(getProject());
     final LanguageLevel oldLevel = projectExtension.getLanguageLevel();

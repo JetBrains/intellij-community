@@ -24,6 +24,7 @@ import com.intellij.psi.search.SearchScope;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler;
 import com.intellij.refactoring.rename.inplace.VariableInplaceRenamer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -33,7 +34,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
  */
 public class GrVariableInplaceRenameHandler extends VariableInplaceRenameHandler {
   @Override
-  protected boolean isAvailable(PsiElement element, Editor editor, PsiFile file) {
+  protected boolean isAvailable(@Nullable PsiElement element, @NotNull Editor editor, @NotNull PsiFile file) {
     if (!editor.getSettings().isVariableInplaceRenameEnabled()) return false;
 
     if (!(element instanceof GrVariable)) return false;
@@ -48,7 +49,7 @@ public class GrVariableInplaceRenameHandler extends VariableInplaceRenameHandler
   }
 
   @Override
-  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, Editor editor) {
+  protected VariableInplaceRenamer createRenamer(@NotNull PsiElement elementToRename, @NotNull Editor editor) {
     return new GrVariableInplaceRenamer((PsiNameIdentifierOwner)elementToRename, editor);
   }
 }

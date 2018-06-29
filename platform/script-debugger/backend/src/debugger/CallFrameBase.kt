@@ -17,7 +17,7 @@ package org.jetbrains.debugger
 
 import com.intellij.openapi.util.NotNullLazyValue
 
-const val RECEIVER_NAME = "this"
+const val RECEIVER_NAME: String = "this"
 
 @Deprecated("")
 /**

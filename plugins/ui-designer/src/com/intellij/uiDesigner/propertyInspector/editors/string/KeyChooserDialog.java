@@ -287,6 +287,8 @@ public final class KeyChooserDialog extends DialogWrapper{
       return myComponent.getSelectedRow();
     }
 
+    @NotNull
+    @Override
     public Object[] getAllElements() {
       if (myElements == null) {
         myElements = new TObjectIntHashMap<>();
@@ -304,6 +306,7 @@ public final class KeyChooserDialog extends DialogWrapper{
       return ((Couple<String>)element).getFirst();
     }
 
+    @Override
     public void selectElement(final Object element, final String selectedText) {
       final int index = myElements.get(element);
       selectElementAt(getComponent().convertRowIndexToView(index));

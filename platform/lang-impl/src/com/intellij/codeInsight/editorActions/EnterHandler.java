@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
@@ -302,6 +288,32 @@ public class EnterHandler extends BaseEnterHandler {
     return commenter.isDocumentationComment(comment);
   }
 
+  /**
+   * Adjusts indentation of the line with {@code offset} in {@code document}.
+   * 
+   * @param language used for code style extraction 
+   * @param document for indent adjustment
+   * @param editor   used for code style extraction
+   * @param offset   in {@code document} for indent adjustment
+   * @return new offset in the {@code document} after commit-free indent adjustment or 
+   *         {@code -1} if commit-free indent adjustment is unavailable in position.   
+   */
+  public static int adjustLineIndentNoCommit(Language language, @NotNull Document document, @NotNull Editor editor, int offset) {
+    final CharSequence docChars = document.getCharsSequence();
+    int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, offset - 1, "\n") + 1;
+    int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
+    String newIndent = CodeStyleFacade.getInstance(editor.getProject()).getLineIndent(editor, language, offset, false);
+    if (newIndent == null) {
+      return -1;
+    }
+    if (newIndent == LineIndentProvider.DO_NOT_ADJUST) {
+      return offset;
+    }
+    int delta = newIndent.length() - (indentEnd - indentStart);
+    document.replaceString(indentStart, indentEnd, newIndent);
+    return offset <= indentEnd ? (indentStart + newIndent.length()) : (offset + delta);
+  }
+
   private static class DoEnterAction implements Runnable {
     
     private final DataContext myDataContext;
@@ -438,8 +450,12 @@ public class EnterHandler extends BaseEnterHandler {
         if (codeInsightSettings.SMART_INDENT_ON_ENTER || myForceIndent || commentContext.docStart || commentContext.docAsterisk
             || commentContext.slashSlash) 
         {
-          myOffset = adjustLineIndent(myDocument.getCharsSequence());
-          
+          final int offset = adjustLineIndentNoCommit(getLanguage(myDataContext), myDocument, myEditor, myOffset);
+          if (offset >= 0) {
+            myOffset = offset;
+            myIsIndentAdjustmentNeeded = false;
+          }
+
           if (commentContext.docAsterisk && !StringUtil.isEmpty(indentInsideJavadoc) && myOffset < myDocument.getTextLength()) {
             myDocument.insertString(myOffset + 1, indentInsideJavadoc);
             myOffset += indentInsideJavadoc.length();
@@ -484,19 +500,6 @@ public class EnterHandler extends BaseEnterHandler {
         LogicalPosition pos = new LogicalPosition(caretPosition.line, caretPosition.column + myCaretAdvance);
         caretModel.moveToLogicalPosition(pos);
       }
-    }
-    
-    private int adjustLineIndent(CharSequence docChars) {
-      Language language = getLanguage(myDataContext);
-      int indentStart = CharArrayUtil.shiftBackwardUntil(docChars, myOffset - 1, "\n") + 1;
-      int indentEnd = CharArrayUtil.shiftForward(docChars, indentStart, " \t");
-      String newIndent = CodeStyleFacade.getInstance(getProject()).getLineIndent(myEditor, language, myOffset, false);
-      if (newIndent == null) return myOffset;
-      myIsIndentAdjustmentNeeded = false;
-      if (newIndent == LineIndentProvider.DO_NOT_ADJUST) return myOffset;
-      int delta = newIndent.length() - (indentEnd - indentStart);
-      myDocument.replaceString(indentStart, indentEnd, newIndent);
-      return myOffset <= indentEnd ? indentStart + newIndent.length() : myOffset + delta;
     }
 
     private void generateJavadoc(CodeDocumentationAwareCommenter commenter) throws IncorrectOperationException {
@@ -697,7 +700,7 @@ public class EnterHandler extends BaseEnterHandler {
         PsiComment comment = element instanceof PsiComment ? (PsiComment)element : PsiTreeUtil.getParentOfType(element, PsiComment.class, false);
         if (comment != null) {
           int commentEnd = comment.getTextRange().getEndOffset();
-          if (myOffset >= commentEnd) {
+          if (myOffset >= commentEnd || lineStart < comment.getTextOffset()) {
             docAsterisk = false;
           }
           else {

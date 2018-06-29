@@ -14,7 +14,7 @@ class Foo {
 
     void test3(String[] foos, String[] bars) {
         System.out.println(//line comment
-        asList(foos)+":"+//line comment
-                asList(bars));
+                asList(foos)+":"+//line comment
+                        asList(bars));
     }
 }

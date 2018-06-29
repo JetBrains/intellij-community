@@ -46,6 +46,7 @@ import com.intellij.vcs.AnnotationProviderEx;
 import com.intellij.vcs.log.VcsUserRegistry;
 import git4idea.annotate.GitAnnotationProvider;
 import git4idea.annotate.GitRepositoryForAnnotationsListener;
+import git4idea.branch.GitBranchIncomingOutgoingManager;
 import git4idea.changes.GitCommittedChangeListProvider;
 import git4idea.changes.GitOutgoingChangesProvider;
 import git4idea.checkin.GitCheckinEnvironment;
@@ -281,6 +282,9 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myRepositoryForAnnotationsListener = new GitRepositoryForAnnotationsListener(myProject);
     }
     GitUserRegistry.getInstance(myProject).activate();
+    if (GitVcsSettings.getInstance(myProject).shouldUpdateBranchInfo()) {
+      GitBranchIncomingOutgoingManager.getInstance(myProject).startScheduling();
+    }
   }
 
   @Override

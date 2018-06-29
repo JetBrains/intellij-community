@@ -16,32 +16,45 @@
 package com.intellij.execution.junit;
 
 import com.intellij.junit4.ExpectedPatterns;
-import junit.framework.Assert;
+import com.intellij.rt.execution.junit.ComparisonFailureData;
+import org.junit.Assert;
 import org.junit.Test;
 
 public class JUnitExpectedPatternsTest {
   @Test
   public void testArrayComparison() {
-    Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("arrays first differed at element [0]; expected: java.lang.String<Text> but was: java.lang.StringBuilder<Text>"));
+    Assert.assertNotNull(createNotification("arrays first differed at element [0]; expected: java.lang.String<Text> but was: java.lang.StringBuilder<Text>"));
   }
 
   @Test
   public void testMultiplePatternsInOneAssertion() {
-    Assert.assertNull(ExpectedPatterns.createExceptionNotification("line1 expected:<java.lang.String<Text>> but was:<java.lang.StringBuilder<Text>>\n" +
-                                                                   "line2 expected:<java.lang.String<Text1>> but was:<java.lang.StringBuilder<Text1>>"));
+    Assert.assertNull(createNotification("line1 expected:<java.lang.String<Text>> but was:<java.lang.StringBuilder<Text>>\n" + 
+                                         "line2 expected:<java.lang.String<Text1>> but was:<java.lang.StringBuilder<Text1>>"));
   }
 
   @Test
   public void testHamcrestAssertThatWithReason() {
-    Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("reason\n" +
-                                                                      "Expected: is \"aaa\\naa\"\n" +
-                                                                      "     but: was \"bbb\\nbb\""));
+    Assert.assertNotNull(createNotification("reason\n" +
+                                            "Expected: is \"aaa\\naa\"\n" +
+                                            "     but: was \"bbb\\nbb\""));
   }
 
   @Test
   public void testHamcrestAssertThatEqWithReason() {
-    Assert.assertNotNull(ExpectedPatterns.createExceptionNotification("reason\n" +
-                                                                      "Expected: \"aaa\\naa\"\n" +
-                                                                      "     got: \"bbb\\nbb\""));
+    Assert.assertNotNull(createNotification("reason\n" +
+                                            "Expected: \"aaa\\naa\"\n" +
+                                            "     got: \"bbb\\nbb\""));
+  }
+
+  @Test
+  public void testNonGreedyGt() {
+    ComparisonFailureData notification = createNotification("expected:<<foo>> but was:<hi with <brackets>>");
+    Assert.assertNotNull(notification);
+    Assert.assertEquals("<foo>", notification.getExpected());
+    Assert.assertEquals("hi with <brackets>", notification.getActual());
+  }
+
+  private static ComparisonFailureData createNotification(String message) {
+    return ExpectedPatterns.createExceptionNotification(new Throwable(message));
   }
 }

@@ -15,15 +15,14 @@
  */
 package com.intellij.ide;
 
+import com.intellij.ide.util.PsiNavigationSupport;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.CommonDataKeys;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -58,27 +57,24 @@ public class JavaFilePasteProvider implements PasteProvider {
       }
     }
     final PsiClass mainClass = publicClass;
-    new WriteCommandAction(project, "Paste class '" + mainClass.getName() + "'") {
-      @Override
-      protected void run(@NotNull Result result) throws Throwable {
-        PsiFile file;
-        try {
-          file = targetDir.createFile(mainClass.getName() + ".java");
-        }
-        catch (IncorrectOperationException e) {
-          return;
-        }
-        final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
-        if (document != null) {
-          document.setText(javaFile.getText());
-          PsiDocumentManager.getInstance(project).commitDocument(document);
-        }
-        if (file instanceof PsiJavaFile) {
-          updatePackageStatement((PsiJavaFile) file, targetDir);
-        }
-        new OpenFileDescriptor(project, file.getVirtualFile()).navigate(true);
+    WriteCommandAction.writeCommandAction(project).withName("Paste class '" + mainClass.getName() + "'").run(() -> {
+      PsiFile file;
+      try {
+        file = targetDir.createFile(mainClass.getName() + ".java");
       }
-    }.execute();
+      catch (IncorrectOperationException e) {
+        return;
+      }
+      final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
+      if (document != null) {
+        document.setText(javaFile.getText());
+        PsiDocumentManager.getInstance(project).commitDocument(document);
+      }
+      if (file instanceof PsiJavaFile) {
+        updatePackageStatement((PsiJavaFile)file, targetDir);
+      }
+      PsiNavigationSupport.getInstance().createNavigatable(project, file.getVirtualFile(), -1).navigate(true);
+    });
   }
 
   private static void updatePackageStatement(final PsiJavaFile javaFile, final PsiDirectory targetDir) {

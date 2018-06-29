@@ -19,12 +19,16 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.filters.FilterPositionUtil;
 import com.intellij.psi.util.ClassUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Objects;
 
 public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceElement, PsiJavaCodeReferenceElement> {
   public ImportClassFix(@NotNull PsiJavaCodeReferenceElement element) {
@@ -103,11 +107,22 @@ public class ImportClassFix extends ImportClassFixBase<PsiJavaCodeReferenceEleme
 
   @Override
   protected boolean canReferenceClass(PsiJavaCodeReferenceElement ref) {
+    if (PsiTreeUtil.getParentOfType(ref, PsiImportStatementBase.class) != null) return false;
     if (ref instanceof PsiReferenceExpression) {
       PsiElement parent = ref.getParent();
       return parent instanceof PsiReferenceExpression || parent instanceof PsiExpressionStatement;
     }
-    return true;
+    return !inReturnTypeOfIncompleteGenericMethod(ref);
+  }
+
+  private static boolean inReturnTypeOfIncompleteGenericMethod(PsiJavaCodeReferenceElement element) {
+    PsiTypeElement type = SyntaxTraverser.psiApi().parents(element).filter(PsiTypeElement.class).last();
+    PsiElement prev = FilterPositionUtil.searchNonSpaceNonCommentBack(type);
+    PsiTypeParameterList typeParameterList = PsiTreeUtil.getParentOfType(prev, PsiTypeParameterList.class);
+    if (typeParameterList != null && typeParameterList.getParent() instanceof PsiErrorElement) {
+      return Arrays.stream(typeParameterList.getTypeParameters()).anyMatch(p -> Objects.equals(element.getReferenceName(), p.getName()));
+    }
+    return false;
   }
 
   @NotNull

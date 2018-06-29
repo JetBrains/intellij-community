@@ -1,7 +1,7 @@
 package org.jetbrains.protocolModelGenerator
 
 class StandaloneType(private val namePath: NamePath, override val writeMethodName: String, override val defaultValue: String? = "null") : BoxableType {
-  override val fullText = namePath.getFullText()
+  override val fullText: String = namePath.getFullText()
 
   override fun getShortText(contextNamespace: NamePath): String {
     val nameLength = namePath.getLength()

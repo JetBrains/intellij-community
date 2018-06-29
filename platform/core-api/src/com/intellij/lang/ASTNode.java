@@ -188,7 +188,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @param anotherParent the parent node whose children are used for replacement.
    */
-  void replaceAllChildrenToChildrenOf(ASTNode anotherParent);
+  void replaceAllChildrenToChildrenOf(@NotNull ASTNode anotherParent);
 
   /**
    * Adds a range of nodes belonging to the same parent to the list of children of this node,
@@ -198,7 +198,7 @@ public interface ASTNode extends UserDataHolder {
    * @param firstChildToNotAdd the first child node following firstChild which will not be added to the tree.
    * @param anchorBefore       the node before which the child nodes are inserted.
    */
-  void addChildren(ASTNode firstChild, ASTNode firstChildToNotAdd, ASTNode anchorBefore);
+  void addChildren(@NotNull ASTNode firstChild, ASTNode firstChildToNotAdd, ASTNode anchorBefore);
 
   /**
    * Creates and returns a deep copy of the AST tree part starting at this node.
@@ -230,7 +230,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @param key the key for accessing the user data object.
    * @return the user data object, or null if no such object is found in the current node.
-   * @see #putCopyableUserData(com.intellij.openapi.util.Key, Object)
+   * @see #putCopyableUserData(Key, Object)
    */
   @Nullable
   <T> T getCopyableUserData(@NotNull Key<T> key);
@@ -241,7 +241,7 @@ public interface ASTNode extends UserDataHolder {
    *
    * @param key the key for accessing the user data object.
    * @param value the user data object to attach.
-   * @see #getCopyableUserData(com.intellij.openapi.util.Key)
+   * @see #getCopyableUserData(Key)
    */
   <T> void putCopyableUserData(@NotNull Key<T> key, T value);
 
@@ -252,7 +252,7 @@ public interface ASTNode extends UserDataHolder {
    * @return the found node, or null if none was found.
    */
   @Nullable
-  ASTNode findChildByType(IElementType type);
+  ASTNode findChildByType(@NotNull IElementType type);
 
   /**
    * Returns the first child after anchor of the specified node which has the specified type.
@@ -262,7 +262,7 @@ public interface ASTNode extends UserDataHolder {
    * @return the found node, or null if none was found.
    */
   @Nullable
-  ASTNode findChildByType(IElementType type, @Nullable ASTNode anchor);
+  ASTNode findChildByType(@NotNull IElementType type, @Nullable ASTNode anchor);
 
   /**
    * Returns the first child of the specified node which has type from specified set.

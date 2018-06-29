@@ -1,26 +1,16 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util
 
 import com.intellij.ide.highlighter.JavaFileType
 import com.intellij.psi.PsiMethod
+import com.intellij.psi.impl.JavaSimplePropertyIndex
+import com.intellij.psi.impl.PropertyIndexValue
 import com.intellij.psi.util.PropertyMemberType
 import com.intellij.psi.util.PropertyUtil
 import com.intellij.psi.util.PsiTreeUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import com.intellij.util.indexing.FileContentImpl
+import com.intellij.util.indexing.IndexingDataKeys
 import kotlin.test.assertNotEquals
 
 class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
@@ -69,8 +59,6 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
                             }""", PropertyMemberType.GETTER)
   }
 
-
-
   // setter field test
 
   fun testSimpleSetter() {
@@ -110,6 +98,62 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
       |public void set<caret>Name(String name) { this.name = name; }}}""".trimMargin(), PropertyMemberType.SETTER)
   }
 
+  // index data test
+
+  fun testAddToIndexOnlyMethodCallsWithoutArguments() {
+    assertJavaSimplePropertyIndex("""
+      public class Foo {
+        public String getName() {
+          return name;
+        }
+
+        public String getName(int x) {
+          return name;
+        }
+
+        public String getBoo() {
+          return Boo.Foo.CONST;
+        }
+
+        public String getXxx() {
+          return xxx().yyy;
+        }
+
+        public class Bar {
+          public String getName() {
+            return Foo.this.getName();
+          }
+
+          public String getName1() {
+            return Foo.this.getName(100);
+          }
+        }
+      }
+    """.trimIndent(), mapOf(Pair(0, PropertyIndexValue("name", true)), Pair(2, PropertyIndexValue("Boo.Foo.CONST", true))))
+  }
+
+  fun testIndexDoesntContainPolyadicExpressions() {
+    assertJavaSimplePropertyIndex("""
+      public class Foo {
+        public String getName() {
+          return n + a + m + e;
+        }
+
+        public String getName1() {
+          return --i;
+        }
+
+        public String getName2() {
+          return 1 == 1 ? 1 : 1;
+        }
+
+        public String getName3() {
+          return new String();
+        }
+      }
+    """.trimIndent(), emptyMap())
+  }
+
   private fun assertPropertyMember(text: String, memberType: PropertyMemberType) {
     doTest(text, memberType, true)
   }
@@ -127,5 +171,14 @@ class JavaPropertyDetectionTest : LightCodeInsightFixtureTestCase() {
     assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method) else PropertyUtil.isSimpleSetter(method))
     //use ast
     assertEquals(expectedDecision, if (memberType == PropertyMemberType.GETTER) PropertyUtil.isSimpleGetter(method, false) else PropertyUtil.isSimpleSetter(method, false))
+  }
+
+  private fun assertJavaSimplePropertyIndex(text: String, expected: Map<Int, PropertyIndexValue>) {
+    val file = myFixture.configureByText(JavaFileType.INSTANCE, text)
+    val content = FileContentImpl.createByFile(file.virtualFile)
+    content.putUserData(IndexingDataKeys.PROJECT, project)
+    val data = JavaSimplePropertyIndex().indexer.map(content)
+
+    assertEquals(expected, data)
   }
 }

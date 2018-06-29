@@ -13,12 +13,14 @@ import javax.swing.*;
  * or to create a template from settings defined in UI form.
  */
 @ApiStatus.Experimental
-public interface PostfixTemplateEditor<T extends PostfixTemplate> extends Disposable {
-  T createTemplate(@NotNull String templateId, @NotNull String templateName);
-
-
-  void setTemplate(T template);
+public interface PostfixTemplateEditor extends Disposable {
+  @NotNull
+  PostfixTemplate createTemplate(@NotNull String templateId, @NotNull String templateName);
 
   @NotNull
   JComponent getComponent();
+
+  default String getHelpId() {
+    return null;
+  }
 }

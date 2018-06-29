@@ -26,12 +26,23 @@ public class VcsRootErrorsFinder {
   }
 
   @NotNull
+  public Collection<VcsRootError> getOrFind() {
+    Collection<VcsRoot> vcsRoots = myRootDetector.getOrDetect();
+    return calcErrors(vcsRoots);
+  }
+
+  @NotNull
   public Collection<VcsRootError> find() {
-    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRoot> vcsRoots = myRootDetector.detect();
+    return calcErrors(vcsRoots);
+  }
+
+  @NotNull
+  private Collection<VcsRootError> calcErrors(@NotNull Collection<VcsRoot> detectedRoots) {
+    List<VcsDirectoryMapping> mappings = myVcsManager.getDirectoryMappings();
     Collection<VcsRootError> errors = new ArrayList<>();
     errors.addAll(findExtraMappings(mappings));
-    errors.addAll(findUnregisteredRoots(mappings, vcsRoots));
+    errors.addAll(findUnregisteredRoots(mappings, detectedRoots));
     return errors;
   }
 

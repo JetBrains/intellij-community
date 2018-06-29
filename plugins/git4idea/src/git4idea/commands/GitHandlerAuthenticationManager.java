@@ -6,7 +6,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.net.HttpConfigurable;
@@ -27,7 +26,7 @@ import java.util.UUID;
  * Manager for Git remotes authentication.
  * Provides necessary handlers and watcher for http auth failure.
  */
-class GitHandlerAuthenticationManager {
+public class GitHandlerAuthenticationManager implements AutoCloseable {
   private static final Logger LOG = Logger.getInstance(GitHandlerAuthenticationManager.class);
 
   @NotNull private final GitLineHandler myHandler;
@@ -51,7 +50,8 @@ class GitHandlerAuthenticationManager {
     return manager;
   }
 
-  public void cleanup() {
+  @Override
+  public void close() {
     cleanupHttpAuth();
     cleanupSshAuth();
   }
@@ -60,7 +60,7 @@ class GitHandlerAuthenticationManager {
     GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
     GitHttpAuthenticator httpAuthenticator =
-      service.createAuthenticator(myProject, myHandler.getCommand(), myHandler.getUrls());
+      service.createAuthenticator(myProject, myHandler.getUrls(), myHandler.isIgnoreAuthenticationRequest());
     myHttpHandler = service.registerHandler(httpAuthenticator, myProject);
     myHandler.addCustomEnvironmentVariable(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, myHttpHandler.toString());
     int port = service.getXmlRcpPort();
@@ -71,7 +71,12 @@ class GitHandlerAuthenticationManager {
       @Override
       public void onLineAvailable(@NonNls String line, Key outputType) {
         String lowerCaseLine = line.toLowerCase();
-        if (lowerCaseLine.contains("authentication failed") || lowerCaseLine.contains("403 forbidden")) {
+        if (lowerCaseLine.contains("authentication failed") ||
+            lowerCaseLine.contains("403 forbidden") ||
+            lowerCaseLine.contains("error: 400") ||
+            (lowerCaseLine.contains("fatal: repository") && lowerCaseLine.contains("not found")) ||
+            (lowerCaseLine.contains("fatal: unable to access") && lowerCaseLine.contains("the requested url returned error: 403")) ||
+            lowerCaseLine.contains("[remote rejected] (permission denied)")) {
           LOG.debug("auth listener: auth failure detected: " + line);
           myHttpAuthFailed = true;
         }
@@ -79,8 +84,7 @@ class GitHandlerAuthenticationManager {
 
       @Override
       public void processTerminated(int exitCode) {
-        LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed
-                             + ", cancelled=" + httpAuthenticator.wasCancelled());
+        LOG.debug("auth listener: process terminated. auth failed=" + myHttpAuthFailed + ", cancelled=" + httpAuthenticator.wasCancelled());
         if (!httpAuthenticator.wasCancelled()) {
           if (myHttpAuthFailed) {
             httpAuthenticator.forgetPassword();
@@ -110,7 +114,8 @@ class GitHandlerAuthenticationManager {
   private void prepareSshAuth() throws IOException {
     GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
-    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject), myProject);
+    myHandler.addCustomEnvironmentVariable(GitSSHHandler.GIT_SSH_VAR, "ssh");
+    mySshHandler = ssh.registerHandler(new GitSSHGUIHandler(myProject, myHandler.isIgnoreAuthenticationRequest()), myProject);
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_HANDLER_ENV, mySshHandler.toString());
     int port = ssh.getXmlRcpPort();
     myHandler.addCustomEnvironmentVariable(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));

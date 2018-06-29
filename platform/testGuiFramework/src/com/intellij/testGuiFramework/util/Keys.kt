@@ -219,7 +219,7 @@ class Shortcut(var modifiers: HashSet<Modifier> = HashSet(), var key: Key? = nul
     return if (mods.isNotEmpty()) "$mods $cleanKeyName" else cleanKeyName
   }
 
-  override fun toString() = getKeystroke()
+  override fun toString(): String = getKeystroke()
 }
 
 operator fun Modifier.plus(modifier: Modifier): Shortcut {
@@ -228,6 +228,10 @@ operator fun Modifier.plus(modifier: Modifier): Shortcut {
 
 operator fun Modifier.plus(key: Key): Shortcut {
   return Shortcut(hashSetOf(this), key)
+}
+
+operator fun Shortcut.plus(modifier: Modifier): Shortcut {
+  return Shortcut(hashSetOf(*this.modifiers.toTypedArray(), modifier), null)
 }
 
 operator fun Shortcut.plus(key: Key): Shortcut {
@@ -249,4 +253,9 @@ operator fun Shortcut.plus(shortcut: Shortcut): Shortcut {
   unionOfModifier.addAll(shortcut.modifiers)
   val newKey = if (this.key != null) this.key else shortcut.key
   return Shortcut(unionOfModifier, newKey)
+}
+
+fun resolveKey(inputString: String): Key {
+  return if (Regex("\\d]").matches(inputString)) Key.valueOf("d$inputString")
+  else Key.valueOf(inputString)
 }

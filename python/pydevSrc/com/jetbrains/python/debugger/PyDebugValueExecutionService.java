@@ -6,12 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.util.ConcurrencyUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 
 public final class PyDebugValueExecutionService {
   @Nullable private ExecutorService myAsyncValuesExecutorService;
@@ -70,6 +72,14 @@ public final class PyDebugValueExecutionService {
     if (myFrameAccessors.size() == 0 && myAsyncValuesExecutorService != null) {
       myAsyncValuesExecutorService.shutdownNow();
       myAsyncValuesExecutorService = null;
+    }
+  }
+
+  @TestOnly
+  public synchronized void shutDownNow(long timeout) throws InterruptedException {
+    if (myAsyncValuesExecutorService != null) {
+      myAsyncValuesExecutorService.shutdownNow();
+      myAsyncValuesExecutorService.awaitTermination(timeout, TimeUnit.MILLISECONDS);
     }
   }
 }

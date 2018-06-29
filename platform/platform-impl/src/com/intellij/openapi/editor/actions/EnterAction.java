@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.openapi.editor.actions;
 
@@ -7,12 +7,14 @@ import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.actionSystem.LatencyAwareEditorAction;
 import com.intellij.openapi.editor.ex.util.EditorUIUtil;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class EnterAction extends EditorAction {
+public class EnterAction extends EditorAction implements LatencyAwareEditorAction {
   public EnterAction() {
     super(new Handler());
     setInjectedContext(true);
@@ -38,8 +40,8 @@ public class EnterAction extends EditorAction {
   public static void insertNewLineAtCaret(Editor editor) {
     EditorUIUtil.hideCursorInEditor(editor);
     Document document = editor.getDocument();
-    int caretLine = editor.getCaretModel().getLogicalPosition().line;
     if(!editor.isInsertMode()) {
+      int caretLine = editor.getCaretModel().getLogicalPosition().line;
       int lineCount = document.getLineCount();
       if(caretLine < lineCount) {
         if (caretLine == lineCount - 1) {
@@ -56,7 +58,7 @@ public class EnterAction extends EditorAction {
     // Smart indenting here:
     CharSequence text = document.getCharsSequence();
     int caretOffset = editor.getCaretModel().getOffset();
-    int lineStartOffset = document.getLineStartOffset(caretLine);
+    int lineStartOffset = DocumentUtil.getLineStartOffset(caretOffset, document);
     int lineStartWsEndOffset = CharArrayUtil.shiftForward(text, lineStartOffset, " \t");
     String s = "\n" + text.subSequence(lineStartOffset, Math.min(caretOffset, lineStartWsEndOffset));
     document.insertString(caretOffset, s);

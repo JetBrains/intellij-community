@@ -18,6 +18,7 @@ package com.intellij.debugger.settings;
 import com.intellij.debugger.DebuggerBundle;
 import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -109,8 +110,11 @@ class JavaHotSwapConfigurableUi implements ConfigurableUi<DebuggerSettings> {
     group.add(myRbNever);
     group.add(myRbAsk);
     final Box box = Box.createHorizontalBox();
+    box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbAlways);
+    box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbNever);
+    box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbAsk);
     final JPanel reloadPanel = new JPanel(new BorderLayout());
     reloadPanel.add(box, BorderLayout.CENTER);

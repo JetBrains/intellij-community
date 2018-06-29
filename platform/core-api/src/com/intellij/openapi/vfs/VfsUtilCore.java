@@ -489,7 +489,7 @@ public class VfsUtilCore {
     }
     if (SystemInfo.isWindows) {
       while (!path.isEmpty() && path.charAt(0) == '/') {
-        path = path.substring(1, path.length());
+        path = path.substring(1);
       }
     }
 
@@ -722,6 +722,7 @@ public class VfsUtilCore {
 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated does not handle recursive symlinks, use {@link #visitChildrenRecursively(VirtualFile, VirtualFileVisitor)} (to be removed in IDEA 2018) */
+  @Deprecated
   public static void processFilesRecursively(@NotNull VirtualFile root,
                                              @NotNull Processor<VirtualFile> processor,
                                              @NotNull Convertor<VirtualFile, Boolean> directoryFilter) {

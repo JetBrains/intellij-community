@@ -14,12 +14,8 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import com.siyeh.ig.performance.CollectionsListSettings;
-import com.siyeh.ig.psiutils.CommentTracker;
-import com.siyeh.ig.psiutils.ControlFlowUtils;
+import com.siyeh.ig.psiutils.*;
 import com.siyeh.ig.psiutils.ControlFlowUtils.InitializerUsageStatus;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.VariableAccessUtils;
-import one.util.streamex.StreamEx;
 import org.jdom.Element;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -27,18 +23,18 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.Objects;
 
 /**
  * @author Dmitry Batkovich
  */
-public class CollectionAddAllCanBeReplacedWithConstructorInspection extends
-                                                                    AbstractBaseJavaLocalInspectionTool {
+public class CollectionAddAllCanBeReplacedWithConstructorInspection extends AbstractBaseJavaLocalInspectionTool {
 
   private final CollectionsListSettings mySettings = new CollectionsListSettings() {
     @Override
     protected Collection<String> getDefaultSettings() {
-      return StreamEx.of(DEFAULT_COLLECTION_LIST).append("java.util.TreeSet", "java.util.TreeMap").sorted().toList();
+      return Collections.emptyList();
     }
   };
 
@@ -148,9 +144,10 @@ public class CollectionAddAllCanBeReplacedWithConstructorInspection extends
       return false;
     }
     final PsiClass initializerClass = (PsiClass)classReference.resolve();
-    if (initializerClass == null ||
-        !mySettings.getCollectionClassesRequiringCapacity().contains(initializerClass.getQualifiedName()) ||
-        !hasProperConstructor(initializerClass)) {
+    if (initializerClass == null) return false;
+    if (!ConstructionUtils.isCollectionWithCopyConstructor(initializerClass) &&
+        (!mySettings.getCollectionClassesRequiringCapacity().contains(initializerClass.getQualifiedName()) ||
+         !hasProperConstructor(initializerClass))) {
       return false;
     }
     final PsiExpressionList argumentList = newExpression.getArgumentList();

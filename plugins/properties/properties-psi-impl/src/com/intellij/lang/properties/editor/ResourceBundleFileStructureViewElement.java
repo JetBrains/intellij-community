@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.lang.properties.editor;
 
@@ -44,7 +42,7 @@ public class ResourceBundleFileStructureViewElement implements StructureViewTree
 
   @Override
   public ResourceBundle getValue() {
-    return myResourceBundle.isValid() ? null : myResourceBundle;
+    return myResourceBundle.isValid() ? myResourceBundle : null;
   }
 
   @NotNull

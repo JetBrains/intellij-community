@@ -26,6 +26,7 @@ import org.jetbrains.jps.builders.impl.logging.ProjectBuilderLoggerBase;
 import org.jetbrains.jps.builders.logging.BuildLoggingManager;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.model.JpsDummyElement;
+import org.jetbrains.jps.model.JpsModuleRootModificationUtil;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
@@ -38,12 +39,15 @@ import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.*;
 
 /**
  * @author db
  * @since 26.07.11
  */
 public abstract class IncrementalTestCase extends JpsBuildTestCase {
+
+  private static final String MODULE_DIR_PREFIX = "module";
   private final String groupName;
   private File baseDir;
   private File workDir;
@@ -219,6 +223,34 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
 
   protected void addTestRoot(JpsModule module, final String testRootRelativePath) {
     module.addSourceRoot(getUrl(testRootRelativePath), JavaSourceRootType.TEST_SOURCE);
+  }
+
+  protected Map<String, JpsModule> setupModules() {
+    final File projectDir = getOrCreateProjectDir();
+    final File[] moduleDirs = projectDir.listFiles((dir, name) -> name.startsWith(MODULE_DIR_PREFIX));
+
+    if (moduleDirs != null && moduleDirs.length > 0) {
+      final Map<String, JpsModule> modules = new HashMap<>();
+      final List<String> moduleNames = new ArrayList<>();
+      for (File moduleDir : moduleDirs) {
+        final String name = moduleDir.getName().substring(MODULE_DIR_PREFIX.length());
+        final JpsModule m = addModule(name, moduleDir.getName() + "/src");
+        modules.put(name, m);
+        moduleNames.add(name);
+      }
+      Collections.sort(moduleNames, Collections.reverseOrder());
+      // set dependencies in alphabet reverse order
+      JpsModule from = null;
+      for (String name : moduleNames) {
+        final JpsModule mod = modules.get(name);
+        if (from != null) {
+          JpsModuleRootModificationUtil.addDependency(from, mod);
+        }
+        from = mod;
+      }
+      return modules;
+    }
+    return Collections.emptyMap();
   }
 
   private static class StringProjectBuilderLogger extends ProjectBuilderLoggerBase {

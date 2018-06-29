@@ -15,7 +15,6 @@
  */
 package org.jetbrains.idea.maven.importing;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.ModuleManager;
@@ -23,7 +22,6 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -47,7 +45,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     setModuleNameAndRoot("module", getProjectPath());
   }
 
-  public void testCreatingBlank() {
+  public void testCreatingBlank() throws Exception {
     if (!hasMavenInstallation()) return;
 
     MavenId id = new MavenId("org.foo", "module", "1.0");
@@ -70,7 +68,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTestSources("module", "src/test/java");
   }
 
-  public void testInheritJdkFromProject() {
+  public void testInheritJdkFromProject() throws Exception {
     if (!hasMavenInstallation()) return;
 
     createNewModule(new MavenId("org.foo", "module", "1.0"));
@@ -78,7 +76,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertTrue(manager.isSdkInherited());
   }
 
-  public void testCreatingFromArchetype() {
+  public void testCreatingFromArchetype() throws Exception {
     if (!hasMavenInstallation()) return;
 
     setArchetype(new MavenArchetype("org.apache.maven.archetypes", "maven-archetype-quickstart", "1.0", null, null));
@@ -119,7 +117,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
                  StringUtil.convertLineSeparators(VfsUtil.loadText(myProjectPom)));
   }
 
-  public void testAddingManagedProjectIfNoArrgerator() {
+  public void testAddingManagedProjectIfNoArrgerator() throws Exception {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -136,7 +134,7 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     assertEquals(2, myProjectsManager.getProjectsTreeForTests().getManagedFilesPaths().size());
   }
 
-  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() {
+  public void testDoNotAddManagedProjectIfAddingAsModuleToAggregator() throws Exception {
     if (!hasMavenInstallation()) return;
 
     importProject("<groupId>test</groupId>" +
@@ -339,16 +337,14 @@ public class MavenModuleBuilderTest extends MavenImportingTestCase {
     myBuilder.setArchetype(archetype);
   }
 
-  private void createNewModule(MavenId id) {
+  private void createNewModule(MavenId id) throws Exception {
     myBuilder.setProjectId(id);
 
-    new WriteAction() {
-      protected void run(@NotNull Result result) throws Throwable {
-        ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
-        myBuilder.createModule(model);
-        model.commit();
-      }
-    }.execute();
+    WriteAction.runAndWait(() -> {
+      ModifiableModuleModel model = ModuleManager.getInstance(myProject).getModifiableModel();
+      myBuilder.createModule(model);
+      model.commit();
+    });
 
     resolveDependenciesAndImport();
   }

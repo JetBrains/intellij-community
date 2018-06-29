@@ -22,5 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.diff.impl" exported="" />
     <orderEntry type="module" module-name="intellij.platform.vcs.log" />
     <orderEntry type="library" name="swingx" level="project" />
+    <orderEntry type="library" name="miglayout-swing" level="project" />
   </component>
 </module>

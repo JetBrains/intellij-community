@@ -63,13 +63,6 @@ public class JavaTestFinder implements TestFinder {
     return TestFinderHelper.getSortedElements(classesWithWeights, false);
   }
 
-  /**
-   * @deprecated {@link JavaTestFinder#getSearchScope(com.intellij.psi.PsiElement, boolean)}
-   */
-  protected GlobalSearchScope getSearchScope(PsiElement element) {
-    return getSearchScope(element, true);
-  }
-
   protected GlobalSearchScope getSearchScope(PsiElement element, boolean dependencies) {
     final Module module = getModule(element);
     if (module != null) {

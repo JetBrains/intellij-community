@@ -22,7 +22,6 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.TransactionGuard;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -68,12 +67,9 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       CommandProcessor.getInstance().executeCommand(newExpression.getProject(), () ->
         psiClass[0] = CreateFromUsageUtils.createClass(referenceElement, CreateClassKind.CLASS, null), getText(), getText());
 
-      new WriteCommandAction(project, getText(), getText()) {
-        @Override
-        protected void run(@NotNull Result result) throws Throwable {
-          setupClassFromNewExpression(psiClass[0], newExpression);
-        }
-      }.execute();
+      WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
+        setupClassFromNewExpression(psiClass[0], newExpression);
+      });
     });
   }
 
@@ -110,17 +106,14 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
       if (editor == null) return;
       final RangeMarker textRange = editor.getDocument().createRangeMarker(aClass.getTextRange());
       final Runnable runnable = () -> {
-        new WriteCommandAction(project, getText(), getText()) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            try {
-              editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
-            }
-            finally {
-              textRange.dispose();
-            }
+        WriteCommandAction.writeCommandAction(project).withName(getText()).withGroupId(getText()).run(() -> {
+          try {
+            editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           }
-        }.execute();
+          finally {
+            textRange.dispose();
+          }
+        });
         startTemplate(editor, template, project, null, getText());
       };
       if (ApplicationManager.getApplication().isUnitTestMode()) {
@@ -243,7 +236,7 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
   @Override
   protected boolean isAvailableImpl(int offset) {
     PsiNewExpression expression = getNewExpression();
-    if (expression.getQualifier() != null) {
+    if (rejectQualifier(expression.getQualifier())) {
       return false;
     }
 
@@ -260,6 +253,10 @@ public class CreateClassFromNewFix extends CreateFromUsageBaseFix {
     }
 
     return false;
+  }
+
+  protected boolean rejectQualifier(PsiExpression qualifier) {
+    return qualifier != null;
   }
 
   protected String getText(final String varName) {

@@ -16,6 +16,10 @@
 
 package com.intellij.navigation;
 
+import com.intellij.ide.IdeBundle;
+import com.intellij.lang.IdeLanguageCustomization;
+import com.intellij.lang.Language;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -27,4 +31,24 @@ public interface GotoClassContributor extends ChooseByNameContributor {
 
   @Nullable
   String getQualifiedNameSeparator();
+
+  /**
+   * Override this method to change texts in 'Go to Class' popup and presentation of 'Navigate | Class' action.
+   * @return collective name of items provided by this contributor
+   * @see #getElementLanguage()
+   */
+  @NotNull
+  default String getElementKind() {
+    return IdeBundle.message("go.to.class.kind.text");
+  }
+
+  /**
+   * If the language returned by this method is one of {@link IdeLanguageCustomization#getPrimaryIdeLanguages() the primary IDE languages} the result of
+   * {@link #getElementKind()} will be used to name `Navigate | Class' action and in 'Go to Class' popup.
+   * @return the language to which items returned by this contributor belong
+   */
+  @Nullable
+  default Language getElementLanguage() {
+    return null;
+  }
 }

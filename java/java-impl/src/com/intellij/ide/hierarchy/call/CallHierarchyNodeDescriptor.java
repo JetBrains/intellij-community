@@ -16,7 +16,6 @@
 package com.intellij.ide.hierarchy.call;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
-import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.hierarchy.HierarchyNodeDescriptor;
 import com.intellij.ide.hierarchy.JavaHierarchyUtil;
@@ -29,13 +28,11 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.util.CompositeAppearance;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.ClassPresentationUtil;
 import com.intellij.psi.util.*;
-import com.intellij.ui.LayeredIcon;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -88,31 +85,15 @@ public final class CallHierarchyNodeDescriptor extends HierarchyNodeDescriptor i
     final CompositeAppearance oldText = myHighlightedText;
     final Icon oldIcon = getIcon();
 
-    int flags = Iconable.ICON_FLAG_VISIBILITY;
-    if (isMarkReadOnly()) {
-      flags |= Iconable.ICON_FLAG_READ_STATUS;
-    }
-
     boolean changes = super.update();
 
     final PsiElement enclosingElement = getEnclosingElement();
 
     if (enclosingElement == null) {
-      final String invalidPrefix = IdeBundle.message("node.hierarchy.invalid");
-      if (!myHighlightedText.getText().startsWith(invalidPrefix)) {
-        myHighlightedText.getBeginning().addText(invalidPrefix, HierarchyNodeDescriptor.getInvalidPrefixAttributes());
-      }
-      return true;
+      return invalidElement();
     }
 
-    Icon newIcon = enclosingElement.getIcon(flags);
-    if (changes && myIsBase) {
-      final LayeredIcon icon = new LayeredIcon(2);
-      icon.setIcon(newIcon, 0);
-      icon.setIcon(AllIcons.Hierarchy.Base, 1, -AllIcons.Hierarchy.Base.getIconWidth() / 2, 0);
-      newIcon = icon;
-    }
-    setIcon(newIcon);
+    installIcon(enclosingElement, changes);
 
     myHighlightedText = new CompositeAppearance();
     TextAttributes mainTextAttributes = null;

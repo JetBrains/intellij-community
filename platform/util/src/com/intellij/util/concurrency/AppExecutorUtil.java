@@ -15,12 +15,11 @@
  */
 package com.intellij.util.concurrency;
 
+import com.intellij.openapi.Disposable;
+import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.concurrent.Callable;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.ScheduledExecutorService;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 
 public class AppExecutorUtil {
   /**
@@ -58,7 +57,7 @@ public class AppExecutorUtil {
    * and execute them in parallel in the application pool (see {@link #getAppExecutorService()} not more than at {@code maxThreads} at a time.
    */
   @NotNull
-  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull String name, int maxThreads) {
+  public static ScheduledExecutorService createBoundedScheduledExecutorService(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads) {
     return new BoundedScheduledExecutorService(name, getAppExecutorService(), maxThreads);
   }
 
@@ -68,7 +67,24 @@ public class AppExecutorUtil {
    * @see #getAppExecutorService()
    */
   @NotNull
-  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull String name, int maxThreads) {
-    return new BoundedTaskExecutor(name, getAppExecutorService(), maxThreads);
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, int maxThreads) {
+    return createBoundedApplicationPoolExecutor(name, getAppExecutorService(), maxThreads);
+  }
+
+  /**
+   * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
+   */
+  @NotNull
+  public static ExecutorService createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads) {
+    return new BoundedTaskExecutor(name, backendExecutor, maxThreads);
+  }
+  /**
+   * @return the bounded executor (executor which runs no more than {@code maxThreads} tasks simultaneously) backed by the {@code backendExecutor}
+   * which will shutdown itself when {@code parentDisposable} gets disposed.
+   */
+  @NotNull
+  public static BoundedTaskExecutor createBoundedApplicationPoolExecutor(@NotNull @Nls(capitalization = Nls.Capitalization.Title) String name, @NotNull Executor backendExecutor, int maxThreads, @NotNull
+                                                                     Disposable parentDisposable) {
+    return new BoundedTaskExecutor(name, backendExecutor, maxThreads, parentDisposable);
   }
 }

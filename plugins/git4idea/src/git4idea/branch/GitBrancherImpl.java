@@ -19,7 +19,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Task;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import git4idea.GitVcs;
 import git4idea.commands.Git;
@@ -169,6 +168,26 @@ class GitBrancherImpl implements GitBrancher {
     }.runInBackground();
   }
 
+  @Override
+  public void deleteTag(@NotNull String name, @NotNull List<GitRepository> repositories) {
+    new CommonBackgroundTask(myProject, "Deleting tag " + name, null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).deleteTag(name, repositories);
+      }
+    }.runInBackground();
+  }
+
+  @Override
+  public void deleteRemoteTag(@NotNull String name, @NotNull Map<GitRepository, String> repositories) {
+    new CommonBackgroundTask(myProject, "Deleting tag " + name + " on remote", null) {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        newWorker(indicator).deleteRemoteTag(name, repositories);
+      }
+    }.runInBackground();
+  }
+
   /**
    * Executes common operations before/after executing the actual branch operation.
    */
@@ -183,7 +202,7 @@ class GitBrancherImpl implements GitBrancher {
 
     @Override
     public final void run(@NotNull ProgressIndicator indicator) {
-      DumbService.getInstance(myProject).suspendIndexingAndRun(getTitle(), () -> execute(indicator));
+      execute(indicator);
       if (myCallInAwtAfterExecution != null) {
         Application application = ApplicationManager.getApplication();
         if (application.isUnitTestMode()) {

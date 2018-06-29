@@ -8,6 +8,7 @@ try:
 except:
     xrange = range
 
+
 #===============================================================================
 # Things that are dependent on having the pydevd debugger
 #===============================================================================
@@ -15,9 +16,11 @@ def log_debug(msg):
     from _pydev_bundle import pydev_log
     pydev_log.debug(msg)
 
+
 def log_error_once(msg):
     from _pydev_bundle import pydev_log
     pydev_log.error_once(msg)
+
 
 pydev_src_dir = os.path.dirname(os.path.dirname(__file__))
 
@@ -34,24 +37,29 @@ def _get_python_c_args(host, port, indC, args, setup):
                setup,
                args[indC + 1])
 
+
 def _get_host_port():
     import pydevd
     host, port = pydevd.dispatch()
     return host, port
+
 
 def _is_managed_arg(arg):
     if arg.endswith('pydevd.py'):
         return True
     return False
 
+
 def _on_forked_process():
     import pydevd
     pydevd.threadingCurrentThread().__pydevd_main_thread = True
     pydevd.settrace_forked()
 
+
 def _on_set_trace_for_new_thread(global_debugger):
     if global_debugger is not None:
         global_debugger.SetTrace(global_debugger.trace_dispatch, global_debugger.frame_eval_func, global_debugger.dummy_trace_dispatch)
+
 
 #===============================================================================
 # Things related to monkey-patching
@@ -93,6 +101,24 @@ def quote_args(args):
         return args
 
 
+def get_c_option_index(args):
+    """
+    Get index of "-c" argument and check if it's interpreter's option
+    :param args: list of arguments
+    :return: index of "-c" if it's an interpreter's option and -1 if it doesn't exist or program's option
+    """
+    try:
+        ind_c = args.index('-c')
+    except ValueError:
+        return -1
+    else:
+        for i in range(1, ind_c):
+            if not args[i].startswith('-'):
+                # there is an arg without "-" before "-c", so it's not an interpreter's option
+                return -1
+        return ind_c
+
+
 def patch_args(args):
     try:
         log_debug("Patching args: %s"% str(args))
@@ -101,22 +127,18 @@ def patch_args(args):
         from pydevd import SetupHolder
         import sys
         new_args = []
-        i = 0
         if len(args) == 0:
             return args
 
         if is_python(args[0]):
-            try:
-                indC = args.index('-c')
-            except ValueError:
-                indC = -1
+            ind_c = get_c_option_index(args)
 
-            if indC != -1:
+            if ind_c != -1:
                 host, port = _get_host_port()
 
                 if port is not None:
                     new_args.extend(args)
-                    new_args[indC + 1] = _get_python_c_args(host, port, indC, args, SetupHolder.setup)
+                    new_args[ind_c + 1] = _get_python_c_args(host, port, ind_c, args, SetupHolder.setup)
                     return quote_args(new_args)
             else:
                 # Check for Python ZIP Applications and don't patch the args for them.
@@ -145,7 +167,6 @@ def patch_args(args):
             return args
 
         i = 1
-
         # Original args should be something as:
         # ['X:\\pysrc\\pydevd.py', '--multiprocess', '--print-in-debugger-startup',
         #  '--vm_type', 'python', '--client', '127.0.0.1', '--port', '56352', '--file', 'x:\\snippet1.py']

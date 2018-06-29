@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.updater;
 
 import java.io.*;
@@ -13,7 +13,7 @@ import java.util.zip.ZipEntry;
 import java.util.zip.ZipFile;
 
 public class Utils {
-  private static final long REQUIRED_FREE_SPACE = 10_0000_0000L;
+  private static final long REQUIRED_FREE_SPACE = 2_000_000_000L;
 
   private static final int BUFFER_SIZE = 8192;  // to minimize native memory allocations for I/O operations
   private static final byte[] BUFFER = new byte[BUFFER_SIZE];

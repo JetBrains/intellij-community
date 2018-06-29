@@ -176,18 +176,13 @@ class NormalCompletionTest extends NormalCompletionTestCase {
 
     LookupManager.getInstance(getProject()).hideActiveLookup()
 
-    CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = false
-    try{
+    JavaCodeStyleSettings.getInstance(getProject()).PREFER_LONGER_NAMES = false
       configureByFile("PreferLongerNamesOption.java")
 
       assertEquals(3, myItems.length)
       assertEquals("ijk", myItems[0].getLookupString())
       assertEquals("efghIjk", myItems[1].getLookupString())
       assertEquals("abcdEfghIjk", myItems[2].getLookupString())
-    }
-    finally{
-      CodeStyleSettingsManager.getSettings(getProject()).getCustomSettings(JavaCodeStyleSettings.class).PREFER_LONGER_NAMES = true
-    }
   }
 
   void testSCR7208() throws Exception {
@@ -1351,6 +1346,7 @@ class XInternalError {}
   void testNoClosingWhenChoosingWithParenBeforeIdentifier() { doTest '(' }
 
   void testPackageInMemberType() { doTest() }
+  void testPackageInMemberTypeGeneric() { doTest() }
 
   void testConstantInAnno() { doTest('\n') }
 
@@ -1662,14 +1658,14 @@ class Bar {
     
     myFixture.configureByText('a.java', 'class Fooxxxxxxxxxx { Fooxxxxx<caret>a f;\n' + 'public void foo() {}\n' * 10000 + '}')
     def items = myFixture.completeBasic()
-    PsiClass c1 = items[1].object
+    PsiClass c1 = items[0].object
     assert !c1.physical
     assert CompletionUtil.getOriginalElement(c1)
     
     getLookup().hide()
     myFixture.type('x')
     items = myFixture.completeBasic()
-    PsiClass c2 = items[1].object
+    PsiClass c2 = items[0].object
     assert !c2.physical
     assert CompletionUtil.getOriginalElement(c2)
 
@@ -1848,6 +1844,29 @@ class Bar {{
   void testCompletingClassWithSameNameAsPackage() {
     myFixture.addClass("package Apple; public class Apple {}")
     doTest('\n')
+  }
+
+  void testSuggestGetInstanceMethodName() { doTest() }
+
+  void testTabOnNewInnerClass() {
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.lookupString.contains('Inner') }
+    myFixture.type('\t')
+    checkResult()
+  }
+
+  void testRemoveUnusedImportOfSameName() {
+    myFixture.addClass("package foo; public class List {}")
+    configureByTestName()
+    lookup.currentItem = myFixture.lookupElements.find { it.object instanceof PsiClass && ((PsiClass)it.object).qualifiedName == 'java.util.List' }
+    myFixture.type('\n')
+    checkResult()
+  }
+
+  void "test no duplication after new with expected type parameter"() {
+    myFixture.configureByText 'a.java', 'class Foo<T> { T t = new <caret> }'
+    complete()
+    assert myFixture.lookupElements.findAll { it.allLookupStrings.contains('T') }.size() < 2
   }
 
 }

@@ -3,10 +3,10 @@
  */
 package org.jetbrains.jetCheck;
 
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Objects;
 
@@ -19,8 +19,11 @@ class RemoveListRange extends ShrinkStep {
   private final int start;
   private final int length;
 
-  RemoveListRange(StructureNode node) {
-    this(node, node.children.size(), node.children.size() - 1, 1);
+  static RemoveListRange fromEnd(StructureNode node) {
+    int likelyFailingSuffix = node.isIncompleteList() && node.children.size() > 2 ? 1 : 0;
+    return new RemoveListRange(node,
+                               node.children.size() - likelyFailingSuffix,
+                               node.children.size() - likelyFailingSuffix - 1, 1);
   }
 
   private RemoveListRange(StructureNode node, int lastSuccessfulRemove, int start, int length) {
@@ -34,6 +37,11 @@ class RemoveListRange extends ShrinkStep {
     assert lastSuccessfulRemove <= node.children.size();
   }
 
+  @Override
+  List<?> getEqualityObjects() {
+    return Arrays.asList(node.id, start, length);
+  }
+
   @Nullable
   @Override
   StructureNode apply(StructureNode root) {
@@ -42,10 +50,12 @@ class RemoveListRange extends ShrinkStep {
     if (!lengthDistribution.isValidValue(newSize)) return null;
 
     List<StructureElement> lessItems = new ArrayList<>(newSize + 1);
-    lessItems.add(new IntData(node.children.get(0).id, newSize, lengthDistribution));
+    lessItems.add(node.isIncompleteList() ? node.children.get(0) : new IntData(node.children.get(0).id, newSize, lengthDistribution));
     lessItems.addAll(node.children.subList(1, start));
     lessItems.addAll(node.children.subList(start + length, node.children.size()));
-    return root.replace(node.id, new StructureNode(node.id, lessItems));
+    StructureNode replacement = new StructureNode(node.id, lessItems);
+    replacement.kind = StructureKind.LIST;
+    return root.replace(node.id, replacement);
   }
 
   @Override
@@ -56,7 +66,7 @@ class RemoveListRange extends ShrinkStep {
     }
 
     int newEnd = start == 1 ? node.children.size() : start;
-    if (newEnd == lastSuccessfulRemove) return node.shrinkChild(1);
+    if (newEnd == lastSuccessfulRemove) return node.shrinkChild(node.children.size() - 1);
     return new RemoveListRange(node, lastSuccessfulRemove, newEnd - 1, 1);
   }
 
@@ -66,16 +76,10 @@ class RemoveListRange extends ShrinkStep {
     if (length == node.children.size() - 1) return null;
 
     StructureNode inheritor = (StructureNode)Objects.requireNonNull(smallerRoot.findChildById(node.id));
-    if (start == 1) return new RemoveListRange(inheritor);
+    if (start == 1) return fromEnd(inheritor);
     
     int newLength = Math.min(length * 2, start - 1);
     return new RemoveListRange(inheritor, start, start - newLength, newLength);
-  }
-
-  @NotNull
-  @Override
-  NodeId getNodeAfter() {
-    return node.id;
   }
 
   @Override

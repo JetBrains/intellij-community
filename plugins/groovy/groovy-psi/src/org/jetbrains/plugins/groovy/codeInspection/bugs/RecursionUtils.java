@@ -22,7 +22,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.utils.BoolUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
@@ -100,11 +99,11 @@ class RecursionUtils {
 
   private static boolean whileStatementMayReturnBeforeRecursing(
       GrWhileStatement loopStatement, GrMethod method) {
-    final GrCondition condition = loopStatement.getCondition();
-    if (!(condition instanceof GrExpression)) {
+    final GrExpression condition = loopStatement.getCondition();
+    if (condition == null) {
       return false;
     }
-    if (expressionDefinitelyRecurses((GrExpression) condition, method)) {
+    if (expressionDefinitelyRecurses(condition, method)) {
       return false;
     }
     final GrStatement body = loopStatement.getBody();
@@ -539,7 +538,7 @@ class RecursionUtils {
   private static boolean whileStatementDefinitelyRecurses(
       GrWhileStatement whileStatement, GrMethod method) {
 
-    final GrExpression condition = (GrExpression) whileStatement.getCondition();
+    final GrExpression condition = whileStatement.getCondition();
     if (expressionDefinitelyRecurses(condition, method)) {
       return true;
     }

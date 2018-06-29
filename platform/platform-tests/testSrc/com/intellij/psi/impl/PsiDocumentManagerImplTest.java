@@ -22,6 +22,7 @@ import com.intellij.mock.MockPsiFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.TransactionGuard;
+import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -76,10 +77,12 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
+import java.nio.charset.StandardCharsets;
 import java.util.Collections;
 import java.util.Random;
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.TimeoutException;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicInteger;
 
 public class PsiDocumentManagerImplTest extends PlatformTestCase {
@@ -754,6 +757,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(PsiDocumentManager.getInstance(myProject).isCommitted(document));
   }
 
+  public void testPerformWhenAllCommittedWorksAfterFileDeletion() throws Exception {
+    PsiFile file = getPsiManager().findFile(getVirtualFile(createTempFile("X.txt", "")));
+    Document document = file.getViewProvider().getDocument();
+    assertNotNull(document);
+
+    AtomicBoolean invoked = new AtomicBoolean();
+    WriteAction.run(() -> {
+      document.setText("class A{}");
+      PsiDocumentManager.getInstance(myProject).performWhenAllCommitted(() -> invoked.set(true));
+      file.getVirtualFile().delete(this);
+    });
+    PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    assertTrue(invoked.get());
+  }
+
   @SuppressWarnings("ConstantConditions")
   public void testPerformLaterWhenAllCommittedFromCommitHandler() throws Exception {
     Document document = createDocument();
@@ -783,7 +801,7 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
 
     WriteCommandAction.runWriteCommandAction(null, () -> {
       try {
-        virtualFile.setBinaryContent("\n txt txt txt".getBytes("UTF-8"));
+        virtualFile.setBinaryContent("\n txt txt txt".getBytes(StandardCharsets.UTF_8));
         virtualFile.rename(this, "X.txt");
       }
       catch (IOException e) {
@@ -927,5 +945,21 @@ public class PsiDocumentManagerImplTest extends PlatformTestCase {
     assertTrue(documentManager.isCommitted(document));
     PsiElement firstChild = psiFile.getFirstChild();
     assertTrue(firstChild instanceof PsiComment);
+  }
+
+  public void testAutoCommitDoesNotGetStuckForDocumentsWithIgnoredFileName() throws IOException {
+    VirtualFile vFile = getVirtualFile(createTempFile("a.txt~", "text"));
+    assertNotNull(getPsiManager().findViewProvider(vFile));
+    assertNull(getPsiManager().findFile(vFile)); // because it's ignored
+
+    Document document = FileDocumentManager.getInstance().getDocument(vFile);
+    ApplicationManager.getApplication().runWriteAction(() -> document.setText("// things"));
+
+    boolean[] calledPerformWhenAllCommitted = new boolean[1];
+    getPsiDocumentManager().performWhenAllCommitted(() -> calledPerformWhenAllCommitted[0] = true);
+    waitForCommits();
+
+    assertTrue(getPsiDocumentManager().isCommitted(document));
+    assertTrue(calledPerformWhenAllCommitted[0]);
   }
 }

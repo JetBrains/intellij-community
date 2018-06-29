@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInsight.completion;
 
 import com.intellij.codeInsight.lookup.InsertHandlerDecorator;
@@ -42,6 +28,7 @@ import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xml.Html5SchemaProvider;
 import com.intellij.xml.XmlBundle;
 import com.intellij.xml.XmlExtension;
@@ -210,12 +197,12 @@ public class XmlCompletionContributor extends CompletionContributor {
   static void completeTagName(CompletionParameters parameters, CompletionResultSet result) {
     PsiElement element = parameters.getPosition();
     if (!isXmlNameCompletion(parameters)) return;
-    result.stopHere();
     PsiElement parent = element.getParent();
     if (!(parent instanceof XmlTag) ||
         !(parameters.getOriginalFile() instanceof XmlFile)) {
       return;
     }
+    result.stopHere();
     final XmlTag tag = (XmlTag)parent;
     final String namespace = tag.getNamespace();
     final String prefix = result.getPrefixMatcher().getPrefix();
@@ -384,9 +371,13 @@ public class XmlCompletionContributor extends CompletionContributor {
     public void handleInsert(InsertionContext context, LookupElement item) {
       super.handleInsert(context, item);
       context.setAddCompletionChar(false);
-      final CaretModel caretModel = context.getEditor().getCaretModel();
-      context.getEditor().getDocument().insertString(caretModel.getOffset(), ";");
-      caretModel.moveToOffset(caretModel.getOffset() + 1);
+      Editor editor = context.getEditor();
+      final CaretModel caretModel = editor.getCaretModel();
+      int caretOffset = caretModel.getOffset();
+      if (!CharArrayUtil.regionMatches(editor.getDocument().getCharsSequence(), caretOffset, ";")) {
+        editor.getDocument().insertString(caretOffset, ";");
+      }
+      caretModel.moveToOffset(caretOffset + 1);
     }
   }
 }

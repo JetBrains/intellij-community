@@ -23,6 +23,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTypesUtil;
+import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.IncorrectOperationException;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -78,6 +79,7 @@ public abstract class ArgumentFixerActionFactory {
     if (methodCandidates.isEmpty()) return;
 
     try {
+      PsiType expectedTypeByParent = PsiTypesUtil.getExpectedTypeByParent(call);
       for (int i = 0; i < expressions.length; i++) {
         PsiExpression expression = expressions[i];
         PsiType exprType = expression.getType();
@@ -91,7 +93,7 @@ public abstract class ArgumentFixerActionFactory {
           if (parameterType instanceof PsiWildcardType) continue;
           if (!GenericsUtil.isFromExternalTypeLanguage(parameterType)) continue;
           if (suggestedCasts.contains(parameterType.getCanonicalText())) continue;
-          if (exprType instanceof PsiPrimitiveType && parameterType instanceof PsiClassType) {
+          if (TypeConversionUtil.isPrimitiveAndNotNull(exprType) && parameterType instanceof PsiClassType) {
             PsiType unboxedParameterType = PsiPrimitiveType.getUnboxedType(parameterType);
             if (unboxedParameterType != null) {
               parameterType = unboxedParameterType;
@@ -99,7 +101,8 @@ public abstract class ArgumentFixerActionFactory {
           }
           // strict compare since even widening cast may help
           if (Comparing.equal(exprType, parameterType)) continue;
-          PsiCall newCall = (PsiCall) call.copy();
+          PsiCall newCall = LambdaUtil.copyTopLevelCall(call); //copy with expected type
+          if (newCall == null) continue;
           PsiExpression modifiedExpression = getModifiedArgument(expression, parameterType);
           if (modifiedExpression == null) continue;
           PsiExpressionList argumentList = newCall.getArgumentList();
@@ -107,6 +110,10 @@ public abstract class ArgumentFixerActionFactory {
           argumentList.getExpressions()[i].replace(modifiedExpression);
           JavaResolveResult resolveResult = newCall.resolveMethodGenerics();
           if (resolveResult.getElement() != null && resolveResult.isValidResult()) {
+            if (expectedTypeByParent != null && newCall instanceof PsiCallExpression) {
+              PsiType type = ((PsiCallExpression)newCall).getType();
+              if (type != null && !TypeConversionUtil.isAssignable(expectedTypeByParent, type)) continue;
+            }
             suggestedCasts.add(parameterType.getCanonicalText());
             QuickFixAction.registerQuickFixAction(highlightInfo, fixRange, createFix(list, i, parameterType));
           }

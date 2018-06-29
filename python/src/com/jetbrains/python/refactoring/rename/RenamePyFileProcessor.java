@@ -88,4 +88,10 @@ public class RenamePyFileProcessor extends RenamePsiFileProcessor {
     }
     return true;
   }
+
+  @Nullable
+  @Override
+  public String getHelpID(PsiElement element) {
+    return "procedures.refactoring.renameRefactorings";
+  }
 }

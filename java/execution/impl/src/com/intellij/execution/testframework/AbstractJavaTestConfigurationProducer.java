@@ -43,6 +43,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.JavaTestFramework;
 import com.intellij.testIntegration.TestFramework;
 import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.Contract;
 
 import java.util.*;
 
@@ -56,6 +57,7 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
   }
 
 
+  @Contract("null->false")
   protected boolean isTestClass(PsiClass psiClass) {
     if (psiClass != null) {
       JavaTestFramework framework = getCurrentFramework(psiClass);
@@ -81,6 +83,10 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
     return null;
   }
 
+  protected boolean isApplicableTestType(String type, ConfigurationContext context) {
+    return true;
+  }
+  
   @Override
   public boolean isConfigurationFromContext(T configuration, ConfigurationContext context) {
     if (isMultipleElementsSelected(context)) {
@@ -106,6 +112,11 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
       : null;
     if (vmParameters != null && !Comparing.strEqual(vmParameters, configuration.getVMParameters())) return false;
     if (differentParamSet(configuration, contextLocation)) return false;
+
+    if (!isApplicableTestType(configuration.getTestType(), context)) return false;
+
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass != null && getCurrentFramework(psiClass) == null) return false;
 
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();

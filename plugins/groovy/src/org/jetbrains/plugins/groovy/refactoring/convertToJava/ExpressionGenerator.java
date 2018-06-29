@@ -896,12 +896,12 @@ public class ExpressionGenerator extends Generator {
         builder.append(text);
       }
       else {
-        builder.append('"').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1, text.length()), "'"))).append('"');
+        builder.append('"').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1), "'"))).append('"');
       }
     }
     else if (text.startsWith("\"")) {
       if (isChar) {
-        builder.append('\'').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1, text.length()), "\""))).append('\'');
+        builder.append('\'').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1), "\""))).append('\'');
       }
       else {
         builder.append(text);

@@ -1,7 +1,9 @@
-<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 16 16">
+<svg id="Layer_1" data-name="Layer 1" xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 16 16">
   <title>variable</title>
-  <g id="_Group_" data-name=" Group " opacity="0.6">
-    <circle cx="8" cy="7.99999" r="7" fill="#f4af3d"/>
+  <g>
+    <g id="_Group_" data-name="&lt;Group&gt;" opacity="0.6">
+      <circle cx="8" cy="8" r="7" fill="#f4af3d"/>
+    </g>
+    <path d="M7.29358,11,5,5H6.14985L7.367,8.3388q.06727.18033.159.46448t.18349.57923q.09174.29508.1682.55738t.10091.39891h.04282q.03057-.13662.104-.39891t.16514-.55738q.09174-.29508.18349-.57923t.159-.46448L9.85015,5H11L8.70642,11Z" fill="#231f20" opacity="0.7"/>
   </g>
-  <path d="M7.29358,11L5,5H6.14985L7.367,8.33879q0.06728,0.18033.159,0.46448T7.70948,9.3825q0.09174,0.29508.1682,0.55738t0.10091,0.39891H8.02141q0.03058-.13661.104-0.39891T8.29055,9.3825q0.09174-.29508.18349-0.57923t0.159-.46448L9.85015,5H11L8.70642,11H7.29358Z" fill="#231f20" opacity="0.6" style="isolation: isolate"/>
 </svg>

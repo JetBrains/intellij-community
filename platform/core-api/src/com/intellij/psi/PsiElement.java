@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * The common base interface for all elements of the PSI tree.
  * <p/>
- * Please see <a href="http://confluence.jetbrains.net/display/IDEADEV/IntelliJ+IDEA+Architectural+Overview">IntelliJ IDEA Architectural Overview </a>
+ * Please see <a href="https://www.jetbrains.org/intellij/sdk/docs/basics/architectural_overview.html">IntelliJ Platform Architectural Overview</a>
  * for high-level overview.
  */
 public interface PsiElement extends UserDataHolder, Iconable {
@@ -321,6 +321,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    * @deprecated not all PSI implementations implement this method correctly.
    */
+  @Deprecated
   void checkAdd(@NotNull PsiElement element) throws IncorrectOperationException;
 
   /**
@@ -370,6 +371,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * @throws IncorrectOperationException if the modification is not supported or not possible for some reason.
    * @deprecated not all PSI implementations implement this method correctly.
    */
+  @Deprecated
   void checkDelete() throws IncorrectOperationException;
 
   /**
@@ -531,7 +533,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
    * Returns the scope in which references to this element are searched.
    *
    * @return the search scope instance.
-   * @see {@link com.intellij.psi.search.PsiSearchHelper#getUseScope(PsiElement)}
+   * @see com.intellij.psi.search.PsiSearchHelper#getUseScope(PsiElement)
    */
   @NotNull
   @Contract(pure=true)

@@ -109,7 +109,6 @@
   <project-components>
     <component>
       <implementation-class>com.intellij.codeInsight.daemon.impl.tagTreeHighlighting.XmlTagTreeHighlightingPassFactory</implementation-class>
-      <skipForDefaultProject/>
     </component>
   </project-components>
 
@@ -509,6 +508,10 @@
     <intentionAction>
       <category>XML</category>
       <className>com.intellij.xml.util.CollapseTagIntention</className>
+    </intentionAction>
+    <intentionAction>
+      <category>XML</category>
+      <className>com.intellij.codeInsight.daemon.impl.analysis.RemoveAttributeIntentionFix</className>
     </intentionAction>
     <intentionAction>
       <category>XML</category>

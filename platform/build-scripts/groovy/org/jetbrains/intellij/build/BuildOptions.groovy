@@ -54,6 +54,8 @@ class BuildOptions {
   static final SOURCES_ARCHIVE_STEP = "sources_archive"
   static final SCRAMBLING_STEP = "scramble"
   static final NON_BUNDLED_PLUGINS_STEP = "non_bundled_plugins"
+  /** Build Maven artifacts for IDE modules. */
+  static final MAVEN_ARTIFACTS_STEP = "maven_artifacts"
   /** Build macOS artifacts. */
   static final MAC_ARTIFACTS_STEP = "mac_artifacts"
   /** Build .dmg file for macOS. If skipped, only .sit archive will be produced. */
@@ -78,6 +80,12 @@ class BuildOptions {
    * A build configuration should have "docker.version >= 17" in requirements.
    */
   boolean buildUnixSnaps = SystemProperties.getBooleanProperty("intellij.build.unix.snaps", false)
+
+  /**
+   * Image for snap package creation. Default is "snapcore/snapcraft:stable", but can be modified mostly due to problems
+   * with new versions of snapcraft.
+   */
+  String snapDockerImage = System.getProperty("intellij.build.snap.docker.image", "snapcore/snapcraft:stable")
 
   /**
    * Path to a zip file containing 'production' and 'test' directories with compiled classes of the project modules inside.

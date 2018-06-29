@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ui.tree;
 
 import org.jetbrains.annotations.NotNull;
@@ -22,6 +8,8 @@ import javax.swing.tree.TreeNode;
 import javax.swing.tree.TreePath;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.concurrent.ExecutionException;
+import java.util.concurrent.TimeoutException;
 
 import static com.intellij.ui.tree.TreeTestUtil.node;
 import static com.intellij.util.ReflectionUtil.getField;
@@ -424,7 +412,7 @@ public class AbstractTreeWalkerTest {
     switch (walker.promise().getState()) {
       case PENDING:
         throw new IllegalStateException("not processed");
-      case FULFILLED:
+      case SUCCEEDED:
         if (!error) break;
         throw new IllegalStateException("not rejected");
       case REJECTED:
@@ -437,7 +425,12 @@ public class AbstractTreeWalkerTest {
   }
 
   private static void assertResult(Walker walker, TreePath expected) {
-    assertEquals("unexpected result", expected, walker.promise().blockingGet(1));
+    try {
+      assertEquals("unexpected result", expected, walker.promise().blockingGet(1));
+    }
+    catch (TimeoutException | ExecutionException e) {
+      throw new AssertionError(e);
+    }
   }
 
 

@@ -31,6 +31,8 @@ public abstract class FileTypeRegistry {
 
   public abstract boolean isFileIgnored(@NotNull VirtualFile file);
 
+  public abstract boolean isFileOfType(@NotNull VirtualFile file, @NotNull FileType type);
+
   public static FileTypeRegistry getInstance() {
     return ourInstanceGetter.get();
   }
@@ -80,18 +82,6 @@ public abstract class FileTypeRegistry {
    */
   @NotNull
   public abstract FileType getFileTypeByExtension(@NonNls @NotNull String extension);
-
-  /**
-   * Tries to detect whether the file is text or not by analyzing its content.
-   * @param file to analyze
-   * @return {@link com.intellij.openapi.fileTypes.PlainTextFileType} if file looks like text,
-   *          or another file type if some file type detector identified the file
-   *          or the {@link UnknownFileType} if file is binary or we are unable to detect.
-   * @deprecated use {@link VirtualFile#getFileType()} instead
-   */
-  @NotNull
-  @Deprecated
-  public abstract FileType detectFileTypeFromContent(@NotNull VirtualFile file);
 
   /**
    * Finds a file type with the specified name.

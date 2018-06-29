@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.components.ServiceManager;
@@ -37,9 +23,6 @@ public abstract class JavaCodeStyleManager {
 
   public static final int DO_NOT_ADD_IMPORTS = 0x1000;
   public static final int INCOMPLETE_CODE = 0x2000;
-
-  /** @deprecated use {@link #INCOMPLETE_CODE} (to be removed in IDEA 17) */
-  @SuppressWarnings({"unused", "SpellCheckingInspection"}) public static final int UNCOMPLETE_CODE = INCOMPLETE_CODE;
 
   public abstract boolean addImport(@NotNull PsiJavaFile file, @NotNull PsiClass refClass);
   @NotNull
@@ -255,4 +238,19 @@ public abstract class JavaCodeStyleManager {
 
   @Nullable
   public abstract Collection<PsiImportStatementBase> findRedundantImports(@NotNull PsiJavaFile file);
+
+  /**
+   * This method is not actually tied to Java Code Style.
+   * This method doesn't add prefixes or suffixes, and doesn't apply keyword correction.
+   * Returned names already have proper pluralization.
+   * <p>
+   * Should be used with {@link #suggestNames(Collection, VariableKind, PsiType)}.
+   */
+  @NotNull
+  public abstract Collection<String> suggestSemanticNames(@NotNull PsiExpression expression);
+
+  @NotNull
+  public abstract SuggestedNameInfo suggestNames(@NotNull Collection<String> semanticNames,
+                                                 @NotNull VariableKind kind,
+                                                 @Nullable PsiType type);
 }

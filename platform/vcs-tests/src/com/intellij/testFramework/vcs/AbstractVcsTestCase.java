@@ -125,31 +125,28 @@ public abstract class AbstractVcsTestCase {
     return VcsTestUtil.findOrCreateDir(myProject, parent, name);
   }
 
-  protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) {
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        int numOfRuns = 5;
-        for (int i = 0; i < numOfRuns; i++) {
-          try {
-            final VirtualFile[] children = dir.getChildren();
-            for (VirtualFile child : children) {
-              if (filter != null && filter.process(child)) {
-                child.delete(AbstractVcsTestCase.this);
-              }
+  protected void clearDirInCommand(final VirtualFile dir, final Processor<VirtualFile> filter) throws Exception {
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      int numOfRuns = 5;
+      for (int i = 0; i < numOfRuns; i++) {
+        try {
+          final VirtualFile[] children = dir.getChildren();
+          for (VirtualFile child : children) {
+            if (filter != null && filter.process(child)) {
+              child.delete(AbstractVcsTestCase.this);
             }
-            return;
           }
-          catch (IOException e) {
-            if (i == numOfRuns - 1) {
-              // last run
-              throw e;
-            }
-            Thread.sleep(50);
+          return;
+        }
+        catch (IOException e) {
+          if (i == numOfRuns - 1) {
+            // last run
+            throw e;
           }
+          Thread.sleep(50);
         }
       }
-    }.execute();
+    });
   }
 
   protected void tearDownProject() throws Exception {
@@ -232,17 +229,14 @@ public abstract class AbstractVcsTestCase {
   @NotNull
   protected VirtualFile copyFileInCommand(@NotNull VirtualFile file, final String toName) {
     final AtomicReference<VirtualFile> res = new AtomicReference<>();
-    new WriteCommandAction.Simple(myProject) {
-      @Override
-      protected void run() throws Throwable {
-        try {
-          res.set(file.copy(this, file.getParent(), toName));
-        }
-        catch (IOException e) {
-          throw new RuntimeException(e);
-        }
+    WriteCommandAction.writeCommandAction(myProject).run(() -> {
+      try {
+        res.set(file.copy(this, file.getParent(), toName));
       }
-    }.execute();
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    });
     return res.get();
   }
 

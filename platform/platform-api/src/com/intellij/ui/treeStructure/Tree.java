@@ -20,6 +20,7 @@ import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Conditions;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.*;
 import com.intellij.util.ReflectionUtil;
 import com.intellij.util.ui.*;
@@ -55,12 +56,12 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
 
   private Dimension myHoldSize;
   private final MySelectionModel mySelectionModel = new MySelectionModel();
-  private boolean myHorizontalAutoScrolling = true;
+  private Boolean myHorizontalAutoScrolling = null;
 
   private TreePath rollOverPath;
 
   public Tree() {
-    this(getDefaultTreeModel());
+    this(new DefaultMutableTreeNode());
   }
 
   public Tree(TreeNode root) {
@@ -867,7 +868,7 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
   }
 
   public boolean isHorizontalAutoScrollingEnabled() {
-    return myHorizontalAutoScrolling;
+    return myHorizontalAutoScrolling != null ? myHorizontalAutoScrolling : Registry.is("ide.tree.horizontal.default.autoscrolling", false);
   }
 
   public void setHorizontalAutoScrollingEnabled(boolean enabled) {

@@ -6,6 +6,8 @@ import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.daemon.impl.ParameterHintsPresentationManager;
 import com.intellij.codeInsight.hint.ParameterInfoController;
+import com.intellij.codeInsight.lookup.LookupElement;
+import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.editor.Editor;
@@ -15,6 +17,7 @@ import com.intellij.util.ui.UIUtil;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.TimeoutException;
 import java.util.concurrent.locks.LockSupport;
+import java.util.stream.Stream;
 
 public abstract class AbstractParameterInfoTestCase extends LightFixtureCompletionTestCase {
   private EditorHintFixture myHintFixture;
@@ -38,21 +41,31 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     }
   }
 
-  public void configureJava(String text) {
+  protected void configureJava(String text) {
     myFixture.configureByText(JavaFileType.INSTANCE, text);
   }
 
-  public void showParameterInfo() {
+  protected void showParameterInfo() {
     myFixture.performEditorAction(IdeActions.ACTION_EDITOR_SHOW_PARAMETER_INFO);
     UIUtil.dispatchAllInvocationEvents();
   }
 
-  public void checkHintContents(String hintText) {
+  protected void checkHintContents(String hintText) {
     assertEquals(hintText, myHintFixture.getCurrentHintText());
   }
 
-  public void type(String text) {
-    myFixture.type(text);
+  public void checkResult(String text) {
+    myFixture.checkResult(text);
+  }
+
+  public void complete(String partOfItemText) {
+    LookupElement[] elements = myFixture.completeBasic();
+    LookupElement element = Stream.of(elements).filter(e -> {
+      LookupElementPresentation p = new LookupElementPresentation();
+      e.renderElement(p);
+      return (p.getItemText() + p.getTailText()).contains(partOfItemText);
+    }).findAny().get();
+    selectItem(element);
   }
 
   private void waitForParameterInfoUpdate() throws TimeoutException {
@@ -72,7 +85,7 @@ public abstract class AbstractParameterInfoTestCase extends LightFixtureCompleti
     AutoPopupController.getInstance(getProject()).waitForDelayedActions(1, TimeUnit.MINUTES);
   }
 
-  public void waitForAllAsyncStuff() throws TimeoutException {
+  protected void waitForAllAsyncStuff() throws TimeoutException {
     waitForParameterInfoUpdate();
     myFixture.doHighlighting();
     waitTillAnimationCompletes(getEditor());

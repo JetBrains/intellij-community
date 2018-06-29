@@ -32,7 +32,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     ContainerUtil.newHashSet(CommonUiProperties.SHOW_DETAILS,
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
                              MainVcsLogUiProperties.BEK_SORT_TYPE,
-                             MainVcsLogUiProperties.SHOW_ROOT_NAMES,
+                             CommonUiProperties.SHOW_ROOT_NAMES,
                              MainVcsLogUiProperties.TEXT_FILTER_MATCH_CASE,
                              MainVcsLogUiProperties.TEXT_FILTER_REGEX,
                              CommonUiProperties.COLUMN_ORDER);
@@ -75,7 +75,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (SHOW_LONG_EDGES.equals(property)) {
       return (T)Boolean.valueOf(getState().LONG_EDGES_VISIBLE);
     }
-    else if (SHOW_ROOT_NAMES.equals(property)) {
+    else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       return (T)Boolean.valueOf(getState().SHOW_ROOT_NAMES);
     }
     else if (BEK_SORT_TYPE.equals(property)) {
@@ -119,7 +119,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
     else if (SHOW_LONG_EDGES.equals(property)) {
       getState().LONG_EDGES_VISIBLE = (Boolean)value;
     }
-    else if (SHOW_ROOT_NAMES.equals(property)) {
+    else if (CommonUiProperties.SHOW_ROOT_NAMES.equals(property)) {
       getState().SHOW_ROOT_NAMES = (Boolean)value;
     }
     else if (BEK_SORT_TYPE.equals(property)) {
@@ -255,69 +255,5 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
   private static class TextFilterSettings {
     public boolean REGEX = false;
     public boolean MATCH_CASE = false;
-  }
-
-  public abstract static class MainVcsLogUiPropertiesListener implements PropertiesChangeListener {
-    public abstract void onShowDetailsChanged();
-
-    public abstract void onShowLongEdgesChanged();
-
-    public abstract void onBekChanged();
-
-    public abstract void onShowRootNamesChanged();
-
-    public abstract void onCompactReferencesViewChanged();
-
-    public abstract void onShowTagNamesChanged();
-
-    public abstract void onTextFilterSettingsChanged();
-
-    public abstract void onHighlighterChanged();
-
-    public abstract void onColumnWidthChanged(int column);
-
-    public abstract void onColumnOrderChanged();
-
-    public abstract void onShowChangesFromParentsChanged();
-
-    @Override
-    public <T> void onPropertyChanged(@NotNull VcsLogUiProperties.VcsLogUiProperty<T> property) {
-      if (CommonUiProperties.SHOW_DETAILS.equals(property)) {
-        onShowDetailsChanged();
-      }
-      else if (SHOW_LONG_EDGES.equals(property)) {
-        onShowLongEdgesChanged();
-      }
-      else if (SHOW_ROOT_NAMES.equals(property)) {
-        onShowRootNamesChanged();
-      }
-      else if (COMPACT_REFERENCES_VIEW.equals(property)) {
-        onCompactReferencesViewChanged();
-      }
-      else if (SHOW_TAG_NAMES.equals(property)) {
-        onShowTagNamesChanged();
-      }
-      else if (BEK_SORT_TYPE.equals(property)) {
-        onBekChanged();
-      }
-      else if (TEXT_FILTER_REGEX.equals(property) || TEXT_FILTER_MATCH_CASE.equals(property)) {
-        onTextFilterSettingsChanged();
-      }
-      else if (CommonUiProperties.COLUMN_ORDER.equals(property)) {
-        onColumnOrderChanged();
-      }
-      else if (property instanceof VcsLogHighlighterProperty) {
-        onHighlighterChanged();
-      }
-      else if (property instanceof CommonUiProperties.TableColumnProperty) {
-        onColumnWidthChanged(((CommonUiProperties.TableColumnProperty)property).getColumn());
-      }
-      else if (SHOW_CHANGES_FROM_PARENTS.equals(property)) {
-        onShowChangesFromParentsChanged();
-      }
-      else {
-        throw new UnsupportedOperationException("Property " + property + " does not exist");
-      }
-    }
   }
 }

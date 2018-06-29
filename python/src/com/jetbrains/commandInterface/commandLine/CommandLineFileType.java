@@ -52,12 +52,17 @@ public final class CommandLineFileType extends LanguageFileType {
   @NotNull
   @Override
   public String getDefaultExtension() {
-    return '.' + EXTENSION;
+    return EXTENSION;
   }
 
   @Nullable
   @Override
   public Icon getIcon() {
     return null;
+  }
+
+  @Override
+  public boolean isReadOnly() {
+    return true;
   }
 }

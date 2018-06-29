@@ -20,6 +20,7 @@ import com.intellij.util.containers.OrderedSet;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.ExpressionUtils;
 import org.jetbrains.annotations.NotNull;
 
 public class ResultOfObjectAllocationIgnoredInspectionBase extends BaseInspection {
@@ -53,8 +54,7 @@ public class ResultOfObjectAllocationIgnoredInspectionBase extends BaseInspectio
         return;
       }
       final PsiNewExpression newExpression = (PsiNewExpression)expression;
-      final PsiExpression[] arrayDimensions = newExpression.getArrayDimensions();
-      if (arrayDimensions.length != 0 || newExpression.getArrayInitializer() != null) {
+      if (ExpressionUtils.isArrayCreationExpression(newExpression)) {
         return;
       }
       final PsiJavaCodeReferenceElement reference = newExpression.getClassOrAnonymousClassReference();

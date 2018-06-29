@@ -70,8 +70,9 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
 
   @Override
   protected void destroyProcessImpl() {
-    if (myTask != null) {
-      myTask.cancel();
+    ExternalSystemTask task = myTask;
+    if (task != null) {
+      task.cancel();
     }
     closeInput();
   }
@@ -105,8 +106,9 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
   }
 
   protected void closeInput() {
-    if (myTask instanceof UserDataHolder) {
-      ((UserDataHolder)myTask).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
+    ExternalSystemTask task = myTask;
+    if (task instanceof UserDataHolder) {
+      ((UserDataHolder)task).putUserData(ExternalSystemRunConfiguration.RUN_INPUT_KEY, null);
     }
     StreamUtil.closeStream(myProcessInput);
     myProcessInput = null;
@@ -114,7 +116,11 @@ public class ExternalSystemProcessHandler extends BuildProcessHandler implements
 
   @Override
   public void dispose() {
-    myTask = null;
-    detachProcessImpl();
+    try {
+      detachProcessImpl();
+    }
+    finally {
+      myTask = null;
+    }
   }
 }

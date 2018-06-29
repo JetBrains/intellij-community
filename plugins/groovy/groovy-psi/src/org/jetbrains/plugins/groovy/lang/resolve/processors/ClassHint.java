@@ -3,6 +3,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiType;
 import com.intellij.psi.scope.ElementClassHint;
 import com.intellij.psi.scope.ElementClassHint.DeclarationKind;
 
@@ -15,8 +16,9 @@ import static com.intellij.psi.scope.ElementClassHint.DeclarationKind.*;
  */
 public interface ClassHint {
   Key<PsiElement> RESOLVE_CONTEXT = Key.create("RESOLVE_CONTEXT");
+  Key<PsiType> THIS_TYPE = Key.create("THIS_TYPE");
 
-  ElementClassHint CLASSES = kind -> kind == CLASS;
+  ElementClassHint EMPTY = kind -> false;
 
   EnumSet<DeclarationKind> RESOLVE_KINDS_CLASS = EnumSet.of(CLASS);
   EnumSet<DeclarationKind> RESOLVE_KINDS_METHOD = EnumSet.of(METHOD);

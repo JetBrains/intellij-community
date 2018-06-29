@@ -39,7 +39,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiElementFilter;
 import com.intellij.psi.util.PsiTreeUtil;
-import java.util.HashMap;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 
@@ -70,64 +69,61 @@ public class SaveAsTemplateAction extends AnAction {
     });
 
     final Document document = EditorFactory.getInstance().createDocument(editor.getDocument().getText().
-                                                                         substring(startOffset,
-                                                                                   selection.getEndOffset()));
+      substring(startOffset,
+                selection.getEndOffset()));
     final boolean isXml = file.getLanguage().is(StdLanguages.XML);
     final int offsetDelta = startOffset;
-    new WriteCommandAction.Simple(project, (String)null) {
-      @Override
-      protected void run() throws Throwable {
-        Map<RangeMarker, String> rangeToText = new HashMap<>();
+    WriteCommandAction.writeCommandAction(project).withName((String)null).run(() -> {
+      Map<RangeMarker, String> rangeToText = new HashMap<>();
 
-        for (PsiElement element : psiElements) {
-          for (PsiReference reference : element.getReferences()) {
-            if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
-              String canonicalText = reference.getCanonicalText();
-              TextRange referenceRange = reference.getRangeInElement();
-              final TextRange elementTextRange = element.getTextRange();
-              LOG.assertTrue(elementTextRange != null, elementTextRange);
-              final TextRange range = elementTextRange.cutOut(referenceRange).shiftRight(-offsetDelta);
-              final String oldText = document.getText(range);
-              // workaround for Java references: canonicalText contains generics, and we need to cut them off because otherwise
-              // they will be duplicated
-              int pos = canonicalText.indexOf('<');
-              if (pos > 0 && !oldText.contains("<")) {
-                canonicalText = canonicalText.substring(0, pos);
-              }
-              if (isXml) { //strip namespace prefixes
-                pos = canonicalText.lastIndexOf(':');
-                if (pos >= 0 && pos < canonicalText.length() - 1 && !oldText.contains(":")) {
-                  canonicalText = canonicalText.substring(pos + 1);
-                }
-              }
-              if (!canonicalText.equals(oldText)) {
-                rangeToText.put(document.createRangeMarker(range), canonicalText);
+      for (PsiElement element : psiElements) {
+        for (PsiReference reference : element.getReferences()) {
+          if (!(reference instanceof PsiQualifiedReference) || ((PsiQualifiedReference)reference).getQualifier() == null) {
+            String canonicalText = reference.getCanonicalText();
+            TextRange referenceRange = reference.getRangeInElement();
+            final TextRange elementTextRange = element.getTextRange();
+            LOG.assertTrue(elementTextRange != null, elementTextRange);
+            final TextRange range = elementTextRange.cutOut(referenceRange).shiftRight(-offsetDelta);
+            final String oldText = document.getText(range);
+            // workaround for Java references: canonicalText contains generics, and we need to cut them off because otherwise
+            // they will be duplicated
+            int pos = canonicalText.indexOf('<');
+            if (pos > 0 && !oldText.contains("<")) {
+              canonicalText = canonicalText.substring(0, pos);
+            }
+            if (isXml) { //strip namespace prefixes
+              pos = canonicalText.lastIndexOf(':');
+              if (pos >= 0 && pos < canonicalText.length() - 1 && !oldText.contains(":")) {
+                canonicalText = canonicalText.substring(pos + 1);
               }
             }
-          }
-        }
-
-        List<RangeMarker> markers = new ArrayList<>();
-        for (RangeMarker m1 : rangeToText.keySet()) {
-          boolean nested = false;
-          for (RangeMarker m2 : rangeToText.keySet()) {
-            if (m1 != m2 && m2.getStartOffset() <= m1.getStartOffset() && m1.getEndOffset() <= m2.getEndOffset()) {
-              nested = true;
-              break;
+            if (!canonicalText.equals(oldText)) {
+              rangeToText.put(document.createRangeMarker(range), canonicalText);
             }
           }
-
-          if (!nested) {
-            markers.add(m1);
-          }
-        }
-
-        for (RangeMarker marker : markers) {
-          final String value = rangeToText.get(marker);
-          document.replaceString(marker.getStartOffset(), marker.getEndOffset(), value);
         }
       }
-    }.execute();
+
+      List<RangeMarker> markers = new ArrayList<>();
+      for (RangeMarker m1 : rangeToText.keySet()) {
+        boolean nested = false;
+        for (RangeMarker m2 : rangeToText.keySet()) {
+          if (m1 != m2 && m2.getStartOffset() <= m1.getStartOffset() && m1.getEndOffset() <= m2.getEndOffset()) {
+            nested = true;
+            break;
+          }
+        }
+
+        if (!nested) {
+          markers.add(m1);
+        }
+      }
+
+      for (RangeMarker marker : markers) {
+        final String value = rangeToText.get(marker);
+        document.replaceString(marker.getStartOffset(), marker.getEndOffset(), value);
+      }
+    });
 
     TemplateImpl template = new TemplateImpl(TemplateListPanel.ABBREVIATION, document.getText().trim(), TemplateSettings.USER_GROUP_NAME);
     template.setToReformat(true);

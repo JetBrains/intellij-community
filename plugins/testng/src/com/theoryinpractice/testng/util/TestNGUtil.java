@@ -26,6 +26,7 @@ import com.intellij.psi.search.searches.AllClassesSearch;
 import com.intellij.psi.util.*;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.JBIterable;
 import com.intellij.util.xml.NanoXmlUtil;
 import com.theoryinpractice.testng.model.TestClassFilter;
 import org.jetbrains.annotations.NonNls;
@@ -245,7 +246,8 @@ public class TestNGUtil {
   }
 
   public static boolean isDisabled(PsiAnnotation annotation) {
-    final PsiAnnotationMemberValue attributeValue = annotation.findDeclaredAttributeValue("enabled");
+    PsiNameValuePair attribute = AnnotationUtil.findDeclaredAttribute(annotation, "enabled");
+    final PsiAnnotationMemberValue attributeValue = attribute != null ? attribute.getDetachedValue() : null;
     return attributeValue != null && attributeValue.textMatches("false");
   }
 
@@ -342,19 +344,11 @@ public class TestNGUtil {
   }
 
   private static Collection<String> extractValuesFromParameter(PsiAnnotationMemberValue value) {
-    Collection<String> results = new ArrayList<>();
-    if (value instanceof PsiArrayInitializerMemberValue) {
-      for (PsiElement child : value.getChildren()) {
-        if (child instanceof PsiLiteralExpression) {
-          results.add((String) ((PsiLiteralExpression) child).getValue());
-        }
-      }
-    } else {
-      if (value instanceof PsiLiteralExpression) {
-        results.add((String) ((PsiLiteralExpression) value).getValue());
-      }
-    }
-    return results;
+    return JBIterable.from(AnnotationUtil.arrayAttributeValues(value))
+                     .filter(PsiLiteralExpression.class)
+                     .map(PsiLiteralExpression::getValue)
+                     .filter(String.class)
+                     .toList();
   }
 
   @Nullable
@@ -440,20 +434,7 @@ public class TestNGUtil {
   }
 
   public static boolean inheritsJUnitTestCase(PsiClass psiClass) {
-    PsiClass current = psiClass;
-    while (current != null) {
-      PsiClass[] supers = current.getSupers();
-      if (supers.length > 0) {
-        PsiClass parent = supers[0];
-        if ("junit.framework.TestCase".equals(parent.getQualifiedName())) return true;
-        current = parent;
-        //handle typo where class extends itself
-        if (current == psiClass) return false;
-      } else {
-        current = null;
-      }
-    }
-    return false;
+    return InheritanceUtil.isInheritor(psiClass, "junit.framework.TestCase");
   }
 
   public static boolean inheritsITestListener(@NotNull PsiClass psiClass) {

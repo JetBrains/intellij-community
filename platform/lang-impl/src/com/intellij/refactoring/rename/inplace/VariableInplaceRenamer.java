@@ -51,8 +51,10 @@ import com.intellij.refactoring.rename.naming.AutomaticRenamerFactory;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.TextOccurrencesUtil;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -70,22 +72,23 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
   private TextRange mySelectedRange;
   protected Language myLanguage;
 
-  public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename, Editor editor) {
+  public VariableInplaceRenamer(@NotNull PsiNamedElement elementToRename,
+                                @NotNull Editor editor) {
     this(elementToRename, editor, elementToRename.getProject());
   }
 
-  public VariableInplaceRenamer(PsiNamedElement elementToRename,
-                                Editor editor,
-                                Project project) {
+  public VariableInplaceRenamer(@Nullable PsiNamedElement elementToRename,
+                                @NotNull Editor editor,
+                                @NotNull Project project) {
     this(elementToRename, editor, project, elementToRename != null ? elementToRename.getName() : null,
          elementToRename != null ? elementToRename.getName() : null);
   }
 
-  public VariableInplaceRenamer(PsiNamedElement elementToRename,
-                                Editor editor,
-                                Project project,
-                                final String initialName,
-                                final String oldName) {
+  public VariableInplaceRenamer(@Nullable PsiNamedElement elementToRename,
+                                @NotNull Editor editor,
+                                @NotNull Project project,
+                                @Nullable String initialName,
+                                @Nullable String oldName) {
     super(editor, elementToRename, project, initialName, oldName);
   }
 
@@ -245,12 +248,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         return;
       }
       if (elementToRename != null) {
-        new WriteCommandAction(myProject, getCommandName()) {
-          @Override
-          protected void run(@NotNull Result result) throws Throwable {
-            renameSynthetic(newName);
-          }
-        }.execute();
+        WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(() -> {
+          renameSynthetic(newName);
+        });
       }
       AutomaticRenamerFactory[] factories = Extensions.getExtensions(AutomaticRenamerFactory.EP_NAME);
       for (AutomaticRenamerFactory renamerFactory : factories) {
@@ -274,7 +274,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             }
 
             if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, PsiUtilCore.toPsiElementArray(renamer.getElements()))) return;
-            final Runnable performAutomaticRename = () -> {
+            final ThrowableRunnable<RuntimeException> performAutomaticRename = () -> {
               CommandProcessor.getInstance().markCurrentCommandAsGlobal(myProject);
               final UsageInfo[] usageInfos = usages.toArray(UsageInfo.EMPTY_ARRAY);
               final MultiMap<PsiElement, UsageInfo> classified = RenameProcessor.classifyUsages(renamer.getElements(), usageInfos);
@@ -293,9 +293,9 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
               }
             };
             if (ApplicationManager.getApplication().isUnitTestMode()) {
-              writeCommandAction.execute();
+              WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename);
             } else {
-              ApplicationManager.getApplication().invokeLater(() -> writeCommandAction.execute());
+              ApplicationManager.getApplication().invokeLater(() -> WriteCommandAction.writeCommandAction(myProject).withName(getCommandName()).run(performAutomaticRename));
             }
           }
         }

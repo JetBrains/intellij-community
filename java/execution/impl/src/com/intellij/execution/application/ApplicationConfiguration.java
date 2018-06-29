@@ -1,41 +1,34 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.application;
 
-import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.diagnostic.logging.LogConfigurationPanel;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.filters.ArgumentFileFilter;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.junit.RefactoringListeners;
-import com.intellij.execution.process.KillableProcessHandler;
-import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.JavaParametersUtil;
 import com.intellij.execution.util.ProgramParametersUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.options.SettingsEditorGroup;
-import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.JdkUtil;
-import com.intellij.openapi.projectRoots.ex.JavaSdkUtil;
+import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiJavaModule;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.refactoring.listeners.RefactoringElementListener;
-import com.intellij.util.PathsList;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.Map;
+import java.util.Objects;
 
 public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunConfigurationModule>
   implements CommonJavaRunConfigurationParameters, ConfigurationWithCommandLineShortener, SingleClassConfiguration, RefactoringListenerProvider {
@@ -53,6 +46,10 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   public ApplicationConfiguration(final String name, final Project project, ApplicationConfigurationType applicationConfigurationType) {
     this(name, project, applicationConfigurationType.getConfigurationFactories()[0]);
+  }
+
+  public ApplicationConfiguration(final String name, final Project project) {
+    this(name, project, ApplicationConfigurationType.getInstance().getConfigurationFactories()[0]);
   }
 
   protected ApplicationConfiguration(final String name, final Project project, final ConfigurationFactory factory) {
@@ -178,16 +175,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
 
   @Override
   public void setWorkingDirectory(@Nullable String value) {
-    String normalizedValue = ExternalizablePath.urlValue(value);
+    String normalizedValue = StringUtil.isEmptyOrSpaces(value) ? null : value.trim();
     //noinspection deprecation
-    WORKING_DIRECTORY = normalizedValue;
-    getOptions().setWorkingDirectory(normalizedValue);
+    WORKING_DIRECTORY = PathUtil.toSystemDependentName(normalizedValue);
+
+    String independentValue = PathUtil.toSystemIndependentName(normalizedValue);
+    getOptions().setWorkingDirectory(Comparing.equal(independentValue, getProject().getBasePath()) ? null : independentValue);
   }
 
   @Override
   public String getWorkingDirectory() {
     //noinspection deprecation
-    return ExternalizablePath.localPathValue(WORKING_DIRECTORY);
+    return WORKING_DIRECTORY;
   }
 
   @Override
@@ -229,11 +228,13 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return ALTERNATIVE_JRE_PATH_ENABLED;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePathEnabled(boolean enabled) {
-    //noinspection deprecation
+    boolean changed = ALTERNATIVE_JRE_PATH_ENABLED != enabled;
     ALTERNATIVE_JRE_PATH_ENABLED = enabled;
     getOptions().setAlternativeJrePathEnabled(enabled);
+    onAlternativeJreChanged(changed, getProject());
   }
 
   @Nullable
@@ -243,11 +244,19 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     return ALTERNATIVE_JRE_PATH;
   }
 
+  @SuppressWarnings("deprecation")
   @Override
   public void setAlternativeJrePath(@Nullable String path) {
-    //noinspection deprecation
+    boolean changed = !Objects.equals(ALTERNATIVE_JRE_PATH, path);
     ALTERNATIVE_JRE_PATH = path;
     getOptions().setAlternativeJrePath(path);
+    onAlternativeJreChanged(changed, getProject());
+  }
+
+  public static void onAlternativeJreChanged(boolean changed, Project project) {
+    if (changed) {
+      AlternativeSdkRootsProvider.reindexIfNeeded(project);
+    }
   }
 
   public boolean isProvidedScopeIncluded() {
@@ -269,9 +278,18 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     super.readExternal(element);
 
     ApplicationConfigurationOptions options = getOptions();
+
+    String workingDirectory = options.getWorkingDirectory();
+    if (workingDirectory == null) {
+      workingDirectory = PathUtil.toSystemDependentName(getProject().getBasePath());
+    }
+    else {
+      workingDirectory = FileUtilRt.toSystemDependentName(VirtualFileManager.extractPath(workingDirectory));
+    }
+
     MAIN_CLASS_NAME = options.getMainClassName();
     PROGRAM_PARAMETERS = options.getProgramParameters();
-    WORKING_DIRECTORY = options.getWorkingDirectory();
+    WORKING_DIRECTORY = workingDirectory;
     ALTERNATIVE_JRE_PATH = options.getAlternativeJrePath();
     ALTERNATIVE_JRE_PATH_ENABLED = options.isAlternativeJrePathEnabled();
     ENABLE_SWING_INSPECTOR = options.isSwingInspectorEnabled();
@@ -310,69 +328,14 @@ public class ApplicationConfiguration extends ModuleBasedConfiguration<JavaRunCo
     getOptions().setSwingInspectorEnabled(value);
   }
 
-  public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends BaseJavaApplicationCommandLineState<T> {
+  public static class JavaApplicationCommandLineState<T extends ApplicationConfiguration> extends ApplicationCommandLineState<T> {
     public JavaApplicationCommandLineState(@NotNull final T configuration, final ExecutionEnvironment environment) {
-      super(environment, configuration);
+      super(configuration, environment);
     }
 
     @Override
-    protected JavaParameters createJavaParameters() throws ExecutionException {
-      final JavaParameters params = new JavaParameters();
-      T configuration = getConfiguration();
-      params.setShortenCommandLine(configuration.getShortenCommandLine(), configuration.getProject());
-
-      final JavaRunConfigurationModule module = myConfiguration.getConfigurationModule();
-      final String jreHome = myConfiguration.isAlternativeJrePathEnabled() ? myConfiguration.getAlternativeJrePath() : null;
-      if (module.getModule() != null) {
-        DumbService.getInstance(module.getProject()).runWithAlternativeResolveEnabled(() -> {
-          int classPathType = JavaParametersUtil.getClasspathType(module, myConfiguration.getMainClassName(), false, myConfiguration.isProvidedScopeIncluded());
-          JavaParametersUtil.configureModule(module, params, classPathType, jreHome);
-        });
-      }
-      else {
-        JavaParametersUtil.configureProject(module.getProject(), params, JavaParameters.JDK_AND_CLASSES_AND_TESTS, jreHome);
-      }
-
-      params.setMainClass(myConfiguration.getMainClassName());
-
-      setupJavaParameters(params);
-
-      setupModulePath(params, module);
-
-      return params;
-    }
-
-    @Override
-    protected GeneralCommandLine createCommandLine() throws ExecutionException {
-      GeneralCommandLine line = super.createCommandLine();
-      Map<String, String> content = line.getUserData(JdkUtil.COMMAND_LINE_CONTENT);
-      if (content != null) {
-        content.forEach((key, value) -> addConsoleFilters(new ArgumentFileFilter(key, value)));
-      }
-      return line;
-    }
-
-    @NotNull
-    @Override
-    protected OSProcessHandler startProcess() throws ExecutionException {
-      OSProcessHandler processHandler = super.startProcess();
-      if (processHandler instanceof KillableProcessHandler && DebuggerSettings.getInstance().KILL_PROCESS_IMMEDIATELY) {
-        ((KillableProcessHandler)processHandler).setShouldKillProcessSoftly(false);
-      }
-      return processHandler;
-    }
-
-    private static void setupModulePath(JavaParameters params, JavaRunConfigurationModule module) {
-      if (JavaSdkUtil.isJdkAtLeast(params.getJdk(), JavaSdkVersion.JDK_1_9)) {
-        PsiJavaModule mainModule = DumbService.getInstance(module.getProject()).computeWithAlternativeResolveEnabled(
-          () -> JavaModuleGraphUtil.findDescriptorByElement(module.findClass(params.getMainClass())));
-        if (mainModule != null) {
-          params.setModuleName(mainModule.getName());
-          PathsList classPath = params.getClassPath(), modulePath = params.getModulePath();
-          modulePath.addAll(classPath.getPathList());
-          classPath.clear();
-        }
-      }
+    protected boolean isProvidedScopeIncluded() {
+      return myConfiguration.isProvidedScopeIncluded();
     }
   }
 }

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diff.util;
 
 import com.intellij.codeInsight.daemon.OutsidersPsiFileSupport;
@@ -51,7 +37,6 @@ import com.intellij.openapi.command.undo.DocumentReference;
 import com.intellij.openapi.command.undo.DocumentReferenceManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.GenericDataProvider;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
@@ -287,7 +272,10 @@ public class DiffUtil {
     if (convertor1 == null && convertor2 == null) return null;
     if (convertor1 == null) return convertor2;
     if (convertor2 == null) return convertor1;
-    return value -> convertor1.execute(convertor2.execute(value));
+    return value -> {
+      int value2 = convertor2.execute(value);
+      return value2 >= 0 ? convertor1.execute(value2) : value2;
+    };
   }
 
   //
@@ -558,11 +546,11 @@ public class DiffUtil {
                                        @Nullable Charset charset,
                                        @Nullable Boolean bom,
                                        boolean readOnly) {
-    if (readOnly) title += " " + DiffBundle.message("diff.content.read.only.content.title.suffix");
-
     JPanel panel = new JPanel(new BorderLayout());
     panel.setBorder(JBUI.Borders.empty(0, 4));
-    panel.add(new JBLabel(title).setCopyable(true), BorderLayout.CENTER);
+    JBLabel titleLabel = new JBLabel(title).setCopyable(true);
+    if (readOnly) titleLabel.setIcon(AllIcons.Ide.Readonly);
+    panel.add(titleLabel, BorderLayout.CENTER);
     if (charset != null && separator != null) {
       JPanel panel2 = new JPanel();
       panel2.setLayout(new BoxLayout(panel2, BoxLayout.X_AXIS));
@@ -668,11 +656,23 @@ public class DiffUtil {
     IdeFocusManager.getInstance(project).requestFocus(component, true);
   }
 
+  public static boolean isFocusedComponentInWindow(@Nullable Component component) {
+    if (component == null) return false;
+    Window window = UIUtil.getWindow(component);
+    if (window == null) return false;
+    Component windowFocusOwner = window.getMostRecentFocusOwner();
+    return windowFocusOwner != null && SwingUtilities.isDescendingFrom(windowFocusOwner, component);
+  }
+
+  public static void requestFocusInWindow(@Nullable Component component) {
+    if (component != null) component.requestFocusInWindow();
+  }
+
   public static void runPreservingFocus(@NotNull FocusableContext context, @NotNull Runnable task) {
-    boolean hadFocus = context.isFocused();
-    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
+    boolean hadFocus = context.isFocusedInWindow();
+//    if (hadFocus) KeyboardFocusManager.getCurrentKeyboardFocusManager().clearFocusOwner();
     task.run();
-    if (hadFocus) context.requestFocus();
+    if (hadFocus) context.requestFocusInWindow();
   }
 
   //
@@ -1293,11 +1293,11 @@ public class DiffUtil {
                         BooleanGetter.FALSE);
   }
 
-  private static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
-                                                  @NotNull List<? extends CharSequence> texts,
-                                                  @NotNull ComparisonPolicy policy,
-                                                  @NotNull ThreeSide side1,
-                                                  @NotNull ThreeSide side2) {
+  public static boolean compareWordMergeContents(@NotNull MergeWordFragment fragment,
+                                                 @NotNull List<? extends CharSequence> texts,
+                                                 @NotNull ComparisonPolicy policy,
+                                                 @NotNull ThreeSide side1,
+                                                 @NotNull ThreeSide side2) {
     int start1 = fragment.getStartOffset(side1);
     int end1 = fragment.getEndOffset(side1);
     int start2 = fragment.getStartOffset(side2);

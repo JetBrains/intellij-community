@@ -86,9 +86,9 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
 
     NotNullComputable<VcsLogDataPack> dataPackGetter = () -> myDataPack;
     myBranchFilterModel = new BranchFilterModel(dataPackGetter, myUiProperties);
-    myUserFilterModel = new UserFilterModel(dataPackGetter, uiProperties);
-    myDateFilterModel = new DateFilterModel(dataPackGetter, uiProperties);
-    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), uiProperties);
+    myUserFilterModel = new UserFilterModel(dataPackGetter, myUiProperties);
+    myDateFilterModel = new DateFilterModel(dataPackGetter, myUiProperties);
+    myStructureFilterModel = new FileFilterModel(dataPackGetter, myLogData.getLogProviders().keySet(), myUiProperties);
     myTextFilterModel = new TextFilterModel(dataPackGetter, myUiProperties);
 
     updateUiOnFilterChange();
@@ -161,27 +161,25 @@ public class VcsLogClassicFilterUi implements VcsLogFilterUi {
     if (StringUtil.isEmptyOrSpaces(text)) {
       return Pair.empty();
     }
-    List<String> hashes = ContainerUtil.newArrayList();
-    for (String word : StringUtil.split(text, " ")) {
-      if (!StringUtil.isEmptyOrSpaces(word) && word.matches(HASH_PATTERN)) {
-        hashes.add(word);
-      }
-      else {
-        break;
-      }
-    }
 
-    VcsLogTextFilter textFilter;
-    VcsLogHashFilterImpl hashFilter;
-    if (!hashes.isEmpty()) { // text is ignored if there are hashes in the text
-      textFilter = null;
-      hashFilter = new VcsLogHashFilterImpl(hashes);
-    }
-    else {
-      textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
-      hashFilter = null;
-    }
+    VcsLogTextFilter textFilter = new VcsLogTextFilterImpl(text, isRegexAllowed, matchesCase);
+    VcsLogHashFilterImpl hashFilter = createHashFilter(text);
     return Pair.create(textFilter, hashFilter);
+  }
+
+  @Nullable
+  private static VcsLogHashFilterImpl createHashFilter(@NotNull String text) {
+    List<String> hashes = ContainerUtil.newArrayList();
+    for (String word: StringUtil.split(text, " ")) {
+      if (!word.matches(HASH_PATTERN)) {
+        return null;
+      }
+      hashes.add(word);
+    }
+    if (hashes.isEmpty()) {
+      return null;
+    }
+    return new VcsLogHashFilterImpl(hashes);
   }
 
   /**

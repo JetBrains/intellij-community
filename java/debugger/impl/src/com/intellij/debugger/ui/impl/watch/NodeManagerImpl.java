@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.debugger.ui.impl.watch;
 
 import com.intellij.debugger.engine.evaluation.EvaluateException;
@@ -15,16 +13,14 @@ import com.intellij.debugger.ui.tree.DebuggerTreeNode;
 import com.intellij.debugger.ui.tree.NodeDescriptor;
 import com.intellij.debugger.ui.tree.NodeManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.StringBuilderSpinAllocator;
-import java.util.HashMap;
 import com.sun.jdi.InternalException;
 import com.sun.jdi.Location;
 import com.sun.jdi.Method;
-import com.sun.jdi.ReferenceType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Comparator;
+import java.util.HashMap;
 import java.util.Map;
 
 /**
@@ -108,14 +104,7 @@ public class NodeManagerImpl extends NodeDescriptorFactoryImpl implements NodeMa
       if (method == null) {
         return null;
       }
-      final ReferenceType referenceType = location.declaringType();
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        return builder.append(referenceType.signature()).append("#").append(method.name()).append(method.signature()).toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
+      return location.declaringType().signature() + "#" + method.name() + method.signature();
     }
     catch (EvaluateException ignored) {
     }

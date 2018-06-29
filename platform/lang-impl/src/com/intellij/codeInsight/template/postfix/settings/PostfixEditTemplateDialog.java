@@ -8,6 +8,7 @@ import com.intellij.openapi.ui.ValidationInfo;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBTextField;
+import com.intellij.uiDesigner.core.Spacer;
 import com.intellij.util.ui.FormBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,18 +23,15 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   private final PostfixTemplateEditor myEditor;
 
   public PostfixEditTemplateDialog(@NotNull Component parentComponent,
-                                   @NotNull PostfixTemplateEditor<PostfixTemplate> editor,
+                                   @NotNull PostfixTemplateEditor editor,
                                    @NotNull String templateType,
                                    @Nullable PostfixTemplate template) {
     super(null, parentComponent, false, IdeModalityType.IDE);
     myEditor = editor;
     Disposer.register(getDisposable(), editor);
-    if (template != null) {
-      editor.setTemplate(template);
-    }
-    String initialKey = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
-    myTemplateNameTextField = new JBTextField(initialKey);
-    setTitle(template != null ? "Edit '" + initialKey + "' template" : "Create new " + templateType + " template");
+    String initialName = template != null ? StringUtil.trimStart(template.getKey(), ".") : "";
+    myTemplateNameTextField = new JBTextField(initialName);
+    setTitle(template != null ? "Edit '" + initialName + "' template" : "Create new " + templateType + " template");
     init();
   }
 
@@ -54,7 +52,7 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   }
 
   @NotNull
-  public String getTemplateKey() {
+  public String getTemplateName() {
     return myTemplateNameTextField.getText();
   }
 
@@ -62,7 +60,14 @@ public class PostfixEditTemplateDialog extends DialogWrapper {
   protected JComponent createCenterPanel() {
     return FormBuilder.createFormBuilder()
                       .addLabeledComponent("Key:", myTemplateNameTextField)
-                      .addComponentFillVertically(myEditor.getComponent(), 0)
+                      .addComponent(myEditor.getComponent())
+                      .addComponentFillVertically(new Spacer(), 0)
                       .getPanel();
+  }
+
+  @Nullable
+  @Override
+  protected String getHelpId() {
+    return myEditor.getHelpId();
   }
 }

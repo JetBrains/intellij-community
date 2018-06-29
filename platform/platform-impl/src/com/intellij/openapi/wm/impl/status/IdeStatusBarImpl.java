@@ -676,8 +676,12 @@ public class IdeStatusBarImpl extends JComponent implements Accessible, StatusBa
         }
       }.installOn(this);
 
-      setFont(SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label());
       setIconOnTheRight(true);
+    }
+
+    @Override
+    public Font getFont() {
+      return SystemInfo.isMac ? JBUI.Fonts.label(11) : JBUI.Fonts.label();
     }
 
     @Override

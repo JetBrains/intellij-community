@@ -41,13 +41,11 @@ public abstract class GradleSettingsControlProvider {
   @NotNull
   public static GradleSettingsControlProvider get() {
     GradleSettingsControlProvider result = null;
-    if (!PlatformUtils.isIntelliJ()) {
-      final String platformPrefix = PlatformUtils.getPlatformPrefix();
-      for (GradleSettingsControlProvider provider : EP_NAME.getExtensions()) {
-        if (StringUtil.equals(platformPrefix, provider.getPlatformPrefix())) {
-          assert result == null : "Multiple GradleSettingsControlProvider extensions found";
-          result = provider;
-        }
+    final String platformPrefix = PlatformUtils.getPlatformPrefix();
+    for (GradleSettingsControlProvider provider : EP_NAME.getExtensions()) {
+      if (StringUtil.equals(platformPrefix, provider.getPlatformPrefix())) {
+        assert result == null : "Multiple GradleSettingsControlProvider extensions found";
+        result = provider;
       }
     }
     return ObjectUtils.notNull(result, new GradleSettingsControlProvider() {
@@ -64,6 +62,14 @@ public abstract class GradleSettingsControlProvider {
       @Override
       public GradleProjectSettingsControlBuilder getProjectSettingsControlBuilder(@NotNull GradleProjectSettings initialSettings) {
         return new IdeaGradleProjectSettingsControlBuilder(initialSettings)
+          // always use qualified module names
+          .dropModulesGroupingOptionPanel()
+          // always use external storage for project files
+          .dropStoreExternallyCheckBox()
+          // hide java-specific option
+          .dropResolveModulePerSourceSetCheckBox()
+          // hide this confusing option
+          .dropCustomizableWrapperButton()
           // Hide bundled distribution option for a while
           .dropUseBundledDistributionButton();
       }

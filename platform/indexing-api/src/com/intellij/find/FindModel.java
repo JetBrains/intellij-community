@@ -169,6 +169,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     isFindAll = model.isFindAll;
     searchContext = model.searchContext;
     isMultiline = model.isMultiline;
+    mySearchInProjectFiles = model.mySearchInProjectFiles;
     if (changed) {
       notifyObservers();
     }
@@ -734,11 +735,17 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
    *
    * @param fileFilter the file name filter text.
    */
-  public void setFileFilter(String fileFilter) {
+  public void setFileFilter(@Nullable String fileFilter) {
     boolean changed = !StringUtil.equals(fileFilter, this.fileFilter);
     this.fileFilter = fileFilter;
     if (changed) {
       notifyObservers();
+    }
+    if (fileFilter != null) {
+      List<String> split = StringUtil.split(fileFilter, ",");
+      if (ContainerUtil.exists(split, s -> s.endsWith("*.iml") || s.endsWith("*.ipr") || s.endsWith("*.iws"))) {
+        setSearchInProjectFiles(true);
+      }
     }
   }
 

@@ -10,6 +10,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.SmartList;
@@ -47,7 +48,11 @@ public class GuessTypeParameters {
     mySubstitutor = substitutor == null ? PsiSubstitutor.EMPTY : substitutor;
   }
 
-  public void setupTypeElement(PsiTypeElement typeElement, ExpectedTypeInfo[] infos, @Nullable PsiElement context, PsiClass targetClass) {
+  @NotNull
+  public PsiTypeElement setupTypeElement(@NotNull PsiTypeElement typeElement,
+                                         @NotNull ExpectedTypeInfo[] infos,
+                                         @Nullable PsiElement context,
+                                         @NotNull PsiClass targetClass) {
     LOG.assertTrue(typeElement.isValid());
     ApplicationManager.getApplication().assertWriteAccessAllowed();
 
@@ -63,10 +68,10 @@ public class GuessTypeParameters {
         final List<PsiType> types = new SmartList<>(map(matchedParameters, it -> myFactory.createType(it)));
         ContainerUtil.addAll(types, ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(myManager, scope), myProject));
         myBuilder.replaceElement(typeElement, new TypeExpression(myProject, types));
-        return;
+        return typeElement;
       }
 
-      typeElement = (PsiTypeElement)typeElement.replace(JavaPsiFacade.getElementFactory(myProject).createTypeElement(info.getType()));
+      typeElement = replaceTypeElement(typeElement, info.getType());
 
       PsiSubstitutor rawingSubstitutor = getRawingSubstitutor(myProject, context, targetClass);
       int substitionResult = hasNullSubstitutions(mySubstitutor)
@@ -102,10 +107,10 @@ public class GuessTypeParameters {
         MyTypeVisitor visitor = new MyTypeVisitor(myManager, scope);
         PsiType[] types = ExpectedTypesProvider.processExpectedTypes(new ExpectedTypeInfo[]{info1}, visitor, myProject);
         myBuilder.replaceElement(referenceNameElement, new TypeExpression(myProject, types));
-        return;
+        return typeElement;
       }
       else if (substitionResult != SUBSTITUTED_NONE) {
-        return;
+        return typeElement;
       }
     }
 
@@ -113,6 +118,14 @@ public class GuessTypeParameters {
                       ? new PsiType[]{typeElement.getType()}
                       : ExpectedTypesProvider.processExpectedTypes(infos, new MyTypeVisitor(myManager, scope), myProject);
     myBuilder.replaceElement(typeElement, new TypeExpression(myProject, types));
+    return typeElement;
+  }
+
+  private PsiTypeElement replaceTypeElement(@NotNull PsiTypeElement templateElement, @NotNull PsiType type) {
+    PsiTypeElement newTypeElement = JavaPsiFacade.getElementFactory(myProject).createTypeElement(type);
+    return PostprocessReformattingAspect.getInstance(myProject).disablePostprocessFormattingInside(
+      () -> (PsiTypeElement)templateElement.replace(newTypeElement)
+    );
   }
 
   private static PsiSubstitutor getRawingSubstitutor(Project project, PsiElement context, PsiClass targetClass) {

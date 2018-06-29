@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
@@ -22,10 +8,11 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.options.newEditor.SettingsDialog;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
-import com.intellij.ui.JBGradientPaint;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
@@ -34,8 +21,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
+import java.util.Locale;
 
 /**
  * @author Konstantin Bulenkov
@@ -91,13 +77,15 @@ public class PluginHeaderPanel {
 
     //data
     myName.setText("<html><body>" + plugin.getName() + "</body></html>");
-    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase());
+    myCategory.setText(plugin.getCategory() == null ? "UNKNOWN" : plugin.getCategory().toUpperCase(Locale.US));
     final boolean hasNewerVersion = ourState.hasNewerVersion(plugin.getPluginId());
+    String versionText;
+    boolean showVersion = !plugin.isBundled() || plugin.allowBundledUpdate();
     if (plugin instanceof PluginNode) {
       final PluginNode node = (PluginNode)plugin;
       myRating.setRate(node.getRating());
       myDownloads.setText(node.getDownloads() + " downloads");
-      myVersion.setText("v" + node.getVersion());
+      versionText = showVersion ? "v" + node.getVersion() : null;
       myUpdated.setText("Updated " + DateFormatUtil.formatDate(node.getDate()));
       switch (node.getStatus()) {
         case PluginNode.STATUS_INSTALLED:
@@ -129,10 +117,13 @@ public class PluginHeaderPanel {
       myDownloadsPanel.setVisible(false);
       final String version = plugin.getVersion();
       if (ourState.wasUpdated(plugin.getPluginId())) {
-        myVersion.setText("New version will be available after restart");
+        versionText = "New version will be available after restart";
+      }
+      else if (version != null && showVersion) {
+        versionText = "Version: " + version;
       }
       else {
-        myVersion.setText("Version: " + (version == null ? "N/A" : version));
+        versionText = null;
       }
       myUpdated.setVisible(false);
       if (ourState.wasUpdated(plugin.getPluginId()) || ourState.wasInstalled(plugin.getPluginId())) {
@@ -141,9 +132,11 @@ public class PluginHeaderPanel {
       else if (!plugin.isBundled() || hasNewerVersion) {
         if (((IdeaPluginDescriptorImpl)plugin).isDeleted()) {
           myActionId = ACTION_ID.RESTART;
-        } else if (hasNewerVersion) {
+        }
+        else if (hasNewerVersion) {
           myActionId = ACTION_ID.UPDATE;
-        } else {
+        }
+        else {
           myActionId = ACTION_ID.UNINSTALL;
         }
       }
@@ -151,6 +144,8 @@ public class PluginHeaderPanel {
         myActionId = null;
       }
     }
+    myVersion.setVisible(versionText != null);
+    myVersion.setText(StringUtil.notNullize(versionText));
     UIUtil.setEnabled(myButtonPanel, true, true);
     if (myManager == null || myActionId == null || (myManager.getInstalled() != myManager.getAvailable() && myActionId == ACTION_ID.UNINSTALL)) {
       myActionId = ACTION_ID.INSTALL;
@@ -160,9 +155,9 @@ public class PluginHeaderPanel {
       UIUtil.setEnabled(myButtonPanel, false, true);
     }
     myRoot.revalidate();
-    ((JComponent)myInstallButton.getParent()).revalidate();
+    myInstallButton.getParent().revalidate();
     myInstallButton.revalidate();
-    ((JComponent)myVersion.getParent()).revalidate();
+    myVersion.getParent().revalidate();
     myVersion.revalidate();
   }
 
@@ -177,23 +172,19 @@ public class PluginHeaderPanel {
           case RESTART:
           case UNINSTALL: return new JBColor(Gray._0, Gray._210);
         }
-
         return new JBColor(Gray._80, Gray._60);
       }
 
       @NotNull
       protected Paint getBackgroundPaint() {
         switch (myActionId) {
-          case UPDATE: return new JBGradientPaint(this,
-                                                  new JBColor(0x629ee1, 0x629ee1),
-                                                  new JBColor(0x3a5bb5, 0x3a5bb5));
-          case INSTALL: return new JBGradientPaint(this,
-                                                   new JBColor(0x60cc69, 0x519557),
-                                                   new JBColor(0x326529, 0x28462f));
+          case UPDATE: return ColorUtil.mix(new JBColor(0x629ee1, 0x629ee1), new JBColor(0x3a5bb5, 0x3a5bb5), 0.5);
+          case INSTALL: return ColorUtil.mix(new JBColor(0x60cc69, 0x519557), new JBColor(0x326529, 0x28462f), 0.5);
           case RESTART:
-          case UNINSTALL: return UIUtil.isUnderDarcula()
-                                 ? new JBGradientPaint(this, UIManager.getColor("Button.darcula.color1"), UIManager.getColor("Button.darcula.color2"))
-                                 : Gray._240;
+          case UNINSTALL:
+            return UIUtil.isUnderDarcula()
+                   ? ColorUtil.mix(UIManager.getColor("Button.darcula.startColor"), UIManager.getColor("Button.darcula.endColor"), 0.5)
+                   : Gray._240;
         }
         return Gray._238;
       }
@@ -230,41 +221,38 @@ public class PluginHeaderPanel {
           case RESTART: return AllIcons.Actions.Restart;
         }
         return super.getIcon();
-
       }
     };
-    myInstallButton.addActionListener(new ActionListener() {
-      @Override
-      public void actionPerformed(ActionEvent e) {
-        switch (myActionId) {
-          case UPDATE:
-          case INSTALL:
-            Runnable setPlugin = () -> setPlugin(myPlugin);
-            new InstallPluginAction(myManager.getAvailable(), myManager.getInstalled()).install(setPlugin, setPlugin, true);
-            break;
-          case UNINSTALL:
-            UninstallPluginAction.uninstall(myManager.getInstalled(), true, myPlugin);
-            break;
-          case RESTART:
-            if (myManager != null) {
-              myManager.apply();
+
+    myInstallButton.addActionListener(e -> {
+      switch (myActionId) {
+        case UPDATE:
+        case INSTALL:
+          Runnable setPlugin = () -> setPlugin(myPlugin);
+          new InstallPluginAction(myManager.getAvailable(), myManager.getInstalled()).install(setPlugin, setPlugin, true);
+          break;
+        case UNINSTALL:
+          UninstallPluginAction.uninstall(myManager.getInstalled(), true, myPlugin);
+          break;
+        case RESTART:
+          if (myManager != null) {
+            myManager.apply();
+          }
+          final DialogWrapper dialog =
+            DialogWrapper.findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
+          if (dialog != null && dialog.isModal()) {
+            dialog.close(DialogWrapper.OK_EXIT_CODE);
+          }
+          IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
+            DialogWrapper settings = DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
+            if (settings instanceof SettingsDialog) {
+              ((SettingsDialog)settings).doOKAction();
             }
-            final DialogWrapper dialog =
-              DialogWrapper.findInstance(KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner());
-            if (dialog != null && dialog.isModal()) {
-              dialog.close(DialogWrapper.OK_EXIT_CODE);
-            }
-            IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown(() -> {
-              DialogWrapper settings = DialogWrapper.findInstance(IdeFocusManager.findInstance().getFocusOwner());
-              if (settings instanceof SettingsDialog) {
-                ((SettingsDialog)settings).doOKAction();
-              }
-              ApplicationManager.getApplication().restart();
-            }, ModalityState.current());
-            break;
-        }
-        setPlugin(myPlugin);
+            ApplicationManager.getApplication().restart();
+          }, ModalityState.current());
+          break;
       }
+      setPlugin(myPlugin);
     });
   }
 

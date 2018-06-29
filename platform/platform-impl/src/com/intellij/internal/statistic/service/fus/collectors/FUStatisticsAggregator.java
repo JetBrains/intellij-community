@@ -5,6 +5,7 @@ import com.intellij.internal.statistic.beans.UsageDescriptor;
 import com.intellij.internal.statistic.service.fus.beans.FSContent;
 import com.intellij.internal.statistic.service.fus.beans.FSGroup;
 import com.intellij.internal.statistic.service.fus.beans.FSSession;
+import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Factory;
@@ -15,6 +16,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.LinkedHashMap;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import static com.intellij.internal.statistic.utils.StatisticsUploadAssistant.LOCK;
 
@@ -29,7 +31,7 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
 
   @Nullable
   public FSContent getUsageCollectorsData(@NotNull Set<String> approvedGroups) {
-    if (approvedGroups.isEmpty()) return null;
+    if (approvedGroups.isEmpty() && !ApplicationManagerEx.getApplicationEx().isInternal()) return null;
 
     FSContent content = FSContent.create();
 
@@ -78,12 +80,24 @@ public class FUStatisticsAggregator implements UsagesCollectorConsumer {
                                     @NotNull Factory<Set<UsageDescriptor>> usagesProducer,
                                     @NotNull Set<String> approvedGroups) {
     if (!usagesCollector.isValid()) return;
-    if (!approvedGroups.contains(usagesCollector.getGroupId())) return;
+    if (approvedGroups.contains(usagesCollector.getGroupId())) {
+      addUsageDescriptors(usagesCollector.getGroupId(), usageDescriptors, usagesProducer);
+    } else if (ApplicationManagerEx.getApplicationEx().isInternal()) {
+      addUsageDescriptors(createDebugModeId(usagesCollector.getGroupId()), usageDescriptors, usagesProducer);
+    }
+  }
 
-    String groupDescriptor = usagesCollector.getGroupId();
+  @NotNull
+  public static String createDebugModeId(@NotNull String groupId) {
+    return "internal." + groupId;
+  }
+
+  private static void addUsageDescriptors(@NotNull String groupDescriptor, @NotNull Map<String, Set<UsageDescriptor>> allUsageDescriptors,
+                                          @NotNull Factory<Set<UsageDescriptor>> usagesProducer) {
     Set<UsageDescriptor> usages = usagesProducer.create();
+    usages = usages.stream().filter(descriptor -> descriptor.getValue() > 0).collect(Collectors.toSet());
     if (!usages.isEmpty()) {
-      usageDescriptors.merge(groupDescriptor, usages, ContainerUtil::union);
+      allUsageDescriptors.merge(groupDescriptor, usages, ContainerUtil::union);
     }
   }
 

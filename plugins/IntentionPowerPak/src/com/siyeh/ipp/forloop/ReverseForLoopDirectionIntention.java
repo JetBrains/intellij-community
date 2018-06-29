@@ -18,9 +18,9 @@ package com.siyeh.ipp.forloop;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.siyeh.ig.psiutils.CommentTracker;
 import com.siyeh.ig.psiutils.ComparisonUtils;
-import com.siyeh.ig.psiutils.ExpressionUtils;
-import com.siyeh.ig.psiutils.ParenthesesUtils;
+import com.siyeh.ig.psiutils.JavaPsiMathUtil;
 import com.siyeh.ig.psiutils.VariableAccessUtils;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -163,53 +163,8 @@ public class ReverseForLoopDirectionIntention extends Intention {
     updateExpression.replace(newUpdate);
   }
 
-  private static String incrementExpression(PsiExpression expression,
-                                            boolean positive) {
-    if (expression instanceof PsiLiteralExpression) {
-      final PsiLiteralExpression literalExpression =
-        (PsiLiteralExpression)expression;
-      final Number value = (Number)literalExpression.getValue();
-      if (value == null) {
-        return null;
-      }
-      if (positive) {
-        return String.valueOf(value.longValue() + 1L);
-      }
-      else {
-        return String.valueOf(value.longValue() - 1L);
-      }
-    }
-    else {
-      if (expression instanceof PsiBinaryExpression) {
-        // see if we can remove a -1 instead of adding a +1
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
-        final PsiExpression rhs = binaryExpression.getROperand();
-        if (ExpressionUtils.isOne(rhs)) {
-          final IElementType tokenType =
-            binaryExpression.getOperationTokenType();
-          if (tokenType == JavaTokenType.MINUS && positive) {
-            return binaryExpression.getLOperand().getText();
-          }
-          else if (tokenType == JavaTokenType.PLUS && !positive) {
-            return binaryExpression.getLOperand().getText();
-          }
-        }
-      }
-      final String expressionText;
-      if (ParenthesesUtils.getPrecedence(expression) >
-          ParenthesesUtils.ADDITIVE_PRECEDENCE) {
-        expressionText = '(' + expression.getText() + ')';
-      }
-      else {
-        expressionText = expression.getText();
-      }
-      if (positive) {
-        return expressionText + "+1";
-      }
-      else {
-        return expressionText + "-1";
-      }
-    }
+  private static String incrementExpression(PsiExpression expression, boolean positive) {
+    // TODO: properly support comment tracking
+    return JavaPsiMathUtil.add(expression, positive ? 1 : -1, new CommentTracker());
   }
 }

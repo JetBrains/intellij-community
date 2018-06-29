@@ -16,8 +16,8 @@
 
 package com.intellij.ide.projectView;
 
-import com.intellij.ide.scratch.RootType;
 import com.intellij.ide.scratch.ScratchProjectViewPane;
+import com.intellij.ide.scratch.ScratchUtil;
 import com.intellij.ide.util.treeView.AbstractTreeUpdater;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
@@ -32,11 +32,11 @@ import static com.intellij.util.ObjectUtils.notNull;
 
 public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdapter {
   private final PsiModificationTracker myModificationTracker;
-  private long myOutOfCodeBlockModificationCount;
+  private long myModificationCount;
 
   protected ProjectViewPsiTreeChangeListener(@NotNull Project project) {
     myModificationTracker = PsiManager.getInstance(project).getModificationTracker();
-    myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
+    myModificationCount = myModificationTracker.getModificationCount();
   }
 
   protected abstract AbstractTreeUpdater getUpdater();
@@ -84,10 +84,10 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       return;
     }
 
-    long newModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
-    if (newModificationCount == myOutOfCodeBlockModificationCount) return;
+    long newModificationCount = myModificationTracker.getModificationCount();
+    if (newModificationCount == myModificationCount) return;
     if (stopProcessingForThisModificationCount) {
-      myOutOfCodeBlockModificationCount = newModificationCount;
+      myModificationCount = newModificationCount;
     }
 
     while (true) {
@@ -102,7 +102,7 @@ public abstract class ProjectViewPsiTreeChangeListener extends PsiTreeChangeAdap
       }
       else if (parent instanceof PsiDirectory &&
                ScratchProjectViewPane.isScratchesMergedIntoProjectTab() &&
-               RootType.forFile(((PsiDirectory)parent).getVirtualFile()) != null) {
+               ScratchUtil.isScratch(((PsiDirectory)parent).getVirtualFile())) {
         addSubtreeToUpdateByRoot();
         break;
       }

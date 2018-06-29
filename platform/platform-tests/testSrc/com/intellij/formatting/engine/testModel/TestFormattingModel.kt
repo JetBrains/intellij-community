@@ -27,9 +27,9 @@ import com.intellij.util.text.CharArrayUtil
 class TestFormattingModel(private val rootBlock: Block,
                           private val document: Document) : FormattingModel, FormattingDocumentModel {
 
-  override fun getRootBlock() = rootBlock
+  override fun getRootBlock(): Block = rootBlock
 
-  override fun getDocumentModel() = this
+  override fun getDocumentModel(): TestFormattingModel = this
 
   override fun replaceWhiteSpace(textRange: TextRange, whiteSpace: String): TextRange {
     WriteCommandAction.runWriteCommandAction(null) {
@@ -45,15 +45,15 @@ class TestFormattingModel(private val rootBlock: Block,
   override fun commitChanges() {
   }
 
-  override fun getLineNumber(offset: Int) = document.getLineNumber(offset)
+  override fun getLineNumber(offset: Int): Int = document.getLineNumber(offset)
 
-  override fun getLineStartOffset(line: Int) = document.getLineStartOffset(line)
+  override fun getLineStartOffset(line: Int): Int = document.getLineStartOffset(line)
 
-  override fun getText(textRange: TextRange) = document.getText(textRange)
+  override fun getText(textRange: TextRange): String = document.getText(textRange)
 
-  override fun getTextLength() = document.textLength
+  override fun getTextLength(): Int = document.textLength
 
-  override fun getDocument() = document
+  override fun getDocument(): Document = document
 
   override fun containsWhiteSpaceSymbolsOnly(startOffset: Int, endOffset: Int): Boolean {
     return CharArrayUtil.containsOnlyWhiteSpaces(document.getText(TextRange(startOffset, endOffset)))

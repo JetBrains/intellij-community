@@ -15,13 +15,13 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.testFramework.PlatformTestCase;
-import org.jetbrains.annotations.NotNull;
+
+import java.io.IOException;
 
 public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCase {
   private PsiModificationTrackerImpl myTracker;
@@ -42,41 +42,35 @@ public class PsiModificationTrackerTreeChangesUpdatesTest extends PlatformTestCa
     super.tearDown();
   }
 
-  public void testMoveFile() {
-    new WriteAction<Object>() {
-      @Override
-      protected void run(@NotNull Result<Object> result) throws Throwable {
-        final VirtualFile dir1 = getProject().getBaseDir().createChildDirectory(this, "dir1");
-        final VirtualFile dir2 = getProject().getBaseDir().createChildDirectory(this, "dir2");
-        VirtualFile child = dir1.createChildData(this, "child");
+  public void testMoveFile() throws IOException {
+    WriteAction.runAndWait(() -> {
+      final VirtualFile dir1 = getProject().getBaseDir().createChildDirectory(this, "dir1");
+      final VirtualFile dir2 = getProject().getBaseDir().createChildDirectory(this, "dir2");
+      VirtualFile child = dir1.createChildData(this, "child");
 
-        long outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
-        child.move(this, dir2);
-        assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+      long outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      child.move(this, dir2);
+      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
 
-        outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
-        child.move(this, dir1);
-        assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
-      }
-    }.execute();
+      outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      child.move(this, dir1);
+      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+    });
   }
 
-  public void testMoveDir() {
-    new WriteAction<Object>() {
-      @Override
-      protected void run(@NotNull Result<Object> result) throws Throwable {
-        final VirtualFile dir1 = getProject().getBaseDir().createChildDirectory(this, "dir1");
-        final VirtualFile dir2 = getProject().getBaseDir().createChildDirectory(this, "dir2");
-        VirtualFile child = dir1.createChildDirectory(this, "child");
+  public void testMoveDir() throws IOException {
+    WriteAction.runAndWait(() -> {
+      final VirtualFile dir1 = getProject().getBaseDir().createChildDirectory(this, "dir1");
+      final VirtualFile dir2 = getProject().getBaseDir().createChildDirectory(this, "dir2");
+      VirtualFile child = dir1.createChildDirectory(this, "child");
 
-        long outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
-        child.move(this, dir2);
-        assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+      long outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      child.move(this, dir2);
+      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
 
-        outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
-        child.move(this, dir1);
-        assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
-      }
-    }.execute();
+      outOfCodeBlockCount = myTracker.getOutOfCodeBlockModificationCount();
+      child.move(this, dir1);
+      assertFalse(myTracker.getOutOfCodeBlockModificationCount() == outOfCodeBlockCount);
+    });
   }
 }

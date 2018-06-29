@@ -197,6 +197,11 @@ public class PyCompatibilityInspectionTest extends PyInspectionTestCase {
     doTest(LanguageLevel.PYTHON34);
   }
 
+  // PY-15360
+  public void testTrailingCommaAfterStarArgs() {
+    doTest(LanguageLevel.PYTHON34);
+  }
+
   private void doTest(@NotNull LanguageLevel level) {
     runWithLanguageLevel(level, this::doTest);
   }

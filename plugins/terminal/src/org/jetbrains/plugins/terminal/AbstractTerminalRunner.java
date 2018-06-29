@@ -173,7 +173,7 @@ public abstract class AbstractTerminalRunner<T extends Process> {
     return dir != null ? dir.getPath() : null;
   }
 
-  private void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
+  public void openSessionInDirectory(@NotNull TerminalWidget terminalWidget, @Nullable String directory) {
     ModalityState modalityState = ModalityState.stateForComponent(terminalWidget.getComponent());
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {

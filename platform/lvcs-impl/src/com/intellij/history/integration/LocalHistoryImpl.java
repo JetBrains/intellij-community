@@ -41,7 +41,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
-import java.io.IOException;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 import static com.intellij.history.integration.LocalHistoryUtil.findRevisionIndexToRevert;
@@ -223,7 +222,7 @@ public class LocalHistoryImpl extends LocalHistory implements ApplicationCompone
       dirHistoryModel.selectRevisions(-1, leftRev - 1); //-1 because we should revert all changes up to previous one, but not label-related.
       dirHistoryModel.createReverter().revert();
     }
-    catch (IOException e) {
+    catch (Exception e) {
       throw new LocalHistoryException(String.format("Couldn't revert %s to local history label.", f.getName()), e);
     }
   }

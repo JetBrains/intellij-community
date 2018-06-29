@@ -449,7 +449,7 @@ public abstract class HgUtil {
   public static String removePasswordIfNeeded(@NotNull String path) {
     Matcher matcher = URL_WITH_PASSWORD.matcher(path);
     if (matcher.matches()) {
-      return path.substring(0, matcher.start(1)) + path.substring(matcher.end(1), path.length());
+      return path.substring(0, matcher.start(1)) + path.substring(matcher.end(1));
     }
     return path;
   }

@@ -52,6 +52,7 @@ public class XDebuggerExpressionEditor extends XDebuggerEditorBase {
         editor.setHorizontalScrollbarVisible(multiline);
         editor.setVerticalScrollbarVisible(multiline);
         editor.getSettings().setUseSoftWraps(isUseSoftWraps());
+        editor.getSettings().setLineCursorWidth(EditorUtil.getDefaultCaretWidth());
         editor.getColorsScheme().setEditorFontName(getFont().getFontName());
         editor.getColorsScheme().setEditorFontSize(getFont().getSize());
         if (multiline) {

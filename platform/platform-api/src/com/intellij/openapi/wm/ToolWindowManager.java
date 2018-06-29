@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+ * Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
  */
 package com.intellij.openapi.wm;
 
@@ -13,7 +13,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkListener;
-import java.util.Objects;
 
 /**
  * If you want to register a toolwindow, which will be enabled during the dumb mode, please use {@link ToolWindowManager}'s
@@ -169,6 +168,7 @@ public abstract class ToolWindowManager {
   /**
    * @return registered tool window with specified {@code id}. If there is no registered
    * tool window with specified {@code id} then the method returns {@code null}.
+   * @see ToolWindowId
    */
   public abstract ToolWindow getToolWindow(@Nullable String id);
 

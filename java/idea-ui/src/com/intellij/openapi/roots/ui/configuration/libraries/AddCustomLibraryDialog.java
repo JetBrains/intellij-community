@@ -19,7 +19,6 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.framework.library.FrameworkLibraryVersionFilter;
 import com.intellij.ide.IdeBundle;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModifiableRootModel;
@@ -90,13 +89,10 @@ public class AddCustomLibraryDialog extends DialogWrapper {
     if (settings != null && settings.downloadFiles(myPanel.getMainPanel())) {
       if (myModifiableRootModel == null) {
         final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
-        new WriteAction() {
-          @Override
-          protected void run(@NotNull final Result result) {
-            addLibraries(model, settings);
-            model.commit();
-          }
-        }.execute();
+        WriteAction.run(() -> {
+          addLibraries(model, settings);
+          model.commit();
+        });
       }
       else {
         addLibraries(myModifiableRootModel, settings);

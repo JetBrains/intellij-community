@@ -15,8 +15,11 @@
  */
 package com.intellij.java.codeInsight.editorActions
 
+import com.intellij.application.options.CodeStyle
 import com.intellij.codeInsight.editorActions.FixDocCommentAction
 import com.intellij.openapi.editor.impl.AbstractEditorTest
+import com.intellij.psi.codeStyle.JavaCodeStyleBean
+import org.jetbrains.annotations.NotNull
 
 /**
  * @author Denis Zhdanov
@@ -35,7 +38,7 @@ class Test {
       expected: '''\
 class Test {
     /**
-     * @param i
+     * @param i <caret>
      * @return
      */
     String test(int i) {
@@ -584,10 +587,54 @@ class Test {
     )
   }
 
+  void testWithEmptyTagsRemovalOption() {
+    codeStyleBean.with {
+      javaDocKeepEmptyParameter = false
+      javaDocKeepEmptyReturn = false
+      javaDocKeepEmptyException = false
+    }
+    doTest(
+      initial: '''package com.company;
+
+public class Test
+{
+    int foo<caret>(String s, int i, double d) throws Exception
+    {
+        return 0;
+    }
+}
+''',
+      expected: '''package com.company;
+
+public class Test
+{
+    /**
+     * @param s <caret>
+     * @param i
+     * @param d
+     * @return
+     * @throws Exception
+     */
+    int foo(String s, int i, double d) throws Exception
+    {
+        return 0;
+    }
+}
+'''
+    )
+  }
+
   private def doTest(Map args) {
     configureFromFileText("${getTestName(false)}.java", args.initial)
     myEditor.settings.virtualSpace = false
     executeAction(FixDocCommentAction.ACTION_ID)
     checkResultByText(args.expected)
+  }
+
+  @NotNull
+  static JavaCodeStyleBean getCodeStyleBean() {
+    JavaCodeStyleBean codeStyleBean = new JavaCodeStyleBean()
+    codeStyleBean.setRootSettings(CodeStyle.getSettings(getProject()))
+    return codeStyleBean
   }
 }

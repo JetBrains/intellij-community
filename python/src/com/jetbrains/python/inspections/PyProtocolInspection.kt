@@ -11,12 +11,11 @@ import com.jetbrains.python.PyNames
 import com.jetbrains.python.codeInsight.typing.PyTypingTypeProvider
 import com.jetbrains.python.codeInsight.typing.inspectProtocolSubclass
 import com.jetbrains.python.codeInsight.typing.isProtocol
-import com.jetbrains.python.psi.PyCallExpression
-import com.jetbrains.python.psi.PyClass
-import com.jetbrains.python.psi.PyKnownDecoratorUtil
+import com.jetbrains.python.psi.*
 import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_RUNTIME
-import com.jetbrains.python.psi.PyTypedElement
+import com.jetbrains.python.psi.PyKnownDecoratorUtil.KnownDecorator.TYPING_RUNTIME_EXT
 import com.jetbrains.python.psi.resolve.PyResolveContext
+import com.jetbrains.python.psi.resolve.PyResolveUtil
 import com.jetbrains.python.psi.resolve.RatedResolveResult
 import com.jetbrains.python.psi.types.PyClassLikeType
 import com.jetbrains.python.psi.types.PyClassType
@@ -85,14 +84,21 @@ class PyProtocolInspection : PyInspection() {
 
     private fun checkRuntimeProtocolInIsInstance(node: PyCallExpression) {
       if (node.isCalleeText(PyNames.ISINSTANCE, PyNames.ISSUBCLASS)) {
-        val base = node.arguments.getOrNull(1)
-        if (base != null) {
-          val type = myTypeEvalContext.getType(base)
-          if (type is PyClassType &&
-              isProtocol(type, myTypeEvalContext) &&
-              !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).contains(TYPING_RUNTIME)) {
+        val base = node.arguments.getOrNull(1) ?: return
+
+        if (base is PyReferenceExpression) {
+          val qNames = PyResolveUtil.resolveImportedElementQNameLocally(base).asSequence().map { it.toString() }
+          if (qNames.any { it == PyTypingTypeProvider.PROTOCOL || it == PyTypingTypeProvider.PROTOCOL_EXT }) {
             registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
+            return
           }
+        }
+
+        val type = myTypeEvalContext.getType(base)
+        if (type is PyClassType &&
+            isProtocol(type, myTypeEvalContext) &&
+            !PyKnownDecoratorUtil.getKnownDecorators(type.pyClass, myTypeEvalContext).any { it == TYPING_RUNTIME || it == TYPING_RUNTIME_EXT}) {
+          registerProblem(base, "Only @runtime protocols can be used with instance and class checks", GENERIC_ERROR)
         }
       }
     }

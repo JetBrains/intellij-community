@@ -27,11 +27,13 @@ public class DirectoryCopyPackagingElement extends FileOrDirectoryCopyPackagingE
     myFilePath = directoryPath;
   }
 
+  @NotNull
   @Override
   public PackagingElementPresentation createPresentation(@NotNull ArtifactEditorContext context) {
     return new DirectoryCopyPresentation(myFilePath);
   }
 
+  @NotNull
   @Override
   public List<? extends Generator> computeAntInstructions(@NotNull PackagingElementResolvingContext resolvingContext,
                                                           @NotNull AntCopyInstructionCreator creator,

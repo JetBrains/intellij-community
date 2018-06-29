@@ -301,20 +301,26 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
 
     Editor editor = context.getEditor();
     if (editor instanceof EditorWindow) return;
+
+    Project project = context.getProject();
+    Document document = editor.getDocument();
+    PsiDocumentManager.getInstance(project).doPostponedOperationsAndUnblockDocument(document);
+
+    int limit = getCompletionHintsLimit();
+
     CaretModel caretModel = editor.getCaretModel();
     int offset = caretModel.getOffset();
     int braceOffset = offset - 1;
-    int numberOfCommas = parametersCount - 1;
-    if (parametersCount > 1 && PsiImplUtil.isVarArgs(method)) numberOfCommas--;
-    String commas = StringUtil.repeat(", ", numberOfCommas);
+    int numberOfParametersToDisplay = parametersCount > 1 && PsiImplUtil.isVarArgs(method) ? parametersCount - 1 : parametersCount;
+    int numberOfCommas = Math.min(numberOfParametersToDisplay, limit) - 1;
+    String commas = Registry.is("editor.completion.hints.virtual.comma") ? "" : StringUtil.repeat(", ", numberOfCommas);
     editor.getDocument().insertString(offset, commas);
 
-    Project project = context.getProject();
-    PsiDocumentManager.getInstance(project).commitDocument(editor.getDocument());
+    PsiDocumentManager.getInstance(project).commitDocument(document);
     MethodParameterInfoHandler handler = new MethodParameterInfoHandler();
     ShowParameterInfoContext infoContext = new ShowParameterInfoContext(editor, project, context.getFile(), braceOffset, braceOffset);
     if (handler.findElementForParameterInfo(infoContext) == null) {
-      editor.getDocument().deleteString(offset, offset + commas.length());
+      document.deleteString(offset, offset + commas.length());
       return;
     }
 
@@ -324,11 +330,22 @@ public class JavaMethodCallElement extends LookupItem<PsiMethod> implements Type
     Disposable hintsDisposal = () -> setCompletionMode(methodCall, false);
     if (Disposer.isDisposed(controller)) {
       Disposer.dispose(hintsDisposal);
-      editor.getDocument().deleteString(offset, offset + commas.length());
+      document.deleteString(offset, offset + commas.length());
     }
     else {
       ParameterHintsPass.syncUpdate(methodCall, editor);
       Disposer.register(controller, hintsDisposal);
+    }
+  }
+
+  public static int getCompletionHintsLimit() {
+    return Math.max(1, Registry.intValue("editor.completion.hints.per.call.limit"));
+  }
+
+  public static void setCompletionModeIfNotSet(@NotNull PsiCall expression, @NotNull Disposable disposable) {
+    if (!isCompletionMode(expression)) {
+      setCompletionMode(expression, true);
+      Disposer.register(disposable, () -> setCompletionMode(expression, false));
     }
   }
 

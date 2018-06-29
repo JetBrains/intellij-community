@@ -62,6 +62,8 @@ import com.intellij.ui.LightweightHint;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usages.*;
 import com.intellij.usages.impl.UsageViewImpl;
+import com.intellij.util.Consumer;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -69,6 +71,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.stream.Stream;
 
 public class FindUtil {
   private static final Key<Direction> KEY = Key.create("FindUtil.KEY");
@@ -83,7 +86,7 @@ public class FindUtil {
     return file != null ? file.getVirtualFile() : null;
   }
 
-  public static void initStringToFindWithSelection(FindModel findModel, Editor editor) {
+  public static void initStringToFindWithSelection(FindModel findModel, @Nullable Editor editor) {
     if (editor != null) {
       String s = editor.getSelectionModel().getSelectedText();
       if (s != null && s.length() < 10000) {
@@ -296,13 +299,13 @@ public class FindUtil {
 
     CharSequence text = document.getCharsSequence();
     int textLength = document.getTextLength();
-    final List<Usage> usages = new ArrayList<>();
     FindManager findManager = FindManager.getInstance(project);
     findModel.setForward(true); // when find all there is no diff in direction
 
     int offset = 0;
     VirtualFile virtualFile = getVirtualFile(editor);
 
+    final List<Usage> usages = new ArrayList<>();
     while (offset < textLength) {
       FindResult result = findManager.findString(text, offset, findModel, virtualFile);
       if (!result.isStringFound()) break;
@@ -504,7 +507,7 @@ public class FindUtil {
     boolean toPrompt = model.isPromptOnReplace();
 
     try {
-      doReplace(project, editor, model, document, offset, toPrompt, delegate);
+      doReplace(project, editor, model, offset, toPrompt, delegate);
     }
     catch (ReadOnlyFragmentModificationException e) {
       EditorActionManager.getInstance().getReadonlyFragmentModificationHandler(document).handle(e);
@@ -519,7 +522,6 @@ public class FindUtil {
   private static void doReplace(@NotNull Project project,
                                 @NotNull Editor editor,
                                 @NotNull FindModel aModel,
-                                @NotNull Document document,
                                 int caretOffset,
                                 boolean toPrompt,
                                 ReplaceDelegate delegate) {
@@ -533,7 +535,8 @@ public class FindUtil {
     boolean reallyReplaced = false;
 
     int offset = caretOffset;
-    while (offset >= 0 && offset < editor.getDocument().getTextLength()) {
+    Document document = editor.getDocument();
+    while (offset >= 0 && offset < document.getTextLength()) {
       caretOffset = offset;
       FindResult result = doSearch(project, editor, offset, !replaced, model, toPrompt);
       if (result == null) {
@@ -903,37 +906,33 @@ public class FindUtil {
     boolean shouldReplace(TextRange range, String replace);
   }
 
-  @Nullable
-  public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
-                                          @NotNull PsiElement[] targets,
-                                          @NotNull String title,
-                                          @NotNull final Project project) {
+  public static <T> UsageView showInUsageView(@Nullable PsiElement sourceElement,
+                                              @NotNull T[] targets,
+                                              @NotNull Function<? super T, ? extends Usage> usageConverter,
+                                              @NotNull String title,
+                                              @Nullable Consumer<? super UsageViewPresentation> presentationSetup,
+                                              @NotNull final Project project) {
     if (targets.length == 0) return null;
     final UsageViewPresentation presentation = new UsageViewPresentation();
     presentation.setCodeUsagesString(title);
     presentation.setTabName(title);
     presentation.setTabText(title);
+    if (presentationSetup != null) {
+      presentationSetup.consume(presentation);
+    }
     UsageTarget[] usageTargets = sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
 
-    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
     UsageView view = UsageViewManager.getInstance(project).showUsages(usageTargets, Usage.EMPTY_ARRAY, presentation);
-
-    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
-    List<SmartPsiElementPointer> pointers = ContainerUtil.map(targets, smartPointerManager::createSmartPsiElementPointer);
-
-    // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
-    //noinspection UnusedAssignment
-    targets = PsiElement.EMPTY_ARRAY;
 
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        for (final SmartPsiElementPointer pointer : pointers) {
+        for (final T pointer : targets) {
           if (((UsageViewImpl)view).isDisposed()) break;
           ApplicationManager.getApplication().runReadAction(() -> {
-            final PsiElement target = pointer.getElement();
-            if (target != null) {
-              view.appendUsage(UsageInfoToUsageConverter.convert(primary, new UsageInfo(target)));
+            Usage usage = usageConverter.fun(pointer);
+            if (usage != null) {
+              view.appendUsage(usage);
             }
           });
         }
@@ -941,6 +940,25 @@ public class FindUtil {
       }
     });
     return view;
+  }
+
+  @Nullable
+  public static UsageView showInUsageView(@Nullable PsiElement sourceElement,
+                                          @NotNull PsiElement[] targets,
+                                          @NotNull String title,
+                                          @NotNull Project project) {
+    if (targets.length == 0) return null;
+    PsiElement[] primary = sourceElement == null ? PsiElement.EMPTY_ARRAY : new PsiElement[]{sourceElement};
+
+    SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(project);
+    SmartPsiElementPointer[] pointers = Stream.of(targets).map(smartPointerManager::createSmartPsiElementPointer).toArray(SmartPsiElementPointer[]::new);
+    // usage view will load document/AST so still referencing all these PSI elements might lead to out of memory
+    //noinspection UnusedAssignment
+    targets = PsiElement.EMPTY_ARRAY;
+    return showInUsageView(sourceElement, pointers, p -> {
+      PsiElement element = p.getElement();
+      return element == null ? null : UsageInfoToUsageConverter.convert(primary, new UsageInfo(element));
+    }, title, null, project);
   }
 
   /**

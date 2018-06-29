@@ -14,7 +14,7 @@ open class BaseGroovyResolveResult<out T : PsiElement>(
   private val place: PsiElement?,
   private val resolveContext: PsiElement? = null,
   private val substitutor: PsiSubstitutor = PsiSubstitutor.EMPTY
-) : ElementGroovyResult<T>(element) {
+) : ElementResolveResult<T>(element) {
 
   private val accessible by lazy(LazyThreadSafetyMode.PUBLICATION) {
     element !is PsiMember || place == null || PsiUtil.isAccessible(place, element)

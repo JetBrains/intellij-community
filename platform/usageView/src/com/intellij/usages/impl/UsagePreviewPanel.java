@@ -186,7 +186,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
       Disposer.dispose(balloon);
       editor.putUserData(REPLACEMENT_BALLOON_KEY, null);
     }
-    FindModel findModel = getFindModel(editor);
+    FindModel findModel = getReplacementModel(editor);
     for (int i = infos.size()-1; i>=0; i--) { // finish with the first usage so that caret end up there
       UsageInfo info = infos.get(i);
       PsiElement psiElement = info.getElement();
@@ -241,11 +241,15 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   private static final Key<Balloon> REPLACEMENT_BALLOON_KEY = Key.create("REPLACEMENT_BALLOON_KEY");
 
   private static void showBalloon(Project project, Editor editor, TextRange range, @NotNull FindModel findModel) {
-
     try {
       String replacementPreviewText = FindManager.getInstance(project)
-        .getStringToReplace(editor.getDocument().getText(range), findModel, range.getStartOffset(), editor.getDocument().getText());
-      ReplacementView replacementView = new ReplacementView(replacementPreviewText);
+                                                 .getStringToReplace(editor.getDocument().getText(range), findModel, range.getStartOffset(),
+                                                                     editor.getDocument().getText());
+    if (!Registry.is("ide.find.show.replacement.hint.for.simple.regexp")
+        && (Comparing.equal(replacementPreviewText, findModel.getStringToReplace()))) {
+      return;
+    }
+    ReplacementView replacementView = new ReplacementView(replacementPreviewText);
 
       BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
       balloonBuilder.setFadeoutTime(0);
@@ -268,7 +272,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
   }
 
   @Nullable
-  private static FindModel getFindModel(@NotNull Editor editor) {
+  private static FindModel getReplacementModel(@NotNull Editor editor) {
     UsagePreviewPanel panel = editor.getUserData(PREVIEW_EDITOR_FLAG);
     Pattern searchPattern = null;
     Pattern replacePattern = null;
@@ -292,7 +296,7 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     if (isDisposed) return null;
     Project project = psiFile.getProject();
 
-    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor, EditorKind.PREVIEW);
+    Editor editor = EditorFactory.getInstance().createEditor(document, project, psiFile.getVirtualFile(), !myIsEditor, getEditorKind());
 
     EditorSettings settings = editor.getSettings();
     customizeEditorSettings(settings);
@@ -301,12 +305,18 @@ public class UsagePreviewPanel extends UsageContextPanelBase implements DataProv
     return editor;
   }
 
+  @NotNull
+  protected EditorKind getEditorKind() {
+    return EditorKind.PREVIEW;
+  }
+
   protected void customizeEditorSettings(EditorSettings settings) {
     settings.setLineMarkerAreaShown(myIsEditor);
     settings.setFoldingOutlineShown(false);
     settings.setAdditionalColumnsCount(0);
     settings.setAdditionalLinesCount(0);
     settings.setAnimatedScrolling(false);
+    settings.setAutoCodeFoldingEnabled(false);
   }
 
   @Override

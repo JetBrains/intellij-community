@@ -17,6 +17,7 @@ import com.jetbrains.env.PyProcessWithConsoleTestTask;
 import com.jetbrains.env.python.testing.CreateConfigurationTestTask.PyConfigurationValidationTask;
 import com.jetbrains.env.ut.PyTestTestProcessRunner;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.run.targetBasedConfiguration.PyRunTargetVariant;
 import com.jetbrains.python.testing.ConfigurationTarget;
@@ -150,7 +151,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                               ".test_pytest_parametrized\n" +
                               "..test_eval\n" +
                               "...(three plus file-8)(-)\n" +
-                              "...((2)+(4)-6)(+)\n" +
+                              ((runner.getCurrentRerunStep() == 0) ? "...((2)+(4)-6)(+)\n" : "") +
                               "...( six times nine_-42)(-)\n", runner.getFormattedTestTree());
         }
       });
@@ -338,6 +339,47 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
   }
 
   /**
+   * Create configuration by right click and check that same configuration is chosen when clicked on same element.
+   * New one created in other case.
+   */
+  @Test
+  public void testConfigurationByContext() {
+    runPythonTest(
+      new CreateConfigurationTestTask<PyTestConfiguration>(myFrameworkName, PyTestConfiguration.class) {
+
+        @NotNull
+        private PyFunction getFunction(@NotNull final String folder) {
+          final PyFile file = (PyFile)myFixture.configureByFile(String.format("configurationByContext/%s/test_test.py", folder));
+          assert file != null;
+          final PyFunction function = file.findTopLevelFunction("test_test");
+          assert function != null;
+          return function;
+        }
+
+        @Override
+        protected void checkConfiguration(@NotNull final PyTestConfiguration configuration,
+                                          @NotNull final PsiElement elementToRightClickOn) {
+
+
+          final PyTestConfiguration sameConfig = createConfigurationByElement(getFunction("bar"), PyTestConfiguration.class);
+          Assert.assertEquals("Same element must provide same config", sameConfig, configuration);
+
+          final PyTestConfiguration differentConfig = createConfigurationByElement(getFunction("foo"), PyTestConfiguration.class);
+          //Although targets are same, working dirs are different
+          assert differentConfig.getTarget().equals(configuration.getTarget());
+
+          Assert.assertNotEquals("Function from different folder must provide different config", differentConfig, configuration);
+        }
+
+        @NotNull
+        @Override
+        protected List<PsiElement> getPsiElementsToRightClickOn() {
+          return Collections.singletonList(getFunction("bar"));
+        }
+      });
+  }
+
+  /**
    * Checks tests are resolved when launched from subfolder
    */
   @Test
@@ -382,13 +424,14 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
 
   @Test(expected = RuntimeConfigurationWarning.class)
   public void testValidation() throws Throwable {
-    new PyConfigurationValidationTask<PyTestConfiguration>() {
-      @NotNull
-      @Override
-      protected PyTestFactory createFactory() {
-        return PyTestFactory.INSTANCE;
-      }
-    }.fetchException(this::runPythonTest);
+    runPythonTestWithException(
+      new PyConfigurationValidationTask<PyTestConfiguration>() {
+        @NotNull
+        @Override
+        protected PyTestFactory createFactory() {
+          return PyTestFactory.INSTANCE;
+        }
+      });
   }
 
   @Test
@@ -582,10 +625,8 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                                       @NotNull final String stderr,
                                       @NotNull final String all) {
         if (runner.getCurrentRerunStep() > 0) {
-          // We rerun all tests, since running parametrized tests is broken until
-          // https://github.com/JetBrains/teamcity-messages/issues/121
-          assertEquals(runner.getFormattedTestTree(), 7, runner.getAllTestsCount());
-          assertEquals(runner.getFormattedTestTree(), 3, runner.getPassedTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 4, runner.getAllTestsCount());
+          assertEquals(runner.getFormattedTestTree(), 0, runner.getPassedTestsCount());
           assertEquals(runner.getFormattedTestTree(), 4, runner.getFailedTestsCount());
           return;
         }
@@ -603,7 +644,7 @@ public final class PythonPyTestingTest extends PyEnvTestCase {
                           Matchers.containsString("I will fail"));
 
         // This test has "sleep(1)", so duration should be >=1000
-        Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(1000L));
+        Assert.assertThat("Wrong duration", testFail.getDuration(), Matchers.greaterThanOrEqualTo(900L));
       }
     });
   }

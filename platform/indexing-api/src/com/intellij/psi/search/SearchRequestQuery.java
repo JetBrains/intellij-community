@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2013 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.psi.search;
 
 import com.intellij.concurrency.AsyncFuture;
@@ -36,13 +22,13 @@ public class SearchRequestQuery extends AbstractQuery<PsiReference> {
 
   @NotNull
   @Override
-  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<PsiReference> consumer) {
-    return PsiSearchHelper.SERVICE.getInstance(myProject).processRequestsAsync(myRequests, consumer);
+  protected AsyncFuture<Boolean> processResultsAsync(@NotNull Processor<? super PsiReference> consumer) {
+    return PsiSearchHelper.getInstance(myProject).processRequestsAsync(myRequests, consumer);
   }
 
   @Override
-  protected boolean processResults(@NotNull Processor<PsiReference> consumer) {
-    return PsiSearchHelper.SERVICE.getInstance(myProject).processRequests(myRequests, consumer);
+  protected boolean processResults(@NotNull Processor<? super PsiReference> consumer) {
+    return PsiSearchHelper.getInstance(myProject).processRequests(myRequests, consumer);
   }
 
   @Override

@@ -16,6 +16,7 @@
 package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Comparator;
 
@@ -30,15 +31,14 @@ public class VirtualFileHierarchicalComparator implements Comparator<VirtualFile
     return ourInstance;
   }
 
-  public int compare(final VirtualFile vf1, final VirtualFile vf2) {
-    final boolean isDir1 = vf1.isDirectory();
-    final boolean isDir2 = vf2.isDirectory();
+  public int compare(@NotNull VirtualFile vf1, @NotNull VirtualFile vf2) {
+    boolean isDir1 = vf1.isDirectory();
+    boolean isDir2 = vf2.isDirectory();
 
-    if ((! isDir1) && (! isDir2)) return 0;
-    if (isDir1 && (! isDir2)) return -1;
-    if ((! isDir1) && isDir2) return 1;
+    if (!isDir1 && !isDir2) return 0;
+    if (isDir1 && !isDir2) return -1;
+    if (!isDir1) return 1;
 
-    final int diff = vf1.getPath().length() - vf2.getPath().length();
-    return diff == 0 ? 0 : (diff < 0 ? -1 : 1);
+    return Integer.compare(vf1.getPath().length(), vf2.getPath().length());
   }
 }

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.move.moveClassesOrPackages;
 
 import com.intellij.CommonBundle;
+import com.intellij.ide.util.PackageUtil;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.application.WriteAction;
@@ -59,7 +60,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
 
   public static boolean isPackageOrDirectory(final PsiElement element) {
     if (element instanceof PsiPackage) return true;
-    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackage((PsiDirectory)element) != null;
+    return element instanceof PsiDirectory && JavaDirectoryService.getInstance().getPackageInSources((PsiDirectory)element) != null;
   }
 
   public static boolean isReferenceInAnonymousClass(@Nullable final PsiReference reference) {
@@ -82,7 +83,7 @@ public class JavaMoveClassesOrPackagesHandler extends MoveHandlerDelegate {
     PsiFile parentFile;
     if (element instanceof PsiClassOwner) {
       final PsiClass[] classes = ((PsiClassOwner)element).getClasses();
-      if (classes.length == 0) return true;
+      if (classes.length == 0 && !PackageUtil.isPackageInfoFile(element)) return true;
       for (PsiClass aClass : classes) {
         if (aClass instanceof PsiSyntheticClass) return true;
       }

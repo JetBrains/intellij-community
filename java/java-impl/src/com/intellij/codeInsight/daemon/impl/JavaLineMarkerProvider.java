@@ -227,7 +227,7 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     Object lock = new Object();
     ProgressIndicator indicator = ProgressIndicatorProvider.getGlobalProgressIndicator();
-    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, true, computable -> {
+    JobLauncher.getInstance().invokeConcurrentlyUnderProgress(tasks, indicator, computable -> {
       List<LineMarkerInfo> infos = computable.compute();
       synchronized (lock) {
         result.addAll(infos);
@@ -319,7 +319,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
 
     if (!methodSet.isEmpty()) {
       final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(containingClass);
-      if (interfaceMethod != null && FunctionalExpressionSearch.search(containingClass).findFirst() != null) {
+      if (interfaceMethod != null &&
+          methodSet.contains(interfaceMethod) &&
+          FunctionalExpressionSearch.search(containingClass).findFirst() != null) {
         overridden.add(interfaceMethod);
       }
     }
@@ -479,8 +481,9 @@ public class JavaLineMarkerProvider extends LineMarkerProviderDescriptor {
       return (Function<PsiElement, String>)element -> "Multiple method overrides";
     }
 
+    @NotNull
     @Override
-    public String getElementPresentation(PsiElement element) {
+    public String getElementPresentation(@NotNull PsiElement element) {
       final PsiElement parent = element.getParent();
       if (parent instanceof PsiFunctionalExpression) {
         return PsiExpressionTrimRenderer.render((PsiExpression)parent);

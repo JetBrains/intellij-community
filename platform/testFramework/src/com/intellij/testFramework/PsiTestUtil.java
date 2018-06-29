@@ -17,8 +17,6 @@ package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.editor.Document;
@@ -38,11 +36,13 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.PsiFileImpl;
 import com.intellij.psi.stubs.StubTextInconsistencyException;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
@@ -224,8 +224,23 @@ public class PsiTestUtil {
 
     String psiTree = StringUtil.join(file.getViewProvider().getAllFiles(), fun, "\n");
     String reparsedTree = StringUtil.join(dummyFile.getViewProvider().getAllFiles(), fun, "\n");
+    assertPsiTextTreeConsistency(psiTree, reparsedTree);
+  }
+
+  private static void assertPsiTextTreeConsistency(String psiTree, String reparsedTree) {
     if (!psiTree.equals(reparsedTree)) {
-      Assert.assertEquals("Re-created from text:\n" + reparsedTree, "PSI structure:\n" + psiTree);
+      String[] psiLines = StringUtil.splitByLinesDontTrim(psiTree);
+      String[] reparsedLines = StringUtil.splitByLinesDontTrim(reparsedTree);
+      for (int i = 0; ; i++) {
+        if (i >= psiLines.length || i >= reparsedLines.length || !psiLines[i].equals(reparsedLines[i])) {
+          psiLines[Math.min(i, psiLines.length - 1)] += "   // in PSI structure";
+          reparsedLines[Math.min(i, reparsedLines.length - 1)] += "   // re-created from text";
+          break;
+        }
+      }
+      psiTree = StringUtil.join(psiLines, "\n");
+      reparsedTree = StringUtil.join(reparsedLines, "\n");
+      Assert.assertEquals(reparsedTree, psiTree);
     }
   }
 
@@ -233,11 +248,23 @@ public class PsiTestUtil {
   private static PsiFile createDummyCopy(PsiFile file) {
     LightVirtualFile copy = new LightVirtualFile(file.getName(), file.getText());
     copy.setOriginalFile(file.getViewProvider().getVirtualFile());
-    return Objects.requireNonNull(file.getManager().findFile(copy));
+    PsiFile dummyCopy = Objects.requireNonNull(file.getManager().findFile(copy));
+    if (dummyCopy instanceof PsiFileImpl) {
+      ((PsiFileImpl)dummyCopy).setOriginalFile(file);
+    }
+    return dummyCopy;
   }
 
   public static void checkPsiMatchesTextIgnoringNonCode(PsiFile file) {
     compareFromAllRoots(file, f -> DebugUtil.psiToStringIgnoringNonCode(f));
+  }
+
+  /**
+   * @deprecated to attract attention and motivate to fix tests which fail these checks
+   */
+  @Deprecated
+  public static void disablePsiTextConsistencyChecks(@NotNull Disposable parentDisposable) {
+    Registry.get("ide.check.structural.psi.text.consistency.in.tests").setValue(false, parentDisposable);
   }
 
   public static void addLibrary(Module module, String libPath) {
@@ -295,37 +322,32 @@ public class PsiTestUtil {
                                            List<VirtualFile> classesRoots,
                                            List<VirtualFile> sourceRoots) {
     LibraryTable libraryTable = ProjectLibraryTable.getInstance(model.getProject());
-    RunResult<Library> result = new WriteAction<Library>() {
-      @Override
-      protected void run(@NotNull Result<Library> result) {
-        Library library = libraryTable.createLibrary(libName);
-        Library.ModifiableModel libraryModel = library.getModifiableModel();
-        try {
-          for (VirtualFile root : classesRoots) {
-            libraryModel.addRoot(root, OrderRootType.CLASSES);
-          }
-          for (VirtualFile root : sourceRoots) {
-            libraryModel.addRoot(root, OrderRootType.SOURCES);
-          }
-          libraryModel.commit();
+    return WriteAction.computeAndWait(() -> {
+      Library library = libraryTable.createLibrary(libName);
+      Library.ModifiableModel libraryModel = library.getModifiableModel();
+      try {
+        for (VirtualFile root : classesRoots) {
+          libraryModel.addRoot(root, OrderRootType.CLASSES);
         }
-        catch (Throwable t) {
-          //noinspection SSBasedInspection
-          libraryModel.dispose();
-          throw t;
+        for (VirtualFile root : sourceRoots) {
+          libraryModel.addRoot(root, OrderRootType.SOURCES);
         }
-
-        model.addLibraryEntry(library);
-        OrderEntry[] orderEntries = model.getOrderEntries();
-        OrderEntry last = orderEntries[orderEntries.length - 1];
-        System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
-        orderEntries[0] = last;
-        model.rearrangeOrderEntries(orderEntries);
-        result.setResult(library);
+        libraryModel.commit();
       }
-    }.execute();
-    result.throwException();
-    return result.getResultObject();
+      catch (Throwable t) {
+        //noinspection SSBasedInspection
+        libraryModel.dispose();
+        throw t;
+      }
+
+      model.addLibraryEntry(library);
+      OrderEntry[] orderEntries = model.getOrderEntries();
+      OrderEntry last = orderEntries[orderEntries.length - 1];
+      System.arraycopy(orderEntries, 0, orderEntries, 1, orderEntries.length - 1);
+      orderEntries[0] = last;
+      model.rearrangeOrderEntries(orderEntries);
+      return library;
+    });
   }
 
   @NotNull
@@ -371,36 +393,33 @@ public class PsiTestUtil {
   }
 
   public static Module addModule(Project project, ModuleType type, String name, VirtualFile root) {
-    return new WriteCommandAction<Module>(project) {
-      @Override
-      protected void run(@NotNull Result<Module> result) {
-        String moduleName;
-        ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
-        try {
-          moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
-          moduleModel.commit();
-        }
-        catch (Throwable t) {
-          moduleModel.dispose();
-          throw t;
-        }
-
-        Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
-        assert dep != null : moduleName;
-
-        ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
-        try {
-          model.addContentEntry(root).addSourceFolder(root, false);
-          model.commit();
-        }
-        catch (Throwable t) {
-          model.dispose();
-          throw t;
-        }
-
-        result.setResult(dep);
+    return WriteCommandAction.writeCommandAction(project).compute(() -> {
+      String moduleName;
+      ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+      try {
+        moduleName = moduleModel.newModule(root.getPath() + "/" + name + ".iml", type.getId()).getName();
+        moduleModel.commit();
       }
-    }.execute().getResultObject();
+      catch (Throwable t) {
+        moduleModel.dispose();
+        throw t;
+      }
+
+      Module dep = ModuleManager.getInstance(project).findModuleByName(moduleName);
+      assert dep != null : moduleName;
+
+      ModifiableRootModel model = ModuleRootManager.getInstance(dep).getModifiableModel();
+      try {
+        model.addContentEntry(root).addSourceFolder(root, false);
+        model.commit();
+      }
+      catch (Throwable t) {
+        model.dispose();
+        throw t;
+      }
+      ;
+      return dep;
+    });
   }
 
   public static void setCompilerOutputPath(Module module, String url, boolean forTests) {
@@ -462,7 +481,7 @@ public class PsiTestUtil {
   }
 
   public static void compareStubTexts(@NotNull StubTextInconsistencyException e) {
-    Assert.assertEquals("Re-created from text:\n" + e.getStubsFromText(), "Stubs from PSI structure:\n" + e.getStubsFromPsi());
+    assertPsiTextTreeConsistency(e.getStubsFromPsi(), e.getStubsFromText());
     throw e;
   }
 

@@ -7,6 +7,7 @@ import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -16,7 +17,6 @@ import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
-import com.jetbrains.python.codeInsight.stdlib.PyNamedTupleType;
 import com.jetbrains.python.inspections.quickfix.PyAddPropertyForFieldQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyMakePublicQuickFix;
 import com.jetbrains.python.inspections.quickfix.PyRenameElementQuickFix;
@@ -73,12 +73,24 @@ public class PyProtectedMemberInspection extends PyInspection {
       }
     }
 
-    private boolean isImportFromTheSamePackage(PyReferenceExpression importSource) {
-      PsiDirectory directory = importSource.getContainingFile().getContainingDirectory();
-      if (directory != null && PyUtil.isPackage(directory, true, importSource.getContainingFile()) &&
-          directory.getName().equals(importSource.getName())) {
-        return true;
+    private boolean isImportFromTheSamePackage(@NotNull PyReferenceExpression importSource) {
+      final PsiDirectory currentFileDirectory = importSource.getContainingFile().getContainingDirectory();
+
+      if (currentFileDirectory != null && PyUtil.isPackage(currentFileDirectory, true, importSource)) {
+        final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(myTypeEvalContext);
+
+        return StreamEx
+          .of(importSource.getReference(resolveContext).multiResolve(false))
+          .map(ResolveResult::getElement)
+          .nonNull()
+          .map(PsiElement::getContainingFile)
+          .nonNull()
+          .map(PsiFile::getContainingDirectory)
+          .nonNull()
+          .map(PsiDirectory::getVirtualFile)
+          .anyMatch(importedSourceDir -> VfsUtilCore.isAncestor(importedSourceDir, currentFileDirectory.getVirtualFile(), false));
       }
+
       return false;
     }
 
@@ -87,6 +99,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       final PyExpression qualifier = node.getQualifier();
       if (ignoreAnnotations && PsiTreeUtil.getParentOfType(node, PyAnnotation.class) != null) return;
       if (qualifier == null || ArrayUtil.contains(qualifier.getText(), PyNames.CANONICAL_SELF, PyNames.CANONICAL_CLS)) return;
+      if (isImportFromTheSamePackage(node)) return;
       checkReference(node, qualifier);
     }
 

@@ -6,6 +6,6 @@ class Test {
 
     {
         foo((t)->{});
-        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo((ClassNotFoundException t)->{});</error>
+        <error descr="Unhandled exception: java.lang.ClassNotFoundException">foo</error>((ClassNotFoundException t)->{});
     }
 }

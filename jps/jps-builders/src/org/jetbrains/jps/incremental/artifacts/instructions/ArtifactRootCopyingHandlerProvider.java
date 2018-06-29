@@ -57,6 +57,7 @@ public abstract class ArtifactRootCopyingHandlerProvider {
   /**
    * @deprecated override {@link #createCustomHandler(JpsArtifact, File, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
    */
+  @Deprecated
   @Nullable
   public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact,
                                                 @NotNull File root,
@@ -69,6 +70,7 @@ public abstract class ArtifactRootCopyingHandlerProvider {
   /**
    * @deprecated override {@link #createCustomHandler(JpsArtifact, File, File, JpsPackagingElement, JpsModel, BuildDataPaths)} instead
    */
+  @Deprecated
   @Nullable
   public FileCopyingHandler createCustomHandler(@NotNull JpsArtifact artifact, @NotNull File root, @NotNull JpsModel model,
                                                 @NotNull BuildDataPaths buildDataPaths) {

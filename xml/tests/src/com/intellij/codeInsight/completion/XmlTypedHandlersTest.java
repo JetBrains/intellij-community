@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.completion;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.ide.highlighter.HtmlFileType;
@@ -266,6 +267,7 @@ public class XmlTypedHandlersTest extends LightPlatformCodeInsightFixtureTestCas
   }
 
   private HtmlCodeStyleSettings getHtmlSettings() {
-    return getCurrentCodeStyleSettings().getCustomSettings(HtmlCodeStyleSettings.class);
+    return CodeStyle.getSettings(myFixture.getProject())
+                    .getCustomSettings(HtmlCodeStyleSettings.class);
   }
 }

@@ -18,6 +18,7 @@ package com.siyeh.ig.performance;
 import com.intellij.psi.*;
 import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PropertyUtilBase;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.Query;
 import com.siyeh.InspectionGadgetsBundle;
@@ -60,6 +61,13 @@ public class CallToSimpleGetterInClassInspectionBase extends BaseInspection {
     @Override
     public void visitMethodCallExpression(@NotNull PsiMethodCallExpression call) {
       super.visitMethodCallExpression(call);
+
+      String referenceName = call.getMethodExpression().getReferenceName();
+      if (referenceName == null ||
+          PropertyUtilBase.getMethodNameGetterFlavour(referenceName) == PropertyUtilBase.GetterFlavour.NOT_A_GETTER) {
+        return;
+      }
+
       final PsiClass containingClass = ClassUtils.getContainingClass(call);
       if (containingClass == null) {
         return;

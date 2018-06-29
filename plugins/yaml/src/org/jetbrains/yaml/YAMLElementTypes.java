@@ -24,20 +24,63 @@ public interface YAMLElementTypes {
   YAMLElementType SCALAR_TEXT_VALUE = new YAMLElementType("Scalar text value");
   YAMLElementType SCALAR_PLAIN_VALUE = new YAMLElementType("Scalar plain style");
   YAMLElementType SCALAR_QUOTED_STRING = new YAMLElementType("Scalar quoted string");
+  YAMLElementType ANCHOR_NODE = new YAMLElementType("Anchor node");
+  YAMLElementType ALIAS_NODE = new YAMLElementType("Alias node");
 
-  TokenSet SCALAR_VALUES = TokenSet.create(
-    YAMLTokenTypes.SCALAR_TEXT,
-    YAMLTokenTypes.SCALAR_STRING,
-    YAMLTokenTypes.SCALAR_DSTRING,
+  TokenSet BLOCK_SCALAR_ITEMS = TokenSet.create(
     YAMLTokenTypes.SCALAR_LIST,
-    YAMLTokenTypes.TEXT,
-    SCALAR_LIST_VALUE
+    YAMLTokenTypes.SCALAR_TEXT
   );
 
-  TokenSet BLANK_ELEMENTS = TokenSet.create(
+  TokenSet SCALAR_ITEMS = TokenSet.orSet(BLOCK_SCALAR_ITEMS, TokenSet.create(
+    YAMLTokenTypes.SCALAR_STRING,
+    YAMLTokenTypes.SCALAR_DSTRING,
+    YAMLTokenTypes.TEXT
+  ));
+
+  TokenSet SCALAR_VALUES = TokenSet.orSet(SCALAR_ITEMS, TokenSet.create(
+    SCALAR_LIST_VALUE
+  ));
+
+  TokenSet EOL_ELEMENTS = TokenSet.create(
+    YAMLTokenTypes.EOL,
+    YAMLTokenTypes.SCALAR_EOL
+  );
+
+  TokenSet SPACE_ELEMENTS = TokenSet.orSet(EOL_ELEMENTS, TokenSet.create(
     YAMLTokenTypes.WHITESPACE,
     TokenType.WHITE_SPACE,
-    YAMLTokenTypes.EOL,
-    YAMLTokenTypes.INDENT,
-    YAMLTokenTypes.COMMENT);
+    YAMLTokenTypes.INDENT
+  ));
+
+  TokenSet BLANK_ELEMENTS = TokenSet.orSet(SPACE_ELEMENTS, TokenSet.create(
+    YAMLTokenTypes.COMMENT
+  ));
+
+  TokenSet CONTAINERS = TokenSet.create(
+    SCALAR_LIST_VALUE,
+    SCALAR_TEXT_VALUE,
+    DOCUMENT,
+    SEQUENCE,
+    MAPPING,
+    SCALAR_QUOTED_STRING,
+    SCALAR_PLAIN_VALUE
+  );
+
+  TokenSet BRACKETS = TokenSet.create(
+    YAMLTokenTypes.LBRACE,
+    YAMLTokenTypes.RBRACE,
+    YAMLTokenTypes.LBRACKET,
+    YAMLTokenTypes.RBRACKET
+  );
+
+  TokenSet DOCUMENT_BRACKETS = TokenSet.create(
+    YAMLTokenTypes.DOCUMENT_MARKER,
+    YAMLTokenTypes.DOCUMENT_END
+  );
+
+  TokenSet TOP_LEVEL = TokenSet.create(
+    FILE,
+    DOCUMENT
+  );
 }

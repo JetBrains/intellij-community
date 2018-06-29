@@ -1,0 +1,4 @@
+deprecated: configurationWarning.png -> /general/balloonError.svg; to be removed in IDEA 2020 - use AllIcons.General.BalloonError
+deprecated: saveTempConfig.png -> /actions/menu-saveall.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Menu_saveall
+deprecated: unknown.png -> /actions/help.svg; to be removed in IDEA 2020 - use AllIcons.Actions.Help
+deprecated: variables.png -> /actions/listFiles.svg; to be removed in IDEA 2020 - use AllIcons.Actions.ListFiles

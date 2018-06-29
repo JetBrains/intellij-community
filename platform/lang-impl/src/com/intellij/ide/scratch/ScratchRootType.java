@@ -17,8 +17,6 @@ package com.intellij.ide.scratch;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.Language;
-import com.intellij.openapi.application.Result;
-import com.intellij.openapi.application.RunResult;
 import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.project.Project;
@@ -32,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.IOException;
 
 /**
  * @author gregsh
@@ -54,6 +53,7 @@ public final class ScratchRootType extends RootType {
   @Nullable
   @Override
   public Icon substituteIcon(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.isDirectory()) return null;
     Icon icon = ObjectUtils.chooseNotNull(super.substituteIcon(project, file), ScratchFileType.INSTANCE.getIcon());
     return LayeredIcon.create(icon, AllIcons.Actions.Scratch);
   }
@@ -69,40 +69,25 @@ public final class ScratchRootType extends RootType {
                                        final Language language,
                                        final String text,
                                        final ScratchFileService.Option option) {
-    RunResult<VirtualFile> result =
-      new WriteCommandAction<VirtualFile>(project, UIBundle.message("file.chooser.create.new.scratch.file.command.name")) {
-        @Override
-        protected boolean isGlobalUndoAction() {
-          return true;
-        }
-
-        @Override
-        protected boolean shouldRecordActionForActiveDocument() {
-          return false;
-        }
-
-        @Override
-        protected UndoConfirmationPolicy getUndoConfirmationPolicy() {
-          return UndoConfirmationPolicy.REQUEST_CONFIRMATION;
-        }
-
-        @Override
-        protected void run(@NotNull Result<VirtualFile> result) throws Throwable {
+    try {
+      return
+        WriteCommandAction.writeCommandAction(project).withName(UIBundle.message("file.chooser.create.new.scratch.file.command.name"))
+                          .withGlobalUndo().shouldRecordActionForActiveDocument(false)
+                          .withUndoConfirmationPolicy(UndoConfirmationPolicy.REQUEST_CONFIRMATION).compute(() -> {
           ScratchFileService fileService = ScratchFileService.getInstance();
-          VirtualFile file = fileService.findFile(ScratchRootType.this, fileName, option);
-          // save text should go before any other manipulations that load document, 
-          // otherwise undo will be broken  
+          VirtualFile file = fileService.findFile(this, fileName, option);
+          // save text should go before any other manipulations that load document,
+          // otherwise undo will be broken
           VfsUtil.saveText(file, text);
-          
+
           fileService.getScratchesMapping().setMapping(file, language);
-          result.setResult(file);
-        }
-      }.execute();
-    if (result.hasException()) {
+          return file;
+        });
+    }
+    catch (IOException e) {
       Messages.showMessageDialog(UIBundle.message("create.new.file.could.not.create.file.error.message", fileName),
                                  UIBundle.message("error.dialog.title"), Messages.getErrorIcon());
       return null;
     }
-    return result.getResultObject();
   }
 }

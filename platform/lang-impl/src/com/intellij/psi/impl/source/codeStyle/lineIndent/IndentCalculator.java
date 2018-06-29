@@ -17,6 +17,7 @@ package com.intellij.psi.impl.source.codeStyle.lineIndent;
 
 import com.intellij.application.options.CodeStyle;
 import com.intellij.formatting.Indent;
+import com.intellij.formatting.IndentImpl;
 import com.intellij.formatting.IndentInfo;
 import com.intellij.lang.Language;
 import com.intellij.openapi.editor.Document;
@@ -32,22 +33,23 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.formatting.Indent.Type.CONTINUATION;
 import static com.intellij.formatting.Indent.Type.NORMAL;
+import static com.intellij.formatting.Indent.Type.SPACES;
 
 public class IndentCalculator {
   
   private @NotNull final Project myProject;
   private @NotNull final Editor myEditor;
   private @NotNull final BaseLineOffsetCalculator myBaseLineOffsetCalculator;
-  private @NotNull final Indent.Type myIndentType;
+  private @NotNull final Indent myIndent;
 
   public IndentCalculator(@NotNull Project project,
                           @NotNull Editor editor,
                           @NotNull BaseLineOffsetCalculator baseLineOffsetCalculator,
-                          @NotNull Indent.Type type) {
+                          @NotNull Indent indent) {
     myProject = project;
     myEditor = editor;
     myBaseLineOffsetCalculator = baseLineOffsetCalculator;
-    myIndentType = type;
+    myIndent = indent;
   }
 
   public final static BaseLineOffsetCalculator LINE_BEFORE = new BaseLineOffsetCalculator() {
@@ -75,15 +77,17 @@ public class IndentCalculator {
         !fileOptions.isOverrideLanguageOptions() && language != null && !(language.is(file.getLanguage()) || language.is(Language.ANY)) ?
         CodeStyle.getLanguageSettings(file, language).getIndentOptions() :
         fileOptions;
-      return
-        baseIndent + new IndentInfo(0, indentTypeToSize(myIndentType, options), 0, false).generateNewWhiteSpace(options);
+      if (options != null) {
+        return baseIndent 
+               + new IndentInfo(0, indentToSize(myIndent, options), 0, false)
+                 .generateNewWhiteSpace(options);
+      }
     }
     return null;
   }
 
-
   @NotNull
-  private String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
+  protected String getBaseIndent(@NotNull SemanticEditorPosition currPosition) {
     CharSequence docChars = myEditor.getDocument().getCharsSequence();
     int offset = currPosition.getStartOffset();
     if (offset > 0) {
@@ -101,12 +105,15 @@ public class IndentCalculator {
     return "";
   }
 
-  private static int indentTypeToSize(@NotNull Indent.Type indentType, @NotNull CommonCodeStyleSettings.IndentOptions options) {
-    if (indentType == NORMAL) {
+  private static int indentToSize(@NotNull Indent indent, @NotNull CommonCodeStyleSettings.IndentOptions options) {
+    if (indent.getType() == NORMAL) {
       return options.INDENT_SIZE;
     }
-    else if (indentType == CONTINUATION) {
+    else if (indent.getType() == CONTINUATION) {
       return options.CONTINUATION_INDENT_SIZE;
+    }
+    else if (indent.getType() == SPACES && indent instanceof IndentImpl) {
+      return ((IndentImpl)indent).getSpaces();
     }
     return 0;
   }

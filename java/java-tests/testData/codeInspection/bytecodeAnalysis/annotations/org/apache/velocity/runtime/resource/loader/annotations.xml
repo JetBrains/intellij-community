@@ -36,6 +36,9 @@
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader java.io.InputStream getResourceStream(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.DataSourceResourceLoader java.sql.PreparedStatement getStatement(java.sql.Connection, java.lang.String, java.lang.String) 0'>
@@ -114,6 +117,11 @@
             <val name="pure" val="true"/>
         </annotation>
     </item>
+    <item name='org.apache.velocity.runtime.resource.loader.JarHolder java.util.Hashtable getEntries()'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;-&gt;new&quot;"/>
+        </annotation>
+    </item>
     <item name='org.apache.velocity.runtime.resource.loader.JarResourceLoader boolean isSourceModified(org.apache.velocity.runtime.resource.Resource)'>
         <annotation name='org.jetbrains.annotations.Contract'>
             <val name="value" val="&quot;_-&gt;true&quot;"/>
@@ -188,6 +196,9 @@
         <annotation name='org.jetbrains.annotations.Nullable'/>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.StringResourceLoader java.io.InputStream getResourceStream(java.lang.String)'>
+        <annotation name='org.jetbrains.annotations.Contract'>
+            <val val="&quot;_-&gt;new&quot;"/>
+        </annotation>
         <annotation name='org.jetbrains.annotations.NotNull'/>
     </item>
     <item name='org.apache.velocity.runtime.resource.loader.StringResourceLoader long getLastModified(org.apache.velocity.runtime.resource.Resource) 0'>

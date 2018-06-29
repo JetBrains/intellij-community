@@ -1,7 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.editor.Document;
@@ -88,22 +87,20 @@ public abstract class PsiTestCase extends ModuleTestCase {
   }
 
   @NotNull
-  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text) {
-    return new WriteAction<PsiFile>() {
-      @Override
-      protected void run(@NotNull Result<PsiFile> result) throws Throwable {
-        if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
-          addSourceContentToRoots(module, vDir);
-        }
-
-        final VirtualFile vFile = vDir.createChildData(vDir, fileName);
-        VfsUtil.saveText(vFile, text);
-        assertNotNull(vFile);
-        final PsiFile file = myPsiManager.findFile(vFile);
-        assertNotNull(file);
-        result.setResult(file);
+  protected PsiFile createFile(@NotNull final Module module, @NotNull final VirtualFile vDir, @NotNull final String fileName, @NotNull final String text)
+    throws IOException {
+    return WriteAction.computeAndWait(() -> {
+      if (!ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vDir)) {
+        addSourceContentToRoots(module, vDir);
       }
-    }.execute().getResultObject();
+
+      final VirtualFile vFile = vDir.createChildData(vDir, fileName);
+      VfsUtil.saveText(vFile, text);
+      assertNotNull(vFile);
+      final PsiFile file = myPsiManager.findFile(vFile);
+      assertNotNull(file);
+      return file;
+    });
   }
 
   protected void addSourceContentToRoots(final Module module, final VirtualFile vDir) {

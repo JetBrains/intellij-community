@@ -80,7 +80,7 @@ public abstract class LineStatusMarkerRenderer {
   @NotNull
   public static RangeHighlighter createRangeHighlighter(@NotNull Range range,
                                                         @NotNull MarkupModel markupModel) {
-    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), true);
+    TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
     TextAttributes attributes = getTextAttributes(range);
 
     RangeHighlighter highlighter = markupModel.addRangeHighlighter(textRange.getStartOffset(), textRange.getEndOffset(),

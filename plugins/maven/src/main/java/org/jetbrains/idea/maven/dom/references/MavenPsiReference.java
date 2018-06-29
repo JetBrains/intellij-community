@@ -48,6 +48,7 @@ public abstract class MavenPsiReference implements PsiReference {
     myRange = range;
   }
 
+  @NotNull
   public PsiElement getElement() {
     return myElement;
   }
@@ -57,6 +58,7 @@ public abstract class MavenPsiReference implements PsiReference {
     return myText;
   }
 
+  @NotNull
   public TextRange getRangeInElement() {
     return myRange;
   }

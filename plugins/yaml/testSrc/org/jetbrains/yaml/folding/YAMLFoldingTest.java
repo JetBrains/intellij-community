@@ -27,7 +27,15 @@ public class YAMLFoldingTest extends LightPlatformCodeInsightFixtureTestCase {
     defaultTest();
   }
 
+  public void testSequenceFolding() {
+    defaultTest();
+  }
+
   public void testRuby18677() {
+    defaultTest();
+  }
+
+  public void testRegionFolding() {
     defaultTest();
   }
 

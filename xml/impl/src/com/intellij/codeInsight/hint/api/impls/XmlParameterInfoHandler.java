@@ -51,11 +51,6 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     return null;
   }
 
-  @Override
-  public Object[] getParametersForDocumentation(final XmlElementDescriptor p, final ParameterInfoContext context) {
-    return getSortedDescriptors(p);
-  }
-
   public static XmlAttributeDescriptor[] getSortedDescriptors(final XmlElementDescriptor p) {
     final XmlAttributeDescriptor[] xmlAttributeDescriptors = p.getAttributesDescriptors(null);
     Arrays.sort(xmlAttributeDescriptors, COMPARATOR);
@@ -104,11 +99,6 @@ public class XmlParameterInfoHandler implements ParameterInfoHandler<XmlTag,XmlE
     } else {
       context.removeHint();
     }
-  }
-
-  @Override
-  public String getParameterCloseChars() {
-    return null;
   }
 
   @Nullable

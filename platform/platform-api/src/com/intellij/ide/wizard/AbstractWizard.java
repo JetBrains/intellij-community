@@ -28,6 +28,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.JBCardLayout;
 import com.intellij.ui.components.panels.OpaquePanel;
+import com.intellij.ui.mac.TouchbarDataKeys;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
@@ -130,19 +131,24 @@ public abstract class AbstractWizard<T extends Step> extends DialogWrapper {
         myHelpButton.setText("");
       }
 
+      int index = 0;
       JPanel leftPanel = new JPanel();
       if (ApplicationInfo.contextHelpAvailable()) {
         leftPanel.add(myHelpButton);
+        TouchbarDataKeys.putClientPropertyDialogButton(myHelpButton, false, false, index++);
       }
       leftPanel.add(myCancelButton);
+      TouchbarDataKeys.putClientPropertyDialogButton(myCancelButton, true, false, index++);
       panel.add(leftPanel, BorderLayout.WEST);
 
       if (mySteps.size() > 1) {
         buttonPanel.add(Box.createHorizontalStrut(5));
         buttonPanel.add(myPreviousButton);
+        TouchbarDataKeys.putClientPropertyDialogButton(myPreviousButton, true, false, index++);
       }
       buttonPanel.add(Box.createHorizontalStrut(5));
       buttonPanel.add(myNextButton);
+      TouchbarDataKeys.putClientPropertyDialogButton(myNextButton, true, true, index++);
     }
     else {
       panel.add(buttonPanel, BorderLayout.CENTER);

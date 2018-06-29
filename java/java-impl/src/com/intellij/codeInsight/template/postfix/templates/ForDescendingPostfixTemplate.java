@@ -3,7 +3,6 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.impl.TextExpression;
-import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplateProvider;
 import com.intellij.codeInsight.template.postfix.util.JavaPostfixTemplatesUtils;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
@@ -11,7 +10,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class ForDescendingPostfixTemplate extends ForIndexedPostfixTemplate {
-  public ForDescendingPostfixTemplate(@NotNull JavaEditablePostfixTemplateProvider provider) {
+  public ForDescendingPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("forr", "for ($type$ $index$ = $bound$; $index$ $sign$ 0; $index$--) {\n$END$\n}",
           "for (int i = expr.length-1; i >= 0; i--)", provider);
   }

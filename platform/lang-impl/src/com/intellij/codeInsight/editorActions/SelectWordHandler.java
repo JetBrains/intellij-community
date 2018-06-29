@@ -1,25 +1,10 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 package com.intellij.codeInsight.editorActions;
 
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
-import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.lang.CompositeLanguage;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -39,6 +24,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.impl.DebugUtil;
+import com.intellij.psi.impl.source.tree.injected.InjectedCaret;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -61,7 +47,7 @@ public class SelectWordHandler extends EditorActionHandler {
     if (LOG.isDebugEnabled()) {
       LOG.debug("enter: execute(editor='" + editor + "')");
     }
-    Project project = CommonDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editor.getComponent()));
+    Project project = CommonDataKeys.PROJECT.getData(dataContext);
     if (project == null) {
       if (myOriginalHandler != null) {
         myOriginalHandler.execute(editor, caret, dataContext);
@@ -142,14 +128,13 @@ public class SelectWordHandler extends EditorActionHandler {
 
     if (element instanceof OuterLanguageElement) {
       PsiElement elementInOtherTree = file.getViewProvider().findElementAt(element.getTextOffset(), element.getLanguage());
-      if (elementInOtherTree == null || elementInOtherTree.getContainingFile() != element.getContainingFile()) {
+      if (elementInOtherTree != null && elementInOtherTree.getContainingFile() != element.getContainingFile()) {
         while (elementInOtherTree != null && elementInOtherTree.getPrevSibling() == null) {
           elementInOtherTree = elementInOtherTree.getParent();
         }
 
         if (elementInOtherTree != null) {
-          assert elementInOtherTree.getTextOffset() == caretOffset;
-          element = elementInOtherTree;
+          if (elementInOtherTree.getTextOffset() == caretOffset) element = elementInOtherTree;
         }
       }
     }

@@ -12,26 +12,29 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.lang.resolve.CompilationPhaseHint
-import org.jetbrains.plugins.groovy.lang.resolve.ElementGroovyResult
+import org.jetbrains.plugins.groovy.lang.resolve.ElementResolveResult
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil.DECLARATION_SCOPE_PASSED
 
-class DuplicateVariableProcessor(private val variable: GrVariable) : FindFirstProcessor<ElementGroovyResult<GrVariable>>(variable.name) {
+class DuplicateVariableProcessor(private val variable: GrVariable) : FindFirstProcessor<ElementResolveResult<GrVariable>>() {
 
   companion object {
     private fun GrVariable.hasExplicitVisibilityModifiers(): Boolean = modifierList?.hasExplicitVisibilityModifiers() ?: false
   }
 
+  private val name = variable.name
+
   init {
+    nameHint(name)
     hint(CompilationPhaseHint.HINT_KEY, CompilationPhaseHint { CompilationPhaseHint.Phase.CONVERSION })
   }
 
   private val hasVisibilityModifier = variable.hasExplicitVisibilityModifiers()
 
-  override fun result(element: PsiElement, state: ResolveState): ElementGroovyResult<GrVariable>? {
+  override fun result(element: PsiElement, state: ResolveState): ElementResolveResult<GrVariable>? {
     if (element !is GrVariable || element is GrBindingVariable) return null
     if (element == variable) return null
     if (element.hasExplicitVisibilityModifiers() != hasVisibilityModifier) return null
-    return ElementGroovyResult(element)
+    return ElementResolveResult(element)
   }
 
   private var myBorderPassed: Boolean = false

@@ -68,7 +68,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
     initBranchSyncPolicyIfNotInitialized();
     warnThatBranchesDivergedIfNeeded();
     if (myRepositoryManager.moreThanOneRoot()) {
-      myPopup.addSettingAction(new TrackReposSynchronouslyAction(myVcsSettings));
+      myPopup.addToolbarAction(new TrackReposSynchronouslyAction(myVcsSettings), true);
     }
   }
 
@@ -79,7 +79,7 @@ public abstract class DvcsBranchPopup<Repo extends Repository> {
 
   private void initBranchSyncPolicyIfNotInitialized() {
     if (myRepositoryManager.moreThanOneRoot() && myVcsSettings.getSyncSetting() == DvcsSyncSettings.Value.NOT_DECIDED) {
-      if (!myMultiRootBranchConfig.diverged()) {
+      if (myRepositoryManager.shouldProposeSyncControl()) {
         notifyAboutSyncedBranches();
         myVcsSettings.setSyncSetting(DvcsSyncSettings.Value.SYNC);
       }

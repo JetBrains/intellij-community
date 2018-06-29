@@ -15,6 +15,8 @@
  */
 package com.intellij.application.options;
 
+import com.intellij.lang.Language;
+import com.intellij.lang.html.HTMLLanguage;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -56,5 +58,11 @@ public class HtmlCodeStyleSettingsProvider extends CodeStyleSettingsProvider {
   @Override
   public CustomCodeStyleSettings createCustomSettings(CodeStyleSettings settings) {
     return new HtmlCodeStyleSettings(settings);
+  }
+
+  @Nullable
+  @Override
+  public Language getLanguage() {
+    return HTMLLanguage.INSTANCE;
   }
 }

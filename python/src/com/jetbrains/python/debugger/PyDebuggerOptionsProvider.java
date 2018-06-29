@@ -40,6 +40,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     myState.mySupportGeventDebugging = state.mySupportGeventDebugging;
     myState.mySupportQtDebugging = state.mySupportQtDebugging;
     myState.myPyQtBackend = state.myPyQtBackend;
+    myState.myAttachProcessFilter = state.myAttachProcessFilter;
   }
 
   public static class State {
@@ -48,6 +49,7 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
     public boolean mySupportGeventDebugging = false;
     public boolean mySupportQtDebugging = true;
     public String myPyQtBackend = "Auto";
+    public String myAttachProcessFilter = "python";
   }
 
 
@@ -89,6 +91,14 @@ public class PyDebuggerOptionsProvider implements PersistentStateComponent<PyDeb
 
   public void setPyQtBackend(String backend) {
     myState.myPyQtBackend = backend;
+  }
+
+  public String getAttachProcessFilter() {
+    return myState.myAttachProcessFilter;
+  }
+
+  public void setAttachProcessFilter(String filter) {
+    myState.myAttachProcessFilter = filter;
   }
 }
 

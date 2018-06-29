@@ -1,132 +1,111 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.diagnostic;
 
 import com.intellij.openapi.diagnostic.IdeaLoggingEvent;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.containers.ContainerUtil;
-import org.apache.log4j.Category;
-import org.apache.log4j.Priority;
-import org.apache.log4j.spi.LoggingEvent;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.Future;
 import java.util.concurrent.TimeUnit;
 
 public class MessagePool {
-  private static final int MAX_POOL_SIZE_FOR_FATALS = 100;
+  public enum State { NoErrors, ReadErrors, UnreadErrors }
 
-  private final List<AbstractMessage> myIdeFatals = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  private final List<MessagePoolListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
-
-  private final MessageGrouper myFatalsGrouper;
-
-  MessagePool(int maxGroupSize, int timeout) {
-    myFatalsGrouper = new MessageGrouper(timeout, maxGroupSize);
-  }
+  private static final int MAX_POOL_SIZE = 100;
+  private static final int MAX_GROUP_SIZE = 20;
+  private static final int GROUP_TIME_SPAN_MS = 1000;
 
   private static class MessagePoolHolder {
-    private static final MessagePool ourInstance = new MessagePool(20, 1000);
+    private static final MessagePool ourInstance = new MessagePool();
   }
 
   public static MessagePool getInstance() {
     return MessagePoolHolder.ourInstance;
   }
 
-  @Nullable
-  public LogMessage addIdeFatalMessage(final IdeaLoggingEvent aEvent) {
-    Object data = aEvent.getData();
-    final LogMessage message = data instanceof LogMessage ? (LogMessage)data : new LogMessage(aEvent);
-    if (myIdeFatals.size() < MAX_POOL_SIZE_FOR_FATALS) {
-      if (myFatalsGrouper.addToGroup(message)) {
-        return message;
+  private final List<AbstractMessage> myErrors = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<MessagePoolListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final MessageGrouper myGrouper = new MessageGrouper();
+
+  private MessagePool() { }
+
+  public void addIdeFatalMessage(@NotNull IdeaLoggingEvent event) {
+    if (myErrors.size() < MAX_POOL_SIZE) {
+      Object data = event.getData();
+      if (data instanceof GroupedLogMessage) {
+        myGrouper.addToGroup(new LogMessage(new Throwable(), "illegal reuse a grouped message", Collections.emptyList()));
       }
-    } else if (myIdeFatals.size() == MAX_POOL_SIZE_FOR_FATALS) {
-      String msg = DiagnosticBundle.message("error.monitor.too.many.errors");
-      LogMessage tooMany = new LogMessage(new LoggingEvent(msg, Category.getRoot(), Priority.ERROR, null, new TooManyErrorsException()));
-      myFatalsGrouper.addToGroup(tooMany);
-      return tooMany;
+      else if (data instanceof AbstractMessage) {
+        myGrouper.addToGroup((AbstractMessage)data);
+      }
+      else {
+        myGrouper.addToGroup(new LogMessage(event.getThrowable(), event.getMessage(), Collections.emptyList()));
+      }
     }
-    return null;
+    else if (myErrors.size() == MAX_POOL_SIZE) {
+      TooManyErrorsException e = new TooManyErrorsException();
+      myGrouper.addToGroup(new LogMessage(e, null, Collections.emptyList()));
+    }
   }
 
-  public List<AbstractMessage> getFatalErrors(boolean aIncludeReadMessages, boolean aIncludeSubmittedMessages) {
+  public State getState() {
+    if (myErrors.isEmpty()) return State.NoErrors;
+    for (AbstractMessage message: myErrors) {
+      if (!message.isRead()) return State.UnreadErrors;
+    }
+    return State.ReadErrors;
+  }
+
+  public List<AbstractMessage> getFatalErrors(boolean includeReadMessages, boolean includeSubmittedMessages) {
     List<AbstractMessage> result = new ArrayList<>();
-    for (AbstractMessage each : myIdeFatals) {
-      if (!each.isRead() && !each.isSubmitted()) {
-        result.add(each);
-      }
-      else if ((each.isRead() && aIncludeReadMessages) || (each.isSubmitted() && aIncludeSubmittedMessages)) {
-        result.add(each);
+    for (AbstractMessage message : myErrors) {
+      if ((!message.isRead() && !message.isSubmitted()) ||
+          (message.isRead() && includeReadMessages) ||
+          (message.isSubmitted() && includeSubmittedMessages)) {
+        result.add(message);
       }
     }
     return result;
   }
 
-  public void clearFatals() {
-    for (AbstractMessage fatal : myIdeFatals) {
-      fatal.setRead(true); // expire notifications
+  public void clearErrors() {
+    for (AbstractMessage message : myErrors) {
+      message.setRead(true); // expire notifications
     }
-
-    myIdeFatals.clear();
-    notifyListenersClear();
+    myErrors.clear();
+    notifyPoolCleared();
   }
 
-  public void addListener(MessagePoolListener aListener) {
-    myListeners.add(aListener);
+  public void addListener(MessagePoolListener listener) {
+    myListeners.add(listener);
   }
 
-  public void removeListener(MessagePoolListener aListener) {
-    myListeners.remove(aListener);
+  public void removeListener(MessagePoolListener listener) {
+    myListeners.remove(listener);
   }
 
-  private void notifyListenersAdd() {
-    for (MessagePoolListener messagePoolListener : myListeners) {
-      messagePoolListener.newEntryAdded();
-    }
+  private void notifyEntryAdded() {
+    myListeners.forEach(MessagePoolListener::newEntryAdded);
   }
 
-  private void notifyListenersClear() {
-    for (MessagePoolListener messagePoolListener : myListeners) {
-      messagePoolListener.poolCleared();
-    }
+  private void notifyPoolCleared() {
+    myListeners.forEach(MessagePoolListener::poolCleared);
   }
 
-  void notifyListenersRead() {
-    for (MessagePoolListener messagePoolListener : myListeners) {
-      messagePoolListener.entryWasRead();
-    }
+  private void notifyEntryRead() {
+    myListeners.forEach(MessagePoolListener::entryWasRead);
   }
 
   private class MessageGrouper implements Runnable {
-    private final int myTimeOut;
-    private final int myMaxGroupSize;
     private final List<AbstractMessage> myMessages = new ArrayList<>();
     private Future<?> myAlarm = CompletableFuture.completedFuture(null);
 
-    public MessageGrouper(int timeout, int maxGroupSize) {
-      myTimeOut = timeout;
-      myMaxGroupSize = maxGroupSize;
-    }
-
+    @Override
     public void run() {
       synchronized (myMessages) {
         if (myMessages.size() > 0) {
@@ -136,35 +115,29 @@ public class MessagePool {
     }
 
     private void post() {
-      AbstractMessage message;
-      if (myMessages.size() == 1) {
-        message = myMessages.get(0);
-      } else {
-        message = new GroupedLogMessage(new ArrayList<>(myMessages));
-      }
-      message.setOnReadCallback(() -> notifyListenersRead());
+      AbstractMessage message = myMessages.size() == 1 ? myMessages.get(0) : new GroupedLogMessage(new ArrayList<>(myMessages));
+      message.setOnReadCallback(() -> notifyEntryRead());
       myMessages.clear();
-      myIdeFatals.add(message);
-      notifyListenersAdd();
+      myErrors.add(message);
+      notifyEntryAdded();
     }
 
-    public boolean addToGroup(@NotNull AbstractMessage message) {
-      boolean result = myMessages.isEmpty();
-      synchronized(myMessages) {
+    private void addToGroup(@NotNull AbstractMessage message) {
+      synchronized (myMessages) {
         myMessages.add(message);
-        if (myMessages.size() >= myMaxGroupSize) {
+        if (myMessages.size() >= MAX_GROUP_SIZE) {
           post();
-        } else {
+        }
+        else {
           myAlarm.cancel(false);
-          myAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(this, myTimeOut, TimeUnit.MILLISECONDS);
+          myAlarm = AppExecutorUtil.getAppScheduledExecutorService().schedule(this, GROUP_TIME_SPAN_MS, TimeUnit.MILLISECONDS);
         }
       }
-      return result;
     }
   }
 
   public static class TooManyErrorsException extends Exception {
-    TooManyErrorsException() {
+    private TooManyErrorsException() {
       super(DiagnosticBundle.message("error.monitor.too.many.errors"));
     }
   }

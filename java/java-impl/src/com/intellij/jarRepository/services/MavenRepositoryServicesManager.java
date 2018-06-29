@@ -6,6 +6,7 @@ package com.intellij.jarRepository.services;
 import com.intellij.jarRepository.RemoteRepositoryDescription;
 import com.intellij.jarRepository.RepositoryArtifactDescription;
 import com.intellij.jarRepository.services.artifactory.ArtifactoryRepositoryService;
+import com.intellij.jarRepository.services.bintray.BintrayRepositoryService;
 import com.intellij.jarRepository.services.nexus.NexusRepositoryService;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -39,7 +40,8 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
   public static final List<String> DEFAULT_SERVICES = Collections.unmodifiableList(Arrays.asList(
     "https://oss.sonatype.org/service/local/",
     "http://repo.jfrog.org/artifactory/api/",
-    "https://repository.jboss.org/nexus/service/local/"
+    "https://repository.jboss.org/nexus/service/local/",
+    "https://jcenter.bintray.com"
   ));
 
   public MavenRepositoryServicesManager() {
@@ -53,7 +55,7 @@ public class MavenRepositoryServicesManager implements PersistentStateComponent<
 
   @NotNull
   public static MavenRepositoryService[] getServices() {
-    return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService()};
+    return new MavenRepositoryService[]{new NexusRepositoryService(), new ArtifactoryRepositoryService(), new BintrayRepositoryService()};
   }
 
   public static String[] getServiceUrls(final Project project) {

@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.console;
 
 import com.intellij.AppTopics;
@@ -34,7 +20,7 @@ import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.fileEditor.FileDocumentManagerAdapter;
+import com.intellij.openapi.fileEditor.FileDocumentManagerListener;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
 import com.intellij.openapi.fileTypes.SyntaxHighlighterFactory;
 import com.intellij.openapi.project.DumbAwareAction;
@@ -46,7 +32,6 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -56,20 +41,18 @@ import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.io.SafeFileOutputStream;
-import com.intellij.xml.util.XmlStringUtil;
 import com.thoughtworks.xstream.io.HierarchicalStreamReader;
 import com.thoughtworks.xstream.io.xml.XppReader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
-import org.xmlpull.v1.XmlPullParserFactory;
-import org.xmlpull.v1.XmlSerializer;
+import org.xmlpull.mxp1.MXParser;
 
 import javax.swing.*;
 import java.awt.event.InputEvent;
 import java.awt.event.KeyEvent;
 import java.io.*;
+import java.nio.charset.StandardCharsets;
 import java.util.*;
 
 /**
@@ -153,7 +136,7 @@ public class ConsoleHistoryController {
   }
 
   public void install() {
-    class Listener extends FileDocumentManagerAdapter implements ProjectEx.ProjectSaved {
+    class Listener implements ProjectEx.ProjectSaved, FileDocumentManagerListener {
       @Override
       public void beforeDocumentSaving(@NotNull Document document) {
         if (document == myConsole.getEditorDocument()) {
@@ -245,40 +228,37 @@ public class ConsoleHistoryController {
     if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command.getText())) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
-    new WriteCommandAction.Simple(myConsole.getProject()) {
-      @Override
-      public void run() {
-        if (storeUserText) {
-          String text = document.getText();
-          if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
-          myHelper.setContent(text);
-          myHelper.getModel().setContent(text);
-        }
-        String text = StringUtil.notNullize(command.getText());
-        int offset;
-        if (regularMode) {
-          if (myMultiline) {
-            offset = insertTextMultiline(text, editor, document);
-          }
-          else {
-            document.setText(text);
-            offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
-          }
+    WriteCommandAction.writeCommandAction(myConsole.getProject()).run(() -> {
+      if (storeUserText) {
+        String text = document.getText();
+        if (Comparing.equal(command.getText(), text) && myHelper.getContent() != null) return;
+        myHelper.setContent(text);
+        myHelper.getModel().setContent(text);
+      }
+      String text = StringUtil.notNullize(command.getText());
+      int offset;
+      if (regularMode) {
+        if (myMultiline) {
+          offset = insertTextMultiline(text, editor, document);
         }
         else {
-          offset = 0;
-          try {
-            document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
-            document.setText(text);
-          }
-          finally {
-            document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
-          }
+          document.setText(text);
+          offset = command.getOffset() == -1 ? document.getTextLength() : command.getOffset();
         }
-        editor.getCaretModel().moveToOffset(offset);
-        editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       }
-    }.execute();
+      else {
+        offset = 0;
+        try {
+          document.putUserData(UndoConstants.DONT_RECORD_UNDO, Boolean.TRUE);
+          document.setText(text);
+        }
+        finally {
+          document.putUserData(UndoConstants.DONT_RECORD_UNDO, null);
+        }
+      }
+      editor.getCaretModel().moveToOffset(offset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    });
   }
 
   protected int insertTextMultiline(String text, Editor editor, Document document) {
@@ -474,7 +454,7 @@ public class ConsoleHistoryController {
       if (!file.exists()) return false;
       HierarchicalStreamReader xmlReader = null;
       try {
-        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), CharsetToolkit.UTF8));
+        xmlReader = new XppReader(new InputStreamReader(new FileInputStream(file), StandardCharsets.UTF_8), new MXParser());
         String text = loadHistory(xmlReader, id);
         if (text != null) {
           myContent = text;
@@ -500,50 +480,9 @@ public class ConsoleHistoryController {
       return false;
     }
 
-    private void saveHistoryOld() {
-      File file = new File(PathUtil.toSystemDependentName(getOldHistoryFilePath(myId)));
-      final File dir = file.getParentFile();
-      if (!dir.exists() && !dir.mkdirs() || !dir.isDirectory()) {
-        LOG.error("failed to create folder: " + dir.getAbsolutePath());
-        return;
-      }
-
-      OutputStream os = null;
-      try {
-        os = new SafeFileOutputStream(file);
-        XmlSerializer serializer = XmlPullParserFactory.newInstance("org.xmlpull.mxp1.MXParserFactory", null).newSerializer();
-        try {
-          serializer.setProperty("http://xmlpull.org/v1/doc/properties.html#serializer-indentation", "  ");
-        }
-        catch (Exception ignored) {
-          // not recognized
-        }
-        serializer.setOutput(os, CharsetToolkit.UTF8);
-        saveHistory(serializer);
-        serializer.flush();
-      }
-      catch (Exception ex) {
-        LOG.error(ex);
-      }
-      finally {
-        try {
-          if (os != null) {
-            os.close();
-          }
-        }
-        catch (Exception ignored) {
-          // nothing
-        }
-      }
-    }
-
     private void saveHistory() {
       try {
         if (getModel().isEmpty()) return;
-        if (myRootType.isHidden()) {
-          saveHistoryOld();
-          return;
-        }
         WriteAction.run(() -> {
           VirtualFile file = HistoryRootType.getInstance().findFile(null, getHistoryName(myRootType, myId), ScratchFileService.Option.create_if_missing);
           VfsUtil.saveText(file, StringUtil.join(getModel().getEntries(), myRootType.getEntrySeparator()));
@@ -574,38 +513,7 @@ public class ConsoleHistoryController {
       getModel().resetEntries(entries);
       return consoleContent;
     }
-
-    private void saveHistory(XmlSerializer out) throws IOException {
-      out.startDocument(CharsetToolkit.UTF8, null);
-      out.startTag(null, "console-history");
-      out.attribute(null, "version", "1");
-      out.attribute(null, "id", myId);
-      try {
-        for (String s : getModel().getEntries()) {
-          textTag(out, "history-entry", s);
-        }
-        String current = myContent;
-        if (StringUtil.isNotEmpty(current)) {
-          textTag(out, "console-content", current);
-        }
-      }
-      finally {
-        out.endTag(null, "console-history");
-        out.endDocument();
-      }
-    }
   }
-
-  private static void textTag(@NotNull XmlSerializer out, @NotNull String tag, @NotNull String text) throws IOException {
-    out.startTag(null, tag);
-    try {
-      out.ignorableWhitespace(XmlStringUtil.wrapInCDATA(text));
-    }
-    finally {
-      out.endTag(null, tag);
-    }
-  }
-
 
   @NotNull
   private static String getHistoryName(@NotNull ConsoleRootType rootType, @NotNull String id) {

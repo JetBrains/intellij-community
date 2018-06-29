@@ -190,6 +190,16 @@ public class ExternalProjectSerializer {
       }
     );
 
+    myKryo.register(
+      FilePatternSetImpl.class,
+      new FieldSerializer<FilePatternSetImpl>(myKryo, FilePatternSetImpl.class) {
+        @Override
+        protected FilePatternSetImpl create(Kryo kryo, Input input, Class<FilePatternSetImpl> type) {
+          return new FilePatternSetImpl(new LinkedHashSet<>(), new LinkedHashSet<>());
+        }
+      }
+    );
+
     myKryo.register(LinkedHashSet.class, new CollectionSerializer() {
       @Override
       protected Collection create(Kryo kryo, Input input, Class<Collection> type) {

@@ -43,7 +43,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
   private static final Pattern ourPattern3 = Pattern.compile("/\\*\\*" + COMMENT + "\\*/", Pattern.DOTALL);
 
   static final Set<String> excludedKeywords = ContainerUtil.newHashSet(PsiKeyword.CLASS, PsiKeyword.INTERFACE, PsiKeyword.ENUM,
-                                                                               PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
+                                                                       PsiKeyword.THROWS, PsiKeyword.EXTENDS, PsiKeyword.IMPLEMENTS);
 
   public JavaCompilingVisitor(GlobalCompilingVisitor compilingVisitor) {
     this.myCompilingVisitor = compilingVisitor;
@@ -197,7 +197,8 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     if (!(expression.getParent() instanceof PsiExpressionStatement) && !(expression instanceof PsiParenthesizedExpression)) {
       final MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(expression);
       if (handler.getFilter() == null) {
-        handler.setFilter(e -> DefaultFilter.accepts((e instanceof PsiExpression) ? PsiUtil.skipParenthesizedExprDown((PsiExpression)e) : e, expression));
+        handler.setFilter(e -> DefaultFilter.accepts(expression,
+                                                     (e instanceof PsiExpression) ? PsiUtil.skipParenthesizedExprDown((PsiExpression)e) : e));
       }
     }
   }
@@ -259,17 +260,24 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     boolean typedVarProcessed = false;
     final PsiElement referenceParent = reference.getParent();
 
-    if ((myCompilingVisitor.getContext().getPattern().isRealTypedVar(reference)) &&
+    final CompiledPattern pattern = myCompilingVisitor.getContext().getPattern();
+    if ((pattern.isRealTypedVar(reference)) &&
         reference.getQualifierExpression() == null &&
         !(referenceParent instanceof PsiExpressionStatement)
       ) {
       // typed var for expression (but not top level)
       MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
       GlobalCompilingVisitor.setFilter(handler, ExpressionFilter.getInstance());
+      final PsiElement parent = reference.getParent();
+      if (parent instanceof PsiSwitchLabelStatement && handler instanceof SubstitutionHandler) {
+        final SubstitutionHandler handler1 = (SubstitutionHandler)handler;
+        pattern.setHandler(parent, new SubstitutionHandler("__case_" + parent.getTextOffset(), false,
+                                                           handler1.getMinOccurs(), handler1.getMaxOccurs(), true));
+      }
       typedVarProcessed = true;
     }
 
-    MatchingHandler handler = myCompilingVisitor.getContext().getPattern().getHandler(reference);
+    MatchingHandler handler = pattern.getHandler(reference);
 
     // We want to merge qname related to class to find it in any form
     final String referencedName = reference.getReferenceName();
@@ -290,9 +298,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
         PsiReferenceExpression currentReference = reference;
 
         while ((qualifier = currentReference.getQualifierExpression()) != null) {
-          if (!(qualifier instanceof PsiReferenceExpression) ||
-              myCompilingVisitor.getContext().getPattern().getHandler(qualifier) instanceof SubstitutionHandler
-            ) {
+          if (!(qualifier instanceof PsiReferenceExpression) || pattern.getHandler(qualifier) instanceof SubstitutionHandler) {
             hasNoNestedSubstitutionHandlers = true;
             break;
           }
@@ -394,12 +400,12 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
       return;
     }
 
-    final MatchingHandler handler = new DeclarationStatementHandler();
+    final DeclarationStatementHandler handler = new DeclarationStatementHandler();
     myCompilingVisitor.getContext().getPattern().setHandler(psiDeclarationStatement, handler);
     final PsiElement previousNonWhiteSpace = PsiTreeUtil.skipWhitespacesBackward(psiDeclarationStatement);
 
     if (previousNonWhiteSpace instanceof PsiComment) {
-      ((DeclarationStatementHandler)handler).setCommentHandler(myCompilingVisitor.getContext().getPattern().getHandler(previousNonWhiteSpace));
+      handler.setCommentHandler(myCompilingVisitor.getContext().getPattern().getHandler(previousNonWhiteSpace));
       myCompilingVisitor.getContext().getPattern().setHandler(previousNonWhiteSpace, handler);
     }
 
@@ -420,6 +426,13 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
     final PsiElement parent = reference.getParent();
     if (parent != null && parent.getParent() instanceof PsiClass) {
       GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference), TypeFilter.getInstance());
+    }
+    else if (parent instanceof PsiNewExpression) {
+      final PsiNewExpression newExpression = (PsiNewExpression)parent;
+      if (newExpression.getArrayInitializer() != null) {
+        GlobalCompilingVisitor.setFilter(myCompilingVisitor.getContext().getPattern().getHandler(reference),
+                                         e -> e instanceof PsiJavaCodeReferenceElement || e instanceof PsiKeyword);
+      }
     }
   }
 
@@ -454,7 +467,7 @@ public class JavaCompilingVisitor extends JavaRecursiveElementWalkingVisitor {
 
   private void createAndSetSubstitutionHandlerFromReference(final PsiElement expr, final String referenceText, boolean classQualifier) {
     final SubstitutionHandler substitutionHandler =
-      new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, false);
+      new SubstitutionHandler("__" + referenceText.replace('.', '_'), false, classQualifier ? 0 : 1, 1, true);
     final boolean caseSensitive = myCompilingVisitor.getContext().getOptions().isCaseSensitiveMatch();
     substitutionHandler.setPredicate(new RegExpPredicate(StructuralSearchUtil.shieldRegExpMetaChars(referenceText),
                                                          caseSensitive, null, false, false));

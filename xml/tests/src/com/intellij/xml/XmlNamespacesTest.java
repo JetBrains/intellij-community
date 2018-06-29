@@ -289,12 +289,9 @@ public class XmlNamespacesTest extends LightCodeInsightFixtureTestCase {
 
   private void doOptimizeImportsTest(String after) {
     myFixture.testHighlighting();
-    new WriteCommandAction(getProject(), getFile()) {
-      @Override
-      protected void run(@NotNull Result result) {
-        new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress();
-      }
-    }.execute();
+    WriteCommandAction.writeCommandAction(getProject(), getFile()).run(() -> {
+      new OptimizeImportsProcessor(getProject(), getFile()).runWithoutProgress();
+    });
     myFixture.checkResult(after);
   }
 

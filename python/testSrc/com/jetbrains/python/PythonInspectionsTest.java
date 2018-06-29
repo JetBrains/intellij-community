@@ -58,6 +58,11 @@ public class PythonInspectionsTest extends PyTestCase {
     doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON37);
   }
 
+  // PY-14896
+  public void testPyMethodParametersInspectionAbstractClassAndStaticMethods() {
+    doHighlightingTest(PyMethodParametersInspection.class, LanguageLevel.PYTHON34);
+  }
+
   public void testPyNestedDecoratorsInspection() {
     LocalInspectionTool inspection = new PyNestedDecoratorsInspection();
     doTest(getTestName(false), inspection);
@@ -85,8 +90,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDefaultArgumentInspection() {
-    LocalInspectionTool inspection = new PyDefaultArgumentInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyDefaultArgumentInspection.class);
   }
 
   public void testPyDocstringInspection() {
@@ -205,7 +209,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyDictDuplicateKeysInspection() {
-    doHighlightingTest(PyDictDuplicateKeysInspection.class);
+    doHighlightingTest(PyDictDuplicateKeysInspection.class, LanguageLevel.PYTHON37);
   }
 
   public void testPyListCreationInspection() {         //PY-2823

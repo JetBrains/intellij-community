@@ -26,6 +26,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.newvfs.VfsPresentationUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.docking.DockManager;
 import org.jetbrains.annotations.NotNull;
@@ -73,7 +74,7 @@ public class FilePreviewPanelProvider extends PreviewPanelProvider<VirtualFile, 
   @NotNull
   @Override
   protected String getTitle(@NotNull VirtualFile file) {
-    return EditorTabbedContainer.calcTabTitle(myProject, file);
+    return VfsPresentationUtil.getPresentableNameForUI(myProject, file);
   }
 
   @Nullable

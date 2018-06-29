@@ -16,10 +16,12 @@
 package com.jetbrains.python.psi.types;
 
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import one.util.streamex.StreamEx;
+import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -27,6 +29,8 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 /**
  * Tools and wrappers around {@link PyType} inheritors
@@ -112,5 +116,56 @@ public final class PyTypeUtil {
       return StreamEx.of(((PyUnionType)type).getMembers());
     }
     return StreamEx.of(type);
+  }
+
+  @Nullable
+  @Contract("null -> null; !null -> !null")
+  public static Ref<PyType> notNullToRef(@Nullable PyType type) {
+    return type == null ? null : Ref.create(type);
+  }
+
+  /**
+   * Returns a collector that combines a stream of {@code Ref<PyType>} back into a single {@code Ref<PyType>}
+   * using {@link PyUnionType#union(PyType, PyType)}.
+   *
+   * @see #toUnion()
+   */
+  @NotNull
+  public static Collector<Ref<PyType>, ?, Ref<PyType>> toUnionFromRef() {
+    return Collectors.reducing(null, (accType, hintType) -> {
+      if (hintType == null) {
+        return accType;
+      }
+      else if (accType == null) {
+        return hintType;
+      }
+      else {
+        return Ref.create(PyUnionType.union(accType.get(), hintType.get()));
+      }
+    });
+  }
+
+  /**
+   * Returns a collector that combines a stream of types back into a single {@code Ref<PyType>}
+   * using {@link PyUnionType#union(PyType, PyType)}.
+   * <p>
+   * Note that it's different from using {@code foldLeft(PyUnionType::union)} because the latter returns {@code Optional<PyType>},
+   * and it doesn't support {@code null} values throwing {@code NullPointerException} if the final result of
+   * {@link PyUnionType#union(PyType, PyType)} was {@code null}. This is why this method returns {@code Ref<PyType>} instead,
+   * because with {@code Optional} it's impossible to distinguish between an empty stream of types and a stream containing only
+   * {@code Any}.
+   *
+   * @see #toUnionFromRef()
+   */
+  @NotNull
+  public static Collector<PyType, ?, Ref<PyType>> toUnion() {
+    return Collectors.reducing(null, Ref::create, (accType, hintType) -> {
+      if (accType == null) {
+        return hintType;
+      }
+      else {
+        return Ref.create(PyUnionType.union(accType.get(), hintType.get()));
+      }
+    });
   }
 }

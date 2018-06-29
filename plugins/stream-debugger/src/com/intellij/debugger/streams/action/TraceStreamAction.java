@@ -15,8 +15,6 @@ import com.intellij.debugger.streams.ui.impl.ElementChooserImpl;
 import com.intellij.debugger.streams.ui.impl.EvaluationAwareTraceWindow;
 import com.intellij.debugger.streams.wrapper.StreamChain;
 import com.intellij.debugger.streams.wrapper.StreamChainBuilder;
-import com.intellij.internal.statistic.UsageTrigger;
-import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
@@ -25,23 +23,16 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiEditorUtil;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.intellij.xdebugger.impl.XDebuggerManagerImpl;
 import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
-import java.util.Locale;
 import java.util.Set;
 import java.util.stream.Collectors;
 import java.util.stream.Stream;
@@ -75,7 +66,6 @@ public class TraceStreamAction extends AnAction {
         presentation.setEnabled(chainExists);
         final int elementHash = System.identityHashCode(element);
         if (chainExists && myLastVisitedPsiElementHash != elementHash) {
-          UsageTrigger.trigger("debugger.streams." + languageId.toLowerCase(Locale.US) + ".activated");
           myLastVisitedPsiElementHash = elementHash;
         }
       }
@@ -90,13 +80,6 @@ public class TraceStreamAction extends AnAction {
     final XDebugSession session = getCurrentSession(e);
     Extensions.getExtensions(LibrarySupportProvider.EP_NAME);
     final PsiElement element = session == null ? null : myPositionResolver.getNearestElementToBreakpoint(session);
-
-    if (element != null && isJdkAtLeast9(session.getProject(), element)) {
-      XDebuggerManagerImpl.NOTIFICATION_GROUP
-        .createNotification("This action does not work with JDK 9 yet", MessageType.WARNING)
-        .notify(session.getProject());
-      return;
-    }
 
     if (element != null) {
       final List<StreamChainWithLibrary> chains = mySupportedLibraries.stream()
@@ -139,7 +122,6 @@ public class TraceStreamAction extends AnAction {
 
   private static void runTrace(@NotNull StreamChain chain, @NotNull SupportedLibrary library, @NotNull XDebugSession session) {
     final EvaluationAwareTraceWindow window = new EvaluationAwareTraceWindow(session, chain);
-    UsageTrigger.trigger("debugger.streams." + library.languageId.toLowerCase(Locale.US) + ".used");
     ApplicationManager.getApplication().invokeLater(window::show);
     final Project project = session.getProject();
     final TraceExpressionBuilder expressionBuilder = library.createExpressionBuilder(project);
@@ -175,18 +157,6 @@ public class TraceStreamAction extends AnAction {
   private static XDebugSession getCurrentSession(@NotNull AnActionEvent e) {
     final Project project = e.getProject();
     return project == null ? null : XDebuggerManager.getInstance(project).getCurrentSession();
-  }
-
-  private static boolean isJdkAtLeast9(@NotNull Project project, @NotNull PsiElement element) {
-    if (element.getLanguage().is(JavaLanguage.INSTANCE)) {
-      final Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
-      if (sdk != null) {
-        final JavaSdkVersion javaVersion = JavaSdk.getInstance().getVersion(sdk);
-        if (javaVersion != null) return javaVersion.isAtLeast(JavaSdkVersion.JDK_1_9);
-      }
-    }
-
-    return false;
   }
 
   private static class MyStreamChainChooser extends ElementChooserImpl<StreamChainOption> {

@@ -21,8 +21,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.UnknownFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
@@ -43,7 +45,8 @@ public class ScratchUtil {
    * @see ScratchFileService
    */
   public static boolean isScratch(@Nullable VirtualFile file) {
-    return file != null && file.getFileType() == ScratchFileType.INSTANCE;
+    RootType rootType = RootType.forFile(file);
+    return rootType != null && !rootType.isHidden();
   }
 
   public static void updateFileExtension(@NotNull Project project, @Nullable VirtualFile file) throws IOException {
@@ -54,28 +57,37 @@ public class ScratchUtil {
 
     if (file == null) return;
     Language language = LanguageUtil.getLanguageForPsi(project, file);
-    FileType expected = getFileTypeFromName(file);
-    FileType actual = language == null ? null : language.getAssociatedFileType();
-    if (expected == actual || actual == null) return;
-    String ext = actual.getDefaultExtension();
-    if (StringUtil.isEmpty(ext)) return;
-
-    String newName = PathUtil.makeFileName(file.getNameWithoutExtension(), ext);
+    FileType prevType = getFileTypeFromName(file);
+    FileType currType = language == null ? null : language.getAssociatedFileType();
+    if (prevType == currType) return;
+    String prevExt = PathUtil.makeFileName("", prevType == null ? "" : prevType.getDefaultExtension());
+    String currExt = currType == null ? "" : currType.getDefaultExtension();
+    // support multipart extensions like *.blade.php
+    String nameWithoutExtension = prevExt.length() > 0 && file.getName().endsWith(prevExt) ?
+                                  StringUtil.trimEnd(file.getName(), prevExt) : file.getNameWithoutExtension();
     VirtualFile parent = file.getParent();
-    newName = parent != null && parent.findChild(newName) != null ? PathUtil.makeFileName(file.getName(), ext) : newName;
+    String newName = parent != null ? VfsUtil.getNextAvailableName(parent, nameWithoutExtension, currExt) :
+                     PathUtil.makeFileName(nameWithoutExtension, currExt);
     file.rename(ScratchUtil.class, newName);
   }
 
   public static boolean hasMatchingExtension(@NotNull Project project, @NotNull VirtualFile file) {
+    if (file.getExtension() == null) return true;
     FileType expected = getFileTypeFromName(file);
     Language language = LanguageUtil.getLanguageForPsi(project, file);
     FileType actual = language == null ? null : language.getAssociatedFileType();
-    return expected == actual && actual != null;
+    if (expected != null && expected == actual) return true;
+    String ext = actual == null ? "" : actual.getDefaultExtension();
+    return ext.length() > 0 && file.getName().endsWith(ext);
   }
 
   @Nullable
   private static FileType getFileTypeFromName(@NotNull VirtualFile file) {
-    String extension = file.getExtension();
-    return extension == null ? null : FileTypeManager.getInstance().getFileTypeByExtension(extension);
+    if (file.getExtension() == null) return null;
+    FileType result = FileTypeManager.getInstance().getFileTypeByFileName(file.getName());
+    if (result == UnknownFileType.INSTANCE || StringUtil.isEmpty(result.getDefaultExtension())) {
+      return null;
+    }
+    return result;
   }
 }

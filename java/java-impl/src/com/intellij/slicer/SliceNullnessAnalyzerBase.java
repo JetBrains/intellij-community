@@ -15,6 +15,7 @@
  */
 package com.intellij.slicer;
 
+import com.intellij.codeInsight.Nullability;
 import com.intellij.codeInsight.PsiEquivalenceUtil;
 import com.intellij.codeInspection.dataFlow.Nullness;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
@@ -170,15 +171,15 @@ public abstract class SliceNullnessAnalyzerBase {
         }
         else {
           final PsiElement value = ReadAction.compute(() -> element.getValue().getElement());
-          Nullness nullness = ReadAction.compute(() -> checkNullness(value));
-          if (nullness == Nullness.NULLABLE) {
+          Nullability nullability = ReadAction.compute(() -> checkNullability(value));
+          if (nullability == Nullability.NULLABLE) {
             group(element, map, NullAnalysisResult.NULLS).add(value);
           }
-          else if (nullness == Nullness.NOT_NULL) {
+          else if (nullability == Nullability.NOT_NULL) {
             group(element, map, NullAnalysisResult.NOT_NULLS).add(value);
           }
           else {
-            Collection<? extends AbstractTreeNode> children = ReadAction.compute(() -> element.getChildren());
+            Collection<? extends AbstractTreeNode> children = ReadAction.compute(element::getChildren);
             if (children.isEmpty()) {
               group(element, map, NullAnalysisResult.UNKNOWNS).add(value);
             }
@@ -200,8 +201,29 @@ public abstract class SliceNullnessAnalyzerBase {
     return node(root, map);
   }
 
+  /**
+   * @param element element to find nullness for
+   * @return element nullness
+   * @deprecated for removal; call/override {@link #checkNullability(PsiElement)} instead.
+   */
+  @SuppressWarnings("DeprecatedIsStillUsed")
+  @Deprecated
   @NotNull
-  protected abstract Nullness checkNullness(final PsiElement element);
+  protected Nullness checkNullness(@SuppressWarnings("unused") final PsiElement element) {
+    throw new UnsupportedOperationException();
+  }
+
+  /**
+   * Implementors must override this method; default implementation just throws UnsupportedOperationException.
+   *
+   * @param element element to find nullability for
+   * @return element nullability
+   */
+  @NotNull
+  protected Nullability checkNullability(final PsiElement element) {
+    //noinspection deprecation
+    return checkNullness(element).toNullability();
+  }
 
   public static class NullAnalysisResult {
     static final int NULLS = 0;

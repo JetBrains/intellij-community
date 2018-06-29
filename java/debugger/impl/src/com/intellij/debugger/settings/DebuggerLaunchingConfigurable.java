@@ -20,6 +20,8 @@ import com.intellij.openapi.options.ConfigurableUi;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.StateRestoringCheckBox;
 import com.intellij.ui.components.panels.VerticalBox;
+import com.intellij.util.ui.JBUI;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -93,7 +95,9 @@ class DebuggerLaunchingConfigurable implements ConfigurableUi<DebuggerSettings> 
     gr.add(myRbSocket);
     gr.add(myRbShmem);
     final Box box = Box.createHorizontalBox();
+    box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbSocket);
+    box.add(Box.createRigidArea(JBUI.size(UIUtil.DEFAULT_HGAP, 0)));
     box.add(myRbShmem);
     final JPanel transportPanel = new JPanel(new BorderLayout());
     transportPanel.add(new JLabel(DebuggerBundle.message("label.debugger.launching.configurable.debugger.transport")), BorderLayout.WEST);

@@ -35,10 +35,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   private static final String SHOW_CONSOLE_ON_STD_OUT = "show_console_on_std_out";
   private static final String SHOW_CONSOLE_ON_STD_ERR = "show_console_on_std_err";
 
+  @Nullable
   private final ConfigurationFactory myFactory;
   private final Project myProject;
   private String myName;
-  private final Icon myIcon;
 
   private RunConfigurationOptions myOptions = createOptions();
 
@@ -46,11 +46,10 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
 
   private List<BeforeRunTask> myBeforeRunTasks = Collections.emptyList();
 
-  protected RunConfigurationBase(@NotNull Project project, @NotNull ConfigurationFactory factory, String name) {
+  protected RunConfigurationBase(@NotNull Project project, @Nullable ConfigurationFactory factory, String name) {
     myProject = project;
     myFactory = factory;
     myName = name;
-    myIcon = factory.getIcon();
   }
 
   @NotNull
@@ -74,6 +73,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
     myBeforeRunTasks = value;
   }
 
+  @Nullable
   @Override
   public final ConfigurationFactory getFactory() {
     return myFactory;
@@ -91,8 +91,9 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   }
 
   @Override
+  @Nullable
   public Icon getIcon() {
-    return myIcon;
+    return myFactory == null ? null : myFactory.getIcon();
   }
 
   @Override
@@ -268,6 +269,7 @@ public abstract class RunConfigurationBase extends UserDataHolderBase implements
   /**
    * @deprecated use {@link RunProfileWithCompileBeforeLaunchOption#isBuildBeforeLaunchAddedByDefault()} instead
    */
+  @Deprecated
   public boolean isCompileBeforeLaunchAddedByDefault() {
     return true;
   }

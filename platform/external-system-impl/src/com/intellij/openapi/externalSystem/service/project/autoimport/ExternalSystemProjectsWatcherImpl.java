@@ -8,7 +8,6 @@ import com.intellij.ide.file.BatchFileChangeListener;
 import com.intellij.notification.*;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -42,6 +41,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
@@ -191,15 +191,13 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
               myChangedDocuments.clear();
             }
 
-            ExternalSystemUtil.invokeLater(myProject, () -> new WriteAction() {
-              @Override
-              protected void run(@NotNull Result result) {
+            ExternalSystemUtil.invokeLater(myProject, () -> WriteAction.run(()-> {
                 for (Document each : copy) {
                   PsiDocumentManager.getInstance(myProject).commitDocument(each);
                   ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
                 }
               }
-            }.execute());
+            ));
           }
         });
       }
@@ -439,11 +437,6 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
             ServiceManager.getService(ProjectDataManager.class).importData(externalProject, project, true);
           }
         }
-
-        @Override
-        public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-          // Do nothing.
-        }
       }, false, ProgressExecutionMode.IN_BACKGROUND_ASYNC, reportRefreshError);
   }
 
@@ -559,9 +552,10 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     protected boolean isRelevant(String path) {
       if (!myKnownFiles.get(path).isEmpty()) return true;
 
+      String canonicalPath = FileUtil.toCanonicalPath(path);
       for (VirtualFilePointer pointer : myFilesPointers.keySet()) {
-        VirtualFile f = pointer.getFile();
-        if (f != null && FileUtil.pathsEqual(path, f.getPath())) {
+        String filePath = VfsUtilCore.urlToPath(pointer.getUrl());
+        if (StringUtil.isNotEmpty(filePath) && FileUtil.namesEqual(canonicalPath, FileUtil.toCanonicalPath(filePath))) {
           for (String projectPath : myFilesPointers.get(pointer)) {
             myKnownFiles.putValue(path, projectPath);
             myKnownAffectedFiles.putValue(projectPath, path);
@@ -631,7 +625,12 @@ public class ExternalSystemProjectsWatcherImpl extends ExternalSystemTaskNotific
     }
 
     private boolean fileWasChanged(VirtualFile file, VFileEvent event) {
-      if (!file.isValid() || !(event instanceof VFileContentChangeEvent)) return true;
+      if (!file.isValid()) {
+        return true;
+      }
+      if (!(event instanceof VFileContentChangeEvent)) {
+        return false;
+      }
 
       Long newCrc = calculateCrc(file);
       file.putUserData(CRC_WITHOUT_SPACES_CURRENT, newCrc);

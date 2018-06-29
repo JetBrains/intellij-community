@@ -1,6 +1,7 @@
 package com.intellij.remoteServer.agent.impl.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.net.MalformedURLException;
@@ -18,7 +19,7 @@ public class UrlCollector {
 
   private List<File> myFiles;
 
-  public URL[] collect(Collection<File> libraries) {
+  public URL[] collect(@NotNull Collection<File> libraries) {
     List<File> files = collectFiles(libraries);
     URL[] result = new URL[files.size()];
     for (int i = 0; i < files.size(); i++) {
@@ -45,8 +46,15 @@ public class UrlCollector {
     return myFiles;
   }
 
-  private void addLibraries(File dir) {
-    for (File file : dir.listFiles()) {
+  private void addLibraries(@NotNull File dir) {
+    LOG.debug("addLibraries: " + dir.getAbsolutePath() + ", exists: " + dir.exists());
+    File[] subFiles = dir.listFiles();
+    if (subFiles == null) {
+      LOG.warn("Can't list files in " + dir);
+      return;
+    }
+
+    for (File file : subFiles) {
       if (file.isDirectory()) {
         addLibraries(file);
       }
@@ -56,8 +64,8 @@ public class UrlCollector {
     }
   }
 
-  private void addFile(File file) {
-    LOG.debug("addFile: " + file.getAbsolutePath());
+  private void addFile(@NotNull File file) {
+    LOG.debug("addFile: " + file.getAbsolutePath() + ", exists: " + file.exists());
     myFiles.add(file);
   }
 }

@@ -119,6 +119,7 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
     try {
       ContainerUtil.addIfNotNull(fixes, StreamFilterNotNullFix.makeFix(qualifier));
+      ContainerUtil.addIfNotNull(fixes, ReplaceComputeWithComputeIfPresentFix.makeFix(qualifier));
       if (isVolatileFieldReference(qualifier)) {
         ContainerUtil.addIfNotNull(fixes, createIntroduceVariableFix(qualifier));
       }
@@ -177,7 +178,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
     private final JCheckBox myTreatUnknownMembersAsNullable;
     private final JCheckBox myReportNullArguments;
     private final JCheckBox myReportNullableMethodsReturningNotNull;
-    private final JCheckBox myReportUncheckedOptionals;
 
     private OptionsPanel() {
       super(new GridBagLayout());
@@ -216,10 +216,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
         "Report nullable methods that always return a non-null value",
         REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL, box -> REPORT_NULLABLE_METHODS_RETURNING_NOT_NULL = box.isSelected());
 
-      myReportUncheckedOptionals = createCheckBoxWithHTML(
-        "Report Optional.get() calls without previous isPresent check",
-        REPORT_UNCHECKED_OPTIONALS, box -> REPORT_UNCHECKED_OPTIONALS = box.isSelected());
-
       gc.insets = JBUI.emptyInsets();
       gc.gridy = 0;
       add(mySuggestNullables, gc);
@@ -251,9 +247,6 @@ public class DataFlowInspection extends DataFlowInspectionBase {
 
       gc.gridy++;
       add(myReportNullableMethodsReturningNotNull, gc);
-
-      gc.gridy++;
-      add(myReportUncheckedOptionals, gc);
     }
 
     @Override

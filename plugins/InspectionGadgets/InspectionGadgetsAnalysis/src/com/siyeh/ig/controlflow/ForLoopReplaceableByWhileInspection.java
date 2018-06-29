@@ -104,7 +104,7 @@ public class ForLoopReplaceableByWhileInspection extends BaseInspection {
       final PsiExpression whileCondition = whileStatement.getCondition();
       if (forCondition != null) {
         assert whileCondition != null;
-        commentTracker.replace(whileCondition, commentTracker.markUnchanged(forCondition));
+        commentTracker.replace(whileCondition, forCondition);
       }
       final PsiBlockStatement blockStatement = (PsiBlockStatement)whileStatement.getBody();
       if (blockStatement == null) {

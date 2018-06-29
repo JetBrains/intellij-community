@@ -1,6 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 
 /*
  * Class Breakpoint
@@ -89,7 +87,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
     return myXBreakpoint.getProperties();
   }
 
-  public XBreakpoint<P> getXBreakpoint() {
+  public final XBreakpoint<P> getXBreakpoint() {
     return myXBreakpoint;
   }
 
@@ -215,7 +213,7 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
 
   protected void createOrWaitPrepare(final DebugProcessImpl debugProcess, @NotNull final SourcePosition classPosition) {
     debugProcess.getRequestsManager().callbackOnPrepareClasses(this, classPosition);
-    processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream());
+    processClassesPrepare(debugProcess, debugProcess.getPositionManager().getAllClasses(classPosition).stream().distinct());
   }
 
   private void processClassesPrepare(DebugProcessImpl debugProcess, Stream<ReferenceType> classes) {
@@ -329,6 +327,17 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
       createRequest(debugProcess);
       debugProcess.getVirtualMachineProxy().resume();
     }
+
+    StackFrameProxyImpl frame = context.getFrameProxy();
+    if (getProperties().isCALLER_FILTERS_ENABLED() && frame != null) {
+      ThreadReferenceProxyImpl threadProxy = frame.threadProxy();
+      StackFrameProxyImpl parentFrame = threadProxy.frameCount() > 1 ? threadProxy.frame(1) : null;
+      String key = parentFrame != null ? DebuggerUtilsEx.methodKey(parentFrame.location().method()) : null;
+      if (!typeMatchesClassFilters(key, getProperties().getCallerFilters(), getProperties().getCallerExclusionFilters())) {
+        return false;
+      }
+    }
+
     if (isInstanceFiltersEnabled()) {
       Value value = context.computeThisObject();
       if (value != null) {  // non-static
@@ -350,7 +359,6 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
         return true;
       }
 
-      StackFrameProxyImpl frame = context.getFrameProxy();
       if (frame != null) {
         Location location = frame.location();
         if (location != null) {
@@ -455,7 +463,18 @@ public abstract class Breakpoint<P extends JavaBreakpointProperties> implements 
   }
 
   protected String calculateEventClass(EvaluationContextImpl context, LocatableEvent event) throws EvaluateException {
-    return event.location().declaringType().name();
+    String className = null;
+    final ObjectReference thisObject = (ObjectReference)context.computeThisObject();
+    if (thisObject != null) {
+      className = thisObject.referenceType().name();
+    }
+    else {
+      final StackFrameProxyImpl frame = context.getFrameProxy();
+      if (frame != null) {
+        className = frame.location().declaringType().name();
+      }
+    }
+    return className;
   }
 
   protected static boolean typeMatchesClassFilters(@Nullable String typeName, ClassFilter[] includeFilters, ClassFilter[] exludeFilters) {

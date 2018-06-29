@@ -1,23 +1,8 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.maven.project;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.EditorFactory;
@@ -154,7 +139,8 @@ public class MavenProjectsManagerWatcher {
         if (file == null) return;
         String fileName = file.getName();
         boolean isMavenFile = fileName.equals(MavenConstants.POM_XML) || fileName.equals(MavenConstants.PROFILES_XML) ||
-                              isSettingsFile(file) || fileName.startsWith("pom.") || isPomFile(file.getPath());
+                              isSettingsFile(file) || fileName.startsWith("pom.") || isPomFile(file.getPath()) ||
+                              isMavenOrJvmConfigFile(file.getPath());
         if (!isMavenFile) return;
 
         synchronized (myChangedDocuments) {
@@ -170,15 +156,12 @@ public class MavenProjectsManagerWatcher {
               myChangedDocuments.clear();
             }
 
-            MavenUtil.invokeLater(myProject, () -> new WriteAction() {
-              @Override
-              protected void run(@NotNull Result result) throws Throwable {
-                for (Document each : copy) {
-                  PsiDocumentManager.getInstance(myProject).commitDocument(each);
-                  ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
-                }
+            MavenUtil.invokeLater(myProject, () -> WriteAction.run(() -> {
+              for (Document each : copy) {
+                PsiDocumentManager.getInstance(myProject).commitDocument(each);
+                ((FileDocumentManagerImpl)FileDocumentManager.getInstance()).saveDocument(each, false);
               }
-            }.execute());
+            }));
           }
         });
       }
@@ -301,7 +284,7 @@ public class MavenProjectsManagerWatcher {
       }
 
       if (forceImportAndResolve || myManager.getImportingSettings().isImportAutomatically()) {
-        myManager.scheduleImportAndResolve().done(modules -> promise.setResult(null));
+        myManager.scheduleImportAndResolve().onSuccess(modules -> promise.setResult(null));
       }
       else {
         promise.setResult(null);
@@ -365,6 +348,10 @@ public class MavenProjectsManagerWatcher {
     return false;
   }
 
+  private static boolean isMavenOrJvmConfigFile(String path) {
+    return path.endsWith(MavenConstants.JVM_CONFIG_RELATIVE_PATH) || path.endsWith(MavenConstants.MAVEN_CONFIG_RELATIVE_PATH);
+  }
+
   private class MyFileChangeListener extends FileChangeListenerBase {
     private List<VirtualFile> filesToUpdate;
     private List<VirtualFile> filesToRemove;
@@ -373,7 +360,7 @@ public class MavenProjectsManagerWatcher {
 
     @Override
     protected boolean isRelevant(String path) {
-      return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path);
+      return isPomFile(path) || isProfilesFile(path) || isSettingsFile(path) || isMavenOrJvmConfigFile(path);
     }
 
     @Override
@@ -403,6 +390,12 @@ public class MavenProjectsManagerWatcher {
         if (remove || fileWasChanged(pom, event)) {
           filesToUpdate.add(pom);
         }
+        return;
+      }
+
+      if (isMavenOrJvmConfigFile(file.getPath()) && (remove || fileWasChanged(file, event))) {
+        VirtualFile baseDir = file.getParent().getParent();
+        MavenUtil.streamPomFiles(myProject, baseDir).forEach(filesToUpdate::add);
         return;
       }
 

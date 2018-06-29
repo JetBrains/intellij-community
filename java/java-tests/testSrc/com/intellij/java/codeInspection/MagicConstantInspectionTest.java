@@ -17,70 +17,38 @@
 package com.intellij.java.codeInspection;
 
 import com.intellij.JavaTestUtil;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.codeInspection.magicConstant.MagicConstantInspection;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
-import com.intellij.psi.JavaPsiFacade;
+import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiClass;
-import com.intellij.psi.impl.PsiManagerEx;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.impl.source.PsiClassImpl;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.FileTreeAccessFilter;
 import com.intellij.testFramework.IdeaTestUtil;
-import com.intellij.testFramework.InspectionTestCase;
+import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-
-public class MagicConstantInspectionTest extends InspectionTestCase {
-
-  private FileTreeAccessFilter myFilter;
-
-  @Override
-  protected String getTestDataPath() {
-    return JavaTestUtil.getJavaTestDataPath() + "/inspection";
-  }
-
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    myFilter = new FileTreeAccessFilter();
-    PsiManagerEx.getInstanceEx(getProject()).setAssertOnFileLoadingFilter(myFilter, getTestRootDisposable());
-  }
+public class MagicConstantInspectionTest extends LightCodeInsightFixtureTestCase {
+  private static final LightProjectDescriptor DESCRIPTOR = new LightProjectDescriptor() {
+    @Nullable
+    @Override
+    public Sdk getSdk() {
+      // has to have JFrame and sources
+      return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
+    }
+  };
 
   @Override
-  protected Sdk getTestProjectSdk() {
-    // has to have JFrame and sources
-    return PsiTestUtil.addJdkAnnotations(IdeaTestUtil.getMockJdk17());
+  protected String getBasePath() {
+    return JavaTestUtil.getRelativeJavaTestDataPath() + "/inspection/magic/";
   }
 
-  private void doTest() {
-    doTest("magic/" + getTestName(true), new LocalInspectionToolWrapper(new MagicConstantInspection()), "jdk 1.7");
-  }
-
+  @NotNull
   @Override
-  protected void setupRootModel(@NotNull String testDir, @NotNull VirtualFile[] sourceDir, String sdkName) {
-    super.setupRootModel(testDir, sourceDir, sdkName);
-    VirtualFile projectDir = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(testDir));
-    // allow to load AST for all files to highlight
-    VfsUtilCore.visitChildrenRecursively(projectDir, new VirtualFileVisitor() {
-      @Override
-      public boolean visitFile(@NotNull VirtualFile v) {
-        myFilter.allowTreeAccessForFile(v);
-        return super.visitFile(v);
-      }
-    });
-    // and JFrame
-    PsiClass cls = JavaPsiFacade.getInstance(getProject()).findClass("javax.swing.JFrame", GlobalSearchScope.allScope(getProject()));
-    PsiClass aClass = (PsiClass)cls.getNavigationElement();
-    assertTrue(aClass instanceof PsiClassImpl); // must to have sources
-
-    myFilter.allowTreeAccessForFile(aClass.getContainingFile().getVirtualFile());
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return DESCRIPTOR;
   }
 
   public void testSimple() { doTest(); }
@@ -88,4 +56,18 @@ public class MagicConstantInspectionTest extends InspectionTestCase {
   public void testManyConstantSources() { doTest(); }
   // test that the optimisation for not loading AST works
   public void testWithLibrary() { doTest(); }
+  public void testSpecialCases() { doTest(); }
+
+  private void doTest() {
+    myFixture.configureByFile(getTestName(false) + ".java");
+
+    PsiClass calendarClass = myFixture.getJavaFacade().findClass(CommonClassNames.JAVA_UTIL_CALENDAR);
+    assertNotNull("No Calendar class in mockJDK", calendarClass);
+    PsiElement calendarSource = calendarClass.getNavigationElement();
+    assertTrue(calendarSource instanceof PsiClassImpl);
+    myFixture.allowTreeAccessForFile(calendarSource.getContainingFile().getVirtualFile());
+
+    myFixture.enableInspections(new MagicConstantInspection());
+    myFixture.testHighlighting(true, false, false);
+  }
 }

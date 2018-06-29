@@ -16,19 +16,12 @@ Groovy script
         PsiElement(=)('=')
         Literal
           PsiElement(Integer)('0')
-      PsiErrorElement:';' expected
+      PsiErrorElement:';' expected, got ','
         <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(,)(',')
-  PsiErrorElement:';' or new line expected
-    <empty list>
+  PsiElement(,)(',')
   PsiWhiteSpace(' ')
-  PsiErrorElement:Unexpected symbol
-    PsiElement(wrong token)('#')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
-    PsiElement(,)(',')
+  PsiElement(wrong token)('#')
+  PsiElement(,)(',')
   PsiWhiteSpace(' ')
   PsiElement(;)(';')
   PsiWhiteSpace(' ')
@@ -41,12 +34,8 @@ Groovy script
     Reference expression
       PsiElement(identifier)('i')
     PsiElement(++)('++')
-  PsiErrorElement:';' or new line expected
-    <empty list>
-  PsiErrorElement:Unexpected symbol
+  PsiErrorElement:')' unexpected
     PsiElement())(')')
-  PsiErrorElement:';' or new line expected
-    <empty list>
   Closable block
     PsiElement({)('{')
     Parameter list

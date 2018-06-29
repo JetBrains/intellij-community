@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.folding.impl;
 
+import com.intellij.application.options.CodeStyle;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.lang.java.JavaLanguage;
@@ -28,8 +29,8 @@ import org.jetbrains.annotations.NotNull;
 
 public class JavaFoldingBuilder extends JavaFoldingBuilderBase {
   @Override
-  protected boolean isBelowRightMargin(@NotNull Project project, int lineLength) {
-    final CodeStyleSettings settings = CodeStyleSettingsManager.getSettings(project);
+  protected boolean isBelowRightMargin(@NotNull PsiFile file, int lineLength) {
+    final CodeStyleSettings settings = CodeStyle.getSettings(file);
     return lineLength <= settings.getRightMargin(JavaLanguage.INSTANCE);
   }
 

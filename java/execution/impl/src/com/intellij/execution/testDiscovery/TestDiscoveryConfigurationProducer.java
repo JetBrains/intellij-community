@@ -1,26 +1,13 @@
-/*
- * Copyright 2000-2015 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.execution.testDiscovery;
 
 import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.execution.*;
 import com.intellij.execution.actions.ConfigurationContext;
-import com.intellij.execution.configurations.ConfigurationType;
-import com.intellij.execution.configurations.ModuleBasedConfiguration;
+import com.intellij.execution.configurations.*;
 import com.intellij.execution.junit.JavaRunConfigurationProducerBase;
+import com.intellij.execution.runners.ExecutionEnvironment;
+import com.intellij.execution.testframework.TestSearchScope;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -32,11 +19,13 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
+import com.intellij.psi.util.ClassUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.testIntegration.TestFramework;
-import com.intellij.util.containers.ContainerUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-import java.io.IOException;
+import javax.swing.*;
 import java.util.*;
 
 public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigurationProducerBase<JavaTestConfigurationBase> {
@@ -48,11 +37,19 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   protected abstract void setPosition(JavaTestConfigurationBase configuration, PsiLocation<PsiMethod> position);
   protected abstract Pair<String, String> getPosition(JavaTestConfigurationBase configuration);
 
+  protected void setupDiscoveryConfiguration(JavaTestConfigurationBase configuration, PsiMethod sourceMethod, Module targetModule) {
+    setPosition(configuration, new PsiLocation<>(sourceMethod));
+    Pair<String, String> position = getPosition(configuration);
+    configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
+    configuration.setModule(targetModule);
+  }
+
+
   @Override
   protected boolean setupConfigurationFromContext(final JavaTestConfigurationBase configuration,
                                                   ConfigurationContext configurationContext,
                                                   Ref<PsiElement> ref) {
-    if (!Registry.is("testDiscovery.enabled")) {
+    if (!Registry.is(TestDiscoveryExtension.TEST_DISCOVERY_REGISTRY_KEY)) {
       return false;
     }
     final Location contextLocation = configurationContext.getLocation();
@@ -62,64 +59,92 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     final PsiMethod sourceMethod = getSourceMethod(location);
     final Pair<String, String> position = getPosition(sourceMethod);
     if (sourceMethod != null && position != null) {
-      try {
-        final Project project = configuration.getProject();
-        final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
-        final Collection<String> testsByMethodName = testDiscoveryIndex.getTestsByMethodName(position.first, position.second);
-        if (testsByMethodName == null ||
-            ContainerUtil.filter(testsByMethodName, s -> s.startsWith(configuration.getFrameworkPrefix())).isEmpty()) {
-          return false;
-        }
-        setPosition(configuration, new PsiLocation<>(sourceMethod));
-        configuration.setName("Tests for " + StringUtil.getShortName(position.first) + "." + position.second);
-
-        final RunnerAndConfigurationSettings template =
-          configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
-        final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
-        if (predefinedModule != null) {
-          configuration.setModule(predefinedModule);
-        }
-
-        //potentially this set won't be big, it reflects modules from where user starts his tests
-        final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
-                                                                                         position.second,
-                                                                                         configuration.getFrameworkPrefix());
-        if (modules.isEmpty()) return true;
-
-        final List<Module> survivedModules = new ArrayList<>();
-        final ModuleManager moduleManager = ModuleManager.getInstance(project);
-        for (String moduleName : modules) {
-          final Module moduleByName = moduleManager.findModuleByName(moduleName);
-          if (moduleByName != null) {
-            survivedModules.add(moduleByName);
-          }
-        }
-        if (survivedModules.isEmpty()) return true;
-
-        final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
-        survivedModules
-          .forEach(module -> {
-            final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
-            dependentModules.add(module);
-            allModules.retainAll(dependentModules);
-          });
-        if (!allModules.isEmpty()) {
-          Module aModule = allModules.iterator().next();
-          for (Module module : survivedModules) {
-            if (allModules.contains(module)) {
-              aModule = module;
-            }
-          }
-          configuration.setModule(aModule);
-        }
-
-        return true;
-      }
-      catch (IOException e) {
+      final Project project = configuration.getProject();
+      final TestDiscoveryIndex testDiscoveryIndex = TestDiscoveryIndex.getInstance(project);
+      if (testDiscoveryIndex.getTestsByMethodName(position.first, position.second, configuration.getTestFrameworkId()).isEmpty()) {
         return false;
       }
+
+      Module targetModule = getTargetModule(configuration, configurationContext, position, project, testDiscoveryIndex);
+      setupDiscoveryConfiguration(configuration, sourceMethod, targetModule);
+      return true;
     }
     return false;
+  }
+
+  private Module getTargetModule(JavaTestConfigurationBase configuration,
+                                 ConfigurationContext configurationContext,
+                                 Pair<String, String> position, Project project, TestDiscoveryIndex testDiscoveryIndex) {
+    final RunnerAndConfigurationSettings template =
+      configurationContext.getRunManager().getConfigurationTemplate(getConfigurationFactory());
+    final Module predefinedModule = ((ModuleBasedConfiguration)template.getConfiguration()).getConfigurationModule().getModule();
+    if (predefinedModule != null) {
+      return predefinedModule;
+    }
+
+    //potentially this set won't be big, it reflects modules from where user starts his tests
+    final Collection<String> modules = testDiscoveryIndex.getTestModulesByMethodName(position.first,
+                                                                                     position.second,
+                                                                                     configuration.getTestFrameworkId());
+    if (modules.isEmpty()) return null;
+
+    final List<Module> survivedModules = new ArrayList<>();
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
+    for (String moduleName : modules) {
+      final Module moduleByName = moduleManager.findModuleByName(moduleName);
+      if (moduleByName != null) {
+        survivedModules.add(moduleByName);
+      }
+    }
+    if (survivedModules.isEmpty()) return null;
+
+    return detectTargetModule(survivedModules, project);
+  }
+
+  public abstract boolean isApplicable(@NotNull Location<PsiMethod> testMethod);
+
+  @NotNull
+  public abstract RunProfileState createProfile(@NotNull Location<PsiMethod>[] testMethods,
+                                                Module module,
+                                                RunConfiguration configuration,
+                                                ExecutionEnvironment environment);
+
+  public RunProfile createProfile(Location<PsiMethod>[] testMethods,
+                                  Module module,
+                                  ConfigurationContext context, 
+                                  String configurationName) {
+    RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(context);
+    JavaTestConfigurationBase configuration = (JavaTestConfigurationBase)settings.getConfiguration();
+    configuration.setModule(module);
+    if (module == null) {
+      configuration.setSearchScope(TestSearchScope.WHOLE_PROJECT);
+    }
+    else {
+      configuration.setSearchScope(TestSearchScope.MODULE_WITH_DEPENDENCIES);
+    }
+    configuration.setShortenCommandLine(ShortenCommandLine.MANIFEST);
+    return new MyRunProfile(testMethods, module, configuration, configurationName);
+  }
+
+  public static Module detectTargetModule(Collection<Module> survivedModules, Project project) {
+    ModuleManager moduleManager = ModuleManager.getInstance(project);
+    final Set<Module> allModules = new HashSet<>(Arrays.asList(moduleManager.getModules()));
+    survivedModules
+      .forEach(module -> {
+        final List<Module> dependentModules = ModuleUtilCore.getAllDependentModules(module);
+        dependentModules.add(module);
+        allModules.retainAll(dependentModules);
+      });
+    if (!allModules.isEmpty()) {
+      Module aModule = allModules.iterator().next();
+      for (Module module : survivedModules) {
+        if (allModules.contains(module)) {
+          aModule = module;
+        }
+      }
+      return aModule;
+    }
+    return null;
   }
 
   @Override
@@ -151,7 +176,7 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
     if (containingClass == null) {
       return null;
     }
-    final String qualifiedName = containingClass.getQualifiedName();
+    final String qualifiedName = ClassUtil.getJVMClassName(containingClass);
     if (qualifiedName != null) {
       return Pair.create(qualifiedName, method.getName());
     }
@@ -162,5 +187,52 @@ public abstract class TestDiscoveryConfigurationProducer extends JavaRunConfigur
   public boolean isConfigurationFromContext(JavaTestConfigurationBase configuration, ConfigurationContext configurationContext) {
     final Pair<String, String> position = getPosition(getSourceMethod(configurationContext.getLocation()));
     return position != null && position.equals(getPosition(configuration));
+  }
+
+  private class MyRunProfile implements RunProfile, ConfigurationWithCommandLineShortener {
+    private final Location<PsiMethod>[] myTestMethods;
+    private final Module myModule;
+    private final JavaTestConfigurationBase myConfiguration;
+    private final String myConfigurationName;
+
+    public MyRunProfile(Location<PsiMethod>[] testMethods, Module module, JavaTestConfigurationBase configuration, String configurationName) {
+      myTestMethods = testMethods;
+      myModule = module;
+      myConfiguration = configuration;
+      myConfigurationName = configurationName;
+    }
+
+    @Nullable
+    @Override
+    public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment environment) {
+      return createProfile(myTestMethods, myModule, myConfiguration, environment);
+    }
+
+    @Override
+    public String getName() {
+      return myConfigurationName;
+    }
+
+    @Nullable
+    @Override
+    public Icon getIcon() {
+      return myConfiguration.getIcon();
+    }
+
+    @Nullable
+    @Override
+    public ShortenCommandLine getShortenCommandLine() {
+      return myConfiguration.getShortenCommandLine();
+    }
+
+    @Override
+    public void setShortenCommandLine(ShortenCommandLine mode) {
+      myConfiguration.setShortenCommandLine(mode);
+    }
+
+    @Override
+    public Project getProject() {
+      return myConfiguration.getProject();
+    }
   }
 }

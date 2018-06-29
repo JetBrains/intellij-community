@@ -3,14 +3,13 @@ package com.intellij.codeInsight.template.postfix.templates;
 
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaEditablePostfixTemplate;
 import com.intellij.codeInsight.template.postfix.templates.editable.JavaPostfixTemplateExpressionCondition;
-import com.intellij.codeInsight.template.postfix.templates.editable.PostfixEditableTemplateProvider;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
 
 public class SynchronizedStatementPostfixTemplate extends JavaEditablePostfixTemplate {
-  public SynchronizedStatementPostfixTemplate(@NotNull PostfixEditableTemplateProvider provider) {
+  public SynchronizedStatementPostfixTemplate(@NotNull JavaPostfixTemplateProvider provider) {
     super("synchronized",
           "synchronized ($EXPR$) {\n$END$\n}",
           "synchronized (expr)",
