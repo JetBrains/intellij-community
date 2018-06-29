@@ -798,6 +798,8 @@ public class PsiBuilderImpl extends UnprotectedUserDataHolder implements PsiBuil
   private void skipLine() {
     boolean wasNewLine = false;
     while (!wasNewLine && myCurrentLexeme < myLexemeCount ) {
+      if (myLexTypes[myCurrentLexeme] != TokenType.CONFLICT_MARKER) // hack hack hack
+        myLexTypes[myCurrentLexeme] = TokenType.WHITE_SPACE;
       String prev = getTokenText();
       wasNewLine = prev != null && prev.contains("\n");
       myCurrentLexeme++;
