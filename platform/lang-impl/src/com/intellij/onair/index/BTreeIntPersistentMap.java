@@ -22,7 +22,7 @@ public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
 
   private final DataExternalizer<V> myExternalizer;
   private final Novelty myNovelty;
-  private final BTree myTree;
+  public final BTree myTree;
 
   public BTreeIntPersistentMap(DataExternalizer<V> valueExternalizer,
                                @NotNull Storage storage,

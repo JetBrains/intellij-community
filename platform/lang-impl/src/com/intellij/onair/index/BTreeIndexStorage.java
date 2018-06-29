@@ -43,9 +43,9 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
   private final KeyDescriptor<Key> myKeyDescriptor;
   private final DataExternalizer<Value> myValueExternalizer;
   private final Novelty myNovelty;
-  private final LoadingCache<Key, CompositeValueContainer<Value>> myCache;
-  private BTree myTree;
-  private BTree myKeysInternary;
+  public final LoadingCache<Key, CompositeValueContainer<Value>> myCache;
+  public BTree myTree;
+  public BTree myKeysInternary;
 
   public static class AddressPair {
     public final Address internary;
@@ -357,7 +357,7 @@ public class BTreeIndexStorage<Key, Value> implements VfsAwareIndexStorage<Key, 
 
   @Override
   public void clearCaches() {
-    myCache.cleanUp();
+    myCache.invalidateAll();
   }
 
   @Override

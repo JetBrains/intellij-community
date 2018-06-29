@@ -289,6 +289,8 @@ public class FSRecords {
           setCurrentVersion();
         }
 
+        /////////////////////////////////////////////////////////////////////////
+
         final int filelength = (int)myRecords.length();
         LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
         myContents.setVersion(myRecords.getInt(HEADER_VERSION_OFFSET));
@@ -300,7 +302,7 @@ public class FSRecords {
           }
         }
 
-
+        //////////////////////////////////////////////////////
 
         if (getVersion() != VERSION) {
           throw new IOException("FS repository version mismatch");
