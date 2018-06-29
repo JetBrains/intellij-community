@@ -371,7 +371,7 @@ public class WSLDistribution {
   @Override
   public String toString() {
     return "WSLDistribution{" +
-           "myId='" + getId() + '\'' +
+           "myDescriptor=" + myDescriptor +
            '}';
   }
 
@@ -381,5 +381,22 @@ public class WSLDistribution {
 
   private static String createAdditionalCommand(@NotNull String... commands) {
     return new GeneralCommandLine(commands).getCommandLineString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    WSLDistribution that = (WSLDistribution)o;
+
+    if (!myDescriptor.equals(that.myDescriptor)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptor.hashCode();
   }
 }
