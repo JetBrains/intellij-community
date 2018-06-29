@@ -148,6 +148,16 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
+  @Contract(pure = true)
+  public static char[] insert(@NotNull char[] array, int index, char value) {
+    char[] result = new char[array.length + 1];
+    System.arraycopy(array, 0, result, 0, index);
+    result[index] = value;
+    System.arraycopy(array, index, result, index + 1, array.length - index);
+    return result;
+  }
+
+  @NotNull
   @Contract(pure=true)
   public static byte[] append(@NotNull byte[] array, byte value) {
     array = realloc(array, array.length + 1);

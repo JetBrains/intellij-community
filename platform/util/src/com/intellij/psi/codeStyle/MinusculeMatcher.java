@@ -2,8 +2,11 @@
 package com.intellij.psi.codeStyle;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.Processor;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.FList;
 import com.intellij.util.io.IOUtil;
@@ -261,31 +264,31 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private char charAt(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? errorState.getPattern(myPattern)[i] : myPattern[i];
+      return errorState.affects(i) ? errorState.getChar(myPattern, i) : myPattern[i];
     }
 
     private char toLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? toLowerAscii(errorState.getPattern(myPattern)[i]) : toLowerCase[i];
+      return errorState.affects(i) ? toLowerAscii(errorState.getChar(myPattern, i)) : toLowerCase[i];
     }
 
     private char toUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? toUpperAscii(errorState.getPattern(myPattern)[i]) : toUpperCase[i];
+      return errorState.affects(i) ? toUpperAscii(errorState.getChar(myPattern, i)) : toUpperCase[i];
     }
 
     private boolean isLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? isLowerAscii(errorState.getPattern(myPattern)[i]) : isLowerCase[i];
+      return errorState.affects(i) ? isLowerAscii(errorState.getChar(myPattern, i)) : isLowerCase[i];
     }
 
     private boolean isUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? isUpperAscii(errorState.getPattern(myPattern)[i]) : isUpperCase[i];
+      return errorState.affects(i) ? isUpperAscii(errorState.getChar(myPattern, i)) : isUpperCase[i];
     }
 
     private boolean isWordSeparator(int i, @NotNull ErrorState errorState) {
-      return errorState.affects(i) ? MinusculeMatcher.isWordSeparator(errorState.getPattern(myPattern)[i]) : isWordSeparator[i];
+      return errorState.affects(i) ? MinusculeMatcher.isWordSeparator(errorState.getChar(myPattern, i)) : isWordSeparator[i];
     }
 
     private int patternLength(@NotNull ErrorState errorState) {
-      return myPattern.length;
+      return errorState.length(myPattern);
     }
 
     @Nullable
@@ -444,7 +447,7 @@ public class MinusculeMatcher implements Matcher {
 
       if (!myAllowTypos || !allowTypos) return false;
 
-      if (errorState.countErrors(0, patternIndex) > 1) return false;
+      if (errorState.countErrors(0, patternIndex) > 0) return false;
       Error prevError = errorState.getError(patternIndex - 1);
       if (prevError == SwapError.instance) {
         return false;
@@ -475,6 +478,15 @@ public class MinusculeMatcher implements Matcher {
         if ((patternChar == nextNameChar || isIgnoreCase && (toLowerCase(patternIndex, errorState) == nextNameChar || toUpperCase(patternIndex, errorState) == nextNameChar)) &&
             (nextPatternChar == nameChar || isIgnoreCase && (toLowerCase(patternIndex + 1, errorState) == nameChar || toUpperCase(patternIndex + 1, errorState) == nameChar))) {
           errorState.addError(patternIndex, SwapError.instance);
+          return true;
+        }
+      }
+
+      if (myName.length() > nameIndex + 1) {
+        char nextNameChar = myName.charAt(nameIndex + 1);
+
+        if (patternChar == nextNameChar || isIgnoreCase && (toLowerCase(patternIndex, errorState) == nextNameChar || toUpperCase(patternIndex, errorState) == nextNameChar)) {
+          errorState.addError(patternIndex, new MissError(nameChar));
           return true;
         }
       }
@@ -752,7 +764,7 @@ public class MinusculeMatcher implements Matcher {
       myErrors.add(pair);
 
       if (myPattern != null) {
-        applyError(myPattern, pair);
+        myPattern = applyError(myPattern, pair);
       }
     }
 
@@ -764,7 +776,7 @@ public class MinusculeMatcher implements Matcher {
 
       if (myErrors != null) {
         for (Pair<Integer, Error> error : myErrors) {
-          if (start <= error.first && error.first <= end) {
+          if (start <= error.first && error.first < end) {
             errors++;
           }
         }
@@ -773,22 +785,43 @@ public class MinusculeMatcher implements Matcher {
       return errors;
     }
 
-    public char[] getPattern(char[] pattern) {
-      if (myPattern == null) {
-        myPattern = applyErrors(Arrays.copyOf(pattern, pattern.length), pattern.length);
+    private boolean processErrors(int start, int end, Processor<Pair<Integer, Error>> processor) {
+      if (myBase != null && start < myDeriveIndex) {
+        if (!myBase.processErrors(start, myDeriveIndex, processor)) {
+          return false;
+        }
       }
-      return myPattern;
+
+      if (myErrors != null) {
+        for (Pair<Integer, Error> error : myErrors) {
+          if (start <= error.first && error.first < end) {
+            if (!processor.process(error)) {
+              return false;
+            }
+          }
+        }
+      }
+
+      return true;
+    }
+
+    public char getChar(char[] pattern, int index) {
+      if (myPattern == null) {
+        myPattern = applyErrors(Arrays.copyOf(pattern, pattern.length), Integer.MAX_VALUE);
+      }
+
+      return myPattern[index];
     }
 
     private char[] applyErrors(char[] pattern, int upToIndex) {
       if (myBase != null) {
-        myBase.applyErrors(pattern, Math.min(myDeriveIndex, upToIndex));
+        pattern = myBase.applyErrors(pattern, Math.min(myDeriveIndex, upToIndex));
       }
 
       if (myErrors != null) {
         for (Pair<Integer, Error> error : myErrors) {
           if (error.first < upToIndex) {
-            applyError(pattern, error);
+            pattern = applyError(pattern, error);
           }
         }
       }
@@ -796,34 +829,37 @@ public class MinusculeMatcher implements Matcher {
       return pattern;
     }
 
-    private void applyError(char[] pattern, Pair<Integer, Error> error) {
+    private char[] applyError(char[] pattern, Pair<Integer, Error> error) {
       if (error.second instanceof TypoError) {
         pattern[error.first] = ((TypoError)error.second).myCorrectChar;
+        return pattern;
       }
       else if (error.second instanceof SwapError) {
         char c = pattern[error.first];
         pattern[error.first] = pattern[error.first + 1];
         pattern[error.first + 1] = c;
+        return pattern;
       }
+      else if (error.second instanceof MissError) {
+        return ArrayUtil.insert(pattern, error.first, ((MissError)error.second).myMissedChar);
+      }
+
+      return pattern;
     }
 
-    public boolean affects(int index) {
-      //todo optimize
-      if (myErrors != null) {
-        for (Pair<Integer, Error> error : myErrors) {
-          if (error.first == index) return true;
-          if (error.first == index - 1 && error.second == SwapError.instance) return true;
+    public boolean affects(final int index) {
+      return !processErrors(0, index + 1, new Processor<Pair<Integer, Error>>() {
+        @Override
+        public boolean process(Pair<Integer, Error> error) {
+          if (error.first == index) return false;
+          if (error.first == index - 1 && error.second == SwapError.instance) return false;
           if (error.first < index) {
-            //todo support miss/extra
+            if (error.second instanceof MissError) return false;
+            //todo support extra
           }
+          return true;
         }
-      }
-
-      if (myBase != null && myDeriveIndex > index) {
-        return myBase.affects(index);
-      }
-
-      return false;
+      });
     }
 
     public Error getError(int i) {
@@ -838,6 +874,20 @@ public class MinusculeMatcher implements Matcher {
       }
 
       return null;
+    }
+
+    public int length(char[] pattern) {
+      final Ref<Integer> ref = new Ref<Integer>(pattern.length);
+      processErrors(0, Integer.MAX_VALUE, new Processor<Pair<Integer, Error>>() {
+        @Override
+        public boolean process(Pair<Integer, Error> error) {
+          if (error.second instanceof MissError) {
+            ref.set(ref.get() + 1);
+          }
+          return true;
+        }
+      });
+      return ref.get();
     }
   }
 
@@ -860,6 +910,14 @@ public class MinusculeMatcher implements Matcher {
 
   private static class SwapError implements Error {
     public static final SwapError instance = new SwapError();
+  }
+
+  private static class MissError implements Error {
+    private final char myMissedChar;
+
+    public MissError(char missedChar) {
+      myMissedChar = missedChar;
+    }
   }
 
   private static class Fragment {

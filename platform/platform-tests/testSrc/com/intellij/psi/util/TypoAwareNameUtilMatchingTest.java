@@ -4,7 +4,8 @@ package com.intellij.psi.util;
 public class TypoAwareNameUtilMatchingTest extends NameUtilMatchingTestCase {
   public void testSimple() {
     assertMatches("doba", "fooBar");
-    assertMatches("dobs", "fooBar");
+    assertMatches("fobs", "fooBar");
+    assertMatches("publix", "public");
   }
 
   public void testFragmentWithBrokenFirstLetter() {
@@ -21,5 +22,10 @@ public class TypoAwareNameUtilMatchingTest extends NameUtilMatchingTestCase {
   public void testSwap() {
     assertMatches("braz", "barz");
     assertMatches("braz", "barvZoo");
+  }
+
+  public void testMissedLetter() {
+    assertMatches("br", "bar");
+    assertMatches("ar", "bar");
   }
 }
