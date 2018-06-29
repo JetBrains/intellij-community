@@ -9,6 +9,7 @@ import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.documentation.docstrings.DocStringFormat;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.resolve.ImportedResolveResult;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
@@ -1335,5 +1336,11 @@ public class PyResolveTest extends PyResolveTestCase {
   // PY-29975
   public void testUnboundVariableOnClassLevelNotDeclaredBelow() {
     assertResolvesTo(PyNamedParameter.class, "foo");
+  }
+
+  // PY-30512
+  public void testDunderBuiltins() {
+    final PsiElement element = doResolve();
+    assertEquals(PyBuiltinCache.getInstance(myFixture.getFile()).getBuiltinsFile(), element);
   }
 }
