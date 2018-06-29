@@ -133,16 +133,17 @@ public class InternalPage extends BasePage {
 
   @Override
   protected Address save(@NotNull Novelty novelty, @NotNull Storage storage, @NotNull StorageConsumer consumer) {
+    final byte[] resultBytes = Arrays.copyOf(backingArray, backingArray.length);
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
-        BasePage child = tree.loadPage(novelty, childAddress);
+        final BasePage child = tree.loadPage(novelty, childAddress);
         childAddress = child.save(novelty, storage, consumer);
-        setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
+        setChild(i, tree.getKeySize(), resultBytes, childAddress.getLowBytes(), childAddress.getHighBytes());
       }
     }
-    Address result = storage.alloc(backingArray);
-    consumer.store(result, backingArray);
+    Address result = storage.alloc(resultBytes);
+    consumer.store(result, resultBytes);
     return result;
   }
 

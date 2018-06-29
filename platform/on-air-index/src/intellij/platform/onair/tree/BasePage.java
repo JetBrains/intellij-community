@@ -150,15 +150,6 @@ public abstract class BasePage {
     set(pos, key, bytesPerKey, backingArray, lowAddressBytes);
   }
 
-  protected void setChildAddress(int pos, long lowAddressBytes, long highAddressBytes) {
-    final int bytesPerKey = tree.getKeySize();
-    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos + bytesPerKey;
-
-    // write address
-    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset);
-    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + 8);
-  }
-
   protected BasePage insertAt(@NotNull Novelty novelty, int pos, byte[] key, long childAddress) {
     if (!needSplit(this)) {
       insertDirectly(novelty, pos, key, childAddress);
@@ -244,6 +235,13 @@ public abstract class BasePage {
     // write address
     writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
     writeUnsignedLong(0, 8, backingArray, offset + bytesPerKey + 8);
+  }
+
+  static void setChild(int pos, int bytesPerKey, byte[] backingArray, long lowAddressBytes, long highAddressBytes) {
+    final int offset = (bytesPerKey + BYTES_PER_ADDRESS) * pos;
+    // write address
+    writeUnsignedLong(lowAddressBytes, 8, backingArray, offset + bytesPerKey);
+    writeUnsignedLong(highAddressBytes, 8, backingArray, offset + bytesPerKey + 8);
   }
 
   static void indent(PrintStream out, int level) {

@@ -8,6 +8,7 @@ import intellij.platform.onair.storage.api.Storage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Arrays;
+import java.util.NoSuchElementException;
 import java.util.concurrent.ConcurrentHashMap;
 
 import static intellij.platform.onair.tree.ByteUtils.normalizeLowBytes;
@@ -17,11 +18,12 @@ public class MockStorage implements Storage {
 
   public final ConcurrentHashMap<Address, byte[]> data = new ConcurrentHashMap<>();
 
+  @NotNull
   @Override
   public byte[] lookup(@NotNull Address address) {
     byte[] result = data.get(address);
     if (result == null) {
-      throw new IllegalArgumentException("data missing");
+      throw new NoSuchElementException("data missing");
     }
     return result;
   }

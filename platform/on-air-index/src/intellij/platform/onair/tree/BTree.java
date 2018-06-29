@@ -99,7 +99,9 @@ public class BTree implements Tree {
 
   @Override
   public Address store(@NotNull Novelty novelty, @NotNull StorageConsumer consumer) {
-    return loadPage(novelty, address).save(novelty, storage, consumer);
+    Address result = loadPage(novelty, address).save(novelty, storage, consumer);
+    System.out.println("tree stored at " + result);
+    return result;
   }
 
   public void dump(@NotNull Novelty novelty, @NotNull PrintStream out, BTree.ToString renderer) {

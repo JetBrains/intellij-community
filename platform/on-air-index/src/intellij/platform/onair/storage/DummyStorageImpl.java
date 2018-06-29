@@ -12,6 +12,7 @@ public class DummyStorageImpl implements Storage {
   private DummyStorageImpl() {
   }
 
+  @NotNull
   @Override
   public byte[] lookup(@NotNull Address address) {
     throw new UnsupportedOperationException();

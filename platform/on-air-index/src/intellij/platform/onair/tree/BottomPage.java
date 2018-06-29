@@ -49,7 +49,8 @@ public class BottomPage extends BasePage {
         if (childAddress.isNovelty()) {
           novelty.free(childAddress.getLowBytes());
         }
-        setChildAddress(pos, novelty.alloc(Arrays.copyOf(value, value.length)), 0);
+        final long childAddressLowBytes = novelty.alloc(value);
+        setChild(pos, tree.getKeySize(), backingArray, childAddressLowBytes, 0);
         flush(novelty);
 
         // this should be always true in order to keep up with keysAddresses[pos] expiration
@@ -61,7 +62,7 @@ public class BottomPage extends BasePage {
     // if found - insert at this position, else insert after found
     pos = -pos - 1;
 
-    final BasePage page = insertAt(novelty, pos, key, novelty.alloc(Arrays.copyOf(value, value.length)));
+    final BasePage page = insertAt(novelty, pos, key, novelty.alloc(value));
     result[0] = true;
     tree.incrementSize();
     return page;
@@ -103,17 +104,18 @@ public class BottomPage extends BasePage {
 
   @Override
   protected Address save(@NotNull Novelty novelty, @NotNull Storage storage, @NotNull StorageConsumer consumer) {
+    final byte[] resultBytes = Arrays.copyOf(backingArray, backingArray.length);
     for (int i = 0; i < size; i++) {
       Address childAddress = getChildAddress(i);
       if (childAddress.isNovelty()) {
-        byte[] leaf = tree.loadLeaf(novelty, childAddress);
+        final byte[] leaf = novelty.lookup(childAddress.getLowBytes()); // leaf values are immutable by design
         childAddress = storage.alloc(leaf);
         consumer.store(childAddress, leaf);
-        setChildAddress(i, childAddress.getLowBytes(), childAddress.getHighBytes());
+        setChild(i, tree.getKeySize(), resultBytes, childAddress.getLowBytes(), childAddress.getHighBytes());
       }
     }
-    Address result = storage.alloc(backingArray);
-    consumer.store(result, backingArray);
+    Address result = storage.alloc(resultBytes);
+    consumer.store(result, resultBytes);
     return result;
   }
 

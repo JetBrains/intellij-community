@@ -33,11 +33,11 @@ import static intellij.platform.onair.tree.BTree.BYTES_PER_ADDRESS;
 import static intellij.platform.onair.tree.ByteUtils.normalizeLowBytes;
 import static intellij.platform.onair.tree.ByteUtils.readUnsignedLong;
 
-public class StorageImpl implements Storage, BulkGetCompletionListener {
+public class StorageImpl implements Storage {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
   private static final int MAX_VALUE_SIZE = Integer.MAX_VALUE;
   private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 250000);
-  private static final int CLIENT_COUNT = 4;
+  private static final int CLIENT_COUNT = 5;
   private final MemcachedClient[] myClient;
   private final ConcurrentObjectCache<Address, Object> myLocalCache;
   private final AtomicInteger prefetchInProgress = new AtomicInteger(0);
@@ -81,6 +81,7 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
     myLocalCache = new ConcurrentObjectCache<>(LOCAL_CACHE_SIZE);
   }
 
+  @NotNull
   @SuppressWarnings("unchecked")
   @Override
   public byte[] lookup(@NotNull Address address) {
@@ -115,7 +116,7 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
         throw toRuntime(e);
       }
     }
-    throw new IllegalArgumentException();
+    throw new NoSuchElementException("page not found");
   }
 
   @NotNull
@@ -193,12 +194,6 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
     addressValues.forEach(value -> myLocalCache.put(value, future));
   }
 
-  @Override
-  public void onComplete(BulkGetFuture<?> future) throws Exception {
-    // prefetchInProgress.decrementAndGet();
-    // future.get().forEach((key, value) -> myLocalCache.put(key, value));
-  }
-
   @SuppressWarnings("WaitNotInLoop")
   public Address bulkStore(@NotNull BTree tree, @NotNull Novelty novelty) {
     final int packSize = 10000;
@@ -209,11 +204,8 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
 
       @Override
       public void store(@NotNull Address address, @NotNull byte[] bytes) {
-        Address anotherAddress = alloc(bytes);
-        if (!address.equals(anotherAddress)) {
-          throw new IllegalStateException();
-        }
-        data.add(new Pair<>(address, Arrays.copyOf(bytes, bytes.length))); // TODO: don't copy?
+        // if (!address.equals(alloc(bytes))) { throw new IllegalStateException(); }
+        data.add(new Pair<>(address, bytes));
         if (data.size() == packSize) {
           Future future = setAll(client, new ArrayList<>(data));
           packs.add(future);
