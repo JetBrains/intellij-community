@@ -1,0 +1,13 @@
+<idea-plugin>
+  <id>foo</id>
+  <extensionPoints>
+    <<error descr="<extensionPoint> must not specify both 'name' and 'qualifiedName' attributes">extensionPoint</error> name="myName" qualifiedName="myQualifiedName" />
+    <<error descr="<extensionPoint> must not specify both 'interface' and 'beanClass' attributes">extensionPoint</error> interface="java.lang.Runnable" beanClass="java.lang.Runnable" />
+
+    <extensionPoint name="name1" />
+    <extensionPoint qualifiedName="qualifiedName1" />
+
+    <extensionPoint interface="java.lang.Runnable" />
+    <extensionPoint beanClass="java.lang.Runnable" />
+  </extensionPoints>
+</idea-plugin>

@@ -473,6 +473,10 @@ public class MyErrorHandler extends ErrorReportSubmitter {}
     myFixture.testHighlighting(getTestName(true) + ".xml")
   }
 
+  void testExtensionPointValidity() {
+    myFixture.testHighlighting(getTestName(true) + ".xml")
+  }
+
   void testRegistrationCheck() {
     Module anotherModule = PsiTestUtil.addModule(getProject(), StdModuleTypes.JAVA, "anotherModule",
                                                  myTempDirFixture.findOrCreateDir("../anotherModuleDir"))
