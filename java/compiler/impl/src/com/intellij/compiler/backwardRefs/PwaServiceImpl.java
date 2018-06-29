@@ -267,7 +267,7 @@ public class PwaServiceImpl extends PwaService {
           String name = eum.getName(symbol.name);
           if (symbol instanceof ClassFileSymbol.Method) {
             String ccName = eum.getName(((ClassFileSymbol.Method)symbol).containingClass);
-            text += StringUtil.getShortName(ccName) + "." + name ;
+            text += StringUtil.getShortName(ccName) + "." + name + "()" ;
           }
           else if (symbol instanceof ClassFileSymbol.Clazz) {
             text += StringUtil.getShortName(name);
