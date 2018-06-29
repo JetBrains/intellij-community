@@ -54,6 +54,7 @@ public class WSLUtilTest {
 
     assertWinPath("c:\\foo", "/mnt/c/foo");
     assertWinPath("c:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
+    assertWinPath("?:\\temp\\KeepCase", null);
 
     assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", "/usr/something/include");
     assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", "/usr/something/bin/gcc");
@@ -94,7 +95,7 @@ public class WSLUtilTest {
     }
   }
 
-  private void assertWinPath(@NotNull String winPath, @NotNull String wslPath) {
+  private void assertWinPath(@NotNull String winPath, @Nullable String wslPath) {
     assertEquals(wslPath, myLegacyWSL.getWslPath(prepare(winPath)));
   }
 

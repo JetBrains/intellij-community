@@ -345,7 +345,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
-    if (StringUtil.isChar(windowsPath, 1, ':')) { // normal windows path => /mnt/disk_letter/path
+    if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return WSL_MNT_ROOT +
              Character.toLowerCase(windowsPath.charAt(0)) +
              FileUtil.toSystemIndependentName(windowsPath.substring(2));
