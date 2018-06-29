@@ -538,29 +538,23 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @NotNull
   public Object[] getCompletionVariants(String prefix, PsiElement location, @NotNull ProcessingContext context) {
     if (isRecursive(context)) return ArrayUtil.EMPTY_OBJECT_ARRAY;
-
     final Set<String> visited = visitedNames(context);
-    final List<Object> result = new ArrayList<>();
 
     final PsiFile origin = location != null ? CompletionUtil.getOriginalOrSelf(location).getContainingFile() : null;
     final TypeEvalContext typeEvalContext = TypeEvalContext.codeCompletion(myClass.getProject(), origin);
 
+    final boolean withinOurClass = withinClass(getPyClass(), location);
+    final Condition<String> nameFilter = name -> {
+      if (!withinOurClass && PyUtil.isClassPrivateName(name)) return false;
+      if (!withinOurClass && isClassProtected(name) && prefix == null) return false;
+      return visited.add(name);
+    };
+
     final CompletionVariantsProcessor processor =
-      new CompletionVariantsProcessor(location, null, null, false, context.get(CTX_SUPPRESS_PARENTHESES) != null);
+      new CompletionVariantsProcessor(location, null, nameFilter, false, context.get(CTX_SUPPRESS_PARENTHESES) != null);
 
     processMembers(processor, () -> processor.setAllowedNames(myClass.getSlots(typeEvalContext)));
-    final boolean withinOurClass = withinClass(getPyClass(), location);
-    StreamEx
-      .of(processor.getResult())
-      .filter(
-        element -> {
-          final String name = element.getLookupString();
-          if (!withinOurClass && PyUtil.isClassPrivateName(name)) return false;
-          if (!withinOurClass && isClassProtected(name) && prefix == null) return false;
-          return visited.add(name);
-        }
-      )
-      .into(result);
+    final List<Object> result = new ArrayList<>(processor.getResultList());
 
     processOwnSlots(
       slot -> {
