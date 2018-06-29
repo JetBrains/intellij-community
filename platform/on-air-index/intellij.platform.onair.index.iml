@@ -13,9 +13,9 @@
     <orderEntry type="library" name="JUnit4" level="project" />
     <orderEntry type="library" name="com.amazonaws:elasticache-java-cluster-client:1.1.1" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util.rt" />
+    <orderEntry type="library" scope="TEST" name="Guava" level="project" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.indexing.impl" />
-    <orderEntry type="module" module-name="intellij.platform.lang.impl" />
     <orderEntry type="library" name="Guava" level="project" />
   </component>
 </module>

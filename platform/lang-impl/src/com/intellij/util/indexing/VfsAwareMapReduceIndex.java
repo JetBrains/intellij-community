@@ -249,14 +249,17 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
     @NotNull
     @Override
-    public PersistentHashMap<Integer, Map<Key, Value>> createMap() throws IOException {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      try {
-        final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
-        return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new MapDataExternalizer<>(myIndexExtension));
-      } finally {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
+    public PersistentMap<Integer, Map<Key, Value>> createMap() throws IOException {
+      return IndexInfrastructure.createForwardIndexStorage((ID<?, ?>)myIndexExtension.getName(),
+                                                           new MapDataExternalizer<>(myIndexExtension));
+      //
+      //PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+      //try {
+      //  final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
+      //  return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new MapDataExternalizer<>(myIndexExtension));
+      //} finally {
+      //  PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+      //}
     }
 
     @Override
@@ -277,19 +280,15 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
     @NotNull
     @Override
-    public PersistentHashMap<Integer, Collection<Key>> createMap() throws IOException {
-      PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      try {
-        return createIdToDataKeysIndex(myIndexExtension);
-      } finally {
-        PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      }
-    }
-
-    @NotNull
-    private static <K> PersistentHashMap<Integer, Collection<K>> createIdToDataKeysIndex(@NotNull IndexExtension<K, ?, ?> extension) throws IOException {
-      final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)extension.getName());
-      return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, createInputsIndexExternalizer(extension));
+    public PersistentMap<Integer, Collection<Key>> createMap() throws IOException {
+      return IndexInfrastructure.createForwardIndexStorage((ID<?, ?>)((IndexExtension<Key, ?, ?>)myIndexExtension).getName(),
+                                                           createInputsIndexExternalizer(myIndexExtension));
+      //PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
+      //try {
+      //
+      //} finally {
+      //  PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
+      //}
     }
   }
 

@@ -102,18 +102,16 @@ public class CopyIndexTest {
         System.out.println("Check storage reads...");
         start = System.currentTimeMillis();
         AtomicInteger step = new AtomicInteger();
+        MockNovelty mockNovelty = new MockNovelty();
         remoteTrees.forEach(tree -> rawContent.forEach((key, value) -> {
           step.incrementAndGet();
-          Assert.assertArrayEquals(value, tree.get(new MockNovelty(), key));
+          Assert.assertArrayEquals(value, tree.get(mockNovelty, key));
         }));
         System.out.println("Time: " + (System.currentTimeMillis() - start) / 1000 + "s");
       }
-      catch (RuntimeException e) {
-        storage.close();
-        throw e;
-      }
       finally {
         novelty.close();
+        storage.close();
       }
     }
     boolean buildPHM = false;

@@ -36,11 +36,12 @@ import static intellij.platform.onair.tree.ByteUtils.readUnsignedLong;
 public class StorageImpl implements Storage, BulkGetCompletionListener {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
   private static final int MAX_VALUE_SIZE = 1024 * 100;
-  private static final int LOCAL_CACHE_SIZE = 50000;
+  private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 250000);
   private static final int CLIENT_COUNT = 4;
   private final MemcachedClient[] myClient;
   private final ConcurrentObjectCache<Address, Object> myLocalCache;
   private final AtomicInteger prefetchInProgress = new AtomicInteger(0);
+  private final ConcurrentHashMap<Address, byte[]> preFetches = new ConcurrentHashMap<>();
 
   private final AtomicLong prefetchHits = new AtomicLong(0);
   private final AtomicLong prefetchMisses = new AtomicLong(0);
@@ -75,7 +76,7 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
     myClient = new MemcachedClient[CLIENT_COUNT];
     final List<InetSocketAddress> address = Collections.singletonList(socketAddress);
     for (int i = 0; i < CLIENT_COUNT; i++) {
-      myClient[i] = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 163840, 16384 * 1024), address);
+      myClient[i] = new MemcachedClient(new BinaryConnectionFactory(ClientMode.Static, 16384, 16384 * 8), address);
     }
     myLocalCache = new ConcurrentObjectCache<>(LOCAL_CACHE_SIZE);
   }
@@ -98,10 +99,11 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
       prefetchHits.incrementAndGet();
       final BulkFuture<Map<String, byte[]>> future = (BulkFuture<Map<String, byte[]>>)result;
       try {
-        final byte[] bytes = future.get().get(address.toString());
-        if (bytes == null) {
-          throw new IllegalStateException("no data in bulk response");
+        Map<String, byte[]> data = future.get();
+        if (!future.getStatus().isSuccess()) {
+          throw new IllegalStateException("prefetch failed");
         }
+        final byte[] bytes = data.get(address.toString());
         myLocalCache.put(address, bytes);
         return bytes;
       }
@@ -130,9 +132,17 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
   }
 
   @Override
-  public void prefetch(@NotNull byte[] bytes, @NotNull BTree tree, int size) {
-    if (prefetchInProgress.get() > 25) {
+  public void prefetch(@NotNull Address prefetchAddress, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type) {
+    if (prefetchInProgress.get() > 70) {
       System.out.println("too many pre-fetches, cool down");
+      return;
+    }
+
+    if (type == BTree.INTERNAL && myLocalCache.get(prefetchAddress) != null) {
+      return;
+    }
+
+    if (preFetches.putIfAbsent(prefetchAddress, bytes) != null) {
       return;
     }
 
@@ -164,12 +174,20 @@ public class StorageImpl implements Storage, BulkGetCompletionListener {
       @Override
       public void onComplete(BulkGetFuture<?> future) throws Exception {
         prefetchInProgress.decrementAndGet();
-        future.get().forEach((key, value) -> {
-          final int index = addresses.indexOf(key);
-          if (index > 0) {
-            myLocalCache.put(addressValues.get(index), value);
-          }
-        });
+        preFetches.remove(prefetchAddress);
+        Map<String, ?> data = future.get();
+        if (future.getStatus().isSuccess()) {
+          data.forEach((key, value) -> {
+            final int index = addresses.indexOf(key);
+            if (index > 0) {
+              myLocalCache.put(addressValues.get(index), value);
+            }
+          });
+        }
+        else {
+          System.out.println("async get failed");
+          addressValues.forEach(value -> myLocalCache.remove(value)); // cleanup futures
+        }
       }
     });
     addressValues.forEach(value -> myLocalCache.put(value, future));
