@@ -16,6 +16,7 @@
 package com.intellij.codeInspection.dataFlow.inliner;
 
 import com.intellij.codeInsight.Nullability;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.codeInspection.dataFlow.*;
 import com.intellij.codeInspection.dataFlow.value.DfaConstValue;
 import com.intellij.codeInspection.dataFlow.value.DfaUnknownValue;
@@ -27,6 +28,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.callMatcher.CallMapper;
 import com.siyeh.ig.callMatcher.CallMatcher;
+import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import org.jetbrains.annotations.NotNull;
@@ -49,6 +51,9 @@ public class StreamChainInliner implements CallInliner {
   private static final CallMatcher MATCH_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "anyMatch", "allMatch",
                                                                  "noneMatch").parameterCount(1);
   private static final CallMatcher SUM_TERMINAL = instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "sum", "count").parameterCount(0);
+  private static final CallMatcher TO_ARRAY_TERMINAL = anyOf(
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "toArray").parameterCount(0),
+    instanceCall(JAVA_UTIL_STREAM_STREAM, "toArray").parameterTypes("java.util.function.IntFunction"));
   private static final CallMatcher OPTIONAL_TERMINAL =
     anyOf(instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "min", "max").parameterCount(0),
           instanceCall(JAVA_UTIL_STREAM_BASE_STREAM, "reduce").parameterCount(1),
@@ -117,6 +122,7 @@ public class StreamChainInliner implements CallInliner {
     .register(SUM_TERMINAL, SumTerminalStep::new)
     .register(MIN_MAX_TERMINAL, MinMaxTerminalStep::new)
     .register(OPTIONAL_TERMINAL, OptionalTerminalStep::new)
+    .register(TO_ARRAY_TERMINAL, ToArrayStep::new)
     .register(COLLECT_TERMINAL, StreamChainInliner::createTerminalFromCollector);
 
   private static final Step NULL_TERMINAL_STEP = new Step(null, null, null) {
@@ -558,7 +564,25 @@ public class StreamChainInliner implements CallInliner {
 
     @Override
     boolean expectNotNull() {
-      return myImmutable;
+      if (myImmutable) return true;
+      PsiType collectionType = ExpectedTypeUtils.findExpectedType(myCall, false);
+      PsiType itemType = JavaGenericsUtil.getCollectionItemType(collectionType, myCall.getResolveScope());
+      return DfaPsiUtil.getTypeNullability(itemType) == Nullability.NOT_NULL;
+    }
+  }
+
+  static class ToArrayStep extends ToCollectionStep {
+    ToArrayStep(@NotNull PsiMethodCallExpression call) {
+      super(call, ArrayUtil.getFirstElement(call.getArgumentList().getExpressions()), false);
+    }
+
+    @Override
+    protected void pushInitialValue(CFGBuilder builder) {
+      if (myFunction == null) {
+        super.pushInitialValue(builder);
+      } else {
+        builder.pushUnknown().invokeFunction(1, myFunction, Nullability.NOT_NULL);
+      }
     }
   }
 

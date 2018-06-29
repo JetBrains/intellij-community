@@ -235,4 +235,7 @@ public class StreamInlining {
     }
   }
 
+  void testToArray(List<String> list) {
+    list.stream().toArray(size -> <warning descr="Function may return null, but it's not allowed here">null</warning>);
+  }
 }
