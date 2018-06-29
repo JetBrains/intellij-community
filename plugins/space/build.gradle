@@ -5,10 +5,14 @@ buildscript {
 }
 
 plugins {
-    id "org.jetbrains.intellij" version "0.3.2"
+    id "org.jetbrains.intellij" version "0.3.4"
 }
 
 applyKotlinJVM()
+
+if (hasProperty("teamcity")) {
+    version = teamcity["build.number"]
+}
 
 dependencies {
     compile project(":app:app-state")

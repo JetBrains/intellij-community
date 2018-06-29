@@ -1,10 +1,10 @@
 <idea-plugin version="2">
-    <id>org.intellij.plugins.circlet</id>
-    <name>Circlet integration</name>
+    <id>com.jetbrains.circlet</id>
+    <name>Circlet Integration</name>
     <version>0.1.dev</version>
     <vendor email="support@jetbrains.com" url="jetbrains.com">JetBrains</vendor>
 
-    <description><![CDATA[Circlet plugin]]></description>
+    <description><![CDATA[Circlet Integration plugin]]></description>
 
     <change-notes><![CDATA[]]>
 
