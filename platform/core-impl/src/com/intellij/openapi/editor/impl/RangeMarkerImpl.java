@@ -130,7 +130,12 @@ public class RangeMarkerImpl extends UserDataHolderBase implements RangeMarkerEx
   @NotNull
   public final DocumentEx getDocument() {
     Object file = myDocumentOrFile;
-    return file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
+    DocumentEx document =
+      file instanceof VirtualFile ? (DocumentEx)FileDocumentManager.getInstance().getDocument((VirtualFile)file) : (DocumentEx)file;
+    if (document == null) {
+      LOG.error("document is null; isValid=" + isValid()+"; file="+file);
+    }
+    return document;
   }
 
   // fake method to simplify setGreedyToLeft/right methods. overridden in RangeHighlighter
