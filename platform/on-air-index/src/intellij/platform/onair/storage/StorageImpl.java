@@ -35,7 +35,7 @@ import static intellij.platform.onair.tree.ByteUtils.readUnsignedLong;
 
 public class StorageImpl implements Storage, BulkGetCompletionListener {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
-  private static final int MAX_VALUE_SIZE = 1024 * 100;
+  private static final int MAX_VALUE_SIZE = Integer.MAX_VALUE;
   private static final int LOCAL_CACHE_SIZE = Integer.getInteger("intellij.platform.onair.storage.cache", 250000);
   private static final int CLIENT_COUNT = 4;
   private final MemcachedClient[] myClient;

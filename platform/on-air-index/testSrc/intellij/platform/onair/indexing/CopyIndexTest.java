@@ -34,6 +34,7 @@ import static com.intellij.util.io.PagedFileStorage.MB;
 
 public class CopyIndexTest {
   private static final HashFunction HASH = Hashing.goodFastHash(128);
+
   public static final int ITERATIONS = 5;
   public static final String FOLDER =
     System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");

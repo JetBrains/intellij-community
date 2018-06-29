@@ -30,6 +30,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -86,7 +87,7 @@ public class IndexInfrastructure {
 
   static {
     try {
-      indexNovelty = new NoveltyImpl(new File("/Users/jetzajac/stopship"));
+      indexNovelty = new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
     }
     catch (IOException e) {
       throw new RuntimeException();
@@ -139,14 +140,17 @@ public class IndexInfrastructure {
   static {
     String revision = System.getProperty("onair.revision");
 
+    try {
+      storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
+    }
+    catch (IOException e) {
+      storage = new MockStorage();
+      System.out.println("Can't connect to index cahce.");
+      // throw new RuntimeException(e);
+    }
+
     if (revision != null && !revision.trim().isEmpty()) {
       indexMeta = downloadIndexMetaData(revision);
-      try {
-        storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
