@@ -117,7 +117,7 @@ public class BTree implements Tree {
     int size = bytes[metadataOffset + 1] & 0xff; // 0..255
     final BasePage result;
     if (!isNovelty) {
-      storage.prefetch(bytes, this, size);
+      storage.prefetch(address, bytes, this, size, type);
     }
     switch (type) {
       case BOTTOM:
