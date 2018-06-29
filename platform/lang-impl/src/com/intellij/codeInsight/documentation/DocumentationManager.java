@@ -805,6 +805,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         else {
           component.setData(element, finalText, collector.effectiveUrl, collector.ref, collector.provider);
         }
+        if (wasEmpty) {
+          component.clearHistory();
+        }
         callback.setDone();
       }, modality);
     }, 10);
