@@ -25,7 +25,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
-import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -231,7 +230,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
       Location location = frame.getDescriptor().getLocation();
       if (location != null) {
         Method method = DebuggerUtilsEx.getMethod(location);
-        if (method != null && method.name().endsWith(CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX)) {
+        // TODO: use com.intellij.rt.debugger.agent.CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX
+        if (method != null && method.name().endsWith("$$$capture")) {
           try {
             return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame.getStackFrameProxy()));
           }
@@ -295,7 +295,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     if (methodPair == null) {
       try {
-        ClassType captureClass = (ClassType)process.findClass(evaluationContext, CaptureStorage.class.getName(), null);
+        // TODO: obtain CaptureStorage fqn from the class somehow
+        ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
         if (captureClass == null) {
           methodPair = NO_CAPTURE_AGENT;
           LOG.debug("Error loading debug agent", "agent class not found");

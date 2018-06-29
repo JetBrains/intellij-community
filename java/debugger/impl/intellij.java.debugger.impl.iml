@@ -22,7 +22,6 @@
     <orderEntry type="module" module-name="intellij.platform.ide.impl" />
     <orderEntry type="module" module-name="intellij.platform.util" />
     <orderEntry type="module" module-name="intellij.platform.jps.build" />
-    <orderEntry type="module" module-name="intellij.java.debugger.agent.storage" scope="PROVIDED" />
   </component>
   <component name="copyright">
     <Base>
