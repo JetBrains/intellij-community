@@ -20,7 +20,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiField;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
@@ -91,13 +90,19 @@ public class JavaArrangementParseInfo {
   private static final int IN_PROGRESS = 1;
   private static final int PASSED = 2;
 
-  private static class DependencyGraphEntry {
+
+  // Required to avoid recursion and to implement DFS via explicit stack
+  private static class Frame {
     final @NotNull PsiMethod myMethod;
     final @NotNull ArrangementEntryDependencyInfo myDependencyInfo;
+    final @NotNull Iterator<PsiMethod> myDependentMethodsIterator;
 
-    private DependencyGraphEntry(@NotNull PsiMethod method, @NotNull ArrangementEntryDependencyInfo info) {
+    private Frame(@NotNull PsiMethod method,
+                  @NotNull ArrangementEntryDependencyInfo info,
+                  @NotNull Iterator<PsiMethod> iterator) {
       myMethod = method;
       myDependencyInfo = info;
+      myDependentMethodsIterator = iterator;
     }
   }
 
@@ -110,36 +115,42 @@ public class JavaArrangementParseInfo {
     }
     ArrangementEntryDependencyInfo result = new ArrangementEntryDependencyInfo(entry);
     TObjectIntHashMap<PsiMethod> methodToStatus = new TObjectIntHashMap<>(); // value is one of NOT_PASSED, IN_PROGRESS, PASSED
-    Stack<DependencyGraphEntry> toProcess = new Stack<>();
+    Stack<Frame> toProcess = new Stack<>();
 
-    toProcess.push(new DependencyGraphEntry(method, result));
+    Set<PsiMethod> startingMethodDependencies = myMethodDependencies.get(method);
+    if (startingMethodDependencies == null) return result;
+    toProcess.push(new Frame(method, result, startingMethodDependencies.iterator()));
     while (!toProcess.empty()) {
-      DependencyGraphEntry graphEntry = toProcess.pop();
-      PsiMethod currentMethod = graphEntry.myMethod;
-      Set<PsiMethod> methodDependencies = myMethodDependencies.get(currentMethod);
-      if (methodDependencies == null) {
-        methodToStatus.put(currentMethod, PASSED);
-        continue;
-      }
+      Frame frame = toProcess.peek();
+      PsiMethod currentMethod = frame.myMethod;
       methodToStatus.put(currentMethod, IN_PROGRESS);
-      for (PsiMethod dependentMethod : methodDependencies) {
-        if (methodToStatus.get(dependentMethod) == IN_PROGRESS) {
+      if (frame.myDependentMethodsIterator.hasNext()) {
+        PsiMethod dependentMethod = frame.myDependentMethodsIterator.next();
+        int methodStatus = methodToStatus.get(dependentMethod);
+        if (methodStatus == IN_PROGRESS) {
           // Prevent cyclic dependencies.
           return null;
         }
+        if (methodStatus == PASSED) continue; // Already passed edge, no need to pass it again
         JavaElementArrangementEntry dependentEntry = myMethodEntriesMap.get(dependentMethod);
-        if (dependentEntry == null) {
-          continue;
-        }
+        if (dependentEntry == null) continue;
         ArrangementEntryDependencyInfo dependentMethodInfo = cache.get(dependentMethod);
         if (dependentMethodInfo == null) {
           cache.put(dependentMethod, dependentMethodInfo = new ArrangementEntryDependencyInfo(dependentEntry));
         }
-        DependencyGraphEntry dependentGraphEntry = new DependencyGraphEntry(dependentMethod, dependentMethodInfo);
-        graphEntry.myDependencyInfo.addDependentEntryInfo(dependentMethodInfo);
-        toProcess.push(dependentGraphEntry);
+        Set<PsiMethod> dependentMethodDependencies = myMethodDependencies.get(dependentMethod);
+        if (dependentMethodDependencies == null) {
+          methodToStatus.put(dependentMethod, PASSED);
+        }
+        else {
+          frame.myDependencyInfo.addDependentEntryInfo(dependentMethodInfo);
+          toProcess.add(new Frame(dependentMethod, dependentMethodInfo, dependentMethodDependencies.iterator()));
+        }
       }
-      methodToStatus.put(currentMethod, PASSED);
+      else {
+        methodToStatus.put(currentMethod, PASSED);
+        toProcess.pop();
+      }
     }
     return result;
   }

@@ -415,6 +415,58 @@ public class Q {
     )
   }
 
+  void "test loop not touched"() {
+    doTest(
+            initial: '''
+public class Q {
+  void o() {
+    a();
+  }
+
+  void a() {
+    b();
+  }
+  
+  void b() {
+    c();
+    d();
+  }
+  
+  void c() {
+    a();
+    d();
+  }
+  
+  void d() {}
+
+}''',
+            expected: '''
+public class Q {
+  void o() {
+    a();
+  }
+
+  void a() {
+    b();
+  }
+  
+  void b() {
+    c();
+    d();
+  }
+  
+  void c() {
+    a();
+    d();
+  }
+  
+  void d() {}
+
+}''',
+            groups: [group(DEPENDENT_METHODS, BREADTH_FIRST)]
+    )
+  }
+
 
 
 
