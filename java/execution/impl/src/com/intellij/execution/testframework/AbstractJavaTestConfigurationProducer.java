@@ -115,6 +115,9 @@ public abstract class AbstractJavaTestConfigurationProducer<T extends JavaTestCo
 
     if (!isApplicableTestType(configuration.getTestType(), context)) return false;
 
+    PsiClass psiClass = PsiTreeUtil.getParentOfType(element, PsiClass.class);
+    if (psiClass != null && getCurrentFramework(psiClass) == null) return false;
+
     if (configuration.isConfiguredByElement(element)) {
       final Module configurationModule = configuration.getConfigurationModule().getModule();
       if (Comparing.equal(location.getModule(), configurationModule)) return true;
