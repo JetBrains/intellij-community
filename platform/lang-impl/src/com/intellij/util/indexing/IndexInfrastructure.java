@@ -44,6 +44,7 @@ import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.NoveltyImpl;
 import intellij.platform.onair.storage.api.Storage;
+import intellij.platform.onair.tree.MockStorage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -71,7 +72,7 @@ public class IndexInfrastructure {
   private IndexInfrastructure() {
   }
 
-  public static Storage storage;
+  public static Storage storage = new MockStorage();
 
   public static final Novelty indexNovelty;
 
