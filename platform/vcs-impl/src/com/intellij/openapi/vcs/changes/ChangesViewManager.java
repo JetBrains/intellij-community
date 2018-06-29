@@ -4,6 +4,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.diff.util.DiffPlaces;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.dnd.DnDEvent;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
@@ -97,6 +98,7 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
   @NotNull private final PropertyChangeListener myGroupingChangeListener;
   private MyChangeViewContent myContent;
   private boolean myModelUpdateInProgress;
+  private MyTreeExpander myTreeExpander;
 
   @NotNull
   public static ChangesViewI getInstance(@NotNull Project project) {
@@ -108,7 +110,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContentManager = contentManager;
     myVcsConfiguration = VcsConfiguration.getInstance(myProject);
     myView = new ChangesListView(project);
-    myView.setTreeExpander(new MyTreeExpander());
+    myTreeExpander = new MyTreeExpander();
+    myView.setTreeExpander(myTreeExpander);
     myRepaintAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, project);
     myTsl = new TreeSelectionListener() {
       @Override
@@ -145,9 +148,6 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     myContent.setHelpId(ChangesListView.HELP_ID);
     myContent.setCloseable(false);
     myContentManager.addContent(myContent);
-
-    myContentManager.addToolWindowTitleAction(myView.createExpandAllAction(true));
-    myContentManager.addToolWindowTitleAction(myView.createCollapseAllAction(true));
 
     scheduleRefresh();
     myProject.getMessageBus().connect().subscribe(RemoteRevisionsCache.REMOTE_VERSION_CHANGED,
@@ -191,7 +191,8 @@ public class ChangesViewManager implements ChangesViewI, ProjectComponent, Persi
     ignoreGroup.add(new ToggleShowIgnoredAction());
     ignoreGroup.add(new IgnoredSettingsAction());
     group.add(ignoreGroup);
-
+    group.add(CommonActionsManager.getInstance().createExpandAllHeaderAction(myTreeExpander, myView));
+    group.add(CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, myView));
     group.addSeparator();
     group.add(new ToggleDetailsAction());
 
