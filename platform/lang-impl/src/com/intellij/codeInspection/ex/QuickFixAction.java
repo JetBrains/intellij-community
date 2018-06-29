@@ -59,7 +59,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
   }
 
   protected QuickFixAction(String text, @NotNull InspectionToolWrapper toolWrapper) {
-    this(text, AllIcons.Actions.CreateFromUsage, null, toolWrapper);
+    this(text, AllIcons.Actions.IntentionBulb, null, toolWrapper);
   }
 
   protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionToolWrapper toolWrapper) {
@@ -282,7 +282,7 @@ public class QuickFixAction extends AnAction implements CustomComponentAction {
     final JButton button = new JButton(presentation.getText());
     Icon icon = presentation.getIcon();
     if (icon == null) {
-      icon = AllIcons.Actions.CreateFromUsage;
+      icon = AllIcons.Actions.IntentionBulb;
     }
     button.setEnabled(presentation.isEnabled());
     button.setIcon(IconLoader.getTransparentIcon(icon, 0.75f));
