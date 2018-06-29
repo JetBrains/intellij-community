@@ -167,7 +167,7 @@ public class MinusculeMatcher implements Matcher {
         matchingCase += evaluateCaseMatching(valuedStartMatch, p, humpStartMatchedUpperCase, i, afterGap, isHumpStart, c);
       }
 
-      errors += 100.0 * range.getErrorCount() / range.getLength();
+      errors += 2000.0 * Math.pow(1.0 * range.getErrorCount() / range.getLength(), 2);
     }
 
     int startIndex = first.getStartOffset();
@@ -384,6 +384,7 @@ public class MinusculeMatcher implements Matcher {
           return null;
         }
         Fragment fragment = seemsLikeFragmentStart(patternIndex, nameIndex, errorState) ? maxMatchingFragment(patternIndex, nameIndex, errorState) : null;
+        if (fragment == null) continue;
 
         // match the remaining pattern only if we haven't already seen fragment of the same (or bigger) length
         // because otherwise it means that we already tried to match remaining pattern letters after it with the remaining name and failed
@@ -442,6 +443,8 @@ public class MinusculeMatcher implements Matcher {
       }
 
       if (!myAllowTypos || !allowTypos) return false;
+
+      if (errorState.countErrors(0, patternIndex) > 1) return false;
 
       char leftMiss = myTypoService.leftMiss(patternChar);
       if (leftMiss != 0) {
@@ -527,6 +530,7 @@ public class MinusculeMatcher implements Matcher {
                                                    @NotNull ErrorState errorState) {
       if (patternIndex + fragmentLength >= patternLength(errorState)) {
         int errors = errorState.countErrors(patternIndex, patternIndex + fragmentLength);
+        if (errors == fragmentLength) return null;
         return FList.<Range>emptyList().prepend(new Range(nameIndex, nameIndex + fragmentLength, errors));
       }
 
@@ -539,6 +543,7 @@ public class MinusculeMatcher implements Matcher {
                               matchSkippingWords(patternIndex + i, nameIndex + i, false, derivedErrorState);
         if (ranges != null) {
           int errors = errorState.countErrors(patternIndex, patternIndex + i);
+          if (errors == i) return null;
           return prependRange(ranges, new Range(nameIndex, nameIndex + i, errors));
         }
       }
@@ -559,7 +564,9 @@ public class MinusculeMatcher implements Matcher {
         if (isUppercasePatternVsLowercaseNameChar(patternIndex + i, nameIndex + i, errorState)) {
           FList<Range> ranges = findUppercaseMatchFurther(patternIndex + i, nameIndex + i, errorState.deriveFrom(patternIndex + i));
           if (ranges != null) {
-            return prependRange(ranges, new Range(nameIndex, nameIndex + i, errorState.countErrors(patternIndex, patternIndex + i)));
+            int errors = errorState.countErrors(patternIndex, patternIndex + i);
+            if (errors == i) return null;
+            return prependRange(ranges, new Range(nameIndex, nameIndex + i, errors));
           }
         }
       }

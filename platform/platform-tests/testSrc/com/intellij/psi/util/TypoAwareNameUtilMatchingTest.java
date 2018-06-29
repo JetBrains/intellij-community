@@ -8,8 +8,13 @@ public class TypoAwareNameUtilMatchingTest extends NameUtilMatchingTestCase {
   }
 
   public void testFragmentWithBrokenFirstLetter() {
-    assertMatches("dova", "fooBar");
-    assertMatches("dova", "fooBqBar");
-    assertMatches("dova", "fooBqBar");
+    assertMatches("doba", "fooBar");
+    assertMatches("doba", "fooBqBar");
+    assertMatches("doba", "fooBqBar");
+    assertMatches("awnutil", "SwiftNameUtil");
+  }
+
+  public void testNoErrorOnlyFragments() {
+    assertDoesntMatch("foobar", "foovse");
   }
 }
