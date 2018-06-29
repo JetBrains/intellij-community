@@ -10,16 +10,22 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.io.URLUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URL;
+import java.util.Enumeration;
 import java.util.LinkedHashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.jar.JarFile;
 
 /**
  * @author nik
@@ -103,15 +109,17 @@ public class BuildProcessClasspathManager {
               }
             }
             // ... look for <jar-name> on the classpath, assuming that <jar-name> is an external (read: Maven) library
-            String classPath = System.getProperty("java.class.path");
-            if (!StringUtil.isEmpty(classPath)) {
-              for (String pathElement : StringUtil.split(classPath, File.pathSeparator)) {
-                if (relativePath.equals(PathUtil.getFileName(pathElement))) {
-                  classpath.add(pathElement);
+            try {
+              Enumeration<URL> urls = BuildProcessClasspathManager.class.getClassLoader().getResources(JarFile.MANIFEST_NAME);
+              while (urls.hasMoreElements()) {
+                Pair<String, String> parts = URLUtil.splitJarUrl(urls.nextElement().getFile());
+                if (parts != null && relativePath.equals(PathUtil.getFileName(parts.first))) {
+                  classpath.add(parts.first);
                   continue outer;
                 }
               }
             }
+            catch (IOException ignored) { }
           }
 
           LOG.error("Cannot add '" + relativePath + "' from '" + plugin.getName() + ' ' + plugin.getVersion() + "'" + " to compiler classpath");
