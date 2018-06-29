@@ -52,4 +52,38 @@ class ResolveLocalTest implements ResolveTest {
   void 'parameter from resource initializer'() {
     resolveTest 'def foo(param) { try (def a = <caret>param) {} }', GrParameter
   }
+
+  @Test
+  void 'for variable from for block'() {
+    resolveTest 'for (def e;;){ <caret>e }', GrVariable
+  }
+
+  @Test
+  void 'for variable from for condition'() {
+    resolveTest 'for (def e;<caret>e;){}', GrVariable
+  }
+
+  @Test
+  void 'for variable from for update'() {
+    resolveTest 'for (def e;;<caret>e){}', GrVariable
+  }
+
+  @Test
+  void 'for variable from for-each expression'() {
+    resolveTest 'for (e : <caret>e) {}', null
+    resolveTest 'for (e in <caret>e) {}', null
+  }
+
+  @Test
+  void 'for variable from for-each block'() {
+    resolveTest 'for (e : b) { <caret>e }', GrVariable
+    resolveTest 'for (e in b) { <caret>e }', GrVariable
+  }
+
+  @Test
+  void 'for variable after for'() {
+    resolveTest 'for (def e;;) {}; <caret>e', null
+    resolveTest 'for (e : b) {}; <caret>e', null
+    resolveTest 'for (e in b) {}; <caret>e', null
+  }
 }
