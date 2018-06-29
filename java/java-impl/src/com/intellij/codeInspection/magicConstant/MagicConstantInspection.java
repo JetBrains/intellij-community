@@ -691,17 +691,21 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     }
 
     PsiElement resolved = null;
+    AllowedValues allowedForRef = null;
     if (expression instanceof PsiReference) {
       resolved = ((PsiReference)expression).resolve();
     }
-    else if (expression instanceof PsiCallExpression) {
+    else if (expression instanceof PsiMethodCallExpression) {
+      allowedForRef = SPECIAL_CASES.mapFirst((PsiMethodCallExpression)expression);
       resolved = ((PsiCallExpression)expression).resolveMethod();
     }
 
-    AllowedValues allowedForRef;
-    if (resolved instanceof PsiModifierListOwner &&
-        (allowedForRef = getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), null)) != null &&
-        allowedForRef.isSubsetOf(allowedValues, manager)) return true;
+    if (allowedForRef == null && resolved instanceof PsiModifierListOwner) {
+      allowedForRef = getAllowedValues((PsiModifierListOwner)resolved, getType((PsiModifierListOwner)resolved), null);
+    }
+    if (allowedForRef != null && allowedForRef.isSubsetOf(allowedValues, manager)) {
+      return true;
+    }
 
     return PsiType.NULL.equals(expression.getType());
   }
@@ -734,9 +738,9 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
       return Comparing.equal(((PsiLiteralExpression)e1).getValue(), ((PsiLiteralExpression)e2).getValue());
     }
     if (e1 instanceof PsiPrefixExpression && e2 instanceof PsiPrefixExpression && ((PsiPrefixExpression)e1).getOperationTokenType() == ((PsiPrefixExpression)e2).getOperationTokenType()) {
-      PsiExpression loperand = ((PsiPrefixExpression)e1).getOperand();
-      PsiExpression roperand = ((PsiPrefixExpression)e2).getOperand();
-      return loperand != null && roperand != null && same(loperand, roperand, manager);
+      PsiExpression lOperand = ((PsiPrefixExpression)e1).getOperand();
+      PsiExpression rOperand = ((PsiPrefixExpression)e2).getOperand();
+      return lOperand != null && rOperand != null && same(lOperand, rOperand, manager);
     }
     if (e1 instanceof PsiReference && e2 instanceof PsiReference) {
       e1 = ((PsiReference)e1).resolve();
@@ -758,7 +762,7 @@ public class MagicConstantInspection extends AbstractBaseJavaLocalInspectionTool
     Collection<? extends AbstractTreeNode> children = rootNode.getChildren().iterator().next().getChildren();
     for (AbstractTreeNode child : children) {
       SliceUsage usage = (SliceUsage)child.getValue();
-      PsiElement element = usage.getElement();
+      PsiElement element = usage != null ? usage.getElement() : null;
       if (element instanceof PsiExpression && !processor.process((PsiExpression)element)) return false;
     }
 
