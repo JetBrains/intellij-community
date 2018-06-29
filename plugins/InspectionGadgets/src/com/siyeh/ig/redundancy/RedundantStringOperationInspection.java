@@ -239,7 +239,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
       CommentTracker ct = new CommentTracker();
       switch (myFixType) {
         case REPLACE_WITH_QUALIFIER: {
-          PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+          PsiExpression result = (PsiExpression)ct.replaceAndRestoreComments(call, qualifier);
           if (result.getParent() instanceof PsiExpressionStatement) {
             extractSideEffects(result, (PsiExpressionStatement)result.getParent());
           }
@@ -251,7 +251,7 @@ public class RedundantStringOperationInspection extends AbstractBaseJavaLocalIns
           for (PsiExpression arg : call.getArgumentList().getExpressions()) {
             list.add(ct.markUnchanged(arg));
           }
-          ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+          ct.replaceAndRestoreComments(call, qualifier);
           break;
       }
     }

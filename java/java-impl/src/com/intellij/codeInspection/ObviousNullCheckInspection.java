@@ -131,7 +131,7 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
         }
         ct.deleteAndRestoreComments(parent);
       } else {
-        ct.replaceAndRestoreComments(call, ct.markUnchanged(startElement));
+        ct.replaceAndRestoreComments(call, startElement);
       }
     }
   }

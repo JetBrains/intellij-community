@@ -94,7 +94,7 @@ public class SimplifiableIfStatementInspection extends AbstractBaseJavaLocalInsp
       if (!PsiTreeUtil.isAncestor(ifStatement, model.myElseBranch, true)) {
         commentTracker.delete(model.myElseBranch);
       }
-      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, commentTracker.markUnchanged(model.myThenBranch));
+      PsiElement result = commentTracker.replaceAndRestoreComments(ifStatement, model.myThenBranch);
       tryJoinDeclaration(result);
     }
 

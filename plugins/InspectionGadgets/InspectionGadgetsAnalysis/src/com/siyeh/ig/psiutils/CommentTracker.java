@@ -20,7 +20,7 @@ import java.util.function.Predicate;
  *
  * @author Tagir Valeev
  */
-public class CommentTracker {
+public final class CommentTracker {
   private final Set<PsiElement> ignoredParents = new HashSet<>();
   private List<PsiComment> comments = new ArrayList<>();
 
@@ -167,10 +167,11 @@ public class CommentTracker {
    * Replaces given PsiElement collecting all the comments inside it.
    *
    * @param element     element to replace
-   * @param replacement replacement element
+   * @param replacement replacement element. It's also marked as unchanged (see {@link #markUnchanged(PsiElement)})
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replace(@NotNull PsiElement element, @NotNull PsiElement replacement) {
+    markUnchanged(replacement);
     grabComments(element);
     return element.replace(replacement);
   }
@@ -201,7 +202,7 @@ public class CommentTracker {
    * <p>After calling this method the tracker cannot be used anymore.</p>
    *
    * @param element     element to replace
-   * @param replacement replacement element
+   * @param replacement replacement element. It's also marked as unchanged (see {@link #markUnchanged(PsiElement)})
    * @return the element which was actually inserted in the tree (either {@code replacement} or its copy)
    */
   public @NotNull PsiElement replaceAndRestoreComments(@NotNull PsiElement element, @NotNull PsiElement replacement) {

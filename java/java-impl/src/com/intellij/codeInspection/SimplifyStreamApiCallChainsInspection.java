@@ -1266,7 +1266,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
         ct.replace(arg, replacement);
       }
       ExpressionUtils.bindCallTo(qualifier, name);
-      return ct.replaceAndRestoreComments(call, ct.markUnchanged(qualifier));
+      return ct.replaceAndRestoreComments(call, qualifier);
     }
 
     static CallHandler<CallChainSimplification> handler() {

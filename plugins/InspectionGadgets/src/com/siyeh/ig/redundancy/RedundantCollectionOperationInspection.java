@@ -175,7 +175,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
         PsiPolyadicExpression conjunction = (PsiPolyadicExpression)parent;
         PsiExpression[] conjuncts = conjunction.getOperands();
         if (conjuncts.length == 2) {
-          ct.replaceAndRestoreComments(parent, ct.markUnchanged(conjuncts[0]));
+          ct.replaceAndRestoreComments(parent, conjuncts[0]);
         } else {
           PsiExpression lastConjunct = conjuncts[conjuncts.length-1];
           PsiJavaToken token = conjunction.getTokenBeforeOperand(lastConjunct);
@@ -189,7 +189,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
         PsiIfStatement ifStatement = (PsiIfStatement)parent;
         PsiExpressionStatement thenBody = tryCast(ControlFlowUtils.stripBraces(ifStatement.getThenBranch()), PsiExpressionStatement.class);
         if (thenBody == null) return;
-        ct.replaceAndRestoreComments(ifStatement, ct.markUnchanged(thenBody));
+        ct.replaceAndRestoreComments(ifStatement, thenBody);
       }
     }
 
@@ -352,8 +352,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       PsiExpression singletonArg = ArrayUtil.getFirstElement(singleton.getArgumentList().getExpressions());
       if (singletonArg == null) return;
       ExpressionUtils.bindCallTo(call, "contains");
-      CommentTracker ct = new CommentTracker();
-      ct.replaceAndRestoreComments(arg, ct.markUnchanged(singletonArg));
+      new CommentTracker().replaceAndRestoreComments(arg, singletonArg);
     }
 
     public static RedundantCollectionOperationHandler handler(PsiMethodCallExpression call) {
@@ -426,7 +425,7 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
           typeElement.replace(JavaPsiFacade.getElementFactory(project).createTypeElement(elementType.createArrayType()));
         }
       }
-      ct.replaceAndRestoreComments(call, ct.markUnchanged(args[0]));
+      ct.replaceAndRestoreComments(call, args[0]);
     }
 
     static RedundantAsListForIterationHandler handler(PsiMethodCallExpression call) {
@@ -480,9 +479,8 @@ public class RedundantCollectionOperationInspection extends AbstractBaseJavaLoca
       if (myCollectionsSort) {
         PsiMethodCallExpression outerCall = PsiTreeUtil.getParentOfType(call, PsiMethodCallExpression.class);
         if (outerCall == null) return;
+        new CommentTracker().replaceAndRestoreComments(call, array);
         CommentTracker ct = new CommentTracker();
-        ct.replaceAndRestoreComments(call, ct.markUnchanged(array));
-        ct = new CommentTracker();
         ct.replaceAndRestoreComments(outerCall, sortMethod + ct.text(outerCall.getArgumentList()));
       }
       else {

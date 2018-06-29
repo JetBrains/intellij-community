@@ -96,7 +96,6 @@ public class ConditionalCanBePushedInsideExpressionInspection extends BaseInspec
       ParenthesesUtils.removeParentheses((PsiExpression)replacedConditionalExpression, false);
       CommentTracker commentTracker = new CommentTracker();
       commentTracker.markUnchanged(conditionalExpression.getCondition());
-      commentTracker.markUnchanged(thenExpression);
       commentTracker.replaceAndRestoreComments(conditionalExpression, thenExpression);
     }
   }
