@@ -261,27 +261,27 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private char charAt(int i, @NotNull ErrorState errorState) {
-      return errorState.hasErrors(i) ? errorState.getPattern(myPattern)[i] : myPattern[i];
+      return errorState.affects(i) ? errorState.getPattern(myPattern)[i] : myPattern[i];
     }
 
     private char toLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.hasErrors(i) ? toLowerAscii(errorState.getPattern(myPattern)[i]) : toLowerCase[i];
+      return errorState.affects(i) ? toLowerAscii(errorState.getPattern(myPattern)[i]) : toLowerCase[i];
     }
 
     private char toUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.hasErrors(i) ? toUpperAscii(errorState.getPattern(myPattern)[i]) : toUpperCase[i];
+      return errorState.affects(i) ? toUpperAscii(errorState.getPattern(myPattern)[i]) : toUpperCase[i];
     }
 
     private boolean isLowerCase(int i, @NotNull ErrorState errorState) {
-      return errorState.hasErrors(i) ? isLowerAscii(errorState.getPattern(myPattern)[i]) : isLowerCase[i];
+      return errorState.affects(i) ? isLowerAscii(errorState.getPattern(myPattern)[i]) : isLowerCase[i];
     }
 
     private boolean isUpperCase(int i, @NotNull ErrorState errorState) {
-      return errorState.hasErrors(i) ? isUpperAscii(errorState.getPattern(myPattern)[i]) : isUpperCase[i];
+      return errorState.affects(i) ? isUpperAscii(errorState.getPattern(myPattern)[i]) : isUpperCase[i];
     }
 
     private boolean isWordSeparator(int i, @NotNull ErrorState errorState) {
-      return errorState.hasErrors(i) ? MinusculeMatcher.isWordSeparator(errorState.getPattern(myPattern)[i]) : isWordSeparator[i];
+      return errorState.affects(i) ? MinusculeMatcher.isWordSeparator(errorState.getPattern(myPattern)[i]) : isWordSeparator[i];
     }
 
     private int patternLength(@NotNull ErrorState errorState) {
@@ -807,7 +807,7 @@ public class MinusculeMatcher implements Matcher {
       }
     }
 
-    public boolean hasErrors(int index) {
+    public boolean affects(int index) {
       //todo optimize
       if (myErrors != null) {
         for (Pair<Integer, Error> error : myErrors) {
@@ -820,7 +820,7 @@ public class MinusculeMatcher implements Matcher {
       }
 
       if (myBase != null && myDeriveIndex > index) {
-        return myBase.hasErrors(index);
+        return myBase.affects(index);
       }
 
       return false;
