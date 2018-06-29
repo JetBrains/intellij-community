@@ -26,13 +26,14 @@ public abstract class ClassFileSymbol {
     public boolean equals(Object o) {
       if (this == o) return true;
       if (!(o instanceof FieldOrMethod)) return false;
+      if (!super.equals(o)) return false;
       FieldOrMethod method = (FieldOrMethod)o;
       return containingClass == method.containingClass;
     }
 
     @Override
     public int hashCode() {
-      return Objects.hash(containingClass);
+      return Objects.hash(super.hashCode(), containingClass);
     }
   }
 
