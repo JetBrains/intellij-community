@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package git4idea.editorConflicts.intentions
 
+import com.intellij.codeInsight.intention.LowPriorityAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
 import com.intellij.openapi.fileEditor.FileDocumentManager
@@ -11,7 +12,7 @@ import git4idea.commands.Git
 import git4idea.commands.GitCommand
 import git4idea.commands.GitLineHandler
 
-class RestoreOriginalConflictsAction(element: PsiElement) : ConflictsIntention(element, "Restore original conflicts") {
+class RestoreOriginalConflictsAction(element: PsiElement) : ConflictsIntention(element, "Restore original conflicts"), LowPriorityAction {
   override fun doInvoke(project: Project, editor: Editor, d: Document, marker: PsiElement) {
     val file = marker.containingFile.virtualFile ?: return
     val repo = GitUtil.getRepositoryManager(marker.project).getRepositoryForFile(marker.containingFile.virtualFile) ?: return

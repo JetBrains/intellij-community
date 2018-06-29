@@ -7,12 +7,14 @@
 [+] Hyperlinks to log
 [+] Revert conflicts
    [ ] revert single conflict
-[ ] Lighter font on markers
-[ ] Java support
-[ ] "What happens" diagram
-[ ] Real-world examples
-[ ] Presentation
+[+] Java support
+[ ] Aesthetics
+[ ] remove "file" part after conflict marker
+[?] Real-world examples
+[?] Presentation
+
 [ ] Highlight taken chunk
+[ ] "What happens" diagram
 [ ] Fold contents
 [ ] annotate inside conflicts
 

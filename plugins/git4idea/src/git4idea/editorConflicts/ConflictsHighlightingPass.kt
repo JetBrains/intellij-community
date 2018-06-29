@@ -57,9 +57,7 @@ class ConflictsHighlightingPass(val file: PsiFile, document: Document) : TextEdi
 
   private fun getIntentionActions(element: PsiElement) = listOf(
     SetActiveIntentionAction(element),
-    TakeThisIntentionAction(element),
-    TakeBothIntentionAction(element),
-    TakeNoneIntentionAction(element),
+    TakeIntentionAction(element),
     CompareChangesAction(element),
     RestoreOriginalConflictsAction(element)
   )

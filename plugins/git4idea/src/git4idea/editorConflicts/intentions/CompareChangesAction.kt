@@ -11,24 +11,17 @@ import com.intellij.diff.util.DiffUserDataKeysEx
 import com.intellij.lang.EditorConflictSupport
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
-import com.intellij.openapi.editor.colors.EditorColors
-import com.intellij.openapi.editor.colors.EditorColorsManager
-import com.intellij.openapi.editor.markup.HighlighterLayer
-import com.intellij.openapi.editor.markup.HighlighterTargetArea
-import com.intellij.openapi.editor.markup.RangeHighlighter
-import com.intellij.openapi.editor.markup.TextAttributes
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.ui.popup.JBPopupAdapter
 import com.intellij.openapi.ui.popup.JBPopupFactory
 import com.intellij.openapi.ui.popup.LightweightWindowEvent
-import com.intellij.openapi.util.TextRange
 import com.intellij.openapi.vcs.*
 import com.intellij.psi.PsiElement
 import com.intellij.psi.SmartPointerManager
 import com.intellij.psi.SmartPsiElementPointer
 import javax.swing.ListSelectionModel
 
-class CompareChangesAction(element: PsiElement) : ConflictsIntention(element, "Compare with...") {
+class CompareChangesAction(element: PsiElement) : ConflictsIntention(element, "Compare...") {
   override fun doInvoke(project: Project, editor: Editor, d: Document, marker: PsiElement) {
     getOtherMarkerAndRun(marker, editor) { thisMarker, otherMarker ->
       val nextForThis = getNextMarker(thisMarker) ?: return@getOtherMarkerAndRun
@@ -92,7 +85,7 @@ class CompareChangesAction(element: PsiElement) : ConflictsIntention(element, "C
         if (it != null && !editor.isDisposed) {
           val marker = it.elementPtr.element ?: return@setItemSelectedCallback
           val nextMarker = getNextMarker(marker) ?: return@setItemSelectedCallback
-          highlighter.highlight(getSectionInnerRange(marker, nextMarker, editor.document))
+          highlighter.highlight(listOf(getSectionInnerRange(marker, nextMarker, editor.document)))
         }
       }
       .addListener(object : JBPopupAdapter() {
@@ -106,27 +99,3 @@ class CompareChangesAction(element: PsiElement) : ConflictsIntention(element, "C
   }
 }
 
-private class Highlighter(private val myEditor: Editor) {
-  private var myActiveHighlighter: RangeHighlighter? = null
-
-  fun highlight(range: TextRange) {
-    dropHighlight()
-    addHighlighter(range)
-  }
-
-  private fun addHighlighter(r: TextRange) {
-    myActiveHighlighter = myEditor.markupModel.addRangeHighlighter(r.startOffset, r.endOffset, HighlighterLayer.ADDITIONAL_SYNTAX,
-                                                                   getAttributes(),
-                                                                   HighlighterTargetArea.EXACT_RANGE)
-  }
-
-  private fun getAttributes(): TextAttributes? {
-    val manager = EditorColorsManager.getInstance()
-    return manager.globalScheme.getAttributes(EditorColors.DELETED_TEXT_ATTRIBUTES)
-  }
-
-  fun dropHighlight() {
-    myActiveHighlighter?.dispose()
-    myActiveHighlighter = null
-  }
-}
