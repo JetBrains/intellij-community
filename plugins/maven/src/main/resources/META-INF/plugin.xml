@@ -74,7 +74,7 @@
 
     <junitPatcher implementation="org.jetbrains.idea.maven.execution.MavenJUnitPatcher" />
 
-    <compileServer.plugin classpath="maven-jps-plugin.jar;maven3/lib/plexus-utils-2.0.6.jar"/>
+    <compileServer.plugin classpath="maven-jps-plugin.jar;plexus-utils-2.0.6.jar"/>
 
     <languageInjector implementation="org.jetbrains.idea.maven.plugins.api.MavenPluginConfigurationLanguageInjector"/>
 
