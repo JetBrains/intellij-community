@@ -20,9 +20,9 @@ class ReviewListItem(review: Review, preferredLanguage: TID?) : JComponentBasedL
 
     private val panel = JPanel(GridLayoutManager(1, 4))
     private val id = JBLabel("#${review.id}")
-    private val title = JBLabel(review.title)
+    private val title = JBLabelWithSizeCheckingToolTip(review.title)
     private val timestamp = JBLabel(review.timestamp.toString())
-    private val createdBy = JBLabel(review.createdBy.fullname(preferredLanguage))
+    private val createdBy = JBLabelWithSizeCheckingToolTip(review.createdBy.fullname(preferredLanguage))
 
     init {
         panel.border = JBUI.Borders.empty(4)
@@ -77,6 +77,10 @@ class ReviewListItem(review: Review, preferredLanguage: TID?) : JComponentBasedL
     override fun onLookAndFeelChanged() {
         updateSelected()
     }
+}
+
+private class JBLabelWithSizeCheckingToolTip(text: String) : JBLabel(text) {
+    override fun getToolTipText(): String? = super.getToolTipText().takeIf { preferredSize.width > size.width }
 }
 
 private fun createFixedSizeGridConstraints(column: Int, size: JBDimension) =
