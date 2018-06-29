@@ -19,6 +19,7 @@
  */
 package com.intellij.util.indexing;
 
+import com.google.gson.GsonBuilder;
 import com.intellij.onair.index.BTreeIndexStorage;
 import com.intellij.onair.index.BTreeIntPersistentMap;
 import com.intellij.openapi.application.Application;
@@ -38,6 +39,7 @@ import com.intellij.util.concurrency.SequentialTaskExecutor;
 import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMap;
+import intellij.platform.onair.storage.StorageImpl;
 import intellij.platform.onair.storage.api.Address;
 import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.NoveltyImpl;
@@ -46,15 +48,14 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.net.InetSocketAddress;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.concurrent.Callable;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.ExecutorService;
-import java.util.concurrent.Future;
+import java.util.Map;
+import java.util.concurrent.*;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class IndexInfrastructure {
@@ -70,21 +71,7 @@ public class IndexInfrastructure {
   private IndexInfrastructure() {
   }
 
-  public static final Storage indexStorage = new Storage() {
-    @Override
-    public byte[] lookup(@NotNull Address address) {
-      return null;
-    }
-
-    @Override
-    public Address alloc(@NotNull byte[] what) {
-      throw new UnsupportedOperationException();
-    }
-
-    @Override
-    public void store(@NotNull Address address, @NotNull byte[] bytes) {
-    }
-  };
+  public static Storage storage;
 
   public static final Novelty indexNovelty;
 
@@ -97,16 +84,83 @@ public class IndexInfrastructure {
     }
   }
 
+  public static ConcurrentHashMap<String, BTreeIndexStorage> indexStorages = new ConcurrentHashMap<>();
+  public static ConcurrentHashMap<String, BTreeIntPersistentMap> forwardStorages = new ConcurrentHashMap<>();
+
+  public static Map downloadIndexMetaData(String revision) {
+    String bucket = "onair-index-data";
+    String region = "eu-central-1";
+
+    try {
+      return new GsonBuilder().create().fromJson(new DataInputStream(new URL(
+        "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/meta").openStream()).readUTF(), Map.class);
+    }
+    catch (Exception e) {
+      throw new RuntimeException("exception downloading index data for revision " + revision, e);
+    }
+  }
+
+  public static Map indexMeta = null;
+
+  static {
+    String revision = System.getProperty("onair.revision");
+
+    if (revision != null && !revision.trim().isEmpty()) {
+      indexMeta = downloadIndexMetaData(revision);
+      try {
+        storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
+      }
+      catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+    }
+  }
+
   public static <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
                                                                      KeyDescriptor<K> keyDescriptor,
                                                                      DataExternalizer<V> valueExternalizer,
                                                                      int cacheSize) {
-    return new BTreeIndexStorage<>(keyDescriptor, valueExternalizer, indexStorage, indexNovelty, null, cacheSize, 15, -1);
+    BTreeIndexStorage.AddressPair address;
+    int newRevision = 17;
+    int baseRevision = -1;
+    if (indexMeta != null) {
+      Map m = (Map)(((Map)indexMeta.get("inverted-indices")).get(indexId.getName()));
+      List invertedAddr = (List)m.get("inverted");
+      List internaryAddr = (List)m.get("internary");
+      Address internary = internaryAddr != null ? new Address(Long.parseLong((String)internaryAddr.get(1)),
+                                                              Long.parseLong((String)internaryAddr.get(0))) : null;
+      address = new BTreeIndexStorage.AddressPair(internary, new Address(Long.parseLong((String)invertedAddr.get(1)),
+                                                                         Long.parseLong((String)invertedAddr.get(0))));
+      baseRevision = Integer.parseInt((String)indexMeta.get("revision-int"));
+    } else {
+      address = null;
+    }
+    BTreeIndexStorage<K, V> storage =
+      new BTreeIndexStorage<>(keyDescriptor,
+                              valueExternalizer,
+                              IndexInfrastructure.storage,
+                              indexNovelty,
+                              address,
+                              cacheSize,
+                              newRevision,
+                              baseRevision);
+    indexStorages.put(indexId.getName(), storage);
+    return storage;
   }
 
   public static <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId,
                                                                         DataExternalizer<V> valueExternalizer) {
-    return new BTreeIntPersistentMap<>(valueExternalizer, indexStorage, indexNovelty, null);
+
+    Address head = null;
+    if (indexMeta != null) {
+      List addr = (List)((Map)(indexMeta.get("forward-indices"))).get(indexId.getName());
+
+      head = new Address(Long.parseLong((String)addr.get(1)),
+                         Long.parseLong((String)addr.get(0)));
+    }
+    BTreeIntPersistentMap<V> map = new BTreeIntPersistentMap<>(valueExternalizer, storage, indexNovelty, head);
+    forwardStorages.put(indexId.getName(), map);
+    return map;
   }
 
   @NotNull
