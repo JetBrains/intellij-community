@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
@@ -29,6 +28,7 @@ import com.intellij.openapi.wm.IdeGlassPaneUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.ui.ColorUtil;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.UIBundle;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.components.JBOptionButton;
@@ -44,14 +44,12 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.swing.SwingUtilities2;
 
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
 import javax.swing.plaf.UIResource;
-import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
 import java.util.List;
@@ -195,9 +193,6 @@ public abstract class DialogWrapper {
   private ErrorText myErrorText;
 
   private final Alarm myErrorTextAlarm = new Alarm();
-
-  public static final Color BALLOON_ERROR_BORDER = new JBColor(new Color(0xe0a8a9), new Color(0x73454b));
-  public static final Color BALLOON_ERROR_BACKGROUND = new JBColor(new Color(0xf5e6e7), new Color(0x593d41));
 
   public static final Color BALLOON_WARNING_BORDER = new JBColor(new Color(0xcca869), new Color(0x4e452f));
   public static final Color BALLOON_WARNING_BACKGROUND = new JBColor(new Color(0xf9f4ee), new Color(0x594e32));
@@ -364,7 +359,7 @@ public abstract class DialogWrapper {
   }
 
   protected void updateErrorInfo(@NotNull List<ValidationInfo> info) {
-    boolean updateNeeded = Registry.is("ide.inplace.errors.balloon") ?
+    boolean updateNeeded = Registry.is("ide.inplace.validation.tooltip") ?
                            !myInfo.equals(info) : !myErrorText.isTextSet(info);
 
     if (updateNeeded) {
@@ -372,7 +367,7 @@ public abstract class DialogWrapper {
         if (myDisposed) return;
         setErrorInfoAll(info);
         myPeer.getRootPane().getGlassPane().repaint();
-        getOKAction().setEnabled(info.isEmpty() || info.stream().noneMatch(info1 -> info1.disableOk));
+        getOKAction().setEnabled(info.isEmpty() || info.stream().allMatch(info1 -> info1.okEnabled));
       });
     }
   }
@@ -1856,12 +1851,12 @@ public abstract class DialogWrapper {
           IdeFocusManager.getInstance(null).requestFocus(info.component, true);
         }
 
-        if (!Registry.is("ide.inplace.errors.balloon")) {
+        if (!Registry.is("ide.inplace.validation.tooltip")) {
           DialogEarthquakeShaker.shake(getPeer().getWindow());
         }
 
         startTrackingValidation();
-        if(infoList.stream().anyMatch(info1 -> info1.disableOk)) return;
+        if(infoList.stream().anyMatch(info1 -> !info1.okEnabled)) return;
       }
       doOKAction();
     }
@@ -1967,76 +1962,30 @@ public abstract class DialogWrapper {
     }
 
     List<ValidationInfo> corrected = myInfo.stream().filter((vi) -> !info.contains(vi)).collect(Collectors.toList());
-    if (Registry.is("ide.inplace.errors.outline")) {
-      corrected.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-            forEach(vi -> vi.component.putClientProperty("JComponent.outline", null));
-    }
-
-    if (Registry.is("ide.inplace.errors.balloon")) {
-      corrected.stream().filter(vi -> vi.component != null).forEach(vi -> {
-        vi.component.putClientProperty("JComponent.error.balloon.builder", null);
-
-        Balloon balloon = (Balloon)vi.component.getClientProperty("JComponent.error.balloon");
-        if (balloon != null && !balloon.isDisposed()) {
-          balloon.hide();
-        }
-
-        Component fc = getFocusable(vi.component);
-        if (fc != null) {
-          for (FocusListener fl : fc.getFocusListeners()) {
-            if (fl instanceof ErrorFocusListener) {
-              fc.removeFocusListener(fl);
-            }
-          }
-        }
-      });
+    if (Registry.is("ide.inplace.validation.tooltip")) {
+      corrected.stream().filter(vi -> vi.component != null).
+        map(vi -> ComponentValidator.getInstance(vi.component)).
+        filter(c -> c != null).
+        forEach(c -> c.reset());
     }
 
     myInfo = info;
 
-    if (Registry.is("ide.inplace.errors.outline")) {
-      myInfo.stream().filter(vi -> (vi.component != null && vi.component.getBorder() instanceof ErrorBorderCapable)).
-        forEach(vi -> vi.component.putClientProperty("JComponent.outline", "error"));
-    }
-
-    if (Registry.is("ide.inplace.errors.balloon") && !myInfo.isEmpty()) {
-      for (ValidationInfo vi : myInfo) {
-        Component fc = getFocusable(vi.component);
-        if (fc != null && fc.isFocusable()) {
-          if (vi.component.getClientProperty("JComponent.error.balloon.builder") == null) {
-            JLabel label = new JLabel();
-            label.setHorizontalAlignment(SwingConstants.LEADING);
-            setErrorTipText(vi.component, label, vi.message);
-
-            BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(label)
-              .setDisposable(getDisposable())
-              .setBorderInsets(UIManager.getInsets("Balloon.error.textInsets"))
-              .setPointerSize(new JBDimension(17, 6))
-              .setCornerToPointerDistance(JBUI.scale(30))
-              .setHideOnKeyOutside(false)
-              .setHideOnClickOutside(false)
-              .setHideOnAction(false)
-              .setBorderColor(BALLOON_ERROR_BORDER)
-              .setFillColor(BALLOON_ERROR_BACKGROUND)
-              .setHideOnFrameResize(false)
-              .setRequestFocus(false)
-              .setAnimationCycle(100)
-              .setShadow(true);
-
-            vi.component.putClientProperty("JComponent.error.balloon.builder", balloonBuilder);
-
-            ErrorFocusListener fl = new ErrorFocusListener(label, vi.message, vi.component);
-            if (fc.hasFocus()) {
-              fl.showErrorTip();
-            }
-
-            fc.addFocusListener(fl);
-            Disposer.register(getDisposable(), () -> fc.removeFocusListener(fl));
+    if (Registry.is("ide.inplace.validation.tooltip") && !myInfo.isEmpty()) {
+      myInfo.forEach(vi -> {
+        if (vi.component != null) {
+          ComponentValidator v = ComponentValidator.getInstance(vi.component);
+          if (v == null) {
+            v = new ComponentValidator(getDisposable()).installOn(vi.component);
           }
-        } else {
-          SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+          if (v != null) {
+            v.updateInfo(vi);
+            return;
+          }
         }
-      }
+
+        SwingUtilities.invokeLater(() -> myErrorText.appendError(vi.message));
+      });
     } else if (!myInfo.isEmpty()) {
       Runnable updateErrorTextRunnable = () -> {
         for (ValidationInfo vi: myInfo) {
@@ -2056,24 +2005,7 @@ public abstract class DialogWrapper {
    * Check if component is in error state validation-wise
    */
   protected boolean hasErrors(@NotNull JComponent component) {
-    return myInfo.stream().anyMatch(i -> component.equals(i.component));
-  }
-
-  private void setErrorTipText(JComponent component, JLabel label, String text) {
-    Insets insets = UIManager.getInsets("Balloon.error.textInsets");
-    int oneLineWidth = SwingUtilities2.stringWidth(label, label.getFontMetrics(label.getFont()), text);
-    int textWidth = getRootPane().getWidth() - component.getX() - insets.left - insets.right - JBUI.scale(30);
-    if (textWidth < JBUI.scale(90)) textWidth = JBUI.scale(90);
-    if (textWidth > oneLineWidth) textWidth = oneLineWidth;
-
-    String htmlText = String.format("<html><div width=%d>%s</div></html>", textWidth, text);
-    label.setText(htmlText);
-  }
-
-  private Component getFocusable(Component source) {
-    return source instanceof JComboBox && !((JComboBox)source).isEditable() ?
-           source :
-           UIUtil.uiTraverser(source).filter(c -> c instanceof JTextComponent && c.isFocusable()).toList().stream().findFirst().orElse(null);
+    return myInfo.stream().anyMatch(i -> component.equals(i.component) && !i.warning);
   }
 
   private void updateSize() {
@@ -2328,90 +2260,6 @@ public abstract class DialogWrapper {
 
     private void setValidationInfo(@NotNull List<ValidationInfo> info) {
       this.info = info;
-    }
-  }
-
-  private static class ErrorTipTracker extends PositionTracker<Balloon> {
-    private final int y;
-
-    private ErrorTipTracker(JComponent component, int y) {
-      super(component);
-      this.y = y;
-    }
-
-    @Override public RelativePoint recalculateLocation(Balloon balloon) {
-      int width = getComponent().getWidth();
-      int delta = width < JBUI.scale(120) ? width / 2 : JBUI.scale(60);
-      return new RelativePoint(getComponent(), new Point(delta, y));
-    }
-  }
-
-  private class ErrorFocusListener implements FocusListener {
-    private final JLabel     label;
-    private final String     text;
-    private final JComponent component;
-
-    private ErrorFocusListener(JLabel label, String text, JComponent component) {
-      this.label = label;
-      this.text = text;
-      this.component = component;
-    }
-
-    @Override public void focusGained(FocusEvent e) {
-      Balloon b = (Balloon)component.getClientProperty("JComponent.error.balloon");
-      if (b == null || b.isDisposed()) {
-        showErrorTip();
-      }
-    }
-
-    @Override public void focusLost(FocusEvent e) {
-      Balloon b = (Balloon)component.getClientProperty("JComponent.error.balloon");
-      if (b != null && !b.isDisposed()) {
-        b.hide();
-      }
-    }
-
-    private void showErrorTip() {
-      BalloonBuilder balloonBuilder = (BalloonBuilder)component.getClientProperty("JComponent.error.balloon.builder");
-      if (balloonBuilder == null) return;
-
-      Balloon balloon = balloonBuilder.createBalloon();
-
-      ComponentListener rl = new ComponentAdapter() {
-        @Override public void componentResized(ComponentEvent e) {
-          if (!balloon.isDisposed()) {
-            setErrorTipText(component, label, text);
-            balloon.revalidate();
-          }
-        }
-      };
-
-      balloon.addListener(new JBPopupListener() {
-        @Override public void onClosed(@NotNull LightweightWindowEvent event) {
-          JRootPane rootPane = getRootPane();
-          if (rootPane != null) {
-            rootPane.removeComponentListener(rl);
-          }
-
-          if (component.getClientProperty("JComponent.error.balloon") == event.asBalloon()) {
-            component.putClientProperty("JComponent.error.balloon", null);
-          }
-        }
-      });
-
-      getRootPane().addComponentListener(rl);
-
-      Point componentPos = SwingUtilities.convertPoint(component, 0, 0, getRootPane().getLayeredPane());
-      Dimension bSize = balloon.getPreferredSize();
-
-      Insets cInsets = component.getInsets();
-      int top =  cInsets != null ? cInsets.top : 0;
-      if (componentPos.y >= bSize.height + top) {
-        balloon.show(new ErrorTipTracker(component, 0), Balloon.Position.above);
-      } else {
-        balloon.show(new ErrorTipTracker(component, component.getHeight()), Balloon.Position.below);
-      }
-      component.putClientProperty("JComponent.error.balloon", balloon);
     }
   }
 

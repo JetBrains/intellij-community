@@ -284,10 +284,10 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
         is LoginNotUniqueException -> ValidationInfo("Account already added", loginTextField)
-        is UnknownHostException -> ValidationInfo("Server is unreachable", false)
-        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
+        is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials.").withOKEnabled()
         is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-        else -> ValidationInfo("Invalid authentication data.\n ${error.message}", false)
+        else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
     }
 
@@ -332,11 +332,11 @@ class GithubLoginDialog @JvmOverloads constructor(private val executorFactory: G
 
     override fun handleAcquireError(error: Throwable): ValidationInfo {
       return when (error) {
-        is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added", false)
-        is UnknownHostException -> ValidationInfo("Server is unreachable", false)
-        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials.", false)
+        is LoginNotUniqueException -> ValidationInfo("Account ${error.login} already added").withOKEnabled()
+        is UnknownHostException -> ValidationInfo("Server is unreachable").withOKEnabled()
+        is GithubAuthenticationException -> ValidationInfo("Incorrect credentials.").withOKEnabled()
         is GithubParseException -> ValidationInfo(error.message ?: "Invalid server path", serverTextField)
-        else -> ValidationInfo("Invalid authentication data.\n ${error.message}", false)
+        else -> ValidationInfo("Invalid authentication data.\n ${error.message}").withOKEnabled()
       }
     }
 
