@@ -92,6 +92,7 @@ public class PwaBuilder extends BaseInstrumentingBuilder {
       public MethodVisitor visitMethod(int access, String name, String desc, String signature, String[] exceptions) {
         ClassFileSymbol.Method myMethod = new ClassFileSymbol.Method(indexWriter.enumerateName(name), myCurrentClassId.name, Type.getArgumentTypes(desc).length);
         classFileData.defs.put(myMethod, null);
+        classFileData.usagesMap.computeIfAbsent(myCurrentClassId, s -> new ArrayList<>()).add(myMethod);
 
         return new MethodVisitor(Opcodes.API_VERSION) {
           // todo local variable etc
