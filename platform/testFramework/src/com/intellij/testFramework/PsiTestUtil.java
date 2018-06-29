@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2016 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testFramework;
 
 import com.intellij.openapi.Disposable;
@@ -125,35 +111,39 @@ public class PsiTestUtil {
     });
   }
 
-  public static void addSourceContentToRoots(Module module, @NotNull VirtualFile vDir) {
-    addSourceContentToRoots(module, vDir, false);
+  public static SourceFolder addSourceContentToRoots(Module module, @NotNull VirtualFile vDir) {
+    return addSourceContentToRoots(module, vDir, false);
   }
 
-  public static void addSourceContentToRoots(Module module, @NotNull VirtualFile vDir, boolean testSource) {
-    ModuleRootModificationUtil.updateModel(module, model -> model.addContentEntry(vDir).addSourceFolder(vDir, testSource));
+  public static SourceFolder addSourceContentToRoots(Module module, @NotNull VirtualFile vDir, boolean testSource) {
+    Ref<SourceFolder> result = Ref.create();
+    ModuleRootModificationUtil.updateModel(module, model -> result.set(model.addContentEntry(vDir).addSourceFolder(vDir, testSource)));
+    return result.get();
   }
 
-  public static void addSourceRoot(Module module, VirtualFile vDir) {
-    addSourceRoot(module, vDir, false);
+  public static SourceFolder addSourceRoot(Module module, VirtualFile vDir) {
+    return addSourceRoot(module, vDir, false);
   }
 
-  public static void addSourceRoot(Module module, VirtualFile vDir, boolean isTestSource) {
-    addSourceRoot(module, vDir, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
+  public static SourceFolder addSourceRoot(Module module, VirtualFile vDir, boolean isTestSource) {
+    return addSourceRoot(module, vDir, isTestSource ? JavaSourceRootType.TEST_SOURCE : JavaSourceRootType.SOURCE);
   }
 
-  public static <P extends JpsElement> void addSourceRoot(Module module, VirtualFile vDir, @NotNull JpsModuleSourceRootType<P> rootType) {
-    addSourceRoot(module, vDir, rootType, rootType.createDefaultProperties());
+  public static <P extends JpsElement> SourceFolder addSourceRoot(Module module, VirtualFile vDir, @NotNull JpsModuleSourceRootType<P> rootType) {
+    return addSourceRoot(module, vDir, rootType, rootType.createDefaultProperties());
   }
 
-  public static <P extends JpsElement> void addSourceRoot(Module module,
+  public static <P extends JpsElement> SourceFolder addSourceRoot(Module module,
                                                           VirtualFile vDir,
                                                           @NotNull JpsModuleSourceRootType<P> rootType,
                                                           P properties) {
+    Ref<SourceFolder> result = Ref.create();
     ModuleRootModificationUtil.updateModel(module, model -> {
       ContentEntry entry = findContentEntry(model, vDir);
       if (entry == null) entry = model.addContentEntry(vDir);
-      entry.addSourceFolder(vDir, rootType, properties);
+      result.set(entry.addSourceFolder(vDir, rootType, properties));
     });
+    return result.get();
   }
 
   @Nullable
