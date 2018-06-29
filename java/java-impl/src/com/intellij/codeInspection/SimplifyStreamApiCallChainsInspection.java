@@ -1601,9 +1601,7 @@ public class SimplifyStreamApiCallChainsInspection extends AbstractBaseJavaLocal
             reversed = true;
           } else {
             if (maybeComparator == null) return null;
-            PsiType comparatorType = maybeComparator instanceof PsiFunctionalExpression
-                             ? ((PsiFunctionalExpression)maybeComparator).getFunctionalInterfaceType()
-                             : maybeComparator.getType();
+            PsiType comparatorType = FunctionalExpressionUtils.getFunctionalExpressionType(maybeComparator);
             if (!InheritanceUtil.isInheritor(comparatorType, JAVA_UTIL_COMPARATOR)) return null;
             comparator = maybeComparator.getText();
           }

@@ -22,6 +22,7 @@ import com.intellij.psi.util.PsiUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import com.siyeh.ig.psiutils.StreamApiUtil;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
@@ -97,13 +98,7 @@ public class SuspiciousToArrayCallInspection extends BaseInspection {
     }
 
     private static PsiType getIntFunctionParameterType(PsiExpression argument) {
-      PsiType argumentType;
-      if (argument instanceof PsiFunctionalExpression) {
-        argumentType = ((PsiFunctionalExpression)argument).getFunctionalInterfaceType();
-      }
-      else {
-        argumentType = argument.getType();
-      }
+      PsiType argumentType = FunctionalExpressionUtils.getFunctionalExpressionType(argument);
       return PsiUtil.substituteTypeParameter(argumentType, "java.util.function.IntFunction", 0, false);
     }
 
