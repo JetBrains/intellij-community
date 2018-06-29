@@ -538,7 +538,7 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                 return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
               });
               if (agentPath != null) {
-                parametersList.add(prefix + agentPath + "=" + generateAgentSettings());
+                parametersList.add(prefix + agentPath + generateAgentSettings());
               }
             }
             else {
@@ -566,17 +566,19 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
                              point.myMethodDesc + CaptureSettingsProvider.AgentPoint.SEPARATOR +
                              point.myKey.asString());
     }
-    try {
-      File file = FileUtil.createTempFile("capture", ".props");
-      try (FileOutputStream out = new FileOutputStream(file)) {
-        properties.store(out, null);
-        return file.toURI().toASCIIString();
+    if (!properties.isEmpty()) {
+      try {
+        File file = FileUtil.createTempFile("capture", ".props");
+        try (FileOutputStream out = new FileOutputStream(file)) {
+          properties.store(out, null);
+          return "=" + file.toURI().toASCIIString();
+        }
+      }
+      catch (IOException e) {
+        LOG.error(e);
       }
     }
-    catch (IOException e) {
-      LOG.error(e);
-    }
-    return null;
+    return "";
   }
 
   private static boolean shouldForceNoJIT(Sdk jdk) {
