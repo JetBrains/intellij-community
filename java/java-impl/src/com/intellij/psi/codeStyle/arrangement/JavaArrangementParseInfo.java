@@ -132,18 +132,14 @@ public class JavaArrangementParseInfo {
           return null;
         }
         if (methodStatus == PASSED) continue; // Already passed edge, no need to pass it again
-        JavaElementArrangementEntry dependentEntry = myMethodEntriesMap.get(dependentMethod);
-        if (dependentEntry == null) continue;
-        ArrangementEntryDependencyInfo dependentMethodInfo = cache.get(dependentMethod);
-        if (dependentMethodInfo == null) {
-          cache.put(dependentMethod, dependentMethodInfo = new ArrangementEntryDependencyInfo(dependentEntry));
-        }
+        ArrangementEntryDependencyInfo dependentMethodInfo = getDependencyInfoCaching(cache, dependentMethod);
+        if (dependentMethodInfo == null) continue;
         Set<PsiMethod> dependentMethodDependencies = myMethodDependencies.get(dependentMethod);
+        frame.myDependencyInfo.addDependentEntryInfo(dependentMethodInfo);
         if (dependentMethodDependencies == null) {
           methodToStatus.put(dependentMethod, PASSED);
         }
         else {
-          frame.myDependencyInfo.addDependentEntryInfo(dependentMethodInfo);
           toProcess.add(new Frame(dependentMethod, dependentMethodInfo, dependentMethodDependencies.iterator()));
         }
       }
@@ -153,6 +149,17 @@ public class JavaArrangementParseInfo {
       }
     }
     return result;
+  }
+
+  private ArrangementEntryDependencyInfo getDependencyInfoCaching(@NotNull Map<PsiMethod, ArrangementEntryDependencyInfo> cache,
+                                                                         PsiMethod method) {
+    JavaElementArrangementEntry entry = myMethodEntriesMap.get(method);
+    if (entry == null) return null;
+    ArrangementEntryDependencyInfo dependentMethodInfo = cache.get(method);
+    if (dependentMethodInfo == null) {
+      cache.put(method, dependentMethodInfo = new ArrangementEntryDependencyInfo(entry));
+    }
+    return dependentMethodInfo;
   }
 
   public void registerGetter(@NotNull String propertyName, @NotNull String className, @NotNull JavaElementArrangementEntry entry) {
