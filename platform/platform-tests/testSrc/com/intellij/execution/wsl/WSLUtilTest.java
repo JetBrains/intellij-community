@@ -55,6 +55,7 @@ public class WSLUtilTest {
     assertWinPath("c:\\foo", "/mnt/c/foo");
     assertWinPath("c:\\temp\\KeepCase", "/mnt/c/temp/KeepCase");
     assertWinPath("?:\\temp\\KeepCase", null);
+    assertWinPath("c:c", null);
 
     assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\include", "/usr/something/include");
     assertWinPath("%LOCALAPPDATA%\\lxss\\rootfs\\usr\\something\\bin\\gcc", "/usr/something/bin/gcc");
