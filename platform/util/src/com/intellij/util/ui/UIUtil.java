@@ -2884,13 +2884,8 @@ public class UIUtil {
     @Override
     public Document createDefaultDocument() {
       StyleSheet styles = getStyleSheet();
-      StyleSheet ss = new StyleSheet() {
-        @Override
-        protected int getCompressionThreshold() {
-          return -1;
-        }
-      };
-
+      // static class instead anonymous for exclude $this [memory leak]
+      StyleSheet ss = new StyleSheetCompressionThreshold();
       ss.addStyleSheet(styles);
 
       HTMLDocument doc = new HTMLDocument(ss);
@@ -2963,6 +2958,13 @@ public class UIUtil {
     public void deinstall(JEditorPane c) {
       c.removeHyperlinkListener(myHyperlinkListener);
       super.deinstall(c);
+    }
+  }
+
+  private static class StyleSheetCompressionThreshold extends StyleSheet {
+    @Override
+    protected int getCompressionThreshold() {
+      return -1;
     }
   }
 
