@@ -67,7 +67,7 @@ class CompareChangesAction(element: PsiElement) : ConflictsIntention(element, "C
     val highlighter = Highlighter(editor)
 
     data class ModelItem(val elementPtr: SmartPsiElementPointer<PsiElement>) {
-      override fun toString() = elementPtr.element?.text ?: "obsolete"
+      override fun toString() = "With " + typeToText(elementPtr.element)
     }
 
     JBPopupFactory.getInstance()

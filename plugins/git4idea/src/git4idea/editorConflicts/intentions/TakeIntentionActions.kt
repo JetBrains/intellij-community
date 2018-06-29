@@ -2,7 +2,6 @@
 package git4idea.editorConflicts.intentions
 
 import com.intellij.lang.EditorConflictSupport
-import com.intellij.openapi.application.runWriteAction
 import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.editor.Editor
@@ -53,17 +52,6 @@ class TakeIntentionAction(element: PsiElement) : ConflictsIntention(element, "Ta
     options.add(Pair("None", emptyList()))
 
     showPopup(editor, options, continuation)
-  }
-
-  private fun typeToText(marker: PsiElement?): String {
-    if (marker == null) return "???"
-    val type = getConflictMarkerType(marker)
-    return when(type) {
-      EditorConflictSupport.ConflictMarkerType.BeforeFirst -> "Current"
-      EditorConflictSupport.ConflictMarkerType.BeforeMerged -> "Common"
-      EditorConflictSupport.ConflictMarkerType.BeforeLast -> "Incoming"
-      EditorConflictSupport.ConflictMarkerType.AfterLast, null -> "???"
-    }
   }
 
   private fun showPopup(editor: Editor,

@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs
 
+import com.intellij.lang.EditorConflictSupport
 import com.intellij.openapi.editor.Document
 import com.intellij.openapi.util.TextRange
 import com.intellij.lang.EditorConflictSupport.*
@@ -111,3 +112,14 @@ fun PsiElement.rangeWithLine(d: Document) =
 
 fun Document.substring(textRange: TextRange) =
   immutableCharSequence.substring(textRange.startOffset, textRange.endOffset)
+
+fun typeToText(marker: PsiElement?): String {
+  if (marker == null) return "???"
+  val type = getConflictMarkerType(marker)
+  return when (type) {
+    EditorConflictSupport.ConflictMarkerType.BeforeFirst -> "Current"
+    EditorConflictSupport.ConflictMarkerType.BeforeMerged -> "Common"
+    EditorConflictSupport.ConflictMarkerType.BeforeLast -> "Incoming"
+    EditorConflictSupport.ConflictMarkerType.AfterLast, null -> "???"
+  }
+}
