@@ -10,10 +10,6 @@ plugins {
 
 applyKotlinJVM()
 
-if (hasProperty("teamcity")) {
-    version = teamcity["build.number"]
-}
-
 dependencies {
     compile project(":app:app-state")
     compile project(":app:app-state:app-state-jvm")
@@ -37,4 +33,10 @@ intellij {
     pluginName "circlet-intellij-plugin"
     updateSinceUntilBuild false
     sandboxDirectory "${project.projectDir}/.sandbox"
+}
+
+if (hasProperty("teamcity")) {
+    patchPluginXml {
+        version teamcity["build.number"]
+    }
 }
