@@ -107,20 +107,24 @@ public class BTree implements Tree {
   }
 
   /* package */ BasePage loadPage(@NotNull Novelty novelty, Address address) {
-    byte[] bytes = address.isNovelty() ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
+    final boolean isNovelty = address.isNovelty();
+    final byte[] bytes = isNovelty ? novelty.lookup(address.getLowBytes()) : storage.lookup(address);
     if (bytes == null) {
       throw new IllegalStateException("page not found at " + address);
     }
     int metadataOffset = (keySize + BYTES_PER_ADDRESS) * getBase();
     byte type = bytes[metadataOffset];
-    byte size = bytes[metadataOffset + 1];
+    int size = bytes[metadataOffset + 1] & 0xff; // 0..255
     final BasePage result;
+    if (!isNovelty) {
+      storage.prefetch(bytes, this, size);
+    }
     switch (type) {
       case BOTTOM:
-        result = new BottomPage(bytes, this, address, size & 0xff); // 0..255
+        result = new BottomPage(bytes, this, address, size);
         break;
       case INTERNAL:
-        result = new InternalPage(bytes, this, address, size & 0xff); // 0..255
+        result = new InternalPage(bytes, this, address, size);
         break;
       default:
         throw new IllegalArgumentException("Unknown page type [" + type + ']');
