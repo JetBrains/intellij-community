@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.DocumentUtil;
 import com.intellij.util.IconUtil;
 import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.impl.ui.ExecutionPointHighlighter;
@@ -141,7 +142,7 @@ public abstract class AbstractValueHint {
   public void invokeHint(Runnable hideRunnable) {
     myHideRunnable = hideRunnable;
 
-    if (!canShowHint()) {
+    if (!canShowHint() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
       hideHint();
       return;
     }
@@ -327,7 +328,8 @@ public abstract class AbstractValueHint {
   }
 
   protected <D> void showTreePopup(@NotNull DebuggerTreeCreator<D> creator, @NotNull D descriptor) {
-    if (myEditor.isDisposed()) {
+    if (myEditor.isDisposed() || !DocumentUtil.isValidOffset(myCurrentRange.getEndOffset(), myEditor.getDocument())) {
+      hideHint();
       return;
     }
 
