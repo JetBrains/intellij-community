@@ -434,17 +434,21 @@ public class MinusculeMatcher implements Matcher {
     }
 
     private boolean charEquals(int patternIndex, int nameIndex, boolean isIgnoreCase, boolean allowTypos, @NotNull ErrorState errorState) {
-      char patternChar = myPattern[patternIndex];
+      char patternChar = charAt(patternIndex, errorState);
       char nameChar = myName.charAt(nameIndex);
 
       if (patternChar == nameChar ||
-          isIgnoreCase && (toLowerCase[patternIndex] == nameChar || toUpperCase[patternIndex] == nameChar)) {
+          isIgnoreCase && (toLowerCase(patternIndex, errorState) == nameChar || toUpperCase(patternIndex, errorState) == nameChar)) {
         return true;
       }
 
       if (!myAllowTypos || !allowTypos) return false;
 
       if (errorState.countErrors(0, patternIndex) > 1) return false;
+      Error prevError = errorState.getError(patternIndex - 1);
+      if (prevError == SwapError.instance) {
+        return false;
+      }
 
       char leftMiss = myTypoService.leftMiss(patternChar);
       if (leftMiss != 0) {
@@ -460,6 +464,17 @@ public class MinusculeMatcher implements Matcher {
         if (rightMiss == nameChar ||
             isIgnoreCase && (toLowerAscii(rightMiss) == nameChar || toUpperAscii(rightMiss) == nameChar)) {
           errorState.addError(patternIndex, new TypoError(rightMiss));
+          return true;
+        }
+      }
+
+      if (patternLength(errorState) > patternIndex + 1 && myName.length() > nameIndex + 1) {
+        char nextNameChar = myName.charAt(nameIndex + 1);
+        char nextPatternChar = charAt(patternIndex + 1, errorState);
+
+        if ((patternChar == nextNameChar || isIgnoreCase && (toLowerCase(patternIndex, errorState) == nextNameChar || toUpperCase(patternIndex, errorState) == nextNameChar)) &&
+            (nextPatternChar == nameChar || isIgnoreCase && (toLowerCase(patternIndex + 1, errorState) == nameChar || toUpperCase(patternIndex + 1, errorState) == nameChar))) {
+          errorState.addError(patternIndex, SwapError.instance);
           return true;
         }
       }
@@ -785,6 +800,11 @@ public class MinusculeMatcher implements Matcher {
       if (error.second instanceof TypoError) {
         pattern[error.first] = ((TypoError)error.second).myCorrectChar;
       }
+      else if (error.second instanceof SwapError) {
+        char c = pattern[error.first];
+        pattern[error.first] = pattern[error.first + 1];
+        pattern[error.first + 1] = c;
+      }
     }
 
     public boolean hasErrors(int index) {
@@ -792,6 +812,7 @@ public class MinusculeMatcher implements Matcher {
       if (myErrors != null) {
         for (Pair<Integer, Error> error : myErrors) {
           if (error.first == index) return true;
+          if (error.first == index - 1 && error.second == SwapError.instance) return true;
           if (error.first < index) {
             //todo support miss/extra
           }
@@ -803,6 +824,20 @@ public class MinusculeMatcher implements Matcher {
       }
 
       return false;
+    }
+
+    public Error getError(int i) {
+      if (myErrors != null) {
+        for (Pair<Integer, Error> error : myErrors) {
+          if (error.first == i) return error.second;
+        }
+      }
+
+      if (myBase != null && myDeriveIndex > i) {
+        return myBase.getError(i);
+      }
+
+      return null;
     }
   }
 
@@ -823,6 +858,9 @@ public class MinusculeMatcher implements Matcher {
     }
   }
 
+  private static class SwapError implements Error {
+    public static final SwapError instance = new SwapError();
+  }
 
   private static class Fragment {
     private final int myLength;

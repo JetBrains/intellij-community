@@ -17,4 +17,9 @@ public class TypoAwareNameUtilMatchingTest extends NameUtilMatchingTestCase {
   public void testNoErrorOnlyFragments() {
     assertDoesntMatch("foobar", "foovse");
   }
+
+  public void testSwap() {
+    assertMatches("braz", "barz");
+    assertMatches("braz", "barvZoo");
+  }
 }
