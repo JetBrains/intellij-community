@@ -123,21 +123,21 @@ public class WSLUtil {
 
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
-   *         For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "C:\Users\file.txt"}
+   *         For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "c:\Users\file.txt"}
    */
   @Nullable
   public static String getWindowsPath(@NotNull String wslPath) {
-    if (!wslPath.startsWith(WSLDistribution.WSL_MNT_ROOT) || wslPath.length() <= WSLDistribution.WSL_MNT_ROOT.length()) {
+    if (!wslPath.startsWith(WSLDistribution.WSL_MNT_ROOT)) {
       return null;
     }
-    int driveIndex = WSLDistribution.WSL_MNT_ROOT.length();
-    if (!Character.isLetter(wslPath.charAt(driveIndex))) {
+    int driveLetterIndex = WSLDistribution.WSL_MNT_ROOT.length();
+    if (driveLetterIndex >= wslPath.length() || !Character.isLetter(wslPath.charAt(driveLetterIndex))) {
       return null;
     }
-    int slashIndex = driveIndex + 1;
+    int slashIndex = driveLetterIndex + 1;
     if (slashIndex < wslPath.length() && wslPath.charAt(slashIndex) != '/') {
       return null;
     }
-    return FileUtil.toSystemDependentName(wslPath.charAt(driveIndex) + ":" + wslPath.substring(slashIndex));
+    return FileUtil.toSystemDependentName(wslPath.charAt(driveLetterIndex) + ":" + wslPath.substring(slashIndex));
   }
 }
