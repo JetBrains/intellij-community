@@ -25,7 +25,6 @@ import org.jetbrains.annotations.NotNull;
 
 public abstract class Differ {
   public static final int UGLY_FORMATTING = Integer.MAX_VALUE;
-  
   protected final Project myProject;
   protected final String myOrigText;
   protected final CodeStyleSettings mySettings;

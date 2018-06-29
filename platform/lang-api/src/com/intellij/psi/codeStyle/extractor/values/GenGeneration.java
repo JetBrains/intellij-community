@@ -29,9 +29,9 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.extractor.Utils.updateState;
 
 public class GenGeneration {
-  private static final int GENERATION_POOL_SIZE = 16/*45*/;
-  private static final int MUTATION_PER_GEN = 4/*10*/;
-  public  static final int GENERATIONS_COUNT = 20/*40*/;
+  private static final int GENERATION_POOL_SIZE = 40/*45*/;
+  private static final int MUTATION_PER_GEN = 10/*10*/;
+  public  static final int GENERATIONS_COUNT = 40/*40*/;
   private List<Gens> myGensPool;
   private int myAge;
   private final int myParentKind;

@@ -295,6 +295,7 @@
         <action id="AutoIndentLines" class="com.intellij.codeInsight.generation.actions.AutoIndentLinesAction"/>
         <action id="OptimizeImports" class="com.intellij.codeInsight.actions.OptimizeImportsAction"/>
         <action id="RearrangeCode" class="com.intellij.application.options.codeStyle.arrangement.action.RearrangeCodeAction"/>
+        <action id="FormatExtractor" class="com.intellij.psi.codeStyle.extractor.ExtractCodeStyleAction" text="Extract Code Format"/>
       </group>
 
       <separator/>

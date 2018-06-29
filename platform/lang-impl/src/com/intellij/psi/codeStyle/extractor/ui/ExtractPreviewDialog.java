@@ -16,25 +16,32 @@
 package com.intellij.psi.codeStyle.extractor.ui;
 
 import com.intellij.application.options.CodeStyle;
+import com.intellij.application.options.CodeStyleAbstractPanel;
+import com.intellij.application.options.TabbedLanguageCodeStylePanel;
+import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
+import com.intellij.application.options.codeStyle.CodeStyleSchemesModelListener;
+import com.intellij.application.options.codeStyle.NewCodeStyleSettingsPanel;
 import com.intellij.diff.DiffContentFactoryEx;
 import com.intellij.diff.DiffManager;
 import com.intellij.diff.DiffRequestPanel;
 import com.intellij.diff.contents.DiffContent;
 import com.intellij.diff.requests.ContentDiffRequest;
 import com.intellij.diff.requests.SimpleDiffRequest;
+import com.intellij.ide.actions.ShowSettingsUtilImpl;
+import com.intellij.openapi.application.ApplicationBundle;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.options.ex.ConfigurableVisitor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.codeStyle.CodeStyleScheme;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.extractor.differ.LangCodeStyleExtractor;
 import com.intellij.psi.codeStyle.extractor.values.ValuesExtractionResult;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.util.ui.JBUI;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 
 public class ExtractPreviewDialog extends DialogWrapper {
   @NotNull final PsiFile myFile;
@@ -58,11 +65,91 @@ public class ExtractPreviewDialog extends DialogWrapper {
     return new JLabel("<html>" + myReport + "</html>");
   }
 
+  private static final float DIFF_SPLITTER_PROPORTION = 0.5f;
+  private static final String DIFF_SPLITTER_PROPORTION_KEY = "code.style.extractor";
+  
   @Nullable
   @Override
   protected JComponent createCenterPanel() {
+    return getDiffComponent();
+    //JBSplitter mySplitter = new JBSplitter(true, DIFF_SPLITTER_PROPORTION_KEY, DIFF_SPLITTER_PROPORTION);
+    //mySplitter.setFirstComponent(getCodeFormat());
+    //mySplitter.setSecondComponent(getDiffComponent());
+    //return mySplitter;
+  }
+
+  @NotNull
+  private JComponent getCodeFormat() {
+    final String languageName = myFile.getLanguage().getDisplayName();
+    String configurableId = "preferences.sourceCode." + languageName;
+    final Project project = myFile.getProject();
+    final Configurable configurable =
+      new ConfigurableVisitor.ByID(configurableId).find(ShowSettingsUtilImpl.getConfigurableGroups(project, true));
+
+    if(configurable != null) {
+      CodeStyleMainPanel codeStyleMainPanel = (CodeStyleMainPanel)configurable.createComponent();
+      if (codeStyleMainPanel != null) {
+        codeStyleMainPanel.getModel().addListener(new CodeStyleSchemesModelListener() {
+          @Override
+          public void currentSchemeChanged(Object source) {
+            int i = 43;
+          }
+
+          @Override
+          public void schemeListChanged() {
+            int i = 43;
+          }
+
+          @Override
+          public void beforeCurrentSettingsChanged() {
+            int i = 43;
+          }
+
+          @Override
+          public void afterCurrentSettingsChanged() {
+            if (codeStyleMainPanel.isModified()) {
+              final CodeStyleSettings settings = codeStyleMainPanel.getModel().getSelectedScheme().getCodeStyleSettings();
+              myDiffPanel.setRequest(createDiffRequest(settings), new Object());
+            }
+          }
+
+          @Override
+          public void schemeChanged(CodeStyleScheme scheme) {
+            int i = 43;
+          }
+
+          @Override
+          public void settingsChanged(@NotNull CodeStyleSettings settings) {
+            myDiffPanel.setRequest(createDiffRequest(settings));
+          }
+        });
+        if (codeStyleMainPanel.getPanels() != null) {
+          for (NewCodeStyleSettingsPanel p : codeStyleMainPanel.getPanels()) {
+            CodeStyleAbstractPanel selectedPanel = p.getSelectedPanel();
+            if (selectedPanel instanceof TabbedLanguageCodeStylePanel) {
+              final TabbedLanguageCodeStylePanel panel = (TabbedLanguageCodeStylePanel)selectedPanel;
+              panel.changeTab(ApplicationBundle.message("title.tabs.and.indents"));
+            }
+          }
+        }
+        return codeStyleMainPanel;
+      }
+    }
+    return new JLabel("No Code Style Dialog For " + languageName);
+  }
+
+  DiffRequestPanel myDiffPanel;
+  
+  @NotNull
+  private JComponent getDiffComponent() {
+    myDiffPanel = DiffManager.getInstance().createRequestPanel(myFile.getProject(), getDisposable(), null);
+    myDiffPanel.setRequest(createDiffRequest(CodeStyle.getSettings(myFile)));
+    return myDiffPanel.getComponent();
+  }
+
+  @NotNull
+  private ContentDiffRequest createDiffRequest(@NotNull CodeStyleSettings settings) {
     final LangCodeStyleExtractor extractor = LangCodeStyleExtractor.EXTENSION.forLanguage(myFile.getLanguage());
-    final CodeStyleSettings settings = CodeStyle.getSettings(myFile);
 
     final ValuesExtractionResult orig = myExtractionResult.apply(true);
     final Project project = myFile.getProject();
@@ -73,14 +160,6 @@ public class ExtractPreviewDialog extends DialogWrapper {
     final DiffContent origCtx = contentFactory.create(project, myFile.getVirtualFile());
     final DiffContent newCtx = contentFactory.create(project, reformattedText);
 
-    ContentDiffRequest request = new SimpleDiffRequest(null, origCtx, newCtx, "Original Code", "Code reformatted with Extracted Code Style");
-
-    DiffRequestPanel diffPanel = DiffManager.getInstance().createRequestPanel(project, getDisposable(), null);
-    diffPanel.setRequest(request);
-
-    final JPanel panel = new JPanel(new BorderLayout());
-    panel.add(diffPanel.getComponent(), BorderLayout.CENTER);
-    panel.setBorder(IdeBorderFactory.createEmptyBorder(JBUI.insetsTop(5)));
-    return panel;
+    return new SimpleDiffRequest(null, origCtx, newCtx, "Original Code", "Code reformatted with Extracted Code Style");
   }
 }
