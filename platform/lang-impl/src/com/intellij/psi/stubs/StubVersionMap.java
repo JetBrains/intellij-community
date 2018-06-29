@@ -205,7 +205,8 @@ class StubVersionMap {
 
   @NotNull
   private static File allIndexedFilesRegistryFile() {
-    return new File(new File(IndexInfrastructure.getIndexRootDir(StubUpdatingIndex.INDEX_ID), ".fileTypes"), INDEXED_FILETYPES);
+    return IndexInfrastructure.allIndexedFilesRegistryFile();
+
   }
 
   @NotNull

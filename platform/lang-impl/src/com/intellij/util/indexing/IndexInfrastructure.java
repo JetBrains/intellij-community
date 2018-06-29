@@ -19,6 +19,8 @@
  */
 package com.intellij.util.indexing;
 
+import com.google.common.base.Charsets;
+import com.google.common.io.CharStreams;
 import com.google.gson.GsonBuilder;
 import com.intellij.onair.index.BTreeIndexStorage;
 import com.intellij.onair.index.BTreeIntPersistentMap;
@@ -27,6 +29,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
+import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -45,6 +48,7 @@ import intellij.platform.onair.storage.api.Novelty;
 import intellij.platform.onair.storage.api.NoveltyImpl;
 import intellij.platform.onair.storage.api.Storage;
 import intellij.platform.onair.tree.MockStorage;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
@@ -52,11 +56,15 @@ import org.jetbrains.ide.PooledThreadExecutor;
 import java.io.*;
 import java.net.InetSocketAddress;
 import java.net.URL;
+import java.nio.channels.Channels;
+import java.nio.channels.FileChannel;
+import java.nio.channels.ReadableByteChannel;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
 import java.util.Map;
 import java.util.concurrent.*;
+import java.util.stream.Collectors;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class IndexInfrastructure {
@@ -91,10 +99,35 @@ public class IndexInfrastructure {
   public static Map downloadIndexMetaData(String revision) {
     String bucket = "onair-index-data";
     String region = "eu-central-1";
-
     try {
-      return new GsonBuilder().create().fromJson(new DataInputStream(new URL(
-        "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/meta").openStream()).readUTF(), Map.class);
+      InputStream stream =
+        new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision + "/index_meta").openStream();
+      Element element = JDOMUtil.load(stream);
+
+      List<String> files = element.getChildren().stream()
+                                  .filter(e -> e.getName().equals("Contents"))
+                                  .flatMap(e -> e.getChildren().stream())
+                                  .filter(o -> o.getName().equals("Key"))
+                                  .map(e -> e.getText())
+                                  .map(s -> s.split("/")[2])
+                                  .collect(Collectors.toList());
+
+      for (String file : files) {
+        String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/index_meta/" + file;
+        ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
+        File base = getIndexMeta();
+        base.mkdirs();
+        try (FileChannel dest = new FileOutputStream(new File(base, file)).getChannel()) {
+          dest.transferFrom(source, 0, Long.MAX_VALUE);
+        }
+      }
+
+      InputStream is = new URL(
+        "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/meta").openStream();
+
+      String str = CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
+
+      return new GsonBuilder().create().fromJson(str, Map.class);
     }
     catch (Exception e) {
       throw new RuntimeException("exception downloading index data for revision " + revision, e);
@@ -164,9 +197,17 @@ public class IndexInfrastructure {
     return map;
   }
 
+  public static File getIndexMeta() {
+    return new File(PathManager.getIndexRoot(), "index_meta");
+  }
+
   @NotNull
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexDirectory(indexName, true), indexName + ".ver");
+    return new File(getIndexMeta(), indexName + ".ver");
+  }
+
+  public static File allIndexedFilesRegistryFile() {
+    return new File(getIndexMeta(), "file_types");
   }
 
   @NotNull
@@ -258,6 +299,7 @@ public class IndexInfrastructure {
   public static <T> Future<T> submitGenesisTask(Callable<T> action) {
     return ourGenesisExecutor.submit(action);
   }
+
 
   public abstract static class DataInitialization<T> implements Callable<T> {
     private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();
