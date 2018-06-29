@@ -9,7 +9,6 @@ import org.jetbrains.annotations.NotNull;
 @SuppressWarnings("DeprecatedIsStillUsed")
 @ApiStatus.ScheduledForRemoval(inVersion = "2019")
 public abstract class ClsCustomNavigationPolicyEx implements ClsCustomNavigationPolicy {
-  @SuppressWarnings("unused")
   public PsiFile getFileNavigationElement(@NotNull ClsFileImpl file) {
     return (PsiFile)getNavigationElement(file);
   }
