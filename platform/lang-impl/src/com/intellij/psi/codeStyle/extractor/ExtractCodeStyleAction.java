@@ -136,7 +136,7 @@ public class ExtractCodeStyleAction extends AnAction implements DumbAware {
             public void hyperlinkUpdate(HyperlinkEvent e) {
               if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED
                   && "apply".equals(e.getDescription())
-                  && new ExtractPreviewDialog(file, calculatedValues, htmlReport).showAndGet()) {
+                  && new ExtractPreviewDialog(file, cloneSettings, calculatedValues, htmlReport).showAndGet()) {
                 calculatedValues.applySelected();
                 CodeStyleScheme derivedScheme = CodeStyleSchemes
                   .getInstance()

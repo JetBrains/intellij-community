@@ -29,9 +29,9 @@ import java.util.List;
 import static com.intellij.psi.codeStyle.extractor.Utils.updateState;
 
 public class GenGeneration {
-  private static final int GENERATION_POOL_SIZE = 40/*45*/;
+  private static final int GENERATION_POOL_SIZE = 45/*45*/;
   private static final int MUTATION_PER_GEN = 10/*10*/;
-  public  static final int GENERATIONS_COUNT = 40/*40*/;
+  public  static final int GENERATIONS_COUNT = 40 /*40*/;
   private List<Gens> myGensPool;
   private int myAge;
   private final int myParentKind;
@@ -58,7 +58,7 @@ public class GenGeneration {
       while (parent1 == parent2) {
         parent1 = Utils.getRandomLess(prevPullSize);//~ fitness?
         parent2 = Utils.getRandomLess(prevPullSize);
-        if (++iterations > (GENERATION_POOL_SIZE/2)) break;
+        if (++iterations > 25) break;
       }
       myGensPool.add(Gens.breed(
         previous.myGensPool.get(parent1),

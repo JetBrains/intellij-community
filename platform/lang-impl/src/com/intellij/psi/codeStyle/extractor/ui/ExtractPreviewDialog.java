@@ -15,7 +15,6 @@
  */
 package com.intellij.psi.codeStyle.extractor.ui;
 
-import com.intellij.application.options.CodeStyle;
 import com.intellij.application.options.CodeStyleAbstractPanel;
 import com.intellij.application.options.TabbedLanguageCodeStylePanel;
 import com.intellij.application.options.codeStyle.CodeStyleMainPanel;
@@ -47,10 +46,14 @@ public class ExtractPreviewDialog extends DialogWrapper {
   @NotNull final PsiFile myFile;
   @NotNull final ValuesExtractionResult myExtractionResult;
   @NotNull final String myReport;
+  @NotNull final CodeStyleSettings mySettings;
   
-  public ExtractPreviewDialog(@NotNull PsiFile file, @NotNull ValuesExtractionResult result, @NotNull String report) {
+  public ExtractPreviewDialog(@NotNull PsiFile file,
+                              @NotNull final CodeStyleSettings settings,
+                              @NotNull ValuesExtractionResult result, @NotNull String report) {
     super(file.getProject());
     myFile = file;
+    mySettings = settings;
     myExtractionResult = result;
     myReport = report;
     setTitle(String.format("Extracted from the %s file code style", file.getName()));
@@ -143,7 +146,7 @@ public class ExtractPreviewDialog extends DialogWrapper {
   @NotNull
   private JComponent getDiffComponent() {
     myDiffPanel = DiffManager.getInstance().createRequestPanel(myFile.getProject(), getDisposable(), null);
-    myDiffPanel.setRequest(createDiffRequest(CodeStyle.getSettings(myFile)));
+    myDiffPanel.setRequest(createDiffRequest(/*CodeStyle.getSettings(myFile)*/mySettings));
     return myDiffPanel.getComponent();
   }
 
