@@ -556,7 +556,7 @@ public class FSRecords {
     String bucket = "onair-index-data";
     String region = "eu-central-1";
     try {
-      InputStream stream = new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision).openStream();
+      InputStream stream = new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision + "/vfs").openStream();
       Element element = JDOMUtil.load(stream);
 
       List<String> files = element.getChildren().stream()
@@ -564,16 +564,20 @@ public class FSRecords {
                                     .flatMap(e -> e.getChildren().stream())
                                     .filter(o -> o.getName().equals("Key"))
                                     .map(e -> e.getText())
-                                    .map(s -> s.split("/")[1])
+                                    .map(s -> s.split("/")[2])
                                     .collect(Collectors.toList());
 
 
       for (String file : files) {
-        String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/" + file;
-        ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-        basePath().mkdirs();
-        FileChannel dest = new FileOutputStream(new File(basePath(), file)).getChannel();
-        dest.transferFrom(source, 0, Long.MAX_VALUE);
+        try {
+          String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/vfs/" + file;
+          ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
+          basePath().mkdirs();
+          FileChannel dest = new FileOutputStream(new File(basePath(), file)).getChannel();
+          dest.transferFrom(source, 0, Long.MAX_VALUE);
+        } catch (Exception e) {
+          e.printStackTrace();
+        }
       }
     }
     catch (Exception e) {
