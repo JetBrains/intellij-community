@@ -15,10 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
-import com.intellij.psi.LambdaUtil;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.PsiVariable;
-import com.intellij.psi.SmartTypePointerManager;
+import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,10 +47,11 @@ public class VariableData extends AbstractVariableData {
     if (var == null) {
       return this;
     }
+    PsiType type = JavaPsiFacade.getElementFactory(var.getProject()).createTypeFromText(this.type.getCanonicalText(), var);
     VariableData data = new VariableData(var, type);
-    data.name = name;
-    data.originalName = originalName;
-    data.passAsParameter = passAsParameter;
+    data.name = this.name;
+    data.originalName = this.originalName;
+    data.passAsParameter = this.passAsParameter;
     return data;
   }
 }
