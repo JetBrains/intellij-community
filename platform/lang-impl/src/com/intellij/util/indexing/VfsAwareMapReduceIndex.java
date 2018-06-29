@@ -30,15 +30,13 @@ import com.intellij.util.SmartList;
 import com.intellij.util.indexing.impl.*;
 import com.intellij.util.io.*;
 import gnu.trove.THashMap;
+import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.Lock;
 
@@ -153,10 +151,41 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
       synchronized (myInMemoryKeys) {
         keyCollection = myInMemoryKeys.remove(inputId);
       }
-      if (keyCollection != null && !keyCollection.isEmpty()) {
-        removeTransientDataForKeys(inputId, keyCollection);
-      }
       
+      if (keyCollection == null) return;
+      
+      try {
+        removeTransientDataForKeys(inputId, keyCollection);
+
+        InputDataDiffBuilder<Key, Value> builder; // todo: the data on disk can change
+        if (mySnapshotInputMappings != null) {
+          builder =  new MapInputDataDiffBuilder<>(inputId, mySnapshotInputMappings.readInputKeys(inputId));
+        } else {
+          builder = getKeysDiffBuilder(inputId);
+        }
+
+        if (builder instanceof CollectionInputDataDiffBuilder<?, ?>) {
+          Collection<Key> keyCollectionFromDisk = ((CollectionInputDataDiffBuilder<Key, Value>)builder).getSeq();
+          if (keyCollectionFromDisk != null) {
+            removeTransientDataForKeys(inputId, keyCollectionFromDisk);
+          }
+        } else {
+          Set<Key> diskKeySet = new THashSet<>();
+          
+          builder.differentiate(
+            Collections.emptyMap(),
+            (key, value, inputId1) -> {
+            },
+            (key, value, inputId1) -> {},
+            (key, inputId1) -> {
+              diskKeySet.add(key);
+            }
+          );
+          removeTransientDataForKeys(inputId, diskKeySet);
+        }
+      } catch (Throwable throwable) {
+        throw new RuntimeException(throwable);
+      }
     } finally {
       lock.unlock();
     }

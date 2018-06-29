@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.InvalidVirtualFileAccessException;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -292,6 +293,10 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
     return found == NULL_VIRTUAL_FILE ? null : found;
   }
 
+  private static final class OptionHolder {
+    static final boolean loadAllChildren = Registry.is("vfs.load.all.persistent.children");
+  }
+  
   @Override
   @NotNull
   public Iterable<VirtualFile> iterInDbChildren() {
@@ -299,7 +304,15 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       return Collections.emptyList();
     }
 
-    if (!ourPersistence.areChildrenLoaded(this)) {
+    boolean areChildrenLoadedInPersistentFs = ourPersistence.areChildrenLoaded(this);
+    
+    if (OptionHolder.loadAllChildren) {
+      if (areChildrenLoadedInPersistentFs) {
+        return Arrays.asList(getChildren());
+      }
+    }
+    
+    if (!areChildrenLoadedInPersistentFs) {
       final String[] names = ourPersistence.listPersisted(this);
       final NewVirtualFileSystem delegate = PersistentFS.replaceWithNativeFS(getFileSystem());
       for (String name : names) {

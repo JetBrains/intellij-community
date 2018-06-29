@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:Suppress("LoopToCallChain", "UseExpressionBody", "LiftReturnOrAssignment")
 
 package org.jetbrains.plugins.groovy.lang.resolve
@@ -9,7 +9,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.ResolveState
 import com.intellij.psi.impl.PsiFileEx
 import com.intellij.psi.scope.PsiScopeProcessor
-import com.intellij.util.SmartList
+import com.intellij.psi.util.parentsOfType
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition
 import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil
@@ -111,13 +111,7 @@ internal fun GrTypeDefinition.processInnersInOutersNoCache(processor: PsiScopePr
 }
 
 private fun GrTypeDefinition.collectOuterClasses(): List<GrTypeDefinition> {
-  val result = SmartList<GrTypeDefinition>()
-  var current: GrTypeDefinition? = containingClass as? GrTypeDefinition
-  while (current != null) {
-    result += current
-    current = current.containingClass as? GrTypeDefinition
-  }
-  return result
+  return parentsOfType<GrTypeDefinition>().drop(1).toList()
 }
 
 private fun useCaches(place: PsiElement): Boolean {

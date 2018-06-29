@@ -406,6 +406,12 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "Jackson", libraryName: "jackson", version: "2.9.5", license: "Apache 2.0",
                                licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0", url: "https://github.com/FasterXML/jackson"),
 
+    new LibraryLicense(name: "Javassist", libraryName: "javassist", version: "3.21.0-GA", license: "Apache 2.0",
+                       url: "https://github.com/jboss-javassist/javassist", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+
+    new LibraryLicense(name: "Objenesis", libraryName: "Objenesis", version: "2.5.1", license: "Apache 2.0",
+                           url: "http://objenesis.org/", licenseUrl: "http://www.apache.org/licenses/LICENSE-2.0.txt"),
+
     // Android Studio: added by Change I43400d97 / commit 27761cb
     new LibraryLicense(name: "JUniversal Char Detection", libraryName: "juniversalchardet", version: "1.0.3", license: "MPL 1.1",
                        url: "https://code.google.com/archive/p/juniversalchardet"),

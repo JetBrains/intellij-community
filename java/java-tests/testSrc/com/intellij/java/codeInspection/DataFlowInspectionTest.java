@@ -374,7 +374,7 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
                        "import javax.annotation.meta.*;" +
                        "@TypeQualifierNickname() @javax.annotation.NonNull(when = Maybe.MAYBE) " +
                        "public @interface NullableNick {}");
-    
+
     doTest();
   }
 
@@ -591,4 +591,5 @@ public class DataFlowInspectionTest extends DataFlowInspectionTestCase {
     myFixture.addClass("package org.junit; public class Assume { public static void assumeNotNull(Object... objects) {}}");
     doTest();
   }
+  public void testNanComparisonWrong() { doTest(); }
 }

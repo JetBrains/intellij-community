@@ -150,26 +150,35 @@ public class ReplaceInProjectManager {
     }
 
     findManager.showFindDialog(findModel, () -> {
-      if (!findModel.isProjectScope() &&
-          FindInProjectUtil.getDirectory(findModel) == null &&
-          findModel.getModuleName() == null &&
-          findModel.getCustomScope() == null) {
-        return;
+      if (findModel.isReplaceState()) {
+        replaceInPath(findModel);
+      } else {
+        FindInProjectManager.getInstance(myProject).findInPath(findModel);
       }
-
-      UsageViewManager manager = UsageViewManager.getInstance(myProject);
-
-      if (manager == null) return;
-      findManager.getFindInProjectModel().copyFrom(findModel);
-      final FindModel findModelCopy = findModel.clone();
-
-      final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
-      final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
-      processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
-
-      UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
-      searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
     });
+  }
+
+  public void replaceInPath(@NotNull FindModel findModel) {
+    FindManager findManager = FindManager.getInstance(myProject);
+    if (!findModel.isProjectScope() &&
+        FindInProjectUtil.getDirectory(findModel) == null &&
+        findModel.getModuleName() == null &&
+        findModel.getCustomScope() == null) {
+      return;
+    }
+
+    UsageViewManager manager = UsageViewManager.getInstance(myProject);
+
+    if (manager == null) return;
+    findManager.getFindInProjectModel().copyFrom(findModel);
+    final FindModel findModelCopy = findModel.clone();
+
+    final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(findModel.isOpenInNewTab(), findModelCopy);
+    final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+    processPresentation.setShowFindOptionsPrompt(findModel.isPromptOnReplace());
+
+    UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, processPresentation);
+    searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation);
   }
 
   private static class ReplaceInProjectTarget extends FindInProjectUtil.StringUsageTarget {

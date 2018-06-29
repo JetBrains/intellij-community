@@ -41,17 +41,18 @@ import org.jetbrains.jetCheck.PropertyChecker
  */
 @SkipSlowTestLocally
 class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
-
   fun testFuzzActions() {
-    val genAction: Generator<Action> = Generator.anyOf(
-      PsiIndexConsistencyTester.commonActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)),
-      Generator.sampledFrom(AddImport, AddEnum, InvisiblePsiChange),
-      Generator.booleans().map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) },
-      Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
-                                          data.generate(Generator.booleans()),
-                                          data.generate(Generator.booleans())) }
-    )
-    PropertyChecker.forAll(Generator.listsOf(genAction)).withIterationCount(20).shouldHold { actions ->
+    val genAction: Generator<Action> = Generator.frequency(
+      10, Generator.sampledFrom(
+      PsiIndexConsistencyTester.commonActions +
+      PsiIndexConsistencyTester.refActions(PsiIndexConsistencyTester.commonRefs + listOf(ClassRef)) + 
+      listOf(AddImport, AddEnum, InvisiblePsiChange) + 
+      listOf(true, false).map { ChangeLanguageLevel(if (it) LanguageLevel.HIGHEST else LanguageLevel.JDK_1_3) }
+    ),
+      1, Generator.from { data -> TextChange(data.generateConditional(Generator.asciiIdentifiers()) { !JavaLexer.isKeyword(it, LanguageLevel.HIGHEST) },
+                                                   data.generate(Generator.booleans()),
+                                                   data.generate(Generator.booleans())) })
+    PropertyChecker.forAll(Generator.listsOf(genAction)).shouldHold { actions ->
       val prevLevel = LanguageLevelModuleExtensionImpl.getInstance(myFixture.module).languageLevel
       try {
         PsiIndexConsistencyTester.runActions(JavaModel(myFixture), *actions.toTypedArray())
@@ -115,12 +116,15 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
   }
 
   private data class TextChange(val newClassName: String, val viaDocument: Boolean, val withImport: Boolean): Action {
+    val newText = (if (withImport) "import zoo.Zoo; "  else "") + "class $newClassName { }"
+
+    override fun toString(): String = "TextChange(via=${if (viaDocument) "document" else "VFS"}, text=\"$newText\")"
+
     override fun performAction(model: Model) {
       model as JavaModel
       PostponedFormatting.performAction(model)
       val counterBefore = PsiManager.getInstance(model.project).modificationTracker.javaStructureModificationCount
       model.docClassName = newClassName
-      val newText = (if (withImport) "import zoo.Zoo; "  else "") + "class $newClassName { }"
       if (viaDocument) {
         model.getDocument().setText(newText)
       } else {
@@ -142,4 +146,8 @@ class JavaPsiIndexConsistencyTest : LightCodeInsightFixtureTestCase() {
 }
 
 private fun Model.findPsiJavaFile() = PsiManager.getInstance(project).findFile(vFile) as PsiJavaFile
-private fun Model.findPsiClass() = JavaPsiFacade.getInstance(project).findClass((this as JavaPsiIndexConsistencyTest.JavaModel).psiClassName, GlobalSearchScope.allScope(project))!!
+private fun Model.findPsiClass(): PsiClass {
+  val name = (this as JavaPsiIndexConsistencyTest.JavaModel).psiClassName
+  return JavaPsiFacade.getInstance(project).findClass(name, GlobalSearchScope.allScope(project)) ?: 
+              error("Expected to find class named \"$name\"")
+}

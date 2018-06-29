@@ -1,0 +1,1 @@
+xs = ('foo'<caret>

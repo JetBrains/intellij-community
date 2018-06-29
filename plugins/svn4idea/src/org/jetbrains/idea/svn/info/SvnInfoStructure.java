@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.info;
 
 import org.jetbrains.annotations.Nullable;
@@ -15,6 +15,7 @@ import org.xml.sax.SAXException;
 import java.io.File;
 import java.util.Date;
 
+import static com.intellij.openapi.util.text.StringUtil.notNullize;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnInfoStructure {
@@ -79,7 +80,8 @@ public class SvnInfoStructure {
     return version == null
            ? null
            : new org.jetbrains.idea.svn.conflict.ConflictVersion(createUrl(version.myRepoUrl), version.myPathInRepo,
-                                                                 parseRevision(version.myRevision), NodeKind.from(version.myKind));
+                                                                 parseRevision(version.myRevision),
+                                                                 NodeKind.from(notNullize(version.myKind)));
   }
   
   private long parseRevision(final String revision) throws SAXException {

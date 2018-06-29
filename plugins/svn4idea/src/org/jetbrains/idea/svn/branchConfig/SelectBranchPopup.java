@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.branchConfig;
 
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -27,8 +27,8 @@ import java.awt.*;
 import java.util.ArrayList;
 import java.util.List;
 
-import static com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 
 public class SelectBranchPopup {
   private final static String CONFIGURE_MESSAGE = SvnBundle.message("configure.branches.item");
@@ -37,7 +37,7 @@ public class SelectBranchPopup {
   }
 
   public interface BranchSelectedCallback {
-    void branchSelected(Project project, SvnBranchConfigurationNew configuration, String url, long revision);
+    void branchSelected(Project project, SvnBranchConfigurationNew configuration, @NotNull Url url, long revision);
   }
 
   public static void show(@NotNull Project project,
@@ -78,12 +78,10 @@ public class SelectBranchPopup {
                                        @Nullable String title,
                                        @Nullable Component component) {
     SvnBranchConfigurationNew configuration = SvnBranchConfigurationManager.getInstance(project).get(vcsRoot);
-    List<String> items = new ArrayList<>();
+    List<Object> items = new ArrayList<>();
 
-    if (!isEmptyOrSpaces(configuration.getTrunkUrl())) {
-      items.add(getTrunkString(configuration));
-    }
-    items.addAll(configuration.getBranchUrls());
+    addIfNotNull(items, configuration.getTrunk());
+    items.addAll(configuration.getBranchLocations());
     items.add(CONFIGURE_MESSAGE);
 
     BranchBasesPopupStep step = new BranchBasesPopupStep(project, vcsRoot, configuration, callback, items, title, component);
@@ -91,22 +89,16 @@ public class SelectBranchPopup {
   }
 
   @NotNull
-  private static String getTrunkString(@NotNull SvnBranchConfigurationNew configuration) {
-    return configuration.getTrunkUrl() + " (trunk)";
-  }
-
-  @NotNull
   private static String getBranchName(@NotNull SvnBranchItem branch) {
-    return Url.tail(branch.getUrl());
+    return branch.getUrl().getTail();
   }
 
-  private static class BranchBasesPopupStep extends BaseListPopupStep<String> {
+  private static class BranchBasesPopupStep extends BaseListPopupStep<Object> {
     @NotNull private final Project myProject;
     @NotNull private final VirtualFile myVcsRoot;
     @NotNull private final SvnBranchConfigurationNew myConfiguration;
     @NotNull private final BranchSelectedCallback myCallback;
     @Nullable private final Component myComponent;
-    @NotNull private final String myTrunkString;
 
     private static final String REFRESH_MESSAGE = SvnBundle.message("refresh.branches.item");
 
@@ -114,53 +106,50 @@ public class SelectBranchPopup {
                                 @NotNull VirtualFile vcsRoot,
                                 @NotNull SvnBranchConfigurationNew configuration,
                                 @NotNull BranchSelectedCallback callback,
-                                @NotNull List<String> items,
+                                @NotNull List<Object> items,
                                 @Nullable String title,
                                 @Nullable Component component) {
       myProject = project;
       myVcsRoot = vcsRoot;
       myConfiguration = configuration;
-      myTrunkString = getTrunkString(configuration);
       myCallback = callback;
       myComponent = component;
       init(title, items, null);
     }
 
     @Override
-    public ListSeparator getSeparatorAbove(String value) {
-      return CONFIGURE_MESSAGE.equals(value) || REFRESH_MESSAGE.equals(value) ? new ListSeparator("") : null;
+    public ListSeparator getSeparatorAbove(Object value) {
+      return CONFIGURE_MESSAGE.equals(value) ? new ListSeparator("") : null;
     }
 
     @NotNull
     @Override
-    public String getTextFor(@NotNull String value) {
-      int pos = value.lastIndexOf('/');
-      if (pos < 0) {
-        return value;
+    public String getTextFor(@NotNull Object value) {
+      if (value instanceof Url) {
+        Url url = (Url)value;
+        String suffix = url.equals(myConfiguration.getTrunk()) ? " (trunk)" : "...";
+
+        return url.getTail() + suffix;
       }
-      if (myConfiguration.getTrunkUrl() == null || !value.startsWith(myConfiguration.getTrunkUrl())) {
-        return value.substring(pos + 1) + "...";
-      }
-      return value.substring(pos + 1);
+      return String.valueOf(value);
     }
 
     @Override
-    public PopupStep onChosen(String selectedValue, boolean finalChoice) {
+    public PopupStep onChosen(Object selectedValue, boolean finalChoice) {
       if (CONFIGURE_MESSAGE.equals(selectedValue)) {
         return doFinalStep(() -> BranchConfigurationDialog.configureBranches(myProject, myVcsRoot));
       }
-      else if (myTrunkString.equals(selectedValue)) {
-        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, myConfiguration.getTrunkUrl(), -1));
-      }
-      else if (selectedValue.equals(myConfiguration.getTrunkUrl())) {
-        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, selectedValue, -1));
+
+      Url url = (Url)selectedValue;
+      if (url.equals(myConfiguration.getTrunk())) {
+        return doFinalStep(() -> myCallback.branchSelected(myProject, myConfiguration, url, -1));
       }
       else {
-        return doFinalStep(() -> showBranchPopup(selectedValue));
+        return doFinalStep(() -> showBranchPopup(url));
       }
     }
 
-    private void loadBranches(@NotNull String selectedBranchesHolder, @NotNull Runnable runnable) {
+    private void loadBranches(@NotNull Url branchLocation, @NotNull Runnable runnable) {
       new Task.Backgroundable(myProject, SvnBundle.message("compare.with.branch.progress.loading.branches"), true) {
         @Override
         public void onFinished() {
@@ -171,29 +160,24 @@ public class SelectBranchPopup {
         public void run(@NotNull ProgressIndicator indicator) {
           NewRootBunch manager = SvnBranchConfigurationManager.getInstance(myProject).getSvnBranchConfigManager();
 
-          manager.reloadBranches(myVcsRoot, selectedBranchesHolder, InfoReliability.setByUser, false);
+          manager.reloadBranches(myVcsRoot, branchLocation, InfoReliability.setByUser, false);
         }
       }.queue();
     }
 
-    private void showBranchPopup(String selectedValue) {
-      List<SvnBranchItem> branches = myConfiguration.getBranches(selectedValue);
-      if (branches == null) {
-        return;
-      }
-
-      Object[] items = new Object[branches.size() + 1];
-      System.arraycopy(branches.toArray(), 0, items, 0, branches.size());
-      items[items.length - 1] = REFRESH_MESSAGE;
+    private void showBranchPopup(@NotNull Url branchLocation) {
+      List<SvnBranchItem> branches = myConfiguration.getBranches(branchLocation);
+      List<Object> items = new ArrayList<>(branches);
+      items.add(REFRESH_MESSAGE);
 
       JBList<Object> branchList = new JBList<>(items);
       branchList.setCellRenderer(new BranchRenderer());
       JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(branchList)
-        .setTitle(Url.tail(selectedValue))
+        .setTitle(branchLocation.getTail())
         .setResizable(true)
         .setItemChoosenCallback(() -> {
           if (REFRESH_MESSAGE.equals(branchList.getSelectedValue())) {
-            loadBranches(selectedValue, () -> showBranchPopup(selectedValue));
+            loadBranches(branchLocation, () -> showBranchPopup(branchLocation));
             return;
           }
           SvnBranchItem item = (SvnBranchItem)branchList.getSelectedValue();

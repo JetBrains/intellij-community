@@ -22,7 +22,7 @@ import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -32,7 +32,6 @@ import java.io.File;
  * @author Eugene Zhuravlev
  */
 public class JavaScratchConfiguration extends ApplicationConfiguration {
-  public int SCRATCH_FILE_ID;
 
   protected JavaScratchConfiguration(String name, Project project, ConfigurationFactory factory) {
     super(name, project, factory);
@@ -45,7 +44,7 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     if (className == null || className.length() == 0) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("no.main.class.specified.error.text"));
     }
-    if (SCRATCH_FILE_ID <= 0) {
+    if (getScratchFileUrl() == null) {
       throw new RuntimeConfigurationError("No scratch file associated with configuration");
     }
     if (getScratchVirtualFile() == null) {
@@ -98,18 +97,28 @@ public class JavaScratchConfiguration extends ApplicationConfiguration {
     return new JavaScratchConfigurable(getProject());
   }
 
+  public void setScratchFileUrl(String url) {
+    getOptions().setScratchFileUrl(url);
+  }
+
   @Nullable
   public String getScratchFileUrl() {
-    final VirtualFile vFile = getScratchVirtualFile();
-    return vFile != null? vFile.getUrl() : null;
+    return getOptions().getScratchFileUrl();
   }
 
   @Nullable
   public VirtualFile getScratchVirtualFile() {
-    final int id = SCRATCH_FILE_ID;
-    if (id <= 0) {
-      return null;
-    }
-    return ManagingFS.getInstance().findFileById(id);
+    final String url = getScratchFileUrl();
+    return url == null? null : VirtualFileManager.getInstance().findFileByUrl(url);
+  }
+
+  @Override
+  protected JavaScratchConfigurationOptions getOptions() {
+    return (JavaScratchConfigurationOptions)super.getOptions();
+  }
+
+  @Override
+  protected Class<? extends ModuleBasedConfigurationOptions> getOptionsClass() {
+    return JavaScratchConfigurationOptions.class;
   }
 }

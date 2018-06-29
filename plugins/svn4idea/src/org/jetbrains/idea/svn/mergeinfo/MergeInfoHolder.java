@@ -1,23 +1,9 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.mergeinfo;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Couple;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.changes.committed.CommittedChangeListsListener;
 import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
@@ -25,6 +11,8 @@ import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.idea.svn.api.Url;
+import org.jetbrains.idea.svn.dialogs.WCInfo;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.history.RootsAndBranches;
 import org.jetbrains.idea.svn.history.SvnChangeList;
@@ -40,7 +28,7 @@ public class MergeInfoHolder {
   @NotNull private final SvnMergeInfoRootPanelManual myPanel;
 
   // used ONLY when refresh is triggered
-  @NotNull private final Map<Couple<String>, MergeInfoCached> myCachedMap;
+  @NotNull private final Map<Pair<WCInfo, Url>, MergeInfoCached> myCachedMap;
 
   public MergeInfoHolder(@NotNull Project project,
                          @NotNull DecoratorManager manager,
@@ -53,9 +41,14 @@ public class MergeInfoHolder {
     myCachedMap = ContainerUtil.newHashMap();
   }
 
+  @NotNull
+  private Pair<WCInfo, Url> getCacheKey() {
+    return Pair.create(myPanel.getWcInfo(), myPanel.getBranch().getUrl());
+  }
+
   @Nullable
   private MergeInfoCached getCurrentCache() {
-    return myCachedMap.get(createKey(myPanel.getWcInfo(), myPanel.getBranch()));
+    return myCachedMap.get(getCacheKey());
   }
 
   private boolean isEnabledAndConfigured(boolean ignoreEnabled) {
@@ -66,11 +59,6 @@ public class MergeInfoHolder {
 
   public boolean refreshEnabled(boolean ignoreEnabled) {
     return isEnabledAndConfigured(ignoreEnabled) && getCurrentCache() == null;
-  }
-
-  @NotNull
-  private static Couple<String> createKey(@NotNull WCInfoWithBranches root, @NotNull WCInfoWithBranches.Branch branch) {
-    return Couple.of(root.getPath(), branch.getUrl());
   }
 
   @NotNull
@@ -91,7 +79,7 @@ public class MergeInfoHolder {
     if (refreshEnabled(ignoreEnabled)) {
       // on awt thread
       final MergeInfoCached state = myMergeInfoCache.getCachedState(myPanel.getWcInfo(), myPanel.getLocalBranch());
-      myCachedMap.put(createKey(myPanel.getWcInfo(), myPanel.getBranch()), state != null ? state.copy() : new MergeInfoCached());
+      myCachedMap.put(getCacheKey(), state != null ? state.copy() : new MergeInfoCached());
       myMergeInfoCache.clear(myPanel.getWcInfo(), myPanel.getLocalBranch());
 
       result = new MyRefresher();
@@ -122,7 +110,7 @@ public class MergeInfoHolder {
         // todo make batches - by 10
         final long number = list.getNumber();
         ApplicationManager.getApplication().invokeLater(() -> {
-          final MergeInfoCached cachedState = myCachedMap.get(createKey(myRefreshedRoot, myRefreshedBranch));
+          final MergeInfoCached cachedState = myCachedMap.get(getCacheKey());
           if (cachedState != null) {
             cachedState.getMap().put(number, checkState);
           }
@@ -134,10 +122,15 @@ public class MergeInfoHolder {
 
     public void onAfterEndReport() {
       ApplicationManager.getApplication().invokeLater(() -> {
-        myCachedMap.remove(createKey(myRefreshedRoot, myRefreshedBranch));
+        myCachedMap.remove(getCacheKey());
         updateMixedRevisionsForPanel();
         myManager.repaintTree();
       });
+    }
+
+    @NotNull
+    private Pair<WCInfo, Url> getCacheKey() {
+      return Pair.create(myRefreshedRoot, myRefreshedBranch.getUrl());
     }
   }
 

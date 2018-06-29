@@ -35,11 +35,11 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.AppIcon.MacAppIcon;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ImageUtil;
@@ -64,9 +64,9 @@ import java.io.File;
 import java.io.InputStream;
 import java.net.URL;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.List;
 import java.util.Locale;
+import java.util.concurrent.atomic.AtomicBoolean;
 
 import static javax.swing.ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER;
 import static javax.swing.ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED;
@@ -256,38 +256,51 @@ public class AppUIUtil {
       if (!agreement.isAccepted()) {
         try {
           // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText()));
+          SwingUtilities.invokeAndWait(() -> showEndUserAgreementText(agreement.getText(), agreement.isPrivacyPolicy()));
           EndUserAgreement.setAccepted(agreement);
         }
         catch (Exception e) {
           Logger.getInstance(AppUIUtil.class).warn(e);
         }
       }
-      final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
-      if (consentsToShow.second) {
+      showConsentsAgreementIfNeed();
+    }
+  }
+
+  public static boolean showConsentsAgreementIfNeed() {
+    final Pair<List<Consent>, Boolean> consentsToShow = ConsentOptions.getInstance().getConsents();
+    AtomicBoolean result = new AtomicBoolean();
+    if (consentsToShow.second) {
+      Runnable runnable = () -> {
+        List<Consent> confirmed = confirmConsentOptions(consentsToShow.first);
+        if (confirmed != null) {
+          ConsentOptions.getInstance().setConsents(confirmed);
+          result.set(true);
+        }
+      };
+      if (SwingUtilities.isEventDispatchThread()) {
+        runnable.run();
+      } else {
         try {
-          final Ref<Collection<Consent>> result = Ref.create(null);
-          // todo: does not seem to request focus when shown
-          SwingUtilities.invokeAndWait(() -> result.set(confirmConsentOptions(consentsToShow.first)));
-          final Collection<Consent> confirmed = result.get();
-          if (confirmed != null) {
-            ConsentOptions.getInstance().setConsents(confirmed);
-          }
+          //noinspection SSBasedInspection
+          SwingUtilities.invokeAndWait(runnable);
         }
         catch (Exception e) {
           Logger.getInstance(AppUIUtil.class).warn(e);
         }
       }
     }
+    return result.get();
   }
 
   /**
    * todo: update to support GDPR requirements
    *
-   * @param htmlText Updated version of Privacy Policy text if any.
+   * @param htmlText Updated version of Privacy Policy or EULA text if any.
    *                 If it's {@code null}, the standard text from bundled resources would be used.
+   * @param isPrivacyPolicy  true if this document is a privacy policy
    */
-  public static void showEndUserAgreementText(@NotNull String htmlText) {
+  public static void showEndUserAgreementText(@NotNull String htmlText, final boolean isPrivacyPolicy) {
     DialogWrapper dialog = new DialogWrapper(true) {
       @Override
       protected JComponent createCenterPanel() {
@@ -346,6 +359,15 @@ public class AppUIUtil {
       }
 
       @Override
+      protected JPanel createSouthAdditionalPanel() {
+        JPanel panel = new NonOpaquePanel(new BorderLayout());
+        JLabel label = new JLabel("Scroll to the end to accept");
+        label.setForeground(new JBColor(0x808080, 0x8C8C8C));
+        panel.add(label);
+        return panel;
+      }
+
+      @Override
       public void doCancelAction() {
         super.doCancelAction();
         ApplicationEx application = ApplicationManagerEx.getApplicationEx();
@@ -358,7 +380,12 @@ public class AppUIUtil {
       }
     };
     dialog.setModal(true);
-    dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+    if (isPrivacyPolicy) {
+      dialog.setTitle(ApplicationInfoImpl.getShadowInstance().getShortCompanyName() + " Privacy Policy");
+    }
+    else {
+      dialog.setTitle(ApplicationNamesInfo.getInstance().getFullProductName() + " User License Agreement");
+    }
     dialog.setSize(JBUI.scale(509), JBUI.scale(395));
     dialog.show();
   }

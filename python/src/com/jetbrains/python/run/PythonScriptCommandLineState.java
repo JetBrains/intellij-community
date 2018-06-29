@@ -135,7 +135,7 @@ public class PythonScriptCommandLineState extends PythonCommandLineState {
       }
       runner.getPydevConsoleCommunication().setConsoleView(runner.getConsoleView());
 
-      runner.getConsoleView().addConsoleFolding(false);
+      runner.getConsoleView().addConsoleFolding(false, true);
       runner.getConsoleView().applySoftWrapping();
 
       List<AnAction> actions = Lists.newArrayList(createActions(runner.getConsoleView(), runner.getProcessHandler()));

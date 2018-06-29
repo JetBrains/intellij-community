@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +25,6 @@ import java.util.Collection;
 
 import static com.intellij.openapi.ui.Messages.showErrorDialog;
 import static org.jetbrains.idea.svn.SvnBundle.message;
-import static org.jetbrains.idea.svn.SvnUtil.append;
 import static org.jetbrains.idea.svn.SvnUtil.createUrl;
 
 public class SvnUpdateRootOptionsPanel implements SvnPanel{
@@ -126,19 +125,19 @@ public class SvnUpdateRootOptionsPanel implements SvnPanel{
     SelectBranchPopup.show(myVcs.getProject(), myRoot.getVirtualFile(), (project, configuration, url, revision) -> {
       // TODO: It seems that we could reuse configuration passed as parameter to this callback
       SvnBranchConfigurationNew branchConfiguration = getBranchConfiguration();
-      String branchRelativeUrl = branchConfiguration != null ? branchConfiguration.getRelativeUrl(mySourceUrl.toString()) : null;
+      String branchRelativeUrl = branchConfiguration != null ? branchConfiguration.getRelativeUrl(mySourceUrl) : null;
 
       if (mySourceUrl == null || branchRelativeUrl == null) {
         myBranchField.setText("");
       }
       else {
         try {
-          myURLText.setText(append(createUrl(url), branchRelativeUrl, true).toDecodedString());
+          myURLText.setText(url.appendPath(branchRelativeUrl, true).toDecodedString());
         }
         catch (SvnBindException e) {
           LOG.error(e);
         }
-        myBranchField.setText(Url.tail(url));
+        myBranchField.setText(url.getTail());
       }
     }, message("select.branch.popup.general.title"), myPanel);
   }

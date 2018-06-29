@@ -1758,6 +1758,15 @@ public class UsageViewImpl implements UsageView {
       };
     }
 
+    // [tav] todo: a temp workaround for IDEA-192713
+    @Override
+    protected void processFocusEvent(FocusEvent e) {
+      super.processFocusEvent(e);
+      if (e.getID() == FocusEvent.FOCUS_GAINED) {
+        transferFocus();
+      }
+    }
+
     @Override
     public void dispose() {
       mySupport = null;

@@ -88,9 +88,14 @@ public class MavenWebArtifactRootCopyingHandlerProvider extends ArtifactRootCopy
         if (relativeDirInWar == null) return null;
       }
       ResourceRootConfiguration warRootConfig = getWarRootConfig(artifactResourceConfiguration, moduleResourceConfiguration);
+      if (root.isFile()) {
+        root = root.getParentFile();
+      }
       warRootConfig.directory = root.getPath();
-      warRootConfig.includes.addAll(artifactResourceConfiguration.warSourceIncludes);
-      warRootConfig.excludes.addAll(artifactResourceConfiguration.warSourceExcludes);
+      if (relativeDirInWar == null) {
+        warRootConfig.includes.addAll(artifactResourceConfiguration.warSourceIncludes);
+        warRootConfig.excludes.addAll(artifactResourceConfiguration.warSourceExcludes);
+      }
       return new MavenWebArtifactCopyingHandler(warRootConfig, moduleResourceConfiguration, relativeDirInWar);
     }
 

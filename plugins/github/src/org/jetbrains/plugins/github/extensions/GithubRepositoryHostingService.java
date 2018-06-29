@@ -5,6 +5,7 @@ import com.intellij.dvcs.hosting.RepositoryListLoader;
 import com.intellij.dvcs.hosting.RepositoryListLoadingException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import git4idea.DialogManager;
 import git4idea.remote.GitRepositoryHostingService;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +33,18 @@ public class GithubRepositoryHostingService extends GitRepositoryHostingService 
 
       @Override
       public boolean isEnabled() {
-        return AuthLevel.LOGGED.accepts(myAuthDataHolder.getAuthData());
+        GithubAuthData authData = myAuthDataHolder.getAuthData();
+        if (authData.getAuthType().equals(GithubAuthData.AuthType.BASIC)) {
+          GithubAuthData.BasicAuth basicAuth = authData.getBasicAuth();
+          if (basicAuth == null) return false;
+          return StringUtil.isNotEmpty(basicAuth.getPassword());
+        }
+        if (authData.getAuthType().equals(GithubAuthData.AuthType.TOKEN)) {
+          GithubAuthData.TokenAuth tokenAuth = authData.getTokenAuth();
+          if (tokenAuth == null) return false;
+          return StringUtil.isNotEmpty(tokenAuth.getToken());
+        }
+        return false;
       }
 
       @Override

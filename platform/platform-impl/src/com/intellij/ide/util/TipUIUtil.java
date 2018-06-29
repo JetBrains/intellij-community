@@ -161,17 +161,10 @@ public class TipUIUtil {
               BufferedImage image = ImageIO.read(url.openStream());
               int w = image.getWidth();
               int h = image.getHeight();
-              if (UIUtil.isJreHiDPI(comp)) {
-                // compensate JRE scale
-                float sysScale = JBUI.sysScale(comp);
-                w = (int)(w / sysScale);
-                h = (int)(h / sysScale);
-              }
-              else {
-                // compensate image scale
-                float imgScale = hidpi ? 2f : 1f;
-                w = (int)(w / imgScale);
-                h = (int)(h / imgScale);
+              if (hidpi) {
+                // the expected (user space) size is @2x / 2 in either JRE-HiDPI or IDE-HiDPI mode
+                w /= 2;
+                h /= 2;
               }
               // fit the user scale
               w = (int)(JBUI.scale((float)w));

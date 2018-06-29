@@ -9,6 +9,7 @@ import com.intellij.ide.highlighter.HtmlFileType;
 import com.intellij.ide.highlighter.JavaFileType;
 import com.intellij.ide.highlighter.XmlFileType;
 import com.intellij.lang.FileASTNode;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -23,6 +24,7 @@ import com.intellij.openapi.editor.ex.DocumentEx;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,6 +45,7 @@ import com.intellij.psi.xml.XmlTag;
 import com.intellij.testFramework.*;
 import com.intellij.util.FileContentUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ref.GCUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Assert;
@@ -1072,6 +1075,21 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
       SmartPointerEx<PsiElement> pointer = createPointer(element);
       assertEquals(element, pointer.getElement());
     }
+  }
+
+  public void testDoNotLeakLightVirtualFileSmartPointersReachableViaDocument() {
+    Key<SmartPointerEx<PsiClass>> key = Key.create("smart pointer test");
+
+    Runnable createFileAndPointer = () -> {
+      PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText("a.java", JavaLanguage.INSTANCE, "class Foo {}", true, false);
+      SmartPointerEx<PsiClass> pointer = createPointer(((PsiJavaFile)file).getClasses()[0]);
+      file.getViewProvider().getDocument().putUserData(key, pointer);
+    };
+    createFileAndPointer.run();
+
+    GCUtil.tryGcSoftlyReachableObjects();
+    SmartPointerTracker.processQueue();
+    LeakHunter.checkLeak(LeakHunter.allRoots(), Document.class, d -> d.getUserData(key) != null);
   }
 
 }

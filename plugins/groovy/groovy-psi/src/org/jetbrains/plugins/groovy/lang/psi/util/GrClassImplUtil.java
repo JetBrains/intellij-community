@@ -382,6 +382,9 @@ public class GrClassImplUtil {
     while (place != null) {
       if (place == element) return true;
       place = place.getParent();
+      if (element instanceof GrField && ((GrField)element).getInitializerGroovy() == place) {
+        return false;
+      }
       if (place instanceof GrClosableBlock) return false;
       if (place instanceof GrEnumConstantInitializer) return false;
     }

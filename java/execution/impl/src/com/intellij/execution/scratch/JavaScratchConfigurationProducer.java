@@ -14,7 +14,6 @@ import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -34,10 +33,10 @@ public class JavaScratchConfigurationProducer extends AbstractApplicationConfigu
     final Location location = context.getLocation();
     if (location != null) {
       final VirtualFile vFile = location.getVirtualFile();
-      if (vFile instanceof VirtualFileWithId && vFile.getFileType() == ScratchFileType.INSTANCE) {
+      if (vFile != null && vFile.getFileType() == ScratchFileType.INSTANCE) {
         final PsiFile psiFile = location.getPsiElement().getContainingFile();
         if (psiFile != null && psiFile.getLanguage() == JavaLanguage.INSTANCE) {
-          configuration.SCRATCH_FILE_ID = ((VirtualFileWithId)vFile).getId();
+          configuration.setScratchFileUrl(vFile.getUrl());
           return super.setupConfigurationFromContext(configuration, context, sourceElement);
         }
       }

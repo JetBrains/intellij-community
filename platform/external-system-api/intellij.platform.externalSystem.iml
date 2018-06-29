@@ -17,5 +17,7 @@
     <orderEntry type="module" module-name="intellij.platform.externalSystem.rt" exported="" />
     <orderEntry type="library" name="KotlinJavaRuntime" level="project" />
     <orderEntry type="library" name="de.ruedigermoeller:fst" level="project" />
+    <orderEntry type="library" name="javassist" level="project" />
+    <orderEntry type="library" name="Objenesis" level="project" />
   </component>
 </module>

@@ -18,7 +18,7 @@ package com.intellij.ide.actions;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
@@ -29,29 +29,26 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author Konstantin Bulenkov
  */
-@SuppressWarnings({"MethodMayBeStatic"})
-public class NewElementAction extends AnAction implements DumbAware, PopupAction {
-  @Override
-  public void actionPerformed(AnActionEvent e) {
-    showPopup(e);
-  }
+public class NewElementAction extends DumbAwareAction implements PopupAction {
 
-  protected void showPopup(AnActionEvent e) {
-    createPopup(e).showInBestPositionFor(e.getDataContext());
+  @Override
+  public void actionPerformed(@NotNull AnActionEvent e) {
+    createPopup(e.getDataContext())
+      .showInBestPositionFor(e.getDataContext());
   }
 
   @NotNull
-  protected ListPopup createPopup(@NotNull AnActionEvent e) {
+  protected ListPopup createPopup(@NotNull DataContext dataContext) {
     return JBPopupFactory.getInstance().createActionGroupPopup(
       getPopupTitle(),
-      getGroup(e.getDataContext()),
-      e.getDataContext(),
+      getGroup(dataContext),
+      dataContext,
       getActionSelectionAid(),
       isShowDisabledActions(),
       getDisposeCallback(),
       getMaxRowCount(),
-      getPreselectActionCondition(e.getDataContext()),
-      e.getPlace());
+      getPreselectActionCondition(dataContext),
+      getPlace());
   }
 
   @Nullable
@@ -106,5 +103,10 @@ public class NewElementAction extends AnAction implements DumbAware, PopupAction
 
   protected ActionGroup getGroup(DataContext dataContext) {
     return (ActionGroup)ActionManager.getInstance().getAction(IdeActions.GROUP_WEIGHING_NEW);
+  }
+
+  @NotNull
+  protected String getPlace() {
+    return ActionPlaces.getActionGroupPopupPlace(IdeActions.GROUP_WEIGHING_NEW);
   }
 }

@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.vcs.VcsException;
@@ -25,7 +25,7 @@ public class LookForBranchOriginTask extends BaseMergeTask {
     Url sourceUrl = myFromSource ? myMergeContext.getSourceUrl() : myMergeContext.getWcInfo().getUrl();
     Url targetUrl = myFromSource ? myMergeContext.getWcInfo().getUrl() : myMergeContext.getSourceUrl();
     SvnBranchPointsCalculator.WrapperInvertor copyPoint =
-      myMergeContext.getVcs().getSvnBranchPointsCalculator().calculateCopyPoint(repoUrl, sourceUrl.toString(), targetUrl.toString());
+      myMergeContext.getVcs().getSvnBranchPointsCalculator().calculateCopyPoint(repoUrl, sourceUrl, targetUrl);
 
     if (copyPoint != null) {
       myCallback.consume(copyPoint);

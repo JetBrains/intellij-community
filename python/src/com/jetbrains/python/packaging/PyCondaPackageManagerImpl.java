@@ -64,13 +64,10 @@ public class PyCondaPackageManagerImpl extends PyPackageManagerImpl {
         arguments.add(requirement.toString());
       }
       arguments.add("-y");
-      if (extraArgs.contains("-U")) {
-        getCondaOutput("update", arguments);
-      }
-      else {
+      if (!extraArgs.contains("-U")) {
         arguments.addAll(extraArgs);
-        getCondaOutput("install", arguments);
       }
+      getCondaOutput("install", arguments);
     }
     else {
       super.install(requirements, extraArgs);

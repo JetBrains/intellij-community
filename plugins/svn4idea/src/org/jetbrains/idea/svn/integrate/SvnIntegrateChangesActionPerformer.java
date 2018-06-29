@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
@@ -13,7 +13,8 @@ import org.jetbrains.idea.svn.branchConfig.SelectBranchPopup;
 import org.jetbrains.idea.svn.branchConfig.SvnBranchConfigurationNew;
 import org.jetbrains.idea.svn.commandLine.SvnBindException;
 
-import static org.jetbrains.idea.svn.SvnUtil.append;
+import static org.jetbrains.idea.svn.SvnUtil.getRelativeUrl;
+import static org.jetbrains.idea.svn.SvnUtil.isAncestor;
 
 public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.BranchSelectedCallback {
   private final SvnVcs myVcs;
@@ -27,12 +28,12 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
     myMergerFactory = mergerFactory;
   }
 
-  public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, final String url, final long revision) {
+  public void branchSelected(final Project project, final SvnBranchConfigurationNew configuration, @NotNull Url url, final long revision) {
     onBranchSelected(url, null, null);
   }
 
-  public void onBranchSelected(String url, @Nullable String selectedLocalBranchPath, @Nullable String dialogTitle) {
-    if (myCurrentBranch.toString().equals(url)) {
+  public void onBranchSelected(@NotNull Url url, @Nullable String selectedLocalBranchPath, @Nullable String dialogTitle) {
+    if (myCurrentBranch.equals(url)) {
       showSameSourceAndTargetMessage();
     }
     else {
@@ -45,15 +46,15 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
   }
 
   @Nullable
-  private Pair<WorkingCopyInfo, Url> selectWorkingCopy(String url,
+  private Pair<WorkingCopyInfo, Url> selectWorkingCopy(@NotNull Url url,
                                                        @Nullable String selectedLocalBranchPath,
                                                        @Nullable String dialogTitle) {
     return IntegratedSelectedOptionsDialog
       .selectWorkingCopy(myVcs.getProject(), myCurrentBranch, url, true, selectedLocalBranchPath, dialogTitle);
   }
 
-  private void runIntegrate(@NotNull String url, @NotNull WorkingCopyInfo workingCopy, @NotNull Url workingCopyUrl) {
-    Url sourceUrl = correctSourceUrl(url, workingCopyUrl.toString());
+  private void runIntegrate(@NotNull Url url, @NotNull WorkingCopyInfo workingCopy, @NotNull Url workingCopyUrl) {
+    Url sourceUrl = correctSourceUrl(url, workingCopyUrl);
 
     if (sourceUrl != null) {
       SvnIntegrateChangesTask integrateTask = new SvnIntegrateChangesTask(myVcs, workingCopy, myMergerFactory, sourceUrl, SvnBundle.message(
@@ -63,19 +64,15 @@ public class SvnIntegrateChangesActionPerformer implements SelectBranchPopup.Bra
   }
 
   @Nullable
-  private Url correctSourceUrl(@NotNull String targetUrl, @NotNull String realTargetUrl) {
-    try {
-      if (realTargetUrl.length() > targetUrl.length()) {
-        if (realTargetUrl.startsWith(targetUrl)) {
-          return append(myCurrentBranch, realTargetUrl.substring(targetUrl.length()), true);
-        }
+  private Url correctSourceUrl(@NotNull Url targetUrl, @NotNull Url realTargetUrl) {
+    if (isAncestor(targetUrl, realTargetUrl)) {
+      try {
+        return myCurrentBranch.appendPath(getRelativeUrl(targetUrl, realTargetUrl), false);
       }
-      else if (realTargetUrl.equals(targetUrl)) {
-        return myCurrentBranch;
+      catch (SvnBindException ignored) {
       }
     }
-    catch (SvnBindException ignored) {
-    }
+
     return null;
   }
 

@@ -20,8 +20,10 @@ import com.intellij.openapi.command.WriteCommandAction
 import com.intellij.openapi.fileEditor.FileDocumentManager
 import com.intellij.openapi.roots.impl.PushedFilePropertiesUpdater
 import com.intellij.openapi.util.Conditions
+import com.intellij.openapi.vfs.VfsUtil
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.psi.PsiDocumentManager
+import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiManager
 import com.intellij.psi.codeStyle.CodeStyleManager
 import com.intellij.psi.impl.source.PostprocessReformattingAspect
@@ -29,7 +31,7 @@ import com.intellij.psi.impl.source.PsiFileImpl
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.testFramework.fixtures.CodeInsightTestFixture
 import com.intellij.util.FileContentUtilCore
-import org.jetbrains.jetCheck.Generator
+import org.junit.Assert.fail
 
 /**
  * @author peter
@@ -39,20 +41,19 @@ object PsiIndexConsistencyTester {
   val commonRefs: List<RefKind> = listOf(RefKind.PsiFileRef, RefKind.DocumentRef, RefKind.DirRef,
                                          RefKind.AstRef(null),
                                          RefKind.StubRef(null), RefKind.GreenStubRef(null))
+  
+  val commonActions: List<Action> = listOf(Action.Commit,
+                                           Action.Gc,
+                                           Action.ReparseFile,
+                                           Action.FilePropertiesChanged,
+                                           Action.ReloadFromDisk,
+                                           Action.Reformat,
+                                           Action.PostponedFormatting,
+                                           Action.RenamePsiFile,
+                                           Action.RenameVirtualFile,
+                                           Action.Save)
 
-  fun commonActions(refs: List<RefKind>): Generator<Action> = Generator.frequency(
-    1, Generator.constant(Action.Gc),
-    15, Generator.sampledFrom(Action.Commit,
-                              Action.ReparseFile,
-                              Action.FilePropertiesChanged,
-                              Action.ReloadFromDisk,
-                              Action.Reformat,
-                              Action.PostponedFormatting,
-                              Action.RenamePsiFile,
-                              Action.RenameVirtualFile,
-                              Action.Save),
-    20, Generator.sampledFrom(refs).flatMap { Generator.sampledFrom(Action.LoadRef(it), Action.ClearRef(it)) })
-
+  fun refActions(refs: List<RefKind>): Iterable<Action> = refs.flatMap { listOf(Action.LoadRef(it), Action.ClearRef(it)) }
 
   fun runActions(model: Model, vararg actions: Action) {
     WriteCommandAction.runWriteCommandAction(model.project) {
@@ -162,12 +163,30 @@ object PsiIndexConsistencyTester {
     }
     data class LoadRef(val kind: RefKind): Action {
       override fun performAction(model: Model) {
-        model.refs[kind] = kind.loadRef(model)
+        val oldValue = model.refs[kind]
+        val newValue = kind.loadRef(model)
+        if (oldValue is PsiElement && oldValue.isValid && newValue is PsiElement && oldValue !== newValue) {
+          fail("Duplicate PSI elements: $oldValue and $newValue")
+        }
+        model.refs[kind] = newValue
       }
     }
     data class ClearRef(val kind: RefKind): Action {
       override fun performAction(model: Model) {
         model.refs.remove(kind)
+      }
+    }
+    data class SetDocumentText(val text: String): Action {
+      override fun performAction(model: Model) {
+        PostponedFormatting.performAction(model)
+        model.getDocument().setText(text)
+      }
+    }
+    data class SetFileText(val text: String): Action {
+      override fun performAction(model: Model) {
+        PostponedFormatting.performAction(model)
+        Save.performAction(model)
+        VfsUtil.saveText(model.vFile, text)
       }
     }
   }

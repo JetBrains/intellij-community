@@ -1,11 +1,10 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SmallMapSerializer;
@@ -23,12 +22,14 @@ import java.util.NavigableMap;
 import java.util.TreeMap;
 
 import static com.intellij.util.containers.ContainerUtil.newTreeMap;
+import static org.jetbrains.idea.svn.branchConfig.UrlDescriptor.DECODED_URL_DESCRIPTOR;
+import static org.jetbrains.idea.svn.branchConfig.UrlDescriptor.ENCODED_URL_DESCRIPTOR;
 
 public class SvnBranchPointsCalculator {
 
   private static final Logger LOG = Logger.getInstance(SvnBranchPointsCalculator.class);
 
-  @NotNull private final SmallMapSerializer<String, TreeMap<String, BranchCopyData>> myPersistentMap;
+  @NotNull private final SmallMapSerializer<Url, TreeMap<String, BranchCopyData>> myPersistentMap;
   @NotNull private final Object myPersistenceLock = new Object();
   @NotNull private final SvnVcs myVcs;
 
@@ -37,11 +38,11 @@ public class SvnBranchPointsCalculator {
     File directory = new File(new File(PathManager.getSystemPath(), "vcs"), "svn_copy_sources");
     directory.mkdirs();
     File file = new File(directory, myVcs.getProject().getLocationHash());
-    myPersistentMap = new SmallMapSerializer<>(file, EnumeratorStringDescriptor.INSTANCE, new BranchDataExternalizer());
+    myPersistentMap = new SmallMapSerializer<>(file, DECODED_URL_DESCRIPTOR, new BranchDataExternalizer());
   }
 
   @Nullable
-  public WrapperInvertor getBestHit(@NotNull String repoUrl, @NotNull String sourceUrl, @NotNull String targetUrl) {
+  public WrapperInvertor getBestHit(@NotNull Url repoUrl, @NotNull Url sourceUrl, @NotNull Url targetUrl) {
     synchronized (myPersistenceLock) {
       WrapperInvertor result = null;
       TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
@@ -72,23 +73,23 @@ public class SvnBranchPointsCalculator {
     }
   }
 
-  private void persist(@NotNull String repoUrl, @NotNull BranchCopyData data) {
+  private void persist(@NotNull Url repoUrl, @NotNull BranchCopyData data) {
     // todo - rewrite of rather big piece; consider rewriting
     synchronized (myPersistenceLock) {
       TreeMap<String, BranchCopyData> map = myPersistentMap.get(repoUrl);
       if (map == null) {
         map = newTreeMap();
       }
-      map.put(data.getTarget(), data);
+      map.put(data.getTarget().toString(), data);
       myPersistentMap.put(repoUrl, map);
       myPersistentMap.force();
     }
   }
 
   @Nullable
-  private static BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, @NotNull String url) {
-    Map.Entry<String, BranchCopyData> branchData = map.floorEntry(url);
-    return branchData != null && url.startsWith(branchData.getKey()) ? branchData.getValue() : null;
+  private static BranchCopyData getBranchData(@NotNull NavigableMap<String, BranchCopyData> map, @NotNull Url url) {
+    Map.Entry<String, BranchCopyData> branchData = map.floorEntry(url.toString());
+    return branchData != null && url.toString().startsWith(branchData.getKey()) ? branchData.getValue() : null;
   }
 
   private static class BranchDataExternalizer implements DataExternalizer<TreeMap<String, BranchCopyData>> {
@@ -101,8 +102,8 @@ public class SvnBranchPointsCalculator {
     }
 
     private static void save(@NotNull DataOutput out, @NotNull BranchCopyData value) throws IOException {
-      out.writeUTF(value.getSource());
-      out.writeUTF(value.getTarget());
+      ENCODED_URL_DESCRIPTOR.save(out, value.getSource());
+      ENCODED_URL_DESCRIPTOR.save(out, value.getTarget());
       out.writeLong(value.getSourceRevision());
       out.writeLong(value.getTargetRevision());
     }
@@ -121,12 +122,12 @@ public class SvnBranchPointsCalculator {
 
     @NotNull
     private static BranchCopyData readCopyPoint(@NotNull DataInput in) throws IOException {
-      String sourceUrl = in.readUTF();
-      String targetUrl = in.readUTF();
+      Url source = ENCODED_URL_DESCRIPTOR.read(in);
+      Url target = ENCODED_URL_DESCRIPTOR.read(in);
       long sourceRevision = in.readLong();
       long targetRevision = in.readLong();
 
-      return new BranchCopyData(sourceUrl, sourceRevision, targetUrl, targetRevision);
+      return new BranchCopyData(source, sourceRevision, target, targetRevision);
     }
   }
 
@@ -162,9 +163,9 @@ public class SvnBranchPointsCalculator {
   }
 
   @Nullable
-  public WrapperInvertor calculateCopyPoint(@NotNull Url repoUrl, @NotNull String sourceUrl, @NotNull String targetUrl)
+  public WrapperInvertor calculateCopyPoint(@NotNull Url repoUrl, @NotNull Url sourceUrl, @NotNull Url targetUrl)
     throws VcsException {
-    WrapperInvertor result = getBestHit(repoUrl.toDecodedString(), sourceUrl, targetUrl);
+    WrapperInvertor result = getBestHit(repoUrl, sourceUrl, targetUrl);
 
     if (result == null) {
       CopyData copyData = new FirstInBranch(myVcs, repoUrl, targetUrl, sourceUrl).run();
@@ -175,32 +176,39 @@ public class SvnBranchPointsCalculator {
           ? new BranchCopyData(sourceUrl, copyData.getCopySourceRevision(), targetUrl, copyData.getCopyTargetRevision())
           : new BranchCopyData(targetUrl, copyData.getCopySourceRevision(), sourceUrl, copyData.getCopyTargetRevision());
 
-        persist(repoUrl.toDecodedString(), branchCopyData);
+        persist(repoUrl, branchCopyData);
         result = new WrapperInvertor(!copyData.isTrunkSupposedCorrect(), branchCopyData);
       }
     }
 
-    logCopyData(repoUrl.toDecodedString(), sourceUrl, targetUrl, result);
+    logCopyData(repoUrl, sourceUrl, targetUrl, result);
 
     return result;
   }
 
-  private static void logCopyData(@NotNull String repoUrl,
-                                  @NotNull String sourceUrl,
-                                  @NotNull String targetUrl,
+  private static void logCopyData(@NotNull Url repoUrl,
+                                  @NotNull Url sourceUrl,
+                                  @NotNull Url targetUrl,
                                   @Nullable WrapperInvertor inverter) {
     if (LOG.isDebugEnabled()) {
-      LOG.debug("repoURL: " + repoUrl + ", sourceUrl:" + sourceUrl + ", targetUrl: " + targetUrl + ", inverter: " + inverter);
+      LOG.debug("repoURL: " +
+                repoUrl.toDecodedString() +
+                ", sourceUrl:" +
+                sourceUrl.toDecodedString() +
+                ", targetUrl: " +
+                targetUrl.toDecodedString() +
+                ", inverter: " +
+                inverter);
     }
   }
 
   public static class BranchCopyData {
-    private final String mySource;
-    private final String myTarget;
+    @NotNull private final Url mySource;
+    @NotNull private final Url myTarget;
     private final long mySourceRevision;
     private final long myTargetRevision;
 
-    public BranchCopyData(String source, long sourceRevision, String target, long targetRevision) {
+    public BranchCopyData(@NotNull Url source, long sourceRevision, @NotNull Url target, long targetRevision) {
       mySource = source;
       mySourceRevision = sourceRevision;
       myTarget = target;
@@ -212,7 +220,8 @@ public class SvnBranchPointsCalculator {
       return "source: " + mySource + "@" + mySourceRevision + " target: " + myTarget + "@" + myTargetRevision;
     }
 
-    public String getSource() {
+    @NotNull
+    public Url getSource() {
       return mySource;
     }
 
@@ -220,7 +229,8 @@ public class SvnBranchPointsCalculator {
       return mySourceRevision;
     }
 
-    public String getTarget() {
+    @NotNull
+    public Url getTarget() {
       return myTarget;
     }
 
