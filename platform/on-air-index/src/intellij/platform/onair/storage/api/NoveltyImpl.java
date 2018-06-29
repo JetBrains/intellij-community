@@ -9,13 +9,14 @@ import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
 import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
 
 public class NoveltyImpl implements Novelty, Closeable {
   private static final int INITIAL_SIZE = 1024 * 1024 * 2047; // almost 2GB
 
   private final MappedByteBuffer myByteBuffer;
   // private final List<Pair<Integer, Integer>> myFreeList;
-  private AtomicInteger mySize = new AtomicInteger(0);
+  private final AtomicLong mySize = new AtomicLong(0);
 
   public NoveltyImpl(File backedFile) throws IOException {
     //myFreeList = new LinkedList<>();
@@ -23,6 +24,7 @@ public class NoveltyImpl implements Novelty, Closeable {
     //myFreeList.add(Pair.create(INITIAL_SIZE, 0));
     try (RandomAccessFile file = new RandomAccessFile(backedFile, "rw")) {
       myByteBuffer = file.getChannel().map(FileChannel.MapMode.READ_WRITE, 0, INITIAL_SIZE);
+      myByteBuffer.limit(INITIAL_SIZE);
     }
   }
 
@@ -58,17 +60,20 @@ public class NoveltyImpl implements Novelty, Closeable {
       }
     }*/
 
-    int size = mySize.getAndAdd(4 + bytes.length);
+    long size = mySize.getAndAdd(4 + bytes.length);
 
     if (size + 4 + bytes.length < myByteBuffer.capacity()) {
       ByteBuffer buffer = myByteBuffer.duplicate();
-      buffer.position(size);
+      if (size > buffer.limit()) {
+        throw new OutOfMemoryError("Not enough memory in Novelty storage " + size + " buffer limit is" + buffer.limit());
+      }
+      buffer.position((int)size);
       buffer.putInt(bytes.length);
       buffer.put(bytes);
-      return (long)size;
+      return size;
     }
 
-    throw new OutOfMemoryError("Not enough memory in Novelty storage");
+    throw new OutOfMemoryError("Not enough memory in Novelty storage " + size);
   }
 
   @Override
@@ -104,7 +109,7 @@ public class NoveltyImpl implements Novelty, Closeable {
   }
 
   public int getSize() {
-    return mySize.get();
+    return (int)mySize.get();
   }
 
   public int getFreeSpace() {

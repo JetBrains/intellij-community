@@ -112,11 +112,7 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
       final ValueContainer<Value> fromDisk = myInitializer.compute();
       final ValueContainerImpl<Value> newMerged;
 
-      if (fromDisk instanceof ValueContainerImpl) {
-        newMerged = ((ValueContainerImpl<Value>)fromDisk).clone();
-      } else {
-        newMerged = ((ChangeTrackingValueContainer<Value>)fromDisk).getMergedData().clone();
-      }
+      newMerged = ((UpdatableValueContainer<Value>)fromDisk).getModifiableCopy();
 
       if ((myAdded != null || myRemoved != null) &&
           (newMerged.size() > ValueContainerImpl.NUMBER_OF_VALUES_THRESHOLD ||
@@ -187,4 +183,8 @@ public class ChangeTrackingValueContainer<Value> extends UpdatableValueContainer
     }
   }
 
+  @Override
+  public ValueContainerImpl<Value> getModifiableCopy() {
+    return getMergedData().getModifiableCopy();
+  }
 }

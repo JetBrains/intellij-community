@@ -42,4 +42,6 @@ public abstract class UpdatableValueContainer<T> extends ValueContainer<T> {
   }
 
   public abstract void saveTo(DataOutput out, DataExternalizer<T> externalizer) throws IOException;
+
+  public abstract ValueContainerImpl<T> getModifiableCopy();
 }
