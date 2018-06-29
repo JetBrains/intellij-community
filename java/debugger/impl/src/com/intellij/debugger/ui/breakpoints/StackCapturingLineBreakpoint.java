@@ -10,6 +10,7 @@ import com.intellij.debugger.engine.evaluation.expression.EvaluatorBuilderImpl;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluator;
 import com.intellij.debugger.engine.evaluation.expression.ExpressionEvaluatorImpl;
 import com.intellij.debugger.engine.events.SuspendContextCommandImpl;
+import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
 import com.intellij.debugger.memory.utils.StackFrameItem;
 import com.intellij.debugger.settings.CapturePoint;
@@ -24,6 +25,7 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.rt.debugger.agent.CaptureStorage;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.util.containers.ContainerUtil;
 import com.sun.jdi.*;
@@ -143,11 +145,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
   public static void createAll(DebugProcessImpl debugProcess) {
     DebuggerManagerThreadImpl.assertIsManagerThread();
-    StreamEx<CapturePoint> points = StreamEx.of(DebuggerSettings.getInstance().getCapturePoints()).filter(c -> c.myEnabled);
-    if (isAgentEnabled()) {
-      points = points.append(debugProcess.getAgentInsertPoints());
-    }
-    points.forEach(c -> track(debugProcess, c));
+    DebuggerSettings.getInstance().getCapturePoints().stream().filter(c -> c.myEnabled).forEach(c -> track(debugProcess, c));
   }
 
   public static void clearCaches(DebugProcessImpl debugProcess) {
@@ -228,12 +226,29 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   }
 
   @Nullable
-  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame,
-                                                     @NotNull SuspendContextImpl suspendContext,
-                                                     boolean checkInProcessData) {
+  public static List<StackFrameItem> getAgentRelatedStack(JavaStackFrame frame, @NotNull SuspendContextImpl suspendContext) {
+    if (isAgentEnabled()) {
+      Location location = frame.getDescriptor().getLocation();
+      if (location != null) {
+        Method method = DebuggerUtilsEx.getMethod(location);
+        if (method != null && method.name().endsWith(CaptureStorage.GENERATED_INSERT_METHOD_POSTFIX)) {
+          try {
+            return getProcessCapturedStack(new EvaluationContextImpl(suspendContext, frame.getStackFrameProxy()));
+          }
+          catch (EvaluateException e) {
+            LOG.error(e);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static List<StackFrameItem> getRelatedStack(@NotNull StackFrameProxyImpl frame, @NotNull SuspendContextImpl suspendContext) {
     DebugProcessImpl debugProcess = suspendContext.getDebugProcess();
     Map<Object, List<StackFrameItem>> capturedStacks = debugProcess.getUserData(CAPTURED_STACKS);
-    if (ContainerUtil.isEmpty(capturedStacks) && !isAgentEnabled()) {
+    if (ContainerUtil.isEmpty(capturedStacks)) {
       return null;
     }
     List<StackCapturingLineBreakpoint> captureBreakpoints = debugProcess.getUserData(CAPTURE_BREAKPOINTS);
@@ -250,18 +265,8 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
         if ((StringUtil.isEmpty(insertClassName) || StringUtil.equals(insertClassName, className)) &&
             StringUtil.equals(b.myCapturePoint.myInsertMethodName, methodName)) {
           try {
-            EvaluationContextImpl evaluationContext = new EvaluationContextImpl(suspendContext, frame);
-            Value key = b.myInsertEvaluator.evaluate(evaluationContext);
-            List<StackFrameItem> items = null;
-            if (key instanceof ObjectReference) {
-              if (capturedStacks != null) {
-                items = capturedStacks.get(getKey((ObjectReference)key));
-              }
-              if (items == null && checkInProcessData) {
-                items = getProcessCapturedStack(key, evaluationContext);
-              }
-            }
-            return items;
+            Value key = b.myInsertEvaluator.evaluate(new EvaluationContextImpl(suspendContext, frame));
+            return key instanceof ObjectReference ? capturedStacks.get(getKey((ObjectReference)key)) : null;
           }
           catch (EvaluateException e) {
             LOG.debug(e);
@@ -281,7 +286,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
   private static final Key<Pair<ClassType, Method>> CAPTURE_STORAGE_METHOD = Key.create("CAPTURE_STORAGE_METHOD");
   public static final Pair<ClassType, Method> NO_CAPTURE_AGENT = Pair.empty();
 
-  private static List<StackFrameItem> getProcessCapturedStack(Value key, EvaluationContextImpl evalContext)
+  private static List<StackFrameItem> getProcessCapturedStack(EvaluationContextImpl evalContext)
     throws EvaluateException {
     EvaluationContextImpl evaluationContext = evalContext.withAutoLoadClasses(false);
 
@@ -290,13 +295,13 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
 
     if (methodPair == null) {
       try {
-        ClassType captureClass = (ClassType)process.findClass(evaluationContext, "com.intellij.rt.debugger.agent.CaptureStorage", null);
+        ClassType captureClass = (ClassType)process.findClass(evaluationContext, CaptureStorage.class.getName(), null);
         if (captureClass == null) {
           methodPair = NO_CAPTURE_AGENT;
           LOG.debug("Error loading debug agent", "agent class not found");
         }
         else {
-          methodPair = Pair.create(captureClass, captureClass.methodsByName("getRelatedStack").get(0));
+          methodPair = Pair.create(captureClass, captureClass.methodsByName("getCurrentCapturedStack").get(0));
         }
       }
       catch (EvaluateException e) {
@@ -311,7 +316,7 @@ public class StackCapturingLineBreakpoint extends WildcardMethodBreakpoint {
     }
 
     VirtualMachineProxyImpl virtualMachineProxy = process.getVirtualMachineProxy();
-    List<Value> args = Arrays.asList(key, virtualMachineProxy.mirrorOf(getMaxStackLength()));
+    List<Value> args = Collections.singletonList(virtualMachineProxy.mirrorOf(getMaxStackLength()));
     Pair<ClassType, Method> finalMethodPair = methodPair;
     Value resArray = evaluationContext.computeAndKeep(
       () -> process.invokeMethod(evaluationContext, finalMethodPair.first, finalMethodPair.second,

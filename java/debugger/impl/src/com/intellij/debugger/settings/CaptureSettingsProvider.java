@@ -3,17 +3,14 @@ package com.intellij.debugger.settings;
 
 import com.intellij.debugger.engine.JVMNameUtil;
 import com.intellij.debugger.engine.evaluation.EvaluateException;
-import com.intellij.debugger.jdi.DecompiledLocalVariable;
 import com.intellij.openapi.application.ReadAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
-import one.util.streamex.StreamEx;
 
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.List;
 
 /**
@@ -24,7 +21,6 @@ public class CaptureSettingsProvider {
 
   private static final List<AgentCapturePoint> CAPTURE_POINTS = new ArrayList<>();
   private static final List<AgentInsertPoint> INSERT_POINTS = new ArrayList<>();
-  private static final List<CapturePoint> IDE_INSERT_POINTS;
 
   private static final KeyProvider THIS_KEY = new StringKeyProvider("this");
   private static final KeyProvider FIRST_PARAM = param(0);
@@ -74,23 +70,12 @@ public class CaptureSettingsProvider {
     addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);
     addInsert("com/sun/glass/ui/InvokeLaterDispatcher$Future", "run",
               new FieldKeyProvider("com/sun/glass/ui/InvokeLaterDispatcher$Future", "runnable"));
-
-    IDE_INSERT_POINTS = StreamEx.of(INSERT_POINTS).map(p -> p.myInsertPoint).nonNull().toList();
   }
 
   public static List<AgentPoint> getPoints() {
     List<AgentPoint> res = ContainerUtil.concat(CAPTURE_POINTS, INSERT_POINTS);
     if (Registry.is("debugger.capture.points.agent.annotations")) {
       res = ContainerUtil.concat(res, getAnnotationPoints());
-    }
-    return res;
-  }
-
-  public static List<CapturePoint> getIdeInsertPoints() {
-    List<CapturePoint> res = Collections.unmodifiableList(IDE_INSERT_POINTS);
-    if (Registry.is("debugger.capture.points.agent.annotations")) {
-      res = ContainerUtil.concat(
-        res, StreamEx.of(getAnnotationPoints()).select(AgentInsertPoint.class).map(p -> p.myInsertPoint).nonNull().toList());
     }
     return res;
   }
@@ -178,25 +163,8 @@ public class CaptureSettingsProvider {
   }
 
   public static class AgentInsertPoint extends AgentPoint {
-    public final CapturePoint myInsertPoint; // for IDE
-
     public AgentInsertPoint(String className, String methodName, String methodDesc, KeyProvider key) {
       super(className, methodName, methodDesc, key);
-      this.myInsertPoint = new CapturePoint();
-      myInsertPoint.myInsertClassName = className.replaceAll("/", ".");
-      myInsertPoint.myInsertMethodName = methodName;
-      if (myKey instanceof FieldKeyProvider) {
-        myInsertPoint.myInsertKeyExpression = ((FieldKeyProvider)myKey).myFieldName;
-      }
-      else {
-        String keyStr = key.asString();
-        try {
-          myInsertPoint.myInsertKeyExpression = DecompiledLocalVariable.PARAM_PREFIX + Integer.parseInt(keyStr);
-        }
-        catch (NumberFormatException ignored) {
-          myInsertPoint.myInsertKeyExpression = keyStr;
-        }
-      }
     }
 
     @Override

@@ -12,8 +12,6 @@ import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.impl.DebuggerSession;
 import com.intellij.debugger.impl.DebuggerUtilsEx;
 import com.intellij.debugger.jdi.*;
-import com.intellij.debugger.memory.utils.StackFrameItem;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.Breakpoint;
@@ -35,7 +33,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.ColoredTextContainer;
-import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayUtil;
 import com.intellij.xdebugger.XDebugSession;
@@ -68,7 +65,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
   @NotNull private final StackFrameDescriptorImpl myDescriptor;
   private JavaDebuggerEvaluator myEvaluator = null;
   private final String myEqualityObject;
-  private CapturePoint myInsertCapturePoint;
 
   public JavaStackFrame(@NotNull StackFrameDescriptorImpl descriptor, boolean update) {
     myDescriptor = descriptor;
@@ -116,9 +112,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     }
     JavaFramesListRenderer.customizePresentation(myDescriptor, component, selectedDescriptor);
-    if (myInsertCapturePoint != null) {
-      component.setIcon(XDebuggerUIConstants.INFORMATION_MESSAGE_ICON);
-    }
   }
 
   @Override
@@ -133,12 +126,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       @Override
       public void threadAction(@NotNull SuspendContextImpl suspendContext) {
         if (node.isObsolete()) return;
-        if (myInsertCapturePoint != null) {
-          node.setMessage("Async stacktrace from " +
-                          myInsertCapturePoint.myClassName + "." + myInsertCapturePoint.myMethodName +
-                          " could be available here, enable in", XDebuggerUIConstants.INFORMATION_MESSAGE_ICON,
-                          SimpleTextAttributes.REGULAR_ATTRIBUTES, StackFrameItem.CAPTURE_SETTINGS_OPENER);
-        }
         XValueChildrenList children = new XValueChildrenList();
         buildVariablesThreadAction(getFrameDebuggerContext(getDebuggerContext()), children, node);
         node.addChildren(children, true);
@@ -689,10 +676,6 @@ public class JavaStackFrame extends XStackFrame implements JVMStackFrameInfoProv
       }
     });
     return rangeRef.get();
-  }
-
-  public void setInsertCapturePoint(CapturePoint insertCapturePoint) {
-    myInsertCapturePoint = insertCapturePoint;
   }
 
   @Override
