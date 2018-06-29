@@ -107,14 +107,17 @@ public class IndexInfrastructure {
   static {
     String revision = System.getProperty("onair.revision");
 
+    try {
+      storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
+    }
+    catch (IOException e) {
+      storage = new MockStorage();
+      System.out.println("Can't connect to index cahce.");
+      // throw new RuntimeException(e);
+    }
+
     if (revision != null && !revision.trim().isEmpty()) {
       indexMeta = downloadIndexMetaData(revision);
-      try {
-        storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
-      }
-      catch (IOException e) {
-        throw new RuntimeException(e);
-      }
     }
   }
 
