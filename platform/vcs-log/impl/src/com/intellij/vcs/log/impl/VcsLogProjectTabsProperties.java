@@ -17,7 +17,7 @@ import static com.intellij.util.containers.ContainerUtil.*;
 import static java.util.Comparator.comparingInt;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
-public class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State> {
+public class VcsLogProjectTabsProperties implements PersistentStateComponent<VcsLogProjectTabsProperties.State>, VcsLogTabsProperties {
   public static final String MAIN_LOG_ID = "MAIN";
   private static final int RECENTLY_FILTERED_VALUES_LIMIT = 10;
   @NotNull private final VcsLogApplicationSettings myAppSettings;
@@ -65,6 +65,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     }
   }
 
+  @Override
   @NotNull
   public MainVcsLogUiProperties createProperties(@NotNull final String id) {
     myState.TAB_STATES.putIfAbsent(id, new VcsLogUiPropertiesImpl.State());

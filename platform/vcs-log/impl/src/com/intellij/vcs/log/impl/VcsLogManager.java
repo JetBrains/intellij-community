@@ -38,7 +38,7 @@ public class VcsLogManager implements Disposable {
   private static final Logger LOG = Logger.getInstance(VcsLogManager.class);
 
   @NotNull private final Project myProject;
-  @NotNull private final VcsLogProjectTabsProperties myUiProperties;
+  @NotNull private final VcsLogTabsProperties myUiProperties;
   @Nullable private final Consumer<Throwable> myRecreateMainLogHandler;
 
   @NotNull private final VcsLogData myLogData;
@@ -46,12 +46,12 @@ public class VcsLogManager implements Disposable {
   @NotNull private final VcsLogTabsWatcher myTabsLogRefresher;
   @NotNull private final PostponableLogRefresher myPostponableRefresher;
 
-  public VcsLogManager(@NotNull Project project, @NotNull VcsLogProjectTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
+  public VcsLogManager(@NotNull Project project, @NotNull VcsLogTabsProperties uiProperties, @NotNull Collection<VcsRoot> roots) {
     this(project, uiProperties, roots, true, null);
   }
 
   public VcsLogManager(@NotNull Project project,
-                       @NotNull VcsLogProjectTabsProperties uiProperties,
+                       @NotNull VcsLogTabsProperties uiProperties,
                        @NotNull Collection<VcsRoot> roots,
                        boolean scheduleRefreshImmediately,
                        @Nullable Consumer<Throwable> recreateHandler) {
@@ -96,7 +96,7 @@ public class VcsLogManager implements Disposable {
   }
 
   @NotNull
-  public VcsLogProjectTabsProperties getUiProperties() {
+  public VcsLogTabsProperties getUiProperties() {
     return myUiProperties;
   }
 
