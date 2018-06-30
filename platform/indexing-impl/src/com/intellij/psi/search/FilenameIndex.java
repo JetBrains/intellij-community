@@ -153,12 +153,12 @@ public class FilenameIndex {
   public static PsiFileSystemItem[] getFilesByName(@NotNull Project project,
                                                    @NotNull String name,
                                                    @NotNull final GlobalSearchScope scope,
-                                                   boolean includeDirs) {
+                                                   boolean directories) {
     SmartList<PsiFileSystemItem> result = new SmartList<>();
     Processor<PsiFileSystemItem> processor = Processors.cancelableCollectProcessor(result);
-    processFilesByName(name, includeDirs, processor, scope, project, null);
+    processFilesByName(name, directories, processor, scope, project, null);
 
-    if (includeDirs) {
+    if (directories) {
       return ArrayUtil.toObjectArray(result, PsiFileSystemItem.class);
     }
     //noinspection SuspiciousToArrayCall
