@@ -55,10 +55,10 @@ public class VcsLogTabsManager {
 
   private class PersistentVcsLogUiFactory implements VcsLogManager.VcsLogUiFactory<VcsLogUiImpl> {
     private final VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> myFactory;
-    @NotNull private final VcsLogTabsProperties myUiProperties;
+    @NotNull private final VcsLogProjectTabsProperties myUiProperties;
 
     public PersistentVcsLogUiFactory(@NotNull VcsLogManager.VcsLogUiFactory<? extends VcsLogUiImpl> factory,
-                                     @NotNull VcsLogTabsProperties properties) {
+                                     @NotNull VcsLogProjectTabsProperties properties) {
       myFactory = factory;
       myUiProperties = properties;
     }

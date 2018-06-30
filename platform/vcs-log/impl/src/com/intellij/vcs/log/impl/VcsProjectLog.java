@@ -47,7 +47,7 @@ public class VcsProjectLog implements Disposable {
   private static final int RECREATE_LOG_TRIES = 5;
   @NotNull private final Project myProject;
   @NotNull private final MessageBus myMessageBus;
-  @NotNull private final VcsLogTabsProperties myUiProperties;
+  @NotNull private final VcsLogProjectTabsProperties myUiProperties;
   @NotNull private final VcsLogTabsManager myTabsManager;
 
   @NotNull
@@ -56,7 +56,7 @@ public class VcsProjectLog implements Disposable {
 
   public VcsProjectLog(@NotNull Project project,
                        @NotNull MessageBus messageBus,
-                       @NotNull VcsLogTabsProperties uiProperties) {
+                       @NotNull VcsLogProjectTabsProperties uiProperties) {
     myProject = project;
     myMessageBus = messageBus;
     myUiProperties = uiProperties;
