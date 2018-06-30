@@ -50,6 +50,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
       Multiset<RecentGroup> branchFrequencies = HashMultiset.create();
       Multiset<RecentGroup> userFrequencies = HashMultiset.create();
       for (Map.Entry<String, VcsLogUiPropertiesImpl.State> entry : myState.TAB_STATES.entrySet()) {
+        if (entry.getKey().startsWith("EXTERNAL")) continue; // do not migrate recent items for external logs
         VcsLogUiPropertiesImpl.State s = entry.getValue();
         branchFrequencies.addAll(map(s.RECENTLY_FILTERED_BRANCH_GROUPS, RecentGroup::new));
         userFrequencies.addAll(map(s.RECENTLY_FILTERED_USER_GROUPS, RecentGroup::new));
@@ -63,6 +64,17 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
       myState.RECENTLY_FILTERED_BRANCH_GROUPS.addAll(getFirstItems(sortedBranches, RECENTLY_FILTERED_VALUES_LIMIT));
       myState.RECENTLY_FILTERED_USER_GROUPS.addAll(getFirstItems(sortedUsers, RECENTLY_FILTERED_VALUES_LIMIT));
     }
+  }
+
+  /**
+   * Method for migrating external log tabs properties to the other storage.
+   * Finds a state by id and removes it.
+   * To be removed after 2018.3 release.
+   */
+  @Deprecated
+  @Nullable
+  public VcsLogUiPropertiesImpl.State removeTabState(@NotNull String id) {
+    return myState.TAB_STATES.remove(id);
   }
 
   @Override

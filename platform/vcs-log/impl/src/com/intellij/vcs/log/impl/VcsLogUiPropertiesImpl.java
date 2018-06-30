@@ -217,7 +217,7 @@ public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.St
     }
   }
 
-  private static class TextFilterSettings {
+  public static class TextFilterSettings {
     public boolean REGEX = false;
     public boolean MATCH_CASE = false;
   }
