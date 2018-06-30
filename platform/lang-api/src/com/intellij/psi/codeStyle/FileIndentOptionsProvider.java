@@ -25,7 +25,8 @@ import org.jetbrains.annotations.Nullable;
 import static com.intellij.psi.codeStyle.CommonCodeStyleSettings.IndentOptions;
 
 /**
- * @author Rustam Vishnyakov
+ * Provides indent options for a PSI file thus allowing different PSI files having different indentation policies withing the same project.
+ * The provider can also offer ad hoc actions to control the current indentation policy without opening settings.
  */
 public abstract class FileIndentOptionsProvider {
 
@@ -49,32 +50,65 @@ public abstract class FileIndentOptionsProvider {
   }
 
   /**
-   * Sets the file as accepted by end user.
-   * @param file The file to be accepted. A particular implementation of {@code FileIndentOptionsProvider} may ignore this parameter
-   *             and set a global acceptance flag so that no notification will be shown anymore.
+   * Checks if any actions are available for the given virtual file and indent options without creating them. Indent options may not
+   * necessarily be from the same {@code FileIndentOptionsProvider} but still the provider may offer its own actions in such case.
+   *
+   * @param file          The current virtual file.
+   * @param indentOptions The indent options to check actions' availability for.
+   * @return True if any actions are available, false otherwise.
    */
-  public void setAccepted(@SuppressWarnings("UnusedParameters") @NotNull VirtualFile file) {}
-
   public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     return false;
   }
 
+  /**
+   * @param file          The current virtual file
+   * @param indentOptions The current indent options.
+   * @return An array of actions available for the given virtual file and indent options or {@code null} if no actions are available.
+   */
   @Nullable
   public AnAction[] getActions(@NotNull PsiFile file, @NotNull IndentOptions indentOptions) {
     return null;
   }
 
+  /**
+   * Returns a tooltip string to inform a user about the given indent options. The default implementation returns the following tooltip:
+   * "x spaces/Tab (hint)", where "hint" is an optional short string returned by {@link #getHint(IndentOptions)}
+   * @param indentOptions The indent options to return the tooltip for.
+   * @return The tooltip string or {@code null} if the tooltip is not available.
+   */
+  @NotNull
   public String getTooltip(@NotNull IndentOptions indentOptions) {
-    return getDefaultTooltip(indentOptions);
+    return getTooltip(indentOptions, getHint(indentOptions));
   }
 
-  public static String getDefaultTooltip(@NotNull IndentOptions indentOptions) {
+  /**
+   * Returns a short, usually one-word, string to indicate the source of the given indent options.
+   *
+   * @param indentOptions The indent options to return the hint for.
+   * @return The indent options source hint or {@code null} if not available.
+   */
+  @Nullable
+  protected String getHint(@NotNull IndentOptions indentOptions) {
+    return null;
+  }
+
+  @NotNull
+  public static String getTooltip(@NotNull IndentOptions indentOptions, @Nullable String hint) {
+    StringBuilder sb = new StringBuilder();
     if (indentOptions.USE_TAB_CHARACTER) {
-      return "Tab";
+      sb.append("Tab");
     }
     else {
-      return Integer.toString(indentOptions.INDENT_SIZE) + " spaces";
+      sb.append(indentOptions.INDENT_SIZE).append(" spaces");
     }
+    if (hint != null) sb.append(" (").append(hint).append(')');
+    return sb.toString();
+  }
+
+  @Nullable
+  public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
+    return null;
   }
 
 }
