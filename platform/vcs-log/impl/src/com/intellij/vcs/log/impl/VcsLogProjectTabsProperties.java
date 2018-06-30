@@ -85,7 +85,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     return newArrayList(myState.OPEN_TABS);
   }
 
-  private static void addRecentGroup(@NotNull List<String> valuesInGroup, @NotNull Deque<RecentGroup> stateField) {
+  public static void addRecentGroup(@NotNull List<String> valuesInGroup, @NotNull Deque<RecentGroup> stateField) {
     RecentGroup group = new RecentGroup();
     group.FILTER_VALUES = valuesInGroup;
     if (stateField.contains(group)) {
@@ -98,7 +98,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   }
 
   @NotNull
-  private static List<List<String>> getRecentGroup(@NotNull Deque<RecentGroup> stateField) {
+  public static List<List<String>> getRecentGroup(@NotNull Deque<RecentGroup> stateField) {
     return map2List(stateField, group -> group.FILTER_VALUES);
   }
 
@@ -134,7 +134,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     }
   }
 
-  private class MyVcsLogUiPropertiesImpl extends VcsLogUiPropertiesImpl {
+  private class MyVcsLogUiPropertiesImpl extends VcsLogUiPropertiesImpl<VcsLogUiPropertiesImpl.State> {
     private final String myId;
 
     public MyVcsLogUiPropertiesImpl(String id) {

@@ -26,7 +26,8 @@ import java.util.*;
 /**
  * Stores UI configuration based on user activity and preferences.
  */
-public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent<VcsLogUiPropertiesImpl.State>, MainVcsLogUiProperties {
+public abstract class VcsLogUiPropertiesImpl<S extends VcsLogUiPropertiesImpl.State>
+  implements PersistentStateComponent<S>, MainVcsLogUiProperties {
   private static final Set<VcsLogUiProperties.VcsLogUiProperty> SUPPORTED_PROPERTIES =
     ContainerUtil.newHashSet(CommonUiProperties.SHOW_DETAILS,
                              MainVcsLogUiProperties.SHOW_LONG_EDGES,
@@ -60,7 +61,7 @@ public abstract class VcsLogUiPropertiesImpl implements PersistentStateComponent
 
   @NotNull
   @Override
-  public abstract State getState();
+  public abstract S getState();
 
   @SuppressWarnings("unchecked")
   @NotNull
