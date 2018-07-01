@@ -3,6 +3,8 @@ package com.intellij.ide.ui.laf;
 
 import com.intellij.ide.ui.UITheme;
 import com.intellij.ide.ui.laf.darcula.DarculaLaf;
+import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconPathPatcher;
 
 import javax.swing.*;
 
@@ -23,5 +25,9 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
 
   public void installTheme(UIDefaults defaults) {
     myTheme.applyProperties(defaults);
+    IconPathPatcher patcher = myTheme.getPatcher();
+    if (patcher != null) {
+      IconLoader.installPathPatcher(patcher);
+    }
   }
 }
