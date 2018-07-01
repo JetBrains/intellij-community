@@ -800,10 +800,8 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
 
     new SubTree(myWorkingCopyDir);
     mySvnClientRunner.checkin(myWorkingCopyDir);
-    sleep(10);
     mySvnClientRunner.update(myTheirs);
     mySvnClientRunner.update(myWorkingCopyDir);
-    sleep(10);
 
     disableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     disableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
