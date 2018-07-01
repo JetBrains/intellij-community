@@ -30,4 +30,11 @@ public class UIThemeBasedLookAndFeelInfo extends UIManager.LookAndFeelInfo {
       IconLoader.installPathPatcher(patcher);
     }
   }
+
+  public void dispose() {
+    IconPathPatcher patcher = myTheme.getPatcher();
+    if (patcher != null) {
+      IconLoader.removePathPatcher(patcher);
+    }
+  }
 }
