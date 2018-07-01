@@ -184,7 +184,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initComponent() {
-    if (myCurrentLaf != null) {
+    if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
