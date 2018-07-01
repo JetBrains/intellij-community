@@ -73,7 +73,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(PsiAssignmentExpression expr) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAssignmentToComparisonFix(@NotNull PsiAssignmentExpression expr) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -185,6 +185,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
     return QuickFixes.EMPTY_FIX;
   }
 
+  @Override
   @NotNull public IntentionAction createAddExceptionToExistingCatch(@NotNull PsiElement element) {
     return QuickFixes.EMPTY_FIX;
   }
@@ -578,7 +579,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createAddToImplicitlyWrittenFieldsFix(Project project, @NotNull String qualifiedName) {
+  public IntentionAction createAddToImplicitlyWrittenFieldsFix(@NotNull Project project, @NotNull String qualifiedName) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -620,7 +621,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createCreateMethodFromUsageFix(PsiMethodReferenceExpression methodReferenceExpression) {
+  public IntentionAction createCreateMethodFromUsageFix(@NotNull PsiMethodReferenceExpression methodReferenceExpression) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -689,14 +690,14 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
 
   @NotNull
   @Override
-  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, PsiMethod method) {
+  public IntentionAction createInsertMethodCallFix(@NotNull PsiMethodCallExpression call, @NotNull PsiMethod method) {
     return QuickFixes.EMPTY_FIX;
   }
 
   @NotNull
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(PsiReferenceExpression methodRef,
-                                                                                      JavaResolveResult result) {
+  public LocalQuickFixAndIntentionActionOnPsiElement createAccessStaticViaInstanceFix(@NotNull PsiReferenceExpression methodRef,
+                                                                                      @NotNull JavaResolveResult result) {
     return QuickFixes.EMPTY_FIX;
   }
 
@@ -718,6 +719,7 @@ public class EmptyQuickFixFactory extends QuickFixFactory {
     return QuickFixes.EMPTY_FIX;
   }
 
+  @NotNull
   @Override
   public IntentionAction createPushDownMethodFix() {
     return QuickFixes.EMPTY_FIX;

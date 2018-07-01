@@ -1079,8 +1079,8 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String pluralize(@NotNull String base, int n) {
-    if (n == 1) return base;
+  public static String pluralize(@NotNull String base, int count) {
+    if (count == 1) return base;
     return pluralize(base);
   }
 

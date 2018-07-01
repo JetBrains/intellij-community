@@ -9,11 +9,15 @@ import org.jetbrains.annotations.Nullable;
 public interface ClsCustomNavigationPolicy {
   ExtensionPointName<ClsCustomNavigationPolicy> EP_NAME = ExtensionPointName.create("com.intellij.psi.clsCustomNavigationPolicy");
 
-  default @Nullable PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsFileImpl clsFile) { return null; }
+  @Nullable
+  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsFileImpl clsFile) { return null; }
 
-  default @Nullable PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsClassImpl clsClass) { return null; }
+  @Nullable
+  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsClassImpl clsClass) { return null; }
 
-  default @Nullable PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsMethodImpl clsMethod) { return null; }
+  @Nullable
+  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsMethodImpl clsMethod) { return null; }
 
-  default @Nullable PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsFieldImpl clsField) { return null; }
+  @Nullable
+  default PsiElement getNavigationElement(@SuppressWarnings("unused") @NotNull ClsFieldImpl clsField) { return null; }
 }

@@ -235,7 +235,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                        outsideResult);
       }
 
-      boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, progress, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
+      boolean success = collectHighlights(allInsideElements, allInsideRanges, allOutsideElements, allOutsideRanges, filteredVisitors, insideResult, outsideResult, forceHighlightParents);
 
       if (success) {
         myHighlightInfoProcessor.highlightsOutsideVisiblePartAreProduced(myHighlightingSession, getEditor(),
@@ -280,7 +280,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                     @NotNull final List<ProperTextRange> ranges1,
                                     @NotNull final List<PsiElement> elements2,
                                     @NotNull final List<ProperTextRange> ranges2,
-                                    @NotNull final ProgressIndicator progress,
                                     @NotNull final HighlightVisitor[] visitors,
                                     @NotNull final List<HighlightInfo> insideResult,
                                     @NotNull final List<HighlightInfo> outsideResult,
@@ -295,13 +294,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     boolean success = analyzeByVisitors(visitors, holder, 0, () -> {
       Stack<TextRange> nestedRange = new Stack<>();
       Stack<List<HighlightInfo>> nestedInfos = new Stack<>();
-      runVisitors(elements1, ranges1, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+      runVisitors(elements1, ranges1, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
       final TextRange priorityIntersection = myPriorityRange.intersection(myRestrictRange);
       if ((!elements1.isEmpty() || !insideResult.isEmpty()) && priorityIntersection != null) { // do not apply when there were no elements to highlight
         myHighlightInfoProcessor.highlightsInsideVisiblePartAreProduced(myHighlightingSession, getEditor(), insideResult, myPriorityRange, myRestrictRange, getId());
       }
-      runVisitors(elements2, ranges2, chunkSize, progress, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
+      runVisitors(elements2, ranges2, chunkSize, skipParentsSet, holder, insideResult, outsideResult, forceHighlightParents, visitors,
                   nestedRange, nestedInfos);
     });
     List<HighlightInfo> postInfos = new ArrayList<>(holder.size());
@@ -332,14 +331,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return success[0];
   }
 
-  private void runVisitors(@NotNull List<PsiElement> elements,
-                           @NotNull List<ProperTextRange> ranges,
+  private void runVisitors(@NotNull List<? extends PsiElement> elements,
+                           @NotNull List<? extends ProperTextRange> ranges,
                            int chunkSize,
-                           @NotNull ProgressIndicator progress,
                            @NotNull Set<? super PsiElement> skipParentsSet,
                            @NotNull HighlightInfoHolder holder,
-                           @NotNull List<HighlightInfo> insideResult,
-                           @NotNull List<HighlightInfo> outsideResult,
+                           @NotNull List<? super HighlightInfo> insideResult,
+                           @NotNull List<? super HighlightInfo> outsideResult,
                            boolean forceHighlightParents,
                            @NotNull HighlightVisitor[] visitors,
                            @NotNull Stack<TextRange> nestedRange,
@@ -386,8 +384,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       for (int j = 0; j < holder.size(); j++) {
         final HighlightInfo info = holder.get(j);
 
-        if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-        List<HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile) ? insideResult : outsideResult;
+        if (!myRestrictRange.contains(info)) continue;
+        List<? super HighlightInfo> result = myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) && !(element instanceof PsiFile)
+                                     ? insideResult : outsideResult;
         // have to filter out already obtained highlights
         if (!result.add(info)) continue;
         boolean isError = info.getSeverity() == HighlightSeverity.ERROR;

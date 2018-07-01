@@ -72,9 +72,9 @@ public class AddVariableInitializerFix implements IntentionAction {
     runAssignmentTemplate(Collections.singletonList(myVariable.getInitializer()), suggestedInitializers, editor);
   }
 
-  public static void runAssignmentTemplate(@NotNull final List<PsiExpression> initializers,
-                                           @NotNull final LookupElement[] suggestedInitializers,
-                                           @Nullable Editor editor) {
+  static void runAssignmentTemplate(@NotNull final List<? extends PsiExpression> initializers,
+                                    @NotNull final LookupElement[] suggestedInitializers,
+                                    @Nullable Editor editor) {
     if (editor == null) return;
     LOG.assertTrue(!initializers.isEmpty());
     final PsiExpression initializer = ObjectUtils.notNull(ContainerUtil.getFirstItem(initializers));
@@ -105,7 +105,7 @@ public class AddVariableInitializerFix implements IntentionAction {
   }
 
   @NotNull
-  public static LookupElement[] suggestInitializer(final PsiVariable variable) {
+  static LookupElement[] suggestInitializer(final PsiVariable variable) {
     PsiType type = variable.getType();
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(variable.getProject());
 

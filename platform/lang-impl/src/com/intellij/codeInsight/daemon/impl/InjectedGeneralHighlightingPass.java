@@ -129,8 +129,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
       List<HighlightInfo> toApply = new ArrayList<>();
       for (HighlightInfo info : gotHighlights) {
-        if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-        if (!myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
+        if (!myRestrictRange.contains(info)) continue;
+        if (!myPriorityRange.contains(info)) {
           toApply.add(info);
         }
       }
@@ -200,7 +200,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   // returns false if canceled
   private boolean addInjectedPsiHighlights(@NotNull final Set<PsiFile> injectedFiles,
                                            @NotNull final ProgressIndicator progress,
-                                           @NotNull final Collection<HighlightInfo> outInfos) {
+                                           @NotNull final Collection<? super HighlightInfo> outInfos) {
     if (injectedFiles.isEmpty()) return true;
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     final TextAttributes injectedAttributes = myGlobalScheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
@@ -212,7 +212,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
   private boolean addInjectedPsiHighlights(@NotNull PsiFile injectedPsi,
                                            TextAttributes injectedAttributes,
-                                           @NotNull Collection<HighlightInfo> outInfos,
+                                           @NotNull Collection<? super HighlightInfo> outInfos,
                                            @NotNull ProgressIndicator progress,
                                            @NotNull InjectedLanguageManager injectedLanguageManager) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
