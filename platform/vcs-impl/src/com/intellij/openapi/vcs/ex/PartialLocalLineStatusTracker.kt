@@ -89,7 +89,8 @@ class PartialLocalLineStatusTracker(project: Project,
   override fun Block.toRange(): LocalRange = LocalRange(this.start, this.end, this.vcsStart, this.vcsEnd, this.innerRanges,
                                                         this.marker.changelistId, this.excludedFromCommit)
 
-  override fun createDocumentTrackerHandler(): DocumentTracker.Handler = PartialDocumentTrackerHandler()
+  override fun createDocumentTrackerHandlers(): List<DocumentTracker.Handler> =
+    super.createDocumentTrackerHandlers() + PartialDocumentTrackerHandler()
 
   override fun getAffectedChangeListsIds(): List<String> {
     return documentTracker.readLock {
@@ -319,10 +320,8 @@ class PartialLocalLineStatusTracker(project: Project,
     undoableActions.add(action)
   }
 
-  private inner class PartialDocumentTrackerHandler : LineStatusTrackerBase<LocalRange>.MyDocumentTrackerHandler() {
+  private inner class PartialDocumentTrackerHandler : DocumentTracker.Handler {
     override fun onRangeRefreshed(before: Block, after: List<Block>) {
-      super.onRangeRefreshed(before, after)
-
       val isExcludedFromCommit = before.excludedFromCommit
       val marker = before.marker
       for (block in after) {
@@ -332,8 +331,6 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangesChanged(before: List<Block>, after: Block) {
-      super.onRangesChanged(before, after)
-
       after.excludedFromCommit = mergeExcludedFromCommitRanges(before)
 
       val affectedMarkers = before.map { it.marker }.distinct()
@@ -354,20 +351,16 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onRangeShifted(before: Block, after: Block) {
-      super.onRangeShifted(before, after)
-
       after.excludedFromCommit = before.excludedFromCommit
       after.marker = before.marker
     }
 
     override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
-      val superMergeable = super.onRangesMerged(range1, range2, merged)
-
       merged.excludedFromCommit = mergeExcludedFromCommitRanges(listOf(range1, range2))
 
       if (range1.marker == range2.marker) {
         merged.marker = range1.marker
-        return superMergeable
+        return true
       }
 
       if (range1.range.isEmpty || range2.range.isEmpty) {
@@ -380,22 +373,18 @@ class PartialLocalLineStatusTracker(project: Project,
         else {
           merged.marker = range1.marker
         }
-        return superMergeable
+        return true
       }
 
       return false
     }
 
     override fun afterRangeChange() {
-      super.afterRangeChange()
-
       updateAffectedChangeLists()
       fireExcludedFromCommitChanged()
     }
 
     override fun afterBulkRangeChange() {
-      super.afterBulkRangeChange()
-
       blocks.forEach {
         // do not override markers, that are set via other methods of this listener
         if (it.ourData.marker == null) {
@@ -408,8 +397,6 @@ class PartialLocalLineStatusTracker(project: Project,
     }
 
     override fun onUnfreeze() {
-      super.onUnfreeze()
-
       if (shouldInitializeWithExcludedFromCommit) {
         shouldInitializeWithExcludedFromCommit = false
         for (block in blocks) {

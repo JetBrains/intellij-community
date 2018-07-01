@@ -57,11 +57,11 @@ class DocumentTracker : Disposable {
 
   constructor(document1: Document,
               document2: Document,
-              handler: Handler) {
+              handler: List<Handler>) {
     assert(document1 != document2)
     this.document1 = document1
     this.document2 = document2
-    this.handler = handler
+    this.handler = WrapperHandler(handler.toList())
 
     val changes = compareLines(document1.immutableCharSequence,
                                document2.immutableCharSequence,
@@ -500,6 +500,50 @@ class DocumentTracker : Disposable {
 
     fun onFreeze() {}
     fun onUnfreeze() {}
+  }
+
+  private class WrapperHandler(val handlers: List<Handler>) : Handler {
+    override fun onRangeRefreshed(before: Block, after: List<Block>) {
+      handlers.forEach { it.onRangeRefreshed(before, after) }
+    }
+
+    override fun onRangesChanged(before: List<Block>, after: Block) {
+      handlers.forEach { it.onRangesChanged(before, after) }
+    }
+
+    override fun onRangeShifted(before: Block, after: Block) {
+      handlers.forEach { it.onRangeShifted(before, after) }
+    }
+
+    override fun onRangesMerged(range1: Block, range2: Block, merged: Block): Boolean {
+      var mergeable = true
+      handlers.forEach { mergeable = mergeable && it.onRangesMerged(range1, range2, merged) }
+      return mergeable
+    }
+
+    override fun afterRangeChange() {
+      handlers.forEach { it.afterRangeChange() }
+    }
+
+    override fun afterBulkRangeChange() {
+      handlers.forEach { it.afterBulkRangeChange() }
+    }
+
+    override fun onFreeze(side: Side) {
+      handlers.forEach { it.onFreeze(side) }
+    }
+
+    override fun onUnfreeze(side: Side) {
+      handlers.forEach { it.onUnfreeze(side) }
+    }
+
+    override fun onFreeze() {
+      handlers.forEach { it.onFreeze() }
+    }
+
+    override fun onUnfreeze() {
+      handlers.forEach { it.onUnfreeze() }
+    }
   }
 
 
