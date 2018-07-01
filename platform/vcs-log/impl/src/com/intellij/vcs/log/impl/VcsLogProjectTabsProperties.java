@@ -14,6 +14,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.*;
 
 import static com.intellij.util.containers.ContainerUtil.*;
+import static com.intellij.vcs.log.ui.filter.BranchFilterPopupComponent.BRANCH_FILTER_NAME;
+import static com.intellij.vcs.log.ui.filter.UserFilterPopupComponent.USER_FILER_NAME;
 import static java.util.Comparator.comparingInt;
 
 @State(name = "Vcs.Log.Tabs.Properties", storages = {@Storage(file = StoragePathMacros.WORKSPACE_FILE)})
@@ -42,10 +44,9 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
   }
 
   private void migrateRecentItems() {
-    if (isEmpty(myState.RECENTLY_FILTERED_BRANCH_GROUPS) && isEmpty(myState.RECENTLY_FILTERED_USER_GROUPS)) {
+    if (isEmpty(myState.RECENT_FILTERS)) {
 
-      myState.RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
-      myState.RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
+      myState.RECENT_FILTERS = newHashMap();
 
       Multiset<RecentGroup> branchFrequencies = HashMultiset.create();
       Multiset<RecentGroup> userFrequencies = HashMultiset.create();
@@ -61,8 +62,8 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
       List<RecentGroup> sortedBranches = sorted(branchFrequencies.elementSet(), comparingInt(value -> -branchFrequencies.count(value)));
       List<RecentGroup> sortedUsers = sorted(userFrequencies.elementSet(), comparingInt(value -> -userFrequencies.count(value)));
 
-      myState.RECENTLY_FILTERED_BRANCH_GROUPS.addAll(getFirstItems(sortedBranches, RECENTLY_FILTERED_VALUES_LIMIT));
-      myState.RECENTLY_FILTERED_USER_GROUPS.addAll(getFirstItems(sortedUsers, RECENTLY_FILTERED_VALUES_LIMIT));
+      myState.RECENT_FILTERS.put(BRANCH_FILTER_NAME, newArrayList(getFirstItems(sortedBranches, RECENTLY_FILTERED_VALUES_LIMIT)));
+      myState.RECENT_FILTERS.put(USER_FILER_NAME, newArrayList(getFirstItems(sortedUsers, RECENTLY_FILTERED_VALUES_LIMIT)));
     }
   }
 
@@ -97,28 +98,37 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     return newArrayList(myState.OPEN_TABS);
   }
 
-  public static void addRecentGroup(@NotNull List<String> valuesInGroup, @NotNull Deque<RecentGroup> stateField) {
-    RecentGroup group = new RecentGroup();
-    group.FILTER_VALUES = valuesInGroup;
-    if (stateField.contains(group)) {
+  public static void addRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField,
+                                    @NotNull String filterName,
+                                    @NotNull Collection<String> values) {
+    List<RecentGroup> recentGroups = stateField.get(filterName);
+    if (recentGroups == null) {
+      recentGroups = newArrayList();
+      stateField.put(filterName, recentGroups);
+    }
+    RecentGroup group = new RecentGroup(values);
+    if (recentGroups.contains(group)) {
       return;
     }
-    stateField.addFirst(group);
-    while (stateField.size() > RECENTLY_FILTERED_VALUES_LIMIT) {
-      stateField.removeLast();
+    recentGroups.add(0, group);
+    while (recentGroups.size() > RECENTLY_FILTERED_VALUES_LIMIT) {
+      recentGroups.remove(recentGroups.size() - 1);
     }
   }
 
   @NotNull
-  public static List<List<String>> getRecentGroup(@NotNull Deque<RecentGroup> stateField) {
-    return map2List(stateField, group -> group.FILTER_VALUES);
+  public static List<List<String>> getRecentGroup(@NotNull Map<String, List<RecentGroup>> stateField, @NotNull String filterName) {
+    List<RecentGroup> values = stateField.get(filterName);
+    if (values == null) {
+      return emptyList();
+    }
+    return map2List(values, group -> group.FILTER_VALUES);
   }
 
   public static class State {
     public Map<String, VcsLogUiPropertiesImpl.State> TAB_STATES = newTreeMap();
     public LinkedHashSet<String> OPEN_TABS = newLinkedHashSet();
-    public Deque<RecentGroup> RECENTLY_FILTERED_USER_GROUPS = new ArrayDeque<>();
-    public Deque<RecentGroup> RECENTLY_FILTERED_BRANCH_GROUPS = new ArrayDeque<>();
+    public Map<String, List<RecentGroup>> RECENT_FILTERS = newHashMap();
   }
 
   public static class RecentGroup {
@@ -128,8 +138,12 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     public RecentGroup() {
     }
 
+    public RecentGroup(@NotNull Collection<String> values) {
+      FILTER_VALUES.addAll(values);
+    }
+
     public RecentGroup(@NotNull VcsLogUiPropertiesImpl.UserGroup oldGroup) {
-      FILTER_VALUES.addAll(oldGroup.users);
+      this(oldGroup.users);
     }
 
     @Override
@@ -171,25 +185,14 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
     }
 
     @Override
-    public void addRecentlyFilteredUserGroup(@NotNull List<String> usersInGroup) {
-      addRecentGroup(usersInGroup, myState.RECENTLY_FILTERED_USER_GROUPS);
+    public void addRecentlyFilteredGroup(@NotNull String filterName, @NotNull Collection<String> values) {
+      addRecentGroup(myState.RECENT_FILTERS, filterName, values);
     }
 
-    @Override
-    public void addRecentlyFilteredBranchGroup(@NotNull List<String> valuesInGroup) {
-      addRecentGroup(valuesInGroup, myState.RECENTLY_FILTERED_BRANCH_GROUPS);
-    }
-
-    @Override
     @NotNull
-    public List<List<String>> getRecentlyFilteredUserGroups() {
-      return getRecentGroup(myState.RECENTLY_FILTERED_USER_GROUPS);
-    }
-
     @Override
-    @NotNull
-    public List<List<String>> getRecentlyFilteredBranchGroups() {
-      return getRecentGroup(myState.RECENTLY_FILTERED_BRANCH_GROUPS);
+    public List<List<String>> getRecentlyFilteredGroups(@NotNull String filterName) {
+      return getRecentGroup(myState.RECENT_FILTERS, filterName);
     }
   }
 }

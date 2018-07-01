@@ -48,9 +48,13 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
   }
 
   @NotNull
-  protected abstract List<List<String>> getRecentValuesFromSettings();
+  protected List<List<String>> getRecentValuesFromSettings() {
+    return myUiProperties.getRecentlyFilteredGroups(myName);
+  }
 
-  protected abstract void rememberValuesInSettings(@NotNull Collection<String> values);
+  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
+    myUiProperties.addRecentlyFilteredGroup(myName, values);
+  }
 
   @NotNull
   protected abstract List<String> getAllValues();

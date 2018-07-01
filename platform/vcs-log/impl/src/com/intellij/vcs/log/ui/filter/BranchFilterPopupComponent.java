@@ -38,16 +38,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+  public static final String BRANCH_FILTER_NAME = "Branch";
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
-    super("Branch", uiProperties, filterModel);
+    super(BRANCH_FILTER_NAME, uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 
@@ -84,17 +84,6 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
     actionGroup.add(new MyBranchPopupBuilder(myFilterModel.getDataPack(), myBranchFilterModel.getVisibleRoots(),
                                              getRecentValuesFromSettings()).build());
     return actionGroup;
-  }
-
-  @NotNull
-  @Override
-  protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredBranchGroups();
-  }
-
-  @Override
-  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<>(values));
   }
 
   @NotNull
