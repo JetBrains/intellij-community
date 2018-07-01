@@ -188,7 +188,6 @@ public abstract class AbstractColorsScheme extends EditorFontCacheImpl implement
   /**
    * Returns the collection of text attribute keys for which this color scheme defines attributes.
    */
-  @SuppressWarnings("unused")
   @NotNull
   public Set<TextAttributesKey> getAttributeKeys() {
     HashSet<TextAttributesKey> result = new HashSet<>(myAttributesMap.keySet());

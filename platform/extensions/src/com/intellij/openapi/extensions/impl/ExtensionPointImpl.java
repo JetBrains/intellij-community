@@ -265,7 +265,6 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
-  @SuppressWarnings("unused") // upsource
   public synchronized void removeUnloadableExtensions() {
     ExtensionComponentAdapter[] adapters = myExtensionAdapters.toArray(ExtensionComponentAdapter.EMPTY_ARRAY);
     for (ExtensionComponentAdapter adapter : adapters) {

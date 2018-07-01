@@ -116,7 +116,6 @@ public class TestScaleHelper {
     };
   }
 
-  @SuppressWarnings("unused")
   public static void saveImage(BufferedImage image, String path) {
     try {
       javax.imageio.ImageIO.write(image, "png", new File(path));

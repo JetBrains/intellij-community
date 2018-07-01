@@ -164,7 +164,6 @@ public class UpdateSettings implements PersistentStateComponent<UpdateOptions>, 
   //<editor-fold desc="Deprecated stuff.">
   /** @deprecated use {@link #getSelectedChannelStatus()} (to be removed in IDEA 2018) */
   @Deprecated
-  @SuppressWarnings("unused")
   public String getUpdateChannelType() {
     return myState.getUpdateChannelType();
   }

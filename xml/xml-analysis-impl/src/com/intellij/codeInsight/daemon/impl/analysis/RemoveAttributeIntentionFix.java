@@ -37,7 +37,7 @@ public class RemoveAttributeIntentionFix implements LocalQuickFix, IntentionActi
     myLocalName = localName;
   }
 
-  @SuppressWarnings("unused")
+  @SuppressWarnings("unused") // to instantiate via extension
   public RemoveAttributeIntentionFix() {
     this(null);
   }

@@ -285,12 +285,10 @@ public final class CompletionServiceImpl extends CompletionService {
     return new CompletionSorterImpl(new ArrayList<>());
   }
 
-  @SuppressWarnings("unused")
   public CompletionLookupArranger createLookupArranger(CompletionParameters parameters) {
     return new CompletionLookupArrangerImpl(parameters).withAllItemsVisible();
   }
 
-  @SuppressWarnings("unused")
   public void handleCompletionItemSelected(CompletionParameters parameters,
                                            LookupElement lookupElement,
                                            PrefixMatcher prefixMatcher,
