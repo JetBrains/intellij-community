@@ -8,6 +8,7 @@ import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.conflict.ConflictAction;
 import org.jetbrains.idea.svn.conflict.ConflictOperation;
 import org.jetbrains.idea.svn.conflict.ConflictVersion;
@@ -17,6 +18,7 @@ import org.junit.Test;
 
 import java.io.File;
 
+import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
 import static org.junit.Assert.*;
 
 /**
@@ -42,10 +44,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
 
   @Test
   public void testFile2File_MINE_UNV_THEIRS_ADD() throws Exception {
-    final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir,
-                                                        TreeConflictData.FileToFile.MINE_UNV_THEIRS_ADD, mySvnClientRunner);
-    creator.create();
-    final String conflictFile = TreeConflictData.FileToFile.MINE_UNV_THEIRS_ADD.getConflictFile();
+    String conflictFile = createConflict(TreeConflictData.FileToFile.MINE_UNV_THEIRS_ADD, false);
 
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
@@ -101,12 +100,16 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     assertTrue(version.isNone());
   }
 
-  private String createConflict(final TreeConflictData.Data data) throws Exception {
-    mySvnClientRunner.testSvnVersion(myWorkingCopyDir);
-    createSubTree();
+  private String createConflict(@NotNull TreeConflictData.Data data) throws Exception {
+    return createConflict(data, true);
+  }
 
-    final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
-    creator.create();
+  private String createConflict(@NotNull TreeConflictData.Data data, boolean createSubtree) throws Exception {
+    if (createSubtree) {
+      mySvnClientRunner.testSvnVersion(myWorkingCopyDir);
+      createSubTree();
+    }
+    runInEdtAndWait(() -> new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner).create());
     return data.getConflictFile();
   }
 
