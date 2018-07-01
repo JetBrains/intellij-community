@@ -107,9 +107,7 @@ public class VcsLogProjectTabsProperties implements PersistentStateComponent<Vcs
       stateField.put(filterName, recentGroups);
     }
     RecentGroup group = new RecentGroup(values);
-    if (recentGroups.contains(group)) {
-      return;
-    }
+    recentGroups.remove(group);
     recentGroups.add(0, group);
     while (recentGroups.size() > RECENTLY_FILTERED_VALUES_LIMIT) {
       recentGroups.remove(recentGroups.size() - 1);

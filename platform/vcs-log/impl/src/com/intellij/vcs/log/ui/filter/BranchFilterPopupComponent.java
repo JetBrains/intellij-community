@@ -118,7 +118,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
     @Override
     protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
-      actionGroup.add(new PredefinedValueAction("Favorites", favorites));
+      actionGroup.add(new PredefinedValueAction("Favorites", favorites, false));
     }
 
     private class BranchFilterAction extends PredefinedValueAction {
@@ -128,7 +128,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       private boolean myIsFavorite;
 
       public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
-        super(value, true);
+        super(value);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
         myHoveredIcon = new LayeredIcon(AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);

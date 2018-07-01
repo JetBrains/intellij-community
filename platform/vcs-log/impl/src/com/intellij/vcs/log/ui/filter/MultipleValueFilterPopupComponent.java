@@ -104,23 +104,19 @@ abstract class MultipleValueFilterPopupComponent<Filter extends VcsLogFilter> ex
     @NotNull protected final List<String> myValues;
     private boolean myAddToRecent;
 
-    public PredefinedValueAction(@NotNull String value, boolean addToRecent) {
-      this(Collections.singletonList(value));
-      myAddToRecent = addToRecent;
-    }
-
     public PredefinedValueAction(@NotNull String value) {
-      this(value, true);
+      this(Collections.singletonList(value));
     }
 
     public PredefinedValueAction(@NotNull List<String> values) {
-      this(displayableText(values), values);
+      this(displayableText(values), values, true);
     }
 
-    public PredefinedValueAction(@NotNull String name, @NotNull List<String> values) {
+    public PredefinedValueAction(@NotNull String name, @NotNull List<String> values, boolean addToRecent) {
       super(null, tooltip(values), null);
       getTemplatePresentation().setText(name, false);
       myValues = values;
+      myAddToRecent = addToRecent;
     }
 
     @Override
