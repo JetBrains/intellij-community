@@ -50,7 +50,6 @@ class MultiplexedSocketReader(object):
             return None, None
         else:
             buff = readall(self._socket.recv, 1)
-            # todo is this actually the equivalent of `buff[0]`?
             direction, = struct.unpack('!b', buff)
             frame = readall(self._socket.recv, sz - 1)
             return direction, frame
@@ -157,8 +156,6 @@ class TBidirectionalClientTransport(TTransportBase, FramedWriter):
         self._client_socket.shutdown(socket.SHUT_RDWR)
         self._client_socket.close()
 
-
-# todo use TFramedTransport to wrap transport into size-prefixed messages
 
 class TServerTransportBase(object):
     """Base class for Thrift server transports."""
