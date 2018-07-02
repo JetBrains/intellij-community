@@ -5,6 +5,7 @@ import com.intellij.util.ThrowableConvertor
 import org.jetbrains.plugins.github.api.GithubApiRequest.*
 import org.jetbrains.plugins.github.api.data.*
 import org.jetbrains.plugins.github.api.requests.*
+import org.jetbrains.plugins.github.api.search.GithubIssueSearchQuery
 import org.jetbrains.plugins.github.api.util.GithubApiPagesLoader
 import org.jetbrains.plugins.github.api.util.GithubApiSearchTermBuilder
 import org.jetbrains.plugins.github.api.util.GithubApiUrlQueryBuilder
@@ -191,6 +192,14 @@ object GithubApiRequests {
                        qualifier("assignee", assignee)
                        query(query)
                      })
+                     param(pagination)
+                   }))
+
+      @JvmStatic
+      fun get(server: GithubServerPath, query: GithubIssueSearchQuery, pagination: GithubRequestPagination? = null) =
+        get(getUrl(server, Search.urlSuffix, urlSuffix,
+                   GithubApiUrlQueryBuilder.urlQuery {
+                     param("q", query.toParameterValue())
                      param(pagination)
                    }))
 
