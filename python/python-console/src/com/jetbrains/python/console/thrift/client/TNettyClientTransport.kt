@@ -40,15 +40,15 @@ class TNettyClientTransport(private val host: String,
   val serverTransport: TServerTransport = object : TServerTransport() {
     private val acceptedOnce = AtomicBoolean(false)
 
-    override fun listen() {
-      // TODO ?
-    }
+    override fun listen() {}
 
     override fun acceptImpl(): TTransport {
       if (acceptedOnce.compareAndSet(false, true)) {
         return serverAcceptedTransport
       }
 
+      // waits forever for the consequent `accept()` calls
+      // in `org.apache.thrift.server.TThreadPoolServer.serve`
       val lock = Object()
       while (true) {
         synchronized(lock) {
@@ -57,9 +57,7 @@ class TNettyClientTransport(private val host: String,
       }
     }
 
-    override fun close() {
-      // TODO ?
-    }
+    override fun close() {}
   }
 
   private fun assureChannelPresent(): Channel = channel ?: throw IllegalStateException("`channel` is `null`")
@@ -67,8 +65,6 @@ class TNettyClientTransport(private val host: String,
   private val messageBuffer: ByteBuf = Unpooled.buffer()
 
   override fun open() {
-    // TODO check state
-
     val workerGroup = NioEventLoopGroup()
 
     try {
@@ -112,8 +108,10 @@ class TNettyClientTransport(private val host: String,
   }
 
   /**
-   * This is a nightmare but [flush] is used as the indicator of the message
-   * write termination... by Thrift itself!
+   * Sends the request to the server with the buffer content.
+   *
+   * Note that the buffer might contain arbitrary portion of consecutive
+   * bytes of the request message or messages.
    */
   override fun flush() {
     try {
