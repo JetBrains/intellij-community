@@ -60,9 +60,19 @@ public class IndexInfrastructure {
   private IndexInfrastructure() {
   }
 
+  public static File getIndexMeta() {
+    return new File(PathManager.getIndexRoot(), "index_meta");
+  }
+
   @NotNull
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexDirectory(indexName, true), indexName + ".ver");
+    //new File(getIndexDirectory(indexName, true), indexName + ".ver");
+    return new File(getIndexMeta(), indexName + ".ver");
+  }
+
+  public static File allIndexedFilesRegistryFile() {
+    //new File(new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), ".fileTypes"), "indexed_filetypes");
+    return new File(getIndexMeta(), "file_types");
   }
 
   @NotNull
@@ -154,6 +164,7 @@ public class IndexInfrastructure {
   public static <T> Future<T> submitGenesisTask(Callable<T> action) {
     return ourGenesisExecutor.submit(action);
   }
+
 
   public abstract static class DataInitialization<T> implements Callable<T> {
     private final List<ThrowableRunnable> myNestedInitializationTasks = new ArrayList<>();

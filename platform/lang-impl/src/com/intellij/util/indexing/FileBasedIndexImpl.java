@@ -367,7 +367,7 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
                                               int version,
                                               IndexConfiguration state)
     throws IOException {
-    VfsAwareMapIndexStorage<K, V> storage = null;
+    VfsAwareIndexStorage<K, V> storage = null;
     final ID<K, V> name = extension.getName();
     boolean contentHashesEnumeratorOk = false;
 
@@ -378,14 +378,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           contentHashesEnumeratorOk = true;
         }
 
-        storage = new VfsAwareMapIndexStorage<>(
-          IndexInfrastructure.getStorageFile(name),
+        storage = IndexStorageManager.getInstance().createIndexStorage(
+          name,
           extension.getKeyDescriptor(),
           extension.getValueExternalizer(),
           extension.getCacheSize(),
           extension.keyIsUniqueForIndexedFile(),
-          extension.traceKeyHashToVirtualFileMapping()
-        );
+          extension.traceKeyHashToVirtualFileMapping());
 
         final InputFilter inputFilter = extension.getInputFilter();
         final Set<FileType> addedTypes = new THashSet<>();
@@ -1428,6 +1427,8 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
 
   @Override
   public void requestRebuild(@NotNull final ID<?, ?> indexId, final Throwable throwable) {
+    System.out.println("rebuild requested for index " + indexId);
+    throwable.printStackTrace();
     cleanupProcessedFlag();
     if (RebuildStatus.requestRebuild(indexId)) {
       String message = "Rebuild requested for index " + indexId;

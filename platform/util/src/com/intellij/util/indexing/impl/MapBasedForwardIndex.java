@@ -16,17 +16,15 @@
 package com.intellij.util.indexing.impl;
 
 import com.intellij.util.indexing.IndexExtension;
-import com.intellij.util.io.IOUtil;
-import com.intellij.util.io.PersistentHashMap;
+import com.intellij.util.io.PersistentMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.File;
 import java.io.IOException;
 import java.util.Map;
 
 public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends AbstractForwardIndex<Key,Value> {
   @NotNull
-  private volatile PersistentHashMap<Integer, MapValueType> myInputsIndex;
+  private volatile PersistentMap<Integer, MapValueType> myInputsIndex;
 
   protected MapBasedForwardIndex(IndexExtension<Key, Value, ?> indexExtension) throws IOException {
     super(indexExtension);
@@ -34,7 +32,7 @@ public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends Abs
   }
 
   @NotNull
-  public abstract PersistentHashMap<Integer, MapValueType> createMap() throws IOException;
+  public abstract PersistentMap<Integer, MapValueType> createMap() throws IOException;
 
   @NotNull
   @Override
@@ -73,15 +71,12 @@ public abstract class MapBasedForwardIndex<Key, Value, MapValueType> extends Abs
 
   @Override
   public void clear() throws IOException {
-    final File baseFile = myInputsIndex.getBaseFile();
     try {
       myInputsIndex.close();
     }
     catch (Throwable ignored) {
     }
-    if (baseFile != null) {
-      IOUtil.deleteAllFilesStartingWith(baseFile);
-    }
+    myInputsIndex.clear();
     myInputsIndex = createMap();
   }
 }

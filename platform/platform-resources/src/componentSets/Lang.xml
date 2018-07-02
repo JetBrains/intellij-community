@@ -15,6 +15,7 @@
       <interface-class>com.intellij.util.indexing.FileBasedIndex</interface-class>
       <implementation-class>com.intellij.util.indexing.FileBasedIndexImpl</implementation-class>
     </component>
+
     <component>
       <interface-class>com.intellij.util.gist.GistManager</interface-class>
       <implementation-class>com.intellij.util.gist.GistManagerImpl</implementation-class>
@@ -240,5 +241,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <projectService serviceInterface="com.intellij.codeInsight.daemon.impl.IntentionsUI"
                     serviceImplementation="com.intellij.codeInsight.daemon.impl.IntentionsUIImpl"/>
+    <applicationService serviceInterface="com.intellij.util.indexing.IndexStorageManager"
+                        serviceImplementation="com.intellij.util.indexing.PHMIndexStorageManager"/>
   </extensions>
 </idea-plugin>

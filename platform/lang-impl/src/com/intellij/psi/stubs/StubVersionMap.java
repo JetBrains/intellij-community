@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 
 class StubVersionMap {
-  private static final String INDEXED_FILETYPES = "indexed_filetypes";
   private static final String RECORD_SEPARATOR = "\uFFFF";
   private static final String LINE_SEPARATOR = "\n";
   private static final Charset ourEncoding = CharsetToolkit.UTF8_CHARSET;
@@ -205,7 +204,8 @@ class StubVersionMap {
 
   @NotNull
   private static File allIndexedFilesRegistryFile() {
-    return new File(new File(IndexInfrastructure.getIndexRootDir(StubUpdatingIndex.INDEX_ID), ".fileTypes"), INDEXED_FILETYPES);
+    return IndexInfrastructure.allIndexedFilesRegistryFile();
+
   }
 
   @NotNull

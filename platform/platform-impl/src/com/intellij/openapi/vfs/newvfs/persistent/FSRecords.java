@@ -111,9 +111,9 @@ public class FSRecords {
 
   private static final FileAttribute ourChildrenAttr = new FileAttribute("FsRecords.DIRECTORY_CHILDREN");
 
-  private static final ReentrantReadWriteLock lock;
-  private static final ReentrantReadWriteLock.ReadLock r;
-  private static final ReentrantReadWriteLock.WriteLock w;
+  public static final ReentrantReadWriteLock lock;
+  public static final ReentrantReadWriteLock.ReadLock r;
+  public static final ReentrantReadWriteLock.WriteLock w;
 
   private static volatile int ourLocalModificationCount;
   private static volatile boolean ourIsDisposed;
@@ -152,7 +152,7 @@ public class FSRecords {
   }
 
   @NotNull
-  static File basePath() {
+  public static File basePath() {
     return new File(DbConnection.getCachesDir());
   }
 
@@ -175,7 +175,6 @@ public class FSRecords {
     private static boolean myCorrupted;
 
     private static final AttrPageAwareCapacityAllocationPolicy REASONABLY_SMALL = new AttrPageAwareCapacityAllocationPolicy();
-
 
     public static void connect() {
       writeAndHandleErrors(()->{
@@ -283,8 +282,23 @@ public class FSRecords {
           setCurrentVersion();
         }
 
-        if (getVersion() != VERSION) {
-          throw new IOException("FS repository version mismatch");
+        final int recordsVersion = myRecords.getInt(HEADER_VERSION_OFFSET);
+
+        if (myAttributes.getVersion() != recordsVersion || recordsVersion != VERSION) {
+           throw new IOException("FS repository version mismatch");
+        }
+
+        if (myContents.getVersion() != recordsVersion) {
+          final int filelength = (int)myRecords.length();
+          LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
+          myContents.setVersion(recordsVersion);
+
+          int count = filelength / RECORD_SIZE;
+          for (int n = 2; n < count; n++) {
+            if (!BitUtil.isSet(getFlags(n), PersistentFS.IS_DIRECTORY_FLAG)) {
+              setContentRecordId(n, 0);
+            }
+          }
         }
 
         if (myRecords.getInt(HEADER_CONNECTION_STATUS_OFFSET) != SAFELY_CLOSED_MAGIC) {
@@ -530,6 +544,7 @@ public class FSRecords {
 
   private FSRecords() {
   }
+
 
   static void connect() {
     DbConnection.connect();
