@@ -504,7 +504,6 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
   }
 
   private static final String AGENT_FILE_NAME = "debugger-agent.jar";
-  private static final String STORAGE_FILE_NAME = "debugger-agent-storage.jar";
 
   private static void addDebuggerAgent(JavaParameters parameters) {
     if (StackCapturingLineBreakpoint.isAgentEnabled()) {
@@ -533,10 +532,8 @@ public class DebuggerManagerImpl extends DebuggerManagerEx implements Persistent
               }
             }
             if (agentFile.exists()) {
-              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(agentFile.getAbsolutePath(), "captureAgent", null, f -> {
-                String name = f.getName();
-                return STORAGE_FILE_NAME.equals(name) || AGENT_FILE_NAME.equals(name);
-              });
+              String agentPath = JavaExecutionUtil.handleSpacesInAgentPath(
+                agentFile.getAbsolutePath(), "captureAgent", null, f -> AGENT_FILE_NAME.equals(f.getName()));
               if (agentPath != null) {
                 parametersList.add(prefix + agentPath + generateAgentSettings());
               }

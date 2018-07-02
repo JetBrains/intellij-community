@@ -3,16 +3,14 @@ package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.jar.JarFile;
 
 /**
  * @author egor
@@ -29,6 +27,16 @@ public class CaptureAgent {
     ourInstrumentation = instrumentation;
     try {
       readSettings(args);
+
+      try {
+        appendStorageJar(instrumentation);
+      }
+      catch (Throwable e) {
+        System.out.println(
+          "Critical error in IDEA Async Stacktraces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
+        e.printStackTrace();
+        return;
+      }
 
       instrumentation.addTransformer(new CaptureTransformer());
 
@@ -55,6 +63,30 @@ public class CaptureAgent {
     catch (Throwable e) {
       System.out.println("Capture agent: unknown exception");
       e.printStackTrace();
+    }
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
+    InputStream inputStream = CaptureAgent.class.getResourceAsStream("/debugger-agent-storage.jar");
+    try {
+      File storageJar = File.createTempFile("debugger-agent-storage", "jar");
+      storageJar.deleteOnExit();
+      OutputStream outStream = new FileOutputStream(storageJar);
+      try {
+        byte[] buffer = new byte[10 * 1024];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+          outStream.write(buffer, 0, bytesRead);
+        }
+      }
+      finally {
+        outStream.close();
+      }
+      instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
+    }
+    finally {
+      inputStream.close();
     }
   }
 
