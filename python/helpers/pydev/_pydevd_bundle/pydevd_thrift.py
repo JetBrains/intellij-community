@@ -16,18 +16,6 @@ try:
 except:
     frame_type = None
 
-## @alexander we do not need xml utility methods now
-# try:
-#     from xml.sax.saxutils import escape
-#
-#
-#     def make_valid_xml_value(s):
-#         return escape(s, {'"': '&quot;'})
-# except:
-#     # Simple replacement if it's not there.
-#     def make_valid_xml_value(s):
-#         return s.replace('<', '&lt;').replace('>', '&gt;').replace('"', '&quot;')
-
 
 class ExceptionOnEvaluate:
     def __init__(self, result):

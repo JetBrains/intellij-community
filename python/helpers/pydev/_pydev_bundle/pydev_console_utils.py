@@ -255,7 +255,6 @@ class BaseInterpreterInterface:
 
     def create_std_in(self, debugger=None, original_std_in=None):
         if debugger is None:
-            # @alexander todo fix `StdIn.readline()`
             return StdIn(self, self.rpc_client, original_stdin=original_std_in)
         else:
             return DebugConsoleStdIn(dbg=debugger, original_stdin=original_std_in)
@@ -499,10 +498,7 @@ class BaseInterpreterInterface:
         return pydevd_thrift.frame_vars_to_struct(self.get_namespace(), hidden_ns)
 
     def getVariable(self, attributes):
-        # @alexander todo replace xml with thrift object
         debug_values = []
-        # xml = StringIO.StringIO()
-        # xml.write("<xml>")
         val_dict = pydevd_vars.resolve_compound_var_object_fields(self.get_namespace(), attributes)
         if val_dict is None:
             val_dict = {}
@@ -510,14 +506,9 @@ class BaseInterpreterInterface:
         keys = val_dict.keys()
         for k in keys:
             val = val_dict[k]
-            # evaluate_full_value = pydevd_xml.should_evaluate_full_value(val)
-            # xml.write(pydevd_vars.var_to_xml(val, k, evaluate_full_value=evaluate_full_value))
             evaluate_full_value = pydevd_thrift.should_evaluate_full_value(val)
             debug_values.append(pydevd_thrift.var_to_struct(val, k, evaluate_full_value=evaluate_full_value))
 
-        # xml.write("</xml>")
-        #
-        # return xml.getvalue()
         return debug_values
 
     def getArray(self, attr, roffset, coffset, rows, cols, format):
@@ -529,13 +520,7 @@ class BaseInterpreterInterface:
     def evaluate(self, expression):
         # returns `DebugValue` of evaluated expression
 
-        # @alexander todo replace xml with thrift object
-        # xml = StringIO.StringIO()
-        # xml.write("<xml>")
         result = pydevd_vars.eval_in_context(expression, self.get_namespace(), self.get_namespace())
-        # xml.write(pydevd_vars.var_to_xml(result, expression))
-        # xml.write("</xml>")
-        # return xml.getvalue()
         return [pydevd_thrift.var_to_struct(result, expression)]
 
     def do_get_completions(self, text, act_tok):
