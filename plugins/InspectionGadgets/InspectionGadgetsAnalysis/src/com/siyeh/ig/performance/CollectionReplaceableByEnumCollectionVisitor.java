@@ -117,4 +117,20 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
 
   @NotNull
   protected abstract String getBaseCollectionName();
+
+  static PsiType[] extractParameterType(@NotNull PsiLocalVariable localVariable, int expectedParameterCount) {
+    PsiExpression initializer = PsiUtil.skipParenthesizedExprDown(localVariable.getInitializer());
+    PsiNewExpression newExpression = tryCast(initializer, PsiNewExpression.class);
+    if (newExpression == null) return null;
+    PsiExpressionList argumentList = newExpression.getArgumentList();
+    if (argumentList == null || !argumentList.isEmpty()) return null;
+    PsiJavaCodeReferenceElement classReference = newExpression.getClassReference();
+    if (classReference == null) return null;
+    PsiReferenceParameterList parameterList = classReference.getParameterList();
+    if (parameterList == null) return null;
+    PsiClassType classType = tryCast(newExpression.getType(), PsiClassType.class);
+    if (classType == null) return null;
+    if (classType.getParameterCount() != expectedParameterCount) return null;
+    return classType.getParameters();
+  }
 }
