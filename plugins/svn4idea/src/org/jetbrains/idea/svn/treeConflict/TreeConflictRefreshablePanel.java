@@ -526,8 +526,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
         }
 
         @Override
-        public boolean isFirstTime() {
-          return false;
+        public boolean isRefresh() {
+          return true;
         }
       }, true);
       myFileHistoryPanel.setBottomRevisionForShowDiff(last);

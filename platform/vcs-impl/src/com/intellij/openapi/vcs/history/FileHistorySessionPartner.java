@@ -157,7 +157,7 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
   private void createOrSelectContentIfNeeded() {
     ToolWindow toolWindow = getToolWindow(myVcs.getProject());
-    if (myRefresherI.isFirstTime()) {
+    if (!myRefresherI.isRefresh()) {
       ContentManager manager = toolWindow.getContentManager();
       boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myFileHistoryPanel, true);
       if (!selectedExistingContent) {

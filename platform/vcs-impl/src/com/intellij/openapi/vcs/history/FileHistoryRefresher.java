@@ -40,17 +40,17 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
                               final AbstractVcs vcs) {
     this(vcsHistoryProvider, path, null, vcs);
   }
-  
+
   public FileHistoryRefresher(final VcsHistoryProviderEx vcsHistoryProvider,
                               final FilePath path,
-                              @Nullable VcsRevisionNumber startingRevisionNumber, 
+                              @Nullable VcsRevisionNumber startingRevisionNumber,
                               final AbstractVcs vcs) {
     this((VcsHistoryProvider)vcsHistoryProvider, path, startingRevisionNumber, vcs);
   }
-  
+
   private FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
                                final FilePath path,
-                               @Nullable VcsRevisionNumber startingRevisionNumber, 
+                               @Nullable VcsRevisionNumber startingRevisionNumber,
                                final AbstractVcs vcs) {
     myVcsHistoryProvider = vcsHistoryProvider;
     myPath = path;
@@ -94,11 +94,10 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   }
 
   /**
-   * Was the refresher called for the first time or via refresh.
-   * @return
+   * Was the refresher called via refresh.
    */
   @Override
-  public boolean isFirstTime() {
-    return !myIsRefresh;
+  public boolean isRefresh() {
+    return myIsRefresh;
   }
 }
