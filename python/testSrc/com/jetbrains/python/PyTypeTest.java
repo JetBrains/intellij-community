@@ -3270,6 +3270,14 @@ public class PyTypeTest extends PyTestCase {
                     "expr = T");
   }
 
+  // PY-29748
+  public void testAfterIdentityComparison() {
+    doTest("int",
+           "a = 1\n" +
+           "if a is a:\n" +
+           "   expr = a");
+  }
+
   private static List<TypeEvalContext> getTypeEvalContexts(@NotNull PyExpression element) {
     return ImmutableList.of(TypeEvalContext.codeAnalysis(element.getProject(), element.getContainingFile()).withTracing(),
                             TypeEvalContext.userInitiated(element.getProject(), element.getContainingFile()).withTracing());
