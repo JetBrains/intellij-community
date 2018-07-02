@@ -47,7 +47,6 @@ public enum PythonHelper implements HelperPackage {
   ATTACH_DEBUGGER("pydev/pydevd_attach_to_process/attach_pydevd.py"),
 
   CONSOLE("pydev", "pydevconsole", HelperDependency.THRIFTPY),
-  RUN_IN_CONSOLE("pydev", "pydev_run_in_console"),
   PROFILER("profiler", "run_profiler", HelperDependency.THRIFTPY),
 
   LOAD_ENTRY_POINT("pycharm", "pycharm_load_entry_point"),

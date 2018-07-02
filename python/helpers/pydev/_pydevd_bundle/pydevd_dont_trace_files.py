@@ -55,7 +55,6 @@ DONT_TRACE = {
     'pydev_monkey.py': PYDEV_FILE,
     'pydev_monkey_qt.py': PYDEV_FILE,
     'pydev_override.py': PYDEV_FILE,
-    'pydev_run_in_console.py': PYDEV_FILE,
     'pydev_umd.py': PYDEV_FILE,
     'pydev_versioncheck.py': PYDEV_FILE,
     'pydevconsole.py': PYDEV_FILE,
