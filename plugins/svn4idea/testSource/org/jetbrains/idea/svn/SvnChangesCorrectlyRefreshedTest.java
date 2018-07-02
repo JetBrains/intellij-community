@@ -8,11 +8,8 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
 import org.jetbrains.annotations.Nullable;
-import org.junit.Assert;
 import org.junit.Test;
 
 import java.io.File;
@@ -21,7 +18,11 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.List;
 
+import static com.intellij.openapi.vfs.VfsUtilCore.toVirtualFileArray;
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme.checkDeletedFilesAreInList;
+import static com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme.checkFilesAreInList;
+import static org.junit.Assert.*;
 
 public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   @Override
@@ -40,7 +41,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, subTree.myS1File, "new content");
 
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
-    Assert.assertEquals("new content", text1.toString());
+    assertEquals("new content", text1.toString());
 
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
     refreshChanges();
@@ -48,24 +49,21 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     if (updateException != null) {
       updateException.printStackTrace();
     }
-    if (! RepeatSvnActionThroughBusy.ourBusyExceptionProcessor.process(updateException)) {
-      Assert.assertNull(updateException == null ? null : updateException.getMessage(), updateException);
+    if (!RepeatSvnActionThroughBusy.ourBusyExceptionProcessor.process(updateException)) {
+      assertNull(updateException == null ? null : updateException.getMessage(), updateException);
     }
 
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(), changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
-    Assert.assertEquals(SubTree.ourS1Contents, text.toString());
+    assertEquals(SubTree.ourS1Contents, text.toString());
 
     refreshChanges();
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
   @Test
@@ -79,19 +77,16 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, newName);
 
     refreshChanges();
-    DuringChangeListManagerUpdateTestScheme
-      .checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(), changeListManager);
+    checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(), changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
     assertVF(subTree.mySourceDir, "s1.txt");
 
     changeListManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
   @Test
@@ -104,19 +99,16 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.myTargetDir, "s1.txt");
 
     refreshChanges();
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(), changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
     assertVF(subTree.mySourceDir, "s1.txt");
 
     changeListManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
   @Test
@@ -132,22 +124,20 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s2.txt");
 
     refreshChanges();
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
-                                                                changeListManager.getDefaultListName(), changeListManager);
+    checkFilesAreInList(new VirtualFile[]{subTree.mySourceDir, subTree.myS1File, subTree.myS2File}, changeListManager.getDefaultListName(),
+                        changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
     subTree.mySourceDir = assertVF(subTree.myRootDir, "source");
-    Assert.assertTrue(subTree.mySourceDir.getPath().endsWith("/root/source"));
+    assertTrue(subTree.mySourceDir.getPath().endsWith("/root/source"));
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.mySourceDir, "s2.txt");
 
     changeListManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
 
   @Test
@@ -156,33 +146,31 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     checkin();
 
     moveFileInCommand(subTree.mySourceDir, subTree.myTargetDir);
-    Assert.assertTrue(subTree.mySourceDir.getPath().endsWith("/target/source"));
+    assertTrue(subTree.mySourceDir.getPath().endsWith("/target/source"));
     assertVF(subTree.myTargetDir, "source");
 
     VcsTestUtil.editFileInCommand(myProject, subTree.myS1File, "new");
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
-    Assert.assertEquals("new", text1.toString());
+    assertEquals("new", text1.toString());
 
     refreshChanges();
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
-                                                                changeListManager.getDefaultListName(), changeListManager);
+    checkFilesAreInList(new VirtualFile[]{subTree.mySourceDir, subTree.myS1File, subTree.myS2File}, changeListManager.getDefaultListName(),
+                        changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
     subTree.mySourceDir = assertVF(subTree.myRootDir, "source");
-    Assert.assertTrue(subTree.mySourceDir.getPath().endsWith("/root/source"));
+    assertTrue(subTree.mySourceDir.getPath().endsWith("/root/source"));
     
     subTree.myS1File = assertVF(subTree.mySourceDir, "s1.txt");
     subTree.myS2File = assertVF(subTree.mySourceDir, "s2.txt");
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
-    Assert.assertEquals(SubTree.ourS1Contents, text.toString());
+    assertEquals(SubTree.ourS1Contents, text.toString());
 
     changeListManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
   
   @Test
@@ -192,11 +180,9 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     refreshChanges();
     final List<VirtualFile> files = getAllFiles(subTree);
 
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VfsUtil.toVirtualFileArray(files), changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(toVirtualFileArray(files), changeListManager.getDefaultListName(), changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
@@ -205,11 +191,10 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.myRootDir, "target");
 
     changeListManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
 
     for (VirtualFile file : files) {
-      Assert.assertTrue(file.getPath(), changeListManager.isUnversioned(file));
+      assertTrue(file.getPath(), changeListManager.isUnversioned(file));
     }
   }
 
@@ -229,12 +214,9 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     refreshChanges();
     final List<VirtualFile> files = getAllFiles(subTree);
-    DuringChangeListManagerUpdateTestScheme
-      .checkDeletedFilesAreInList(VfsUtil.toVirtualFileArray(files), changeListManager.getDefaultListName(),
-                                  changeListManager);
+    checkDeletedFilesAreInList(toVirtualFileArray(files), changeListManager.getDefaultListName(), changeListManager);
 
     final Collection<Change> changes = changeListManager.getDefaultChangeList().getChanges();
-
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
@@ -251,21 +233,17 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.myTargetDir, "t15.txt");
 
     changeListManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(),
-                                                                changeListManager);
+    checkFilesAreInList(VirtualFile.EMPTY_ARRAY, changeListManager.getDefaultListName(), changeListManager);
   }
   
   @Nullable
   private static VirtualFile assertVF(final VirtualFile parent, final String name) {
     final VirtualFile[] files = parent.getChildren();
-    //final StringBuilder sb = new StringBuilder("Files: ");
     for (VirtualFile file : files) {
-      //sb.append(file.getName()).append(' ');
       if (name.equals(file.getName())) return file;
     }
     System.out.println("not found as child");
-    Assert.assertNotNull(LocalFileSystem.getInstance().findFileByIoFile(new File(parent.getPath(), name)));
-    //Assert.assertTrue(sb.toString(), false);
+    assertNotNull(LocalFileSystem.getInstance().findFileByIoFile(new File(parent.getPath(), name)));
     return null;
   }
 }
