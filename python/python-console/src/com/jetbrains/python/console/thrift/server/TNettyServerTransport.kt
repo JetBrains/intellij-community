@@ -75,8 +75,6 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
     private val serverBound = CountDownLatch(1)
 
     fun listen() {
-      // TODO check state!
-
       // ServerBootstrap is a helper class that sets up a server. You can set
       // up the server using a Channel directly. However, please note that this
       // is a tedious process, and you do not need to do that in most cases.
@@ -188,22 +186,17 @@ class TNettyServerTransport(port: Int) : TServerTransport() {
 
     fun takeReverseTransport(): TTransport = reverseTransportQueue.take()
 
+    /**
+     * Shutdown the server [NioEventLoopGroup].
+     *
+     * Does not wait for the server socket to be closed.
+     */
     fun close() {
       if (closed.compareAndSet(false, true)) {
         LOG.debug("Closing Netty server")
 
         workerGroup.shutdownGracefully()
         bossGroup.shutdownGracefully()
-
-        // TODO close server channel!
-
-        // TODO should we wait for channel close move to `close()`
-        /*
-              // Wait until the server socket is closed.
-              // In this example, this does not happen, but you can do that to gracefully
-              // shut down your server.
-              f.channel().closeFuture().sync()
-        */
       }
     }
   }
