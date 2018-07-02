@@ -316,7 +316,9 @@ public class DarculaTitlePane extends JPanel {
     }
 
     menu.add(new JSeparator());
-    menu.add(myCloseAction);
+
+    JMenuItem closeMenuItem = menu.add(myCloseAction);
+    closeMenuItem.setFont(getFont().deriveFont(Font.BOLD));
   }
 
   @Override
