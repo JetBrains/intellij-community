@@ -1,10 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.yaml.formatter;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Spacing;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
@@ -17,6 +14,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.yaml.YAMLElementTypes;
 import org.jetbrains.yaml.YAMLFileType;
+import org.jetbrains.yaml.YAMLLanguage;
 import org.jetbrains.yaml.YAMLTokenTypes;
 import org.jetbrains.yaml.psi.YAMLKeyValue;
 import org.jetbrains.yaml.psi.YAMLSequenceItem;
@@ -32,6 +30,8 @@ class YAMLFormattingContext {
 
   @NotNull
   public final CodeStyleSettings mySettings;
+  @NotNull
+  private final SpacingBuilder mySpaceBuilder;
 
   /** This alignments increase partial reformatting stability in case of initially incorrect indents */
   @NotNull
@@ -47,6 +47,9 @@ class YAMLFormattingContext {
 
   YAMLFormattingContext(@NotNull CodeStyleSettings settings) {
     mySettings = settings;
+    mySpaceBuilder = new SpacingBuilder(mySettings, YAMLLanguage.INSTANCE)
+      .before(YAMLTokenTypes.COLON).spaces(0)
+    ;
     shouldIndentSequenceValue = mySettings.getCustomSettings(YAMLCodeStyleSettings.class).INDENT_SEQUENCE_VALUE;
     shouldInlineSequenceIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).SEQUENCE_ON_NEW_LINE;
     shouldInlineBlockMappingIntoSequence = !mySettings.getCustomSettings(YAMLCodeStyleSettings.class).BLOCK_MAPPING_ON_NEW_LINE;
@@ -54,7 +57,12 @@ class YAMLFormattingContext {
   }
 
   @Nullable
-  Spacing computeSpacing(@Nullable Block child1, @NotNull Block child2) {
+  Spacing computeSpacing(@NotNull Block parent, @Nullable Block child1, @NotNull Block child2) {
+    Spacing simpleSpacing = mySpaceBuilder.getSpacing(parent, child1, child2);
+    if (simpleSpacing != null) {
+      return simpleSpacing;
+    }
+
     if (!(child1 instanceof AbstractBlock && child2 instanceof AbstractBlock)) {
       return null;
     }
