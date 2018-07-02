@@ -407,29 +407,34 @@ public class FileUtilRt {
     // normalize and use only the file name from the prefix
     prefix = new File(prefix).getName();
 
-    int exceptionsCount = 0;
+    int attempts = 0;
     int i = 0;
     int maxFileNumber = 10;
+    IOException exception = null;
     while (true) {
+      File f = null;
       try {
-        File f = calcName(dir, prefix, suffix, i);
+        f = calcName(dir, prefix, suffix, i);
 
         boolean success = isDirectory ? f.mkdir() : f.createNewFile();
-        if (!success) {
-          String[] children = f.getParentFile().list();
-          List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
-          maxFileNumber = Math.max(10, list.size() * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
-          throw new IOException("Unable to create temporary file " + f + "\nDirectory '" + f.getParentFile() +
-                                "' list ("+list.size()+" children): " + list);
+        if (success) {
+          return normalizeFile(f);
         }
-
-        return normalizeFile(f);
       }
       catch (IOException e) { // Win32 createFileExclusively access denied
-        if (++exceptionsCount >= 100) {
-          throw e;
+        exception = e;
+      }
+      attempts++;
+      if (attempts > maxFileNumber / 2 || attempts > 100) {
+        String[] children = dir.list();
+        List<String> list = children == null ? Collections.<String>emptyList() : Arrays.asList(children);
+        maxFileNumber = Math.max(10, list.size() * 10); // if too many files are in tmp dir, we need a bigger random range than meager 10
+        if (attempts > 100) {
+          throw exception != null ? exception: new IOException("Unable to create temporary file " + f + "\nDirectory '" + dir +
+                                "' list ("+list.size()+" children): " + list);
         }
       }
+
       i++; // for some reason the file1 can't be created (previous file1 was deleted but got locked by anti-virus?). try file2.
       if (i > 2) {
         i = 2 + RANDOM.nextInt(maxFileNumber); // generate random suffix if too many failures
@@ -446,7 +451,7 @@ public class FileUtilRt {
     String name = prefix + suffix;
     File f = new File(dir, name);
     if (!name.equals(f.getName())) {
-      throw new IOException("Unable to create temporary file " + f + " for name " + name);
+      throw new IOException("Generated name is malformed. name='"+name+"'; new File(dir, name)='" + f+"'");
     }
     return f;
   }
