@@ -203,7 +203,7 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     if (isApplicable(function)) {
       final PyExpression callee = callSite instanceof PyCallExpression ? ((PyCallExpression)callSite).getCallee() : null;
       final NumpyDocString docString = forFunction(function, callee);
@@ -406,15 +406,6 @@ public class NumpyDocStringTypeProvider extends PyTypeProviderBase {
       }
     }
     return null;
-  }
-
-  @Nullable
-  @Override
-  public Ref<PyType> getReturnType(@NotNull PyCallable callable, @NotNull TypeEvalContext context) {
-    return Optional
-      .ofNullable(PyUtil.as(callable, PyFunction.class))
-      .map(function -> getCallType(function, null, context))
-      .orElse(null);
   }
 
   @Override
