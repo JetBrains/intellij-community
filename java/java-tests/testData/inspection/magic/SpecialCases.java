@@ -50,4 +50,14 @@ public class SpecialCases {
     if(instance.get(Calendar.AM_PM) == <warning descr="Should be one of: Calendar.AM, Calendar.PM">MONDAY</warning>) {}
     if(instance.get(Calendar.DATE) == 1) {}
   }
+
+  public void test(Calendar cal) {
+    // IDEA-127764
+    if (cal.get(Calendar.DAY_OF_WEEK) != cal.getFirstDayOfWeek()) {
+    }
+    if (<warning descr="Should be one of: Calendar.SUNDAY, Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, ...">cal.get(Calendar.MONTH)</warning> != <warning descr="Should be one of: Calendar.JANUARY, Calendar.FEBRUARY, Calendar.MARCH, Calendar.APRIL, Calendar.MAY, ...">cal.getFirstDayOfWeek()</warning>) {
+    }
+    if (<warning descr="Should be one of: Calendar.SUNDAY, Calendar.MONDAY, Calendar.TUESDAY, Calendar.WEDNESDAY, Calendar.THURSDAY, ...">cal.get(Calendar.YEAR)</warning> != cal.getFirstDayOfWeek()) {
+    }
+  }
 }
