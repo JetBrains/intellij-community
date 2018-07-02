@@ -80,6 +80,22 @@ class GithubPullRequestsLoader(private val serverPath: GithubServerPath,
     }
   }
 
+  @CalledInAwt
+  fun reset() {
+    progressIndicator.cancel()
+    progressIndicator = object : EmptyProgressIndicator() {
+      override fun start() {
+        checkCanceled()
+        super.start()
+      }
+    }
+    executor.execute {
+      nextPageRequest = createInitialRequest()
+      stateEventDispatcher.multicaster.loaderReset()
+      LOG.debug("Reset listeners notified")
+    }
+  }
+
   fun addStateListener(listener: StateListener) = stateEventDispatcher.addListener(listener)
 
   fun removeStateListener(listener: StateListener) = stateEventDispatcher.removeListener(listener)
@@ -93,5 +109,6 @@ class GithubPullRequestsLoader(private val serverPath: GithubServerPath,
     fun loadingStopped() {}
     fun moreDataLoaded(data: List<GithubSearchedIssue>, hasNext: Boolean) {}
     fun loadingErrorOccurred(error: Throwable) {}
+    fun loaderReset() {}
   }
 }

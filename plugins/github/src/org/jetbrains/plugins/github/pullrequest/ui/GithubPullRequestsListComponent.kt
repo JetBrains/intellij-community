@@ -1,21 +1,29 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.github.pullrequest.ui
 
+import com.intellij.icons.AllIcons
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
+import com.intellij.openapi.actionSystem.AnActionEvent
+import com.intellij.openapi.actionSystem.DefaultActionGroup
 import com.intellij.openapi.application.invokeAndWaitIfNeed
 import com.intellij.openapi.progress.util.ProgressWindow
+import com.intellij.openapi.project.DumbAwareAction
+import com.intellij.ui.IdeBorderFactory
 import com.intellij.ui.ScrollPaneFactory
+import com.intellij.ui.SideBorder
 import com.intellij.ui.SimpleTextAttributes
-import com.intellij.ui.components.panels.Wrapper
 import com.intellij.util.ui.JBUI
+import com.intellij.util.ui.UIUtil
+import com.intellij.util.ui.components.BorderLayoutPanel
 import com.intellij.vcs.log.ui.frame.ProgressStripe
 import org.jetbrains.plugins.github.api.data.GithubSearchedIssue
 import org.jetbrains.plugins.github.pullrequest.data.GithubPullRequestsLoader
 import javax.swing.JScrollBar
 import javax.swing.ScrollPaneConstants
 
-class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoader)
-  : Wrapper(), Disposable, GithubPullRequestsLoader.StateListener {
+class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoader, actionManager: ActionManager)
+  : BorderLayoutPanel(), Disposable, GithubPullRequestsLoader.StateListener {
 
   private val tableModel = GithubPullRequestsTableModel()
   private val table = GithubPullRequestsTable(tableModel)
@@ -32,8 +40,21 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
   init {
     loader.addStateListener(this)
 
-    val tableWithError = JBUI.Panels.simplePanel(progressStripe).addToTop(errorPanel)
-    setContent(tableWithError)
+    val refreshAction = object : DumbAwareAction("Refresh", null, AllIcons.Actions.Refresh) {
+      override fun actionPerformed(e: AnActionEvent) = loader.reset()
+    }
+    val actionGroup = DefaultActionGroup(refreshAction)
+    val toolbar = actionManager.createActionToolbar("GithubPullRequestsToolWindowListToolbar", actionGroup, true)
+    toolbar.setReservePlaceAutoPopupIcon(false)
+
+    val headerPanel = JBUI.Panels.simplePanel(UIUtil.DEFAULT_HGAP, 0).addToRight(toolbar.component)
+    val tableWithError = JBUI.Panels
+      .simplePanel(progressStripe)
+      .addToTop(errorPanel)
+      .withBorder(IdeBorderFactory.createBorder(SideBorder.TOP))
+
+    addToCenter(tableWithError)
+    addToTop(headerPanel)
   }
 
   private fun potentiallyLoadMore() {
@@ -80,6 +101,15 @@ class GithubPullRequestsListComponent(private val loader: GithubPullRequestsLoad
       //otherwise scrollbar will have old values (before data insert)
       scrollPane.viewport.validate()
       potentiallyLoadMore()
+    }
+  }
+
+  override fun loaderReset() {
+    invokeAndWaitIfNeed {
+      loadOnScrollThreshold = false
+      errorPanel.setError(null)
+      tableModel.clear()
+      loader.requestLoadMore()
     }
   }
 

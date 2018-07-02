@@ -2,6 +2,7 @@
 package org.jetbrains.plugins.github.pullrequest.ui
 
 import com.intellij.openapi.Disposable
+import com.intellij.openapi.actionSystem.ActionManager
 import com.intellij.openapi.progress.ProgressManager
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.util.Disposer
@@ -14,13 +15,14 @@ import javax.swing.JComponent
 
 class GithubPullRequestsComponentFactory(private val project: Project,
                                          private val progressManager: ProgressManager,
-                                         private val requestExecutorManager: GithubApiRequestExecutorManager) {
+                                         private val requestExecutorManager: GithubApiRequestExecutorManager,
+                                         private val actionManager: ActionManager) {
 
   fun createComponent(remoteUrl: String, account: GithubAccount): JComponent? {
     val requestExecutor = requestExecutorManager.getExecutor(account, project) ?: return null
     val loader = GithubPullRequestsLoader(account.server, GithubUrlUtil.getUserAndRepositoryFromRemoteUrl(remoteUrl)!!,
                                           progressManager, requestExecutor)
-    val list = GithubPullRequestsListComponent(loader)
+    val list = GithubPullRequestsListComponent(loader, actionManager)
     Disposer.register(list, loader)
 
     return GithubPullRequestsComponent(list)
