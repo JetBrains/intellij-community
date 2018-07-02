@@ -33,10 +33,7 @@ class MultiplexedSocketReader(object):
         """
         return self._response_pipe.read(sz)
 
-    # noinspection PyUnusedLocal
     def _try_fill_buffer(self):
-        thread_name = threading.current_thread().name
-
         with self._read_socket_lock:
             direction, frame = self._read_frame()
 
