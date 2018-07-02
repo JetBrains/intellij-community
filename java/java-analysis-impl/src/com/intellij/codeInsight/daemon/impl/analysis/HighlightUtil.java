@@ -662,8 +662,8 @@ public class HighlightUtil extends HighlightUtilBase {
       HighlightInfo highlightInfo = builder.create();
       if (variable instanceof PsiLocalVariable) {
         QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createReuseVariableDeclarationFix((PsiLocalVariable)variable));
-        QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNavigateToAlreadyDeclaredVariableFix((PsiLocalVariable)variable));
       }
+      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createNavigateToAlreadyDeclaredVariableFix(oldVariable));
       return highlightInfo;
     }
     return null;
