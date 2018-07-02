@@ -1,9 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.VcsException;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.util.TimeoutUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.api.Target;
 import org.jetbrains.idea.svn.auth.AuthenticationService;
@@ -12,28 +9,22 @@ import org.junit.Test;
 
 import java.io.File;
 
-import static org.junit.Assert.assertNotNull;
+import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
+import static org.hamcrest.CoreMatchers.not;
+import static org.hamcrest.Matchers.isEmptyString;
+import static org.junit.Assert.assertThat;
 
-// TODO: Rather strange test - probably it should be removed
 public class SvnCommandLineStabilityTest extends SvnTestCase {
-
   @Test
-  public void testCallInfoManyTimes() throws Exception {
+  public void no_error_on_many_info_calls() throws Exception {
     for (int i = 0; i < 200; i++) {
-      call();
-      TimeoutUtil.sleep(5);
+      assertThat(runInfo().getOutput(), not(isEmptyString()));
     }
-  }
-
-  private void call() throws VcsException {
-    String result = runInfo().getOutput();
-    System.out.println(result);
-    assertNotNull(result);
   }
 
   @NotNull
   private CommandExecutor runInfo() throws SvnBindException {
-    File workingDirectory = VfsUtilCore.virtualToIoFile(myWorkingCopyDir);
+    File workingDirectory = virtualToIoFile(myWorkingCopyDir);
     Command command = new Command(SvnCommandName.info);
 
     command.setTarget(Target.on(workingDirectory));
