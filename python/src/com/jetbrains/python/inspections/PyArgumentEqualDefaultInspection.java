@@ -157,7 +157,8 @@ public class PyArgumentEqualDefaultInspection extends PyInspection {
       if (isBothInstanceOf(key, defaultValue, PyNumericLiteralExpression.class) ||
           isBothInstanceOf(key, defaultValue, PyPrefixExpression.class) ||
           isBothInstanceOf(key, defaultValue, PyBinaryExpression.class) ||
-          isBothInstanceOf(key, defaultValue, PyNoneLiteralExpression.class)) {
+          isBothInstanceOf(key, defaultValue, PyNoneLiteralExpression.class) ||
+          isBothInstanceOf(key, defaultValue, PyBoolLiteralExpression.class)) {
         if (key.getText().equals(defaultValue.getText()))
           return true;
       }
