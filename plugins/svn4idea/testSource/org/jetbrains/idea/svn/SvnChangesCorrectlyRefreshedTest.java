@@ -36,14 +36,12 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   public void testModificationAndAfterRevert() throws Exception {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
-    sleep(100);
 
     VcsTestUtil.editFileInCommand(myProject, subTree.myS1File, "new content");
 
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new content", text1.toString());
 
-    sleep(100);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
     refreshChanges();
     final VcsException updateException = changeListManager.getUpdateException();
@@ -80,7 +78,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     assertVF(subTree.mySourceDir, newName);
 
-    sleep(300);
     refreshChanges();
     DuringChangeListManagerUpdateTestScheme
       .checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(), changeListManager);
@@ -106,7 +103,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     assertVF(subTree.myTargetDir, "s1.txt");
 
-    sleep(300);
     refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, changeListManager.getDefaultListName(),
                                                                 changeListManager);
@@ -135,7 +131,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.mySourceDir, "s2.txt");
 
-    sleep(300);
     refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
                                                                 changeListManager.getDefaultListName(), changeListManager);
@@ -168,7 +163,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final CharSequence text1 = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals("new", text1.toString());
 
-    sleep(300);
     refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
                                                                 changeListManager.getDefaultListName(), changeListManager);
@@ -232,7 +226,6 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     checkin();
 
     deleteFileInCommand(subTree.myRootDir);
-    sleep(300);
 
     refreshChanges();
     final List<VirtualFile> files = getAllFiles(subTree);
