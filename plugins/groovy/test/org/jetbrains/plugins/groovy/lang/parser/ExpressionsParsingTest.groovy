@@ -636,6 +636,8 @@ class ExpressionsParsingTest extends GroovyParsingTestCase {
 
   void testcommandExpr$literalInvoked() { doTest() }
 
+  void testcommandExpr$slashyInvoked() { doTest() }
+
   void testcommandExpr$safeIndex() { doTest() }
 
   void testcommandExpr$safeIndexEmpty() { doTest() }
