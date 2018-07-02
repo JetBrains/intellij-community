@@ -7566,7 +7566,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   //                                    | 'this'
   //                                    | 'super'
   //                                    | code_reference_identifiers_soft &(reference_dot | '.&')
-  //                                    | (STR_SQ | STR_DQ) &string_literal_as_reference
+  //                                    | (STR_SQ | STR_DQ | regex_literal) &string_literal_as_reference
   public static boolean unqualified_reference_expression(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression")) return false;
     boolean r;
@@ -7630,7 +7630,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // (STR_SQ | STR_DQ) &string_literal_as_reference
+  // (STR_SQ | STR_DQ | regex_literal) &string_literal_as_reference
   private static boolean unqualified_reference_expression_4(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression_4")) return false;
     boolean r;
@@ -7641,12 +7641,13 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // STR_SQ | STR_DQ
+  // STR_SQ | STR_DQ | regex_literal
   private static boolean unqualified_reference_expression_4_0(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "unqualified_reference_expression_4_0")) return false;
     boolean r;
     r = consumeTokenSmart(b, STR_SQ);
     if (!r) r = consumeTokenSmart(b, STR_DQ);
+    if (!r) r = regex_literal(b, l + 1);
     return r;
   }
 
