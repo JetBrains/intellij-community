@@ -210,8 +210,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
 
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
@@ -241,8 +239,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     final String conflictFile = createConflict(TreeConflictData.FileToFile.MINE_MOVE_THEIRS_ADD);
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
@@ -481,9 +477,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
@@ -510,9 +503,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     final String conflictFile = createConflict(TreeConflictData.FileToDir.MINE_ADD_THEIRS_ADD);
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
@@ -545,9 +535,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
@@ -577,9 +564,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
@@ -606,9 +590,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     final String conflictFile = createConflict(TreeConflictData.FileToDir.MINE_MOVE_THEIRS_ADD);
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
@@ -642,9 +623,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
@@ -671,9 +649,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     final String conflictFile = createConflict(TreeConflictData.DirToFile.MINE_ADD_THEIRS_ADD);
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
@@ -706,9 +681,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
@@ -738,9 +710,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VirtualFile vf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(new File(myWorkingCopyDir.getPath(), conflictFile));
     assertNotNull(vf);
     final Change change = changeListManager.getChange(vf);
@@ -767,9 +736,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     final String conflictFile = createConflict(TreeConflictData.DirToFile.MINE_MOVE_THEIRS_ADD);
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-
     VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
     changeListManager.ensureUpToDate(false);
 
