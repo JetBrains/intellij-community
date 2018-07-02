@@ -288,6 +288,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected class SubTree {
+    public final VirtualFile myBase;
     public VirtualFile myRootDir;
     public VirtualFile mySourceDir;
     public VirtualFile myTargetDir;
@@ -295,13 +296,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     public VirtualFile myS1File;
     public VirtualFile myS2File;
 
-    public final List<VirtualFile> myTargetFiles;
+    public final List<VirtualFile> myTargetFiles = new ArrayList<>();
     public static final String ourS1Contents = "123";
     public static final String ourS2Contents = "abc";
 
-    private VirtualFile findOrCreateChild(final VirtualFile parent, final String name, final String content) {
+    private VirtualFile findChild(final VirtualFile parent, final String name, final String content, boolean create) {
       final VirtualFile result = parent.findChild(name);
-      if (result != null) return result;
+      if (result != null || !create) return result;
       if (content == null) {
         return createDirInCommand(parent, name);
       } else {
@@ -309,16 +310,21 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       }
     }
 
-    public SubTree(final VirtualFile base) {
-      myRootDir = findOrCreateChild(base, "root", null);
-      mySourceDir = findOrCreateChild(myRootDir, "source", null);
-      myS1File = findOrCreateChild(mySourceDir, "s1.txt", ourS1Contents);
-      myS2File = findOrCreateChild(mySourceDir, "s2.txt", ourS2Contents);
+    public SubTree(@NotNull VirtualFile base) {
+      myBase = base;
+      refresh(true);
+    }
 
-      myTargetDir = findOrCreateChild(myRootDir, "target", null);
-      myTargetFiles = new ArrayList<>();
+    public void refresh(boolean create) {
+      myRootDir = findChild(myBase, "root", null, create);
+      mySourceDir = findChild(myRootDir, "source", null, create);
+      myS1File = findChild(mySourceDir, "s1.txt", ourS1Contents, create);
+      myS2File = findChild(mySourceDir, "s2.txt", ourS2Contents, create);
+
+      myTargetDir = findChild(myRootDir, "target", null, create);
+      myTargetFiles.clear();
       for (int i = 0; i < 10; i++) {
-        myTargetFiles.add(findOrCreateChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents));
+        myTargetFiles.add(findChild(myTargetDir, "t" + (i + 10) + ".txt", ourS1Contents, create));
       }
     }
   }

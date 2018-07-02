@@ -245,6 +245,9 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final RollbackWorker worker = new RollbackWorker(myProject);
     worker.doRollback(changes, false);
 
+    // VirtualFile instances are invalid after deletion above - find them again after rollback
+    subTree.refresh(false);
+
     assertVF(subTree.myRootDir, "source");
     assertVF(subTree.mySourceDir, "s1.txt");
     assertVF(subTree.myRootDir, "target");
