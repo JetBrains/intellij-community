@@ -16,7 +16,7 @@ import java.util.List;
  * @deprecated Use {@link SimpleChangesBrowser}
  */
 @Deprecated
-public class ChangesBrowser extends OldChangesBrowserBase<Change> {
+public class ChangesBrowser extends OldChangesBrowserBase {
 
   public ChangesBrowser(@NotNull Project project,
                         @Nullable List<? extends ChangeList> changeLists,
@@ -27,7 +27,7 @@ public class ChangesBrowser extends OldChangesBrowserBase<Change> {
                         @Nullable Runnable inclusionListener,
                         @NotNull MyUseCase useCase,
                         @Nullable VirtualFile toSelect) {
-    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect, Change.class);
+    super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect);
 
     init();
     mySelectedChangeList = initialListSelection;
