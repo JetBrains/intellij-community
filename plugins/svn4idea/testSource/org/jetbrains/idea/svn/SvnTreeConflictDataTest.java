@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -483,7 +482,6 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
                               @NotNull BiConsumer<TreeConflictDescription, TreeConflictDescription> checker) throws Exception {
     String conflictFile = createConflict(data, createSubtree);
 
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
     refreshChanges();
 
     Change change;

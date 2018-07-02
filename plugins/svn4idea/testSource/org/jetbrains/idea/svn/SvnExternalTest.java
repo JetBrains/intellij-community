@@ -2,10 +2,11 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsDirectoryMapping;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -22,15 +23,12 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
 
 public class SvnExternalTest extends SvnTestCase {
-  private ChangeListManagerImpl clManager;
   private Url myMainUrl;
   private Url myExternalURL;
 
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -120,8 +118,8 @@ public class SvnExternalTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change1 = clManager.getChange(vf1);
-    final Change change2 = clManager.getChange(vf2);
+    final Change change1 = changeListManager.getChange(vf1);
+    final Change change2 = changeListManager.getChange(vf2);
 
     assertNotNull(change1);
     assertNotNull(change2);
@@ -156,7 +154,7 @@ public class SvnExternalTest extends SvnTestCase {
   }
 
   private void setNewDirectoryMappings(final File sourceDir) {
-    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
+    UIUtil.invokeAndWaitIfNeeded((Runnable)() -> vcsManager.setDirectoryMappings(
       Arrays.asList(new VcsDirectoryMapping(FileUtil.toSystemIndependentName(sourceDir.getPath()), vcs.getName()))));
   }
 
@@ -181,7 +179,7 @@ public class SvnExternalTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change = clManager.getChange(externalVf);
+    final Change change = changeListManager.getChange(externalVf);
     assertNotNull(change);
     assertEquals(FileStatus.MODIFIED, change.getFileStatus());
   }

@@ -3,7 +3,10 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.changes.*;
+import com.intellij.openapi.vcs.changes.Change;
+import com.intellij.openapi.vcs.changes.LocalChangeList;
+import com.intellij.openapi.vcs.changes.LocallyDeletedChange;
+import com.intellij.openapi.vcs.changes.SimpleContentRevision;
 import com.intellij.openapi.vcs.rollback.RollbackProgressListener;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -26,13 +29,10 @@ import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
 public class SvnRollbackTest extends SvnTestCase {
 
-  private ChangeListManager myChangeListManager;
-
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myChangeListManager = ChangeListManager.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -46,7 +46,7 @@ public class SvnRollbackTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, a, "tset");
     refreshChanges();
 
-    final Change change = myChangeListManager.getChange(a);
+    final Change change = changeListManager.getChange(a);
     Assert.assertNotNull(change);
 
     rollbackIMpl(Collections.singletonList(change), Collections.emptyList());
@@ -61,7 +61,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    List<LocalChangeList> lists = myChangeListManager.getChangeLists();
+    List<LocalChangeList> lists = changeListManager.getChangeLists();
     final HashSet<Change> afterCopy = new HashSet<>(allowedAfter);
     for (LocalChangeList list : lists) {
       final Collection<Change> listChanges = list.getChanges();
@@ -302,7 +302,7 @@ public class SvnRollbackTest extends SvnTestCase {
   }
 
   private Change assertDeletedChange(FilePath fpSource) {
-    final Change change = myChangeListManager.getChange(fpSource);
+    final Change change = changeListManager.getChange(fpSource);
     Assert.assertNotNull(change);
     Assert.assertNull(change.getAfterRevision());
     return change;
@@ -328,7 +328,7 @@ public class SvnRollbackTest extends SvnTestCase {
   }
 
   private Change assertCreatedChange(VirtualFile newDir) {
-    final Change change = myChangeListManager.getChange(newDir);
+    final Change change = changeListManager.getChange(newDir);
     Assert.assertNotNull(change);
     Assert.assertNull(change.getBeforeRevision());
     return change;
@@ -356,11 +356,11 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change dirChange = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
 
-    FileStatus status = myChangeListManager.getStatus(unverionedDir);
+    FileStatus status = changeListManager.getStatus(unverionedDir);
     Assert.assertEquals(FileStatus.UNKNOWN, status);
     Assert.assertTrue(! wasUnvDir.exists());
 
-    FileStatus fileStatus = myChangeListManager.getStatus(unvFile);
+    FileStatus fileStatus = changeListManager.getStatus(unvFile);
     Assert.assertEquals(FileStatus.UNKNOWN, fileStatus);
     Assert.assertTrue(! wasUnvFile.exists());
 
@@ -382,7 +382,7 @@ public class SvnRollbackTest extends SvnTestCase {
     SvnPropertyService.doAddToIgnoreProperty(vcs, false, new VirtualFile[]{ignored}, groupInfo);
 
     refreshChanges();
-    Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
+    Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
@@ -392,12 +392,12 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change s1Change = assertMovedChange(tree.myS1File);
     final Change s2Change = assertMovedChange(tree.myS2File);
     Assert.assertTrue(! wasIgnored.exists());
-    Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
+    Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
 
     rollbackIMpl(Collections.singletonList(dirChange), Collections.emptyList());
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was not committed
-    Assert.assertTrue(FileStatus.UNKNOWN.equals(myChangeListManager.getStatus(ignored)));
+    Assert.assertTrue(FileStatus.UNKNOWN.equals(changeListManager.getStatus(ignored)));
     Assert.assertTrue(wasIgnored.exists());
   }
 
@@ -414,7 +414,7 @@ public class SvnRollbackTest extends SvnTestCase {
     checkin();
 
     refreshChanges();
-    Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
+    Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
@@ -424,12 +424,12 @@ public class SvnRollbackTest extends SvnTestCase {
     final Change s1Change = assertMovedChange(tree.myS1File);
     final Change s2Change = assertMovedChange(tree.myS2File);
     Assert.assertTrue(! wasIgnored.exists());
-    Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
+    Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
 
     rollbackIMpl(Collections.singletonList(dirChange), Collections.emptyList());
     ignored = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(wasIgnored);
     // ignored property was not committed
-    Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
+    Assert.assertTrue(FileStatus.IGNORED.equals(changeListManager.getStatus(ignored)));
     Assert.assertTrue(wasIgnored.exists());
   }
 
@@ -485,7 +485,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
+    final List<LocallyDeletedChange> deletedFiles = changeListManager.getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
     Assert.assertTrue(deletedFiles.size() == 1);
     Assert.assertEquals(wasFile, deletedFiles.get(0).getPath().getIOFile());
@@ -505,7 +505,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
+    final List<LocallyDeletedChange> deletedFiles = changeListManager.getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
     Assert.assertTrue(deletedFiles.size() == 3);
 
@@ -546,7 +546,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
+    final List<LocallyDeletedChange> deletedFiles = changeListManager.getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
     Assert.assertTrue(deletedFiles.size() == 3);
     final Set<File> files = new HashSet<>();
@@ -601,7 +601,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     refreshChanges();
 
-    final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
+    final List<LocallyDeletedChange> deletedFiles = changeListManager.getDeletedFiles();
     if (allowed == null || allowed.isEmpty()) {
       Assert.assertTrue(deletedFiles == null || deletedFiles.isEmpty());
     }
@@ -613,14 +613,14 @@ public class SvnRollbackTest extends SvnTestCase {
   }
 
   private Change assertMovedChange(final VirtualFile file) {
-    final Change change = myChangeListManager.getChange(file);
+    final Change change = changeListManager.getChange(file);
     Assert.assertNotNull(change);
     Assert.assertTrue(change.isMoved());
     return change;
   }
 
   private Change assertRenamedChange(final VirtualFile file) {
-    final Change change = myChangeListManager.getChange(file);
+    final Change change = changeListManager.getChange(file);
     Assert.assertNotNull(change);
     Assert.assertTrue(change.isRenamed());
     return change;

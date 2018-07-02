@@ -1,15 +1,12 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.idea.svn;
 
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.annotate.FileAnnotation;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.VcsAnnotationLocalChangesListener;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsRevisionDescription;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,15 +22,11 @@ import static org.junit.Assert.*;
 public class SvnAnnotationIsClosedTest extends SvnTestCase {
   private volatile boolean myIsClosed;
   private volatile boolean myIsClosed1;
-  private ChangeListManager myChangeListManager;
-  private VcsDirtyScopeManager myDirtyScopeManager;
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myChangeListManager = ChangeListManager.getInstance(myProject);
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
     myIsClosed = false;
@@ -49,7 +42,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -61,15 +54,15 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertFalse(myIsClosed); // not closed on typing
 
     refreshChanges();
-    final Change change = myChangeListManager.getChange(tree.myS1File);
+    final Change change = changeListManager.getChange(tree.myS1File);
     assertNotNull(change);
 
     final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "commit");
     assertTrue(exceptions == null || exceptions.isEmpty());
-    myDirtyScopeManager.fileDirty(tree.myS1File);
+    dirtyScopeManager.fileDirty(tree.myS1File);
 
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
+    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
     assertTrue(myIsClosed);
   }
@@ -84,7 +77,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     checkin();  //#3
     runInAndVerifyIgnoreOutput("up", "-r", "2");
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -108,7 +101,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     checkin();  //#3
     runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -134,7 +127,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     checkin();  //#3
     runInAndVerifyIgnoreOutput("up", "-r", "2");  // take #2
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -150,8 +143,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     myWorkingCopyDir.refresh(false, true);
     imitateEvent(myWorkingCopyDir);
 
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
+    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
     assertTrue(myIsClosed);
   }
@@ -165,7 +158,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -179,7 +172,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertFalse(myIsClosed); // not closed on typing
 
     refreshChanges();
-    final Change change = myChangeListManager.getChange(tree.myS1File);
+    final Change change = changeListManager.getChange(tree.myS1File);
     assertNotNull(change);
   }
 
@@ -193,7 +186,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     checkin();
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -204,7 +197,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertFalse(myIsClosed); // not closed on typing
 
     refreshChanges();
-    final Change change = myChangeListManager.getChange(tree.myS1File);
+    final Change change = changeListManager.getChange(tree.myS1File);
     assertNotNull(change);
   }
 
@@ -217,7 +210,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4\n");
     checkin();  //#3
 
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), tree.myS1File);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -233,8 +226,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     myWorkingCopyDir.refresh(false, true);
     imitateEvent(myWorkingCopyDir);
 
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
+    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
     assertTrue(myIsClosed);
   }
@@ -258,8 +251,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     refreshChanges();
 
-    final Change change1 = myChangeListManager.getChange(vf1);
-    final Change change2 = myChangeListManager.getChange(vf2);
+    final Change change1 = changeListManager.getChange(vf1);
+    final Change change2 = changeListManager.getChange(vf2);
     assertNotNull(change1);
     assertNotNull(change2);
 
@@ -283,7 +276,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     assertRevision(vf2, diffProvider, 4);
 
     // then annotate both
-    final VcsAnnotationLocalChangesListener listener = ProjectLevelVcsManager.getInstance(myProject).getAnnotationLocalChangesListener();
+    final VcsAnnotationLocalChangesListener listener = vcsManager.getAnnotationLocalChangesListener();
     final FileAnnotation annotation = createTestAnnotation(vcs.getAnnotationProvider(), vf1);
     annotation.setCloser(() -> {
       myIsClosed = true;
@@ -302,8 +295,8 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("up", sourceDir.getPath());
     imitateEvent(lfs.refreshAndFindFileByIoFile(sourceDir));
     imitateEvent(lfs.refreshAndFindFileByIoFile(externalDir));
-    myChangeListManager.ensureUpToDate(false);
-    myChangeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
+    changeListManager.ensureUpToDate(false);
+    changeListManager.ensureUpToDate(false);  // wait for after-events like annotations recalculation
     sleep(100); // zipper updater
     //verify(runSvn("up", "-r", "3", externalDir.getPath()));
     assertRevision(vf1, diffProvider, 3);

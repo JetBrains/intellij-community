@@ -7,11 +7,9 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
-import org.junit.Before;
 import org.junit.Test;
 
 import java.io.File;
@@ -23,15 +21,6 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class SvnCommitTest extends SvnTestCase {
-  private ChangeListManager myChangeListManager;
-
-  @Override
-  @Before
-  public void setUp() throws Exception {
-    super.setUp();
-    myChangeListManager = ChangeListManager.getInstance(myProject);
-  }
-
   @Test
   public void testSimpleCommit() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -182,7 +171,7 @@ public class SvnCommitTest extends SvnTestCase {
   private void checkinPaths(FilePath... files) {
     final List<Change> changes = new ArrayList<>();
     for (FilePath file : files) {
-      final Change change = myChangeListManager.getChange(file);
+      final Change change = changeListManager.getChange(file);
       assertNotNull(change);
       changes.add(change);
     }
@@ -191,7 +180,7 @@ public class SvnCommitTest extends SvnTestCase {
     refreshChanges();
 
     for (FilePath file : files) {
-      final Change changeA = myChangeListManager.getChange(file);
+      final Change changeA = changeListManager.getChange(file);
       assertNull(changeA);
     }
   }
@@ -199,7 +188,7 @@ public class SvnCommitTest extends SvnTestCase {
   private HashSet<String> checkinFiles(VirtualFile... files) {
     final List<Change> changes = new ArrayList<>();
     for (VirtualFile file : files) {
-      final Change change = myChangeListManager.getChange(file);
+      final Change change = changeListManager.getChange(file);
       assertNotNull(change);
       changes.add(change);
     }
@@ -212,20 +201,20 @@ public class SvnCommitTest extends SvnTestCase {
     refreshChanges();
 
     for (VirtualFile file : files) {
-      final Change changeA = myChangeListManager.getChange(file);
+      final Change changeA = changeListManager.getChange(file);
       assertNull(changeA);
     }
     return feedback;
   }
 
   protected void checkinFile(VirtualFile file, FileStatus status) {
-    final Change change = myChangeListManager.getChange(file);
+    final Change change = changeListManager.getChange(file);
     assertNotNull(change);
     assertEquals(status, change.getFileStatus());
     final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "test comment");
     assertTrue(exceptions == null || exceptions.isEmpty());
     refreshChanges();
-    final Change changeA = myChangeListManager.getChange(file);
+    final Change changeA = changeListManager.getChange(file);
     assertNull(changeA);
   }
 }

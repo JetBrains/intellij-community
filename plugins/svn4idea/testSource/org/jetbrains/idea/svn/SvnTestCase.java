@@ -18,11 +18,13 @@ import com.intellij.openapi.ui.TestDialog;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsShowConfirmationOption;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.ex.ProjectLevelVcsManagerEx;
+import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vcs.update.CommonUpdateProjectAction;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -73,6 +75,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   protected String myAnotherRepoUrl;
   protected File myPluginRoot;
 
+  protected ProjectLevelVcsManagerImpl vcsManager;
+  protected ChangeListManagerImpl changeListManager;
+  protected VcsDirtyScopeManager dirtyScopeManager;
   protected SvnVcs vcs;
 
   protected SvnTestCase() {
@@ -147,8 +152,11 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       initProject(myWcRoot, this.getTestName());
       activateVCS(SvnVcs.VCS_NAME);
 
+      vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
+      changeListManager = ChangeListManagerImpl.getInstanceImpl(myProject);
+      dirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
       vcs = SvnVcs.getInstance(myProject);
-      myGate = new MockChangeListManagerGate(ChangeListManager.getInstance(myProject));
+      myGate = new MockChangeListManagerGate(changeListManager);
 
       ((StartupManagerImpl)StartupManager.getInstance(myProject)).runPostStartupActivities();
       refreshSvnMappingsSynchronously();
@@ -171,8 +179,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   }
 
   protected void refreshChanges() {
-    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    dirtyScopeManager.markEverythingDirty();
     changeListManager.ensureUpToDate(false);
   }
 
@@ -183,7 +190,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   @After
   public void tearDown() throws Exception {
-    ChangeListManagerImpl.getInstanceImpl(myProject).stopEveryThingIfInTestMode();
+    changeListManager.stopEveryThingIfInTestMode();
     runInEdtAndWait(() -> {
       tearDownProject();
 
@@ -250,10 +257,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       externalURL = myRepoUrl + "/root/target";
     }
 
-    final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
-    clManager.stopEveryThingIfInTestMode();
+    changeListManager.stopEveryThingIfInTestMode();
     sleep(100);
     final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
@@ -271,10 +277,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     // above is preparation
 
     // start change list manager again
-    clManager.forceGoInTestMode();
+    changeListManager.forceGoInTestMode();
     refreshSvnMappingsSynchronously();
-    //clManager.ensureUpToDate(false);
-    //clManager.ensureUpToDate(false);
+    //changeListManager.ensureUpToDate(false);
+    //changeListManager.ensureUpToDate(false);
   }
 
   public String getTestDataDir() {
@@ -327,8 +333,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", myRepoUrl + "/branches");
     runInAndVerifyIgnoreOutput("mkdir", "-m", "mkdir", myRepoUrl + "/tags");
 
-    final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
-    clManager.stopEveryThingIfInTestMode();
+    changeListManager.stopEveryThingIfInTestMode();
     sleep(100);
     boolean deleted = false;
     for (int i = 0; i < 5; i++) {
@@ -347,10 +352,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final String branchUrl = myRepoUrl + "/branches/b1";
     runInAndVerifyIgnoreOutput("copy", "-q", "-m", "coppy", mainUrl, branchUrl);
 
-    clManager.forceGoInTestMode();
+    changeListManager.forceGoInTestMode();
     refreshSvnMappingsSynchronously();
-    //clManager.ensureUpToDate(false);
-    //clManager.ensureUpToDate(false);
+    //changeListManager.ensureUpToDate(false);
+    //changeListManager.ensureUpToDate(false);
 
     return branchUrl;
   }
@@ -361,7 +366,6 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public void prepareExternal(final boolean commitExternalDefinition, final boolean updateExternal,
                               final boolean anotherRepository) throws Exception {
-    final ChangeListManagerImpl clManager = (ChangeListManagerImpl)ChangeListManager.getInstance(myProject);
     final String mainUrl = myRepoUrl + "/root/source";
     final String externalURL;
     if (anotherRepository) {
@@ -373,7 +377,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     final SubTree subTree = new SubTree(myWorkingCopyDir);
     checkin();
-    clManager.stopEveryThingIfInTestMode();
+    changeListManager.stopEveryThingIfInTestMode();
     sleep(100);
     final File rootFile = virtualToIoFile(subTree.myRootDir);
     FileUtil.delete(rootFile);
@@ -402,10 +406,10 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     // above is preparation
 
     // start change list manager again
-    clManager.forceGoInTestMode();
+    changeListManager.forceGoInTestMode();
     refreshSvnMappingsSynchronously();
-    //clManager.ensureUpToDate(false);
-    //clManager.ensureUpToDate(false);
+    //changeListManager.ensureUpToDate(false);
+    //changeListManager.ensureUpToDate(false);
   }
 
   protected void createAnotherRepo() throws Exception {

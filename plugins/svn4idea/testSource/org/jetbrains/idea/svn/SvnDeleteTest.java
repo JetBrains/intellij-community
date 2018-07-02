@@ -3,7 +3,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -43,8 +42,7 @@ public class SvnDeleteTest extends SvnTestCase {
     Assert.assertEquals(2, changesManually.size());
 
     refreshChanges();
-    final ChangeListManager clManager = ChangeListManager.getInstance(myProject);
-    final List<LocalChangeList> lists = clManager.getChangeListsCopy();
+    final List<LocalChangeList> lists = changeListManager.getChangeListsCopy();
     Assert.assertEquals(1, lists.size());
     final Collection<Change> changes = lists.get(0).getChanges();
     Assert.assertEquals(2, changes.size());

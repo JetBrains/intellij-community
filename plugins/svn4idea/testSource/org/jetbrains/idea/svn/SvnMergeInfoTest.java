@@ -2,8 +2,10 @@
 package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
-import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
+import com.intellij.openapi.vcs.CommittedChangesProvider;
+import com.intellij.openapi.vcs.VcsConfiguration;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -43,7 +45,6 @@ public class SvnMergeInfoTest extends SvnTestCase {
   private static final String CONTENT2 = "123\n456\n123\n4";
 
   private File myBranchVcsRoot;
-  private ProjectLevelVcsManagerImpl myProjectLevelVcsManager;
   private WCInfo myWCInfo;
   private WCInfoWithBranches myWCInfoWithBranches;
   private OneShotMergeInfoHelper myOneShotMergeInfoHelper;
@@ -70,8 +71,7 @@ public class SvnMergeInfoTest extends SvnTestCase {
     myBranchVcsRoot = new File(myTempDirFixture.getTempDirPath(), "branch");
     myBranchVcsRoot.mkdir();
 
-    myProjectLevelVcsManager = (ProjectLevelVcsManagerImpl) ProjectLevelVcsManager.getInstance(myProject);
-    myProjectLevelVcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
+    vcsManager.setDirectoryMapping(myBranchVcsRoot.getAbsolutePath(), SvnVcs.VCS_NAME);
 
     VirtualFile vcsRoot = LocalFileSystem.getInstance().findFileByIoFile(myBranchVcsRoot);
     Node node = new Node(vcsRoot, createUrl(myBranchUrl), createUrl(myRepoUrl));

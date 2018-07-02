@@ -5,7 +5,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -16,17 +15,9 @@ import java.util.Collection;
 import java.util.List;
 
 public class SvnNativeListsTest extends SvnTestCase {
-  private ChangeListManager myChangeListManager;
-
-  @Override
-  public void setUp() throws Exception {
-    super.setUp();
-    myChangeListManager = ChangeListManager.getInstance(myProject);
-  }
-
   @Override
   public void tearDown() throws Exception {
-    final List<LocalChangeList> changeListList = myChangeListManager.getChangeLists();
+    final List<LocalChangeList> changeListList = changeListManager.getChangeLists();
     for (LocalChangeList list : changeListList) {
       if (list.hasDefaultName()) continue;
       final Collection<Change> changes = list.getChanges();
@@ -46,11 +37,11 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   @Test
   public void testAdd() throws Throwable {
-    final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    final LocalChangeList newL = changeListManager.addChangeList("newOne", null);
     sleepABit();
     refreshChanges();
 
-    myChangeListManager.setDefaultChangeList(newL);
+    changeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
@@ -64,17 +55,17 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   private void ensureAddedToNativeList() {
     refreshChanges();  // first time new changes are detected and added to _IDEA_ changeslist
-    myChangeListManager.ensureUpToDate(false);  // and on the same thread a request is put for files addition;
+    changeListManager.ensureUpToDate(false);  // and on the same thread a request is put for files addition;
     // so stay here for 2nd cycle and wait for native addition completion
   }
 
   @Test
   public void testDeleted() throws Throwable {
-    final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    final LocalChangeList newL = changeListManager.addChangeList("newOne", null);
     sleepABit();
     refreshChanges();
 
-    myChangeListManager.setDefaultChangeList(newL);
+    changeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -92,11 +83,11 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   @Test
   public void testEdit() throws Throwable {
-    final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    final LocalChangeList newL = changeListManager.addChangeList("newOne", null);
     sleepABit();
     refreshChanges();
 
-    myChangeListManager.setDefaultChangeList(newL);
+    changeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand("a.txt", "old content");
@@ -113,11 +104,11 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   @Test
   public void testEditAndMove() throws Throwable {
-    final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    final LocalChangeList newL = changeListManager.addChangeList("newOne", null);
     sleepABit();
     refreshChanges();
 
-    myChangeListManager.setDefaultChangeList(newL);
+    changeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -144,11 +135,11 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   @Test
   public void testMove() throws Throwable {
-    final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    final LocalChangeList newL = changeListManager.addChangeList("newOne", null);
     sleepABit();
     refreshChanges();
 
-    myChangeListManager.setDefaultChangeList(newL);
+    changeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -167,11 +158,11 @@ public class SvnNativeListsTest extends SvnTestCase {
 
   @Test
   public void testMoveMove() throws Throwable {
-    final LocalChangeList newL = myChangeListManager.addChangeList("newOne", null);
+    final LocalChangeList newL = changeListManager.addChangeList("newOne", null);
     sleepABit();
     refreshChanges();
 
-    myChangeListManager.setDefaultChangeList(newL);
+    changeListManager.setDefaultChangeList(newL);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);

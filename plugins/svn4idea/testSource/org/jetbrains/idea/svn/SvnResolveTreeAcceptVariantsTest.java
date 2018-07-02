@@ -4,12 +4,9 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
-import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -38,7 +35,6 @@ import static org.junit.Assert.*;
 public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
-  private ChangeListManager myChangeListManager;
 
   @Override
   @Before
@@ -50,7 +46,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     clearWc(true);
 
-    myChangeListManager = ChangeListManager.getInstance(myProject);
     myTraceClient = true;
   }
 
@@ -86,22 +81,21 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
         System.out.println("========= TEST " + getTestName(data) + " =========");
       }
 
-      ((ChangeListManagerImpl) myChangeListManager).stopEveryThingIfInTestMode();
+      changeListManager.stopEveryThingIfInTestMode();
       myWorkingCopyDir = createDirInCommand(myWorkingCopyDir.getParent(), "test" + cnt);
       myTheirs = createDirInCommand(myTheirs.getParent(), "theirs" + cnt);
       mySvnClientRunner.checkout(myRepoUrl, myTheirs);
       mySvnClientRunner.checkout(myRepoUrl, myWorkingCopyDir);
       sleep(200);
 
-      ProjectLevelVcsManager.getInstance(myProject).setDirectoryMappings(
-        Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), vcs.getName())));
+      vcsManager.setDirectoryMappings(Collections.singletonList(new VcsDirectoryMapping(myWorkingCopyDir.getPath(), vcs.getName())));
       createSubTree(data);
       myTheirs.refresh(false, true);
       final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
       sleep(200);
 
-      ((ChangeListManagerImpl)myChangeListManager).forceGoInTestMode();
+      changeListManager.forceGoInTestMode();
       refreshChanges();
       refreshChanges();
 
@@ -109,7 +103,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
       final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-      final Change change = myChangeListManager.getChange(filePath);
+      final Change change = changeListManager.getChange(filePath);
       assertNotNull(change);
       assertTrue(change instanceof ConflictedSvnChange);
       final SvnRevisionNumber committedRevision =
@@ -227,7 +221,7 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
 
       final File conflictIoFile = new File(myWorkingCopyDir.getPath(), conflictFile);
       final FilePath filePath = VcsUtil.getFilePath(conflictIoFile);
-      final Change change = myChangeListManager.getChange(filePath);
+      final Change change = changeListManager.getChange(filePath);
       assertNotNull(change);
       assertTrue(change instanceof ConflictedSvnChange);
       final SvnRevisionNumber committedRevision =

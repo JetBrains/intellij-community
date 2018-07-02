@@ -4,7 +4,10 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.*;
+import com.intellij.openapi.vcs.CheckoutProvider;
+import com.intellij.openapi.vcs.FilePath;
+import com.intellij.openapi.vcs.VcsException;
+import com.intellij.openapi.vcs.VcsKey;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.CurrentContentRevision;
 import com.intellij.openapi.vcs.update.UpdateSession;
@@ -517,7 +520,7 @@ public class SvnNativeClientAuthTest extends SvnTestCase {
       ++ myExpectedCreds;
       ++ myExpectedCert;
     }
-    ProjectLevelVcsManager.getInstance(myProject).setDirectoryMapping(root.getPath(), SvnVcs.VCS_NAME);
+    vcsManager.setDirectoryMapping(root.getPath(), SvnVcs.VCS_NAME);
     refreshSvnMappingsSynchronously();
     return root;
   }

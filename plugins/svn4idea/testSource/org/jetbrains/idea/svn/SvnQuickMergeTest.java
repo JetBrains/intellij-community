@@ -5,7 +5,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -44,7 +43,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
   private File myBranchRoot;
   private VirtualFile myBranchVf;
   private SubTree myBranchTree;
-  private ChangeListManager myChangeListManager;
   private SvnTestCase.SubTree myTree;
 
   @Override
@@ -52,7 +50,6 @@ public class SvnQuickMergeTest extends SvnTestCase {
   public void setUp() throws Exception {
     super.setUp();
 
-    myChangeListManager = ChangeListManager.getInstance(myProject);
     myBranchUrl = prepareBranchesStructure();
     myBranchRoot = new File(myTempDirFixture.getTempDirPath(), "b1");
 
@@ -87,11 +84,11 @@ public class SvnQuickMergeTest extends SvnTestCase {
     refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
     assertNotNull(fileChange);
     assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
     assertNotNull(dirChange);
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }
@@ -144,11 +141,11 @@ public class SvnQuickMergeTest extends SvnTestCase {
     refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
     assertNotNull(fileChange);
     assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
     assertNotNull(dirChange);
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
@@ -209,11 +206,11 @@ public class SvnQuickMergeTest extends SvnTestCase {
     refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS2File);
+    final Change fileChange = changeListManager.getChange(myTree.myS2File);
     assertNotNull(fileChange);
     assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
     assertNotNull(dirChange);
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
@@ -248,11 +245,11 @@ public class SvnQuickMergeTest extends SvnTestCase {
     refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
     assertNotNull(fileChange);
     assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
     assertNotNull(dirChange);
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
 
@@ -295,11 +292,11 @@ public class SvnQuickMergeTest extends SvnTestCase {
     refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
-    final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
+    final Change fileChange = changeListManager.getChange(myTree.myS1File);
     assertNotNull(fileChange);
     assertEquals(FileStatus.MODIFIED, fileChange.getFileStatus());
 
-    final Change dirChange = myChangeListManager.getChange(myWorkingCopyDir);
+    final Change dirChange = changeListManager.getChange(myWorkingCopyDir);
     assertNotNull(dirChange);
     assertEquals(FileStatus.MODIFIED, dirChange.getFileStatus());
   }

@@ -3,8 +3,6 @@ package org.jetbrains.idea.svn;
 
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.idea.svn.api.Depth;
 import org.jetbrains.idea.svn.properties.PropertyValue;
@@ -20,13 +18,9 @@ import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static org.jetbrains.idea.svn.SvnPropertyKeys.SVN_IGNORE;
 
 public class SvnIgnoreTest extends SvnTestCase {
-  private ChangeListManager clManager;
-
   @Override
   public void setUp() throws Exception {
     super.setUp();
-
-    clManager = ChangeListManager.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -49,7 +43,7 @@ public class SvnIgnoreTest extends SvnTestCase {
       current = createDirInCommand(current, "dir" + i);
       ignored.add(current);
       refreshChanges();
-      Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
+      Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
     }
     testOneFile(current, "file.txt");
 
@@ -106,13 +100,13 @@ public class SvnIgnoreTest extends SvnTestCase {
 
   private void testImpl(VirtualFile file) {
     refreshChanges();
-    Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
+    Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
 
-    VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);
-    clManager.ensureUpToDate(false);
+    dirtyScopeManager.fileDirty(file);
+    changeListManager.ensureUpToDate(false);
 
-    Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
-    final FileStatus status = clManager.getStatus(file);
+    Assert.assertTrue(changeListManager.getDefaultChangeList().getChanges().isEmpty());
+    final FileStatus status = changeListManager.getStatus(file);
     Assert.assertTrue(status.getText(), FileStatus.IGNORED.equals(status));
   }
 }
