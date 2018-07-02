@@ -542,7 +542,6 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
   public PyDebugValue evaluate(String expression, boolean execute, boolean doTrunc) throws PyDebuggerException {
     if (myClient != null) {
       try {
-        // @alexander todo make `evaluate` return the single value... or rewrite this code?
         // @alexander todo add specific exception to the method (previously processed by `checkError()`)
         List<DebugValue> debugValues = myClient.evaluate(expression);
         return createPyDebugValue(debugValues.iterator().next(), this);
@@ -590,16 +589,8 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
           // @alexander todo add specific exception to the method (previously processed by `checkError()`)
           myClient.loadFullValue(seq, evaluationExpressions);
 
-          // @alexander todo it was expected here that `loadFullValue()` might return `List<PyDebugValue>` somehow...
+          // previously `loadFullValue()` might return `List<PyDebugValue>` but this is no longer true
         }
-        // @alexander todo uncomment probably
-        /*
-        catch (PyDebuggerException e) {
-          if (myWebServer != null && !e.getMessage().startsWith("Console already exited")) {
-            LOG.error(e);
-          }
-        }
-        */
         catch (TException e) {
           for (PyAsyncValue<String> asyncValue : pyAsyncValues) {
             PyDebugValue value = asyncValue.getDebugValue();
