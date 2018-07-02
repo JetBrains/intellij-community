@@ -2,9 +2,7 @@
 package com.intellij.ide.plugins;
 
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.BrowserUtil;
-import com.intellij.ide.HelpTooltip;
-import com.intellij.ide.IdeBundle;
+import com.intellij.ide.*;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
@@ -20,6 +18,7 @@ import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.fileChooser.ex.FileTextFieldImpl;
+import com.intellij.openapi.ide.CopyPasteManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -715,6 +714,7 @@ public class PluginManagerConfigurableNew
     PluginsGroupComponent panel =
       new PluginsGroupComponent(new PluginsListLayout(), new MultiSelectionEventHandler(), myNameListener, mySearchListener,
                                 descriptor -> new ListPluginComponent(myPluginsModel, descriptor, false));
+    registerCopyProvider(panel);
 
     PluginsGroup installing = new PluginsGroup("Installing");
     installing.descriptors.addAll(MyPluginModel.getInstallingPlugins());
@@ -773,6 +773,7 @@ public class PluginManagerConfigurableNew
       new PluginsGroupComponentWithProgress(new PluginsListLayout(), new MultiSelectionEventHandler(), myNameListener, mySearchListener,
                                             descriptor -> new ListPluginComponent(myPluginsModel, descriptor, true));
     panel.getEmptyText().setText("No updates available.");
+    registerCopyProvider(panel);
 
     ApplicationManager.getApplication().executeOnPooledThread(() -> {
       Collection<PluginDownloader> updates = UpdateChecker.getPluginUpdates();
@@ -1384,6 +1385,40 @@ public class PluginManagerConfigurableNew
     public int toolbarX;
   }
 
+  private static void registerCopyProvider(@NotNull PluginsGroupComponent component) {
+    CopyProvider copyProvider = new CopyProvider() {
+      @Override
+      public void performCopy(@NotNull DataContext dataContext) {
+        StringBuilder result = new StringBuilder();
+        for (CellPluginComponent pluginComponent : component.getSelection()) {
+          result.append(pluginComponent.myPlugin.getName()).append(" (").append(pluginComponent.myPlugin.getVersion()).append(")\n");
+        }
+        CopyPasteManager.getInstance().setContents(new TextTransferable(result.substring(0, result.length() - 1)));
+      }
+
+      @Override
+      public boolean isCopyEnabled(@NotNull DataContext dataContext) {
+        return !component.getSelection().isEmpty();
+      }
+
+      @Override
+      public boolean isCopyVisible(@NotNull DataContext dataContext) {
+        return true;
+      }
+    };
+
+    DataManager.registerDataProvider(component, new DataProvider() {
+      @Nullable
+      @Override
+      public Object getData(String dataId) {
+        if (PlatformDataKeys.COPY_PROVIDER.is(dataId)) {
+          return copyProvider;
+        }
+        return null;
+      }
+    });
+  }
+
   private static class PluginsGroupComponent extends JBPanelWithEmptyText {
     private final EventHandler myEventHandler;
     private final LinkListener<IdeaPluginDescriptor> myListener;
@@ -1412,6 +1447,11 @@ public class PluginManagerConfigurableNew
       myGroups.clear();
       myEventHandler.clear();
       removeAll();
+    }
+
+    @NotNull
+    public List<CellPluginComponent> getSelection() {
+      return myEventHandler.getSelection();
     }
 
     public void setSelection(@NotNull CellPluginComponent component) {
@@ -1720,6 +1760,11 @@ public class PluginManagerConfigurableNew
     public void initialSelection() {
     }
 
+    @NotNull
+    public List<CellPluginComponent> getSelection() {
+      return Collections.emptyList();
+    }
+
     public void setSelection(@NotNull CellPluginComponent component) {
     }
 
@@ -1953,8 +1998,9 @@ public class PluginManagerConfigurableNew
       }
     }
 
+    @Override
     @NotNull
-    private List<CellPluginComponent> getSelection() {
+    public List<CellPluginComponent> getSelection() {
       List<CellPluginComponent> selection = new ArrayList<>();
 
       for (CellPluginComponent component : myComponents) {
@@ -2407,6 +2453,8 @@ public class PluginManagerConfigurableNew
 
     public SearchResultInfo(@NotNull String query) {
       key = query;
+
+      registerCopyProvider(myInstalledPanel);
 
       myPanel = new PanelWithProgress("Nothing to show");
       myPanel.setOpaque(true);
