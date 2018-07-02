@@ -522,11 +522,11 @@ public class JavaCompletionUtil {
       }
 
       if (completion instanceof PsiClass) {
-        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems((PsiClass)completion,
-                                                                                                             JavaClassNameCompletionContributor.AFTER_NEW
-                                                                                                               .accepts(reference),
-                                                                                                             JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
-                                                                                                             Conditions.alwaysTrue());
+        List<JavaPsiClassReferenceElement> classItems = JavaClassNameCompletionContributor.createClassLookupItems(
+          CompletionUtil.getOriginalOrSelf((PsiClass)completion),
+          JavaClassNameCompletionContributor.AFTER_NEW.accepts(reference),
+          JavaClassNameInsertHandler.JAVA_CLASS_INSERT_HANDLER,
+          Conditions.alwaysTrue());
         return JBIterable.from(classItems).flatMap(i -> JavaConstructorCallElement.wrap(i, reference.getElement()));
       }
     }
