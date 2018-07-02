@@ -59,6 +59,7 @@ import java.util.Map;
 import java.util.concurrent.CompletableFuture;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
 import java.util.stream.Collectors;
 
 import static com.jetbrains.python.console.PydevConsoleCommunicationUtil.*;
@@ -385,13 +386,13 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
       return "Unable to get description: waiting for input.";
     }
 
-    // @alexander todo [regression] add timeout in 5s
     ThrowableComputable<String, Exception> doGetDesc = () -> myClient.getDescription(text);
     if (ApplicationManager.getApplication().isDispatchThread()) {
       return ProgressManager.getInstance().runProcessWithProgressSynchronously(doGetDesc, "Getting Description", true, myProject);
     }
     else {
-      return doGetDesc.compute();
+      // note that the thread would still wait for the response after the timeout occurs
+      return ApplicationManager.getApplication().executeOnPooledThread(() -> doGetDesc.compute()).get(5, TimeUnit.SECONDS);
     }
   }
 
