@@ -42,7 +42,7 @@ import java.util.zip.ZipOutputStream
 internal fun isImportExportActionApplicable(): Boolean {
   val app = ApplicationManager.getApplication()
   val storageManager = app.stateStore.storageManager as? StateStorageManagerImpl ?: return true
-  return !storageManager.isStreamProviderEnabled
+  return !storageManager.isStreamProviderPreventExportAction
 }
 
 // for Rider purpose
