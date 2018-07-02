@@ -79,8 +79,9 @@ public class ParametrizedDuplicates {
   }
 
   @Nullable
-  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor) {
-    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, DuplicatesFinder.MatchType.PARAMETRIZED);
+  public static ParametrizedDuplicates findDuplicates(@NotNull ExtractMethodProcessor originalProcessor,
+                                                      @NotNull DuplicatesFinder.MatchType matchType) {
+    DuplicatesFinder finder = createDuplicatesFinder(originalProcessor, matchType);
     if (finder == null) {
       return null;
     }
@@ -412,6 +413,10 @@ public class ParametrizedDuplicates {
 
   public List<Match> getDuplicates() {
     return myMatches;
+  }
+
+  boolean isEmpty() {
+    return ContainerUtil.isEmpty(myMatches);
   }
 
   @NotNull
