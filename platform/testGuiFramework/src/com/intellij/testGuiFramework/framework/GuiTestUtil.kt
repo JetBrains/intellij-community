@@ -31,7 +31,6 @@ import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText

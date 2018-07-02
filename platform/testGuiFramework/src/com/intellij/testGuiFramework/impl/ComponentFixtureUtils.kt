@@ -11,7 +11,6 @@ import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
-import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt.getComponentText
