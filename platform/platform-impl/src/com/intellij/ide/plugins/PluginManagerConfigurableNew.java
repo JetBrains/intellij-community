@@ -3367,13 +3367,51 @@ public class PluginManagerConfigurableNew
           return new Dimension(width, insets.top + baseSize.height + insets.bottom);
         }
 
+        private int calculateBaseWidth(@NotNull Container parent) {
+          int parentWidth = parent.getWidth();
+
+          if (myProgressComponent != null) {
+            return parentWidth - myProgressComponent.getPreferredSize().width - myOffset.get();
+          }
+
+          if (!myVersionComponents.isEmpty() && myVersionComponents.get(0).isVisible()) {
+            for (Component component : myVersionComponents) {
+              parentWidth -= component.getPreferredSize().width;
+            }
+            parentWidth -= myOffset.get() * myVersionComponents.size();
+          }
+
+          for (Component component : myButtonComponents) {
+            parentWidth -= component.getPreferredSize().width;
+          }
+          parentWidth -= myButtonOffset.get() * (myButtonComponents.size() - 1);
+
+          if (myErrorComponent != null) {
+            if (myErrorEnableComponent != null) {
+              parentWidth -= (myOffset.get() + myErrorEnableComponent.getPreferredSize().width);
+            }
+
+            int errorPartWidth = myErrorComponent.getPreferredSize().width / 3;
+            if (myBaseComponent.getPreferredSize().width >= (parentWidth - errorPartWidth)) {
+              parentWidth -= errorPartWidth;
+            }
+          }
+
+          return parentWidth;
+        }
+
         @Override
         public void layoutContainer(Container parent) {
           Dimension baseSize = myBaseComponent.getPreferredSize();
           int top = parent.getInsets().top;
           int y = top + myBaseComponent.getBaseline(baseSize.width, baseSize.height);
           int x = 0;
+          int calcBaseWidth = calculateBaseWidth(parent);
 
+          JLabel label = (JLabel)myBaseComponent;
+          label.setToolTipText(calcBaseWidth < baseSize.width ? label.getText() : null);
+
+          baseSize.width = Math.min(baseSize.width, calcBaseWidth);
           myBaseComponent.setBounds(x, top, baseSize.width, baseSize.height);
           x += baseSize.width;
 
