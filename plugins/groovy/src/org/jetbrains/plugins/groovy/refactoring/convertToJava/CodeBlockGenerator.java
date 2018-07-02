@@ -13,6 +13,7 @@ import org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnI
 import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -410,7 +411,7 @@ public class CodeBlockGenerator extends Generator {
       final GrTraditionalForClause cl = (GrTraditionalForClause)clause;
       final GrCondition initialization = cl.getInitialization();
       final GrExpression condition = cl.getCondition();
-      final GrExpression update = cl.getUpdate();
+      final GrExpressionList update = cl.getUpdate();
 
       if (initialization instanceof GrParameter) {
         StringBuilder partBuilder = new StringBuilder();
@@ -450,7 +451,7 @@ public class CodeBlockGenerator extends Generator {
     }
   }
 
-  private static void genForPart(StringBuilder builder, GrExpression part, final ExpressionContext context) {
+  private static void genForPart(StringBuilder builder, GroovyPsiElement part, final ExpressionContext context) {
     genForPart(builder, part, new ExpressionGenerator(new StringBuilder(), context));
   }
 
