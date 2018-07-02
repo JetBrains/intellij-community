@@ -383,6 +383,8 @@ interface TxANotAnno {}
     final LookupImpl lookup = invokeCompletion("/../smartTypeSorting/JComponentAddNew.java")
     assertPreferredItems(0, "FooBean3", "JComponent", "Component")
     incUseCount(lookup, 2) //Component
+    assertPreferredItems(1, "Component", "FooBean3", "JComponent")
+    incUseCount(lookup, 0) //Component
     assertPreferredItems(0, "Component", "FooBean3", "JComponent")
   }
 
@@ -855,6 +857,10 @@ class Foo {
 
   void testPreferFinalBeforeVariable() {
     checkPreferredItems 0, 'final', 'find1'
+  }
+
+  void testDispreferMultiMethodInterfaceAfterNew() {
+    checkPreferredItems 1, 'Intf', 'IntfImpl'
   }
 
 }
