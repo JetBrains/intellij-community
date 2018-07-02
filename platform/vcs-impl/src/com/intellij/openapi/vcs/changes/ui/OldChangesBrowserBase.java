@@ -115,7 +115,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     add(createToolbar(), BorderLayout.NORTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
-    myViewer.setDoubleClickHandler(getDoubleClickHandler());
+    myViewer.setDoubleClickHandler(() -> showDiff());
   }
 
   @NotNull
@@ -137,11 +137,6 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     return null;
   }
 
-  @NotNull
-  private Runnable getDoubleClickHandler() {
-    return () -> showDiff();
-  }
-
   public void dispose() {
   }
 
@@ -161,7 +156,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   public void calcData(DataKey key, DataSink sink) {
     if (key == VcsDataKeys.CHANGES) {
       List<Change> list = getSelectedChanges();
-      if (list.isEmpty()) list = getAllChanges();
+      if (list.isEmpty()) list = myViewer.getChanges();
       sink.put(VcsDataKeys.CHANGES, list.toArray(new Change[0]));
     }
     else if (key == VcsDataKeys.CHANGES_SELECTION) {
@@ -261,7 +256,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     List<Change> changes = getSelectedChanges();
 
     if (changes.size() < 2) {
-      List<Change> allChanges = getAllChanges();
+      List<Change> allChanges = myViewer.getChanges();
       if (allChanges.size() > 1 || changes.isEmpty()) {
         changes = allChanges;
       }
@@ -290,7 +285,7 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   public void rebuildList() {
-    myViewer.setChangesToDisplay(getCurrentDisplayedObjects(), myToSelect);
+    myViewer.setChangesToDisplay(getCurrentDisplayedChanges(), myToSelect);
   }
 
   public void setAlwayExpandList(final boolean value) {
@@ -331,21 +326,11 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
     toolBarGroup.add(myDiffAction);
   }
 
-  @NotNull
-  protected List<Change> getCurrentIncludedChanges() {
-    return ContainerUtil.newArrayList(myViewer.getIncludedChanges());
-  }
-
 
   @NotNull
-  protected List<Change> getCurrentDisplayedChanges() {
+  private List<Change> getCurrentDisplayedChanges() {
     if (myChangesToDisplay != null) return myChangesToDisplay;
     return mySelectedChangeList != null ? ContainerUtil.newArrayList(mySelectedChangeList.getChanges()) : Collections.emptyList();
-  }
-
-  @NotNull
-  protected List<Change> getCurrentDisplayedObjects() {
-    return getCurrentDisplayedChanges();
   }
 
   public JComponent getPreferredFocusedComponent() {
@@ -376,11 +361,6 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   @NotNull
   public List<Change> getSelectedChanges() {
     return myViewer.getSelectedChanges();
-  }
-
-  @NotNull
-  protected List<Change> getAllChanges() {
-    return myViewer.getChanges();
   }
 
   @NotNull
