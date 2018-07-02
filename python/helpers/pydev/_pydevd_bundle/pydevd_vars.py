@@ -878,7 +878,6 @@ def header_data_to_thrift_struct(rows, cols, dtypes, col_bounds, col_to_format, 
 TYPE_TO_THRIFT_STRUCT_CONVERTERS = {"ndarray": array_to_thrift_struct, "DataFrame": dataframe_to_thrift_struct, "Series": dataframe_to_thrift_struct}
 
 
-# @alexander todo `GetArrayResponse` should be renamed to `ArrayChunk`
 def table_like_struct_to_thrift_struct(array, name, roffset, coffset, rows, cols, format):
     # returns `GetArrayResponse`
     _, type_name, _ = get_type(array)
