@@ -9,6 +9,7 @@ import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
@@ -28,6 +29,13 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
     super.visitDoWhileStatement(statement)
     holder.createErrorAnnotation(statement.doKeyword, message("unsupported.do.while.statement"))
+  }
+
+  override fun visitExpressionList(expressionList: GrExpressionList) {
+    super.visitExpressionList(expressionList)
+    if (expressionList.expressions.size > 1) {
+      holder.createErrorAnnotation(expressionList, message("unsupported.expression.list.in.for.update"))
+    }
   }
 
   override fun visitTryResourceList(resourceList: GrTryResourceList) {
