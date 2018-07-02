@@ -19,7 +19,6 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -35,12 +34,13 @@ import java.util.*;
 import java.util.List;
 
 public class ChooseComponentsToExportDialog extends DialogWrapper {
+  private static final String DEFAULT_FILE_NAME = "settings.zip";
+  private static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME;
+
   private static final Logger LOG = Logger.getInstance(ChooseComponentsToExportDialog.class);
 
   private final ElementsChooser<ComponentElementProperties> myChooser;
   private final FieldPanel myPathPanel;
-  @NonNls
-  public static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath()+"/"+"settings.jar");
   private final boolean myShowFilePath;
   private final String myDescription;
 
@@ -171,7 +171,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       public void consume(List<VirtualFile> files) {
         VirtualFile file = files.get(0);
         if (file.isDirectory()) {
-          result.setResult(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
+          result.setResult(file.getPath() + '/' + DEFAULT_FILE_NAME);
         }
         else {
           result.setResult(file.getPath());
