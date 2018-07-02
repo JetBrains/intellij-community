@@ -11,6 +11,7 @@ import runtime.utils.*
 import java.awt.*
 import java.awt.event.*
 import javax.swing.*
+import kotlin.math.*
 
 class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetimed(parentLifetime) {
     interface Item {
@@ -136,6 +137,30 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         select(panel.components.lastOrNull())
     }
 
+    private fun scrollPageUp() {
+        scrollPage { visibleRect ->
+            -min(visibleRect.height, visibleRect.y)
+        }
+    }
+
+    private fun scrollPage(getShift: (visibleRect: Rectangle) -> Int) {
+        val visibleRect = panel.visibleRect
+        val shift = getShift(visibleRect)
+
+        if (shift != 0) {
+            visibleRect.translate(0, shift)
+            panel.scrollRectToVisible(visibleRect)
+        }
+    }
+
+    private fun scrollPageDown() {
+        scrollPage { visibleRect ->
+            val visibleRectHeight = visibleRect.height
+
+            min(visibleRectHeight, panel.height - visibleRect.y - visibleRectHeight)
+        }
+    }
+
     private class MyItem(item: Item, val index: Int) : Item by item
 
     private inner class MyMouseAdapter : MouseAdapter() {
@@ -159,6 +184,8 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
                 KeyEvent.VK_DOWN -> handle(e, ::selectNext)
                 KeyEvent.VK_HOME -> handle(e, ::selectFirst)
                 KeyEvent.VK_END -> handle(e, ::selectLast)
+                KeyEvent.VK_PAGE_UP -> handle(e, ::scrollPageUp)
+                KeyEvent.VK_PAGE_DOWN -> handle(e, ::scrollPageDown)
             }
         }
 
