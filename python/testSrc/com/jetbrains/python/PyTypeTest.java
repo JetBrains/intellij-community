@@ -1342,6 +1342,32 @@ public class PyTypeTest extends PyTestCase {
     );
   }
 
+  // PY-29577
+  public void testRangeTypeByModifications() {
+    doTest("List[int]",
+           "expr = range(10)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.append('a')");
+
+    doTest("List[Union[int, Any]]",
+           "expr = range(10)\n" +
+           "expr.append(var)\n");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr[0] = 'a'\n");
+
+    doTest("List[Union[int, str, None]]",
+           "expr = range(10)\n" +
+           "expr.extend(['a', None])");
+
+    doTest("List[Union[int, str]]",
+           "expr = range(10)\n" +
+           "expr.index('a')");
+  }
+
   // PY-1182
   public void testDictTypeByModifications() {
     doTest("Dict[str, Union[int, str]]",

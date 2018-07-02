@@ -22,7 +22,8 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
   @Override
   public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     String qualifiedName = function.getQualifiedName();
-    if (qualifiedName != null && PyCollectionTypeUtil.INSTANCE.getCOLLECTION_CONSTRUCTORS().contains(qualifiedName)) {
+    if (qualifiedName != null &&
+        PyCollectionTypeUtil.INSTANCE.getCollectionConstructors(LanguageLevel.forElement(callSite)).contains(qualifiedName)) {
       PyExpression target = PyCollectionTypeUtil.INSTANCE.getTargetForValueInAssignment(callSite);
       if (target instanceof PyTargetExpression) {
         List<PyExpression> arguments = callSite.getArguments(null);
@@ -34,7 +35,7 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
           final List<PyType> typesByModifications = PyCollectionTypeUtil.INSTANCE
             .getCollectionTypeByModifications(qualifiedName, element, context);
           if (!typesByModifications.isEmpty()) {
-            if (qualifiedName.equals(PyCollectionTypeUtil.INSTANCE.getDICT_CONSTRUCTOR())) {
+            if (qualifiedName.equals(PyCollectionTypeUtil.DICT_CONSTRUCTOR)) {
               argumentTypes = extractTypesForDict(argumentTypes, typesByModifications);
             }
             else {
@@ -45,6 +46,12 @@ public final class PyCollectionTypeByModificationsProvider extends PyTypeProvide
             final PyClass cls = function.getContainingClass();
             if (cls != null) {
               return Ref.create(new PyCollectionTypeImpl(cls, false, argumentTypes));
+            }
+            else {
+              final PyType returnType = context.getReturnType(function);
+              if (returnType instanceof PyClassType) {
+                return Ref.create(new PyCollectionTypeImpl(((PyClassType)returnType).getPyClass(), false, argumentTypes));
+              }
             }
           }
         }
