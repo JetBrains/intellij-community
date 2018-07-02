@@ -289,23 +289,23 @@ public class FSRecords {
           setCurrentVersion();
         }
 
-        /////////////////////////////////////////////////////////////////////////
+        final int recordsVersion = myRecords.getInt(HEADER_VERSION_OFFSET);
 
-        final int filelength = (int)myRecords.length();
-        LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
-        myContents.setVersion(myRecords.getInt(HEADER_VERSION_OFFSET));
-
-        int count = filelength / RECORD_SIZE;
-        for (int n = 2; n < count; n++) {
-          if (!BitUtil.isSet(getFlags(n), PersistentFS.IS_DIRECTORY_FLAG)) {
-            setContentRecordId(n, 0);
-          }
+        if (myAttributes.getVersion() != recordsVersion || recordsVersion != VERSION) {
+           throw new IOException("FS repository version mismatch");
         }
 
-        //////////////////////////////////////////////////////
+        if (myContents.getVersion() != recordsVersion) {
+          final int filelength = (int)myRecords.length();
+          LOG.assertTrue(filelength % RECORD_SIZE == 0, "invalid file size: " + filelength);
+          myContents.setVersion(recordsVersion);
 
-        if (getVersion() != VERSION) {
-          throw new IOException("FS repository version mismatch");
+          int count = filelength / RECORD_SIZE;
+          for (int n = 2; n < count; n++) {
+            if (!BitUtil.isSet(getFlags(n), PersistentFS.IS_DIRECTORY_FLAG)) {
+              setContentRecordId(n, 0);
+            }
+          }
         }
 
         if (myRecords.getInt(HEADER_CONNECTION_STATUS_OFFSET) != SAFELY_CLOSED_MAGIC) {

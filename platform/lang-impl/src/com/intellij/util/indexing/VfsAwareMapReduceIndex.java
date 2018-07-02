@@ -250,8 +250,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     @NotNull
     @Override
     public PersistentMap<Integer, Map<Key, Value>> createMap() throws IOException {
-      return IndexInfrastructure.createForwardIndexStorage((ID<?, ?>)myIndexExtension.getName(),
-                                                           new MapDataExternalizer<>(myIndexExtension));
+
+      return IndexStorageManager.getInstance().createForwardIndexStorage((ID<?, ?>)myIndexExtension.getName(),
+                                                                         new MapDataExternalizer<>(myIndexExtension));
+
       //
       //PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
       //try {
@@ -281,8 +283,10 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     @NotNull
     @Override
     public PersistentMap<Integer, Collection<Key>> createMap() throws IOException {
-      return IndexInfrastructure.createForwardIndexStorage((ID<?, ?>)((IndexExtension<Key, ?, ?>)myIndexExtension).getName(),
-                                                           createInputsIndexExternalizer(myIndexExtension));
+
+      return IndexStorageManager.getInstance().createForwardIndexStorage((ID<?, ?>)((IndexExtension<Key, ?, ?>)myIndexExtension).getName(),
+                                                                         createInputsIndexExternalizer(myIndexExtension));
+
       //PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
       //try {
       //

@@ -19,18 +19,11 @@
  */
 package com.intellij.util.indexing;
 
-import com.google.common.base.Charsets;
-import com.google.common.io.CharStreams;
-import com.google.gson.GsonBuilder;
-import com.intellij.onair.index.BTreeIndexStorage;
-import com.intellij.onair.index.BTreeIntPersistentMap;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.CacheUpdateRunner;
-import com.intellij.openapi.util.JDOMUtil;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -40,32 +33,18 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.concurrency.AppExecutorUtil;
 import com.intellij.util.concurrency.SequentialTaskExecutor;
-import com.intellij.util.io.DataExternalizer;
-import com.intellij.util.io.KeyDescriptor;
-import com.intellij.util.io.PersistentMap;
-import intellij.platform.onair.storage.StorageImpl;
-import intellij.platform.onair.storage.api.Address;
-import intellij.platform.onair.storage.api.Novelty;
-import intellij.platform.onair.storage.api.NoveltyImpl;
-import intellij.platform.onair.storage.api.Storage;
-import intellij.platform.onair.tree.MockStorage;
-import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.PooledThreadExecutor;
 
-import java.io.*;
-import java.net.InetSocketAddress;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
+import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Locale;
-import java.util.Map;
-import java.util.concurrent.*;
-import java.util.stream.Collectors;
+import java.util.concurrent.Callable;
+import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Future;
 
 @SuppressWarnings("HardCodedStringLiteral")
 public class IndexInfrastructure {
@@ -79,126 +58,6 @@ public class IndexInfrastructure {
     "IndexInfrastructure Pool");
 
   private IndexInfrastructure() {
-  }
-
-  public static Storage storage = new MockStorage();
-
-  public static final Novelty indexNovelty;
-
-  static {
-    try {
-      indexNovelty = new NoveltyImpl(FileUtil.createTempFile("novelty-", ".here"));
-    }
-    catch (IOException e) {
-      throw new RuntimeException();
-    }
-  }
-
-  public static ConcurrentHashMap<String, BTreeIndexStorage> indexStorages = new ConcurrentHashMap<>();
-  public static ConcurrentHashMap<String, BTreeIntPersistentMap> forwardStorages = new ConcurrentHashMap<>();
-
-  public static Map downloadIndexMetaData(String revision) {
-    String bucket = "onair-index-data";
-    String region = "eu-central-1";
-    try {
-      InputStream stream =
-        new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision + "/index_meta").openStream();
-      Element element = JDOMUtil.load(stream);
-
-      List<String> files = element.getChildren().stream()
-                                  .filter(e -> e.getName().equals("Contents"))
-                                  .flatMap(e -> e.getChildren().stream())
-                                  .filter(o -> o.getName().equals("Key"))
-                                  .map(e -> e.getText())
-                                  .map(s -> s.split("/")[2])
-                                  .collect(Collectors.toList());
-
-      for (String file : files) {
-        String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/index_meta/" + file;
-        ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-        File base = getIndexMeta();
-        base.mkdirs();
-        try (FileChannel dest = new FileOutputStream(new File(base, file)).getChannel()) {
-          dest.transferFrom(source, 0, Long.MAX_VALUE);
-        }
-      }
-
-      InputStream is = new URL(
-        "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/meta").openStream();
-
-      String str = CharStreams.toString(new InputStreamReader(is, Charsets.UTF_8));
-
-      return new GsonBuilder().create().fromJson(str, Map.class);
-    }
-    catch (Exception e) {
-      throw new RuntimeException("exception downloading index data for revision " + revision, e);
-    }
-  }
-
-  public static Map indexMeta = null;
-
-  static {
-    String revision = System.getProperty("onair.revision");
-
-    try {
-      storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
-    }
-    catch (IOException e) {
-      storage = new MockStorage();
-      System.out.println("Can't connect to index cahce.");
-      // throw new RuntimeException(e);
-    }
-
-    if (revision != null && !revision.trim().isEmpty()) {
-      indexMeta = downloadIndexMetaData(revision);
-    }
-  }
-
-  public static <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
-                                                                     KeyDescriptor<K> keyDescriptor,
-                                                                     DataExternalizer<V> valueExternalizer,
-                                                                     int cacheSize) {
-    BTreeIndexStorage.AddressPair address;
-    int newRevision = 17;
-    int baseRevision = -1;
-    if (indexMeta != null) {
-      Map m = (Map)(((Map)indexMeta.get("inverted-indices")).get(indexId.getName()));
-      List invertedAddr = (List)m.get("inverted");
-      List internaryAddr = (List)m.get("internary");
-      Address internary = internaryAddr != null ? new Address(Long.parseLong((String)internaryAddr.get(1)),
-                                                              Long.parseLong((String)internaryAddr.get(0))) : null;
-      address = new BTreeIndexStorage.AddressPair(internary, new Address(Long.parseLong((String)invertedAddr.get(1)),
-                                                                         Long.parseLong((String)invertedAddr.get(0))));
-      baseRevision = Integer.parseInt((String)indexMeta.get("revision-int"));
-    } else {
-      address = null;
-    }
-    BTreeIndexStorage<K, V> storage =
-      new BTreeIndexStorage<>(keyDescriptor,
-                              valueExternalizer,
-                              IndexInfrastructure.storage,
-                              indexNovelty,
-                              address,
-                              cacheSize,
-                              newRevision,
-                              baseRevision);
-    indexStorages.put(indexId.getName(), storage);
-    return storage;
-  }
-
-  public static <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId,
-                                                                        DataExternalizer<V> valueExternalizer) {
-
-    Address head = null;
-    if (indexMeta != null) {
-      List addr = (List)((Map)(indexMeta.get("forward-indices"))).get(indexId.getName());
-
-      head = new Address(Long.parseLong((String)addr.get(1)),
-                         Long.parseLong((String)addr.get(0)));
-    }
-    BTreeIntPersistentMap<V> map = new BTreeIntPersistentMap<>(valueExternalizer, storage, indexNovelty, head);
-    forwardStorages.put(indexId.getName(), map);
-    return map;
   }
 
   public static File getIndexMeta() {

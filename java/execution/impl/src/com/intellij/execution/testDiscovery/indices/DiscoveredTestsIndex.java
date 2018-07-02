@@ -22,22 +22,24 @@ public class DiscoveredTestsIndex extends MapReduceIndex<Integer, TIntArrayList,
       @NotNull
       @Override
       public PersistentMap<Integer, Collection<Integer>> createMap() throws IOException {
-        return IndexInfrastructure.createForwardIndexStorage(ID.create("test.discovery.forward.idx"),
-                                                             new DataExternalizer<Collection<Integer>>() {
-                                                               @Override
-                                                               public void save(@NotNull DataOutput out, Collection<Integer> value)
-                                                                 throws IOException {
-                                                                 DataInputOutputUtilRt.writeSeq(out, value,
-                                                                                                i -> EnumeratorIntegerDescriptor.INSTANCE
-                                                                                                  .save(out, i));
-                                                               }
 
-                                                               @Override
-                                                               public Collection<Integer> read(@NotNull DataInput in) throws IOException {
-                                                                 return DataInputOutputUtilRt
-                                                                   .readSeq(in, () -> EnumeratorIntegerDescriptor.INSTANCE.read(in));
-                                                               }
-                                                             });
+        return IndexStorageManager.getInstance().createForwardIndexStorage(ID.create("test.discovery.forward.idx"),
+                                                                           new DataExternalizer<Collection<Integer>>() {
+                                                                   @Override
+                                                                   public void save(@NotNull DataOutput out, Collection<Integer> value)
+                                                                     throws IOException {
+                                                                     DataInputOutputUtilRt.writeSeq(out, value,
+                                                                                                    i -> EnumeratorIntegerDescriptor.INSTANCE
+                                                                                                      .save(out, i));
+                                                                   }
+
+                                                                   @Override
+                                                                   public Collection<Integer> read(@NotNull DataInput in) throws IOException {
+                                                                     return DataInputOutputUtilRt
+                                                                       .readSeq(in, () -> EnumeratorIntegerDescriptor.INSTANCE.read(in));
+                                                                   }
+                                                                 });
+
         //return new PersistentHashMap<>(new File(file, "forward.idx"), EnumeratorIntegerDescriptor.INSTANCE,
         //                               new DataExternalizer<Collection<Integer>>() {
         //                                 @Override

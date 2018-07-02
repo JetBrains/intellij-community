@@ -130,9 +130,11 @@ public class RefreshWorker {
         long currentLength = persistence.getLastRecordedLength(file);
         long upToDateLength = attributes.length;
 
-        boolean timestampsDiffer = currentTimestamp != upToDateTimestamp;
-        boolean lengthsDiffer = currentLength != upToDateLength;
-        if (lengthsDiffer) {
+        if (currentLength != upToDateLength) {
+          scheduleUpdateContent(file);
+        }
+        else if (currentTimestamp != upToDateTimestamp) {
+          //TODO: compare hashes
           scheduleUpdateContent(file);
         }
       }
