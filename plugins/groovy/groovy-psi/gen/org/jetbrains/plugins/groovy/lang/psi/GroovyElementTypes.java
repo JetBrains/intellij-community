@@ -88,6 +88,7 @@ public interface GroovyElementTypes {
   GrEnumDefinitionElementType ENUM_TYPE_DEFINITION = new GrEnumDefinitionElementType("ENUM_TYPE_DEFINITION");
   GroovyElementType EQUALITY_EXPRESSION = new GroovyElementType("EQUALITY_EXPRESSION");
   GroovyElementType EXPRESSION = new GroovyElementType("EXPRESSION");
+  GroovyElementType EXPRESSION_LIST = new GroovyElementType("EXPRESSION_LIST");
   GrExtendsClauseElementType EXTENDS_CLAUSE = new GrExtendsClauseElementType("EXTENDS_CLAUSE");
   GrFieldElementType FIELD = new GrFieldElementType("FIELD");
   GroovyElementType FINALLY_CLAUSE = new GroovyElementType("FINALLY_CLAUSE");

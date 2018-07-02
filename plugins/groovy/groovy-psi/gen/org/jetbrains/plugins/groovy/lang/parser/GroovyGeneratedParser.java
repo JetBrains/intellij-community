@@ -139,6 +139,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     else if (t == EXPRESSION) {
       r = expression(b, 0, -1);
     }
+    else if (t == EXPRESSION_LIST) {
+      r = expression_list(b, 0);
+    }
     else if (t == FIELD) {
       r = field(b, 0);
     }
@@ -3160,6 +3163,40 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
+  // expression (',' expression)*
+  public static boolean expression_list(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_list")) return false;
+    boolean r;
+    Marker m = enter_section_(b, l, _NONE_, EXPRESSION_LIST, "<expression list>");
+    r = expression(b, l + 1, -1);
+    r = r && expression_list_1(b, l + 1);
+    exit_section_(b, l, m, r, false, null);
+    return r;
+  }
+
+  // (',' expression)*
+  private static boolean expression_list_1(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_list_1")) return false;
+    while (true) {
+      int c = current_position_(b);
+      if (!expression_list_1_0(b, l + 1)) break;
+      if (!empty_element_parsed_guard_(b, "expression_list_1", c)) break;
+    }
+    return true;
+  }
+
+  // ',' expression
+  private static boolean expression_list_1_0(PsiBuilder b, int l) {
+    if (!recursion_guard_(b, l, "expression_list_1_0")) return false;
+    boolean r;
+    Marker m = enter_section_(b);
+    r = consumeToken(b, T_COMMA);
+    r = r && expression(b, l + 1, -1);
+    exit_section_(b, m, null, r);
+    return r;
+  }
+
+  /* ********************************************************** */
   // <<notApplicationArguments expression_or_application_inner>>
   public static boolean expression_or_application(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "expression_or_application")) return false;
@@ -3458,6 +3495,12 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     if (!r) r = expression(b, l + 1, -1);
     if (!r) r = clear_variants_and_fail(b, l + 1);
     return r;
+  }
+
+  /* ********************************************************** */
+  // expression_list
+  static boolean for_clause_update(PsiBuilder b, int l) {
+    return expression_list(b, l + 1);
   }
 
   /* ********************************************************** */
@@ -6042,7 +6085,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // empty for_clause_initialization? ';' expression? ';' mb_nl expression?
+  // empty for_clause_initialization? ';' expression? ';' mb_nl for_clause_update?
   public static boolean traditional_for_clause(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "traditional_for_clause")) return false;
     boolean r, p;
@@ -6073,10 +6116,10 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return true;
   }
 
-  // expression?
+  // for_clause_update?
   private static boolean traditional_for_clause_6(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "traditional_for_clause_6")) return false;
-    expression(b, l + 1, -1);
+    for_clause_update(b, l + 1);
     return true;
   }
 
