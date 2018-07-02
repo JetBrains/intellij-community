@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.io.FileUtil
@@ -272,13 +272,25 @@ idea.fatal.error.notification=disabled
     compileModules(moduleNames + (buildContext.proprietaryBuildTools.scrambleTool?.additionalModulesToCompile ?: []) +
                    productLayout.mainModules, buildContext.productProperties.modulesToCompileTests)
 
-    def pluginsToPublish = DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)
+    def pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>();
+    for (PluginLayout plugin  : DistributionJARsBuilder.getPluginsByModules(buildContext, buildContext.productProperties.productLayout.pluginModulesToPublish)) {
+      def publishingSpec = buildContext.productProperties.productLayout.pluginsToPublish.find { spec -> spec.mainModule == plugin.mainModule }
+      if (publishingSpec == null) {
+        buildContext.messages.error("buildContext.productProperties.productLayout.pluginModulesToPublish doesn't have info for $plugin.mainModule")
+      }
+
+      pluginsToPublish.put(plugin, publishingSpec)
+    }
+
     if (buildContext.shouldBuildDistributions()) {
       def providedModulesFilePath = "${buildContext.paths.artifacts}/${buildContext.productProperties.productCode}-builtinModules.json"
       buildProvidedModulesList(providedModulesFilePath, moduleNames)
       if (buildContext.productProperties.productLayout.buildAllCompatiblePlugins) {
         if (!buildContext.options.buildStepsToSkip.contains(BuildOptions.PROVIDED_MODULES_LIST_STEP)) {
-          pluginsToPublish = new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()
+          pluginsToPublish = new LinkedHashMap<PluginLayout, PluginPublishingSpec>() 
+          for (PluginLayout plugin : new PluginsCollector(buildContext, providedModulesFilePath).collectCompatiblePluginsToPublish()) {
+            pluginsToPublish.put(plugin, new PluginPublishingSpec(plugin.mainModule))
+          }
         }
         else {
           buildContext.messages.info("Skipping collecting compatible plugins because PROVIDED_MODULES_LIST_STEP was skipped")
@@ -286,7 +298,7 @@ idea.fatal.error.notification=disabled
       }
     }
     def distributionJARsBuilder = new DistributionJARsBuilder(buildContext, patchedApplicationInfo, pluginsToPublish)
-    compileModules(distributionJARsBuilder.platformModules + (pluginsToPublish.collect { it.moduleJars.values()  }.flatten() as List<String>))
+    compileModules(distributionJARsBuilder.platformModules + (pluginsToPublish.collect { it.key.moduleJars.values()  }.flatten() as List<String>))
 
     //we need this to ensure that all libraries which may be used in the distribution are resolved, even if product modules don't depend on them (e.g. JUnit5)
     CompilationTasks.create(buildContext).resolveProjectDependencies()
@@ -466,7 +478,6 @@ idea.fatal.error.notification=disabled
     checkModules(layout.moduleExcludes.keySet(), "productProperties.productLayout.moduleExcludes")
     checkModules(layout.mainModules, "productProperties.productLayout.mainModules")
     checkModules([layout.searchableOptionsModule], "productProperties.productLayout.searchableOptionsModule")
-    checkModules(layout.pluginModulesWithRestrictedCompatibleBuildRange, "productProperties.productLayout.pluginModulesWithRestrictedCompatibleBuildRange")
     checkProjectLibraries(layout.projectLibrariesToUnpackIntoMainJar, "productProperties.productLayout.projectLibrariesToUnpackIntoMainJar")
     nonTrivialPlugins.findAll {layout.bundledPluginModules.contains(it.mainModule)}.each { plugin ->
       checkModules(plugin.moduleJars.values() - plugin.optionalModules, "'$plugin.mainModule' plugin")
@@ -604,7 +615,7 @@ idea.fatal.error.notification=disabled
   @Override
   void buildUnpackedDistribution(String targetDirectory) {
     buildContext.paths.distAll = targetDirectory
-    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo(), [])
+    def jarsBuilder = new DistributionJARsBuilder(buildContext, patchApplicationInfo(), [:])
     CompilationTasks.create(buildContext).buildProjectArtifacts(jarsBuilder.includedProjectArtifacts)
     jarsBuilder.buildJARs()
     layoutShared()

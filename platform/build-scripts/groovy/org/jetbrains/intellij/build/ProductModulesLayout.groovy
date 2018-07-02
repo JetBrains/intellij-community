@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -57,8 +57,28 @@ class ProductModulesLayout {
   /**
    * Names of the main modules (containing META-INF/plugin.xml) of the plugins which aren't bundled with the product but may be installed
    * into it. Zip archives of these plugins will be built and placed under 'plugins' directory in the build artifacts.
+   * 
+   * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
    */
-  List<String> pluginModulesToPublish = []
+  List<String> getPluginModulesToPublish() {
+    return pluginsToPublish.collect { it.mainModule }
+  }
+
+  /**
+   * @see org.jetbrains.intellij.build.ProductModulesLayout#getPluginModulesToPublish()
+   * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
+   */
+  void setPluginModulesToPublish(List<String> plugins) {
+    pluginsToPublish = plugins.collect { new PluginPublishingSpec(it) }
+  }
+
+  /**
+   * Specification ({@link PluginPublishingSpec}) for the plugins which aren't bundled with the product but may be installed
+   * into it. Zip archives of these plugins will be built and placed under 'plugins' directory in the build artifacts.
+   * 
+   * @see org.jetbrains.intellij.build.ProductModulesLayout#pluginsToPublish
+   */
+  List<PluginPublishingSpec> pluginsToPublish = []
 
   /**
    * Describes non-trivial layout of all plugins which may be included into the product. The actual list of the plugins need to be bundled
@@ -102,14 +122,16 @@ class ProductModulesLayout {
   String searchableOptionsModule = "intellij.platform.resources"
 
   /**
-   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginModulesToPublish} plugins.
+   * If {@code true} a special xml descriptor in custom plugin repository format will be generated for {@link #pluginsToPublish} plugins.
    * This descriptor and the plugin *.zip files need to be uploaded to the URL specified in 'plugins@builtin-url' attribute in *ApplicationInfo.xml file.
+   *
+   * @see org.jetbrains.intellij.build.PluginPublishingSpec#includeInCustomPluginRepository
    */
   boolean prepareCustomPluginRepositoryForPublishedPlugins = false
 
   /**
    * If {@code true} then all plugins that compatible with an IDE will be built.
-   * Otherwise only plugins from {@link #pluginModulesToPublish} will be considered.
+   * Otherwise only plugins from {@link #pluginsToPublish} will be considered.
    */
   boolean buildAllCompatiblePlugins = false
 
@@ -117,14 +139,6 @@ class ProductModulesLayout {
    * List of plugin names which should not be built even if they are compatible and {@link #buildAllCompatiblePlugins} is true
    */
   List<String> compatiblePluginsToIgnore = []
-
-  /**
-   * Names of the main modules of plugins from {@link #pluginModulesToPublish} list where since-build/until-build range should be restricted.
-   * These plugins will be compatible with builds which number differ from the build which produces these plugins only in the last component,
-   * i.e. plugins produced in 163.1111.22 build will be compatible with 163.1111.* builds. The plugins not included into this list
-   * will be compatible with all builds from the same baseline, i.e. with 163.* builds.
-   */
-  List<String> pluginModulesWithRestrictedCompatibleBuildRange = []
 
   /**
    * Specifies path to a text file containing list of classes in order they are loaded by the product. Entries in the produces *.jar files
