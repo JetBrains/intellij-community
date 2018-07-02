@@ -17,12 +17,15 @@ package com.siyeh.ig.performance;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.psiutils.ExpectedTypeUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+
+import static com.intellij.util.ObjectUtils.tryCast;
 
 /**
  * @author Bas Leijdekkers
@@ -78,11 +81,24 @@ abstract class CollectionReplaceableByEnumCollectionVisitor extends BaseInspecti
         return;
       }
     }
-    if (!expectedType.isAssignableFrom(TypeUtils.getType(getReplacementCollectionName(), expression)) &&
-        !isReplaceableType((PsiClassType)expectedType)) {
+    PsiClassType replacementCollectionType = TypeUtils.getType(getReplacementCollectionName(), expression);
+    if (!expectedType.isAssignableFrom(replacementCollectionType) && !isReplaceableType((PsiClassType)expectedType)) {
       return;
     }
-    registerNewExpressionError(expression);
+    PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression).getParent();
+    PsiLocalVariable localVariable = tryCast(parent, PsiLocalVariable.class);
+    if (localVariable != null) {
+      PsiClass localVariableClass = PsiUtil.resolveClassInClassTypeOnly(localVariable.getType());
+      if (localVariableClass != null && getBaseCollectionName().equals(localVariableClass.getQualifiedName())) {
+        registerNewExpressionError(expression, localVariable);
+      }
+      else {
+        registerNewExpressionError(expression);
+      }
+    }
+    else {
+      registerNewExpressionError(expression);
+    }
   }
 
   private boolean isReplaceableType(PsiClassType classType) {
