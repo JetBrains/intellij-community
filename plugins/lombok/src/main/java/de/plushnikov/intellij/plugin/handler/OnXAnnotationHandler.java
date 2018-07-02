@@ -19,6 +19,10 @@ public class OnXAnnotationHandler {
   private static final String ANNOTATION_TYPE_EXPECTED = "Annotation type expected";
   private static final String CANNOT_FIND_METHOD_VALUE_MESSAGE = "Cannot find method 'value'";
 
+  private static final String CANNOT_RESOLVE_METHOD_ON_METHOD_MESSAGE = "Cannot resolve method 'onMethod_'";
+  private static final String CANNOT_RESOLVE_METHOD_ON_CONSTRUCTOR_MESSAGE = "Cannot resolve method 'onConstructor_'";
+  private static final String CANNOT_RESOLVE_METHOD_ON_PARAM_MESSAGE = "Cannot resolve method 'onParam_'";
+
   private static final Collection<String> ONXABLE_ANNOTATIONS = Arrays.asList(
     "lombok.Getter",
     "lombok.Setter",
@@ -31,12 +35,19 @@ public class OnXAnnotationHandler {
   private static final Collection<String> ONX_PARAMETERS = Arrays.asList(
     "onConstructor",
     "onMethod",
-    "onParam"
+    "onParam",
+    "onConstructor_",
+    "onMethod_",
+    "onParam_"
   );
 
   public static boolean isOnXParameterAnnotation(HighlightInfo highlightInfo, PsiFile file) {
-    if (!(ANNOTATION_TYPE_EXPECTED.equals(highlightInfo.getDescription())
-      || CANNOT_RESOLVE_UNDERSCORES_MESSAGE.matcher(StringUtil.notNullize(highlightInfo.getDescription())).matches())) {
+    final String description = StringUtil.notNullize(highlightInfo.getDescription());
+    if (!(ANNOTATION_TYPE_EXPECTED.equals(description)
+      || CANNOT_RESOLVE_UNDERSCORES_MESSAGE.matcher(description).matches()
+      || CANNOT_RESOLVE_METHOD_ON_METHOD_MESSAGE.equals(description)
+      || CANNOT_RESOLVE_METHOD_ON_CONSTRUCTOR_MESSAGE.equals(description)
+      || CANNOT_RESOLVE_METHOD_ON_PARAM_MESSAGE.equals(description))) {
       return false;
     }
 

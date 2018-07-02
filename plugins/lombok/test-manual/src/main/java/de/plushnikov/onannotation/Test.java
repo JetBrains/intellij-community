@@ -8,10 +8,10 @@ import javax.persistence.Column;
 import javax.persistence.Id;
 import javax.validation.constraints.Max;
 
-@AllArgsConstructor(onConstructor = @__(@Deprecated))
+@AllArgsConstructor(onConstructor_ = @Deprecated)
 public class Test {
-  @Getter(onMethod = @__({@Id, @Column(name = "unique-id")}))
-  @Setter(onParam = @__(@Max(100030)))
+  @Getter(onMethod_ = {@Id, @Column(name = "unique-id")})
+  @Setter(onParam_ = @Max(100030))
   private long unid;
 
   public static void main(String[] args) {
