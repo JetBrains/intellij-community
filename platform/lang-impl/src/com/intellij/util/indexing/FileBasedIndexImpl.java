@@ -378,10 +378,13 @@ public class FileBasedIndexImpl extends FileBasedIndex implements BaseComponent,
           contentHashesEnumeratorOk = true;
         }
 
-        storage = IndexStorageManager.getInstance()
-                                     .createIndexStorage(name, extension.getKeyDescriptor(), extension.getValueExternalizer(),
-                                                         extension.getCacheSize(), extension.keyIsUniqueForIndexedFile(),
-                                                         extension.traceKeyHashToVirtualFileMapping());
+        storage = IndexStorageManager.getInstance().createIndexStorage(
+          name,
+          extension.getKeyDescriptor(),
+          extension.getValueExternalizer(),
+          extension.getCacheSize(),
+          extension.keyIsUniqueForIndexedFile(),
+          extension.traceKeyHashToVirtualFileMapping());
 
         final InputFilter inputFilter = extension.getInputFilter();
         final Set<FileType> addedTypes = new THashSet<>();

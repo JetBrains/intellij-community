@@ -22,6 +22,12 @@ public class PHMIndexStorageManager implements IndexStorageManager {
   }
 
   @Override
+  public <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId, DataExternalizer<V> valueExternalizer, File storageFile)
+    throws IOException {
+    return new PersistentHashMap<>(storageFile, EnumeratorIntegerDescriptor.INSTANCE, valueExternalizer);
+  }
+
+  @Override
   public <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
                                                               KeyDescriptor<K> keyDescriptor,
                                                               DataExternalizer<V> valueExternalizer,

@@ -20,7 +20,6 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteArraySequence;
@@ -38,7 +37,6 @@ import com.intellij.util.io.*;
 import com.intellij.util.io.DataOutputStream;
 import com.intellij.util.io.storage.*;
 import gnu.trove.TIntArrayList;
-import org.jdom.Element;
 import org.jetbrains.annotations.Contract;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,10 +45,6 @@ import org.jetbrains.annotations.TestOnly;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
-import java.net.URL;
-import java.nio.channels.Channels;
-import java.nio.channels.FileChannel;
-import java.nio.channels.ReadableByteChannel;
 import java.nio.charset.Charset;
 import java.security.MessageDigest;
 import java.util.ArrayList;
@@ -59,7 +53,6 @@ import java.util.List;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
-import java.util.stream.Collectors;
 
 /**
  * @author max
@@ -552,49 +545,9 @@ public class FSRecords {
   private FSRecords() {
   }
 
-  public static void download(String revision) {
-    String bucket = "onair-index-data";
-    String region = "eu-central-1";
-    try {
-      InputStream stream = new URL("https://s3." + region + ".amazonaws.com/" + bucket + "?prefix=" + revision + "/vfs").openStream();
-      Element element = JDOMUtil.load(stream);
-
-      List<String> files = element.getChildren().stream()
-                                    .filter(e -> e.getName().equals("Contents"))
-                                    .flatMap(e -> e.getChildren().stream())
-                                    .filter(o -> o.getName().equals("Key"))
-                                    .map(e -> e.getText())
-                                    .map(s -> s.split("/")[2])
-                                    .collect(Collectors.toList());
-
-
-      for (String file : files) {
-        try {
-          String s3url = "https://s3." + region + ".amazonaws.com/" + bucket + "/" + revision + "/vfs/" + file;
-          ReadableByteChannel source = Channels.newChannel(new URL(s3url).openStream());
-          basePath().mkdirs();
-          FileChannel dest = new FileOutputStream(new File(basePath(), file)).getChannel();
-          dest.transferFrom(source, 0, Long.MAX_VALUE);
-        } catch (Exception e) {
-          e.printStackTrace();
-        }
-      }
-    }
-    catch (Exception e) {
-      throw new RuntimeException("exception downloading vfs data for revision " + revision, e);
-    }
-  }
-
 
   static void connect() {
-    String revision = System.getProperty("onair.revision");
-
-    if (revision != null && !revision.trim().isEmpty()) {
-      download(revision);
-    }
-
     DbConnection.connect();
-
   }
 
   public static long getCreationTimestamp() {

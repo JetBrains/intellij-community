@@ -66,10 +66,12 @@ public class IndexInfrastructure {
 
   @NotNull
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
+    //new File(getIndexDirectory(indexName, true), indexName + ".ver");
     return new File(getIndexMeta(), indexName + ".ver");
   }
 
   public static File allIndexedFilesRegistryFile() {
+    //new File(new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), ".fileTypes"), "indexed_filetypes");
     return new File(getIndexMeta(), "file_types");
   }
 

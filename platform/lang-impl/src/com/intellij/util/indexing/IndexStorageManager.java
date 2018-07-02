@@ -6,6 +6,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMap;
 
+import java.io.File;
 import java.io.IOException;
 
 public interface IndexStorageManager {
@@ -15,6 +16,13 @@ public interface IndexStorageManager {
 
   <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId,
                                                           DataExternalizer<V> valueExternalizer) throws IOException;
+
+  default <V> PersistentMap<Integer, V> createForwardIndexStorage(ID<?, ?> indexId,
+                                                                  DataExternalizer<V> valueExternalizer,
+                                                                  File storageFile) throws IOException {
+    return createForwardIndexStorage(indexId, valueExternalizer);
+  }
+
 
   <K, V> VfsAwareIndexStorage<K, V> createIndexStorage(ID<?, ?> indexId,
                                                        KeyDescriptor<K> keyDescriptor,

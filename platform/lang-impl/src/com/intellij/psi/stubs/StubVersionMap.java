@@ -48,7 +48,6 @@ import java.util.Map;
 import java.util.Set;
 
 class StubVersionMap {
-  private static final String INDEXED_FILETYPES = "indexed_filetypes";
   private static final String RECORD_SEPARATOR = "\uFFFF";
   private static final String LINE_SEPARATOR = "\n";
   private static final Charset ourEncoding = CharsetToolkit.UTF8_CHARSET;

@@ -253,15 +253,6 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
 
       return IndexStorageManager.getInstance().createForwardIndexStorage((ID<?, ?>)myIndexExtension.getName(),
                                                                          new MapDataExternalizer<>(myIndexExtension));
-
-      //
-      //PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      //try {
-      //  final File indexStorageFile = IndexInfrastructure.getInputIndexStorageFile((ID<?, ?>)myIndexExtension.getName());
-      //  return new PersistentHashMap<>(indexStorageFile, EnumeratorIntegerDescriptor.INSTANCE, new MapDataExternalizer<>(myIndexExtension));
-      //} finally {
-      //  PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      //}
     }
 
     @Override
@@ -283,16 +274,8 @@ public class VfsAwareMapReduceIndex<Key, Value, Input> extends MapReduceIndex<Ke
     @NotNull
     @Override
     public PersistentMap<Integer, Collection<Key>> createMap() throws IOException {
-
       return IndexStorageManager.getInstance().createForwardIndexStorage((ID<?, ?>)((IndexExtension<Key, ?, ?>)myIndexExtension).getName(),
                                                                          createInputsIndexExternalizer(myIndexExtension));
-
-      //PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.TRUE);
-      //try {
-      //
-      //} finally {
-      //  PersistentHashMapValueStorage.CreationTimeOptions.HAS_NO_CHUNKS.set(Boolean.FALSE);
-      //}
     }
   }
 
