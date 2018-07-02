@@ -374,7 +374,7 @@ public class PyTypingTypeProvider extends PyTypeProviderBase {
 
   @Nullable
   @Override
-  public Ref<PyType> getCallType(@NotNull PyFunction function, @Nullable PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
+  public Ref<PyType> getCallType(@NotNull PyFunction function, @NotNull PyCallSiteExpression callSite, @NotNull TypeEvalContext context) {
     final String functionQName = function.getQualifiedName();
 
     if ("typing.cast".equals(functionQName)) {
