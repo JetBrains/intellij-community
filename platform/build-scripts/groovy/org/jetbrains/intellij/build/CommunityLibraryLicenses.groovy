@@ -426,6 +426,10 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
+    new LibraryLicense(name: "delight-nashorn-sandbox", libraryName: "delight-nashorn-sandbox", version: "0.1.15", license: "Apache 2.0",
+                          url: "https://github.com/javadelight/delight-nashorn-sandbox", licenseUrl: "https://github.com/javadelight/delight-nashorn-sandbox/blob/master/LICENSE.TXT"),
+
+
     jetbrainsLibrary("intellij-coverage"),
     jetbrainsLibrary("intellij-test-discovery"),
     jetbrainsLibrary("CoverageReport"),
