@@ -34,8 +34,7 @@ class MultiplexedSocketReader(object):
         return self._response_pipe.read(sz)
 
     # noinspection PyUnusedLocal
-    def _try_fill_buffer(self, sz):
-        # todo use `sz` argument
+    def _try_fill_buffer(self):
         thread_name = threading.current_thread().name
 
         with self._read_socket_lock:
@@ -47,8 +46,6 @@ class MultiplexedSocketReader(object):
             self._response_pipe.write(frame)
 
     def _read_frame(self):
-        # todo introduce sz argument
-
         buff = readall(self._socket.recv, 4)
         sz, = struct.unpack('!i', buff)
         if sz == 0:
@@ -67,7 +64,7 @@ class MultiplexedSocketReader(object):
 
     def _reading(self):
         while True:
-            self._try_fill_buffer(1)
+            self._try_fill_buffer()
 
 
 class SocketWriter(object):
