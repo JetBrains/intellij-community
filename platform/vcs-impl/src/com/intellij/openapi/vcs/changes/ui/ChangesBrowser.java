@@ -30,20 +30,23 @@ public class ChangesBrowser extends OldChangesBrowserBase<Change> {
     super(project, changes, capableOfExcludingChanges, highlightProblems, inclusionListener, useCase, toSelect, Change.class);
 
     init();
-    setInitialSelection(changeLists, changes, initialListSelection);
+    mySelectedChangeList = initialListSelection;
     rebuildList();
   }
 
+  @Override
   @NotNull
   protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
     return TreeModelBuilder.buildFromChanges(myProject, myViewer.getGrouping(), changes, changeNodeDecorator);
   }
 
+  @Override
   @NotNull
   protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<?> node) {
     return node.getAllChangesUnder();
   }
 
+  @Override
   @Nullable
   protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode<?> node) {
     final Object o = node.getUserObject();
