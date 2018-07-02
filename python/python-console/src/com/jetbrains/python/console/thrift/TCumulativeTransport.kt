@@ -14,9 +14,7 @@ abstract class TCumulativeTransport : TTransport() {
 
   private val messageBuffer: ByteBuf = Unpooled.buffer()
 
-  override fun open() {
-    // TODO should we do smth?
-  }
+  override fun open() {}
 
   final override fun write(buf: ByteArray, off: Int, len: Int) {
     messageBuffer.writeBytes(buf, off, len)
