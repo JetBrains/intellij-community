@@ -37,7 +37,7 @@ class YAMLFormattingBlock extends AbstractBlock {
   @Nullable
   @Override
   public Spacing getSpacing(@Nullable Block child1, @NotNull Block child2) {
-    return myContext.computeSpacing(child1, child2);
+    return myContext.computeSpacing(this, child1, child2);
   }
 
   @Override
