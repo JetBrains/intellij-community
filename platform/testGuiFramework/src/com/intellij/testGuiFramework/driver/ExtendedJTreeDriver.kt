@@ -1,13 +1,15 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.testGuiFramework.driver
 
+import com.intellij.testGuiFramework.cellReader.ExtendedJTreeCellReader
+import com.intellij.testGuiFramework.cellReader.ProjectTreeCellReader
+import com.intellij.testGuiFramework.cellReader.SettingsTreeCellReader
 import com.intellij.testGuiFramework.framework.GuiTestUtil
-import com.intellij.testGuiFramework.framework.GuiTestUtil.pause
 import com.intellij.testGuiFramework.impl.GuiRobotHolder
 import com.intellij.testGuiFramework.impl.GuiTestUtilKt
-import com.intellij.testGuiFramework.impl.toFestTimeout
 import org.fest.assertions.Assertions
 import org.fest.reflect.core.Reflection
+import org.fest.swing.cell.JTreeCellReader
 import org.fest.swing.core.MouseButton
 import org.fest.swing.core.MouseClickInfo
 import org.fest.swing.driver.ComponentPreconditions
@@ -16,12 +18,8 @@ import org.fest.swing.driver.JTreeLocation
 import org.fest.swing.exception.ActionFailedException
 import org.fest.swing.exception.LocationUnavailableException
 import org.fest.swing.exception.WaitTimedOutError
-import org.fest.swing.timing.Condition
-import org.fest.swing.timing.Pause
-import org.fest.swing.timing.Timeout
 import org.fest.swing.util.Pair
 import org.fest.swing.util.Triple
-import org.fest.util.Preconditions
 import java.awt.Point
 import java.awt.Rectangle
 import org.fest.swing.core.Robot
@@ -34,6 +32,16 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
   private val DEFAULT_FIND_PATH_ATTEMPTS: Int = 3
   // TODO: check can we remove jTreeLocation and use local variables instead of
   private val jTreeLocation = JTreeLocation()
+
+  private fun JTree.getCellReader(): JTreeCellReader {
+    val resultReader = when (javaClass.name) {
+      "com.intellij.openapi.options.newEditor.SettingsTreeView\$MyTree" -> SettingsTreeCellReader()
+      "com.intellij.ide.projectView.impl.ProjectViewPane\$1" -> ProjectTreeCellReader()
+      else -> ExtendedJTreeCellReader()
+    }
+    replaceCellReader(resultReader)
+    return resultReader
+  }
 
   fun clickPath(tree: JTree, treePath: TreePath, mouseClickInfo: MouseClickInfo): Unit =
     clickPath(tree, treePath, mouseClickInfo.button(), mouseClickInfo.times())
@@ -230,6 +238,17 @@ open class ExtendedJTreeDriver(robot: Robot = GuiRobotHolder.robot) : JTreeDrive
     drop(tree, tree.scrollToMatchingPath(treePath).second!!)
   }
 
+  fun getPathStrings(tree: JTree, path: TreePath) : List<String>{
+    var myPath = path
+    val result = mutableListOf<String>()
+    while (myPath.pathCount != 1 || (tree.isRootVisible && myPath.pathCount == 1)) {
+      val valueAt = tree.getCellReader().valueAt(tree, myPath.lastPathComponent) ?: "null"
+      result.add(0, valueAt)
+      if (myPath.pathCount == 1) break
+      else myPath = myPath.parentPath
+    }
+    return result.toList()
+  }
 } // end of class
 
 

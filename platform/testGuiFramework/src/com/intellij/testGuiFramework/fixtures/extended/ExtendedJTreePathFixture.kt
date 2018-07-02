@@ -72,9 +72,5 @@ open class ExtendedJTreePathFixture(
 
   fun drop(): Unit = myDriver.drop(tree, path)
 
-  fun getPathStrings() : List<String>{
-    TODO("Make a real body")
-  }
-
-
+  fun getPathStrings(): List<String> = myDriver.getPathStrings(tree, path)
 }
