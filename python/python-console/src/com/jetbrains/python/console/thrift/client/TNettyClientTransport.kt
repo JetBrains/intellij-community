@@ -67,40 +67,28 @@ class TNettyClientTransport(private val host: String,
   override fun open() {
     val workerGroup = NioEventLoopGroup()
 
-    try {
-      val b = Bootstrap() // (1)
-      b.group(workerGroup) // (2)
-      b.channel(NioSocketChannel::class.java) // (3)
-      b.option(ChannelOption.SO_KEEPALIVE, true) // (4)
-      b.handler(object : ChannelInitializer<SocketChannel>() {
-        override fun initChannel(ch: SocketChannel) {
-          ch.pipeline().addLast(LoggingHandler(LogLevel.DEBUG))
+    val b = Bootstrap() // (1)
+    b.group(workerGroup) // (2)
+    b.channel(NioSocketChannel::class.java) // (3)
+    b.option(ChannelOption.SO_KEEPALIVE, true) // (4)
+    b.handler(object : ChannelInitializer<SocketChannel>() {
+      override fun initChannel(ch: SocketChannel) {
+        ch.pipeline().addLast(LoggingHandler(LogLevel.DEBUG))
 
-          ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1048576, 0, 4, 0, 4))
-          ch.pipeline().addLast(LengthFieldPrepender(4))
+        ch.pipeline().addLast(LengthFieldBasedFrameDecoder(1048576, 0, 4, 0, 4))
+        ch.pipeline().addLast(LengthFieldPrepender(4))
 
-          ch.pipeline().addLast(DirectedMessageCodec())
-          ch.pipeline().addLast(DirectedMessageHandler(responseStream, serverAcceptedTransport.outputStream))
-        }
-      })
+        ch.pipeline().addLast(DirectedMessageCodec())
+        ch.pipeline().addLast(DirectedMessageHandler(responseStream, serverAcceptedTransport.outputStream))
+      }
+    })
 
-      // Start the client.
-      val f = b.connect(host, port).sync() // (5)
+    // Start the client.
+    val f = b.connect(host, port).sync() // (5)
 
-      channel = f.channel()
+    channel = f.channel()
 
-      messageHandler = f.channel().pipeline().get(DirectedMessageHandler::class.java)
-
-      /*
-            // Wait until the connection is closed.
-            f.channel().closeFuture().sync()
-      */
-    }
-    finally {
-      /*
-            workerGroup.shutdownGracefully()
-      */
-    }
+    messageHandler = f.channel().pipeline().get(DirectedMessageHandler::class.java)
   }
 
   override fun write(buf: ByteArray, off: Int, len: Int) {
