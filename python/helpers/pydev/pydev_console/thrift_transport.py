@@ -135,6 +135,8 @@ class TBidirectionalClientTransport(TTransportBase, FramedWriter):
         self._reader = reader
         self._writer = writer
 
+        self._is_closed = False
+
     def _get_writer(self):
         return self._writer
 
@@ -148,11 +150,11 @@ class TBidirectionalClientTransport(TTransportBase, FramedWriter):
         return self._reader.read_response(sz)
 
     def is_open(self):
-        # todo we may try to monitor reads and writes and put a flag if they fail
-        return self._client_socket
+        return not self._is_closed
 
     def close(self):
-        # todo should we do something with buffer of the multiplexed reader
+        self._is_closed = True
+
         self._client_socket.shutdown(socket.SHUT_RDWR)
         self._client_socket.close()
 
