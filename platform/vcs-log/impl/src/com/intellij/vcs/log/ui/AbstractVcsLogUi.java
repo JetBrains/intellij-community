@@ -211,7 +211,7 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull
   protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? "Commit " + commitId.toString() + " does not match active filters" : "Commit " + commitId.toString() + " not found";
+    return exists ? "Commit " + commitId.toString() + " doesn't match the filters" : "Commit " + commitId.toString() + " not found";
   }
 
   protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {

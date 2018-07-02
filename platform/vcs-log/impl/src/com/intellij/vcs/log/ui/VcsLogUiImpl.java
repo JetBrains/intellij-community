@@ -108,7 +108,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
     }
 
     List<NamedRunnable> runnables = ContainerUtil.newArrayList();
-    runnables.add(new NamedRunnable("Reset filters and search again.") {
+    runnables.add(new NamedRunnable("View and Reset Filters") {
       @Override
       public void run() {
         getFilterUi().setFilter(null);
@@ -117,7 +117,7 @@ public class VcsLogUiImpl extends AbstractVcsLogUi {
       }
     });
     if (VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(getId())) {
-      runnables.add(new NamedRunnable("Search in new tab.") {
+      runnables.add(new NamedRunnable("View in New Tab") {
         @Override
         public void run() {
           VcsProjectLog projectLog = VcsProjectLog.getInstance(myProject);
