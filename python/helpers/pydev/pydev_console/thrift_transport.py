@@ -3,9 +3,9 @@ import struct
 import sys
 import threading
 
-from pydev_console.io import PipeIO
 from _jetbrains_thriftpy.thrift import TClient
 from _jetbrains_thriftpy.transport import TTransportBase, readall
+from pydev_console.io import PipeIO
 
 REQUEST = 0
 RESPONSE = 1
@@ -33,7 +33,7 @@ class MultiplexedSocketReader(object):
         """
         return self._response_pipe.read(sz)
 
-    def _try_fill_buffer(self):
+    def _read_and_dispatch_next_frame(self):
         with self._read_socket_lock:
             direction, frame = self._read_frame()
 
@@ -56,12 +56,12 @@ class MultiplexedSocketReader(object):
             return direction, frame
 
     def start_reading(self):
-        t = threading.Thread(target=self._reading)
+        t = threading.Thread(target=self._read_forever)
         t.start()
 
-    def _reading(self):
+    def _read_forever(self):
         while True:
-            self._try_fill_buffer()
+            self._read_and_dispatch_next_frame()
 
 
 class SocketWriter(object):
