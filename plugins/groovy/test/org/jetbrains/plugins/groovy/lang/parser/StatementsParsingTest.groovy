@@ -219,6 +219,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testLoop$dowhile5() { doTest() }
 
+  void testLoop$dowhile6() { doTest() }
+
   void testMethods$method1() throws Throwable { doTest() }
 
   void testMethods$method2() throws Throwable { doTest() }

@@ -96,6 +96,7 @@ class KeywordCompletionTest extends LightCodeInsightFixtureTestCase {
   void testExtends()             { doTest() }
   void testImplements()          { doTest() }
   void testAfterNumberLiteral()  { doTest() }
+  void testDoWhile()             { doTest() }
 
   String basePath = TestUtils.testDataPath + 'groovy/oldCompletion/keyword'
 
