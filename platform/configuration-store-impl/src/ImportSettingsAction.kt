@@ -68,8 +68,7 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
-                               IdeBundle.message("title.file.not.found"))
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)), IdeBundle.message("title.file.not.found"))
       return
     }
 
