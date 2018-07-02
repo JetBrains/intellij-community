@@ -11,20 +11,13 @@ internal class DirectedMessageCodec : ByteToMessageCodec<DirectedMessage>() {
   }
 
   override fun decode(ctx: ChannelHandlerContext, `in`: ByteBuf, out: MutableList<Any>) {
-/*
-    try {
-*/
-      val directionByte = `in`.readByte()
-      val direction = DirectedMessage.MessageDirection.values()[directionByte.toInt()]
-      val length = `in`.readableBytes()
-      val content = ByteArray(length)
-      `in`.readBytes(content)
-      out.add(DirectedMessage(direction, content))
-/*
-    }
-    finally {
-      `in`.release()
-    }
-*/
+    val directionByte = `in`.readByte()
+    val direction = DirectedMessage.MessageDirection.values()[directionByte.toInt()]
+    val length = `in`.readableBytes()
+    val content = ByteArray(length)
+    `in`.readBytes(content)
+    out.add(DirectedMessage(direction, content))
+
+    // `in` will be released later in `ByteToMessageDecoder.channelRead()`
   }
 }
