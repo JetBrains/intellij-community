@@ -5,10 +5,11 @@ import com.intellij.idea.ActionsBundle
 import com.intellij.openapi.ui.ComponentWithBrowseButton
 import com.intellij.testGuiFramework.cellReader.ExtendedJComboboxCellReader
 import com.intellij.testGuiFramework.cellReader.ExtendedJListCellReader
-import com.intellij.testGuiFramework.driver.ExtJTreePathFinder
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.*
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedButtonFixture
+import com.intellij.testGuiFramework.fixtures.extended.ExtendedJTreePathFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTableFixture
 import com.intellij.testGuiFramework.fixtures.extended.ExtendedTreeFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil
@@ -258,7 +259,7 @@ fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, time
  * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, timeout: Long = defaultTimeout): ExtendedTreeFixture =
+fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, timeout: Long = defaultTimeout): ExtendedJTreePathFixture =
   if (target() is Container) GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
   else throw unableToFindComponent("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
 
@@ -269,38 +270,22 @@ fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, 
  * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.checkboxTreeExt(
+fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(
   vararg pathStrings: String,
   timeout: Long = defaultTimeout,
-  predicate: FinderPredicate = ExtJTreePathFinder.predicateEquality
-): ExtCheckboxTreeFixture =
+  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
+): CheckboxTreeFixture =
   if (target() is Container) {
-    val extendedJTreePathFixture = GuiTestUtil.jTreePathExt(
+    val extendedJTreePathFixture = GuiTestUtil.jTreePath(
       container = target() as Container,
       timeout = timeout,
       predicate = predicate,
       pathStrings = *pathStrings
     )
     if (extendedJTreePathFixture.tree !is CheckboxTree) throw ComponentLookupException("Found JTree but not a CheckboxTree")
-    ExtCheckboxTreeFixture(extendedJTreePathFixture.tree, extendedJTreePathFixture.path, robot())
+    CheckboxTreeFixture(extendedJTreePathFixture.tree, extendedJTreePathFixture.path, robot())
   }
   else throw unableToFindComponent("""CheckboxTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
-
-/**
- * Finds a CheckboxTree component in hierarchy of context component by a path and returns CheckboxTreeFixture.
- *
- * @pathStrings comma separated array of Strings, representing path items: checkboxTree("JBoss", "JBoss Drools")
- * @timeout in seconds to find JTree component
- * @throws ComponentLookupException if component has not been found or timeout exceeded
- */
-fun <S, C : Component> ComponentFixture<S, C>.checkboxTree(vararg pathStrings: String,
-                                                           timeout: Long = defaultTimeout): CheckboxTreeFixture =
-  if (target() is Container) {
-    val extendedTreeFixture = GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
-    if (extendedTreeFixture.tree !is CheckboxTree) throw ComponentLookupException("Found JTree but not a CheckboxTree")
-    CheckboxTreeFixture(robot(), extendedTreeFixture.tree)
-  }
-  else throw unableToFindComponent("""CheckboxTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
 
 /**
  * Finds a JTable component in hierarchy of context component by a cellText and returns JTableFixture.

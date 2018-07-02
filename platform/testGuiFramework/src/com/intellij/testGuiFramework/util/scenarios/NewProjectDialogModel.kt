@@ -2,7 +2,7 @@
 package com.intellij.testGuiFramework.util.scenarios
 
 import com.intellij.openapi.util.io.FileUtil
-import com.intellij.testGuiFramework.driver.ExtJTreePathFinder
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.fixtures.JDialogFixture
 import com.intellij.testGuiFramework.framework.GuiTestUtil.defaultTimeout
 import com.intellij.testGuiFramework.framework.GuiTestUtil.typeText
@@ -295,9 +295,9 @@ fun NewProjectDialogModel.createGradleProject(projectPath: String, gradleOptions
       list.clickItem(groupGradle)
       setCheckboxValue(checkKotlinDsl, gradleOptions.useKotlinDsl)
       if (gradleOptions.framework.isNotEmpty()) {
-        checkboxTreeExt(gradleOptions.framework).check()
+        checkboxTree(gradleOptions.framework).check()
         if (gradleOptions.isJavaShouldNotBeChecked)
-          checkboxTreeExt(NewProjectDialogModel.Constants.libJava).uncheck()
+          checkboxTree(NewProjectDialogModel.Constants.libJava).uncheck()
       }
       button(buttonNext).click()
       logUIStep("Fill GroupId with `${gradleOptions.group}`")
@@ -363,10 +363,9 @@ fun NewProjectDialogModel.createMavenProject(projectPath: String, mavenOptions: 
         }
 
         logUIStep("Double click on `${mavenOptions.archetypeGroup}` in the archetype list")
-        jTree(mavenOptions.archetypeGroup).doubleClickPath(mavenOptions.archetypeGroup)
+        jTree(mavenOptions.archetypeGroup).doubleClickPath()
         logUIStep("Select the archetype `${mavenOptions.archetypeVersion}` in the group `$mavenOptions.archetypeGroup`")
-        jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath(mavenOptions.archetypeGroup,
-                                                                                    mavenOptions.archetypeVersion)
+        jTree(mavenOptions.archetypeGroup, mavenOptions.archetypeVersion).clickPath()
 
       }
       button(buttonNext).click()
@@ -591,11 +590,10 @@ fun NewProjectDialogModel.setLibrariesAndFrameworks(libs: LibrariesSet) {
   with(connectDialog()) {
     for (lib in libs) {
       guiTestCase.logUIStep("Include `${lib.mainPath.joinToString()}` to the project")
-        checkboxTreeExt(
-          pathStrings = *lib.mainPath,
-          predicate = ExtJTreePathFinder.predicateWithVersion
-        ).check()
+      checkboxTree(
+        pathStrings = *lib.mainPath,
+        predicate = ExtendedJTreePathFinder.predicateWithVersion
+      ).check()
     }
   }
-
 }

@@ -26,7 +26,7 @@ import com.intellij.openapi.util.text.StringUtil.isNotEmpty
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.openapi.wm.IdeFrame
 import com.intellij.openapi.wm.impl.IdeFrameImpl
-import com.intellij.testGuiFramework.driver.ExtJTreePathFinder
+import com.intellij.testGuiFramework.driver.ExtendedJTreePathFinder
 import com.intellij.testGuiFramework.driver.FinderPredicate
 import com.intellij.testGuiFramework.fixtures.IdeFrameFixture
 import com.intellij.testGuiFramework.fixtures.RadioButtonFixture
@@ -743,10 +743,10 @@ object GuiTestUtil {
     return JTextComponentFixture(GuiRobotHolder.robot, jTextComponent)
   }
 
-  fun jTreePathExt(container: Container,
+  fun jTreePath(container: Container,
                    timeout: Long,
                    vararg pathStrings: String,
-                   predicate: FinderPredicate = ExtJTreePathFinder.predicateEquality): ExtendedJTreePathFixture {
+                   predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality): ExtendedJTreePathFixture {
     val myTree: JTree?
     try {
       myTree = if (pathStrings.isEmpty()) {
@@ -754,33 +754,17 @@ object GuiTestUtil {
       }
       else {
         waitUntilFound(GuiRobotHolder.robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtJTreePathFinder(it, *pathStrings).existsByPredicate(predicate) },
+                       GuiTestUtilKt.typeMatcher(JTree::class.java) {
+                         ExtendedJTreePathFinder(it).existsByPredicate(pathStrings = *pathStrings, predicate = predicate)
+                       },
                        timeout.toFestTimeout())
       }
     }
     catch (e: WaitTimedOutError) {
       throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path ${pathStrings.joinToString()}" else ""}"""")
     }
-    return ExtendedJTreePathFixture(myTree, ExtJTreePathFinder(myTree, *pathStrings).findMatchingPathByPredicate(predicate))
-  }
-
-  fun jTreePath(container: Container, timeout: Long, vararg pathStrings: String): ExtendedTreeFixture {
-    val myTree: JTree?
-    val pathList = pathStrings.toList()
-    try {
-      myTree = if (pathList.isEmpty()) {
-        waitUntilFound(GuiRobotHolder.robot, container, GuiTestUtilKt.typeMatcher(JTree::class.java) { true }, timeout.toFestTimeout())
-      }
-      else {
-        waitUntilFound(GuiRobotHolder.robot, container,
-                       GuiTestUtilKt.typeMatcher(JTree::class.java) { ExtendedTreeFixture(GuiRobotHolder.robot, it).hasPath(pathList) },
-                       timeout.toFestTimeout())
-      }
-    }
-    catch (e: WaitTimedOutError){
-      throw ComponentLookupException("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
-    }
-    return ExtendedTreeFixture(GuiRobotHolder.robot, myTree)
+    return ExtendedJTreePathFixture(myTree, ExtendedJTreePathFinder(myTree)
+      .findMatchingPathByPredicate(pathStrings = *pathStrings, predicate = predicate))
   }
 
   //*********COMMON FUNCTIONS WITHOUT CONTEXT
