@@ -48,7 +48,10 @@ struct ArrayData {
  **/
 struct GetArrayResponse {
   /**
-   * TODO what is `slice`?
+   * The string representation of the array slice. It is constructed from the
+   * name of the array variable and the range.
+   *
+   * E.g. `array[0:100]`, `matrix[0:3, 0:3]`, `multidimensional[0][0][0:50]`.
    */
   1: string slice,
   2: i32 rows,
@@ -103,7 +106,6 @@ typedef string AttributeDescription
 
 typedef list<DebugValue> DebugValues
 
-// TODO add throws to each method?
 service PythonConsole {
   /**
    * Returns `true` if Python console script needs more code to evaluate it.
@@ -121,8 +123,6 @@ service PythonConsole {
 
   /**
    * The description of the given attribute in the shell.
-   *
-   * TODO Timeout is 5 seconds.
    */
   AttributeDescription getDescription(1: string text),
 
