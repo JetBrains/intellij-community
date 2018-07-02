@@ -45,6 +45,9 @@ open class StateStorageManagerImpl(private val rootTagName: String,
 
   val compoundStreamProvider: CompoundStreamProvider = CompoundStreamProvider()
 
+  val isStreamProviderEnabled: Boolean
+    get() = compoundStreamProvider.enabled
+
   override fun addStreamProvider(provider: StreamProvider, first: Boolean) {
     if (first) {
       compoundStreamProvider.providers.add(0, provider)

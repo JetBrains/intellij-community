@@ -29,6 +29,10 @@ import java.util.zip.ZipInputStream
 
 // for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isImportExportActionApplicable()
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
