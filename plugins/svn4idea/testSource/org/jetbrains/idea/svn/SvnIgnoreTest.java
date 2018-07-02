@@ -48,8 +48,7 @@ public class SvnIgnoreTest extends SvnTestCase {
     for (int i = 0; i < 10; i++) {
       current = createDirInCommand(current, "dir" + i);
       ignored.add(current);
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      clManager.ensureUpToDate(false);
+      refreshChanges();
       Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
     }
     testOneFile(current, "file.txt");
@@ -106,8 +105,7 @@ public class SvnIgnoreTest extends SvnTestCase {
   }
 
   private void testImpl(VirtualFile file) {
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     Assert.assertTrue(clManager.getDefaultChangeList().getChanges().isEmpty());
 
     VcsDirtyScopeManager.getInstance(myProject).fileDirty(file);

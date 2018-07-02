@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.SmartList;
@@ -85,8 +84,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     waitQuickMerge(myBranchUrl, new QuickMergeTestInteraction(true, null));
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
@@ -143,8 +141,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
       throw new RuntimeException(selectionError.get());
     }
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
@@ -209,8 +206,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
       throw new RuntimeException(selectionError.get());
     }
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS2File);
@@ -249,8 +245,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     waitQuickMerge(myBranchUrl, testInteraction);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);
@@ -297,8 +292,7 @@ public class SvnQuickMergeTest extends SvnTestCase {
 
     waitQuickMerge(trunkUrl, new QuickMergeTestInteraction(false, null));
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     // should have changed svn:mergeinfo on wc root and s1 file
     final Change fileChange = myChangeListManager.getChange(myTree.myS1File);

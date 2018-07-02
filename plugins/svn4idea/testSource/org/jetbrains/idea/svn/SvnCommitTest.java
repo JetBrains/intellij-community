@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -24,14 +23,12 @@ import java.util.List;
 import static org.junit.Assert.*;
 
 public class SvnCommitTest extends SvnTestCase {
-  private VcsDirtyScopeManager myDirtyScopeManager;
   private ChangeListManager myChangeListManager;
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
   }
 
@@ -39,8 +36,7 @@ public class SvnCommitTest extends SvnTestCase {
   public void testSimpleCommit() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "123");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFile(file, FileStatus.ADDED);
   }
@@ -49,14 +45,12 @@ public class SvnCommitTest extends SvnTestCase {
   public void testCommitRename() {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "123");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFile(file, FileStatus.ADDED);
 
     renameFileInCommand(file, "aRenamed.txt");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFile(file, FileStatus.MODIFIED);
   }
@@ -66,16 +60,14 @@ public class SvnCommitTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     final VirtualFile file = createFileInCommand(myWorkingCopyDir, "a.txt", "123");
     final VirtualFile file2 = createFileInCommand(myWorkingCopyDir, "aRenamed.txt", "1235");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(file, file2);
 
     renameFileInCommand(file, file.getName() + "7.txt");
     renameFileInCommand(file2, "a.txt");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(file, file2);
   }
@@ -86,15 +78,13 @@ public class SvnCommitTest extends SvnTestCase {
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "f");
     final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
     final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(dir, file, file2);
 
     renameFileInCommand(dir, dir.getName() + "dd");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(dir, file, file2);
   }
@@ -106,16 +96,14 @@ public class SvnCommitTest extends SvnTestCase {
     final VirtualFile dir = createDirInCommand(myWorkingCopyDir, "f");
     final VirtualFile file = createFileInCommand(dir, "a.txt", "123");
     final VirtualFile file2 = createFileInCommand(dir, "b.txt", "1235");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(dir, file, file2);
 
     final FilePath dirPath = VcsUtil.getFilePath(dir.getPath(), true);
     deleteFileInCommand(dir);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinPaths(dirPath);
   }
@@ -138,8 +126,7 @@ public class SvnCommitTest extends SvnTestCase {
     editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
     editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final HashSet<String> strings = checkinFiles(vf1, vf2);
     System.out.println("" + StringUtil.join(strings, "\n"));
@@ -164,8 +151,7 @@ public class SvnCommitTest extends SvnTestCase {
     editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
     editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(vf1, vf2);
   }
@@ -188,8 +174,7 @@ public class SvnCommitTest extends SvnTestCase {
     editFileInCommand(vf1, "2317468732ghdwwe7y348rf");
     editFileInCommand(vf2, "2317468732ghdwwe7y348rf csdjcjksw");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     checkinFiles(vf1, vf2);
   }
@@ -203,8 +188,7 @@ public class SvnCommitTest extends SvnTestCase {
     }
     final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(changes, "test comment list");
     assertTrue(exceptions == null || exceptions.isEmpty());
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     for (FilePath file : files) {
       final Change changeA = myChangeListManager.getChange(file);
@@ -225,8 +209,7 @@ public class SvnCommitTest extends SvnTestCase {
       exceptions.get(0).printStackTrace();
     }
     assertTrue(exceptions == null || exceptions.isEmpty());
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     for (VirtualFile file : files) {
       final Change changeA = myChangeListManager.getChange(file);
@@ -241,8 +224,7 @@ public class SvnCommitTest extends SvnTestCase {
     assertEquals(status, change.getFileStatus());
     final List<VcsException> exceptions = vcs.getCheckinEnvironment().commit(Collections.singletonList(change), "test comment");
     assertTrue(exceptions == null || exceptions.isEmpty());
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     final Change changeA = myChangeListManager.getChange(file);
     assertNull(changeA);
   }

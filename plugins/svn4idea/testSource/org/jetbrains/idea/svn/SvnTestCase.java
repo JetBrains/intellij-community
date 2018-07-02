@@ -156,9 +156,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     // there should be kind-a waiting for after change list manager finds all changes and runs inner refresh of copies in the above method
     if (myInitChangeListManager) {
-      ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-      VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-      changeListManager.ensureUpToDate(false);
+      refreshChanges();
     }
   }
 
@@ -170,6 +168,12 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     semaphore.down();
     ((SvnFileUrlMappingImpl) vcs.getSvnFileUrlMapping()).realRefresh(() -> semaphore.up());
     semaphore.waitFor();
+  }
+
+  protected void refreshChanges() {
+    ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
+    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
+    changeListManager.ensureUpToDate(false);
   }
 
   @Override

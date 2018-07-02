@@ -60,8 +60,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1\n2\n3**\n4++\n");
     assertFalse(myIsClosed); // not closed on typing
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     final Change change = myChangeListManager.getChange(tree.myS1File);
     assertNotNull(change);
 
@@ -93,8 +92,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     });
     listener.registerAnnotation(tree.myS1File, annotation);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     imitUpdate(myProject);
     assertTrue(myIsClosed);
@@ -119,8 +117,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     listener.registerAnnotation(tree.myS1File, annotation);
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     assertFalse(myIsClosed);
 
     imitUpdate(myProject);
@@ -146,8 +143,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     listener.registerAnnotation(tree.myS1File, annotation);
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     assertFalse(myIsClosed);
 
     update();
@@ -182,8 +178,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     VcsTestUtil.renameFileInCommand(myProject, tree.myS1File, "5364536");
     assertFalse(myIsClosed); // not closed on typing
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     final Change change = myChangeListManager.getChange(tree.myS1File);
     assertNotNull(change);
   }
@@ -208,8 +203,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
 
     assertFalse(myIsClosed); // not closed on typing
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     final Change change = myChangeListManager.getChange(tree.myS1File);
     assertNotNull(change);
   }
@@ -232,8 +226,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     listener.registerAnnotation(tree.myS1File, annotation);
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1+\n2\n3\n4\n");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     assertFalse(myIsClosed);
 
     checkin();
@@ -263,8 +256,7 @@ public class SvnAnnotationIsClosedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
     VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change1 = myChangeListManager.getChange(vf1);
     final Change change2 = myChangeListManager.getChange(vf2);

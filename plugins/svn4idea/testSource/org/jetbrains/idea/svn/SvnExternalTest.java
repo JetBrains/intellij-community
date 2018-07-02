@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ui.UIUtil;
@@ -119,8 +118,7 @@ public class SvnExternalTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, vf1, "test externals 123" + System.currentTimeMillis());
     VcsTestUtil.editFileInCommand(myProject, vf2, "test externals 123" + System.currentTimeMillis());
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change1 = clManager.getChange(vf1);
     final Change change2 = clManager.getChange(vf2);
@@ -181,8 +179,7 @@ public class SvnExternalTest extends SvnTestCase {
     assertNotNull(externalVf);
     editFileInCommand(externalVf, "some new content");
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = clManager.getChange(externalVf);
     assertNotNull(change);

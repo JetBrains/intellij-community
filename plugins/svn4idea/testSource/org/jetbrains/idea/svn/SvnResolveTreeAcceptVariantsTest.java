@@ -10,7 +10,6 @@ import com.intellij.openapi.vcs.VcsDirectoryMapping;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -39,7 +38,6 @@ import static org.junit.Assert.*;
 public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
   private VirtualFile myTheirs;
   private SvnClientRunnerImpl mySvnClientRunner;
-  private VcsDirtyScopeManager myDirtyScopeManager;
   private ChangeListManager myChangeListManager;
 
   @Override
@@ -52,7 +50,6 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
     mySvnClientRunner = new SvnClientRunnerImpl(myRunner);
     clearWc(true);
 
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
     myTraceClient = true;
   }
@@ -105,10 +102,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       sleep(200);
 
       ((ChangeListManagerImpl)myChangeListManager).forceGoInTestMode();
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
+      refreshChanges();
+      refreshChanges();
 
       final String conflictFile = data.getConflictFile();
 
@@ -225,10 +220,8 @@ public class SvnResolveTreeAcceptVariantsTest extends SvnTestCase {
       final ConflictCreator creator = new ConflictCreator(vcs, myTheirs, myWorkingCopyDir, data, mySvnClientRunner);
       creator.create();
 
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
-      myDirtyScopeManager.markEverythingDirty();
-      myChangeListManager.ensureUpToDate(false);
+      refreshChanges();
+      refreshChanges();
 
       final String conflictFile = data.getConflictFile();
 

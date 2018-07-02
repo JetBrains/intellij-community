@@ -6,7 +6,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
@@ -21,7 +20,6 @@ import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 
 public class SvnExternalCommitNoticedTest extends SvnTestCase {
   private ChangeListManagerImpl clManager;
-  private VcsDirtyScopeManager myVcsDirtyScopeManager;
 
   @Override
   @Before
@@ -30,7 +28,6 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     super.setUp();
 
     clManager = (ChangeListManagerImpl) ChangeListManager.getInstance(myProject);
-    myVcsDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
@@ -45,8 +42,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, tree.myS2File, "test2");
     VcsTestUtil.editFileInCommand(myProject, tree.myTargetFiles.get(1), "target1");
 
-    myVcsDirtyScopeManager.markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     Assert.assertEquals(3, clManager.getChangesIn(myWorkingCopyDir).size());
 
     TimeoutUtil.sleep(100);
@@ -67,8 +63,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
 
     VcsTestUtil.renameFileInCommand(myProject, tree.myTargetDir, "aabbcc");
 
-    myVcsDirtyScopeManager.markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     Assert.assertEquals(11, clManager.getChangesIn(myWorkingCopyDir).size());
 
     TimeoutUtil.sleep(100);
@@ -146,8 +141,7 @@ public class SvnExternalCommitNoticedTest extends SvnTestCase {
     renameFileInCommand(vf, "tt11.txt");
     renameFileInCommand(vfMain, "ss11.txt");
 
-    myVcsDirtyScopeManager.markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     Assert.assertEquals(2, clManager.getChangesIn(myWorkingCopyDir).size());
 
     TimeoutUtil.sleep(100);

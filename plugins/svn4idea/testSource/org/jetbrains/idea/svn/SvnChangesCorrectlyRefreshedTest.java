@@ -8,7 +8,6 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.changes.ui.RollbackWorker;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -52,8 +51,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
 
     sleep(100);
     LocalFileSystem.getInstance().refreshAndFindFileByIoFile(virtualToIoFile(subTree.myS1File));
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     final VcsException updateException = ((ChangeListManagerImpl)clManager).getUpdateException();
     if (updateException != null) {
       updateException.printStackTrace();
@@ -72,8 +70,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     final CharSequence text = LoadTextUtil.loadText(subTree.myS1File);
     Assert.assertEquals(SubTree.ourS1Contents, text.toString());
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VirtualFile.EMPTY_ARRAY, clManager.getDefaultListName(), clManager);
   }
 
@@ -88,9 +85,9 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, newName);
 
     sleep(300);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
-    DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myS1File}, clManager.getDefaultListName(), clManager);
+    refreshChanges();
+    DuringChangeListManagerUpdateTestScheme
+      .checkFilesAreInList(new VirtualFile[]{subTree.myS1File}, clManager.getDefaultListName(), clManager);
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
 
@@ -113,8 +110,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.myTargetDir, "s1.txt");
 
     sleep(300);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.myS1File}, clManager.getDefaultListName(), clManager);
 
     final Collection<Change> changes = clManager.getDefaultChangeList().getChanges();
@@ -141,8 +137,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     assertVF(subTree.mySourceDir, "s2.txt");
 
     sleep(300);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
                                                                 clManager.getDefaultListName(), clManager);
 
@@ -174,8 +169,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     Assert.assertEquals("new", text1.toString());
 
     sleep(300);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(new VirtualFile[] {subTree.mySourceDir, subTree.myS1File, subTree.myS2File},
                                                                 clManager.getDefaultListName(), clManager);
 
@@ -200,8 +194,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
   public void testAddDirEditFileAndAfterRevert() {
     final SubTree subTree = new SubTree(myWorkingCopyDir);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     final List<VirtualFile> files = getAllFiles(subTree);
     
     DuringChangeListManagerUpdateTestScheme.checkFilesAreInList(VfsUtil.toVirtualFileArray(files), clManager.getDefaultListName(), clManager);
@@ -238,8 +231,7 @@ public class SvnChangesCorrectlyRefreshedTest extends SvnTestCase {
     deleteFileInCommand(subTree.myRootDir);
     sleep(300);
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    clManager.ensureUpToDate(false);
+    refreshChanges();
     final List<VirtualFile> files = getAllFiles(subTree);
     DuringChangeListManagerUpdateTestScheme.checkDeletedFilesAreInList(VfsUtil.toVirtualFileArray(files), clManager.getDefaultListName(),
                                                                        clManager);

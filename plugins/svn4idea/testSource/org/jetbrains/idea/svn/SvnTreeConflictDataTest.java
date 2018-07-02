@@ -4,7 +4,6 @@ package org.jetbrains.idea.svn;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.vcsUtil.VcsUtil;
@@ -485,8 +484,7 @@ public class SvnTreeConflictDataTest extends SvnTestCase {
     String conflictFile = createConflict(data, createSubtree);
 
     ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     Change change;
     if (data == TreeConflictData.DirToDir.MINE_DELETE_THEIRS_EDIT ||

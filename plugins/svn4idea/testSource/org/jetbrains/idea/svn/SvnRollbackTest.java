@@ -26,14 +26,12 @@ import static org.jetbrains.idea.svn.api.Revision.WORKING;
 
 public class SvnRollbackTest extends SvnTestCase {
 
-  private VcsDirtyScopeManager myDirtyScopeManager;
   private ChangeListManager myChangeListManager;
 
   @Override
   @Before
   public void setUp() throws Exception {
     super.setUp();
-    myDirtyScopeManager = VcsDirtyScopeManager.getInstance(myProject);
     myChangeListManager = ChangeListManager.getInstance(myProject);
 
     enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
@@ -46,8 +44,7 @@ public class SvnRollbackTest extends SvnTestCase {
     checkin();
 
     VcsTestUtil.editFileInCommand(myProject, a, "tset");
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = myChangeListManager.getChange(a);
     Assert.assertNotNull(change);
@@ -62,8 +59,7 @@ public class SvnRollbackTest extends SvnTestCase {
       throw exceptions.get(0);
     }
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     List<LocalChangeList> lists = myChangeListManager.getChangeLists();
     final HashSet<Change> afterCopy = new HashSet<>(allowedAfter);
@@ -86,8 +82,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     VcsTestUtil.moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertMovedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -106,8 +101,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     VcsTestUtil.moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertMovedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -138,8 +132,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -167,8 +160,7 @@ public class SvnRollbackTest extends SvnTestCase {
     VcsTestUtil.editFileInCommand(myProject, innerFile, "some content");
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -217,8 +209,7 @@ public class SvnRollbackTest extends SvnTestCase {
     Assert.assertTrue(! wasU.exists());
     Assert.assertTrue(! wasU2.exists());
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -263,8 +254,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File fileAfter = virtualToIoFile(innerFile);
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "newName");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -303,8 +293,7 @@ public class SvnRollbackTest extends SvnTestCase {
     VcsTestUtil.deleteFileInCommand(myProject, tree.mySourceDir);
     VcsTestUtil.deleteFileInCommand(myProject, tree.myTargetFiles.get(0));
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertDeletedChange(fpSource);
     final Change t11Change = assertDeletedChange(fpT11);
@@ -329,8 +318,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final VirtualFile inSource = createFileInCommand(tree.myTargetDir, "newF.txt", "54321");
 
     Assert.assertTrue(newDir != null && inNewDir != null && inSource != null);
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change change = assertCreatedChange(newDir);
     final Change inNewDirChange = assertCreatedChange(inNewDir);
@@ -363,8 +351,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change dirChange = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -394,14 +381,12 @@ public class SvnRollbackTest extends SvnTestCase {
     groupInfo.onFileEnabled(ignored);
     SvnPropertyService.doAddToIgnoreProperty(vcs, false, new VirtualFile[]{ignored}, groupInfo);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change dirChange = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -428,14 +413,12 @@ public class SvnRollbackTest extends SvnTestCase {
     SvnPropertyService.doAddToIgnoreProperty(vcs, false, new VirtualFile[]{ignored}, groupInfo);
     checkin();
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
     Assert.assertTrue(FileStatus.IGNORED.equals(myChangeListManager.getStatus(ignored)));
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change dirChange = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -460,8 +443,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change dirChange = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -482,8 +464,7 @@ public class SvnRollbackTest extends SvnTestCase {
 
     VcsTestUtil.renameFileInCommand(myProject, tree.mySourceDir, "renamed");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change dirChange = assertRenamedChange(tree.mySourceDir);
     final Change s1Change = assertMovedChange(tree.myS1File);
@@ -502,8 +483,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasFile = virtualToIoFile(tree.myS1File);
     VcsTestUtil.deleteFileInCommand(myProject, tree.myS1File);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
@@ -523,8 +503,7 @@ public class SvnRollbackTest extends SvnTestCase {
     final File wasFileS2 = virtualToIoFile(tree.myS2File);
     VcsTestUtil.deleteFileInCommand(myProject, tree.mySourceDir);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
@@ -551,8 +530,7 @@ public class SvnRollbackTest extends SvnTestCase {
     VirtualFile dir = createDirInCommand(tree.mySourceDir, "dirrr");
     VirtualFile f2 = createFileInCommand(dir, "f2", "411");
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     assertCreatedChange(f1);
     assertCreatedChange(dir);
@@ -566,8 +544,7 @@ public class SvnRollbackTest extends SvnTestCase {
     VcsTestUtil.deleteFileInCommand(myProject, f1);
     VcsTestUtil.deleteFileInCommand(myProject, dir);
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
     Assert.assertNotNull(deletedFiles);
@@ -594,8 +571,7 @@ public class SvnRollbackTest extends SvnTestCase {
     VcsTestUtil.moveFileInCommand(myProject, tree.mySourceDir, tree.myTargetDir);
     Assert.assertTrue(!wasInitially.exists());
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Change movedChange = assertMovedChange(tree.mySourceDir);
     final File was = virtualToIoFile(tree.mySourceDir);
@@ -623,8 +599,7 @@ public class SvnRollbackTest extends SvnTestCase {
     vcs.createRollbackEnvironment().rollbackMissingFileDeletion(locally, exceptions, RollbackProgressListener.EMPTY);
     Assert.assertTrue(exceptions.isEmpty());
 
-    myDirtyScopeManager.markEverythingDirty();
-    myChangeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final List<LocallyDeletedChange> deletedFiles = ((ChangeListManagerImpl)myChangeListManager).getDeletedFiles();
     if (allowed == null || allowed.isEmpty()) {

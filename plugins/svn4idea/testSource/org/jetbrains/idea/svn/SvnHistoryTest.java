@@ -6,8 +6,6 @@ import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.actions.VcsContextFactory;
-import com.intellij.openapi.vcs.changes.ChangeListManager;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.history.VcsAbstractHistorySession;
 import com.intellij.openapi.vcs.history.VcsAppendableHistorySessionPartner;
 import com.intellij.openapi.vcs.history.VcsFileRevision;
@@ -91,8 +89,7 @@ public class SvnHistoryTest extends SvnTestCase {
     }
 
     VcsTestUtil.renameFileInCommand(myProject, tree.myS1File, "renamed.txt");
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    refreshChanges();
 
     int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
     assertEquals(11, count);
@@ -113,8 +110,7 @@ public class SvnHistoryTest extends SvnTestCase {
 
     VcsTestUtil.renameFileInCommand(myProject, tree.myTargetDir, "renamedTarget");
     VcsTestUtil.moveFileInCommand(myProject, tree.myS1File, tree.myTargetDir);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    ChangeListManager.getInstance(myProject).ensureUpToDate(false);
+    refreshChanges();
 
     int count = reportHistory(provider, VcsUtil.getFilePath(tree.myS1File));
     assertEquals(11, count);

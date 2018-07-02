@@ -7,7 +7,6 @@ import com.intellij.openapi.vcs.VcsTestUtil;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
-import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.vcs.DuringChangeListManagerUpdateTestScheme;
 import org.junit.Test;
@@ -62,8 +61,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     runInAndVerifyIgnoreOutput("switch", branchUrl + "/root/target", tree.myTargetDir.getPath());
 
     final ChangeListManager changeListManager = ChangeListManager.getInstance(myProject);
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Runnable check = () -> {
       assertEquals(FileStatus.SWITCHED, changeListManager.getStatus(tree.myS1File));
@@ -80,8 +78,7 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     check.run();
 
     VcsTestUtil.editFileInCommand(myProject, tree.myS1File, "1234543534543 3543 ");
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
+    refreshChanges();
 
     final Runnable check2 = () -> {
       assertEquals(FileStatus.MODIFIED, changeListManager.getStatus(tree.myS1File));
@@ -281,9 +278,8 @@ public class SvnConcurrentChangeListManagerTest extends SvnTestCase {
     // not parralel, just test of correct detection
     runInAndVerifyIgnoreOutput("changelist", targetName, file.getPath());
 
-    VcsDirtyScopeManager.getInstance(myProject).markEverythingDirty();
-    changeListManager.ensureUpToDate(false);
-    checkFilesAreInList(new VirtualFile[] {file}, targetName, changeListManager);
+    refreshChanges();
+    checkFilesAreInList(new VirtualFile[]{file}, targetName, changeListManager);
   }
 
   @Test
