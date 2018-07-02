@@ -163,6 +163,7 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
     private JBCheckBox myShowDebugConsoleByDefault;
     private JBCheckBox myIpythonEnabledCheckbox;
     private JBCheckBox myShowsVariablesByDefault;
+    private JBCheckBox myUseExistingConsole;
     private PyConsoleOptions myOptionsProvider;
 
     public JPanel createPanel(PyConsoleOptions optionsProvider) {
@@ -173,20 +174,23 @@ public class PyConsoleOptionsConfigurable extends SearchableConfigurable.Parent.
 
     public void apply() {
       myOptionsProvider.setShowDebugConsoleByDefault(myShowDebugConsoleByDefault.isSelected());
-      myOptionsProvider.setShowVariablesByDefault(myShowsVariablesByDefault.isSelected());
       myOptionsProvider.setIpythonEnabled(myIpythonEnabledCheckbox.isSelected());
+      myOptionsProvider.setShowVariablesByDefault(myShowsVariablesByDefault.isSelected());
+      myOptionsProvider.setUseExistingConsole(myUseExistingConsole.isSelected());
     }
 
     public void reset() {
       myShowDebugConsoleByDefault.setSelected(myOptionsProvider.isShowDebugConsoleByDefault());
-      myShowsVariablesByDefault.setSelected(myOptionsProvider.isShowVariableByDefault());
       myIpythonEnabledCheckbox.setSelected(myOptionsProvider.isIpythonEnabled());
+      myShowsVariablesByDefault.setSelected(myOptionsProvider.isShowVariableByDefault());
+      myUseExistingConsole.setSelected(myOptionsProvider.isUseExistingConsole());
     }
 
     public boolean isModified() {
       return myShowDebugConsoleByDefault.isSelected() != myOptionsProvider.isShowDebugConsoleByDefault() ||
              myIpythonEnabledCheckbox.isSelected()  != myOptionsProvider.isIpythonEnabled() ||
-             myShowsVariablesByDefault.isSelected() != myOptionsProvider.isShowVariableByDefault();
+             myShowsVariablesByDefault.isSelected() != myOptionsProvider.isShowVariableByDefault() ||
+             myUseExistingConsole.isSelected() != myOptionsProvider.isUseExistingConsole();
 
     }
   }
