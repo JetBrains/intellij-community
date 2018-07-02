@@ -26,10 +26,11 @@ Groovy script
           PsiElement(Integer)('5')
       PsiElement(;)(';')
       PsiWhiteSpace(' ')
-      Unary expression
-        Reference expression
-          PsiElement(identifier)('i')
-        PsiElement(++)('++')
+      Expression list
+        Unary expression
+          Reference expression
+            PsiElement(identifier)('i')
+          PsiElement(++)('++')
     PsiElement())(')')
     Block statement
       Open block

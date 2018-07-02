@@ -121,6 +121,8 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$for9() throws Throwable { doTest() }
 
+  void testFor$for14() throws Throwable { doTest() }
+
   void testFor$idenfierAfterLParen() { doTest() }
 
   void testFor$keywordOnly() { doTest() }
