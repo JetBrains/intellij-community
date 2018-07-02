@@ -119,15 +119,23 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   @NotNull
-  protected abstract DefaultTreeModel buildTreeModel(final List<Change> changes,
-                                                     ChangeNodeDecorator changeNodeDecorator,
-                                                     boolean showFlatten);
+  protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
+    return TreeModelBuilder.buildFromChanges(myProject, myViewer.getGrouping(), changes, changeNodeDecorator);
+  }
 
   @NotNull
-  protected abstract List<Change> getSelectedObjects(@NotNull ChangesBrowserNode<?> node);
+  protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<?> node) {
+    return node.getAllChangesUnder();
+  }
 
   @Nullable
-  protected abstract Change getLeadSelectedObject(@NotNull ChangesBrowserNode<?> node);
+  protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode<?> node) {
+    final Object o = node.getUserObject();
+    if (o instanceof Change) {
+      return (Change)o;
+    }
+    return null;
+  }
 
   @NotNull
   private Runnable getDoubleClickHandler() {
@@ -324,15 +332,21 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   @NotNull
-  protected abstract List<Change> getCurrentIncludedChanges();
+  protected List<Change> getCurrentIncludedChanges() {
+    return ContainerUtil.newArrayList(myViewer.getIncludedChanges());
+  }
+
 
   @NotNull
   protected List<Change> getCurrentDisplayedChanges() {
+    if (myChangesToDisplay != null) return myChangesToDisplay;
     return mySelectedChangeList != null ? ContainerUtil.newArrayList(mySelectedChangeList.getChanges()) : Collections.emptyList();
   }
 
   @NotNull
-  protected abstract List<Change> getCurrentDisplayedObjects();
+  protected List<Change> getCurrentDisplayedObjects() {
+    return getCurrentDisplayedChanges();
+  }
 
   public JComponent getPreferredFocusedComponent() {
     return myViewer.getPreferredFocusedComponent();
@@ -360,10 +374,14 @@ public abstract class OldChangesBrowserBase extends JPanel implements TypeSafeDa
   }
 
   @NotNull
-  public abstract List<Change> getSelectedChanges();
+  public List<Change> getSelectedChanges() {
+    return myViewer.getSelectedChanges();
+  }
 
   @NotNull
-  protected abstract List<Change> getAllChanges();
+  protected List<Change> getAllChanges() {
+    return myViewer.getChanges();
+  }
 
   @NotNull
   private Stream<VirtualFile> getSelectedFiles() {

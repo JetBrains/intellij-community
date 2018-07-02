@@ -34,58 +34,6 @@ public class ChangesBrowser extends OldChangesBrowserBase {
     rebuildList();
   }
 
-  @Override
-  @NotNull
-  protected DefaultTreeModel buildTreeModel(final List<Change> changes, ChangeNodeDecorator changeNodeDecorator, boolean showFlatten) {
-    return TreeModelBuilder.buildFromChanges(myProject, myViewer.getGrouping(), changes, changeNodeDecorator);
-  }
-
-  @Override
-  @NotNull
-  protected List<Change> getSelectedObjects(@NotNull final ChangesBrowserNode<?> node) {
-    return node.getAllChangesUnder();
-  }
-
-  @Override
-  @Nullable
-  protected Change getLeadSelectedObject(@NotNull final ChangesBrowserNode<?> node) {
-    final Object o = node.getUserObject();
-    if (o instanceof Change) {
-      return (Change)o;
-    }
-    return null;
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getSelectedChanges() {
-    return myViewer.getSelectedChanges();
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getAllChanges() {
-    return myViewer.getChanges();
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getCurrentDisplayedChanges() {
-    return myChangesToDisplay != null ? myChangesToDisplay : super.getCurrentDisplayedChanges();
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getCurrentIncludedChanges() {
-    return ContainerUtil.newArrayList(myViewer.getIncludedChanges());
-  }
-
-  @NotNull
-  @Override
-  public List<Change> getCurrentDisplayedObjects() {
-    return getCurrentDisplayedChanges();
-  }
-
   public enum MyUseCase {
     LOCAL_CHANGES,
     COMMITTED_CHANGES
