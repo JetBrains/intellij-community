@@ -13,7 +13,9 @@ import java.awt.event.*
 import javax.swing.*
 import kotlin.math.*
 
-class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetimed(parentLifetime) {
+class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime) :
+    Lifetimed by NestedLifetimed(parentLifetime) {
+
     interface Item {
         val component: JComponent
 
@@ -28,7 +30,15 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         panel, ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED, ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER
     )
 
-    private var selectedItem: MyItem? = null
+    var selectedItem: T?
+        get() = _selectedItem?.item
+        set(value) {
+            if (value != null) {
+                select(panel.components.firstOrNull { it.item?.item === value })
+            }
+        }
+
+    private var _selectedItem: MyItem<T>? = null
 
     private val mouseAdapter = MyMouseAdapter()
     private val focusAdapter = MyFocusAdapter()
@@ -42,6 +52,11 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         updateOwnLookAndFeel()
     }
 
+    private val Component.item: MyItem<T>? get() {
+        @Suppress("UNCHECKED_CAST")
+        return ((this as? JComponent)?.getClientProperty(ITEM_KEY) as MyItem<T>?) ?: parent?.item
+    }
+
     private fun onLookAndFeelChanged() {
         updateOwnLookAndFeel()
 
@@ -52,7 +67,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         panel.background = UIUtil.getListBackground()
     }
 
-    fun add(item: Item) {
+    fun add(item: T) {
         val itemComponent = item.component
 
         itemComponent.putClientProperty(ITEM_KEY, MyItem(item, panel.components.size))
@@ -70,7 +85,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
     }
 
     fun removeAll() {
-        selectedItem = null
+        _selectedItem = null
 
         panel.removeAll()
     }
@@ -85,10 +100,10 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
 
     private fun select(newSelectedComponent: Component?) {
         newSelectedComponent?.item?.let { newSelectedItem ->
-            if (newSelectedItem !== selectedItem) {
-                selectedItem?.selected = false
+            if (newSelectedItem !== _selectedItem) {
+                _selectedItem?.selected = false
                 newSelectedItem.selected = true
-                selectedItem = newSelectedItem
+                _selectedItem = newSelectedItem
 
                 val bounds = newSelectedItem.component.bounds
 
@@ -116,11 +131,11 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
             return null
         }
 
-        if (selectedItem == null) {
+        if (_selectedItem == null) {
             return components[0]
         }
 
-        return (selectedItem!!.index + shift).takeIf { it in 0 until components.size  }?.let { components[it] }
+        return (_selectedItem!!.index + shift).takeIf { it in 0 until components.size  }?.let { components[it] }
     }
 
     private fun selectNext() {
@@ -161,7 +176,7 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
         }
     }
 
-    private class MyItem(item: Item, val index: Int) : Item by item
+    private class MyItem<T : Item>(val item: T, val index: Int) : Item by item
 
     private inner class MyMouseAdapter : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
@@ -198,8 +213,5 @@ class JComponentBasedList(parentLifetime: Lifetime) : Lifetimed by NestedLifetim
 
     private companion object {
         private val ITEM_KEY = "${JComponentBasedList::class.qualifiedName}.ITEM_KEY"
-
-        private val Component.item: MyItem?
-            get() = ((this as? JComponent)?.getClientProperty(ITEM_KEY) as MyItem?) ?: parent?.item
     }
 }

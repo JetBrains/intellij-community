@@ -8,7 +8,7 @@ import com.intellij.uiDesigner.core.*
 import com.intellij.util.ui.*
 import javax.swing.*
 
-class ReviewListItem(review: Review, preferredLanguage: TID?) : JComponentBasedList.Item {
+class ReviewListItem(val review: Review, preferredLanguage: TID?) : JComponentBasedList.Item {
     override val component: JComponent get() = panel
 
     override var selected: Boolean = false

@@ -23,7 +23,7 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
 
     val panel = JPanel(GridLayoutManager(1, 1))
 
-    private val list = JComponentBasedList(lifetime)
+    private val list = JComponentBasedList<ReviewListItem>(lifetime)
 
     private val reloader = updater<Unit>("Reviews Reloader") {
         reloadImpl()
@@ -56,13 +56,26 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     private fun reload(reviews: List<Review>) {
+        val selectedReviewId = list.selectedItem?.review?.id
+
         list.removeAll()
 
         val preferredLanguage = project.connection.loginModel?.me?.preferredLanguage
+        var selectedReviewListItem: ReviewListItem? = null
 
-        reviews.forEach { review -> list.add(ReviewListItem(review, preferredLanguage)) }
+        reviews.forEach { review ->
+            val reviewListItem = ReviewListItem(review, preferredLanguage)
+
+            list.add(reviewListItem)
+
+            if (selectedReviewId != null && selectedReviewListItem == null && review.id == selectedReviewId) {
+                selectedReviewListItem = reviewListItem
+            }
+        }
 
         list.revalidate()
+
+        list.selectedItem = selectedReviewListItem
     }
 }
 
