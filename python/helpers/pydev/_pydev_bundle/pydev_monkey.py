@@ -177,7 +177,16 @@ def patch_args(args):
                 # Always insert at pos == 1 (i.e.: pydevd "--module" --multiprocess ...)
                 original.insert(1, '--module')
             else:
-                if args[i].startswith('-'):
+                if args[i] == '-':
+                    # this is the marker that input is going to be from stdin for Python
+                    # however pydevd only supports passing a file argument, so we would need to
+                    # write out the stdin to a file and pass that in for this to work;
+                    # but in this function we don't have access to it, because patching occurs at
+                    # Popen creation time, while stdin may be passed in later during communicate
+                    # solution: for now we just disable the debugging here, don't crash but is
+                    # not supported
+                    return args
+                elif args[i].startswith('-'):
                     new_args.append(args[i])
                 else:
                     break
