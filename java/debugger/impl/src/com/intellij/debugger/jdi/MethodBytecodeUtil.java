@@ -31,11 +31,13 @@ public class MethodBytecodeUtil {
    * Allows to use ASM MethodVisitor with jdi method bytecode
    */
   public static void visit(Method method, MethodVisitor methodVisitor, boolean withLineNumbers) {
-    visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
+    if (method.virtualMachine().canGetBytecodes()) {
+      visit(method, method.bytecodes(), methodVisitor, withLineNumbers);
+    }
   }
 
   public static void visit(Method method, long maxOffset, MethodVisitor methodVisitor, boolean withLineNumbers) {
-    if (maxOffset > 0) {
+    if (maxOffset > 0 && method.virtualMachine().canGetBytecodes()) {
       // need to keep the size, otherwise labels array will not be initialized correctly
       byte[] originalBytecodes = method.bytecodes();
       byte[] bytecodes = originalBytecodes;
@@ -63,6 +65,9 @@ public class MethodBytecodeUtil {
   }
 
   private static void visit(Method method, byte[] bytecodes, MethodVisitor methodVisitor, boolean withLineNumbers) {
+    if (!method.virtualMachine().canGetConstantPool()) {
+      return;
+    }
     ReferenceType type = method.declaringType();
     try {
       byte[] constantPool = getConstantPool(type);
