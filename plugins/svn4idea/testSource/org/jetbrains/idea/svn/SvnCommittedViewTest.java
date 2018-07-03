@@ -32,7 +32,6 @@ public class SvnCommittedViewTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-
     final VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
     final VirtualFile f12 = createFileInCommand(d1, "f12.txt", "----");
 
@@ -41,11 +40,10 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 1, new Data[] {new Data(absPath(f11), FileStatus.ADDED, null),
-      new Data(absPath(f12), FileStatus.ADDED, null), new Data(absPath(d1), FileStatus.ADDED, null)});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
+    checkList(changeListList, 1, new Data(absPath(f11), FileStatus.ADDED, null), new Data(absPath(f12), FileStatus.ADDED, null),
+              new Data(absPath(d1), FileStatus.ADDED, null));
   }
 
   @Test
@@ -54,9 +52,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     final VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-
     final VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    final VirtualFile f12 = createFileInCommand(d1, "f12.txt", "----");
+    createFileInCommand(d1, "f12.txt", "----");
 
     // r1, addition without history
     checkin();
@@ -72,11 +69,10 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(f11), FileStatus.DELETED, null)});
-    checkList(changeListList, 3, new Data[] {new Data(absPath(d1), FileStatus.DELETED, null)});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
+    checkList(changeListList, 2, new Data(absPath(f11), FileStatus.DELETED, null));
+    checkList(changeListList, 3, new Data(absPath(d1), FileStatus.DELETED, null));
   }
 
   @Test
@@ -85,9 +81,8 @@ public class SvnCommittedViewTest extends SvnTestCase {
     enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
 
     VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-
-    VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    VirtualFile f12 = createFileInCommand(d1, "f12.txt", "----");
+    createFileInCommand(d1, "f11.txt", "123\n456");
+    createFileInCommand(d1, "f12.txt", "----");
 
     // r1, addition without history
     checkin();
@@ -103,10 +98,9 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- replaced")});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
+    checkList(changeListList, 2, new Data(absPath(d1), FileStatus.MODIFIED, "- replaced"));
   }
 
   @Test
@@ -116,14 +110,12 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
     VirtualFile d2 = createDirInCommand(myWorkingCopyDir, "d2");
-
-    VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    VirtualFile f12 = createFileInCommand(d1, "f12.txt", "----");
+    createFileInCommand(d1, "f11.txt", "123\n456");
+    createFileInCommand(d1, "f12.txt", "----");
 
     // r1, addition without history
     checkin();
 
-    final String oldPath = absPath(d1);
     moveFileInCommand(d1, d2);
     Thread.sleep(100);
 
@@ -131,10 +123,9 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar)});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
+    checkList(changeListList, 2, new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar));
   }
 
   @Test
@@ -144,14 +135,12 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
     VirtualFile d2 = createDirInCommand(myWorkingCopyDir, "d2");
-
     VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    VirtualFile f12 = createFileInCommand(d1, "f12.txt", "----");
+    createFileInCommand(d1, "f12.txt", "----");
 
     // r1, addition without history
     checkin();
 
-    final String oldPath = absPath(d1);
     final String oldF11Path = virtualToIoFile(f11).getAbsolutePath();
     moveFileInCommand(d1, d2);
     VcsTestUtil.editFileInCommand(myProject, f11, "new");
@@ -162,11 +151,10 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-      new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path)});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
+    checkList(changeListList, 2, new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
+              new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path));
   }
 
   @Test
@@ -186,10 +174,11 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
-    checkList(changeListList, 2, new Data[] {new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk")});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(),
+                           new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
+    checkList(changeListList, 2,
+              new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk"));
   }
 
   @Test
@@ -215,11 +204,13 @@ public class SvnCommittedViewTest extends SvnTestCase {
 
     vcs.invokeRefreshSvnRoots();
     final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList =
-      committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                                                   new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
-    checkList(changeListList, 2, new Data[] {new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk"),
-      new Data(new File(myWorkingCopyDir.getPath(), "branch/folder").getAbsolutePath(), FileStatus.MODIFIED, "- copied from /trunk/folder")});
+    final List<SvnChangeList> changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(),
+                           new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
+    checkList(changeListList, 2,
+              new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk"),
+              new Data(new File(myWorkingCopyDir.getPath(), "branch/folder").getAbsolutePath(), FileStatus.MODIFIED,
+                       "- copied from /trunk/folder"));
   }
 
   protected String absPath(final VirtualFile vf) {
@@ -248,7 +239,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     }
   }
 
-  protected void checkList(final List<SvnChangeList> lists, final long revision, final Data[] content) {
+  protected void checkList(final List<SvnChangeList> lists, final long revision, final Data... content) {
     SvnChangeList list = null;
     for (SvnChangeList changeList : lists) {
       if (changeList.getNumber() == revision) {
