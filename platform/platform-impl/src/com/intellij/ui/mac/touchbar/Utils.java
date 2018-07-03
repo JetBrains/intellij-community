@@ -29,14 +29,18 @@ public class Utils {
     return false;
   }
 
-  public static void restartTouchBarServer() {
+  // returns true when success
+  public static boolean restartTouchBarServer() {
     try {
-      ExecUtil.sudo(new GeneralCommandLine("pkill", TB_SERVER_PROCESS), "");
+      final ProcessOutput out = ExecUtil.sudoAndGetOutput(new GeneralCommandLine("pkill", TB_SERVER_PROCESS), "");
+      return out.getStderr().isEmpty();
     } catch (ExecutionException e) {
       LOG.error(e);
     } catch (IOException e) {
       LOG.error(e);
     }
+
+    return false;
   }
 
   public static String getAppId() {
