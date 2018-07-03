@@ -1,6 +1,6 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 @file:JvmName("GroovyParserUtils")
-@file:Suppress("UNUSED_PARAMETER")
+@file:Suppress("UNUSED_PARAMETER", "LiftReturnOrAssignment")
 
 package org.jetbrains.plugins.groovy.lang.parser
 
@@ -60,7 +60,6 @@ private val typeWasPrimitive: Key<Boolean> = Key.create("groovy.parse.type.was.p
 private val referenceHadTypeArguments: Key<Boolean> = Key.create("groovy.parse.ref.had.type.arguments")
 private val referenceWasQualified: Key<Boolean> = Key.create("groovy.parse.ref.was.qualified")
 
-@Suppress("LiftReturnOrAssignment")
 fun classIdentifier(builder: PsiBuilder, level: Int): Boolean {
   if (builder.tokenType === IDENTIFIER) {
     builder[currentClassNames]!!.push(builder.tokenText)
@@ -321,7 +320,6 @@ fun unexpected(builder: PsiBuilder, level: Int, parser: Parser, key: String): Bo
   return true
 }
 
-@Suppress("LiftReturnOrAssignment")
 fun parseTailLeftFlat(builder: PsiBuilder, level: Int, head: Parser, tail: Parser): Boolean {
   val marker = builder.mark()
   if (!head.parse(builder, level)) {
@@ -347,7 +345,6 @@ private fun PsiBuilder.any(): Boolean = advanceIf { true }
 
 private fun PsiBuilder.advanceIf(tokenSet: TokenSet): Boolean = advanceIf { tokenType in tokenSet }
 
-@Suppress("LiftReturnOrAssignment")
 private inline fun PsiBuilder.advanceIf(crossinline condition: PsiBuilder.() -> Boolean): Boolean {
   if (condition()) {
     advanceLexer()
@@ -383,7 +380,6 @@ fun clearError(builder: PsiBuilder, level: Int): Boolean {
 fun withProtectedLastVariantPos(builder: PsiBuilder, level: Int, parser: Parser): Boolean {
   val state = builder.state
   val prev = state.currentFrame.lastVariantAt
-  @Suppress("LiftReturnOrAssignment")
   if (parser.parse(builder, level)) {
     return true
   }
