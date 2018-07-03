@@ -355,7 +355,7 @@ private declaration_start_modifiers ::= non_empty_modifier_list mb_type_paramete
 private mb_type_parameter_list ::= [mb_nl type_parameter_list]
 private mb_declaration_type_element ::= [mb_nl declaration_type_element]
 private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
-private definitely_type_element ::= <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
+private definitely_type_element ::= <<definitelyTypeElement type_element &declaration_lookahead>>
 
 private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
 private method_lookahead ::= method_identifier '('

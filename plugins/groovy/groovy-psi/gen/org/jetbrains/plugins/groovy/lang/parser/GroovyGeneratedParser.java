@@ -2654,7 +2654,7 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
   }
 
   /* ********************************************************** */
-  // <<definitelyTypeElement type_element (<<wasDefinitelyTypeElement>> | &declaration_lookahead)>>
+  // <<definitelyTypeElement type_element &declaration_lookahead>>
   static boolean definitely_type_element(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "definitely_type_element")) return false;
     boolean r;
@@ -2664,20 +2664,9 @@ public class GroovyGeneratedParser implements PsiParser, LightPsiParser {
     return r;
   }
 
-  // <<wasDefinitelyTypeElement>> | &declaration_lookahead
+  // &declaration_lookahead
   private static boolean definitely_type_element_0_1(PsiBuilder b, int l) {
     if (!recursion_guard_(b, l, "definitely_type_element_0_1")) return false;
-    boolean r;
-    Marker m = enter_section_(b);
-    r = wasDefinitelyTypeElement(b, l + 1);
-    if (!r) r = definitely_type_element_0_1_1(b, l + 1);
-    exit_section_(b, m, null, r);
-    return r;
-  }
-
-  // &declaration_lookahead
-  private static boolean definitely_type_element_0_1_1(PsiBuilder b, int l) {
-    if (!recursion_guard_(b, l, "definitely_type_element_0_1_1")) return false;
     boolean r;
     Marker m = enter_section_(b, l, _AND_);
     r = declaration_lookahead(b, l + 1);
