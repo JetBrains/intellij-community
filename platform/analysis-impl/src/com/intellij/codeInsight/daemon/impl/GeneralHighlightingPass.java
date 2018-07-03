@@ -104,6 +104,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   @NotNull
   @Override
   public Document getDocument() {
+    // this pass always get not-null document
     //noinspection ConstantConditions
     return super.getDocument();
   }
@@ -214,12 +215,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                                         }));
 
 
-      setProgressLimit((long)(allInsideElements.size()+allOutsideElements.size()));
+      setProgressLimit(allInsideElements.size() + allOutsideElements.size());
 
       final boolean forceHighlightParents = forceHighlightParents();
 
       if (!isDumbMode()) {
-        highlightTodos(getFile(), getDocument().getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(), progress, myPriorityRange, insideResult,
+        highlightTodos(getFile(), getDocument().getCharsSequence(), myRestrictRange.getStartOffset(), myRestrictRange.getEndOffset(),
+                       myPriorityRange, insideResult,
                        outsideResult);
       }
 
@@ -264,13 +266,13 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return new ArrayList<>(myHighlights);
   }
 
-  private boolean collectHighlights(@NotNull final List<PsiElement> elements1,
-                                    @NotNull final List<ProperTextRange> ranges1,
-                                    @NotNull final List<PsiElement> elements2,
-                                    @NotNull final List<ProperTextRange> ranges2,
+  private boolean collectHighlights(@NotNull final List<? extends PsiElement> elements1,
+                                    @NotNull final List<? extends ProperTextRange> ranges1,
+                                    @NotNull final List<? extends PsiElement> elements2,
+                                    @NotNull final List<? extends ProperTextRange> ranges2,
                                     @NotNull final HighlightVisitor[] visitors,
                                     @NotNull final List<HighlightInfo> insideResult,
-                                    @NotNull final List<HighlightInfo> outsideResult,
+                                    @NotNull final List<? super HighlightInfo> outsideResult,
                                     final boolean forceHighlightParents) {
     final Set<PsiElement> skipParentsSet = new THashSet<>();
 
@@ -456,10 +458,9 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                              @NotNull CharSequence text,
                              int startOffset,
                              int endOffset,
-                             @NotNull ProgressIndicator progress,
                              @NotNull ProperTextRange priorityRange,
-                             @NotNull Collection<HighlightInfo> insideResult,
-                             @NotNull Collection<HighlightInfo> outsideResult) {
+                             @NotNull Collection<? super HighlightInfo> insideResult,
+                             @NotNull Collection<? super HighlightInfo> outsideResult) {
     PsiTodoSearchHelper helper = PsiTodoSearchHelper.SERVICE.getInstance(file.getProject());
     if (helper == null || !shouldHighlightTodos(helper, file)) return;
     TodoItem[] todoItems = helper.findTodoItems(file, startOffset, endOffset);
@@ -494,10 +495,10 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   private static void addTodoItem(int restrictStartOffset,
                                   int restrictEndOffset,
                                   @NotNull ProperTextRange priorityRange,
-                                  @NotNull Collection<HighlightInfo> insideResult,
-                                  @NotNull Collection<HighlightInfo> outsideResult,
-                                  TextAttributes attributes,
-                                  String description, String tooltip, TextRange range) {
+                                  @NotNull Collection<? super HighlightInfo> insideResult,
+                                  @NotNull Collection<? super HighlightInfo> outsideResult,
+                                  @NotNull TextAttributes attributes,
+                                  @NotNull String description, @NotNull String tooltip, @NotNull TextRange range) {
     if (range.getStartOffset() >= restrictEndOffset || range.getEndOffset() <= restrictStartOffset) return;
     HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.TODO)
                                       .range(range)
@@ -505,16 +506,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
                                       .description(description)
                                       .escapedToolTip(tooltip)
                                       .createUnconditionally();
-    (priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult).add(info);
+    Collection<? super HighlightInfo> result = priorityRange.containsRange(info.getStartOffset(), info.getEndOffset()) ? insideResult : outsideResult;
+    result.add(info);
   }
 
-  private static boolean shouldHighlightTodos(PsiTodoSearchHelper helper, PsiFile file) {
-    if (helper instanceof PsiTodoSearchHelperImpl) {
-      PsiTodoSearchHelperImpl helperImpl = (PsiTodoSearchHelperImpl) helper;
-      return helperImpl.shouldHighlightInEditor(file);
-    } else {
-      return false;
-    }
+  private static boolean shouldHighlightTodos(@NotNull PsiTodoSearchHelper helper, @NotNull PsiFile file) {
+    return helper instanceof PsiTodoSearchHelperImpl && ((PsiTodoSearchHelperImpl)helper).shouldHighlightInEditor(file);
   }
 
   private void reportErrorsToWolf() {
@@ -542,6 +539,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     return myUpdateAll ? super.getProgress() : -1;
   }
 
+  @NotNull
   private static List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
                                                  @NotNull VirtualFile file,
                                                  final boolean hasErrorElement) {

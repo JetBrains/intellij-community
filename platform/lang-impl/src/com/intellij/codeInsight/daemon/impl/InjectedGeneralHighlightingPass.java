@@ -207,13 +207,13 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     return JobLauncher.getInstance()
       .invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), progress,
-                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos, progress, injectedLanguageManager));
+                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos,
+                                                                               injectedLanguageManager));
   }
 
   private boolean addInjectedPsiHighlights(@NotNull PsiFile injectedPsi,
                                            TextAttributes injectedAttributes,
                                            @NotNull Collection<? super HighlightInfo> outInfos,
-                                           @NotNull ProgressIndicator progress,
                                            @NotNull InjectedLanguageManager injectedLanguageManager) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
     if (documentWindow == null) return true;
@@ -269,7 +269,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     if (!isDumbMode()) {
       List<HighlightInfo> todos = new ArrayList<>();
-      highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), progress, myPriorityRange, todos, todos);
+      highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), myPriorityRange, todos, todos);
       for (HighlightInfo info : todos) {
         addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, null, outInfos);
       }
