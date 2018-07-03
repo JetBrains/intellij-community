@@ -93,6 +93,11 @@ public class GitCommitCompareInfo {
     return changes;
   }
 
+  protected void updateTotalDiff(@NotNull Map<GitRepository, Collection<Change>> newDiff) {
+    myTotalDiff.clear();
+    myTotalDiff.putAll(newDiff);
+  }
+
   public enum InfoType {
     BOTH, HEAD_TO_BRANCH, BRANCH_TO_HEAD
   }
