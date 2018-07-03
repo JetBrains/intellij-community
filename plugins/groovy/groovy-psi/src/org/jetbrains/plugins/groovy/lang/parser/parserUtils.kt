@@ -142,24 +142,23 @@ private fun PsiBuilder.isNextTokenCapitalized(): Boolean {
 }
 
 fun definitelyTypeElement(builder: PsiBuilder, level: Int, typeElement: Parser, check: Parser): Boolean {
-  try {
-    return builder.withKey(parseDefinitelyTypeElement, true) {
-      typeElement.parse(builder, level) && check.parse(builder, level)
-    }
-  }
-  finally {
-    builder[typeWasPrimitive] = null
-    builder[referenceHadTypeArguments] = null
-    builder[referenceWasQualified] = null
-  }
+  val result = builder.withKey(parseDefinitelyTypeElement, true) {
+    typeElement.parse(builder, level)
+  } && (builder.wasDefinitelyTypeElement() || check.parse(builder, level))
+  builder.clearTypeInfo()
+  return result
 }
 
 private val PsiBuilder.definitelyTypeElementParsing get() = this[parseDefinitelyTypeElement] && !anyTypeElementParsing
 
-fun wasDefinitelyTypeElement(builder: PsiBuilder, level: Int): Boolean {
-  return builder[typeWasPrimitive] ||
-         builder[referenceHadTypeArguments] ||
-         builder[referenceWasQualified]
+private fun PsiBuilder.wasDefinitelyTypeElement(): Boolean {
+  return this[typeWasPrimitive] || this[referenceHadTypeArguments] || this[referenceWasQualified]
+}
+
+private fun PsiBuilder.clearTypeInfo() {
+  this[typeWasPrimitive] = null
+  this[referenceHadTypeArguments] = null
+  this[referenceWasQualified] = null
 }
 
 fun setTypeWasPrimitive(builder: PsiBuilder, level: Int): Boolean {
