@@ -30,7 +30,7 @@ public interface IndexPatternBuilder {
    * on subsequent line
    */
   @NotNull
-  default String getCharsAllowedInContinuationPrefix(IElementType tokenType) {
+  default String getCharsAllowedInContinuationPrefix(@NotNull IElementType tokenType) {
     return "";
   }
 }
