@@ -8,7 +8,6 @@ import java.io.RandomAccessFile;
 import java.nio.ByteBuffer;
 import java.nio.MappedByteBuffer;
 import java.nio.channels.FileChannel;
-import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicLong;
 
 public class NoveltyImpl implements Novelty, Closeable {
@@ -99,7 +98,9 @@ public class NoveltyImpl implements Novelty, Closeable {
     ByteBuffer buffer = myByteBuffer.duplicate();
     buffer.position((int)address);
     final int count = buffer.getInt();
-    assert bytes.length == count;
+    if (count != bytes.length) {
+      throw new IllegalArgumentException("buffer overrun, address: " + address + ", expected: " + count + ", actual: " + bytes.length);
+    }
     buffer.put(bytes);
   }
 
