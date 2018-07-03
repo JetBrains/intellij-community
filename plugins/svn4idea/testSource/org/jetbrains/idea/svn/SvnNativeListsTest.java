@@ -9,8 +9,10 @@ import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.TimeoutUtil;
+import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
+import java.io.IOException;
 import java.util.Collection;
 import java.util.List;
 
@@ -126,11 +128,10 @@ public class SvnNativeListsTest extends SvnTestCase {
     renameFileInCommand(file, "b.txt");
     refreshChanges();
     sleepABit();
-    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    assertRename("a.txt", "b.txt");
 
     ensureAddedToNativeList();
-
-    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    assertRename("a.txt", "b.txt");
   }
 
   @Test
@@ -152,8 +153,7 @@ public class SvnNativeListsTest extends SvnTestCase {
     refreshChanges();
     sleepABit();
     ensureAddedToNativeList();
-
-    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    assertRename("a.txt", "b.txt");
   }
 
   @Test
@@ -175,17 +175,20 @@ public class SvnNativeListsTest extends SvnTestCase {
     refreshChanges();
     sleepABit();
     ensureAddedToNativeList();
-
-    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + b.txt", "D a.txt");
+    assertRename("a.txt", "b.txt");
 
     renameFileInCommand(file, "c.txt");
     refreshChanges();
     sleepABit();
-    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
+    assertRename("a.txt", "c.txt");
 
     ensureAddedToNativeList();
+    assertRename("a.txt", "c.txt");
+  }
 
-    runAndVerifyStatus("", "--- Changelist 'newOne':", "A + c.txt", "D a.txt");
+  private void assertRename(@NotNull String beforeName, @NotNull String afterName) throws IOException {
+    runAndVerifyStatus("", "--- Changelist 'newOne':", "D " + beforeName, "> moved to " + afterName, "A + " + afterName,
+                       "> moved from " + beforeName);
   }
 
   private void sleepABit() {
