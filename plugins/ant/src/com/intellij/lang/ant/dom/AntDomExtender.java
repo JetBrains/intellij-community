@@ -233,8 +233,8 @@ public class AntDomExtender extends DomExtender<AntDomElement>{
       if (genericInfo.getAttributeChildDescription(attribName) == null) { // if not defined yet 
         final String _attribName = attribName.toLowerCase(Locale.US);
         final Pair<Type, Class> types = registeredAttribs.get(_attribName);
-        Type type = types != null? types.getFirst() : null;
-        Class converterClass = types != null ? types.getSecond() : null;
+        Type type = Pair.getFirst(types);
+        Class converterClass = Pair.getSecond(types);
         if (type == null) {
           type = String.class; // use String by default
           final Class attributeType = parentIntrospector.getAttributeType(attribName);

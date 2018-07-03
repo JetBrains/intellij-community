@@ -72,7 +72,7 @@ public class CompositeDiffPanel implements DiffViewer {
       final DiffRequest diffRequest = entry.getValue();
       diffRequest.getGenericData().put(PlatformDataKeys.COMPOSITE_DIFF_VIEWER.getName(), this);
       final Pair<DiffViewer, Content> pair = mapCopy.get(key);
-      DiffViewer viewer = pair != null ? pair.first : null;
+      DiffViewer viewer = Pair.getFirst(pair);
       if (viewer != null && viewer.acceptsType(diffRequest.getType()) && viewer.canShowRequest(diffRequest)) {
         viewer.setDiffRequest(diffRequest);
         myMap.put(key, pair);

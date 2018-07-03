@@ -102,7 +102,7 @@ public class GithubRebaseAction extends LegacySingleAccountActionGroup {
     public void run(@NotNull ProgressIndicator indicator) {
       myRepository.update();
       Pair<GitRemote, String> remote = getRemote(myAccount.getServer(), myRepository);
-      String upstreamRemoteUrl = remote != null ? remote.second : null;
+      String upstreamRemoteUrl = Pair.getSecond(remote);
       if (upstreamRemoteUrl == null) {
         indicator.setText("Configuring upstream remote...");
         LOG.info("Configuring upstream remote");

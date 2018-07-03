@@ -714,7 +714,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         String description = null;
         if (element instanceof PsiClass) {
           final Pair<PsiImportStaticReferenceElement, PsiClass> imported = mySingleImportedClasses.get(refName);
-          final PsiClass aClass = imported == null ? null : imported.getSecond();
+          final PsiClass aClass = Pair.getSecond(imported);
           if (aClass != null && !manager.areElementsEquivalent(aClass, element)) {
             //noinspection ConditionalExpressionWithIdenticalBranches
             description = imported.first == null
@@ -727,7 +727,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         }
         else if (element instanceof PsiField) {
           final Pair<PsiImportStaticReferenceElement, PsiField> imported = mySingleImportedFields.get(refName);
-          final PsiField field = imported == null ? null : imported.getSecond();
+          final PsiField field = Pair.getSecond(imported);
           if (field != null && !manager.areElementsEquivalent(field, element)) {
             //noinspection ConditionalExpressionWithIdenticalBranches
             description = imported.first.equals(ref)
