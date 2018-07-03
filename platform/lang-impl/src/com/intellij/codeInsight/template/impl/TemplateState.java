@@ -635,8 +635,12 @@ public class TemplateState implements Disposable {
     return result;
   }
 
-  ExpressionContext getCurrentExpressionContext() {
+  public ExpressionContext getCurrentExpressionContext() {
     return createExpressionContext(mySegments.getSegmentStart(getCurrentSegmentNumber()));
+  }
+
+  public ExpressionContext getExpressionContextForSegment(int segmentNumber) {
+    return createExpressionContext(mySegments.getSegmentStart(segmentNumber));
   }
 
   Expression getCurrentExpression() {
