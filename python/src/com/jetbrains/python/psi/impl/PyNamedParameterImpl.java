@@ -304,9 +304,9 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
         if (context.maySwitchToAST(this)) {
-          final Set<String> attributes = collectUsedAttributes(context);
-          if (!attributes.isEmpty()) {
-            return new PyStructuralType(attributes, true);
+          final PyType typeFromUsages = getTypeFromUsages(context);
+          if (typeFromUsages != null) {
+            return typeFromUsages;
           }
         }
       }
@@ -319,12 +319,15 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
     return new PyElementPresentation(this);
   }
 
-  @NotNull
-  private Set<String> collectUsedAttributes(@NotNull final TypeEvalContext context) {
-    final Set<String> result = new LinkedHashSet<>();
+  @Nullable
+  private PyType getTypeFromUsages(@NotNull TypeEvalContext context) {
+    final Set<String> usedAttributes = new LinkedHashSet<>();
+
     final ScopeOwner owner = ScopeUtil.getScopeOwner(this);
     final String name = getName();
+
     final Ref<Boolean> parameterWasReassigned = Ref.create(false);
+    final Ref<Boolean> noneComparison = Ref.create(false);
 
     if (owner != null && name != null) {
       owner.accept(new PyRecursiveElementVisitor() {
@@ -411,6 +414,21 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
           }
         }
 
+        @Override
+        public void visitPyBinaryExpression(PyBinaryExpression node) {
+          super.visitPyBinaryExpression(node);
+
+          if (noneComparison.get() || !node.isOperator(PyNames.IS) && !node.isOperator("isnot")) return;
+
+          final PyExpression lhs = node.getLeftExpression();
+          final PyExpression rhs = node.getRightExpression();
+
+          if (isReferenceToParameter(lhs) ^ isReferenceToParameter(rhs) &&
+              (lhs != null && context.getType(lhs) instanceof PyNoneType) ^ (rhs != null && context.getType(rhs) instanceof PyNoneType)) {
+            noneComparison.set(true);
+          }
+        }
+
         @Contract("null -> false")
         private boolean isReferenceToParameter(@Nullable PsiElement element) {
           if (element == null) return false;
@@ -419,7 +437,13 @@ public class PyNamedParameterImpl extends PyBaseElementImpl<PyNamedParameterStub
         }
       });
     }
-    return result;
+
+    if (!usedAttributes.isEmpty()) {
+      final PyStructuralType structuralType = new PyStructuralType(usedAttributes, true);
+      return noneComparison.get() ? PyUnionType.union(structuralType, PyNoneType.INSTANCE) : structuralType;
+    }
+
+    return null;
   }
 
   @NotNull
