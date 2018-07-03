@@ -15,13 +15,17 @@
  */
 package com.jetbrains.python.codeInsight;
 
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.PyNames;
+import com.jetbrains.python.codeInsight.fstrings.FStringParser;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyCallExpressionNavigator;
+import one.util.streamex.StreamEx;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,46 +143,74 @@ public class PyInjectionUtil {
       boolean injected = false;
       boolean strict = true;
       final PyStringLiteralExpression expr = (PyStringLiteralExpression)element;
-      final List<TextRange> ranges = expr.getStringValueTextRanges();
-      final String text = expr.getText();
-      for (TextRange range : ranges) {
-        if (formatting != Formatting.NONE) {
-          final String part = range.substring(text);
-          final List<FormatStringChunk> chunks = formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(part) : parsePercentFormat(part);
-          if (!filterSubstitutions(chunks).isEmpty()) {
+      for (ASTNode node : expr.getStringNodes()) {
+        final int nodeOffsetInParent = node.getStartOffset() - expr.getTextRange().getStartOffset();
+        final PyUtil.StringNodeInfo nodeInfo = new PyUtil.StringNodeInfo(node);
+        final TextRange contentRange = nodeInfo.getContentRange();
+        final int contentStartOffset = contentRange.getStartOffset();
+        if (formatting != Formatting.NONE || nodeInfo.isFormatted()) {
+          // Each range is relative to the start of the string node
+          final List<TextRange> subsRanges;
+          if (formatting != Formatting.NONE) {
+            final String content = nodeInfo.getContent();
+            subsRanges = StreamEx.of(formatting == Formatting.NEW_STYLE ? parseNewStyleFormat(content) : parsePercentFormat(content))
+                                 .select(SubstitutionChunk.class)
+                                 .map(chunk -> chunk.getTextRange().shiftRight(contentStartOffset))
+                                 .toList();
+          }
+          else {
+            // f-string fragment parser handles string literal prefix and opening quotes itself
+            subsRanges = StreamEx.of(FStringParser.parse(node.getText()).getFragments())
+                                 .filter(f -> f.getDepth() == 1) // don't consider nested fragments like {foo:{bar}}
+                                 .map(f -> TextRange.create(f.getLeftBraceOffset(),
+                                                            Math.max(f.getRightBraceOffset() + 1, f.getContentEndOffset())))
+                                 .toList();
+          }
+          if (!subsRanges.isEmpty()) {
             strict = false;
           }
-          for (int i = 0; i < chunks.size(); i++) {
-            final FormatStringChunk chunk = chunks.get(i);
-            if (chunk instanceof ConstantChunk) {
-              final int nextIndex = i + 1;
+
+
+          final TextRange sentinel = TextRange.from(contentRange.getEndOffset(), 0);
+          final List<TextRange> withSentinel = ContainerUtil.append(subsRanges, sentinel);
+
+          int literalChunkStart = contentStartOffset;
+          int literalChunkEnd;
+          for (int i = 0; i < withSentinel.size(); i++) {
+            final TextRange subRange = withSentinel.get(i);
+            literalChunkEnd = subRange.getStartOffset();
+            if (literalChunkEnd > literalChunkStart) {
               final String chunkPrefix;
-              if (i == 1 && chunks.get(0) instanceof SubstitutionChunk) {
+              if (i == 0) {
+                chunkPrefix = prefix;
+              }
+              else if (i == 1 && withSentinel.get(0).getStartOffset() == contentStartOffset) {
                 chunkPrefix = missingValue;
               }
-              else if (i == 0) {
-                chunkPrefix = prefix;
-              } else {
+              else {
                 chunkPrefix = "";
               }
+
               final String chunkSuffix;
-              if (nextIndex < chunks.size() && chunks.get(nextIndex) instanceof SubstitutionChunk) {
+              if (i < withSentinel.size() - 1) {
                 chunkSuffix = missingValue;
               }
-              else if (nextIndex == chunks.size()) {
+              else if (i == withSentinel.size() - 1) {
                 chunkSuffix = suffix;
               }
               else {
                 chunkSuffix = "";
               }
-              final TextRange chunkRange = chunk.getTextRange().shiftRight(range.getStartOffset());
-              registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange);
+
+              final TextRange chunkRange = TextRange.create(literalChunkStart, literalChunkEnd);
+              registrar.addPlace(chunkPrefix, chunkSuffix, expr, chunkRange.shiftRight(nodeOffsetInParent));
               injected = true;
             }
+            literalChunkStart = subRange.getEndOffset();
           }
         }
         else {
-          registrar.addPlace(prefix, suffix, expr, range);
+          registrar.addPlace(prefix, suffix, expr, contentRange.shiftRight(nodeOffsetInParent));
           injected = true;
         }
       }

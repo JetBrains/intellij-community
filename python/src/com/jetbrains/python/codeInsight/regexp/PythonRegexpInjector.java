@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.jetbrains.python.codeInsight.PyInjectionUtil;
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
+import com.jetbrains.python.codeInsight.fstrings.PyFStringsInjector;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -106,6 +107,9 @@ public class PythonRegexpInjector implements MultiHostInjector {
           file.putUserData(InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
         }
       }
+    }
+    if (context instanceof PyStringLiteralExpression) {
+      PyFStringsInjector.injectFStringFragments(registrar, (PyStringLiteralExpression)context);
     }
   }
 
