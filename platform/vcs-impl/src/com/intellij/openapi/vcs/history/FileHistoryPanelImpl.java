@@ -445,7 +445,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
       mySplitter.revalidate();
       mySplitter.repaint();
 
-      myRefresherI.refresh(true, canUseCache);
+      myRefresherI.refresh(canUseCache);
     });
   }
 

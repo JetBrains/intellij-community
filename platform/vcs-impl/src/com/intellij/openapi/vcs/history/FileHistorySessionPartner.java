@@ -143,18 +143,16 @@ public class FileHistorySessionPartner implements VcsAppendableHistorySessionPar
 
   public void createOrSelectContent() {
     ToolWindow toolWindow = getToolWindow(myVcs.getProject());
-    if (!myRefresherI.isRefresh()) {
-      ContentManager manager = toolWindow.getContentManager();
-      boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myFileHistoryPanel, true);
-      if (!selectedExistingContent) {
-        String tabName = myPath.getName();
-        if (myStartingRevisionNumber != null) {
-          tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
-        }
-        ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true);
+    ContentManager manager = toolWindow.getContentManager();
+    boolean selectedExistingContent = ContentUtilEx.selectContent(manager, myFileHistoryPanel, true);
+    if (!selectedExistingContent) {
+      String tabName = myPath.getName();
+      if (myStartingRevisionNumber != null) {
+        tabName += " (" + VcsUtil.getShortRevisionString(myStartingRevisionNumber) + ")";
       }
-      toolWindow.activate(null);
+      ContentUtilEx.addTabbedContent(manager, myFileHistoryPanel, "History", tabName, true);
     }
+    toolWindow.activate(null);
   }
 
   public void finished() {

@@ -521,13 +521,8 @@ public class TreeConflictRefreshablePanel implements Disposable {
       }
       myFileHistoryPanel = new FileHistoryPanelImpl(myVcs, myPath, session, myProvider, null, new FileHistoryRefresherI() {
         @Override
-        public void refresh(boolean isRefresh, boolean canUseCache) {
+        public void refresh(boolean canUseCache) {
           //we will not refresh
-        }
-
-        @Override
-        public boolean isRefresh() {
-          return true;
         }
 
         @Override

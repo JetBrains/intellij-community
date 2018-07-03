@@ -34,7 +34,6 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
   private final AbstractVcs myVcs;
   @Nullable private final VcsRevisionNumber myStartingRevisionNumber;
   private boolean myFirstTime = true;
-  private boolean myIsRefresh;
 
   public FileHistoryRefresher(final VcsHistoryProvider vcsHistoryProvider,
                               final FilePath path,
@@ -87,8 +86,7 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
    * @param canUseCache
    */
   @Override
-  public void refresh(boolean isRefresh, boolean canUseCache) {
-    myIsRefresh = isRefresh;
+  public void refresh(boolean canUseCache) {
     mySessionPartner.beforeRefresh();
 
     if (myVcsHistoryProvider instanceof VcsHistoryProviderEx && myStartingRevisionNumber != null) {
@@ -106,13 +104,5 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     }
 
     myFirstTime = false;
-  }
-
-  /**
-   * Was the refresher called via refresh.
-   */
-  @Override
-  public boolean isRefresh() {
-    return myIsRefresh;
   }
 }

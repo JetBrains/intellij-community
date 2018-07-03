@@ -16,9 +16,7 @@
 package com.intellij.openapi.vcs.history;
 
 public interface FileHistoryRefresherI {
-  void refresh(boolean isRefresh, boolean canUseCache);
-
-  boolean isRefresh();
+  void refresh(boolean canUseCache);
 
   void selectContent();
 }

@@ -121,7 +121,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @NotNull AbstractVcs vcs) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs);
     refresher.selectContent();
-    refresher.refresh(false, true);
+    refresher.refresh(true);
   }
 
   public void showFileHistory(@NotNull VcsHistoryProviderEx historyProvider,
@@ -130,7 +130,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
                               @Nullable VcsRevisionNumber startingRevisionNumber) {
     FileHistoryRefresherI refresher = FileHistoryRefresher.findOrCreate(historyProvider, path, vcs, startingRevisionNumber);
     refresher.selectContent();
-    refresher.refresh(false, true);
+    refresher.refresh(true);
   }
 
   public void showRollbackChangesDialog(List<Change> changes) {
@@ -215,15 +215,16 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
   }
 
   public void showErrors(final List<VcsException> abstractVcsExceptions, @NotNull final String tabDisplayName) {
-    showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName, vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
+    showErrorsImpl(abstractVcsExceptions.isEmpty(), () -> abstractVcsExceptions.get(0), tabDisplayName,
+                   vcsErrorViewPanel -> addDirectMessages(vcsErrorViewPanel, abstractVcsExceptions));
   }
-  
+
   @Override
   public boolean commitChanges(@NotNull Collection<Change> changes, @NotNull LocalChangeList initialChangeList,
                                @NotNull String commitMessage, @Nullable CommitResultHandler customResultHandler) {
-      return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList,
-                                                  CommitChangeListDialog.collectExecutors(myProject, changes), true, commitMessage,
-                                                  customResultHandler);
+    return CommitChangeListDialog.commitChanges(myProject, changes, initialChangeList,
+                                                CommitChangeListDialog.collectExecutors(myProject, changes), true, commitMessage,
+                                                customResultHandler);
   }
 
   private static void addDirectMessages(VcsErrorViewPanel vcsErrorViewPanel, List<VcsException> abstractVcsExceptions) {
@@ -285,7 +286,8 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
       for (Map.Entry<HotfixData, List<VcsException>> entry : exceptionGroups.entrySet()) {
         if (entry.getKey() == null) {
           addDirectMessages(vcsErrorViewPanel, entry.getValue());
-        } else {
+        }
+        else {
           final List<VcsException> exceptionList = entry.getValue();
           final List<SimpleErrorData> list = new ArrayList<>(exceptionList.size());
           for (VcsException exception : exceptionList) {
@@ -454,7 +456,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
 
     if (ok) {
       if (myProject.isDefault() || (ProjectLevelVcsManager.getInstance(myProject).getAllActiveVcss().length == 0) ||
-          (! ModalityState.NON_MODAL.equals(ModalityState.current()))) {
+          (!ModalityState.NON_MODAL.equals(ModalityState.current()))) {
         final List<CommittedChangeList> versions = new ArrayList<>();
 
         if (parent == null || !parent.isValid()) {
@@ -473,13 +475,13 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
         if (task[0] != null) {
           task[0].cancel();
           final List<VcsException> exceptions = task[0].getExceptions();
-          if (! exceptions.isEmpty()) {
+          if (!exceptions.isEmpty()) {
             Messages.showErrorDialog(myProject, VcsBundle.message("browse.changes.error.message", exceptions.get(0).getMessage()),
                                      VcsBundle.message("browse.changes.error.title"));
             return;
           }
 
-          if (! task[0].isRevisionsReturned()) {
+          if (!task[0].isRevisionsReturned()) {
             Messages.showInfoMessage(myProject, VcsBundle.message("browse.changes.nothing.found"),
                                      VcsBundle.message("browse.changes.nothing.found.title"));
           }
@@ -662,8 +664,11 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
     private volatile boolean myCanceled;
     private boolean myRevisionsReturned;
 
-    private AsynchronousListsLoader(@Nullable Project project, final CommittedChangesProvider provider,
-                                    final RepositoryLocation location, final ChangeBrowserSettings settings, final ChangesBrowserDialog dlg) {
+    private AsynchronousListsLoader(@Nullable Project project,
+                                    final CommittedChangesProvider provider,
+                                    final RepositoryLocation location,
+                                    final ChangeBrowserSettings settings,
+                                    final ChangesBrowserDialog dlg) {
       super(project, VcsBundle.message("browse.changes.progress.title"), true);
       myProvider = provider;
       myLocation = location;
@@ -697,7 +702,7 @@ public class AbstractVcsHelperImpl extends AbstractVcsHelper {
             bufferedListConsumer.flush();
             appender.finished();
 
-            if (! myRevisionsReturned) {
+            if (!myRevisionsReturned) {
               application.invokeLater(() -> myDlg.close(-1), ModalityState.stateForComponent(myDlg.getWindow()));
             }
           }
