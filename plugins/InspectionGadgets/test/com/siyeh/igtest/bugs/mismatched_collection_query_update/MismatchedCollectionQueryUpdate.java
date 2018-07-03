@@ -570,7 +570,7 @@ class AssertTest {
   }
 }
 
-class SynchornizedTest {
+class SynchronizedTest {
   void test() {
     List<String> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<>();
     list.add("foo");
