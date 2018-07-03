@@ -54,7 +54,7 @@ public class OnAirPersistentFS extends PersistentFSImpl {
 
   @Override
   public void initComponent() {
-    String revision = System.getProperty("onair.revision");
+    String revision = System.getProperty("onair.index.revision");
     if (revision != null && !revision.trim().isEmpty()) {
       download(revision);
     }

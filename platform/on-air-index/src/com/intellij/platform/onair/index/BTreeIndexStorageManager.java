@@ -11,6 +11,7 @@ import com.intellij.platform.onair.storage.api.Address;
 import com.intellij.platform.onair.storage.api.Novelty;
 import com.intellij.platform.onair.storage.api.NoveltyImpl;
 import com.intellij.platform.onair.storage.api.Storage;
+import com.intellij.platform.onair.tree.BTree;
 import com.intellij.util.indexing.ID;
 import com.intellij.util.indexing.IndexInfrastructure;
 import com.intellij.util.indexing.IndexStorageManager;
@@ -19,6 +20,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.KeyDescriptor;
 import com.intellij.util.io.PersistentMap;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.*;
 import java.net.InetSocketAddress;
@@ -40,8 +42,34 @@ public class BTreeIndexStorageManager implements IndexStorageManager {
 
   public BTreeIndexStorageManager() {
     try {
-      String revision = System.getProperty("onair.revision");
-      storage = new StorageImpl(new InetSocketAddress("test-index.bvey1z.cfg.euc1.cache.amazonaws.com", 11211));
+      String revision = System.getProperty("onair.index.revision");
+      String cacheHost = System.getProperty("onair.index.cache.host");
+      String cachePort = System.getProperty("onair.index.cache.port", "11211");
+      if (cacheHost != null) {
+        storage = new StorageImpl(new InetSocketAddress(cacheHost, Integer.parseInt(cachePort)));
+      } else {
+        storage = new Storage() {
+          @Override
+          public @NotNull byte[] lookup(@NotNull Address address) {
+            return new byte[0];
+          }
+
+          @Override
+          public @NotNull Address alloc(@NotNull byte[] what) {
+            return null;
+          }
+
+          @Override
+          public void prefetch(@NotNull Address address, @NotNull byte[] bytes, @NotNull BTree tree, int size, byte type) {
+
+          }
+
+          @Override
+          public void store(@NotNull Address address, @NotNull byte[] bytes) {
+
+          }
+        };
+      }
 
       if (revision != null && !revision.trim().isEmpty()) {
         indexHeads = downloadIndexData(revision);

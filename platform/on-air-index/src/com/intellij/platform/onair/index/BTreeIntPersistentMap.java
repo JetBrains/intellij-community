@@ -20,30 +20,30 @@ import java.io.IOException;
 
 public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
 
-  private final DataExternalizer<V> myExternalizer;
-  private final Novelty myNovelty;
-  public final BTree myTree;
+  private final DataExternalizer<V> valueExternalizer;
+  private final Novelty novelty;
+  public final BTree tree;
 
   public BTreeIntPersistentMap(DataExternalizer<V> valueExternalizer,
                                @NotNull Storage storage,
                                @NotNull Novelty novelty,
                                @Nullable Address head) {
-    myExternalizer = valueExternalizer;
-    myNovelty = novelty;
+    this.valueExternalizer = valueExternalizer;
+    this.novelty = novelty;
     if (head == null) {
-      myTree = BTree.create(novelty, storage, 4);
+      tree = BTree.create(novelty, storage, 4);
     } else {
-      myTree = BTree.load(storage, 4, head);
+      tree = BTree.load(storage, 4, head);
     }
   }
 
   @Override
   public V get(Integer key) throws IOException {
-    @Nullable byte[] value = myTree.get(myNovelty, ByteUtils.toBytes(key));
+    @Nullable byte[] value = tree.get(novelty, ByteUtils.toBytes(key));
     if (value == null) {
       return null;
     } else {
-      return myExternalizer.read(new DataInputStream(new ByteArrayInputStream(value)));
+      return valueExternalizer.read(new DataInputStream(new ByteArrayInputStream(value)));
     }
   }
 
@@ -51,18 +51,18 @@ public class BTreeIntPersistentMap<V> implements PersistentMap<Integer, V> {
   public void put(Integer key, V value) throws IOException {
     ByteArrayOutputStream baos = new ByteArrayOutputStream();
     DataOutputStream s = new DataOutputStream(baos);
-    myExternalizer.save(s, value);
-    myTree.put(myNovelty, ByteUtils.toBytes(key), baos.toByteArray(), true);
+    valueExternalizer.save(s, value);
+    tree.put(novelty, ByteUtils.toBytes(key), baos.toByteArray(), true);
   }
 
   @Override
   public void remove(Integer key) throws IOException {
-    myTree.delete(myNovelty, ByteUtils.toBytes(key));
+    tree.delete(novelty, ByteUtils.toBytes(key));
   }
 
   @Override
   public boolean processKeys(Processor<Integer> processor) throws IOException {
-    return myTree.forEach(myNovelty, (key, value) -> processor.process((int)ByteUtils.readUnsignedInt(key, 0)));
+    return tree.forEach(novelty, (key, value) -> processor.process((int)ByteUtils.readUnsignedInt(key, 0)));
   }
 
   @Override
