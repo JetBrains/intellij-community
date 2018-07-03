@@ -533,12 +533,6 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     }
   }
 
-  @Override
-  public double getProgress() {
-    // do not show progress of visible highlighters update
-    return myUpdateAll ? super.getProgress() : -1;
-  }
-
   @NotNull
   private static List<Problem> convertToProblems(@NotNull Collection<? extends HighlightInfo> infos,
                                                  @NotNull VirtualFile file,
