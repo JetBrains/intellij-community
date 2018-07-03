@@ -2413,20 +2413,6 @@ public class ContainerUtil extends ContainerUtilRt {
     });
   }
 
-  /**
-   * @deprecated use {@link List#indexOf(Object)} instead, to be removed in 2018.3
-   */
-  @Deprecated
-  @Contract(pure=true)
-  public static <T> int indexOf(@NotNull List<T> list, @NotNull final T object) {
-    return indexOf(list, new Condition<T>() {
-      @Override
-      public boolean value(T t) {
-        return t.equals(object);
-      }
-    });
-  }
-
   @NotNull
   @Contract(pure=true)
   public static <A,B> Map<B,A> reverseMap(@NotNull Map<A,B> map) {
@@ -2476,7 +2462,8 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   @Contract(value = " -> new", pure = true)
   public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
-    return ContainerUtilRt.createEmptyCOWList();
+    // does not create garbage new Object[0]
+    return new CopyOnWriteArrayList<T>(ContainerUtilRt.<T>emptyList());
   }
 
   /**
