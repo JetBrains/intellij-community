@@ -13,14 +13,21 @@ import org.jetbrains.idea.svn.history.*;
 
 import java.util.*;
 
+import static com.intellij.util.containers.ContainerUtil.map;
+import static com.intellij.util.containers.ContainerUtil.reverse;
+import static java.util.Arrays.asList;
+import static java.util.Collections.emptyList;
+import static java.util.Collections.singletonList;
+
 public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
-  private SvnVcs myVcs;
-  private SvnRepositoryLocation myLocation;
-  private LoadedRevisionsCache myInternalManager;
   private final static Url URL = SvnUtil.parseUrl("file:///C:/repo/trunk");
   private final static Url ROOT = SvnUtil.parseUrl("file:///C:/repo");
   private final static String AUTHOR = "author";
   private final static int PAGE = 5;
+
+  private SvnVcs myVcs;
+  private SvnRepositoryLocation myLocation;
+  private LoadedRevisionsCache myInternalManager;
 
   @Override
   protected void setUp() throws Exception {
@@ -32,11 +39,15 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
 
   @Override
   protected void tearDown() throws Exception {
-    myInternalManager = null;
-    myLocation = null;
-    myVcs = null;
-    FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
-    super.tearDown();
+    try {
+      myInternalManager = null;
+      myLocation = null;
+      myVcs = null;
+      FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
+    }
+    finally {
+      super.tearDown();
+    }
   }
 
   private SvnChangeList createList(final long revision) {
@@ -89,12 +100,12 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     return new LiveProvider(null, myLocation, liveRevisions.get(liveRevisions.size() - 1), new MockSvnLogLoader(liveRevisions), ROOT);
   }
 
-  private void checkBounds(final Pair<Long, Long> bounds, final long startRevision, final int step) {
+  private static void checkBounds(final Pair<Long, Long> bounds, final long startRevision, final int step) {
     assert (bounds.first - startRevision) % step == 0;
     assert (bounds.second - startRevision) % step == 0;
   }
 
-  private class MockCachedProvider extends CachedProvider {
+  private static class MockCachedProvider extends CachedProvider {
     private MockCachedProvider(final Iterator<ChangesBunch> iterator, final Origin origin) {
       super(iterator, origin);
     }
@@ -170,15 +181,14 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     for (; i >= startRevision; i -= step * PAGE) {
       assert (! Boolean.TRUE.equals(myYoungestRead.get()));
       final List<Fragment> fragments = factory.goBack(PAGE, myYoungestRead);
-      debugFragments(i, fragments);
       checkFragments(i, internalRevisions, committedRevisions, fragments, step);
     }
     // otherwise end of live stream is not jet detected (additional request is required)
     assert (! (i + step < startRevision) ^ Boolean.TRUE.equals(myYoungestRead.get()));
   }
 
-  private void checkFragments(final long earlyRevision, final List<Long> internally, final List<Long> committed,
-                              final List<Fragment> fragments, final int step) {
+  private static void checkFragments(final long earlyRevision, final List<Long> internally, final List<Long> committed,
+                                     final List<Fragment> fragments, final int step) {
     final List<Long> expectedRevisions = new ArrayList<>();
     for (long i = earlyRevision; i > (earlyRevision - PAGE * step); i -= step) {
       expectedRevisions.add(i);
@@ -197,82 +207,63 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     }
   }
 
-  private void debugFragments(final long earlyRevision, final List<Fragment> fragments) {
-    //System.out.println("Loaded for start revision: " + earlyRevision);
-    //for (Fragment fragment : fragments) {
-    //  System.out.println(fragment.getOrigin().toString() + " from: " + fragment.getList().get(0).getNumber() +
-    //    " to: " + fragment.getList().get(fragment.getList().size() - 1).getNumber());
-    //}
-    //System.out.println();
-  }
-
-  private List<CommittedChangeList> revisionsToLists(final List<Long> revisions) {
-    final List<CommittedChangeList> lists = new ArrayList<>();
-    for (Long revision : revisions) {
-      lists.add(createList(revision));
-    }
-    return lists;
-  }
-
   private LoadedRevisionsCache.Bunch putToInternalCache(final List<Long> revisions, final boolean consistent, final LoadedRevisionsCache.Bunch bindTo) {
-    final List<CommittedChangeList> lists = revisionsToLists(revisions);
-    Collections.reverse(lists);
-    return myInternalManager.put(lists, consistent, bindTo);
+    return myInternalManager.put(reverse(map(revisions, this::createList)), consistent, bindTo);
   }
 
   public void testJustLiveProvider() throws Exception {
-    performTest(11, 2, null, Collections.emptyList(), 121);
+    performTest(11, 2, null, emptyList(), 121);
   }
 
   public void testLiveAndSimpleInternalProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, null, Collections.singletonList(new Pair<>(109L, 117L)), 121 + i);
+      performTest(11, 2, null, singletonList(new Pair<>(109L, 117L)), 121 + i);
     }
   }
 
   public void testLiveAndSimpleCommittedProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<>(19L, 117L), Collections.emptyList(), 121 + i);
+      performTest(11, 2, new Pair<>(19L, 117L), emptyList(), 121 + i);
     }
   }
 
   public void testLiveAndTwoInternalsProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, null, Arrays.asList(new Pair<>(101L, 111L), new Pair<>(113L, 117L)), 121 + i);
+      performTest(11, 2, null, asList(new Pair<>(101L, 111L), new Pair<>(113L, 117L)), 121 + i);
     }
   }
 
   public void testCommittedAndSeveralInternalsProvider() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<>(11L, 17L), Arrays.asList(new Pair<>(19L, 23L), new Pair<>(25L, 37L + i)), 37 + i);
+      performTest(11, 2, new Pair<>(11L, 17L), asList(new Pair<>(19L, 23L), new Pair<>(25L, 37L + i)), 37 + i);
     }
   }
 
   public void testAllThreeProviders() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<>(11L, 17L), Arrays.asList(new Pair<>(23L, 37L), new Pair<>(45L, 57L)), 87 + i);
+      performTest(11, 2, new Pair<>(11L, 17L), asList(new Pair<>(23L, 37L), new Pair<>(45L, 57L)), 87 + i);
     }
   }
 
   public void testShift() throws Exception {
     for (int i = 0; i < 2 * PAGE; i+=2) {
-      performTest(11, 2, new Pair<>(11L, 15L), Arrays.asList(new Pair<>(17L, 25L), new Pair<>(27L, 35L)), 37 + i);
+      performTest(11, 2, new Pair<>(11L, 15L), asList(new Pair<>(17L, 25L), new Pair<>(27L, 35L)), 37 + i);
     }
   }
 
   public void testShortLive() throws Exception {
-    performTest(11, 2, null, Collections.emptyList(), 13);
+    performTest(11, 2, null, emptyList(), 13);
   }
 
   public void testShortInternal() throws Exception {
-    performTest(11, 2, null, Collections.singletonList(new Pair<>(11L, 15L)), 15);
+    performTest(11, 2, null, singletonList(new Pair<>(11L, 15L)), 15);
   }
   
   public void testShortCommitted() throws Exception {
-    performTest(11, 2, new Pair<>(11L, 15L), Collections.emptyList(), 15);
+    performTest(11, 2, new Pair<>(11L, 15L), emptyList(), 15);
   }
 
   public void testThreeByOne() throws Exception {
-    performTest(11, 2, new Pair<>(11L, 11L), Collections.singletonList(new Pair<>(13L, 13L)), 15);
+    performTest(11, 2, new Pair<>(11L, 11L), singletonList(new Pair<>(13L, 13L)), 15);
   }
 }
