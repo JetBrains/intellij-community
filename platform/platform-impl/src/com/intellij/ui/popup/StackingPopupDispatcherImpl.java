@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.StackingPopupDispatcher;
 import com.intellij.util.containers.WeakList;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -113,6 +114,10 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
 
     while (true) {
       if (popup != null && !popup.isDisposed()) {
+        Window window = UIUtil.getWindow(mouseEvent.getComponent());
+        if (window != null && window != popup.getPopupWindow() && SwingUtilities.isDescendingFrom(window, popup.getPopupWindow())) {
+          return false;
+        }
         final Component content = popup.getContent();
         if (!content.isShowing()) {
           popup.cancel();
