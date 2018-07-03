@@ -70,6 +70,7 @@ import static com.intellij.refactoring.util.duplicates.DuplicatesFinder.MatchTyp
 
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
+  @TestOnly
   public static final Key<Boolean> SIGNATURE_CHANGE_ALLOWED = Key.create("SignatureChangeAllowed");
 
   protected final Project myProject;
@@ -2188,6 +2189,7 @@ public class ExtractMethodProcessor implements MatchProvider {
 
   private boolean shouldChangeSignature() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
+      //noinspection TestOnlyProblems
       return Optional.of(myExtractedMethod)
                      .map(PsiElement::getContainingFile)
                      .map(psiFile -> psiFile.getUserData(SIGNATURE_CHANGE_ALLOWED))
