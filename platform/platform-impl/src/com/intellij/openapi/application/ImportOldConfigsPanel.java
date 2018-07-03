@@ -1,6 +1,7 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
@@ -92,6 +93,7 @@ class ImportOldConfigsPanel extends JDialog {
     myPrevInstallation.addActionListener(e -> {
       FileChooserDescriptor chooserDescriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();
       chooserDescriptor.setHideIgnored(false);
+      chooserDescriptor.withFileFilter(file -> file.isDirectory() || ConfigImportHelper.isSettingsFile(file));
       Ref<VirtualFile> fileRef = Ref.create();
       PathChooserDialog chooser = new FileChooserFactoryImpl().createPathChooser(chooserDescriptor, null, myRootPanel);
       chooser.choose(myLastSelection, files -> fileRef.set(files.get(0)));
@@ -131,24 +133,34 @@ class ImportOldConfigsPanel extends JDialog {
       }
 
       File selectedDir = new File(FileUtil.toCanonicalPath(text.trim()));
-      if (FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getHomePath()) ||
-          FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getConfigPath())) {
-        showError(ApplicationBundle.message("error.selected.current.installation.home", myProductName));
-        return;
-      }
 
-      Pair<File, File> result = myValidator.apply(selectedDir);
-      if (result == null) {
-        showError(ApplicationBundle.message("error.does.not.appear.to.be.installation.home", selectedDir, myProductName));
-        return;
+      if (selectedDir.isFile()) {
+        if (!ConfigImportHelper.isValidSettingsFile(selectedDir)) {
+          showError(IdeBundle.message("error.file.contains.no.settings.to.import", selectedDir, IdeBundle.message("message.please.ensure.correct.settings")));
+          return;
+        }
+        myResult = pair(selectedDir, null);
       }
+      else {
+        if (FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getHomePath()) ||
+            FileUtil.pathsEqual(selectedDir.getPath(), PathManager.getConfigPath())) {
+          showError(ApplicationBundle.message("error.selected.current.installation.home", myProductName));
+          return;
+        }
 
-      if (!result.first.canRead()) {
-        showError(ApplicationBundle.message("error.no.read.permissions", result));
-        return;
+        Pair<File, File> result = myValidator.apply(selectedDir);
+        if (result == null) {
+          showError(ApplicationBundle.message("error.does.not.appear.to.be.installation.home", selectedDir, myProductName));
+          return;
+        }
+
+        if (!result.first.canRead()) {
+          showError(ApplicationBundle.message("error.no.read.permissions", result));
+          return;
+        }
+
+        myResult = result;
       }
-
-      myResult = result;
     }
 
     dispose();

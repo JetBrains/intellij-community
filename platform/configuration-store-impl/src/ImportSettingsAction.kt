@@ -47,11 +47,11 @@ open class ImportSettingsAction : AnAction(), DumbAware {
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-              IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.message, promptLocationMessage()),
+              IdeBundle.message("error.reading.settings.file", saveFile, e1.message, promptLocationMessage()),
               IdeBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
-          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.message),
+          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", saveFile, e1.message),
                                    IdeBundle.message("title.error.reading.file"))
         }
       }
@@ -68,14 +68,14 @@ open class ImportSettingsAction : AnAction(), DumbAware {
 
   protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)), IdeBundle.message("title.file.not.found"))
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", saveFile), IdeBundle.message("title.file.not.found"))
       return
     }
 
     val relativePaths = getPaths(saveFile.inputStream())
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
-          IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
+          IdeBundle.message("error.file.contains.no.settings.to.import", saveFile, promptLocationMessage()),
           IdeBundle.message("title.invalid.file"))
       return
     }
@@ -115,8 +115,6 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     result.add(PluginManager.INSTALLED_TXT)
     return result
   }
-
-  private fun presentableFileName(file: Path) = "'" + file.systemIndependentPath + "'"
 
   private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
 }

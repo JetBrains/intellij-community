@@ -2,9 +2,9 @@
 package com.intellij.configurationStore;
 
 import com.intellij.ide.IdeBundle;
-import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -154,7 +154,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
     chooserDescriptor.setTitle(title);
-    chooserDescriptor.withFileFilter(file -> ArchiveFileType.INSTANCE.equals(file.getFileType()));
+    chooserDescriptor.withFileFilter(ConfigImportHelper::isSettingsFile);
 
     VirtualFile initialDir;
     if (oldPath != null) {
