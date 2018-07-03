@@ -4,7 +4,7 @@ import java.util.Arrays;
 import java.util.stream.Stream;
 
 public class Main {
-  public boolean find(String[] data, String key) {
-    return Arrays.asList(data).contains(key);
+  public boolean find(String key, String addVal) {
+    return Arrays.asList("foo", "bar", "baz", addVal).contains(key);
   }
 }
