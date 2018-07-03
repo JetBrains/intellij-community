@@ -1,279 +1,268 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
-package org.jetbrains.idea.svn;
+package org.jetbrains.idea.svn
 
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.vcs.CommittedChangesProvider;
-import com.intellij.openapi.vcs.FileStatus;
-import com.intellij.openapi.vcs.VcsConfiguration;
-import com.intellij.openapi.vcs.VcsTestUtil;
-import com.intellij.openapi.vcs.changes.Change;
-import com.intellij.openapi.vcs.changes.ContentRevision;
-import com.intellij.openapi.vcs.versionBrowser.ChangeBrowserSettings;
-import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.idea.svn.history.SvnChangeList;
-import org.jetbrains.idea.svn.history.SvnRepositoryLocation;
-import org.junit.Assert;
-import org.junit.Test;
+import com.intellij.openapi.util.Comparing
+import com.intellij.openapi.vcs.FileStatus
+import com.intellij.openapi.vcs.VcsConfiguration
+import com.intellij.openapi.vcs.VcsTestUtil
+import com.intellij.openapi.vcs.changes.Change
+import com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile
+import com.intellij.openapi.vfs.VirtualFile
+import org.jetbrains.idea.svn.history.SvnChangeList
+import org.jetbrains.idea.svn.history.SvnRepositoryLocation
+import org.junit.Assert
+import org.junit.Test
+import java.io.File
+import java.util.*
 
-import java.io.File;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
-
-public class SvnCommittedViewTest extends SvnTestCase {
+class SvnCommittedViewTest : SvnTestCase() {
 
   @Test
-  public void testAdd() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+  @Throws(Exception::class)
+  fun testAdd() {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
 
-    final VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-    final VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    final VirtualFile f12 = createFileInCommand(d1, "f12.txt", "----");
+    val d1 = createDirInCommand(myWorkingCopyDir, "d1")
+    val f11 = createFileInCommand(d1, "f11.txt", "123\n456")
+    val f12 = createFileInCommand(d1, "f12.txt", "----")
 
     // r1, addition without history
-    checkin();
+    checkin()
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 1, new Data(absPath(f11), FileStatus.ADDED, null), new Data(absPath(f12), FileStatus.ADDED, null),
-              new Data(absPath(d1), FileStatus.ADDED, null));
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
+    checkList(changeListList, 1, Data(absPath(f11), FileStatus.ADDED, null), Data(absPath(f12), FileStatus.ADDED, null),
+              Data(absPath(d1), FileStatus.ADDED, null))
   }
 
   @Test
-  public void testDelete() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+  @Throws(Exception::class)
+  fun testDelete() {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
 
-    final VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-    final VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    createFileInCommand(d1, "f12.txt", "----");
+    val d1 = createDirInCommand(myWorkingCopyDir, "d1")
+    val f11 = createFileInCommand(d1, "f11.txt", "123\n456")
+    createFileInCommand(d1, "f12.txt", "----")
 
     // r1, addition without history
-    checkin();
+    checkin()
 
-    deleteFileInCommand(f11);
-    
-    checkin();
-    update();
+    deleteFileInCommand(f11)
 
-    deleteFileInCommand(d1);
+    checkin()
+    update()
 
-    checkin();
+    deleteFileInCommand(d1)
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data(absPath(f11), FileStatus.DELETED, null));
-    checkList(changeListList, 3, new Data(absPath(d1), FileStatus.DELETED, null));
+    checkin()
+
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
+    checkList(changeListList, 2, Data(absPath(f11), FileStatus.DELETED, null))
+    checkList(changeListList, 3, Data(absPath(d1), FileStatus.DELETED, null))
   }
 
   @Test
-  public void testReplaced() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+  @Throws(Exception::class)
+  fun testReplaced() {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
 
-    VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-    createFileInCommand(d1, "f11.txt", "123\n456");
-    createFileInCommand(d1, "f12.txt", "----");
+    val d1 = createDirInCommand(myWorkingCopyDir, "d1")
+    createFileInCommand(d1, "f11.txt", "123\n456")
+    createFileInCommand(d1, "f12.txt", "----")
 
     // r1, addition without history
-    checkin();
+    checkin()
 
-    File dir = virtualToIoFile(d1);
-    final String d1Path = dir.getAbsolutePath();
-    runInAndVerifyIgnoreOutput("delete", d1Path);
-    boolean created = dir.mkdir();
-    Assert.assertTrue(created);
-    runInAndVerifyIgnoreOutput("add", d1Path);
+    val dir = virtualToIoFile(d1)
+    val d1Path = dir.absolutePath
+    runInAndVerifyIgnoreOutput("delete", d1Path)
+    val created = dir.mkdir()
+    Assert.assertTrue(created)
+    runInAndVerifyIgnoreOutput("add", d1Path)
 
-    checkin();
+    checkin()
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data(absPath(d1), FileStatus.MODIFIED, "- replaced"));
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
+    checkList(changeListList, 2, Data(absPath(d1), FileStatus.MODIFIED, "- replaced"))
   }
 
   @Test
-  public void testMoveDir() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+  @Throws(Exception::class)
+  fun testMoveDir() {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
 
-    VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-    VirtualFile d2 = createDirInCommand(myWorkingCopyDir, "d2");
-    createFileInCommand(d1, "f11.txt", "123\n456");
-    createFileInCommand(d1, "f12.txt", "----");
+    val d1 = createDirInCommand(myWorkingCopyDir, "d1")
+    val d2 = createDirInCommand(myWorkingCopyDir, "d2")
+    createFileInCommand(d1, "f11.txt", "123\n456")
+    createFileInCommand(d1, "f12.txt", "----")
 
     // r1, addition without history
-    checkin();
+    checkin()
 
-    moveFileInCommand(d1, d2);
-    Thread.sleep(100);
+    moveFileInCommand(d1, d2)
+    Thread.sleep(100)
 
-    checkin();
+    checkin()
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar));
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
+    checkList(changeListList, 2, Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar))
   }
 
   @Test
-  public void testMoveDirChangeFile() throws Exception {
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD);
-    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE);
+  @Throws(Exception::class)
+  fun testMoveDirChangeFile() {
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.ADD)
+    enableSilentOperation(VcsConfiguration.StandardConfirmation.REMOVE)
 
-    VirtualFile d1 = createDirInCommand(myWorkingCopyDir, "d1");
-    VirtualFile d2 = createDirInCommand(myWorkingCopyDir, "d2");
-    VirtualFile f11 = createFileInCommand(d1, "f11.txt", "123\n456");
-    createFileInCommand(d1, "f12.txt", "----");
+    val d1 = createDirInCommand(myWorkingCopyDir, "d1")
+    val d2 = createDirInCommand(myWorkingCopyDir, "d2")
+    val f11 = createFileInCommand(d1, "f11.txt", "123\n456")
+    createFileInCommand(d1, "f12.txt", "----")
 
     // r1, addition without history
-    checkin();
+    checkin()
 
-    final String oldF11Path = virtualToIoFile(f11).getAbsolutePath();
-    moveFileInCommand(d1, d2);
-    VcsTestUtil.editFileInCommand(myProject, f11, "new");
+    val oldF11Path = virtualToIoFile(f11).absolutePath
+    moveFileInCommand(d1, d2)
+    VcsTestUtil.editFileInCommand(myProject, f11, "new")
 
-    Thread.sleep(100);
+    Thread.sleep(100)
 
-    checkin();
+    checkin()
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
-      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
-              new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path));
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
+      .getCommittedChanges(committedChangesProvider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl), 0)
+    checkList(changeListList, 2, Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
+              Data(absPath(f11), FileStatus.MODIFIED, "- moved from $oldF11Path"))
   }
 
   @Test
-  public void testCopyDir() throws Exception {
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    new File(folder, "f1.txt").createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
+  @Throws(Exception::class)
+  fun testCopyDir() {
+    val trunk = File(myTempDirFixture.tempDirPath, "trunk")
+    trunk.mkdir()
+    Thread.sleep(100)
+    val folder = File(trunk, "folder")
+    folder.mkdir()
+    Thread.sleep(100)
+    File(folder, "f1.txt").createNewFile()
+    File(folder, "f2.txt").createNewFile()
+    Thread.sleep(100)
 
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
-    runInAndVerifyIgnoreOutput("copy", "-m", "test", myRepoUrl + "/trunk", myRepoUrl + "/branch");
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.absolutePath, "$myRepoUrl/trunk")
+    runInAndVerifyIgnoreOutput("copy", "-m", "test", "$myRepoUrl/trunk", "$myRepoUrl/branch")
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
       .getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                           new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
+                           SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0)
     checkList(changeListList, 2,
-              new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk"));
+              Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"))
   }
 
   @Test
-  public void testCopyAndModify() throws Exception {
-    final File trunk = new File(myTempDirFixture.getTempDirPath(), "trunk");
-    trunk.mkdir();
-    Thread.sleep(100);
-    final File folder = new File(trunk, "folder");
-    folder.mkdir();
-    Thread.sleep(100);
-    new File(folder, "f1.txt").createNewFile();
-    new File(folder, "f2.txt").createNewFile();
-    Thread.sleep(100);
+  @Throws(Exception::class)
+  fun testCopyAndModify() {
+    val trunk = File(myTempDirFixture.tempDirPath, "trunk")
+    trunk.mkdir()
+    Thread.sleep(100)
+    val folder = File(trunk, "folder")
+    folder.mkdir()
+    Thread.sleep(100)
+    File(folder, "f1.txt").createNewFile()
+    File(folder, "f2.txt").createNewFile()
+    Thread.sleep(100)
 
-    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.getAbsolutePath(), myRepoUrl + "/trunk");
+    runInAndVerifyIgnoreOutput("import", "-m", "test", trunk.absolutePath, "$myRepoUrl/trunk")
 
-    update();
+    update()
 
-    runInAndVerifyIgnoreOutput("copy", myWorkingCopyDir.getPath() + "/trunk", myWorkingCopyDir.getPath() + "/branch");
-    runInAndVerifyIgnoreOutput("propset", "testprop", "testval", myWorkingCopyDir.getPath() + "/branch/folder");
+    runInAndVerifyIgnoreOutput("copy", myWorkingCopyDir.path + "/trunk", myWorkingCopyDir.path + "/branch")
+    runInAndVerifyIgnoreOutput("propset", "testprop", "testval", myWorkingCopyDir.path + "/branch/folder")
 
-    checkin();
+    checkin()
 
-    vcs.invokeRefreshSvnRoots();
-    final CommittedChangesProvider<SvnChangeList,ChangeBrowserSettings> committedChangesProvider = vcs.getCommittedChangesProvider();
-    final List<SvnChangeList> changeListList = committedChangesProvider
+    vcs.invokeRefreshSvnRoots()
+    val committedChangesProvider = vcs.committedChangesProvider
+    val changeListList = committedChangesProvider
       .getCommittedChanges(committedChangesProvider.createDefaultSettings(),
-                           new SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0);
+                           SvnRepositoryLocation(myRepositoryUrl.appendPath("branch", false)), 0)
     checkList(changeListList, 2,
-              new Data(new File(myWorkingCopyDir.getPath(), "branch").getAbsolutePath(), FileStatus.ADDED, "- copied from /trunk"),
-              new Data(new File(myWorkingCopyDir.getPath(), "branch/folder").getAbsolutePath(), FileStatus.MODIFIED,
-                       "- copied from /trunk/folder"));
+              Data(File(myWorkingCopyDir.path, "branch").absolutePath, FileStatus.ADDED, "- copied from /trunk"),
+              Data(File(myWorkingCopyDir.path, "branch/folder").absolutePath, FileStatus.MODIFIED,
+                   "- copied from /trunk/folder"))
   }
 
-  protected String absPath(final VirtualFile vf) {
-    return virtualToIoFile(vf).getAbsolutePath();
+  protected fun absPath(vf: VirtualFile): String {
+    return virtualToIoFile(vf).absolutePath
   }
 
-  protected static class Data {
-    public final String myLocalPath;
-    public final FileStatus myStatus;
-    @Nullable
-    public final String myOriginText;
+  protected class Data(val myLocalPath: String, val myStatus: FileStatus, val myOriginText: String?) {
 
-    protected Data(@NotNull final String localPath, @NotNull final FileStatus status, @Nullable final String originText) {
-      myLocalPath = localPath;
-      myStatus = status;
-      myOriginText = originText;
-    }
-
-    public boolean shouldBeComparedWithChange(final Change change) {
-      if (FileStatus.DELETED.equals(myStatus) && (change.getAfterRevision() == null)) {
+    fun shouldBeComparedWithChange(change: Change): Boolean {
+      return if (FileStatus.DELETED == myStatus && change.afterRevision == null) {
         // before path
-        return (change.getBeforeRevision() != null) && myLocalPath.equals(change.getBeforeRevision().getFile().getPath());
-      } else {
-        return (change.getAfterRevision() != null) && myLocalPath.equals(change.getAfterRevision().getFile().getPath());
+        change.beforeRevision != null && myLocalPath == change.beforeRevision!!.file.path
+      }
+      else {
+        change.afterRevision != null && myLocalPath == change.afterRevision!!.file.path
       }
     }
   }
 
-  protected void checkList(final List<SvnChangeList> lists, final long revision, final Data... content) {
-    SvnChangeList list = null;
-    for (SvnChangeList changeList : lists) {
-      if (changeList.getNumber() == revision) {
-        list = changeList;
+  protected fun checkList(lists: List<SvnChangeList>, revision: Long, vararg content: Data) {
+    var list: SvnChangeList? = null
+    for (changeList in lists) {
+      if (changeList.number == revision) {
+        list = changeList
       }
     }
-    Assert.assertNotNull("Change list #" + revision + " not found.", list);
+    Assert.assertNotNull("Change list #$revision not found.", list)
 
-    final Collection<Change> changes = new ArrayList<>(list.getChanges());
-    Assert.assertNotNull("Null changes list", changes);
-    Assert.assertEquals(changes.size(), content.length);
+    val changes = ArrayList(list!!.changes)
+    Assert.assertNotNull("Null changes list", changes)
+    Assert.assertEquals(changes.size.toLong(), content.size.toLong())
 
-    for (Data data : content) {
-      boolean found = false;
-      for (Change change : changes) {
+    for (data in content) {
+      var found = false
+      for (change in changes) {
         if (data.shouldBeComparedWithChange(change)) {
-          Assert.assertTrue(Comparing.equal(data.myOriginText, change.getOriginText(myProject)));
-          Assert.assertEquals(data.myStatus, change.getFileStatus());
-          found = true;
-          break;
+          Assert.assertTrue(Comparing.equal(data.myOriginText, change.getOriginText(myProject)))
+          Assert.assertEquals(data.myStatus, change.fileStatus)
+          found = true
+          break
         }
       }
-      Assert.assertTrue(printChanges(data, changes), found);
+      Assert.assertTrue(printChanges(data, changes), found)
     }
   }
 
-  private static String printChanges(final Data data, final Collection<Change> changes) {
-    final StringBuilder sb = new StringBuilder("Data: ").append(data.myLocalPath).append(" exists: ").
-      append(new File(data.myLocalPath).exists()).append(" Changes: ");
-    for (Change change : changes) {
-      final ContentRevision cr = change.getAfterRevision() == null ? change.getBeforeRevision() : change.getAfterRevision();
-      final File ioFile = cr.getFile().getIOFile();
-      sb.append("'").append(ioFile.getAbsolutePath()).append("' exists: ").append(ioFile.exists()).append(" | ");
+  private fun printChanges(data: Data, changes: Collection<Change>): String {
+    val sb = StringBuilder("Data: ").append(data.myLocalPath).append(" exists: ").append(File(data.myLocalPath).exists()).append(
+      " Changes: ")
+    for (change in changes) {
+      val cr = if (change.afterRevision == null) change.beforeRevision else change.afterRevision
+      val ioFile = cr!!.file.ioFile
+      sb.append("'").append(ioFile.absolutePath).append("' exists: ").append(ioFile.exists()).append(" | ")
     }
-    return sb.toString();
+    return sb.toString()
   }
 }
