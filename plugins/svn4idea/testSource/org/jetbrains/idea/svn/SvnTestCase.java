@@ -48,6 +48,7 @@ import org.jetbrains.idea.svn.actions.CreateExternalAction;
 import org.jetbrains.idea.svn.api.Url;
 import org.junit.After;
 import org.junit.Before;
+import org.junit.BeforeClass;
 
 import java.io.File;
 import java.io.IOException;
@@ -57,8 +58,10 @@ import java.util.List;
 
 import static com.intellij.openapi.vfs.VfsUtilCore.virtualToIoFile;
 import static com.intellij.testFramework.EdtTestUtil.runInEdtAndWait;
+import static com.intellij.testFramework.UsefulTestCase.IS_UNDER_TEAMCITY;
 import static org.jetbrains.idea.svn.SvnUtil.parseUrl;
 import static org.junit.Assert.*;
+import static org.junit.Assume.assumeTrue;
 
 public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
@@ -106,6 +109,13 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
   @NotNull
   public static String getPluginHome() {
     return PluginPathManager.getPluginHomePath("svn4idea");
+  }
+
+  @BeforeClass
+  public static void assumeWindowsUnderTeamCity() {
+    if (IS_UNDER_TEAMCITY) {
+      assumeTrue("Windows is required", SystemInfo.isWindows);
+    }
   }
 
   @Before
