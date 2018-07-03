@@ -191,15 +191,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
     }
 
-    if (DomUtil.hasXml(extensionPoint.getBeanClass()) && DomUtil.hasXml(extensionPoint.getInterface())) {
-      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
-                           DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"), null);
-    }
-    if (DomUtil.hasXml(extensionPoint.getName()) && DomUtil.hasXml(extensionPoint.getQualifiedName())) {
-      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
-                           DevKitBundle.message("inspections.plugin.xml.ep.both.name.and.qualifiedName"), null);
-    }
-
+    checkEpBeanClassAndInterface(extensionPoint, holder);
     checkEpNameAndQualifiedName(extensionPoint, holder);
 
     Module module = extensionPoint.getModule();
@@ -208,9 +200,35 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
     }
   }
 
+  private static void checkEpBeanClassAndInterface(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    boolean hasBeanClass = DomUtil.hasXml(extensionPoint.getBeanClass());
+    boolean hasInterface = DomUtil.hasXml(extensionPoint.getInterface());
+    if (hasBeanClass && hasInterface) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"), null);
+    }
+    else if (!hasBeanClass && !hasInterface) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null);
+    }
+  }
+
   private static void checkEpNameAndQualifiedName(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    GenericAttributeValue<String> name = extensionPoint.getName();
     GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
-    if (DomUtil.hasXml(qualifiedName)) {
+    boolean hasName = DomUtil.hasXml(name);
+    boolean hasQualifiedName = DomUtil.hasXml(qualifiedName);
+
+    if (hasName && hasQualifiedName) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.both.name.and.qualifiedName"), null);
+    }
+    else if (!hasName && !hasQualifiedName) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.name.and.qualifiedName"), null);
+    }
+
+    if (hasQualifiedName) {
       if (!isValidEpName(qualifiedName)) {
         String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
                                               DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualifiedName"),
@@ -220,8 +238,7 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       return;
     }
 
-    GenericAttributeValue<String> name = extensionPoint.getName();
-    if (DomUtil.hasXml(name) && !isValidEpName(name)) {
+    if (hasName && !isValidEpName(name)) {
       String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
                                             DevKitBundle.message("inspections.plugin.xml.invalid.ep.name"),
                                             name.getValue());
