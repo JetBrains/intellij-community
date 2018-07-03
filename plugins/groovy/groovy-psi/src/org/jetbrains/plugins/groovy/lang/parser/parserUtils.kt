@@ -341,6 +341,13 @@ fun parseTailLeftFlat(builder: PsiBuilder, level: Int, head: Parser, tail: Parse
   }
 }
 
+private fun <T> PsiBuilder.lookahead(action: PsiBuilder.() -> T): T {
+  val marker = mark()
+  val result = action()
+  marker.rollbackTo()
+  return result
+}
+
 private fun PsiBuilder.any(): Boolean = advanceIf { true }
 
 private fun PsiBuilder.advanceIf(tokenSet: TokenSet): Boolean = advanceIf { tokenType in tokenSet }
@@ -400,6 +407,35 @@ fun newLine(builder: PsiBuilder, level: Int): Boolean {
 
 fun noNewLine(builder: PsiBuilder, level: Int): Boolean = !newLine(builder, level)
 
-fun noParenthesized(builder: PsiBuilder, level: Int): Boolean {
-  return builder.latestDoneMarker?.tokenType != PARENTHESIZED_EXPRESSION
+fun castOperandCheck(builder: PsiBuilder, level: Int): Boolean {
+  return builder.tokenType !== T_LPAREN || builder.lookahead {
+    castOperandCheckInner(this)
+  }
+}
+
+private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
+  var parenCount = 0
+  while (!builder.eof()) {
+    builder.advanceLexer()
+    val tokenType = builder.tokenType
+    when {
+      tokenType === T_LPAREN -> {
+        parenCount++
+      }
+      tokenType === T_RPAREN -> {
+        if (parenCount == 0) {
+          // we discovered closing parenthesis and didn't find any commas
+          return true
+        }
+        parenCount--
+      }
+      tokenType === T_COMMA -> {
+        if (parenCount == 0) {
+          // comma on the same level of parentheses means we are in argument list
+          return false
+        }
+      }
+    }
+  }
+  return false
 }
