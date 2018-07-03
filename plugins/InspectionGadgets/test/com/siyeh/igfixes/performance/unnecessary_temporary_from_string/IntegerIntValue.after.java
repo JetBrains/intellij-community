@@ -1,5 +1,6 @@
 class Test {
   void test(String s) {
-    int x = Integer.parseInt(s<caret>);
+      /*hello*/
+      int x = Integer.parseInt(s +/*double-s*/s<caret>);
   }
 }
