@@ -438,3 +438,33 @@ private fun castOperandCheckInner(builder: PsiBuilder): Boolean {
   }
   return false
 }
+
+private val explicitLeftMarker = Key.create<Marker>("groovy.parse.left.marker")
+
+/**
+ * Stores [PsiBuilder.getLatestDoneMarker] in user data to be able to use it later in [wrapLeft].
+ */
+fun markLeft(builder: PsiBuilder, level: Int): Boolean {
+  builder[explicitLeftMarker] = builder.latestDoneMarker as? Marker
+  return true
+}
+
+/**
+ * Let sequence `a b c d` result in the following tree: `(a) (b) (c) (d)`.
+ * Then `a b <<markLeft>> c d <<wrapLeft>>` will result in: `(a) ((b) (c) d)`
+ */
+fun wrapLeft(builder: PsiBuilder, level: Int): Boolean {
+  val explicitLeft = builder[explicitLeftMarker] ?: return false
+  val latest = builder.latestDoneMarker ?: return false
+  explicitLeft.precede().done(latest.tokenType)
+  (latest as? Marker)?.drop()
+  return true
+}
+
+fun choice(builder: PsiBuilder, level: Int, vararg parsers: Parser): Boolean {
+  assert(parsers.size > 1)
+  for (parser in parsers) {
+    if (parser.parse(builder, level)) return true
+  }
+  return false
+}

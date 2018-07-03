@@ -351,6 +351,13 @@ private annotation_level ::= type_definition | parse_annotation_declaration
 
 
 // region Declarations
+private meta declaration ::= <<choice
+                                 <<d_modifiers <<after_modifiers>>>>
+                                 <<d_no_modifiers <<after_no_modifiers>>>>
+                             >>
+private meta d_modifiers ::= non_empty_modifier_list mark_left <<mb_nl_group <<after_modifiers>>>> { pin = 1 }
+private meta d_no_modifiers ::= empty_modifier_list mark_left <<after_no_modifiers>>
+
 private declaration_start_modifiers ::= non_empty_modifier_list mb_type_parameter_list mb_declaration_type_element { pin = 1 }
 private mb_type_parameter_list ::= [mb_nl type_parameter_list]
 private mb_declaration_type_element ::= [mb_nl declaration_type_element]
@@ -628,6 +635,8 @@ tuple_var_declaration ::= non_empty_modifier_list tuple_var_declaration_tuple tu
 private tuple_var_declaration_tuple ::= '(' tuple_var_declaration_item (',' tuple_var_declaration_item)* ')'
 {
   consumeTokenMethod = 'consumeTokenFast'
+  pin = 2
+  pin('tuple_var_declaration_tuple_2_0') = 1
 }
 
 private tuple_var_declaration_item ::= type_element tuple_variable | tuple_variable
@@ -748,12 +757,16 @@ for_in_clause ::= for_in_parameter (':' | 'in') expression { consumeTokenMethod 
 for_in_parameter ::= modifier_list mb_type_element IDENTIFIER | clear_variants_and_fail { elementType = parameter }
 
 traditional_for_clause ::= empty for_clause_initialization? ';' expression? ';' mb_nl for_clause_update? { pin = 1 }
-private for_clause_initialization ::= traditional_for_parameter | expression | clear_variants_and_fail
-traditional_for_parameter ::= traditional_for_parameter_inner mb_initializer { elementType = parameter }
-private traditional_for_parameter_inner ::= non_empty_modifier_list mb_type_element IDENTIFIER
-                                          | empty_modifier_list type_element IDENTIFIER
-
+private for_clause_initialization ::= for_variable_declaration | expression | clear_variants_and_fail
 private for_clause_update ::= expression_list
+
+private for_variable_declaration ::= <<declaration fvd_after_modifiers fvd_after_no_modifiers>>
+private fvd_after_modifiers ::= fvd_tuple_tail | fvd_modifiers_type | fvd_tail
+left fvd_tuple_tail ::= tuple_var_declaration_tuple tuple_initializer { pin = 1 elementType = variable_declaration }
+private fvd_modifiers_type ::= <<definitelyTypeElement type_element variable_lookahead>> fvd_tail { pin = 1 }
+private fvd_after_no_modifiers ::= (capital_type_element variable_lookahead) fvd_tail { pin = 1 }
+private fvd_tail ::= variable_declaration_tail <<wrapLeft>>
+
 expression_list ::= expression (',' expression)*
 
 // FIXME get rid of this weird logic
@@ -1270,4 +1283,5 @@ private external clear_error ::= clearError
 private external fail ::= noMatch
 private external end_of_file ::= eof
 private external no_nl ::= noNewLine
+private external mark_left ::= markLeft
 // endregion
