@@ -129,6 +129,26 @@ class StatementsParsingTest extends GroovyParsingTestCase {
 
   void testFor$lParen() { doTest() }
 
+  void testFor$identifierAfterParameter() { doTest() }
+
+  void testFor$multiDeclaration() { doTest() }
+
+  void testFor$multiDeclaration2() { doTest() }
+
+  void testFor$multiDeclaration3() { doTest() }
+
+  void testFor$multiDeclaration4() { doTest() }
+
+  void testFor$tupleDeclaration() { doTest() }
+
+  void testFor$tupleDeclarationCommaAfterVar() { doTest() }
+
+  void testFor$tupleDeclarationNoInitializer() { doTest() }
+
+  void testFor$tupleDeclarationNoInitializerValue() { doTest() }
+
+  void testFor$tupleDeclarationSingleVariable() { doTest() }
+
   void testIfstmt$if1() throws Throwable { doTest() }
 
   void testIfstmt$if2() throws Throwable { doTest() }
