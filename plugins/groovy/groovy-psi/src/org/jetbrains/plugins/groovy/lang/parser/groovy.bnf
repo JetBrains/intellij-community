@@ -355,10 +355,11 @@ private declaration_start_modifiers ::= non_empty_modifier_list mb_type_paramete
 private mb_type_parameter_list ::= [mb_nl type_parameter_list]
 private mb_declaration_type_element ::= [mb_nl declaration_type_element]
 private declaration_type_element ::= definitely_type_element | clear_variants_and_fail
-private definitely_type_element ::= <<definitelyTypeElement type_element &declaration_lookahead>>
+private definitely_type_element ::= <<definitelyTypeElement type_element declaration_lookahead>>
 
-private declaration_lookahead ::= method_lookahead | IDENTIFIER { consumeTokenMethod = 'consumeTokenFast' }
-private method_lookahead ::= method_identifier '('
+private declaration_lookahead ::= method_lookahead | variable_lookahead
+private variable_lookahead ::= &IDENTIFIER
+private method_lookahead ::= &(method_identifier '(')
 // endregion
 
 
@@ -372,7 +373,7 @@ private class_declaration_start_after_no_modifiers ::= class_declaration_start_a
                                                      | class_declaration_start_after_no_modifiers2
 private class_declaration_start_after_no_modifiers1 ::= capital_type_element !'('
 private class_declaration_start_after_no_modifiers2 ::= declaration_type_element
-private naked_method_declaration_start ::= empty_modifier_list &method_lookahead
+private naked_method_declaration_start ::= empty_modifier_list method_lookahead
 
 private class_declaration_tail ::= <<mb_nl_group (methods_tail | field_declaration)>>
 private methods_tail ::= constructor | method
@@ -453,7 +454,7 @@ private parameter_start ::= parameter_start_modifiers | parameter_start_no_modif
 private parameter_start_modifiers ::= non_empty_modifier_list parameter_start_after_modifiers { pin = 1 }
 private parameter_start_after_modifiers ::= parameter_type_element_silent? ellipsis?
 private parameter_start_no_modifiers ::= empty_modifier_list parameter_start_after_no_modifiers
-private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | &IDENTIFIER
+private parameter_start_after_no_modifiers ::= parameter_type_element_silent ellipsis? | ellipsis | variable_lookahead
 private parameter_type_element_silent ::= parameter_type_element | clear_variants_and_fail
 private parameter_type_element ::= primitive_type_element array_type_elements
                                  | qualified_class_type_element array_type_elements
@@ -608,7 +609,7 @@ fake variable_declaration ::= { elementTypeClass = 'org.jetbrains.plugins.groovy
 private parse_block_declaration ::= <<parseTailLeftFlat block_declaration_start block_declaration_tail>>
 private block_declaration_start ::= declaration_start_modifiers | block_declaration_start_no_modifiers
 private block_declaration_start_no_modifiers ::= empty_modifier_list block_declaration_type_element
-private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) &declaration_lookahead
+private block_declaration_type_element ::= (capital_type_element | clear_variants_and_fail) declaration_lookahead
 private block_declaration_tail ::= <<mb_nl_group (method | variable_declaration_tail)>>
 private local_variable_declaration ::= <<parseTailLeftFlat block_declaration_start variable_declaration_tail>>
 
@@ -736,7 +737,7 @@ while_statement ::= 'while' ('(' mb_nl expression mb_nl ')' mb_nl branch)
 
 do_while_statement ::= 'do' mb_nl branch mb_nl 'while' '(' expression ')' { pin = 1 }
 
-private type_element_followed_by_identifier ::= type_element &IDENTIFIER
+private type_element_followed_by_identifier ::= type_element variable_lookahead
 private mb_type_element ::= type_element_followed_by_identifier?
 
 for_statement ::= 'for' (for_header mb_nl for_body) { pin('.*') = 1 }
