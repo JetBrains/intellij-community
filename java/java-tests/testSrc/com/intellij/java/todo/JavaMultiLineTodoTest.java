@@ -54,6 +54,19 @@ public class JavaMultiLineTodoTest extends LightDaemonAnalyzerTestCase {
               " */");
   }
 
+  public void testNewLineBetweenCommentLines() {
+    testTodos("class C {\n" +
+              "    // [TODO first line]<caret>\n" +
+              "    //  [second line]\n" +
+              "}");
+    type('\n');
+    checkTodos("class C {\n" +
+               "    // [TODO first line]\n" +
+               "    \n" +
+               "    //  second line\n" +
+               "}");
+  }
+
   private void testTodos(String text) {
     configureFromFileText("Foo.java", text);
     EditorTestUtil.setEditorVisibleSize(myEditor, 1000, 1000); // set visible area for highlighting

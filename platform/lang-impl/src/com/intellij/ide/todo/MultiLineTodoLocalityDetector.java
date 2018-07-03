@@ -5,6 +5,7 @@ import com.intellij.codeInsight.daemon.ChangeLocalityDetector;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -13,11 +14,20 @@ public class MultiLineTodoLocalityDetector implements ChangeLocalityDetector {
   @Nullable
   @Override
   public PsiElement getChangeHighlightingDirtyScopeFor(@NotNull PsiElement changedElement) {
-    if (!(changedElement instanceof PsiComment) || !TodoConfiguration.getInstance().isMultiLine()) return null;
-    PsiComment commentAbove = findAdjacentComment(changedElement, true);
-    PsiComment commentBelow = findAdjacentComment(changedElement, false);
-    if (commentAbove == null && commentBelow == null) return null;
-    return PsiTreeUtil.findCommonParent(changedElement, commentAbove, commentBelow);
+    if (!TodoConfiguration.getInstance().isMultiLine()) return null;
+    if (changedElement instanceof PsiWhiteSpace) {
+      PsiElement prevLeaf = PsiTreeUtil.prevLeaf(changedElement);
+      return prevLeaf instanceof PsiComment ? PsiTreeUtil.findCommonParent(changedElement, prevLeaf) : null;
+    }
+    else if (changedElement instanceof PsiComment) {
+      PsiComment commentAbove = findAdjacentComment(changedElement, true);
+      PsiComment commentBelow = findAdjacentComment(changedElement, false);
+      if (commentAbove == null && commentBelow == null) return null;
+      return PsiTreeUtil.findCommonParent(changedElement, commentAbove, commentBelow);
+    }
+    else {
+      return null;
+    }
   }
 
   private static PsiComment findAdjacentComment(PsiElement element, boolean above) {
