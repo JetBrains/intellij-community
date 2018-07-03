@@ -74,10 +74,15 @@ public class ElementsChooser<T> extends MultiStateElementsChooser<T, Boolean> {
 
   @NotNull
   public List<T> getMarkedElements() {
+    return getElements(true);
+  }
+
+  @NotNull
+  public List<T> getElements(boolean isMarked) {
     Map<T, Boolean> elementMarkStates = getElementMarkStates();
     List<T> elements = new ArrayList<>();
     for (Map.Entry<T, Boolean> entry : elementMarkStates.entrySet()) {
-      if (entry.getValue()) {
+      if (entry.getValue() == isMarked) {
         elements.add(entry.getKey());
       }
     }

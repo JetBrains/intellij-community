@@ -39,6 +39,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   private static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME;
 
   private static final Logger LOG = Logger.getInstance(ChooseComponentsToExportDialog.class);
+  public static final String KEY_UNMAKRKED_NAMES = "export.settings.unmarked";
 
   private final ElementsChooser<ComponentElementProperties> myChooser;
   private final FieldPanel myPathPanel;
@@ -64,8 +65,9 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
     myChooser = new ElementsChooser<>(true);
     myChooser.setColorUnmarkedElements(false);
+    Set<String> unmarkedElementNames = getUnmarkedElementNames();
     for (ComponentElementProperties componentElementProperty : new LinkedHashSet<>(componentToContainingListElement.values())) {
-      myChooser.addElement(componentElementProperty, true, componentElementProperty);
+      myChooser.addElement(componentElementProperty, !unmarkedElementNames.contains(componentElementProperty.toString()), componentElementProperty);
     }
     myChooser.sort(Comparator.comparing(ComponentElementProperties::toString));
 
@@ -86,6 +88,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     setTitle(title);
     init();
+  }
+
+  private static Set<String> getUnmarkedElementNames() {
+    String value = PropertiesComponent.getInstance().getValue(KEY_UNMAKRKED_NAMES);
+    if (StringUtil.isEmpty(value)) {
+      return Collections.emptySet();
+    }
+    return new THashSet<>(StringUtil.split(value.trim(), "|"));
   }
 
   private void updateControls() {
@@ -119,6 +129,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText(), DEFAULT_PATH);
+    List<ComponentElementProperties> unmarked = myChooser.getElements(false);
+    StringBuilder builder = new StringBuilder();
+    for (ComponentElementProperties element : unmarked) {
+      builder.append(element.toString());
+      builder.append("|");
+    }
+    PropertiesComponent.getInstance().setValue(KEY_UNMAKRKED_NAMES, builder.length() == 0 ? null : builder.toString());
+
     super.doOKAction();
   }
 
