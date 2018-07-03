@@ -42,7 +42,11 @@ public class PyFStringsInjector extends PyInjectorBase {
     if (pyString == null) {
       return;
     }
-    
+
+    injectFStringFragments(registrar, pyString);
+  }
+
+  public static void injectFStringFragments(@NotNull MultiHostRegistrar registrar, PyStringLiteralExpression pyString) {
     for (ASTNode node : pyString.getStringNodes()) {
       final int relNodeOffset = node.getTextRange().getStartOffset() - pyString.getTextRange().getStartOffset();
       for (Fragment offsets : getInjectionRanges(node)) {
