@@ -14,6 +14,7 @@ import org.jetbrains.idea.svn.history.*;
 import java.util.*;
 
 public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
+  private SvnVcs myVcs;
   private SvnRepositoryLocation myLocation;
   private LoadedRevisionsCache myInternalManager;
   private final static Url URL = SvnUtil.parseUrl("file:///C:/repo/trunk");
@@ -24,6 +25,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
+    myVcs = SvnVcs.getInstance(getProject());
     myLocation = new SvnRepositoryLocation(URL);
     myInternalManager = LoadedRevisionsCache.getInstance(myFixture.getProject());
   }
@@ -32,6 +34,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
   protected void tearDown() throws Exception {
     myInternalManager = null;
     myLocation = null;
+    myVcs = null;
     FileUtil.delete(SvnApplicationSettings.getLoadedRevisionsDir(myFixture.getProject()));
     super.tearDown();
   }
@@ -40,7 +43,7 @@ public class SvnCachingRevisionsTest extends CodeInsightFixtureTestCase {
     LogEntry entry =
       new LogEntry.Builder().setRevision(revision).setAuthor(AUTHOR).setDate(new Date(System.currentTimeMillis())).setMessage("").build();
 
-    return new SvnChangeList(null, myLocation, entry, ROOT);
+    return new SvnChangeList(myVcs, myLocation, entry, ROOT);
   }
 
   private class MockSvnLogLoader implements SvnLogLoader {
