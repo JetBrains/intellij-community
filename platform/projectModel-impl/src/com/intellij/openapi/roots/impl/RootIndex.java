@@ -1,18 +1,4 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.roots.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
@@ -44,11 +30,9 @@ import com.intellij.util.containers.ConcurrentBitSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.containers.SLRUMap;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.fileTypes.FileNameMatcherFactory;
-import org.jetbrains.jps.model.module.JpsModuleSourceRootType;
 
 import java.util.*;
 
@@ -66,8 +50,6 @@ public class RootIndex {
 
   private final Map<VirtualFile, DirectoryInfo> myRootInfos = ContainerUtil.newHashMap();
   private final ConcurrentBitSet myNonInterestingIds = new ConcurrentBitSet();
-  private final List<JpsModuleSourceRootType<?>> myRootTypes = ContainerUtil.newArrayList();
-  private final TObjectIntHashMap<JpsModuleSourceRootType<?>> myRootTypeId = new TObjectIntHashMap<>();
   @NotNull private final Project myProject;
   private final PackageDirectoryCache myPackageDirectoryCache;
   private OrderEntryGraph myOrderEntryGraph;
@@ -137,7 +119,7 @@ public class RootIndex {
         for (final SourceFolder sourceFolder : contentEntry.getSourceFolders()) {
           final VirtualFile sourceFolderRoot = sourceFolder.getFile();
           if (sourceFolderRoot != null && ensureValid(sourceFolderRoot, sourceFolder)) {
-            info.rootTypeId.put(sourceFolderRoot, getRootTypeId(sourceFolder.getRootType()));
+            info.sourceFolders.put(sourceFolderRoot, sourceFolder);
             info.classAndSourceRoots.add(sourceFolderRoot);
             info.sourceRootOf.putValue(sourceFolderRoot, module);
             info.packagePrefix.put(sourceFolderRoot, sourceFolder.getPackagePrefix());
@@ -534,20 +516,6 @@ public class RootIndex {
   }
 
 
-  private int getRootTypeId(@NotNull JpsModuleSourceRootType<?> rootType) {
-    if (myRootTypeId.containsKey(rootType)) {
-      return myRootTypeId.get(rootType);
-    }
-
-    int id = myRootTypes.size();
-    if (id > DirectoryInfoImpl.MAX_ROOT_TYPE_ID) {
-      LOG.error("Too many different types of module source roots (" + id + ") registered: " + myRootTypes);
-    }
-    myRootTypes.add(rootType);
-    myRootTypeId.put(rootType, id);
-    return id;
-  }
-
   @NotNull
   DirectoryInfo getInfoForFile(@NotNull VirtualFile file) {
     if (!file.isValid() || !(file instanceof VirtualFileWithId)) {
@@ -611,11 +579,6 @@ public class RootIndex {
     return parentPackageName.isEmpty() ? subdirName : parentPackageName + "." + subdirName;
   }
 
-  @Nullable
-  public JpsModuleSourceRootType<?> getSourceRootType(@NotNull DirectoryInfo directoryInfo) {
-    return myRootTypes.get(directoryInfo.getSourceRootTypeId());
-  }
-
   boolean resetOnEvents(@NotNull List<? extends VFileEvent> events) {
     for (VFileEvent event : events) {
       VirtualFile file = event.getFile();
@@ -652,7 +615,7 @@ public class RootIndex {
     @NotNull final Map<VirtualFile, Module> contentRootOf = ContainerUtil.newHashMap();
     @NotNull final Map<VirtualFile, String> contentRootOfUnloaded = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, Module> sourceRootOf = MultiMap.createSet();
-    @NotNull final TObjectIntHashMap<VirtualFile> rootTypeId = new TObjectIntHashMap<>();
+    @NotNull final Map<VirtualFile, SourceFolder> sourceFolders = ContainerUtil.newHashMap();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> excludedFromLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> classOfLibraries = MultiMap.createSmart();
     @NotNull final MultiMap<VirtualFile, /*Library|SyntheticLibrary*/ Object> sourceOfLibraries = MultiMap.createSmart();
@@ -894,7 +857,7 @@ public class RootIndex {
     VirtualFile moduleSourceRoot = info.findPackageRootInfo(hierarchy, moduleContentRoot, null, null);
     boolean inModuleSources = moduleSourceRoot != null;
     boolean inLibrarySource = librarySourceRoot != null;
-    int typeId = moduleSourceRoot != null ? info.rootTypeId.get(moduleSourceRoot) : 0;
+    SourceFolder sourceFolder = moduleSourceRoot != null ? info.sourceFolders.get(moduleSourceRoot) : null;
 
     Module module = info.contentRootOf.get(nearestContentRoot);
     String unloadedModuleName = info.contentRootOfUnloaded.get(nearestContentRoot);
@@ -903,11 +866,12 @@ public class RootIndex {
     Condition<VirtualFile> libraryExclusionPredicate = getLibraryExclusionPredicate(librarySourceRootInfo);
 
     DirectoryInfo directoryInfo = contentExcludePatterns != null || libraryExclusionPredicate != null
-                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, libraryClassRoot,
-                                                                         inModuleSources, inLibrarySource, !inProject, typeId,
+                                  ? new DirectoryInfoWithExcludePatterns(root, module, nearestContentRoot, sourceRoot, sourceFolder, 
+                                                                         libraryClassRoot, inModuleSources, inLibrarySource, !inProject,
                                                                          contentExcludePatterns, libraryExclusionPredicate, unloadedModuleName)
-                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, libraryClassRoot, inModuleSources,
-                                                          inLibrarySource, !inProject, typeId, unloadedModuleName);
+                                  : new DirectoryInfoImpl(root, module, nearestContentRoot, sourceRoot, sourceFolder, 
+                                                          libraryClassRoot, inModuleSources, inLibrarySource, 
+                                                          !inProject, unloadedModuleName);
 
     String packagePrefix = info.calcPackagePrefix(root, hierarchy, moduleContentRoot, libraryClassRoot, librarySourceRoot);
 
