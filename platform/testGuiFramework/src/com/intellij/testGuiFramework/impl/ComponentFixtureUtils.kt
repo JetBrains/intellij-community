@@ -258,8 +258,17 @@ fun <S, C : Component> ComponentFixture<S, C>.textfield(textLabel: String?, time
  * @timeout in seconds to find JTree component
  * @throws ComponentLookupException if component has not been found or timeout exceeded
  */
-fun <S, C : Component> ComponentFixture<S, C>.jTree(vararg pathStrings: String, timeout: Long = defaultTimeout): ExtendedJTreePathFixture =
-  if (target() is Container) GuiTestUtil.jTreePath(target() as Container, timeout, *pathStrings)
+fun <S, C : Component> ComponentFixture<S, C>.jTree(
+  vararg pathStrings: String,
+  timeout: Long = defaultTimeout,
+  predicate: FinderPredicate = ExtendedJTreePathFinder.predicateEquality
+): ExtendedJTreePathFixture =
+  if (target() is Container) GuiTestUtil.jTreePath(
+    container = target() as Container,
+    timeout = timeout,
+    pathStrings = *pathStrings,
+    predicate = predicate
+  )
   else throw unableToFindComponent("""JTree "${if (pathStrings.isNotEmpty()) "by path $pathStrings" else ""}"""")
 
 /**
