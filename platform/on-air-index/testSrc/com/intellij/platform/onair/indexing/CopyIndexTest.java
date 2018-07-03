@@ -37,7 +37,7 @@ public class CopyIndexTest {
 
   public static final int ITERATIONS = 5;
   public static final String FOLDER =
-    System.getProperty("intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
+    System.getProperty("com.intellij.platform.onair.indexing.CopyIndexTest.dir", "/Users/pavel/work/index-sandbox");
   public static final String host = "localhost";
   public static final int port = 11211;
   public static final String PHM = FOLDER + "/idea/java.class.shortname.storage";
