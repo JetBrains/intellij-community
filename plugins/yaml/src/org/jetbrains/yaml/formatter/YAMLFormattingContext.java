@@ -5,7 +5,6 @@ import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
-import com.intellij.psi.formatter.common.AbstractBlock;
 import com.intellij.psi.impl.source.tree.TreeUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtilCore;
@@ -63,17 +62,19 @@ class YAMLFormattingContext {
       return simpleSpacing;
     }
 
-    if (!(child1 instanceof AbstractBlock && child2 instanceof AbstractBlock)) {
+    if (!(child1 instanceof ASTBlock && child2 instanceof ASTBlock)) {
       return null;
     }
-    ASTNode node1 = ((AbstractBlock)child1).getNode();
-    ASTNode node2 = ((AbstractBlock)child2).getNode();
+    ASTNode node1 = ((ASTBlock)child1).getNode();
+    ASTNode node2 = ((ASTBlock)child2).getNode();
     if (PsiUtilCore.getElementType(node1) != YAMLTokenTypes.SEQUENCE_MARKER) {
       return null;
     }
     IElementType node2Type = PsiUtilCore.getElementType(node2);
     int indentSize = mySettings.getIndentSize(YAMLFileType.YML);
-    if (indentSize < 2) indentSize = 2;
+    if (indentSize < 2) {
+      indentSize = 2;
+    }
 
     int spaces = 1;
     int minLineFeeds = 0;
