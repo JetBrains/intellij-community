@@ -134,7 +134,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
                                                    new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1")});
+    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar)});
   }
 
   @Test
@@ -165,7 +165,7 @@ public class SvnCommittedViewTest extends SvnTestCase {
     final List<SvnChangeList> changeListList =
       committedChangesProvider.getCommittedChanges(committedChangesProvider.createDefaultSettings(),
                                                    new SvnRepositoryLocation(myRepositoryUrl), 0);
-    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar + "d1"),
+    checkList(changeListList, 2, new Data[] {new Data(absPath(d1), FileStatus.MODIFIED, "- moved from .." + File.separatorChar),
       new Data(absPath(f11), FileStatus.MODIFIED, "- moved from " + oldF11Path)});
   }
 
