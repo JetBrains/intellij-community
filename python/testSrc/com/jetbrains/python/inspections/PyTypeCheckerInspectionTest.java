@@ -579,6 +579,61 @@ public class PyTypeCheckerInspectionTest extends PyInspectionTestCase {
     doTest();
   }
 
+  // PY-27231
+  public void testStructuralAndNone() {
+    doTestByText("def func11(value):\n" +
+                 "    if value is not None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func12(value):\n" +
+                 "    if None is not value and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func21(value):\n" +
+                 "    if value is None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func22(value):\n" +
+                 "    if None is value and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "func11(None)\n" +
+                 "func12(None)\n" +
+                 "func21(None)\n" +
+                 "func22(None)\n" +
+                 "\n" +
+                 "\n" +
+                 "def func31(value):\n" +
+                 "    if value and None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func32(value):\n" +
+                 "    if value is value and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func33(value):\n" +
+                 "    if None is None and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "def func34(value):\n" +
+                 "    a = 2\n" +
+                 "    if a is a and value != 1:\n" +
+                 "        pass\n" +
+                 "\n" +
+                 "\n" +
+                 "func31(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)\n" +
+                 "func32(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)\n" +
+                 "func33(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)\n" +
+                 "func34(<warning descr=\"Expected type '{__ne__}', got 'None' instead\">None</warning>)");
+  }
+
   // PY-29704
   public void testPassingAbstractMethodResult() {
     doTestByText("import abc\n" +
