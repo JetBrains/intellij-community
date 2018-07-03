@@ -258,8 +258,9 @@ fun inlayOffset(callArgument: PsiExpression, atEnd: Boolean): Int {
   return if (atEnd) callArgument.textRange.endOffset else callArgument.textRange.startOffset
 }
 
-private fun isUnclearExpression(callArgument: PsiElement): Boolean {
-  val isShowHint = when (callArgument) {
+private fun shouldShowHintsForExpression(callArgument: PsiElement): Boolean {
+  if (JavaInlayParameterHintsProvider.getInstance().isShowHintWhenExpressionTypeIsClear.get()) return true
+  return when (callArgument) {
     is PsiLiteralExpression -> true
     is PsiThisExpression -> true
     is PsiBinaryExpression -> true
@@ -271,8 +272,6 @@ private fun isUnclearExpression(callArgument: PsiElement): Boolean {
     }
     else -> false
   }
-
-  return isShowHint
 }
 
 
@@ -285,7 +284,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
     for (callInfo in regularArgs) {
       val inlay = when {
         isErroneousArg(callInfo) -> null
-        isUnclearExpression(callInfo.argument) -> inlayInfo(callInfo)
+        shouldShowHintsForExpression(callInfo.argument) -> inlayInfo(callInfo)
         !callInfo.isAssignable(substitutor) -> inlayInfo(callInfo, showOnlyIfExistedBefore = true)
         else -> null
       }
@@ -320,7 +319,7 @@ private class CallInfo(val regularArgs: List<CallArgumentInfo>, val varArg: PsiP
 
     var hasUnassignable = false
     for (expr in varArgExpressions) {
-      if (isUnclearExpression(expr)) {
+      if (shouldShowHintsForExpression(expr)) {
         return inlayInfo(varArgExpressions.first(), varArg)
       }
       hasUnassignable = hasUnassignable || !varArg.isAssignable(expr, substitutor)
