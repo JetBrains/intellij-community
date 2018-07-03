@@ -55,17 +55,32 @@ class ResolveLocalTest implements ResolveTest {
 
   @Test
   void 'for variable from for block'() {
-    resolveTest 'for (def e;;){ <caret>e }', GrVariable
+    resolveTest 'for (def e,f;;){ <caret>e }', GrVariable
+    resolveTest 'for (def e,f;;){ <caret>f }', GrVariable
+    resolveTest 'for (def (e,f);;){ <caret>e }', GrVariable
+    resolveTest 'for (def (e,f);;){ <caret>f }', GrVariable
   }
 
   @Test
   void 'for variable from for condition'() {
-    resolveTest 'for (def e;<caret>e;){}', GrVariable
+    resolveTest 'for (def e,f; <caret>e;){}', GrVariable
+    resolveTest 'for (def e,f; <caret>f;){}', GrVariable
+    resolveTest 'for (def (e,f); <caret>e;){}', GrVariable
+    resolveTest 'for (def (e,f); <caret>f;){}', GrVariable
   }
 
   @Test
   void 'for variable from for update'() {
-    resolveTest 'for (def e;;<caret>e){}', GrVariable
+    resolveTest 'for (def e,f;; <caret>e){}', GrVariable
+    resolveTest 'for (def e,f;; <caret>f){}', GrVariable
+    resolveTest 'for (def (e,f);; <caret>e){}', GrVariable
+    resolveTest 'for (def (e,f);; <caret>f){}', GrVariable
+  }
+
+  @Test
+  void 'for variable from another variable'() {
+    resolveTest 'for (def e,f = <caret>e;;) {}', GrVariable
+    resolveTest 'for (def f = <caret>e, e;;) {}', null
   }
 
   @Test

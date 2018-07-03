@@ -397,7 +397,7 @@ public class CodeBlockGenerator extends Generator {
     ExpressionContext forContext = context.extend();
     if (clause instanceof GrForInClause) {
       final GrExpression expression = ((GrForInClause)clause).getIteratedExpression();
-      final GrVariable declaredVariable = clause.getDeclaredVariable();
+      final GrVariable declaredVariable = ((GrForInClause)clause).getDeclaredVariable();
       LOG.assertTrue(declaredVariable != null);
 
       writeVariableWithoutSemicolonAndInitializer(builder, declaredVariable, context);

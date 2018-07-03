@@ -193,8 +193,9 @@ public class GroovyCompletionData {
   }
 
   private static boolean isAfterForParameter(PsiElement position) {
-    ElementPattern<PsiElement> forParameter =
-      PsiJavaPatterns.psiElement().withParents(GrParameter.class, GrTraditionalForClause.class, GrForStatement.class);
+    ElementPattern<PsiElement> forParameter = PsiJavaPatterns.psiElement().withParents(
+      GrVariable.class, GrVariableDeclaration.class, GrTraditionalForClause.class, GrForStatement.class
+    );
     return PsiJavaPatterns.psiElement().withParent(GrReferenceExpression.class).afterLeaf(forParameter).accepts(position) ||
            forParameter.accepts(position) && PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement(GroovyTokenTypes.mIDENT)).accepts(position);
   }
