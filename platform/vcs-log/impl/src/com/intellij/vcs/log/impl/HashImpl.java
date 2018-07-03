@@ -131,7 +131,11 @@ public class HashImpl implements Hash {
   @NotNull
   @Override
   public String toShortString() {
-    String s = asString();
-    return s.substring(0, Math.min(s.length(), SHORT_HASH_LENGTH));
+    return toShortString(asString());
+  }
+
+  @NotNull
+  public static String toShortString(@NotNull String hashString) {
+    return hashString.substring(0, Math.min(hashString.length(), SHORT_HASH_LENGTH));
   }
 }

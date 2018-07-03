@@ -34,6 +34,7 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.vcs.log.*;
 import com.intellij.vcs.log.data.VcsLogData;
+import com.intellij.vcs.log.impl.HashImpl;
 import com.intellij.vcs.log.impl.VcsLogImpl;
 import com.intellij.vcs.log.impl.VcsLogUiProperties;
 import com.intellij.vcs.log.ui.highlighters.VcsLogHighlighterFactory;
@@ -211,7 +212,19 @@ public abstract class AbstractVcsLogUi implements VcsLogUi, Disposable {
 
   @NotNull
   protected static <T> String getCommitNotFoundMessage(@NotNull T commitId, boolean exists) {
-    return exists ? "Commit " + commitId.toString() + " doesn't match the filters" : "Commit " + commitId.toString() + " not found";
+    return exists ? "Commit " + getCommitPresentation(commitId) + " doesn't match the filters" :
+           "Commit " + getCommitPresentation(commitId) + " not found";
+  }
+
+  @NotNull
+  protected static <T> String getCommitPresentation(@NotNull T commitId) {
+    if (commitId instanceof Hash) {
+      return ((Hash)commitId).toShortString();
+    }
+    else if (commitId instanceof String) {
+      return HashImpl.toShortString((String)commitId);
+    }
+    return commitId.toString();
   }
 
   protected void showWarningWithLink(@NotNull String mainText, @NotNull String linkText, @NotNull Runnable onClick) {

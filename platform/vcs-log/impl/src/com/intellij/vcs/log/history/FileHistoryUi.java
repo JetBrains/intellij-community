@@ -223,8 +223,8 @@ public class FileHistoryUi extends AbstractVcsLogUi {
       super.handleCommitNotFound(commitId, false, rowGetter);
       return;
     }
-    
-    String mainText = "Commit " + commitId.toString() + " does not exist in history for " + myPath.getName();
+
+    String mainText = "Commit " + getCommitPresentation(commitId) + " does not exist in history for " + myPath.getName();
     if (getFilterUi().getFilters().get(VcsLogFilterCollection.BRANCH_FILTER) != null) {
       showWarningWithLink(mainText + " in current branch", "View and Show All Branches", () -> {
         myUiProperties.set(FileHistoryUiProperties.SHOW_ALL_BRANCHES, true);
