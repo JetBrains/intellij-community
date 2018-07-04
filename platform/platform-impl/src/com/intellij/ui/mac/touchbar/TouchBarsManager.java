@@ -11,7 +11,6 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
-import com.intellij.openapi.application.impl.LaterInvocator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ex.EditorEx;
@@ -46,7 +45,7 @@ public class TouchBarsManager {
   private static final Map<Project, ProjectData> ourProjectData = new HashMap<>(); // NOTE: probably it is better to use api of UserDataHolder
   private static final Map<Container, BarContainer> ourTemporaryBars = new HashMap<>();
 
-  public static void initialize() {
+  public static void subscribeProjectManager() {
     if (!isTouchBarAvailable())
       return;
 
@@ -327,7 +326,7 @@ public class TouchBarsManager {
     if (!isTouchBarAvailable())
       return null;
 
-    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    final ModalityState ms = Utils.getCurrentModalityState();
     final BarType btype = ModalityState.NON_MODAL.equals(ms) ? BarType.DIALOG : BarType.MODAL_DIALOG;
     BarContainer bc = null;
 
@@ -453,8 +452,6 @@ public class TouchBarsManager {
   }
 
   private static void _updateCurrentTouchbar() {
-    ApplicationManager.getApplication().assertIsDispatchThread();
-
     final TouchBar top = ourStack.getTopTouchBar();
     if (top != null)
       top.updateActionItems();
