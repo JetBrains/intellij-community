@@ -215,3 +215,31 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
         private val ITEM_KEY = "${JComponentBasedList::class.qualifiedName}.ITEM_KEY"
     }
 }
+
+fun <T : JComponentBasedList.Item, U: Any> JComponentBasedList<T>.reload(
+    newData: Iterable<U>,
+    transform: (U) -> T,
+    isSame: (T, T) -> Boolean
+) {
+    val oldSelectedItem = selectedItem
+
+    removeAll()
+
+    var newSelectedItem: T? = null
+
+    newData.forEach {
+        val item = transform(it)
+
+        add(item)
+
+        if (oldSelectedItem != null && newSelectedItem == null && isSame(item, oldSelectedItem)) {
+            newSelectedItem = item
+        }
+    }
+
+    revalidate()
+
+    selectedItem = newSelectedItem
+}
+
+fun <T : Any> isSameBy(selector: (T) -> Any): (T, T) -> Boolean = { t1, t2 -> selector(t1) == selector(t2) }

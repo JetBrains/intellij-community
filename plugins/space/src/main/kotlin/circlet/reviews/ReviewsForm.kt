@@ -56,26 +56,9 @@ class ReviewsForm(private val project: Project, parentLifetime: Lifetime) :
     }
 
     private fun reload(reviews: List<Review>) {
-        val selectedReviewId = list.selectedItem?.review?.id
-
-        list.removeAll()
-
         val preferredLanguage = project.connection.loginModel?.me?.preferredLanguage
-        var selectedReviewListItem: ReviewListItem? = null
 
-        reviews.forEach { review ->
-            val reviewListItem = ReviewListItem(review, preferredLanguage)
-
-            list.add(reviewListItem)
-
-            if (selectedReviewId != null && selectedReviewListItem == null && review.id == selectedReviewId) {
-                selectedReviewListItem = reviewListItem
-            }
-        }
-
-        list.revalidate()
-
-        list.selectedItem = selectedReviewListItem
+        list.reload(reviews, { ReviewListItem(it, preferredLanguage) }, isSameBy { it.review.id })
     }
 }
 
