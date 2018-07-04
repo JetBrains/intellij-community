@@ -215,7 +215,7 @@ class VariableView(override val variableName: String, private val variable: Vari
     }
 
     var functionValue = value as? FunctionValue
-    if (functionValue != null && functionValue.hasScopes() == ThreeState.NO) {
+    if (functionValue != null && (functionValue.hasScopes() == ThreeState.NO)) {
       functionValue = null
     }
 
@@ -313,7 +313,8 @@ class VariableView(override val variableName: String, private val variable: Vari
 
   fun getValue(): Value? = variable.value
 
-  override fun canNavigateToSource(): Boolean = value is FunctionValue || viewSupport.canNavigateToSource(variable, context)
+  override fun canNavigateToSource(): Boolean = value is FunctionValue && value?.valueString?.contains("[native code]") != true
+                                                || viewSupport.canNavigateToSource(variable, context)
 
   override fun computeSourcePosition(navigatable: XNavigatable) {
     if (value is FunctionValue) {
