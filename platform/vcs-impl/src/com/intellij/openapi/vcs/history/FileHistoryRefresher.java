@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs.history;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FilePath;
@@ -66,32 +67,8 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     myStartingRevisionNumber = startingRevisionNumber;
     mySessionPartner = new FileHistorySessionPartner(vcsHistoryProvider, path, startingRevisionNumber, vcs, this);
 
-    int delayMillis = 20_000;
-    Alarm updateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, mySessionPartner);
-    updateAlarm.addRequest(new Runnable() {
-      Future<?> lastTask;
-
-      public void run() {
-        if (lastTask != null) {
-          lastTask.cancel(false);
-        }
-        if (myVcs.getProject().isDisposed()) {
-          return;
-        }
-
-        updateAlarm.cancelAllRequests();
-        if (updateAlarm.isDisposed()) return;
-        updateAlarm.addRequest(this, delayMillis);
-
-        if (!ApplicationManager.getApplication().isActive()) return;
-
-        lastTask = ourExecutor.submit(() -> {
-          if (!updateAlarm.isDisposed() && mySessionPartner.shouldBeRefreshed()) {
-            ApplicationManager.getApplication().invokeLater(() -> refresh(true));
-          }
-        });
-      }
-    }, delayMillis);
+    RefreshRequest request = new RefreshRequest(20_000, mySessionPartner);
+    request.schedule();
   }
 
   @NotNull
@@ -145,5 +122,41 @@ public class FileHistoryRefresher implements FileHistoryRefresherI {
     }
 
     myFirstTime = false;
+  }
+
+  private class RefreshRequest implements Runnable {
+    @NotNull private final Alarm myUpdateAlarm;
+    private final int myDelayMillis;
+    @Nullable Future<?> myLastTask;
+
+    public RefreshRequest(int delayMillis, @NotNull Disposable parent) {
+      myUpdateAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
+      myDelayMillis = delayMillis;
+    }
+
+    public void run() {
+      if (myLastTask != null) {
+        myLastTask.cancel(false);
+      }
+      if (myVcs.getProject().isDisposed()) {
+        return;
+      }
+
+      myUpdateAlarm.cancelAllRequests();
+      if (myUpdateAlarm.isDisposed()) return;
+      schedule();
+
+      if (!ApplicationManager.getApplication().isActive()) return;
+
+      myLastTask = ourExecutor.submit(() -> {
+        if (!myUpdateAlarm.isDisposed() && mySessionPartner.shouldBeRefreshed()) {
+          ApplicationManager.getApplication().invokeLater(() -> refresh(true));
+        }
+      });
+    }
+
+    public void schedule() {
+      myUpdateAlarm.addRequest(this, myDelayMillis);
+    }
   }
 }
