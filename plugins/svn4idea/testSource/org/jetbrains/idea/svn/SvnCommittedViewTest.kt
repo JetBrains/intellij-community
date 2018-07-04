@@ -188,8 +188,6 @@ class SvnCommittedViewTest : SvnTestCase() {
   private fun assertRevisions(vararg revisions: Pair<Long, List<Data>>) = assertRevisionsInPath("", *revisions)
 
   private fun assertRevisionsInPath(path: String, vararg revisions: Pair<Long, List<Data>>) {
-    vcs.invokeRefreshSvnRoots()
-
     val provider = vcs.committedChangesProvider
     val changeLists = provider.getCommittedChanges(
       provider.createDefaultSettings(), SvnRepositoryLocation(myRepositoryUrl.appendPath(path, false)), 0)
