@@ -3,17 +3,22 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.SeverityRegistrar;
+import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.util.Couple;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.util.containers.ContainerUtil;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.IdentityHashMap;
 import java.util.List;
 
 public class ProblemDescriptorUtil {
@@ -164,5 +169,74 @@ public class ProblemDescriptorUtil {
         return HighlightInfoType.INFORMATION;
     }
     throw new RuntimeException("Cannot map " + highlightType);
+  }
+
+  @NotNull
+  public static ProblemDescriptor[] convertToProblemDescriptors(@NotNull final List<Annotation> annotations, @NotNull final PsiFile file) {
+    if (annotations.isEmpty()) {
+      return ProblemDescriptor.EMPTY_ARRAY;
+    }
+
+    List<ProblemDescriptor> problems = ContainerUtil.newArrayListWithCapacity(annotations.size());
+    IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache = ContainerUtil.newIdentityHashMap();
+    for (Annotation annotation : annotations) {
+      if (annotation.getSeverity() == HighlightSeverity.INFORMATION ||
+          annotation.getStartOffset() == annotation.getEndOffset() && !annotation.isAfterEndOfLine()) {
+        continue;
+      }
+
+      final PsiElement startElement;
+      final PsiElement endElement;
+      if (annotation.getStartOffset() == annotation.getEndOffset() && annotation.isAfterEndOfLine()) {
+        startElement = endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      }
+      else {
+        startElement = file.findElementAt(annotation.getStartOffset());
+        endElement = file.findElementAt(annotation.getEndOffset() - 1);
+      }
+      if (startElement == null || endElement == null) {
+        continue;
+      }
+
+      LocalQuickFix[] quickFixes = toLocalQuickFixes(annotation.getQuickFixes(), quickFixMappingCache);
+      ProblemDescriptor descriptor = new ProblemDescriptorBase(startElement,
+                                                               endElement,
+                                                               annotation.getMessage(),
+                                                               quickFixes,
+                                                               ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+                                                               annotation.isAfterEndOfLine(),
+                                                               null,
+                                                               true,
+                                                               false);
+      problems.add(descriptor);
+    }
+    return problems.toArray(ProblemDescriptor.EMPTY_ARRAY);
+  }
+
+  @NotNull
+  private static LocalQuickFix[] toLocalQuickFixes(@Nullable List<Annotation.QuickFixInfo> fixInfos,
+                                                   @NotNull IdentityHashMap<IntentionAction, LocalQuickFix> quickFixMappingCache) {
+    if (fixInfos == null || fixInfos.isEmpty()) {
+      return LocalQuickFix.EMPTY_ARRAY;
+    }
+    LocalQuickFix[] result = new LocalQuickFix[fixInfos.size()];
+    int i = 0;
+    for (Annotation.QuickFixInfo fixInfo : fixInfos) {
+      IntentionAction intentionAction = fixInfo.quickFix;
+      final LocalQuickFix fix;
+      if (intentionAction instanceof LocalQuickFix) {
+        fix = (LocalQuickFix)intentionAction;
+      }
+      else {
+        LocalQuickFix lqf = quickFixMappingCache.get(intentionAction);
+        if (lqf == null) {
+          lqf = new ExternalAnnotatorInspectionVisitor.LocalQuickFixBackedByIntentionAction(intentionAction);
+          quickFixMappingCache.put(intentionAction, lqf);
+        }
+        fix = lqf;
+      }
+      result[i++] = fix;
+    }
+    return result;
   }
 }
