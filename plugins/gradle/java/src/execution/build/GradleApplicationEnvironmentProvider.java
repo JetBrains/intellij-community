@@ -122,7 +122,8 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     if (environment != null) {
       RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
       assert runnerAndConfigurationSettings != null;
-      ExternalSystemRunConfiguration gradleRunConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
+      ExternalSystemRunConfiguration gradleRunConfiguration =
+        (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
       final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
       if (gradlePath == null) return null;
@@ -174,10 +175,10 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
       gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
 
       // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
-      List<BeforeRunTask<?>> tasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()
-                                                   .filter(task -> task.getProviderId() != CompileStepBeforeRun.ID)
-                                                   .collect(Collectors.toList());
-      RunManagerImpl.getInstanceImpl(project).setBeforeRunTasks(gradleRunConfiguration,tasks);
+      List<BeforeRunTask> tasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()
+                                                .filter(task -> task.getProviderId() != CompileStepBeforeRun.ID)
+                                                .collect(Collectors.toList());
+      gradleRunConfiguration.setBeforeRunTasks(tasks);
       return environment;
     }
     else {
@@ -187,7 +188,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
 
   private static String createEscapedParameters(List<String> parameters, String prefix) {
     StringBuilder result = new StringBuilder();
-    for (String parameter : parameters) {
+    for (String parameter: parameters) {
       if (StringUtil.isEmpty(parameter)) continue;
       String escaped = StringUtil.escapeChars(parameter, '\\', '"', '\'');
       result.append(prefix).append(" '").append(escaped).append("'\n");
