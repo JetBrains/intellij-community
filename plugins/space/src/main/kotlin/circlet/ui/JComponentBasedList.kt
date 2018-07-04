@@ -94,11 +94,7 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
         panel.revalidate()
     }
 
-    private fun select(event: ComponentEvent) {
-        select(event.component)
-    }
-
-    private fun select(newSelectedComponent: Component?) {
+    private fun select(newSelectedComponent: Component?, onSelectNew: (Component) -> Unit = {}) {
         newSelectedComponent?.item?.let { newSelectedItem ->
             if (newSelectedItem !== _selectedItem) {
                 _selectedItem?.selected = false
@@ -111,15 +107,17 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
                     panel.scrollRectToVisible(bounds)
                 }
 
-                IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
-                    IdeFocusManager.getGlobalInstance().requestFocus(newSelectedComponent, true)
-                }
+                onSelectNew(newSelectedComponent)
             }
         }
     }
 
     private fun selectPrevious() {
-        select(getPrevious())
+        selectAndFocus(getPrevious())
+    }
+
+    private fun selectAndFocus(newSelectedComponent: Component?) {
+        select(newSelectedComponent, ::requestFocus)
     }
 
     private fun getPrevious(): Component? = getAdjacent(-1)
@@ -139,17 +137,17 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     }
 
     private fun selectNext() {
-        select(getNext())
+        selectAndFocus(getNext())
     }
 
     private fun getNext(): Component? = getAdjacent(1)
 
     private fun selectFirst() {
-        select(panel.components.firstOrNull())
+        selectAndFocus(panel.components.firstOrNull())
     }
 
     private fun selectLast() {
-        select(panel.components.lastOrNull())
+        selectAndFocus(panel.components.lastOrNull())
     }
 
     private fun scrollPageUp() {
@@ -181,14 +179,17 @@ class JComponentBasedList<T : JComponentBasedList.Item>(parentLifetime: Lifetime
     private inner class MyMouseAdapter : MouseAdapter() {
         override fun mousePressed(e: MouseEvent) {
             if (SwingUtilities.isLeftMouseButton(e)) {
-                select(e)
+                val component = e.component
+
+                select(component)
+                component?.let { requestFocus(it) }
             }
         }
     }
 
     private inner class MyFocusAdapter : FocusAdapter() {
         override fun focusGained(e: FocusEvent) {
-            select(e)
+            select(e.component)
         }
     }
 
@@ -243,3 +244,9 @@ fun <T : JComponentBasedList.Item, U: Any> JComponentBasedList<T>.reload(
 }
 
 fun <T : Any> isSameBy(selector: (T) -> Any): (T, T) -> Boolean = { t1, t2 -> selector(t1) == selector(t2) }
+
+private fun requestFocus(component: Component) {
+    IdeFocusManager.getGlobalInstance().doWhenFocusSettlesDown {
+        IdeFocusManager.getGlobalInstance().requestFocus(component, true)
+    }
+}
