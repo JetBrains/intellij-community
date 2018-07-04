@@ -172,12 +172,12 @@ public class JBDiff {
    * See http://www.cs.lth.se/Research/Algorithms/Papers/jesper5.ps
    *
    * @param I
-   * @param V
    * @param oldBuf
    */
-  private static void qsufsort(int[] I, int[] V, byte[] oldBuf) {
+  private static void qsufsort(int[] I, byte[] oldBuf) {
 
     int oldsize = oldBuf.length;
+    int[] V = new int[oldsize + 1];
 
     int[] buckets = new int[256];
     int i, h, len;
@@ -245,6 +245,11 @@ public class JBDiff {
     for (i = 0; i < oldsize + 1; i++) {
       I[V[i]] = i;
     }
+
+    //free(V)
+    V = null;
+    System.gc();
+
   }
 
   /**
@@ -303,13 +308,8 @@ public class JBDiff {
     int oldsize = oldBuf.length;
 
     int[] I = new int[oldsize + 1];
-    int[] V = new int[oldsize + 1];
 
-    qsufsort(I, V, oldBuf);
-
-    //free(V)
-    V = null;
-    System.gc();
+    qsufsort(I, oldBuf);
 
     byte[] newBuf = Utils.readBytes(newFileIn);
     int newsize = newBuf.length;
@@ -323,25 +323,25 @@ public class JBDiff {
     byte[] eb = new byte[newsize];
 
     /*
-                 * Diff file is composed as follows:
-                 *
-                 * Header (32 bytes)
-                 * Data (from offset 32 to end of file)
-                 *
-                 * Header:
-                 * Offset 0, length 8 bytes: file magic "jbdiff40"
-                 * Offset 8, length 8 bytes: length of ctrl block
-                 * Offset 16, length 8 bytes: length of compressed diff block
-                 * Offset 24, length 8 bytes: length of new file
-                 *
-                 * Data:
-                 * 32  (length ctrlBlockLen): ctrlBlock
-                 * 32+ctrlBlockLen (length diffBlockLen): diffBlock (gziped)
-                 * 32+ctrlBlockLen+diffBlockLen (to end of file): extraBlock (gziped)
-                 *
-                 * ctrlBlock comprises a set of records, each record 12 bytes. A record
-                 * comprises 3 x 32 bit integers. The ctrlBlock is not compressed.
-                 */
+     * Diff file is composed as follows:
+     *
+     * Header (32 bytes)
+     * Data (from offset 32 to end of file)
+     *
+     * Header:
+     * Offset 0, length 8 bytes: file magic "jbdiff40"
+     * Offset 8, length 8 bytes: length of ctrl block
+     * Offset 16, length 8 bytes: length of compressed diff block
+     * Offset 24, length 8 bytes: length of new file
+     *
+     * Data:
+     * 32  (length ctrlBlockLen): ctrlBlock
+     * 32+ctrlBlockLen (length diffBlockLen): diffBlock (gziped)
+     * 32+ctrlBlockLen+diffBlockLen (to end of file): extraBlock (gziped)
+     *
+     * ctrlBlock comprises a set of records, each record 12 bytes. A record
+     * comprises 3 x 32 bit integers. The ctrlBlock is not compressed.
+     */
 
     ByteArrayOutputStream arrayOut = new OpenByteArrayOutputStream();
     DataOutputStream diffOut = new DataOutputStream(arrayOut);
@@ -451,8 +451,8 @@ public class JBDiff {
         eblen += (scan - lenb) - (lastscan + lenf);
 
         /*
-                                  * Write control block entry (3 x int)
-                                  */
+         * Write control block entry (3 x int)
+         */
         diffOut.writeInt(lenf);
         diffOut.writeInt((scan - lenb) - (lastscan + lenf));
         diffOut.writeInt((pos.value - lenb) - (lastpos + lenf));
@@ -464,19 +464,23 @@ public class JBDiff {
       } // end if
     } // end while loop
 
+    //free(I)
+    I = null;
+    System.gc();
+
     GZIPOutputStream gzOut;
 
     /*
-                 * Write diff block
-                 */
+     * Write diff block
+     */
     gzOut = new GZIPOutputStream(diffOut);
     gzOut.write(db, 0, dblen);
     gzOut.finish();
     int diffBlockLen = diffOut.size() - ctrlBlockLen;
 
     /*
-      * Write extra block
-      */
+     * Write extra block
+     */
     gzOut = new GZIPOutputStream(diffOut);
     gzOut.write(eb, 0, eblen);
     gzOut.finish();
