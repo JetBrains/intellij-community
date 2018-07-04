@@ -7,6 +7,7 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.ui.customization.CustomActionsSchema;
 import com.intellij.ide.ui.customization.CustomisedActionGroup;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -211,7 +212,7 @@ class BuildUtils {
 
   static TouchBar createButtonsBar(@NotNull Map<TouchbarDataKeys.DlgButtonDesc, JButton> unorderedButtons) {
     final TouchBar result = new TouchBar("dialog_buttons", false, false, false);
-    final ModalityState ms = LaterInvocator.getCurrentModalityState();
+    final ModalityState ms = Utils.getCurrentModalityState();
 
     // 1. add option buttons (at left)
     byte prio = -1;
@@ -270,8 +271,10 @@ class BuildUtils {
   static TouchBar createScrubberBarFromPopup(@NotNull ListPopupImpl listPopup) {
     final TouchBar result = new TouchBar("popup_scrubber_bar" + listPopup, true, false, true);
 
+    final Application app = ApplicationManager.getApplication();
+    final ModalityState ms = app != null ? LaterInvocator.getCurrentModalityState() : null;
+
     final TBItemScrubber scrub = result.addScrubber();
-    final ModalityState ms = LaterInvocator.getCurrentModalityState();
     @NotNull ListPopupStep listPopupStep = listPopup.getListStep();
     for (Object obj : listPopupStep.getValues()) {
       final Icon ic = listPopupStep.getIconFor(obj);
@@ -284,12 +287,18 @@ class BuildUtils {
           txt = txt.substring(0, pos) + txt.substring(pos + 1);
       }
 
-      final Runnable action = () -> {
+      final Runnable edtAction = () -> {
         listPopup.getList().setSelectedValue(obj, false);
         listPopup.handleSelect(true);
       };
 
-      scrub.addItem(ic, txt, () -> ApplicationManager.getApplication().invokeLater(() -> action.run(), ms));
+      final Runnable action = () -> {
+        if (app == null)
+          SwingUtilities.invokeLater(edtAction);
+        else
+          app.invokeLater(edtAction, ms);
+      };
+      scrub.addItem(ic, txt, action);
     }
 
     result.selectVisibleItemsToShow();
