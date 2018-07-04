@@ -194,7 +194,7 @@ public class FileHistoryPanelImpl extends PanelWithActionsAndCloseButton impleme
 
         lastTask = ourExecutor.submit(() -> {
           if (!updateAlarm.isDisposed() && myHistorySession.shouldBeRefreshed()) {
-            ApplicationManager.getApplication().invokeAndWait(() -> myRefresherI.refresh(true));
+            ApplicationManager.getApplication().invokeLater(() -> myRefresherI.refresh(true));
           }
         });
       }
