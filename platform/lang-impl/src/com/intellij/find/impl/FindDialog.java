@@ -651,16 +651,14 @@ public class FindDialog extends DialogWrapper implements FindUI {
       topOptionsPanel.add(leftOptionsPanel);
     }
 
-    if (myHelper.getModel().isOpenInNewTabVisible()){
-      myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
-      myCbToOpenInNewTab.setFocusable(false);
-      myCbToOpenInNewTab.setSelected(myHelper.isUseSeparateView());
-      myCbToOpenInNewTab.setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
-      myCbToOpenInNewTab.addActionListener(e -> myHelper.setUseSeparateView(myCbToOpenInNewTab.isSelected()));
+    myCbToOpenInNewTab = new JCheckBox(FindBundle.message("find.open.in.new.tab.checkbox"));
+    myCbToOpenInNewTab.setFocusable(false);
+    myCbToOpenInNewTab.setSelected(myHelper.isUseSeparateView());
+    myCbToOpenInNewTab.setEnabled(myHelper.getModel().isOpenInNewTabEnabled());
+    myCbToOpenInNewTab.addActionListener(e -> myHelper.setUseSeparateView(myCbToOpenInNewTab.isSelected()));
 
-      if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
-      resultsOptionPanel.add(myCbToOpenInNewTab);
-    }
+    if (resultsOptionPanel == null) resultsOptionPanel = createResultsOptionPanel(optionsPanel, gbConstraints);
+    resultsOptionPanel.add(myCbToOpenInNewTab);
 
     if (myPreviewSplitter != null) {
       TabbedPane pane = new JBTabsPaneImpl(myProject, SwingConstants.TOP, myDisposable);
