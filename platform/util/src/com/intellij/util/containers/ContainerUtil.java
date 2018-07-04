@@ -2099,8 +2099,11 @@ public class ContainerUtil extends ContainerUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> boolean exists(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
-    return or(Arrays.asList(iterable), condition);
+  public static <T> boolean exists(@NotNull T[] array, @NotNull Condition<? super T> condition) {
+    for (final T t : array) {
+      if (condition.value(t)) return true;
+    }
+    return false;
   }
 
   @Contract(pure=true)
@@ -2110,7 +2113,7 @@ public class ContainerUtil extends ContainerUtilRt {
 
   @Contract(pure=true)
   public static <T> boolean or(@NotNull T[] iterable, @NotNull Condition<? super T> condition) {
-    return or(Arrays.asList(iterable), condition);
+    return exists(iterable, condition);
   }
 
   @Contract(pure=true)
