@@ -29,6 +29,12 @@ public class PythonOverridingBuiltinReferenceResolveProvider implements PyOverri
   @NotNull
   @Override
   public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
+    return resolveName((PyQualifiedElement)element, context);
+  }
+
+  @NotNull
+  @Override
+  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedElement element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
 
     // resolve implicit __class__ inside class function

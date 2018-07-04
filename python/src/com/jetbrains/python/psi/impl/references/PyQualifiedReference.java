@@ -71,6 +71,12 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   @NotNull
   @Override
+  public PyQualifiedExpression getElement() {
+    return (PyQualifiedExpression)super.getElement();
+  }
+
+  @NotNull
+  @Override
   protected List<RatedResolveResult> resolveInner() {
     PyPsiUtils.assertValid(myElement);
     ResolveResultList ret = new ResolveResultList();
@@ -263,7 +269,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     if (qualifier == null) {
       return EMPTY_ARRAY;
     }
-    final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
+    final PyQualifiedElement element = CompletionUtil.getOriginalOrSelf(myElement);
 
     PyType qualifierType = TypeEvalContext.codeCompletion(element.getProject(), element.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
@@ -470,7 +476,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
 
   @NotNull
   protected PyQualifiedReference copyWithResolveContext(PyResolveContext context) {
-    return new PyQualifiedReference(myElement, context);
+    return new PyQualifiedReference(getElement(), context);
   }
 
   private boolean isResolvedToResult(PsiElement element, PsiElement resolveResult) {

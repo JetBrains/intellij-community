@@ -16,10 +16,7 @@
 package com.jetbrains.python.psi.resolve;
 
 import com.jetbrains.python.PyNames;
-import com.jetbrains.python.psi.AccessDirection;
-import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyQualifiedExpression;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
 import com.jetbrains.python.psi.types.TypeEvalContext;
@@ -38,6 +35,12 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
   @NotNull
   @Override
   public List<RatedResolveResult> resolveName(@NotNull PyQualifiedExpression element, @NotNull TypeEvalContext context) {
+    return resolveName((PyQualifiedElement)element, context);
+  }
+
+  @NotNull
+  @Override
+  public List<RatedResolveResult> resolveName(@NotNull PyQualifiedElement element, @NotNull TypeEvalContext context) {
     final String referencedName = element.getReferencedName();
     if (referencedName == null) {
       return Collections.emptyList();
@@ -51,7 +54,7 @@ public class PythonBuiltinReferenceResolveProvider implements PyReferenceResolve
       result.addAll(
         Optional
           .ofNullable(builtinCache.getObjectType())
-          .map(type -> type.resolveMember(referencedName, element, AccessDirection.of(element),
+          .map(type -> type.resolveMember(referencedName, element.getQualifier(), AccessDirection.of(element),
                                           PyResolveContext.noImplicits().withTypeEvalContext(context)))
           .orElse(Collections.emptyList())
       );

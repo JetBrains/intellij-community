@@ -2,6 +2,7 @@
 package com.jetbrains.python.psi.resolve
 
 import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil
+import com.jetbrains.python.psi.PyQualifiedElement
 import com.jetbrains.python.psi.PyQualifiedExpression
 import com.jetbrains.python.psi.types.TypeEvalContext
 
@@ -14,6 +15,10 @@ import com.jetbrains.python.psi.types.TypeEvalContext
 class PyForwardReferenceResolveProvider : PyReferenceResolveProvider {
 
   override fun resolveName(element: PyQualifiedExpression, context: TypeEvalContext): List<RatedResolveResult> {
+    return resolveName(element as PyQualifiedElement, context)
+  }
+
+  override fun resolveName(element: PyQualifiedElement, context: TypeEvalContext): List<RatedResolveResult> {
     if (!PyResolveUtil.allowForwardReferences(element)) {
       return emptyList()
     }
@@ -27,8 +32,5 @@ class PyForwardReferenceResolveProvider : PyReferenceResolveProvider {
     } else emptyList()
   }
 
-  override fun allowsForwardOutgoingReferencesInClass(element: PyQualifiedExpression): Boolean {
-    return PyResolveUtil.allowForwardReferences(element)
-  }
-
+  override fun allowsForwardOutgoingReferencesInClass(element: PyQualifiedElement): Boolean = PyResolveUtil.allowForwardReferences(element)
 }

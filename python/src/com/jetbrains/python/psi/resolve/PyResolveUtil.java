@@ -318,7 +318,7 @@ public class PyResolveUtil {
   /**
    * Check whether forward references are allowed for the given element.
    */
-  public static boolean allowForwardReferences(@NotNull PyQualifiedExpression element) {
+  public static boolean allowForwardReferences(@NotNull PyQualifiedElement element) {
     // Allow forward references in Pyi annotations
     if (PyiUtil.isInsideStubAnnotation(element)) {
       return true;

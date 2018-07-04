@@ -150,11 +150,12 @@ public class PyDocReference extends PyReferenceImpl {
     return null;
   }
 
+  @Override
   @NotNull
   public Object[] getVariants() {
     final ArrayList<Object> ret = Lists.newArrayList(super.getVariants());
-    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
+    final PyQualifiedElement originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedElement element = originalElement != null ? originalElement : myElement;
 
     final ScopeOwner scopeOwner = getHostScopeOwner();
     if (scopeOwner != null) {

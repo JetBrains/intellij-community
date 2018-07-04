@@ -44,10 +44,10 @@ import java.util.function.Supplier;
  * @author yole
  */
 public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference {
-  protected final PyQualifiedExpression myElement;
+  protected final PyQualifiedElement myElement;
   protected final PyResolveContext myContext;
 
-  public PyReferenceImpl(PyQualifiedExpression element, @NotNull PyResolveContext context) {
+  public PyReferenceImpl(PyQualifiedElement element, @NotNull PyResolveContext context) {
     myElement = element;
     myContext = context;
   }
@@ -62,7 +62,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
 
   @NotNull
   @Override
-  public PsiElement getElement() {
+  public PyQualifiedElement getElement() {
     return myElement;
   }
 
@@ -377,7 +377,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return StreamEx.of(elements).allMatch(this::isInOwnScopeComprehension);
   }
 
-  private static boolean allowsForwardOutgoingReferencesInClass(@NotNull PyQualifiedExpression element) {
+  private static boolean allowsForwardOutgoingReferencesInClass(@NotNull PyQualifiedElement element) {
     return ContainerUtil.exists(Extensions.getExtensions(PyReferenceResolveProvider.EP_NAME),
                                 provider -> provider.allowsForwardOutgoingReferencesInClass(element));
   }
@@ -676,8 +676,8 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     final List<LookupElement> ret = Lists.newArrayList();
 
     // Use real context here to enable correct completion and resolve in case of PyExpressionCodeFragment!!!
-    final PyQualifiedExpression originalElement = CompletionUtil.getOriginalElement(myElement);
-    final PyQualifiedExpression element = originalElement != null ? originalElement : myElement;
+    final PyQualifiedElement originalElement = CompletionUtil.getOriginalElement(myElement);
+    final PyQualifiedElement element = originalElement != null ? originalElement : myElement;
     final PsiElement realContext = PyPsiUtils.getRealContext(element);
 
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(element);
@@ -817,9 +817,9 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     return myElement.hashCode();
   }
 
-  protected static Object[] getTypeCompletionVariants(PyExpression pyExpression, PyType type) {
+  protected static Object[] getTypeCompletionVariants(PyElement element, PyType type) {
     ProcessingContext context = new ProcessingContext();
     context.put(PyType.CTX_NAMES, new HashSet<>());
-    return type.getCompletionVariants(pyExpression.getName(), pyExpression, context);
+    return type.getCompletionVariants(element.getName(), element, context);
   }
 }
