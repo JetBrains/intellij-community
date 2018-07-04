@@ -92,8 +92,11 @@ public abstract class AbstractConfigUtils {
   public static String getSDKJarVersion(String jarPath, final Pattern jarPattern, String manifestPath, String versionGroupName) {
     try {
       File[] jars = LibrariesUtil.getFilesInDirectoryByPattern(jarPath, jarPattern);
-      if (jars.length != 1) {
+      if (jars.length == 0) {
         return null;
+      }
+      if (jars.length > 1) {
+        Arrays.sort(jars);
       }
       JarFile jarFile = new JarFile(jars[0]);
       try {
