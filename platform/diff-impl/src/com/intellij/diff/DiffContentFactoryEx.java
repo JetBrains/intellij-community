@@ -25,6 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.nio.charset.Charset;
 
 public abstract class DiffContentFactoryEx extends DiffContentFactory {
   @NotNull
@@ -41,6 +42,12 @@ public abstract class DiffContentFactoryEx extends DiffContentFactory {
   public abstract DiffContent createFromBytes(@Nullable Project project,
                                               @NotNull byte[] content,
                                               @NotNull FilePath filePath) throws IOException;
+
+  @NotNull
+  public abstract DiffContent createFromBytes(@Nullable Project project,
+                                              @NotNull byte[] content,
+                                              @NotNull FilePath filePath,
+                                              @Nullable Charset defaultCharset) throws IOException;
 
   @NotNull
   public abstract DiffContent createFromBytes(@Nullable Project project,
