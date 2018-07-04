@@ -2,11 +2,10 @@
 package org.jetbrains.plugins.gradle.config
 
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider
+import com.intellij.codeInsight.highlighting.ReadWriteAccessDetector
 import com.intellij.openapi.util.Ref
 import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiExpression
 import com.intellij.psi.PsiMember
-import com.intellij.psi.util.PsiUtil
 import com.intellij.usages.impl.rules.UsageType
 import com.intellij.util.Processor
 
@@ -40,16 +39,24 @@ class GradleImplicitUsageProvider : ImplicitUsageProvider {
         return@Processor false
       }
 
-      val refElement = it.element as? PsiExpression ?: return@Processor true
-
-      when (usage) {
-        UsageType.READ -> if (PsiUtil.isAccessedForReading(refElement)) {
+      val readWriteAccessDetector = ReadWriteAccessDetector.findDetector(element) ?: return@Processor true
+      val access = readWriteAccessDetector.getReferenceAccess(it.element, it)
+      when (access) {
+        ReadWriteAccessDetector.Access.ReadWrite -> {
           found.set(true)
           return@Processor false
         }
-        UsageType.WRITE -> if (PsiUtil.isAccessedForWriting(refElement)) {
-          found.set(true)
-          return@Processor false
+        ReadWriteAccessDetector.Access.Read -> {
+          if (usage == UsageType.READ) {
+            found.set(true)
+            return@Processor false
+          }
+        }
+        ReadWriteAccessDetector.Access.Write -> {
+          if (usage == UsageType.WRITE) {
+            found.set(true)
+            return@Processor false
+          }
         }
       }
       true
