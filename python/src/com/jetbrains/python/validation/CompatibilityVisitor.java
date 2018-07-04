@@ -9,7 +9,6 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiWhiteSpace;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.QualifiedName;
@@ -422,12 +421,9 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyAugAssignmentStatement(PyAugAssignmentStatement node) {
     super.visitPyAugAssignmentStatement(node);
-    final PsiElement operation = node.getOperation();
-    if (operation != null) {
-      final IElementType operationType = operation.getNode().getElementType();
-      if (PyTokenTypes.ATEQ.equals(operationType)) {
-        checkMatrixMultiplicationOperator(operation);
-      }
+    final PsiElement operator = node.getPsiOperator();
+    if (operator != null && PyTokenTypes.ATEQ.equals(node.getOperator())) {
+      checkMatrixMultiplicationOperator(operator);
     }
   }
 

@@ -306,9 +306,9 @@ public class PyInlineLocalHandler extends InlineActionHandler {
     assert value != null;
     if (def instanceof PyAugAssignmentStatement) {
       final PyAugAssignmentStatement expression = (PyAugAssignmentStatement)def;
-      final PsiElement operation = expression.getOperation();
-      assert operation != null;
-      final String op = operation.getText().replace('=', ' ');
+      final PsiElement operator = expression.getPsiOperator();
+      assert operator != null;
+      final String op = operator.getText().replace('=', ' ');
       return PyElementGenerator.getInstance(project).createExpressionFromText(localName + " " + op + value.getText() + ")");
     }
     return value;

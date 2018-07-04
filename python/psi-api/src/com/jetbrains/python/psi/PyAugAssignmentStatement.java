@@ -27,6 +27,27 @@ public interface PyAugAssignmentStatement extends PyStatement {
   PyExpression getTarget();
   @Nullable
   PyExpression getValue();
+
+  /**
+   * @deprecated This method will be removed in 2019.1.
+   */
   @Nullable
+  @Deprecated
   PsiElement getOperation();
+
+  /**
+   * @apiNote This method will be marked as abstract in 2019.1.
+   */
+  @Nullable
+  default PyElementType getOperator() {
+    return null;
+  }
+
+  /**
+   * @apiNote This method will be marked as abstract in 2019.1.
+   */
+  @Nullable
+  default PsiElement getPsiOperator() {
+    return getOperation();
+  }
 }

@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.psi.PyAugAssignmentStatement;
+import com.jetbrains.python.psi.PyElementType;
 import com.jetbrains.python.psi.PyElementVisitor;
 import com.jetbrains.python.psi.PyExpression;
 import org.jetbrains.annotations.NotNull;
@@ -29,31 +30,44 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class PyAugAssignmentStatementImpl extends PyElementImpl implements PyAugAssignmentStatement {
-  public PyAugAssignmentStatementImpl(ASTNode astNode) {
+
+  public PyAugAssignmentStatementImpl(@NotNull ASTNode astNode) {
     super(astNode);
   }
 
   @Override
-  protected void acceptPyVisitor(PyElementVisitor pyVisitor) {
+  protected void acceptPyVisitor(@NotNull PyElementVisitor pyVisitor) {
     pyVisitor.visitPyAugAssignmentStatement(this);
   }
 
+  @Override
   @NotNull
   public PyExpression getTarget() {
-    final PyExpression target = childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
-    if (target == null) {
-      throw new RuntimeException("Target missing in augmented assignment statement");
-    }
-    return target;
+    return childToPsiNotNull(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 0);
   }
 
+  @Override
   @Nullable
   public PyExpression getValue() {
     return childToPsi(PythonDialectsTokenSetProvider.INSTANCE.getExpressionTokens(), 1);
   }
 
+  @Override
   @Nullable
   public PsiElement getOperation() {
+    return getPsiOperator();
+  }
+
+  @Nullable
+  @Override
+  public PyElementType getOperator() {
+    final PsiElement psiOperator = getPsiOperator();
+    return psiOperator != null ? (PyElementType)psiOperator.getNode().getElementType() : null;
+  }
+
+  @Nullable
+  @Override
+  public PsiElement getPsiOperator() {
     return PyPsiUtils.getChildByFilter(this, PyTokenTypes.AUG_ASSIGN_OPERATIONS, 0);
   }
 }
