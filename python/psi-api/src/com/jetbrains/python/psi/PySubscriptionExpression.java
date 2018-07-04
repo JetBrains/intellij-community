@@ -26,7 +26,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallSiteExpression, PyReferenceOwner {
+public interface PySubscriptionExpression extends PyQualifiedExpression, PyCallSiteExpression {
 
   @Nullable
   @Override

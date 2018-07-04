@@ -29,8 +29,8 @@ import java.util.List;
  * @author yole
  */
 public interface PyTargetExpression extends PyQualifiedExpression, PsiNamedElement, PsiNameIdentifierOwner, PyDocStringOwner,
-                                            PyQualifiedNameOwner, PyReferenceOwner, StubBasedPsiElement<PyTargetExpressionStub>,
-                                            PyPossibleClassMember, PyTypeCommentOwner, PyAnnotationOwner {
+                                            PyQualifiedNameOwner, StubBasedPsiElement<PyTargetExpressionStub>, PyPossibleClassMember,
+                                            PyTypeCommentOwner, PyAnnotationOwner {
   PyTargetExpression[] EMPTY_ARRAY = new PyTargetExpression[0];
 
   /**

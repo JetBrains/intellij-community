@@ -25,7 +25,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.List;
 import java.util.function.Predicate;
 
-public interface PyReferenceExpression extends PyQualifiedExpression, PyReferenceOwner {
+public interface PyReferenceExpression extends PyQualifiedExpression {
   PyReferenceExpression[] EMPTY_ARRAY = new PyReferenceExpression[0];
 
   /**

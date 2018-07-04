@@ -20,7 +20,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public interface PyPrefixExpression extends PyQualifiedExpression, PyReferenceOwner, PyCallSiteExpression {
+public interface PyPrefixExpression extends PyQualifiedExpression, PyCallSiteExpression {
   @Nullable
   PyExpression getOperand();
   PyElementType getOperator();
