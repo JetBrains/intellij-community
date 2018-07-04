@@ -291,8 +291,8 @@ public class HgBranchPopupActions {
   public static class CurrentBranch extends BranchActions implements PopupElementWithAdditionalInfo {
     public CurrentBranch(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
-               AllIcons.Vcs.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+               AllIcons.Nodes.NotFavoriteOnHover);
     }
 
     @NotNull
@@ -338,8 +338,8 @@ public class HgBranchPopupActions {
 
     public CurrentActiveBookmark(@NotNull Project project, @NotNull List<HgRepository> repositories, @NotNull String branchName) {
       super(project, repositories, branchName);
-      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Vcs.FavoriteOnHover,
-               AllIcons.Vcs.NotFavoriteOnHover);
+      setIcons(DvcsImplIcons.CurrentBranchFavoriteLabel, DvcsImplIcons.CurrentBranchLabel, AllIcons.Nodes.FavoriteOnHover,
+               AllIcons.Nodes.NotFavoriteOnHover);
     }
 
     @NotNull

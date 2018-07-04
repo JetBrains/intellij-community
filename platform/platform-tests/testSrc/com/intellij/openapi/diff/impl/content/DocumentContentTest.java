@@ -19,12 +19,12 @@ import com.intellij.openapi.diff.BaseDiffTestCase;
 import com.intellij.openapi.diff.DocumentContent;
 import com.intellij.openapi.diff.SimpleContent;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
-import com.intellij.openapi.diff.impl.incrementalMerge.MergeTestUtils;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.EditorFactory;
 
 public class DocumentContentTest extends BaseDiffTestCase {
   public void testInitialSync() {
-    Document baseDocument = MergeTestUtils.createDocument("123");
+    Document baseDocument = EditorFactory.getInstance().createDocument("123");
     DocumentContent content = new DocumentContent(myProject, baseDocument);
     content.addListener(SHOULD_NOT_INVALIDATE);
     Document workingDocument = content.getDocument();

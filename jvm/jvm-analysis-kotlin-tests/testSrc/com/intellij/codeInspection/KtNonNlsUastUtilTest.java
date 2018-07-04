@@ -20,8 +20,8 @@ import static com.intellij.codeInspection.NonNlsUastUtil.isNonNlsStringLiteral;
 public class KtNonNlsUastUtilTest extends JavaCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
-    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
     super.setUp();
+    Assume.assumeTrue(KotlinVersion.CURRENT.isAtLeast(1, 2, 60));
   }
 
   @Override

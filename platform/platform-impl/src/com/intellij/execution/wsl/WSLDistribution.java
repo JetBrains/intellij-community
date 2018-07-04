@@ -345,7 +345,7 @@ public class WSLDistribution {
    */
   @Nullable
   public String getWslPath(@NotNull String windowsPath) {
-    if (StringUtil.isChar(windowsPath, 1, ':')) { // normal windows path => /mnt/disk_letter/path
+    if (FileUtil.isWindowsAbsolutePath(windowsPath)) { // absolute windows path => /mnt/disk_letter/path
       return WSL_MNT_ROOT +
              Character.toLowerCase(windowsPath.charAt(0)) +
              FileUtil.toSystemIndependentName(windowsPath.substring(2));
@@ -371,7 +371,7 @@ public class WSLDistribution {
   @Override
   public String toString() {
     return "WSLDistribution{" +
-           "myId='" + getId() + '\'' +
+           "myDescriptor=" + myDescriptor +
            '}';
   }
 
@@ -381,5 +381,22 @@ public class WSLDistribution {
 
   private static String createAdditionalCommand(@NotNull String... commands) {
     return new GeneralCommandLine(commands).getCommandLineString();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    WSLDistribution that = (WSLDistribution)o;
+
+    if (!myDescriptor.equals(that.myDescriptor)) return false;
+
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    return myDescriptor.hashCode();
   }
 }

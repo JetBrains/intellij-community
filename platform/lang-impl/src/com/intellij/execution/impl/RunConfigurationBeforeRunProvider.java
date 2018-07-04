@@ -336,7 +336,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
     @Nullable
     public RunnerAndConfigurationSettings getSettings() {
       Pair<RunnerAndConfigurationSettings, ExecutionTarget> settingsWithTarget = getSettingsWithTarget();
-      return settingsWithTarget == null ? null : settingsWithTarget.first;
+      return Pair.getFirst(settingsWithTarget);
     }
 
     @Nullable

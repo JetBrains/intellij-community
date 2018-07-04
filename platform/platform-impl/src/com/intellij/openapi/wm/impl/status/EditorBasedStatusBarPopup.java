@@ -210,8 +210,11 @@ public abstract class EditorBasedStatusBarPopup extends EditorBasedWidget implem
       if (myStatusBar != null) {
         myStatusBar.updateWidget(ID());
       }
+      afterVisibleUpdate(state);
     }, 200, ModalityState.any());
   }
+
+  protected void afterVisibleUpdate(@NotNull WidgetState state) {}
 
   protected static class WidgetState {
     /**

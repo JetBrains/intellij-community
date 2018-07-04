@@ -15,6 +15,7 @@ import com.intellij.refactoring.util.LambdaRefactoringUtil;
 import com.intellij.util.ArrayUtil;
 import com.siyeh.ig.psiutils.EquivalenceChecker;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.FunctionalExpressionUtils;
 import com.siyeh.ig.psiutils.MethodCallUtils;
 import one.util.streamex.EntryStream;
 import one.util.streamex.StreamEx;
@@ -133,9 +134,7 @@ abstract class FunctionHelper {
   @Nullable
   static FunctionHelper create(PsiExpression expression, int paramCount, boolean allowReturns) {
     if(expression == null) return null;
-    PsiType type = expression instanceof PsiFunctionalExpression
-                   ? ((PsiFunctionalExpression)expression).getFunctionalInterfaceType()
-                   : expression.getType();
+    PsiType type = FunctionalExpressionUtils.getFunctionalExpressionType(expression);
     if(!(type instanceof PsiClassType)) return null;
     PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(type);
     if (interfaceMethod == null || interfaceMethod.getParameterList().getParametersCount() != paramCount) return null;

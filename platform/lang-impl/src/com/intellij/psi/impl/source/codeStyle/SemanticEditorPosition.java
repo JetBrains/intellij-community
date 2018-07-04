@@ -232,7 +232,6 @@ public class SemanticEditorPosition {
     return myIterator.getStart();
   }
 
-  @SuppressWarnings("unused")
   public boolean isAtAnyOf(@NotNull SyntaxElement... syntaxElements) {
     if (!myIterator.atEnd()) {
       SyntaxElement currElement = map(myIterator.getTokenType());

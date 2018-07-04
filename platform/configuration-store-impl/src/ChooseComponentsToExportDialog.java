@@ -4,6 +4,7 @@ package com.intellij.configurationStore;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
@@ -19,7 +20,6 @@ import com.intellij.ui.FieldPanel;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.concurrency.AsyncPromise;
 import org.jetbrains.concurrency.Promise;
@@ -35,12 +35,14 @@ import java.util.*;
 import java.util.List;
 
 public class ChooseComponentsToExportDialog extends DialogWrapper {
+  private static final String DEFAULT_FILE_NAME = "settings.zip";
+  private static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath() + "/") + DEFAULT_FILE_NAME;
+
   private static final Logger LOG = Logger.getInstance(ChooseComponentsToExportDialog.class);
+  public static final String KEY_UNMAKRKED_NAMES = "export.settings.unmarked";
 
   private final ElementsChooser<ComponentElementProperties> myChooser;
   private final FieldPanel myPathPanel;
-  @NonNls
-  public static final String DEFAULT_PATH = FileUtil.toSystemDependentName(PathManager.getConfigPath()+"/"+"settings.jar");
   private final boolean myShowFilePath;
   private final String myDescription;
 
@@ -63,8 +65,9 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     }
     myChooser = new ElementsChooser<>(true);
     myChooser.setColorUnmarkedElements(false);
+    Set<String> unmarkedElementNames = getUnmarkedElementNames();
     for (ComponentElementProperties componentElementProperty : new LinkedHashSet<>(componentToContainingListElement.values())) {
-      myChooser.addElement(componentElementProperty, true, componentElementProperty);
+      myChooser.addElement(componentElementProperty, !unmarkedElementNames.contains(componentElementProperty.toString()), componentElementProperty);
     }
     myChooser.sort(Comparator.comparing(ComponentElementProperties::toString));
 
@@ -85,6 +88,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
 
     setTitle(title);
     init();
+  }
+
+  private static Set<String> getUnmarkedElementNames() {
+    String value = PropertiesComponent.getInstance().getValue(KEY_UNMAKRKED_NAMES);
+    if (StringUtil.isEmpty(value)) {
+      return Collections.emptySet();
+    }
+    return new THashSet<>(StringUtil.split(value.trim(), "|"));
   }
 
   private void updateControls() {
@@ -118,6 +129,14 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
   @Override
   protected void doOKAction() {
     PropertiesComponent.getInstance().setValue("export.settings.path", myPathPanel.getText(), DEFAULT_PATH);
+    List<ComponentElementProperties> unmarked = myChooser.getElements(false);
+    StringBuilder builder = new StringBuilder();
+    for (ComponentElementProperties element : unmarked) {
+      builder.append(element.toString());
+      builder.append("|");
+    }
+    PropertiesComponent.getInstance().setValue(KEY_UNMAKRKED_NAMES, builder.length() == 0 ? null : builder.toString());
+
     super.doOKAction();
   }
 
@@ -153,6 +172,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
     chooserDescriptor.setDescription(description);
     chooserDescriptor.setHideIgnored(false);
     chooserDescriptor.setTitle(title);
+    chooserDescriptor.withFileFilter(ConfigImportHelper::isSettingsFile);
 
     VirtualFile initialDir;
     if (oldPath != null) {
@@ -171,7 +191,7 @@ public class ChooseComponentsToExportDialog extends DialogWrapper {
       public void consume(List<VirtualFile> files) {
         VirtualFile file = files.get(0);
         if (file.isDirectory()) {
-          result.setResult(file.getPath() + '/' + new File(DEFAULT_PATH).getName());
+          result.setResult(file.getPath() + '/' + DEFAULT_FILE_NAME);
         }
         else {
           result.setResult(file.getPath());

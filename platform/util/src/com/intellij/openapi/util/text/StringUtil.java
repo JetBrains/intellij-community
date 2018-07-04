@@ -1079,8 +1079,8 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   @Contract(pure = true)
-  public static String pluralize(@NotNull String base, int n) {
-    if (n == 1) return base;
+  public static String pluralize(@NotNull String base, int count) {
+    if (count == 1) return base;
     return pluralize(base);
   }
 
@@ -1835,7 +1835,11 @@ public class StringUtil extends StringUtilRt {
 
   @Contract(pure = true)
   public static boolean startsWith(@NotNull CharSequence text, int startIndex, @NotNull CharSequence prefix) {
-    int l1 = text.length() - startIndex;
+    int tl = text.length();
+    if (startIndex < 0 || startIndex > tl) {
+      throw new IllegalArgumentException("Index is out of bounds: " + startIndex + ", length: " + tl);
+    }
+    int l1 = tl - startIndex;
     int l2 = prefix.length();
     if (l1 < l2) return false;
 

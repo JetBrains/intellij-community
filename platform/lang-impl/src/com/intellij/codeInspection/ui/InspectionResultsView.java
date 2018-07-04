@@ -157,9 +157,7 @@ public class InspectionResultsView extends JPanel implements Disposable, DataPro
       @Override
       public void onDone(boolean isExcludeAction) {
         if (isExcludeAction) {
-          if (myGlobalInspectionContext.getUIOptions().FILTER_RESOLVED_ITEMS) {
-            myTree.removeSelectedProblems();
-          }
+          myTree.removeSelectedProblems();
           myTree.repaint();
         }
         else {

@@ -6,19 +6,20 @@ Groovy script
     PsiWhiteSpace(' ')
     PsiElement(()('(')
     Traditional FOR clause
-      Parameter
+      Variable definitions
         Modifiers
           <empty list>
         Built in type
           PsiElement(int)('int')
         PsiWhiteSpace(' ')
-        PsiElement(identifier)('i')
-        PsiElement(=)('=')
-        Literal
-          PsiElement(Integer)('0')
-      PsiErrorElement:';' expected, got ','
-        <empty list>
-  PsiElement(,)(',')
+        Variable
+          PsiElement(identifier)('i')
+          PsiElement(=)('=')
+          Literal
+            PsiElement(Integer)('0')
+        PsiElement(,)(',')
+        PsiErrorElement:identifier expected, got '#'
+          <empty list>
   PsiWhiteSpace(' ')
   PsiElement(wrong token)('#')
   PsiElement(,)(',')

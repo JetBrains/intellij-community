@@ -16,10 +16,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.JBPopupMenu;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.IconLoader;
-import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
@@ -184,7 +181,7 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
   @Override
   public void initComponent() {
-    if (myCurrentLaf != null) {
+    if (myCurrentLaf != null && !(myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo)) {
       final UIManager.LookAndFeelInfo laf = findLaf(myCurrentLaf.getClassName());
       if (laf != null) {
         boolean needUninstall = UIUtil.isUnderDarcula();
@@ -420,6 +417,10 @@ public final class LafManagerImpl extends LafManager implements PersistentStateC
 
     if (SystemInfo.isMacOSYosemite) {
       installMacOSXFonts(UIManager.getLookAndFeelDefaults());
+    }
+
+    if (myCurrentLaf instanceof UIThemeBasedLookAndFeelInfo) {
+      ((UIThemeBasedLookAndFeelInfo)myCurrentLaf).dispose();
     }
 
     myCurrentLaf = ObjectUtils.chooseNotNull(lookAndFeelInfo, findLaf(lookAndFeelInfo.getClassName()));

@@ -1,21 +1,26 @@
 // Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.application;
 
+import com.intellij.ide.actions.ImportSettingsFilenameFilter;
 import com.intellij.ide.cloudConfig.CloudConfigProvider;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.startup.StartupActionScriptManager;
 import com.intellij.idea.Main;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.ReflectionUtil;
+import com.intellij.util.io.ZipUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.io.File;
+import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.StringReader;
 import java.util.ArrayList;
@@ -24,6 +29,8 @@ import java.util.PropertyResourceBundle;
 import java.util.function.Function;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.zip.ZipEntry;
+import java.util.zip.ZipInputStream;
 
 import static com.intellij.openapi.util.Pair.pair;
 
@@ -73,6 +80,31 @@ public class ConfigImportHelper {
    */
   public static boolean isFirstSession() {
     return Boolean.getBoolean(FIRST_SESSION_KEY);
+  }
+
+  /**
+   * Simple check by file type, content is not checked.
+   */
+  public static boolean isSettingsFile(@NotNull VirtualFile file) {
+    return ArchiveFileType.INSTANCE.equals(file.getFileType());
+  }
+
+  public static boolean isValidSettingsFile(@NotNull File file) {
+    try (ZipInputStream zipStream = new ZipInputStream(new FileInputStream(file))) {
+      while (true) {
+        ZipEntry entry = zipStream.getNextEntry();
+        if (entry == null) {
+          break;
+        }
+
+        if (entry.getName().equals(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
+          return true;
+        }
+      }
+    }
+    catch (IOException ignore) {
+    }
+    return false;
   }
 
   /**
@@ -138,7 +170,7 @@ public class ConfigImportHelper {
   }
 
   @Nullable
-  private static Pair<File, File> findConfigDirectoryByPath(File selectedDir) {
+  private static Pair<File, File> findConfigDirectoryByPath(@NotNull File selectedDir) {
     // tries to map a user selection into a valid config directory
     // returns a pair of a config directory and an IDE home (when a user pointed to it; null otherwise)
 
@@ -288,6 +320,11 @@ public class ConfigImportHelper {
     }
 
     try {
+      if (oldConfigDir.isFile()) {
+        ZipUtil.extract(oldConfigDir, newConfigDir, null);
+        return;
+      }
+
       // copy everything including plugins (the plugin manager will sort out incompatible ones)
       FileUtil.copyDir(oldConfigDir, newConfigDir);
 

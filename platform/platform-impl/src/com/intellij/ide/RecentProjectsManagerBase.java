@@ -549,7 +549,6 @@ public abstract class RecentProjectsManagerBase extends RecentProjectsManager im
   }
 
   @Nullable
-  @SuppressWarnings("unused")
   protected String getRecentProjectMetadata(@SystemIndependent String path, @NotNull Project project) {
     return null;
   }

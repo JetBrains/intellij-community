@@ -14,9 +14,8 @@ import org.junit.Rule
 import org.junit.rules.ErrorCollector
 import org.junit.rules.TemporaryFolder
 import org.junit.rules.TestName
-import java.io.File
 import java.nio.file.Files
-import java.nio.file.Paths
+import java.nio.file.Path
 
 open class GuiTestCaseExt : GuiTestCase() {
 
@@ -251,13 +250,12 @@ fun GuiTestCase.checkRunGutterIcons(expectedNumberOfRunIcons: Int, expectedRunLi
   }
 }
 
-fun GuiTestCase.checkFileExists(filePath: String){
+fun GuiTestCase.checkFileExists(filePath: Path) {
   logTestStep("Going to check whether file `$filePath` created")
-  assert(File(filePath).exists()) { "Can't find a file `$filePath`" }
+  assert(filePath.toFile().exists()) { "Can't find a file `$filePath`" }
 }
 
-fun GuiTestCase.checkFileContainsLine(filePath: String, line: String){
-  val inputFile = Paths.get(filePath)
-  logTestStep("Going to check whether ${inputFile.fileName} contains line `$line`")
-  assert(Files.readAllLines(inputFile).contains(line)) { "Line `$line` not found" }
+fun GuiTestCase.checkFileContainsLine(filePath: Path, line: String) {
+  logTestStep("Going to check whether ${filePath.fileName} contains line `$line`")
+  assert(Files.readAllLines(filePath).contains(line)) { "Line `$line` not found" }
 }

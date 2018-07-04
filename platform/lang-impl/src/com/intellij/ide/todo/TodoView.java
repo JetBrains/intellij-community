@@ -230,10 +230,11 @@ public class TodoView implements PersistentStateComponent<TodoView.State>, Dispo
         return expander != null && expander.canCollapse();
       }
     };
-
-    ((ToolWindowEx)toolWindow)
-      .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
-                       CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
+    //CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent());
+    //CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent());
+    //((ToolWindowEx)toolWindow)
+    //  .setTitleActions(CommonActionsManager.getInstance().createExpandAllAction(proxyExpander, toolWindow.getComponent()),
+    //                   CommonActionsManager.getInstance().createCollapseAllAction(proxyExpander, toolWindow.getComponent()));
   }
 
   @NotNull

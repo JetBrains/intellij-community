@@ -336,13 +336,13 @@ public abstract class LocalToFieldHandler {
 
         switch (finalInitializerPlace) {
           case IN_FIELD_DECLARATION:
-            appendComments(declarationStatement, myField);
+            appendComments(declarationStatement, myField, myLocal.getInitializer());
             declarationStatement.delete();
             break;
 
           case IN_CURRENT_METHOD:
             PsiExpressionStatement statement = createAssignment(myLocal, myFieldName, factory);
-            appendComments(declarationStatement, declarationStatement);
+            appendComments(declarationStatement, declarationStatement, myLocal.getInitializer());
             if (declarationStatement instanceof PsiDeclarationStatement) {
               declarationStatement.replace(statement);
             } else {
@@ -385,9 +385,16 @@ public abstract class LocalToFieldHandler {
   }
 
   private static void appendComments(PsiElement declarationStatement, PsiElement element) {
+    appendComments(declarationStatement, element, null);
+  }
+
+  private static void appendComments(PsiElement declarationStatement, PsiElement element, PsiElement unchanged) {
     final Collection<PsiComment> comments = PsiTreeUtil.findChildrenOfType(declarationStatement, PsiComment.class);
     final PsiElement parent = element.getParent();
     for (PsiComment comment : comments) {
+      if (PsiTreeUtil.isAncestor(unchanged, comment, false)) {
+        continue;
+      }
       parent.addBefore(comment, element);
     }
   }

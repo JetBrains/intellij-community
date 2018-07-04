@@ -477,8 +477,15 @@ public class ExpressionUtils {
     return false;
   }
 
+  /**
+   * Returns true if given expression is an operand of String concatenation.
+   * Also works if expression parent is {@link PsiParenthesizedExpression}.
+   *
+   * @param expression expression to check
+   * @return true if given expression is an operand of String concatenation
+   */
   public static boolean isStringConcatenationOperand(PsiExpression expression) {
-    final PsiElement parent = expression.getParent();
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(expression.getParent());
     if (!(parent instanceof PsiPolyadicExpression)) {
       return false;
     }
@@ -492,7 +499,8 @@ public class ExpressionUtils {
     if (operands.length < 2) {
       return false;
     }
-    final int index = ArrayUtil.indexOf(operands, expression);
+    final int index = ArrayUtil.indexOf(operands, expression, (operand, e) ->
+      operand == e || PsiTreeUtil.isAncestor(operand, e, false));
     for (int i = 0; i < index; i++) {
       final PsiType type = operands[i].getType();
       if (TypeUtils.isJavaLangString(type)) {

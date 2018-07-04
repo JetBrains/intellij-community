@@ -29,7 +29,6 @@ import com.siyeh.ig.callMatcher.CallMatcher;
 import com.siyeh.ig.psiutils.ComparisonUtils;
 import com.siyeh.ig.psiutils.EqualityCheck;
 import com.siyeh.ig.psiutils.ImportUtils;
-import com.siyeh.ig.psiutils.TypeUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -278,7 +277,9 @@ public abstract class SimplifiableAssertionInspection extends BaseInspection {
       else {
         buf.append(lhs.getText()).append(',').append(rhs.getText());
       }
-      if (TypeUtils.hasFloatingPointType(lhs) || TypeUtils.hasFloatingPointType(rhs) ||
+
+      if (lhsType != null && TypeConversionUtil.isFloatOrDoubleType(lhsType.getDeepComponentType()) ||
+          rhsType != null && TypeConversionUtil.isFloatOrDoubleType(rhsType.getDeepComponentType()) ||
           isPrimitiveAndBoxedFloat(lhsType, rhsType) || isPrimitiveAndBoxedFloat(rhsType, lhsType)) {
         buf.append(",0.0");
       }

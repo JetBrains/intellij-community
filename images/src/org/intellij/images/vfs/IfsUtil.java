@@ -95,7 +95,7 @@ public final class IfsUtil {
           catch (ImageReadException ignore) { }
         }
 
-        if (isScalableImage(file)) {
+        if (isSVG(file)) {
           final Ref<URL> url = Ref.create();
           try {
             url.set(new File(file.getPath()).toURI().toURL());
@@ -176,8 +176,8 @@ public final class IfsUtil {
     return SoftReference.dereference(imageProviderRef);
   }
 
-  private static boolean isScalableImage(@NotNull VirtualFile file) {
-    return SVG_FORMAT.equalsIgnoreCase(file.getExtension());
+  public static boolean isSVG(@Nullable VirtualFile file) {
+    return file != null && SVG_FORMAT.equalsIgnoreCase(file.getExtension());
   }
 
   @Nullable

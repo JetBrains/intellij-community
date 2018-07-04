@@ -294,10 +294,21 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     assert containingClass != null;
     final PsiModifierList classModifiers = containingClass.getModifierList();
     if (classModifiers != null && (classModifiers.hasModifierProperty(PsiModifier.PRIVATE) || classModifiers.hasModifierProperty(PsiModifier.PACKAGE_LOCAL))) {
-      return doAddLanguageAnnotation(project, parameterIndex >= 0? psiMethod.getParameterList().getParameters()[parameterIndex] : psiMethod,
+      return doAddLanguageAnnotation(project, parameterIndex >= 0 ? psiMethod.getParameterList().getParameters()[parameterIndex] : psiMethod,
                                      host, languageId);
     }
 
+    final MethodParameterInjection injection = makeParameterInjection(psiMethod, parameterIndex, languageId);
+    doEditInjection(project, injection, psiMethod);
+    return true;
+  }
+
+  @NotNull
+  public static MethodParameterInjection makeParameterInjection(@NotNull PsiMethod psiMethod,
+                                                                int parameterIndex,
+                                                                @NotNull String languageId) {
+    final PsiClass containingClass = psiMethod.getContainingClass();
+    assert containingClass != null;
     final String className = containingClass.getQualifiedName();
     assert className != null;
     final MethodParameterInjection injection = new MethodParameterInjection();
@@ -312,8 +323,7 @@ public class JavaLanguageInjectionSupport extends AbstractLanguageInjectionSuppo
     }
     injection.setMethodInfos(Collections.singletonList(info));
     injection.generatePlaces();
-    doEditInjection(project, injection, psiMethod);
-    return true;
+    return injection;
   }
 
   static int findParameterIndex(final PsiElement target, final PsiExpressionList parent) {

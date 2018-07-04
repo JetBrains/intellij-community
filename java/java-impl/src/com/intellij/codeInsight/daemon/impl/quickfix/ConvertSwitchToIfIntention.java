@@ -296,6 +296,7 @@ public class ConvertSwitchToIfIntention implements IntentionAction {
   }
 
   private static void appendElement(PsiElement element, @NonNls StringBuilder out, CommentTracker commentTracker) {
+    if (element instanceof PsiWhiteSpace) return;
     if (element instanceof PsiBreakStatement) {
       final PsiBreakStatement breakStatement = (PsiBreakStatement)element;
       final PsiIdentifier identifier = breakStatement.getLabelIdentifier();

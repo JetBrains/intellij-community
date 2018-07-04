@@ -2005,10 +2005,6 @@
                      key="string.concatenation.inside.string.buffer.append.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.siyeh.ig.performance.StringConcatenationInsideStringBufferAppendInspection"/>
-    <localInspection groupPath="Java" language="JAVA" suppressId="RedundantStringConstructorCall" shortName="StringConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
-                     key="string.constructor.display.name" groupBundle="messages.InspectionsBundle"
-                     groupKey="group.names.performance.issues" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.siyeh.ig.performance.StringConstructorInspection"/>
     <localInspection groupPath="Java" language="JAVA" shortName="StringEqualsEmptyString" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="string.equals.empty.string.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.performance.issues" enabledByDefault="false" level="WARNING"

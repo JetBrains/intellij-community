@@ -325,7 +325,7 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "pockets", attachedTo: "intellij.python.helpers", version: "0.3.2", license: "BSD", url: "http://pockets.readthedocs.org/"),
     new LibraryLicense(name: "protobuf", version: "2.5.0", license: "New BSD", url: "http://code.google.com/p/protobuf/",
                        licenseUrl: "https://github.com/google/protobuf/blob/master/LICENSE"),
-    new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.4", license: "Apache 2.0",
+    new LibraryLicense(name: "Proxy Vole", libraryName: "proxy-vole", version: "1.0.5", license: "Apache 2.0",
                        url: "https://github.com/MarkusBernhardt/proxy-vole", licenseUrl: "https://github.com/MarkusBernhardt/proxy-vole/blob/master/LICENSE.md"),
     new LibraryLicense(name: "pty4j", libraryName: "pty4j", version: "0.7.5", license: "Eclipse Public License v1.0",
                        url: "https://github.com/traff/pty4j"),
@@ -426,10 +426,8 @@ class CommunityLibraryLicenses {
     new LibraryLicense(name: "JetBrains Annotations for Java 5", libraryName: "jetbrains-annotations-java5", version: "16.0.1", license: "Apache 2.0",
                        url: "https://github.com/JetBrains/java-annotations"),
 
-    new LibraryLicense(name: "Rhino JavaScript Engine", libraryName: "rhino", version: "1.7.8", license: "MPL 1.1",
-                       url: "http://www.mozilla.org/rhino/", licenseUrl: "http://www.mozilla.org/MPL/MPL-1.1.html"),
-    new LibraryLicense(name: "delight-rhino-sandbox", libraryName: "delight-rhino-sandbox", version: "0.0.6", license: "Apache 2.0",
-                       url: "https://github.com/javadelight/delight-rhino-sandbox", licenseUrl: "https://github.com/javadelight/delight-rhino-sandbox/blob/master/LICENSE.TXT"),
+    new LibraryLicense(name: "delight-nashorn-sandbox", libraryName: "delight-nashorn-sandbox", version: "0.1.15", license: "Apache 2.0",
+                       url: "https://github.com/javadelight/delight-nashorn-sandbox", licenseUrl: "https://github.com/javadelight/delight-nashorn-sandbox/blob/master/LICENSE.TXT"),
 
     new LibraryLicense(name: "error-prone-annotations", libraryName: "error-prone-annotations", version: "2.3.1", license: "Apache 2.0",
                        url: "https://github.com/google/error-prone", licenseUrl: "https://github.com/google/error-prone/blob/master/COPYING"),

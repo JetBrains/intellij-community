@@ -1,21 +1,5 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
-
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.plugins.groovy.lang.completion;
-
 
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.TailTypes;
@@ -27,10 +11,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
 import com.intellij.lang.ASTNode;
-import com.intellij.patterns.ElementPattern;
-import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.PsiJavaPatterns;
-import com.intellij.patterns.StandardPatterns;
+import com.intellij.patterns.*;
 import com.intellij.psi.*;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -43,7 +24,9 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
+import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationNameValuePair;
@@ -67,6 +50,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+
+import static com.intellij.patterns.PlatformPatterns.psiElement;
 
 /**
  * @author ilyas
@@ -208,8 +193,9 @@ public class GroovyCompletionData {
   }
 
   private static boolean isAfterForParameter(PsiElement position) {
-    ElementPattern<PsiElement> forParameter =
-      PsiJavaPatterns.psiElement().withParents(GrParameter.class, GrTraditionalForClause.class, GrForStatement.class);
+    ElementPattern<PsiElement> forParameter = PsiJavaPatterns.psiElement().withParents(
+      GrVariable.class, GrVariableDeclaration.class, GrTraditionalForClause.class, GrForStatement.class
+    );
     return PsiJavaPatterns.psiElement().withParent(GrReferenceExpression.class).afterLeaf(forParameter).accepts(position) ||
            forParameter.accepts(position) && PsiJavaPatterns.psiElement().afterLeaf(PsiJavaPatterns.psiElement(GroovyTokenTypes.mIDENT)).accepts(position);
   }
@@ -306,6 +292,9 @@ public class GroovyCompletionData {
     }
     if (afterIfOrElse(context)) {
       result.addElement(keyword(PsiKeyword.ELSE, TailType.HUMBLE_SPACE_BEFORE_WORD));
+    }
+    if (WHILE_KEYWORD_POSITION.accepts(context)) {
+      result.addElement(keyword(PsiKeyword.WHILE, TailTypes.WHILE_LPARENTH));
     }
 
     if (isCommandCallWithOneArg(context)) {
@@ -591,6 +580,15 @@ public class GroovyCompletionData {
     }
     return false;
   }
+
+  private static final ElementPattern<PsiElement> SKIP_CONDITION = StandardPatterns.or(
+    psiElement().whitespaceCommentEmptyOrError(),
+    psiElement(GroovyElementTypes.NL)
+  );
+
+  private static final PsiElementPattern<?, ?> WHILE_KEYWORD_POSITION = psiElement()
+    .withSuperParent(2, GrDoWhileStatement.class)
+    .afterLeafSkipping(SKIP_CONDITION, psiElement(GroovyElementTypes.T_RBRACE));
 
   private static boolean afterAbstractMethod(PsiElement context, boolean acceptAnnotationMethods, boolean skipNLs) {
     PsiElement candidate;

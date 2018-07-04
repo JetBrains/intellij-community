@@ -17,7 +17,6 @@ import com.intellij.debugger.jdi.EmptyConnectorArgument;
 import com.intellij.debugger.jdi.StackFrameProxyImpl;
 import com.intellij.debugger.jdi.ThreadReferenceProxyImpl;
 import com.intellij.debugger.jdi.VirtualMachineProxyImpl;
-import com.intellij.debugger.settings.CapturePoint;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.settings.NodeRendererSettings;
 import com.intellij.debugger.ui.breakpoints.BreakpointManager;
@@ -132,8 +131,6 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
   private final Alarm myStatusUpdateAlarm = new Alarm();
 
   private final ThreadBlockedMonitor myThreadBlockedMonitor = new ThreadBlockedMonitor(this, myDisposable);
-
-  private List<CapturePoint> myAgentInsertPoints = Collections.emptyList();
 
   protected DebugProcessImpl(Project project) {
     myProject = project;
@@ -2202,14 +2199,5 @@ public abstract class DebugProcessImpl extends UserDataHolderBase implements Deb
 
   static boolean isResumeOnlyCurrentThread() {
     return DebuggerSettings.getInstance().RESUME_ONLY_CURRENT_THREAD;
-  }
-
-  @NotNull
-  public List<CapturePoint> getAgentInsertPoints() {
-    return myAgentInsertPoints;
-  }
-
-  public void setAgentInsertPoints(@NotNull List<CapturePoint> agentInsertPoints) {
-    myAgentInsertPoints = agentInsertPoints;
   }
 }

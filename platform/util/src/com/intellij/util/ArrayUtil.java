@@ -754,7 +754,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Contract(pure=true)
-  public static <T> int lastIndexOf(@NotNull final T[] src, final T obj) {
+  public static <T> int lastIndexOf(@NotNull final T[] src, @Nullable final T obj) {
     for (int i = src.length - 1; i >= 0; i--) {
       final T o = src[i];
       if (o == null) {
@@ -899,27 +899,28 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @Nullable
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static <T> T[] copyOf(@Nullable T[] original) {
     if (original == null) return null;
     return Arrays.copyOf(original, original.length);
   }
 
   @Nullable
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static boolean[] copyOf(@Nullable boolean[] original) {
     if (original == null) return null;
     return original.length == 0 ? EMPTY_BOOLEAN_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @Nullable
-  @Contract("null -> null; !null -> !null")
+  @Contract(value = "null -> null; !null -> !null", pure = true)
   public static int[] copyOf(@Nullable int[] original) {
     if (original == null) return null;
     return original.length == 0 ? EMPTY_INT_ARRAY : Arrays.copyOf(original, original.length);
   }
 
   @NotNull
+  @Contract(pure = true)
   public static <T> T[] stripTrailingNulls(@NotNull T[] array) {
     return array.length != 0 && array[array.length-1] == null ? Arrays.copyOf(array, trailingNullsIndex(array)) : array;
   }
@@ -962,6 +963,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return middlePartLength == 0 ? 0 : total / middlePartLength;
   }
 
+  @Contract(pure = true)
   public static int min(int[] values) {
     int min = Integer.MAX_VALUE;
     for (int value : values) {

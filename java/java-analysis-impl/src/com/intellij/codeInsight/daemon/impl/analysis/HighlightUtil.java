@@ -2594,7 +2594,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (element instanceof PsiClass) {
       String name = ((PsiClass)element).getName();
       Pair<PsiImportStaticReferenceElement, PsiClass> imported = importedClasses.get(name);
-      PsiClass importedClass = imported == null ? null : imported.getSecond();
+      PsiClass importedClass = Pair.getSecond(imported);
       if (importedClass != null && !containingFile.getManager().areElementsEquivalent(importedClass, element)) {
         String description = JavaErrorMessages.message("single.import.class.conflict", formatClass(importedClass));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(statement).descriptionAndTooltip(description).create();

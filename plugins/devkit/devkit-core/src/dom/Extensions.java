@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.devkit.dom;
 
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.xml.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -23,6 +24,10 @@ import org.jetbrains.idea.devkit.dom.impl.ExtensionNsConverter;
 import java.util.List;
 
 public interface Extensions extends DomElement {
+
+  @NotNull
+  @Override
+  XmlTag getXmlTag();
 
   @NonNls
   String DEFAULT_PREFIX = "com.intellij";

@@ -236,6 +236,15 @@ public abstract class TextFieldWithPopupHandlerUI extends BasicTextFieldUI imple
     POPUP, CLEAR, NEWLINE
   }
 
+  @NotNull
+  public Point getExtensionIconLocation(@NotNull final Extension extension) {
+    final IconHolder iconHolder = icons.get(extension.toString());
+    if (iconHolder == null) {
+      throw new IllegalArgumentException("Unknown extension");
+    }
+    return iconHolder.bounds.getLocation();
+  }
+
   /**
    * Default handler for mouse moved, mouse clicked, property changed and document modified.
    */

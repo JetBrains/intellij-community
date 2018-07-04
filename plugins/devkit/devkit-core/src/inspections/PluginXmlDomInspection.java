@@ -191,24 +191,58 @@ public class PluginXmlDomInspection extends BasicDomElementsInspection<IdeaPlugi
       holder.createProblem(extensionPoint, DevKitBundle.message("inspections.plugin.xml.ep.doesnt.have.with"), new AddWithTagFix());
     }
 
-    GenericAttributeValue<String> name = extensionPoint.getName();
-    if (!isValidEpName(name)) {
-      String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
-                                            DevKitBundle.message("inspections.plugin.xml.invalid.ep.name"),
-                                            name.getValue());
-      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING, message, null);
-    }
-    GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
-    if (!isValidEpName(qualifiedName)) {
-      String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
-                                            DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualifiedName"),
-                                            name.getValue());
-      holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING, message, null);
-    }
+    checkEpBeanClassAndInterface(extensionPoint, holder);
+    checkEpNameAndQualifiedName(extensionPoint, holder);
 
     Module module = extensionPoint.getModule();
     if (ComponentModuleRegistrationChecker.isIdeaPlatformModule(module)) {
       ComponentModuleRegistrationChecker.checkProperModule(extensionPoint, holder, myRegistrationCheckIgnoreClassList);
+    }
+  }
+
+  private static void checkEpBeanClassAndInterface(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    boolean hasBeanClass = DomUtil.hasXml(extensionPoint.getBeanClass());
+    boolean hasInterface = DomUtil.hasXml(extensionPoint.getInterface());
+    if (hasBeanClass && hasInterface) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.both.beanClass.and.interface"), null);
+    }
+    else if (!hasBeanClass && !hasInterface) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.beanClass.and.interface"), null);
+    }
+  }
+
+  private static void checkEpNameAndQualifiedName(ExtensionPoint extensionPoint, DomElementAnnotationHolder holder) {
+    GenericAttributeValue<String> name = extensionPoint.getName();
+    GenericAttributeValue<String> qualifiedName = extensionPoint.getQualifiedName();
+    boolean hasName = DomUtil.hasXml(name);
+    boolean hasQualifiedName = DomUtil.hasXml(qualifiedName);
+
+    if (hasName && hasQualifiedName) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.both.name.and.qualifiedName"), null);
+    }
+    else if (!hasName && !hasQualifiedName) {
+      holder.createProblem(extensionPoint, ProblemHighlightType.GENERIC_ERROR,
+                           DevKitBundle.message("inspections.plugin.xml.ep.missing.name.and.qualifiedName"), null);
+    }
+
+    if (hasQualifiedName) {
+      if (!isValidEpName(qualifiedName)) {
+        String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
+                                              DevKitBundle.message("inspections.plugin.xml.invalid.ep.qualifiedName"),
+                                              qualifiedName.getValue());
+        holder.createProblem(qualifiedName, ProblemHighlightType.WEAK_WARNING, message, null);
+      }
+      return;
+    }
+
+    if (hasName && !isValidEpName(name)) {
+      String message = DevKitBundle.message("inspections.plugin.xml.invalid.ep.name.description",
+                                            DevKitBundle.message("inspections.plugin.xml.invalid.ep.name"),
+                                            name.getValue());
+      holder.createProblem(name, ProblemHighlightType.WEAK_WARNING, message, null);
     }
   }
 

@@ -19,6 +19,7 @@ import java.nio.file.LinkOption;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 
@@ -49,15 +50,17 @@ public class WSLUtil {
   };
 
   /**
-   * @return
+   * @return true if there are distributions available for usage
    */
   public static boolean hasAvailableDistributions() {
-    return getAvailableDistributions().size() > 0;
+    return !getAvailableDistributions().isEmpty();
   }
 
 
   /**
    * @return list of installed WSL distributions
+   * @apiNote order of entries depends on configuration file and may change between launches.
+   * @see WSLDistributionService
    */
   @NotNull
   public static List<WSLDistribution> getAvailableDistributions() {
@@ -66,11 +69,16 @@ public class WSLUtil {
     final Path executableRoot = getExecutableRootPath();
     if (executableRoot == null) return Collections.emptyList();
 
-    List<WslDistributionDescriptor> descriptors = WSLDistributionService.getInstance().getDescriptors();
+    Collection<WslDistributionDescriptor> descriptors = WSLDistributionService.getInstance().getDescriptors();
     final List<WSLDistribution> result = new ArrayList<>(descriptors.size() + 1 /* LEGACY_WSL */);
 
     for (WslDistributionDescriptor descriptor: descriptors) {
-      final Path executablePath = executableRoot.resolve(descriptor.getExeName());
+
+      Path executablePath = Paths.get(descriptor.getExecutablePath());
+      if (!executablePath.isAbsolute()) {
+        executablePath = executableRoot.resolve(executablePath);
+      }
+
       if (Files.exists(executablePath, LinkOption.NOFOLLOW_LINKS)) {
         result.add(new WSLDistribution(descriptor, executablePath));
       }
@@ -78,7 +86,7 @@ public class WSLUtil {
     // add legacy WSL if it's available
     ContainerUtil.addIfNotNull(result, WSLDistributionLegacy.getInstance());
 
-    return Collections.unmodifiableList(result);
+    return result;
   }
 
   /**
@@ -123,21 +131,21 @@ public class WSLUtil {
 
   /**
    * @return Windows-dependent path for a file, pointed by {@code wslPath} in WSL or null if path is unmappable.
-   *         For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "C:\Users\file.txt"}
+   *         For example, {@code getWindowsPath("/mnt/c/Users/file.txt") returns "c:\Users\file.txt"}
    */
   @Nullable
   public static String getWindowsPath(@NotNull String wslPath) {
-    if (!wslPath.startsWith(WSLDistribution.WSL_MNT_ROOT) || wslPath.length() <= WSLDistribution.WSL_MNT_ROOT.length()) {
+    if (!wslPath.startsWith(WSLDistribution.WSL_MNT_ROOT)) {
       return null;
     }
-    int driveIndex = WSLDistribution.WSL_MNT_ROOT.length();
-    if (!Character.isLetter(wslPath.charAt(driveIndex))) {
+    int driveLetterIndex = WSLDistribution.WSL_MNT_ROOT.length();
+    if (driveLetterIndex >= wslPath.length() || !Character.isLetter(wslPath.charAt(driveLetterIndex))) {
       return null;
     }
-    int slashIndex = driveIndex + 1;
+    int slashIndex = driveLetterIndex + 1;
     if (slashIndex < wslPath.length() && wslPath.charAt(slashIndex) != '/') {
       return null;
     }
-    return FileUtil.toSystemDependentName(wslPath.charAt(driveIndex) + ":" + wslPath.substring(slashIndex));
+    return FileUtil.toSystemDependentName(wslPath.charAt(driveLetterIndex) + ":" + wslPath.substring(slashIndex));
   }
 }

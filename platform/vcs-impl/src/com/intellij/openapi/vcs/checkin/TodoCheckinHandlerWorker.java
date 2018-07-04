@@ -1,26 +1,11 @@
-/*
- * Copyright 2000-2014 JetBrains s.r.o.
- *
- * Licensed under the Apache License, Version 2.0 (the "License");
- * you may not use this file except in compliance with the License.
- * You may obtain a copy of the License at
- *
- * http://www.apache.org/licenses/LICENSE-2.0
- *
- * Unless required by applicable law or agreed to in writing, software
- * distributed under the License is distributed on an "AS IS" BASIS,
- * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
- * See the License for the specific language governing permissions and
- * limitations under the License.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.openapi.vcs.checkin;
 
 import com.intellij.diff.comparison.ComparisonManager;
 import com.intellij.diff.comparison.ComparisonPolicy;
 import com.intellij.diff.comparison.DiffTooBigException;
 import com.intellij.diff.fragments.LineFragment;
-import com.intellij.diff.util.DiffUtil;
-import com.intellij.diff.util.TextDiffType;
+import com.intellij.ide.todo.TodoConfiguration;
 import com.intellij.ide.todo.TodoFilter;
 import com.intellij.ide.todo.TodoIndexPatternProvider;
 import com.intellij.openapi.application.ReadAction;
@@ -69,8 +54,8 @@ public class TodoCheckinHandlerWorker {
   private final Collection<Change> myChanges;
   private final TodoFilter myTodoFilter;
 
-  private final List<TodoItem> myAddedOrEditedTodos = new ArrayList<>();
-  private final List<TodoItem> myInChangedTodos = new ArrayList<>();
+  private final Set<TodoItem> myAddedOrEditedTodos = new HashSet<>();
+  private final Set<TodoItem> myInChangedTodos = new HashSet<>();
   private final List<Pair<FilePath, String>> mySkipped = new SmartList<>();
 
   public TodoCheckinHandlerWorker(@NotNull Project project, @NotNull Collection<Change> changes, @Nullable TodoFilter todoFilter) {
@@ -184,33 +169,22 @@ public class TodoCheckinHandlerWorker {
 
     public void process() throws DiffTooBigException {
       List<LineFragment> lineFragments = getLineFragments(myBeforeContent, myAfterContent);
-      lineFragments = ContainerUtil.filter(lineFragments, it -> DiffUtil.getLineDiffType(it) != TextDiffType.DELETED);
 
       List<Pair<TodoItem, LineFragment>> changedTodoItems = new ArrayList<>();
       StepIntersection.processIntersections(
         myNewTodoItems, lineFragments,
-        TODO_ITEM_CONVERTOR, RIGHT_LINE_FRAGMENT_CONVERTOR,
-        (todoItem, lineFragment) -> {
-          // TODO: we might actually get duplicated todo items here. But this should not happen until IDEA-62161 is implemented.
-          changedTodoItems.add(Pair.create(todoItem, lineFragment));
-        });
+        TODO_ITEM_CONVERTOR, new RightLineFragmentConvertor(myAfterContent),
+        (todoItem, lineFragment) -> changedTodoItems.add(Pair.create(todoItem, lineFragment)));
 
-      boolean allAreInserted = ContainerUtil.and(changedTodoItems, pair -> DiffUtil.getLineDiffType(pair.second) == TextDiffType.INSERTED);
-      if (allAreInserted) {
-        for (Pair<TodoItem, LineFragment> pair : changedTodoItems) {
-          myAddedOrEditedTodos.add(pair.first);
-        }
-        return;
-      }
+      if (changedTodoItems.isEmpty()) return;
 
-
-      final PsiFile beforePsiFile = ReadAction.compute(() -> {
-        return PsiFileFactory.getInstance(myProject)
-          .createFileFromText("old" + myAfterFile.getName(), myAfterFile.getFileType(), myBeforeContent);
-      });
+      final PsiFile beforePsiFile = ReadAction.compute(() -> PsiFileFactory.getInstance(myProject)
+                                                                           .createFileFromText("old" + myAfterFile.getName(),
+                                                                                               myAfterFile.getFileType(), myBeforeContent));
 
       final IndexPatternSearch.SearchParameters searchParameters =
-        new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider.getInstance());
+        new IndexPatternSearch.SearchParameters(beforePsiFile, TodoIndexPatternProvider.getInstance(),
+                                                TodoConfiguration.getInstance().isMultiLine());
       final Collection<IndexPatternOccurrence> patternOccurrences = LightIndexPatternSearch.SEARCH.createQuery(searchParameters).findAll();
 
       if (patternOccurrences.isEmpty()) {
@@ -234,16 +208,11 @@ public class TodoCheckinHandlerWorker {
         TodoItem todoItem = pair.first;
         LineFragment lineFragment = pair.second;
 
-        if (DiffUtil.getLineDiffType(lineFragment) == TextDiffType.INSERTED) {
-          myAddedOrEditedTodos.add(todoItem);
-          continue;
-        }
-
         if (lineFragment != lastLineFragment) {
           oldTodoTexts.clear();
           StepIntersection.processElementIntersections(
             lineFragment, oldTodoItems,
-            LEFT_LINE_FRAGMENT_CONVERTOR, TODO_ITEM_CONVERTOR,
+            new LeftLineFragmentConvertor(myBeforeContent), TODO_ITEM_CONVERTOR,
             (fragment, oldTodoItem) -> oldTodoTexts.add(getTodoText(oldTodoItem, myBeforeContent)));
           lastLineFragment = lineFragment;
         }
@@ -252,18 +221,19 @@ public class TodoCheckinHandlerWorker {
         if (!oldTodoTexts.contains(text)) {
           myAddedOrEditedTodos.add(todoItem);
         }
-        else {
+        else if (TODO_ITEM_CONVERTOR.convert(todoItem).getEndOffset() >= lineFragment.getStartOffset2()) {
           myInChangedTodos.add(todoItem);
         }
       }
+      myInChangedTodos.removeAll(myAddedOrEditedTodos);
     }
   }
 
-  public List<TodoItem> getAddedOrEditedTodos() {
+  public Set<TodoItem> getAddedOrEditedTodos() {
     return myAddedOrEditedTodos;
   }
 
-  public List<TodoItem> getInChangedTodos() {
+  public Set<TodoItem> getInChangedTodos() {
     return myInChangedTodos;
   }
 
@@ -271,15 +241,22 @@ public class TodoCheckinHandlerWorker {
     return mySkipped;
   }
 
-  private static String getTodoText(TodoItem oldItem, final String content) {
-    final String fragment = content.substring(oldItem.getTextRange().getStartOffset(), oldItem.getTextRange().getEndOffset());
+  private static String getTodoText(TodoItem item, final String content) {
+    StringJoiner joiner = new StringJoiner("\n");
+    joiner.add(getTodoPartText(content, item.getTextRange()));
+    item.getAdditionalTextRanges().forEach(r -> joiner.add(getTodoPartText(content, r)));
+    return joiner.toString();
+  }
+
+  private static String getTodoPartText(String content, TextRange textRange) {
+    final String fragment = content.substring(textRange.getStartOffset(), textRange.getEndOffset());
     return StringUtil.join(fragment.split("\\s"), " ");
   }
 
   private static List<LineFragment> getLineFragments(@NotNull String beforeContent, @NotNull String afterContent)
     throws DiffTooBigException {
     ProgressIndicator indicator = notNull(ProgressManager.getInstance().getProgressIndicator(), DumbProgressIndicator.INSTANCE);
-    return ComparisonManager.getInstance().compareLines(beforeContent, afterContent, ComparisonPolicy.IGNORE_WHITESPACES, indicator);
+    return ComparisonManager.getInstance().compareLines(beforeContent, afterContent, ComparisonPolicy.DEFAULT, indicator);
   }
 
   @Nullable
@@ -298,26 +275,44 @@ public class TodoCheckinHandlerWorker {
   private final static String ourCannotLoadCurrentRevision = "Can not load current revision";
 
   private static final Convertor<TodoItem, TextRange> TODO_ITEM_CONVERTOR = o -> {
-    final TextRange textRange = o.getTextRange();
-    return new TextRange(textRange.getStartOffset(), textRange.getEndOffset() - 1);
+    TextRange textRange = o.getTextRange();
+    List<TextRange> additionalRanges = o.getAdditionalTextRanges();
+    return new TextRange(textRange.getStartOffset(),
+                         (additionalRanges.isEmpty() ? textRange : additionalRanges.get(additionalRanges.size() - 1)).getEndOffset() - 1);
   };
 
-  private static final Convertor<LineFragment, TextRange> LEFT_LINE_FRAGMENT_CONVERTOR = o -> {
-    int start = o.getStartOffset1();
-    int end = o.getEndOffset1();
-    return new TextRange(start, Math.max(start, end - 1));
-  };
+  private static class LeftLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
+    private final String myContent;
 
-  private static final Convertor<LineFragment, TextRange> RIGHT_LINE_FRAGMENT_CONVERTOR = o -> {
-    int start = o.getStartOffset2();
-    int end = o.getEndOffset2();
-    return new TextRange(start, Math.max(start, end - 1));
-  };
+    private LeftLineFragmentConvertor(String content) {myContent = content;}
 
-  public List<TodoItem> inOneList() {
-    final List<TodoItem> list = new ArrayList<>();
-    list.addAll(getAddedOrEditedTodos());
-    list.addAll(getInChangedTodos());
-    return list;
+    @Override
+    public TextRange convert(LineFragment o) {
+      int start = o.getStartOffset1();
+      int end = o.getEndOffset1();
+      int prevLineStart = myContent.lastIndexOf('\n', start - 2) + 1;
+      return new TextRange(prevLineStart, Math.max(start, end - 1));
+    }
+  }
+
+  private static class RightLineFragmentConvertor implements Convertor<LineFragment, TextRange> {
+    private final String myContent;
+
+    private RightLineFragmentConvertor(String content) {myContent = content;}
+
+    @Override
+    public TextRange convert(LineFragment o) {
+      int start = o.getStartOffset2();
+      int end = o.getEndOffset2();
+      int prevLineStart = myContent.lastIndexOf('\n', start - 2) + 1;
+      return new TextRange(prevLineStart, Math.max(start, end - 1));
+    }
+  }
+
+  public Set<TodoItem> inOneList() {
+    final Set<TodoItem> set = new HashSet<>();
+    set.addAll(getAddedOrEditedTodos());
+    set.addAll(getInChangedTodos());
+    return set;
   }
 }

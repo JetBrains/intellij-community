@@ -174,6 +174,13 @@ public class FoldExpressionIntoStreamInspection extends AbstractBaseJavaLocalIns
     @NotNull
     @Override
     public String getFamilyName() {
+      return InspectionsBundle.message("inspection.fold.expression.fix.family.name");
+    }
+
+    @Nls(capitalization = Nls.Capitalization.Sentence)
+    @NotNull
+    @Override
+    public String getName() {
       return InspectionsBundle.message(myStringJoin ?
                                        "inspection.fold.expression.into.string.fix.name" :
                                        "inspection.fold.expression.into.stream.fix.name");

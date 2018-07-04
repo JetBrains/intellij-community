@@ -22,6 +22,7 @@ import com.intellij.codeInsight.lookup.LookupElementPresentation;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.containers.ContainerUtil;
 
 @SuppressWarnings({"ALL"})
 public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCase {
@@ -228,5 +229,10 @@ public class SecondSmartTypeCompletionTest extends LightFixtureCompletionTestCas
   public void testPreferChainFieldSuggestionByExpectedName() {
     configure();
     myFixture.assertPreferredCompletionItems(0, "b.superclass", "b.b", "b.a");
+  }
+
+  public void testNoAsListWhenSetExpected() {
+    configure();
+    assertNull(ContainerUtil.find(myFixture.getLookupElements(), e -> LookupElementPresentation.renderElement(e).getItemText().contains("asList")));
   }
 }

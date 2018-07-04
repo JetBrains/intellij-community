@@ -1,7 +1,7 @@
 YAML file
-  PsiElement(indent)('    ')
   YAML document
     YAML sequence
+      PsiElement(indent)('    ')
       YAML sequence item
         PsiElement(-)('-')
         PsiWhiteSpace(' ')

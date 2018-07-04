@@ -387,11 +387,11 @@ public class SvnRollbackTest extends Svn17TestCase {
     final Change s1Change = assertMovedChange(tree.myS1File);
 
     FileStatus status = myChangeListManager.getStatus(unverionedDir);
-    Assert.assertNotNull(FileStatus.UNKNOWN.equals(status));
+    Assert.assertEquals(FileStatus.UNKNOWN, status);
     Assert.assertTrue(! wasUnvDir.exists());
 
     FileStatus fileStatus = myChangeListManager.getStatus(unvFile);
-    Assert.assertNotNull(FileStatus.UNKNOWN.equals(fileStatus));
+    Assert.assertEquals(FileStatus.UNKNOWN, fileStatus);
     Assert.assertTrue(! wasUnvFile.exists());
 
     rollbackIMpl(Collections.singletonList(dirChange), Collections.singletonList(new Change(s1Change.getBeforeRevision(),

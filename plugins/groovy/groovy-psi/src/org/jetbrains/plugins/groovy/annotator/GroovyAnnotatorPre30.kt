@@ -9,9 +9,12 @@ import org.jetbrains.plugins.groovy.annotator.intentions.ReplaceDotFix
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementTypes.*
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor
 import org.jetbrains.plugins.groovy.lang.psi.api.GrDoWhileStatement
+import org.jetbrains.plugins.groovy.lang.psi.api.GrExpressionList
 import org.jetbrains.plugins.groovy.lang.psi.api.GrInExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.GrTryResourceList
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrInstanceOfExpression
@@ -28,6 +31,24 @@ internal class GroovyAnnotatorPre30(private val holder: AnnotationHolder) : Groo
   override fun visitDoWhileStatement(statement: GrDoWhileStatement) {
     super.visitDoWhileStatement(statement)
     holder.createErrorAnnotation(statement.doKeyword, message("unsupported.do.while.statement"))
+  }
+
+  override fun visitTraditionalForClause(forClause: GrTraditionalForClause) {
+    super.visitTraditionalForClause(forClause)
+    val initialization = forClause.initialization as? GrVariableDeclaration ?: return
+    if (initialization.isTuple) {
+      holder.createErrorAnnotation(initialization, message("unsupported.tuple.declaration.in.for"))
+    }
+    else if (initialization.variables.size > 1) {
+      holder.createErrorAnnotation(initialization, message("unsupported.multiple.variables.in.for"))
+    }
+  }
+
+  override fun visitExpressionList(expressionList: GrExpressionList) {
+    super.visitExpressionList(expressionList)
+    if (expressionList.expressions.size > 1) {
+      holder.createErrorAnnotation(expressionList, message("unsupported.expression.list.in.for.update"))
+    }
   }
 
   override fun visitTryResourceList(resourceList: GrTryResourceList) {

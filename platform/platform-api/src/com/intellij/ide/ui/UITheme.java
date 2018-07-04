@@ -3,12 +3,14 @@ package com.intellij.ide.ui;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.intellij.openapi.util.IconLoader;
+import com.intellij.openapi.util.IconPathPatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.JBDimension;
 import com.intellij.util.ui.JBInsets;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.plaf.ColorUIResource;
@@ -30,6 +32,7 @@ public class UITheme {
   private String id;
   private Map<String, Object> ui;
   private Map<String, Object> icons;
+  private IconPathPatcher patcher;
 
   private UITheme() {
   }
@@ -49,6 +52,16 @@ public class UITheme {
   public static UITheme loadFromJson(InputStream stream, @NotNull String themeId) throws IOException {
     UITheme theme = new ObjectMapper().readValue(stream, UITheme.class);
     theme.id = themeId;
+    if (!theme.icons.isEmpty()) {
+      theme.patcher = new IconPathPatcher() {
+        @Nullable
+        @Override
+        public String patchPath(String path, ClassLoader classLoader) {
+          Object value = theme.icons.get(path);
+          return value instanceof String ? (String)value : null;
+        }
+      };
+    }
     return theme;
   }
 
@@ -62,6 +75,10 @@ public class UITheme {
     for (Map.Entry<String, Object> entry : ui.entrySet()) {
       apply(entry.getKey(), entry.getValue(), defaults);
     }
+  }
+
+  public IconPathPatcher getPatcher() {
+    return patcher;
   }
 
   private static void apply(String key, Object value, UIDefaults defaults) {

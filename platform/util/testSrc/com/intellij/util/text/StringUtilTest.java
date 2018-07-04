@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.Comparing;
@@ -26,6 +26,7 @@ import static org.junit.Assert.*;
  * @author Eugene Zhuravlev
  * @since Dec 22, 2006
  */
+@SuppressWarnings("ResultOfMethodCallIgnored")
 public class StringUtilTest {
   @Test
   public void testTrimLeadingChar() {
@@ -683,5 +684,55 @@ public class StringUtilTest {
     assertFalse(StringUtil.isShortNameOf("a.b.c", "d"));
     assertFalse(StringUtil.isShortNameOf("x.y.zzz", "zz"));
     assertFalse(StringUtil.isShortNameOf("x", "a.b.x"));
+  }
+
+  @Test
+  public void startsWith() {
+    assertTrue(StringUtil.startsWith("abcdefgh", 5, "fgh"));
+    assertTrue(StringUtil.startsWith("abcdefgh", 2, "cde"));
+    assertTrue(StringUtil.startsWith("abcdefgh", 0, "abc"));
+    assertTrue(StringUtil.startsWith("abcdefgh", 0, "abcdefgh"));
+    assertFalse(StringUtil.startsWith("abcdefgh", 5, "cde"));
+
+    assertTrue(StringUtil.startsWith("abcdefgh", 0, ""));
+    assertTrue(StringUtil.startsWith("abcdefgh", 4, ""));
+    assertTrue(StringUtil.startsWith("abcdefgh", 7, ""));
+    assertTrue(StringUtil.startsWith("abcdefgh", 8, ""));
+
+    assertTrue(StringUtil.startsWith("", 0, ""));
+
+    assertFalse(StringUtil.startsWith("ab", 0, "abcdefgh"));
+    assertFalse(StringUtil.startsWith("ab", 1, "abcdefgh"));
+    assertFalse(StringUtil.startsWith("ab", 2, "abcdefgh"));
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithNegativeIndex() {
+    StringUtil.startsWith("abcdefgh", -1, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithIndexGreaterThanLength() {
+    StringUtil.startsWith("abcdefgh", 9, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithEmptyStringNegativeIndex() {
+    StringUtil.startsWith("", -1, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithEmptyStringIndexGreaterThanLength() {
+    StringUtil.startsWith("", 1, "");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithLongerSuffixNegativeIndex() {
+    StringUtil.startsWith("ab", -1, "abcdefgh");
+  }
+
+  @Test(expected = IllegalArgumentException.class)
+  public void startsWithLongerSuffixIndexGreaterThanLength() {
+    StringUtil.startsWith("ab", 3, "abcdefgh");
   }
 }

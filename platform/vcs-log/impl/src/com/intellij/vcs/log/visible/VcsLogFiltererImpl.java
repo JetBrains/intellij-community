@@ -18,6 +18,7 @@ package com.intellij.vcs.log.visible;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
@@ -312,12 +313,9 @@ public class VcsLogFiltererImpl implements VcsLogFilterer {
         continue;
       }
 
-      VcsLogFilterCollection rootSpecificCollection = filterCollection;
-      if (rootSpecificCollection.get(VcsLogFilterCollection.ROOT_FILTER) != null) {
-        rootSpecificCollection = new VcsLogFilterCollectionBuilder(filterCollection)
-          .with(new VcsLogStructureFilterImpl(ContainerUtil.newHashSet(VcsLogUtil.getFilteredFilesForRoot(root, filterCollection))))
-          .build();
-      }
+      Set<FilePath> filesForRoot = VcsLogUtil.getFilteredFilesForRoot(root, filterCollection);
+      VcsLogStructureFilterImpl structureFilter = filesForRoot.isEmpty() ? null : new VcsLogStructureFilterImpl(filesForRoot);
+      VcsLogFilterCollection rootSpecificCollection = new VcsLogFilterCollectionBuilder(filterCollection).with(structureFilter).build();
 
       List<TimedVcsCommit> matchingCommits = entry.getValue().getCommitsMatchingFilter(root, rootSpecificCollection, maxCount);
       commits.addAll(ContainerUtil.map(matchingCommits, commit -> new CommitId(commit.getId(), root)));

@@ -601,8 +601,23 @@ class JavaFormatterTest : AbstractJavaFormatterTest() {
   }
 
   fun testTwoJavaDocs() {
-    doTextTest("/**\n" + " * \n" + " */\n" + "        class Test {\n" + "    /**\n" + "     */\n" + "     public void foo();\n" + "}",
-               "/**\n" + " *\n" + " */\n" + "class Test {\n" + "    /**\n" + "     */\n" + "    public void foo();\n" + "}")
+    doTextTest("""/**
+ *
+ */
+        class Test {
+    /**
+     */
+     public void foo();
+}""",
+               """/**
+ *
+ */
+class Test {
+    /**
+     *
+     */
+    public void foo();
+}""")
   }
 
   fun testJavaDocLinksWithParameterNames() {

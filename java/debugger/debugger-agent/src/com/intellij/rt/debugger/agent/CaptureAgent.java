@@ -3,16 +3,14 @@ package com.intellij.rt.debugger.agent;
 
 import org.jetbrains.capture.org.objectweb.asm.*;
 
-import java.io.File;
-import java.io.FileOutputStream;
-import java.io.FileReader;
-import java.io.IOException;
+import java.io.*;
 import java.lang.instrument.ClassFileTransformer;
 import java.lang.instrument.Instrumentation;
 import java.lang.instrument.UnmodifiableClassException;
 import java.net.URI;
 import java.security.ProtectionDomain;
 import java.util.*;
+import java.util.jar.JarFile;
 
 /**
  * @author egor
@@ -28,6 +26,8 @@ public class CaptureAgent {
   public static void premain(String args, Instrumentation instrumentation) {
     ourInstrumentation = instrumentation;
     try {
+      appendStorageJar(instrumentation);
+
       readSettings(args);
 
       instrumentation.addTransformer(new CaptureTransformer());
@@ -53,8 +53,32 @@ public class CaptureAgent {
       }
     }
     catch (Throwable e) {
-      System.out.println("Capture agent: unknown exception");
+      System.err.println("Critical error in IDEA Async Stack Traces instrumenting agent. Agent is now disabled. Please report to IDEA support:");
       e.printStackTrace();
+    }
+  }
+
+  @SuppressWarnings("SSBasedInspection")
+  private static void appendStorageJar(Instrumentation instrumentation) throws IOException {
+    InputStream inputStream = CaptureAgent.class.getResourceAsStream("/debugger-agent-storage.jar");
+    try {
+      File storageJar = File.createTempFile("debugger-agent-storage", "jar");
+      storageJar.deleteOnExit();
+      OutputStream outStream = new FileOutputStream(storageJar);
+      try {
+        byte[] buffer = new byte[10 * 1024];
+        int bytesRead;
+        while ((bytesRead = inputStream.read(buffer)) != -1) {
+          outStream.write(buffer, 0, bytesRead);
+        }
+      }
+      finally {
+        outStream.close();
+      }
+      instrumentation.appendToBootstrapClassLoaderSearch(new JarFile(storageJar));
+    }
+    finally {
+      inputStream.close();
     }
   }
 
@@ -69,6 +93,10 @@ public class CaptureAgent {
   }
 
   private static void readSettings(String uri) {
+    if (uri == null || uri.isEmpty()) {
+      return;
+    }
+
     Properties properties = new Properties();
     File file;
     try {
@@ -335,7 +363,7 @@ public class CaptureAgent {
   }
 
   private static class InstrumentPoint {
-    final static String ANY = "*";
+    final static String ANY_DESC = "*";
 
     final String myClassName;
     final String myMethodName;
@@ -353,7 +381,7 @@ public class CaptureAgent {
       if (!myMethodName.equals(name)) {
         return false;
       }
-      return myMethodDesc.equals(ANY) || myMethodDesc.equals(desc);
+      return myMethodDesc.equals(ANY_DESC) || myMethodDesc.equals(desc);
     }
   }
 
@@ -403,6 +431,8 @@ public class CaptureAgent {
     }
     points.add(new InstrumentPoint(className, methodName, methodDesc, keyProvider));
   }
+
+  private static final KeyProvider FIRST_PARAM = param(0);
 
   static final KeyProvider THIS_KEY_PROVIDER = new KeyProvider() {
     @Override
@@ -496,5 +526,64 @@ public class CaptureAgent {
       }
       mv.visitVarInsn(Opcodes.ALOAD, index);
     }
+  }
+
+  private static void addCapture(String className, String methodName, KeyProvider key) {
+    addCapturePoint(true, className, methodName, InstrumentPoint.ANY_DESC, key);
+  }
+
+  private static void addInsert(String className, String methodName, KeyProvider key) {
+    addCapturePoint(false, className, methodName, InstrumentPoint.ANY_DESC, key);
+  }
+
+  private static KeyProvider param(int idx) {
+    return new ParamKeyProvider(idx);
+  }
+
+  // predefined points
+  static {
+    addCapture("java/awt/event/InvocationEvent", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/awt/event/InvocationEvent", "dispatch", THIS_KEY_PROVIDER);
+
+    addCapture("java/lang/Thread", "start", THIS_KEY_PROVIDER);
+    addInsert("java/lang/Thread", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/FutureTask", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/FutureTask", "run", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/FutureTask", "runAndReset", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$AsyncSupply", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$AsyncSupply", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$AsyncRun", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$AsyncRun", "run", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$UniAccept", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$UniAccept", "tryFire", THIS_KEY_PROVIDER);
+
+    addCapture("java/util/concurrent/CompletableFuture$UniRun", "<init>", THIS_KEY_PROVIDER);
+    addInsert("java/util/concurrent/CompletableFuture$UniRun", "tryFire", THIS_KEY_PROVIDER);
+
+    // netty
+    addCapture("io/netty/util/concurrent/SingleThreadEventExecutor", "addTask", FIRST_PARAM);
+    addInsert("io/netty/util/concurrent/AbstractEventExecutor", "safeExecute", FIRST_PARAM);
+
+    // scala
+    addCapture("scala/concurrent/impl/Future$PromiseCompletingRunnable", "<init>", THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/Future$PromiseCompletingRunnable", "run", THIS_KEY_PROVIDER);
+
+    addCapture("scala/concurrent/impl/CallbackRunnable", "<init>", THIS_KEY_PROVIDER);
+    addInsert("scala/concurrent/impl/CallbackRunnable", "run", THIS_KEY_PROVIDER);
+
+    // akka-scala
+    addCapture("akka/actor/ScalaActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/RepointableActorRef", "$bang", FIRST_PARAM);
+    addCapture("akka/actor/LocalActorRef", "$bang", FIRST_PARAM);
+    addInsert("akka/actor/Actor$class", "aroundReceive", param(2));
+
+    // JavaFX
+    addCapture("com/sun/glass/ui/InvokeLaterDispatcher", "invokeLater", FIRST_PARAM);
+    addInsert("com/sun/glass/ui/InvokeLaterDispatcher$Future", "run",
+              new FieldKeyProvider("com/sun/glass/ui/InvokeLaterDispatcher$Future", "runnable"));
   }
 }

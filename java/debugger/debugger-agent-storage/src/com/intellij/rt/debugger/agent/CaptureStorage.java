@@ -216,9 +216,18 @@ public class CaptureStorage {
 
   // to be run from the debugger
   @SuppressWarnings("unused")
+  public static Object[][] getCurrentCapturedStack(int limit) {
+    return wrapInArray(CURRENT_STACKS.get().peekLast(), limit);
+  }
+
+  // to be run from the debugger
+  @SuppressWarnings("unused")
   public static Object[][] getRelatedStack(Object key, int limit) {
     //noinspection SuspiciousMethodCalls
-    CapturedStack stack = STORAGE.get(new HardKey(key));
+    return wrapInArray(STORAGE.get(new HardKey(key)), limit);
+  }
+
+  private static Object[][] wrapInArray(CapturedStack stack, int limit) {
     if (stack == null) {
       return null;
     }

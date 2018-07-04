@@ -119,6 +119,13 @@ public class XBreakpointManagerImpl implements XBreakpointManager {
     }
     else {
       myBreakpoints.put(type, breakpoint);
+      if (initUI) {
+        BreakpointsUsageCollector.reportUsage(myProject, "new.breakpoint");
+        BreakpointsUsageCollector.reportUsage(myProject, "new." + type.getId());
+        if (myDebuggerManager.getCurrentSession() != null) {
+          BreakpointsUsageCollector.reportUsage(myProject, "new.within.session");
+        }
+      }
     }
     myAllBreakpoints.add(breakpoint);
     if (breakpoint instanceof XLineBreakpointImpl) {

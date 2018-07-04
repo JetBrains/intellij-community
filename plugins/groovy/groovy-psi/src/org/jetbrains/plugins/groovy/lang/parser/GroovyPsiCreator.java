@@ -97,6 +97,7 @@ public class GroovyPsiCreator {
     if (elem == FOR_STATEMENT) return new GrForStatementImpl(node);
     if (elem == FOR_IN_CLAUSE) return new GrForInClauseImpl(node);
     if (elem == TRADITIONAL_FOR_CLAUSE) return new GrTraditionalForClauseImpl(node);
+    if (elem == EXPRESSION_LIST) return new GrExpressionListImpl(node);
     if (elem == WHILE_STATEMENT) return new GrWhileStatementImpl(node);
     if (elem == DO_WHILE_STATEMENT) return new GrDoWhileStatementImpl(node);
     if (elem == TRY_STATEMENT) return new GrTryCatchStatementImpl(node);

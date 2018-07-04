@@ -72,6 +72,11 @@ public final class IconLoader {
     clearCache();
   }
 
+  public static void removePathPatcher(@NotNull IconPathPatcher patcher) {
+    ourPatchers.remove(patcher);
+    clearCache();
+  }
+
   @Deprecated
   @NotNull
   public static Icon getIcon(@NotNull final Image image) {

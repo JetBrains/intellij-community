@@ -46,10 +46,6 @@ public class CucumberJvmSMFormatterUtil {
     return source.replace("|", "||").replace("\n", "|n").replace("\r", "|r").replace("'", "|'").replace("[", "|[").replace("]", "|]");
   }
 
-  private static boolean isWhitespace(char c) {
-    return c == ' ' || c == '\t' || c == '\n';
-  }
-
   /**
    * Gets feature title from @param featureHeader
    * From code:
@@ -70,7 +66,7 @@ public class CucumberJvmSMFormatterUtil {
     }
 
     int start = i;
-    while (start >= 0 && !isWhitespace(featureHeader.charAt(start))) {
+    while (start >= 0 && !Character.isWhitespace(featureHeader.charAt(start))) {
       start--;
     }
     start++;

@@ -371,6 +371,9 @@ public class InspectionTree extends Tree {
   }
 
   public void removeSelectedProblems() {
+    if (!getContext().getUIOptions().FILTER_RESOLVED_ITEMS) {
+      return;
+    }
     synchronized (getContext().getView().getTreeStructureUpdateLock()) {
       TreePath[] selected = getSelectionPaths();
       if (selected == null) return;

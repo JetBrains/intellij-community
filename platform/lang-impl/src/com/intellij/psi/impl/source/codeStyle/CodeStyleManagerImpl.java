@@ -918,7 +918,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager implements Formatting
     Language language = file.getLanguage();
     LanguageCodeStyleSettingsProvider settingsProvider = LanguageCodeStyleSettingsProvider.forLanguage(language);
     if (settingsProvider != null) {
-      return settingsProvider.getDocCommentSettings(file);
+      return settingsProvider.getDocCommentSettings(CodeStyle.getSettings(file));
     }
     return DocCommentSettings.DEFAULTS;
   }

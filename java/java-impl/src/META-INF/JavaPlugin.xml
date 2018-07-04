@@ -52,6 +52,7 @@
 
     <extensionPoint qualifiedName="com.intellij.java.refactoring.chainCallExtractor" interface="com.intellij.refactoring.chainCall.ChainCallExtractor"/>
     <extensionPoint qualifiedName="com.intellij.java.inspection.bulkMethodInfo" interface="com.intellij.codeInspection.bulkOperation.BulkMethodInfoProvider"/>
+    <extensionPoint qualifiedName="com.intellij.java.externalAnnotation" interface="com.intellij.codeInsight.externalAnnotation.AnnotationProvider"/>
     <extensionPoint qualifiedName="com.intellij.documentationDelegateProvider" interface="com.intellij.codeInsight.javadoc.DocumentationDelegateProvider"/>
     <extensionPoint qualifiedName="com.intellij.codeInsight.externalLibraryResolver" interface="com.intellij.codeInsight.daemon.quickFix.ExternalLibraryResolver"/>
     <extensionPoint qualifiedName="com.intellij.refactoring.moveClassHandler" interface="com.intellij.refactoring.move.moveClassesOrPackages.MoveClassHandler"/>
@@ -126,6 +127,11 @@
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.CollectionChainCallExtractor"/>
     <java.refactoring.chainCallExtractor implementation="com.intellij.refactoring.chainCall.StreamChainCallExtractor"/>
     <java.inspection.bulkMethodInfo implementation="com.intellij.codeInspection.bulkOperation.JdkBulkMethodInfoProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.DeprecationAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NotNullAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.NullableAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableAnnotationProvider"/>
+    <java.externalAnnotation implementation="com.intellij.codeInsight.externalAnnotation.UnmodifiableViewAnnotationProvider"/>
     <refactoring.pushDown language="JAVA" implementationClass="com.intellij.refactoring.memberPushDown.JavaPushDownDelegate" id="java"/>
     <refactoring.introduceParameterObject language="JAVA"
                                           implementationClass="com.intellij.refactoring.introduceparameterobject.JavaIntroduceParameterObjectDelegate"/>

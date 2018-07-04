@@ -1,11 +1,10 @@
-/*
- * Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
- */
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
@@ -19,6 +18,7 @@ import com.intellij.psi.search.searches.OverridingMethodsSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Query;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -214,7 +214,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         if (psiMethod == null) return; //invalid refMethod
         final Project project = psiMethod.getProject();
         final PsiManager psiManager = PsiManager.getInstance(project);
-        final List<PsiJavaCodeReferenceElement> refsToDelete = new ArrayList<>();
+        final List<PsiElement> refsToDelete = new ArrayList<>();
         for (CommonProblemDescriptor problem : problems) {
           final PsiElement psiElement = ((ProblemDescriptor)problem).getPsiElement();
           if (psiElement instanceof PsiJavaCodeReferenceElement) {
@@ -238,7 +238,7 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
         if (!FileModificationService.getInstance().preparePsiElementsForWrite(refsToDelete)) return;
 
         WriteAction.run(() -> {
-          for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
+          for (final PsiElement aRefsToDelete : refsToDelete) {
             if (aRefsToDelete.isValid()) {
               aRefsToDelete.delete();
             }
@@ -252,17 +252,9 @@ public class RedundantThrowsDeclarationInspection extends GlobalJavaBatchInspect
 
     private void removeException(RefMethod refMethod,
                                  PsiType exceptionType,
-                                 List<PsiJavaCodeReferenceElement> refsToDelete,
+                                 List<PsiElement> refsToDelete,
                                  PsiMethod psiMethod) {
-      PsiManager psiManager = psiMethod.getManager();
-
-      PsiJavaCodeReferenceElement[] refs = psiMethod.getThrowsList().getReferenceElements();
-      for (PsiJavaCodeReferenceElement ref : refs) {
-        PsiType refType = JavaPsiFacade.getInstance(psiManager.getProject()).getElementFactory().createType(ref);
-        if (exceptionType.isAssignableFrom(refType)) {
-          refsToDelete.add(ref);
-        }
-      }
+      ContainerUtil.addAll(refsToDelete, MethodThrowsFix.Remove.extractRefsToRemove(psiMethod, exceptionType));
 
       if (refMethod != null) {
         assert myProcessor != null;

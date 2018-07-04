@@ -25,19 +25,19 @@ public class ContainerUtilRt {
   private static final int ARRAY_COPY_THRESHOLD = 20;
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K, V> HashMap<K, V> newHashMap() {
     return new java.util.HashMap<K, V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <K, V> HashMap<K, V> newHashMap(@NotNull Map<? extends K, ? extends V> map) {
     return new java.util.HashMap<K, V>(map);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> Map<K, V> newHashMap(@NotNull List<K> keys, @NotNull List<V> values) {
     if (keys.size() != values.size()) {
       throw new IllegalArgumentException(keys + " should have same length as " + values);
@@ -51,7 +51,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> Map<K, V> newHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>... entries) {
     Map<K, V> map = newHashMap(entries.length + 1);
     map.put(first.getFirst(), first.getSecond());
@@ -62,43 +62,43 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <K, V> Map<K, V> newHashMap(int initialCapacity) {
     return new java.util.HashMap<K, V>(initialCapacity);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap() {
     return new TreeMap<K, V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <K extends Comparable, V> TreeMap<K, V> newTreeMap(@NotNull Map<K, V> map) {
     return new TreeMap<K, V>(map);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap() {
     return new LinkedHashMap<K, V>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(int capacity) {
     return new LinkedHashMap<K, V>(capacity);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <K, V> LinkedHashMap<K, V> newLinkedHashMap(@NotNull Map<K, V> map) {
     return new LinkedHashMap<K, V>(map);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_,_ -> new", pure = true)
   public static <K, V> LinkedHashMap<K,V> newLinkedHashMap(@NotNull Pair<K, ? extends V> first, @NotNull Pair<K, ? extends V>[] entries) {
     LinkedHashMap<K, V> map = newLinkedHashMap();
     map.put(first.getFirst(), first.getSecond());
@@ -109,13 +109,13 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList() {
     return new LinkedList<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull T... elements) {
     final LinkedList<T> list = newLinkedList();
     Collections.addAll(list, elements);
@@ -123,19 +123,19 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedList<T> newLinkedList(@NotNull Iterable<? extends T> elements) {
     return copy(ContainerUtilRt.<T>newLinkedList(), elements);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> ArrayList<T> newArrayList() {
     return new ArrayList<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull T... elements) {
     ArrayList<T> list = newArrayListWithCapacity(elements.length);
     Collections.addAll(list, elements);
@@ -143,7 +143,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayList(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
@@ -153,7 +153,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> ArrayList<T> newArrayListWithCapacity(int size) {
     return new ArrayList<T>(size);
   }
@@ -167,25 +167,25 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> HashSet<T> newHashSet() {
     return new java.util.HashSet<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(int initialCapacity) {
     return new java.util.HashSet<T>(initialCapacity);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull T... elements) {
     return new java.util.HashSet<T>(Arrays.asList(elements));
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> HashSet<T> newHashSet(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
@@ -195,27 +195,26 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
   public static <T> HashSet<T> newHashSet(@NotNull Iterator<? extends T> iterator) {
     HashSet<T> set = newHashSet();
     while (iterator.hasNext()) set.add(iterator.next());
     return set;
   }
 
+  @Contract(value = " -> new", pure = true)
   @NotNull
-  @Contract(pure=true)
   public static <T> LinkedHashSet<T> newLinkedHashSet() {
     return new LinkedHashSet<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull T... elements) {
     return newLinkedHashSet(Arrays.asList(elements));
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> LinkedHashSet<T> newLinkedHashSet(@NotNull Iterable<? extends T> elements) {
     if (elements instanceof Collection) {
       @SuppressWarnings("unchecked") Collection<? extends T> collection = (Collection<? extends T>)elements;
@@ -225,13 +224,13 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> TreeSet<T> newTreeSet() {
     return new TreeSet<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> TreeSet<T> newTreeSet(@NotNull T... elements) {
     TreeSet<T> set = newTreeSet();
     Collections.addAll(set, elements);
@@ -239,31 +238,31 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> TreeSet<T> newTreeSet(@NotNull Iterable<? extends T> elements) {
     return copy(ContainerUtilRt.<T>newTreeSet(), elements);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> TreeSet<T> newTreeSet(@Nullable Comparator<? super T> comparator) {
     return new TreeSet<T>(comparator);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> Stack<T> newStack() {
     return new Stack<T>();
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> Stack<T> newStack(@NotNull Collection<T> elements) {
     return new Stack<T>(elements);
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = "_ -> new", pure = true)
   public static <T> Stack<T> newStack(@NotNull T... initial) {
     return new Stack<T>(Arrays.asList(initial));
   }
@@ -350,7 +349,7 @@ public class ContainerUtilRt {
   }
 
   @NotNull
-  @Contract(pure=true)
+  @Contract(value = " -> new", pure = true)
   public static <T> CopyOnWriteArrayList<T> createEmptyCOWList() {
     // does not create garbage new Object[0]
     return new CopyOnWriteArrayList<T>(ContainerUtilRt.<T>emptyList());

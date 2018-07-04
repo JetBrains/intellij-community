@@ -223,7 +223,7 @@ object GuiTestLocalLauncher {
       .plus("-Didea.config.path=${GuiTestOptions.getConfigPath()}")
       .plus("-Didea.system.path=${GuiTestOptions.getSystemPath()}")
       .plus("-Dfile.encoding=${GuiTestOptions.getEncoding()}")
-      .plus(if (ide.ideType.platformPrefix.isNullOrEmpty()) "" else "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
+      .plusIf(!ide.ideType.platformPrefix.isNullOrEmpty(), "-Didea.platform.prefix=${ide.ideType.platformPrefix}")
       .plus(customVmOptions)
       .plus("-Xdebug")
       .plus("-Xrunjdwp:transport=dt_socket,server=y,suspend=${GuiTestOptions.suspendDebug()},address=${GuiTestOptions.getDebugPort()}")
@@ -389,5 +389,17 @@ object GuiTestLocalLauncher {
   private fun URL.correctPath(): String {
     return Paths.get(this.toURI()).toFile().path
   }
+
+  /**
+   * Returns a list containing all elements of the original collection including the given [element] if [condition] is true.
+   */
+  private fun <T> List<T>.plusIf(condition: Boolean, element: T): List<T> {
+    if (!condition) return this
+    val result = ArrayList<T>(size + 1)
+    result.addAll(this)
+    result.add(element)
+    return result
+  }
+
 
 }

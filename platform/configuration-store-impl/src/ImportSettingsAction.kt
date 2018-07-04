@@ -17,6 +17,9 @@ import com.intellij.openapi.ui.Messages
 import com.intellij.openapi.updateSettings.impl.UpdateSettings
 import com.intellij.openapi.util.io.FileUtil
 import com.intellij.openapi.util.io.getParentPath
+import com.intellij.util.io.copy
+import com.intellij.util.io.exists
+import com.intellij.util.io.inputStream
 import com.intellij.util.io.systemIndependentPath
 import gnu.trove.THashSet
 import java.io.File
@@ -29,41 +32,50 @@ import java.util.zip.ZipInputStream
 
 // for Rider purpose
 open class ImportSettingsAction : AnAction(), DumbAware {
+  override fun update(e: AnActionEvent) {
+    e.presentation.isEnabledAndVisible = isImportExportActionApplicable()
+  }
+
   override fun actionPerformed(e: AnActionEvent) {
     val dataContext = e.dataContext
     val component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext)
     ChooseComponentsToExportDialog.chooseSettingsFile(PathManager.getConfigPath(), component, IdeBundle.message("title.import.file.location"), IdeBundle.message("prompt.choose.import.file.path"))
       .onSuccess {
-        val saveFile = File(it)
+        val saveFile = Paths.get(it)
         try {
           doImport(saveFile)
         }
         catch (e1: ZipException) {
           Messages.showErrorDialog(
-              IdeBundle.message("error.reading.settings.file", presentableFileName(saveFile), e1.message, promptLocationMessage()),
+              IdeBundle.message("error.reading.settings.file", saveFile, e1.message, promptLocationMessage()),
               IdeBundle.message("title.invalid.file"))
         }
         catch (e1: IOException) {
-          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", presentableFileName(saveFile), e1.message),
+          Messages.showErrorDialog(IdeBundle.message("error.reading.settings.file.2", saveFile, e1.message),
                                    IdeBundle.message("title.error.reading.file"))
         }
       }
   }
 
   protected open fun getExportableComponents(relativePaths: Set<String>): Map<Path, List<ExportableItem>> = getExportableComponentsMap(false, true, onlyPaths = relativePaths)
+
   protected open fun getMarkedComponents(components: Set<ExportableItem>): Set<ExportableItem> = components
 
+  @Deprecated("", replaceWith = ReplaceWith("doImport(saveFile.toPath())"))
   protected open fun doImport(saveFile: File) {
+    doImport(saveFile.toPath())
+  }
+
+  protected open fun doImport(saveFile: Path) {
     if (!saveFile.exists()) {
-      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", presentableFileName(saveFile)),
-                               IdeBundle.message("title.file.not.found"))
+      Messages.showErrorDialog(IdeBundle.message("error.cannot.find.file", saveFile), IdeBundle.message("title.file.not.found"))
       return
     }
 
     val relativePaths = getPaths(saveFile.inputStream())
     if (!relativePaths.contains(ImportSettingsFilenameFilter.SETTINGS_JAR_MARKER)) {
       Messages.showErrorDialog(
-          IdeBundle.message("error.file.contains.no.settings.to.import", presentableFileName(saveFile), promptLocationMessage()),
+          IdeBundle.message("error.file.contains.no.settings.to.import", saveFile, promptLocationMessage()),
           IdeBundle.message("title.invalid.file"))
       return
     }
@@ -77,12 +89,12 @@ open class ImportSettingsAction : AnAction(), DumbAware {
       return
     }
 
-    val tempFile = File(PathManager.getPluginTempPath(), saveFile.name)
-    FileUtil.copy(saveFile, tempFile)
+    val tempFile = Paths.get(PathManager.getPluginTempPath()).resolve(saveFile.fileName)
+    saveFile.copy(tempFile)
     val filenameFilter = ImportSettingsFilenameFilter(getRelativeNamesToExtract(getMarkedComponents(dialog.exportableComponents)))
     StartupActionScriptManager.addActionCommands(listOf(
-      StartupActionScriptManager.UnzipCommand(tempFile, File(configPath), filenameFilter),
-      StartupActionScriptManager.DeleteCommand(tempFile)))
+      StartupActionScriptManager.UnzipCommand(tempFile.toFile(), File(configPath), filenameFilter),
+      StartupActionScriptManager.DeleteCommand(tempFile.toFile())))
 
     UpdateSettings.getInstance().forceCheckForUpdateAfterRestart()
 
@@ -103,8 +115,6 @@ open class ImportSettingsAction : AnAction(), DumbAware {
     result.add(PluginManager.INSTALLED_TXT)
     return result
   }
-
-  private fun presentableFileName(file: File) = "'" + FileUtil.toSystemDependentName(file.path) + "'"
 
   private fun promptLocationMessage() = IdeBundle.message("message.please.ensure.correct.settings")
 }

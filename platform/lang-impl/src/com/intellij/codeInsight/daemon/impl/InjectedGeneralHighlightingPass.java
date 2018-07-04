@@ -129,8 +129,8 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
       List<HighlightInfo> toApply = new ArrayList<>();
       for (HighlightInfo info : gotHighlights) {
-        if (!myRestrictRange.containsRange(info.getStartOffset(), info.getEndOffset())) continue;
-        if (!myPriorityRange.containsRange(info.getStartOffset(), info.getEndOffset())) {
+        if (!myRestrictRange.contains(info)) continue;
+        if (!myPriorityRange.contains(info)) {
           toApply.add(info);
         }
       }
@@ -200,20 +200,20 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
   // returns false if canceled
   private boolean addInjectedPsiHighlights(@NotNull final Set<PsiFile> injectedFiles,
                                            @NotNull final ProgressIndicator progress,
-                                           @NotNull final Collection<HighlightInfo> outInfos) {
+                                           @NotNull final Collection<? super HighlightInfo> outInfos) {
     if (injectedFiles.isEmpty()) return true;
     final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
     final TextAttributes injectedAttributes = myGlobalScheme.getAttributes(EditorColors.INJECTED_LANGUAGE_FRAGMENT);
 
     return JobLauncher.getInstance()
       .invokeConcurrentlyUnderProgress(new ArrayList<>(injectedFiles), progress,
-                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos, progress, injectedLanguageManager));
+                                       injectedPsi -> addInjectedPsiHighlights(injectedPsi, injectedAttributes, outInfos,
+                                                                               injectedLanguageManager));
   }
 
   private boolean addInjectedPsiHighlights(@NotNull PsiFile injectedPsi,
                                            TextAttributes injectedAttributes,
-                                           @NotNull Collection<HighlightInfo> outInfos,
-                                           @NotNull ProgressIndicator progress,
+                                           @NotNull Collection<? super HighlightInfo> outInfos,
                                            @NotNull InjectedLanguageManager injectedLanguageManager) {
     DocumentWindow documentWindow = (DocumentWindow)PsiDocumentManager.getInstance(myProject).getCachedDocument(injectedPsi);
     if (documentWindow == null) return true;
@@ -269,7 +269,7 @@ public class InjectedGeneralHighlightingPass extends GeneralHighlightingPass {
 
     if (!isDumbMode()) {
       List<HighlightInfo> todos = new ArrayList<>();
-      highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), progress, myPriorityRange, todos, todos);
+      highlightTodos(injectedPsi, injectedPsi.getText(), 0, injectedPsi.getTextLength(), myPriorityRange, todos, todos);
       for (HighlightInfo info : todos) {
         addPatchedInfos(info, injectedPsi, documentWindow, injectedLanguageManager, null, outInfos);
       }

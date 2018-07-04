@@ -1968,14 +1968,16 @@ public class InferenceSession {
           for (PsiClass gClass : tSupers) {
             final PsiSubstitutor sSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)sBound);
             final PsiSubstitutor tSubstitutor = TypeConversionUtil.getSuperClassSubstitutor(gClass, (PsiClassType)tBound);
+            boolean found = false;
             for (PsiTypeParameter typeParameter : gClass.getTypeParameters()) {
               final PsiType sType = sSubstitutor.substituteWithBoundsPromotion(typeParameter);
               final PsiType tType = tSubstitutor.substituteWithBoundsPromotion(typeParameter);
               final Pair<PsiType, PsiType> typePair = Pair.create(sType, tType);
               if (!processor.process(typePair)) {
-                return gClass;
+                found = true;
               }
             }
+            if (found) return gClass;
           }
         }
       }

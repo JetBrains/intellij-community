@@ -66,9 +66,11 @@ import org.jetbrains.annotations.*;
 import java.util.*;
 
 import static com.intellij.codeInsight.AnnotationUtil.CHECK_TYPE;
+import static com.intellij.refactoring.util.duplicates.DuplicatesFinder.MatchType;
 
 public class ExtractMethodProcessor implements MatchProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.extractMethod.ExtractMethodProcessor");
+  public static final Key<Boolean> SIGNATURE_CHANGE_ALLOWED = Key.create("SignatureChangeAllowed");
 
   protected final Project myProject;
   private final Editor myEditor;
@@ -117,6 +119,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   protected boolean myIsChainedConstructor;
   protected List<Match> myDuplicates;
   private ParametrizedDuplicates myParametrizedDuplicates;
+  private ParametrizedDuplicates myExactDuplicates;
   @PsiModifier.ModifierConstant protected String myMethodVisibility = PsiModifier.PRIVATE;
   protected boolean myGenerateConditionalExit;
   protected PsiStatement myFirstExitStatementCopy;
@@ -891,7 +894,10 @@ public class ExtractMethodProcessor implements MatchProvider {
   }
 
   protected void initDuplicates() {
-    myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
+    myParametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED);
+    if (myParametrizedDuplicates != null && !myParametrizedDuplicates.isEmpty()) {
+      myExactDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.EXACT);
+    }
     myDuplicates = new ArrayList<>();
   }
 
@@ -914,7 +920,7 @@ public class ExtractMethodProcessor implements MatchProvider {
     DuplicatesFinder finder = new DuplicatesFinder(elements, myInputVariables.copy(), value, parameters);
     List<Match> myDuplicates = finder.findDuplicates(myTargetClass);
     if (!ContainerUtil.isEmpty(myDuplicates)) return myDuplicates.size();
-    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this);
+    ParametrizedDuplicates parametrizedDuplicates = ParametrizedDuplicates.findDuplicates(this, MatchType.PARAMETRIZED);
     if (parametrizedDuplicates != null) {
       List<Match> duplicates = parametrizedDuplicates.getDuplicates();
       return duplicates != null ? duplicates.size() : 0;
@@ -1339,14 +1345,11 @@ public class ExtractMethodProcessor implements MatchProvider {
       final List<PsiElement> parameterValue = match.getParameterValues(data.variable);
       if (parameterValue != null) {
         for (PsiElement val : parameterValue) {
-          if (val instanceof PsiExpression) {
-            final PsiType exprType = ((PsiExpression)val).getType();
-            if (exprType != null && !TypeConversionUtil.isAssignable(data.type, exprType)) {
-              final PsiTypeCastExpression cast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(A)a", val);
-              cast.getCastType().replace(elementFactory.createTypeElement(data.type));
-              cast.getOperand().replace(val.copy());
-              val = cast;
-            }
+          if (val instanceof PsiExpression && isCastRequired(data, (PsiExpression)val)) {
+            final PsiTypeCastExpression cast = (PsiTypeCastExpression)elementFactory.createExpressionFromText("(A)a", val);
+            cast.getCastType().replace(elementFactory.createTypeElement(data.type));
+            cast.getOperand().replace(val.copy());
+            val = cast;
           }
           methodCallExpression.getArgumentList().add(val);
         }
@@ -1360,6 +1363,15 @@ public class ExtractMethodProcessor implements MatchProvider {
     PsiElement appendLocation = addNotNullConditionalCheck(match, replacedMatch);
     declareReusedVariables(appendLocation, reusedVariables);
     return replacedMatch;
+  }
+
+  private static boolean isCastRequired(@NotNull VariableData data, @NotNull PsiExpression val) {
+    final PsiType exprType = val.getType();
+    if (exprType == null || TypeConversionUtil.isAssignable(data.type, exprType)) {
+      return false;
+    }
+    final PsiClass psiClass = PsiUtil.resolveClassInClassTypeOnly(data.type);
+    return !(psiClass instanceof PsiTypeParameter);
   }
 
   @NotNull
@@ -2158,10 +2170,7 @@ public class ExtractMethodProcessor implements MatchProvider {
                                                  .allMatch(List::isEmpty);
       boolean isFoldable = myInputVariables.isFoldable();
       if (!showDialog || isSignatureUnchanged || isFoldable ||
-          ApplicationManager.getApplication().isUnitTestMode() ||
-          new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
-                                              myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
-                                              myParametrizedDuplicates.getSize()).showAndGet()) {
+          shouldChangeSignature()) {
 
         myDuplicates = myParametrizedDuplicates.getDuplicates();
         if (myExtractedMethod.isPhysical()) {
@@ -2177,7 +2186,22 @@ public class ExtractMethodProcessor implements MatchProvider {
         return true;
       }
     }
-    return false;
+    if (myExactDuplicates != null) {
+      myDuplicates = myExactDuplicates.getDuplicates();
+    }
+    return !myDuplicates.isEmpty();
+  }
+
+  private boolean shouldChangeSignature() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      return Optional.of(myExtractedMethod)
+                     .map(PsiElement::getContainingFile)
+                     .map(psiFile -> psiFile.getUserData(SIGNATURE_CHANGE_ALLOWED))
+                     .orElse(true);
+    }
+    return new SignatureSuggesterPreviewDialog(myExtractedMethod, myParametrizedDuplicates.getParametrizedMethod(),
+                                               myMethodCall, myParametrizedDuplicates.getParametrizedCall(),
+                                               myParametrizedDuplicates.getSize()).showAndGet();
   }
 
   private void replaceParametrizedMethod() {

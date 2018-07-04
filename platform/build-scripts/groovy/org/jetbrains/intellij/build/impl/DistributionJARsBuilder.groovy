@@ -1,4 +1,4 @@
-// Copyright 2000-2017 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
+// Copyright 2000-2018 JetBrains s.r.o. Use of this source code is governed by the Apache 2.0 license that can be found in the LICENSE file.
 package org.jetbrains.intellij.build.impl
 
 import com.intellij.openapi.util.MultiValuesMap
@@ -35,9 +35,10 @@ class DistributionJARsBuilder {
   private final Set<String> usedModules = new LinkedHashSet<>()
   private final PlatformLayout platform
   private final File patchedApplicationInfo
-  private final List<PluginLayout> pluginsToPublish
+  private final LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish
 
-  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, List<PluginLayout> pluginsToPublish) {
+  DistributionJARsBuilder(BuildContext buildContext, File patchedApplicationInfo, 
+                          LinkedHashMap<PluginLayout, PluginPublishingSpec> pluginsToPublish) {
     this.patchedApplicationInfo = patchedApplicationInfo
     this.buildContext = buildContext
     this.pluginsToPublish = pluginsToPublish
@@ -147,7 +148,7 @@ class DistributionJARsBuilder {
   }
 
   private Set<String> getEnabledPluginModules() {
-    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.collect { it.mainModule } as Set<String>
+    buildContext.productProperties.productLayout.bundledPluginModules + pluginsToPublish.keySet().collect { it.mainModule } as Set<String>
   }
 
   List<String> getPlatformModules() {
@@ -183,7 +184,7 @@ class DistributionJARsBuilder {
   }
 
   Collection<String> getIncludedProjectArtifacts() {
-    platform.includedArtifacts.keySet() + pluginsToPublish.collectMany {it.includedArtifacts.keySet()}
+    platform.includedArtifacts.keySet() + pluginsToPublish.keySet().collectMany {it.includedArtifacts.keySet()}
   }
 
   void buildJARs() {
@@ -315,40 +316,75 @@ class DistributionJARsBuilder {
     def ant = buildContext.ant
     def layoutBuilder = createLayoutBuilder()
     buildContext.executeStep("Build non-bundled plugins", BuildOptions.NON_BUNDLED_PLUGINS_STEP) {
+      def pluginXmlFiles = new LinkedHashMap<PluginLayout, String>()
+
+      pluginsToPublish.each { pluginAndPublishing ->
+        def plugin = pluginAndPublishing.key
+
+        def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
+        def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
+        if (!new File(pluginXmlPath)) {
+          buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
+        }
+
+        pluginXmlFiles.put(plugin, pluginXmlPath)
+      }
+
       if (buildContext.productProperties.setPluginAndIDEVersionInPluginXml) {
-        pluginsToPublish.each { plugin ->
-          def moduleOutput = buildContext.getModuleOutputPath(buildContext.findRequiredModule(plugin.mainModule))
-          def pluginXmlPath = "$moduleOutput/META-INF/plugin.xml"
-          if (!new File(pluginXmlPath)) {
-            buildContext.messages.error("plugin.xml not found in $plugin.mainModule module: $pluginXmlPath")
-          }
+        pluginsToPublish.each { pluginAndPublishing ->
+          def plugin = pluginAndPublishing.key
+          def publishingSpec = pluginAndPublishing.value
+
+          def pluginXmlPath = pluginXmlFiles[plugin]
           def patchedPluginXmlDir = "$buildContext.paths.temp/patched-plugin-xml/$plugin.mainModule"
+          def patchedPluginXmlPath = "$patchedPluginXmlDir/META-INF/plugin.xml"
+          pluginXmlFiles.put(plugin, patchedPluginXmlPath)
+
           ant.copy(file: pluginXmlPath, todir: "$patchedPluginXmlDir/META-INF")
-          setPluginVersionAndSince("$patchedPluginXmlDir/META-INF/plugin.xml", getPluginVersion(plugin),
+
+          CompatibleBuildRange compatibleBuildRange = publishingSpec.compatibleBuildRange
+          if (compatibleBuildRange == null) {
+            def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+            compatibleBuildRange = includeInCustomRepository ? CompatibleBuildRange.EXACT : CompatibleBuildRange.NEWER_WITH_SAME_BASELINE
+          }
+
+          setPluginVersionAndSince(patchedPluginXmlPath, getPluginVersion(plugin),
                                    buildContext.buildNumber,
-                                   productLayout.prepareCustomPluginRepositoryForPublishedPlugins,
-                                   productLayout.pluginModulesWithRestrictedCompatibleBuildRange.contains(plugin.mainModule))
+                                   compatibleBuildRange)
           layoutBuilder.patchModuleOutput(plugin.mainModule, patchedPluginXmlDir)
         }
       }
 
       def pluginsToPublishDir = "$buildContext.paths.temp/${buildContext.productProperties.productCode}-plugins-to-publish"
       def pluginsDirectoryName = "${buildContext.productProperties.productCode}-plugins"
-      buildPlugins(layoutBuilder, pluginsToPublish, pluginsToPublishDir)
+      buildPlugins(layoutBuilder, new ArrayList<PluginLayout>(pluginsToPublish.keySet()), pluginsToPublishDir)
       def nonBundledPluginsArtifacts = "$buildContext.paths.artifacts/$pluginsDirectoryName"
-      def pluginZipFiles = new LinkedHashMap<PluginLayout, String>()
-      pluginsToPublish.each { plugin ->
+
+      def pluginsToIncludeInCustomRepository = new ArrayList<PluginRepositorySpec>()
+
+      pluginsToPublish.each { pluginAndPublishing ->
+        def plugin = pluginAndPublishing.key
+        def publishingSpec = pluginAndPublishing.value
+
+        def includeInCustomRepository = productLayout.prepareCustomPluginRepositoryForPublishedPlugins && publishingSpec.includeInCustomPluginRepository
+
         def directory = getActualPluginDirectoryName(plugin, buildContext)
-        String suffix = productLayout.prepareCustomPluginRepositoryForPublishedPlugins ? "" : "-${getPluginVersion(plugin)}"
+        String suffix = includeInCustomRepository ? "" : "-${getPluginVersion(plugin)}"
         def destFile = "$nonBundledPluginsArtifacts/$directory${suffix}.zip"
-        pluginZipFiles[plugin] = destFile.toString()
+
+        if (includeInCustomRepository) {
+          pluginsToIncludeInCustomRepository.add(new PluginRepositorySpec(pluginZip: destFile.toString(),
+                                                                          pluginXml: pluginXmlFiles[plugin]))
+        }
+
         ant.zip(destfile: destFile) {
           zipfileset(dir: "$pluginsToPublishDir/$directory", prefix: directory)
         }
         buildContext.notifyArtifactBuilt(destFile)
       }
+
       if (productLayout.prepareCustomPluginRepositoryForPublishedPlugins) {
-        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToPublish, pluginZipFiles, nonBundledPluginsArtifacts)
+        new PluginRepositoryXmlGenerator(buildContext).generate(pluginsToIncludeInCustomRepository, nonBundledPluginsArtifacts)
         buildContext.notifyArtifactBuilt("$nonBundledPluginsArtifacts/plugins.xml")
       }
     }
@@ -602,21 +638,29 @@ class DistributionJARsBuilder {
     new LayoutBuilder(buildContext, COMPRESS_JARS)
   }
 
-  private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber, boolean setExactNumberInUntilBuild, boolean useRestrictedCompatibleBuildRange) {
+  private void setPluginVersionAndSince(String pluginXmlPath, String version, String buildNumber,
+                                        CompatibleBuildRange compatibleBuildRange) {
     buildContext.ant.replaceregexp(file: pluginXmlPath,
                                    match: "<version>[\\d.]*</version>",
                                    replace: "<version>${version}</version>")
     def sinceBuild
     def untilBuild
-    if (!setExactNumberInUntilBuild && buildNumber.matches(/(\d+\.)+\d+/)) {
-      if (buildNumber.matches(/\d+\.\d+/)) {
-        sinceBuild = buildNumber
+    if (compatibleBuildRange != CompatibleBuildRange.EXACT && buildNumber.matches(/(\d+\.)+\d+/)) {
+      if (compatibleBuildRange == CompatibleBuildRange.ANY_WITH_SAME_BASELINE) {
+        sinceBuild = buildNumber.substring(0, buildNumber.indexOf('.'))
+        untilBuild = buildNumber.substring(0, buildNumber.indexOf('.')) + ".*"
       }
       else {
-        sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+        if (buildNumber.matches(/\d+\.\d+/)) {
+          sinceBuild = buildNumber
+        }
+        else {
+          sinceBuild = buildNumber.substring(0, buildNumber.lastIndexOf('.'))
+        }
+        int end = compatibleBuildRange == CompatibleBuildRange.RESTRICTED_TO_SAME_RELEASE ? buildNumber.lastIndexOf('.') :
+                  buildNumber.indexOf('.')
+        untilBuild = buildNumber.substring(0, end) + ".*"
       }
-      int end = useRestrictedCompatibleBuildRange ? buildNumber.lastIndexOf('.') : buildNumber.indexOf('.')
-      untilBuild = buildNumber.substring(0, end) + ".*"
     }
     else {
       sinceBuild = buildNumber

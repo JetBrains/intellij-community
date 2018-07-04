@@ -562,3 +562,20 @@ class InLambdaTest {
     IntStream.range(0, 100).mapToObj(String::valueOf).forEach(e -> listForLambda.add(e));
   }
 }
+
+class AssertTest {
+  void test() {
+    List<String> <warning descr="Contents of collection 'list' are queried, but never updated">list</warning> = new ArrayList<>();
+    assert list.isEmpty() : list;
+  }
+}
+
+class SynchronizedTest {
+  void test() {
+    List<String> <warning descr="Contents of collection 'list' are updated, but never queried">list</warning> = new ArrayList<>();
+    list.add("foo");
+    synchronized (list) {
+      System.out.println("hello");
+    }
+  }
+}

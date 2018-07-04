@@ -25,7 +25,9 @@ import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
@@ -59,6 +61,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   
   private boolean myIsEnabledInTest;
   private final Map<VirtualFile,IndentOptions> myDiscardedOptions = ContainerUtil.createWeakMap();
+  private boolean hasBeenAdvertised;
 
   @Nullable
   @Override
@@ -132,10 +135,12 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     List<AnAction> actions = ContainerUtil.newArrayList();
     final VirtualFile virtualFile = file.getVirtualFile();
     final Project project = file.getProject();
+    final IndentOptions projectOptions = CodeStyle.getSettings(project).getIndentOptions(file.getFileType());
+    final String projectOptionsTip = FileIndentOptionsProvider.getTooltip(projectOptions, "project");
     if (indentOptions instanceof TimeStampedIndentOptions) {
       if (((TimeStampedIndentOptions)indentOptions).isDetected()) {
         actions.add(
-          new AnAction("Discard detected for " + virtualFile.getName()) {
+          new AnAction(ApplicationBundle.message("code.style.indent.detector.reject", projectOptionsTip)) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               disableForFile(virtualFile, indentOptions);
@@ -144,7 +149,21 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
           }
         );
         actions.add(
-          new AnAction("Disable detection in project") {
+          new AnAction(ApplicationBundle.message("code.style.indent.detector.reindent", projectOptionsTip)) {
+            @Override
+            public void actionPerformed(AnActionEvent e) {
+              disableForFile(virtualFile, indentOptions);
+              notifyIndentOptionsChanged(project, file);
+              CommandProcessor.getInstance().runUndoTransparentAction(
+                () -> ApplicationManager.getApplication().runWriteAction(
+                  () -> CodeStyleManager.getInstance(project).adjustLineIndent(file, file.getTextRange()))
+              );
+              myDiscardedOptions.remove(virtualFile);
+            }
+          }
+        );
+        actions.add(
+          new AnAction(ApplicationBundle.message("code.style.indent.detector.disable")) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               CodeStyle.getSettings(project).AUTODETECT_INDENTS = false;
@@ -160,7 +179,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
       final Document document = PsiDocumentManager.getInstance(project).getDocument(file);
       if (document != null) {
         actions.add(
-          new AnAction("with " + getTooltip(discardedOptions)) {
+          new AnAction(ApplicationBundle.message("code.style.indent.detector.apply", getTooltip(discardedOptions))) {
             @Override
             public void actionPerformed(AnActionEvent e) {
               myDiscardedOptions.remove(virtualFile);
@@ -203,11 +222,11 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   private static class DetectionDisabledNotification extends Notification {
     public DetectionDisabledNotification(Project project) {
       super(NOTIFICATION_GROUP.getDisplayId(),
-            "Indent Detection",
-            "Indent detection has been disabled.",
+            ApplicationBundle.message("code.style.indent.detector.notification.title"),
+            ApplicationBundle.message("code.style.indent.detector.notification.content"),
             NotificationType.INFORMATION);
       addAction(new ReEnableDetection(project, this));
-      addAction(new ShowIndentDetectionOptionAction("Show settings..."));
+      addAction(new ShowIndentDetectionOptionAction(ApplicationBundle.message("code.style.indent.detector.notification.settings")));
     }
   }
 
@@ -227,7 +246,7 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
     private final Notification myNotification;
 
     public ReEnableDetection(@NotNull Project project, Notification notification) {
-      super("Re-enable");
+      super(ApplicationBundle.message("code.style.indent.detector.notification.enable"));
       myProject = project;
       myNotification = notification;
     }
@@ -241,18 +260,34 @@ public class DetectableIndentOptionsProvider extends FileIndentOptionsProvider {
   }
 
   @Override
-  public String getTooltip(@NotNull IndentOptions indentOptions) {
-    String tooltip = super.getTooltip(indentOptions);
-    if (indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected()) {
-      tooltip += " (detected)";
+  public String getHint(@NotNull IndentOptions indentOptions) {
+    if (areDetected(indentOptions)) {
+      return "detected";
     }
-    return tooltip;
+    return null;
   }
 
   @Override
   public boolean areActionsAvailable(@NotNull VirtualFile file, @NotNull IndentOptions indentOptions) {
     return
-      indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected() ||
+      areDetected(indentOptions) ||
       myDiscardedOptions.containsKey(file);
+  }
+
+  @Nullable
+  @Override
+  public String getAdvertisementText(@NotNull PsiFile psiFile, @NotNull IndentOptions indentOptions) {
+    if (areDetected(indentOptions) && !hasBeenAdvertised) {
+      String actualOptionsHint = getTooltip(indentOptions, null);
+      IndentOptions projectOptions = CodeStyle.getSettings(psiFile.getProject()).getIndentOptions(psiFile.getFileType());
+      String projectOptionsHint = getTooltip(projectOptions, null);
+      hasBeenAdvertised = true;
+      return ApplicationBundle.message("code.style.different.indent.size.detected", actualOptionsHint, projectOptionsHint);
+    }
+    return null;
+  }
+
+  private static boolean areDetected(@NotNull IndentOptions indentOptions) {
+    return indentOptions instanceof TimeStampedIndentOptions && ((TimeStampedIndentOptions)indentOptions).isDetected();
   }
 }

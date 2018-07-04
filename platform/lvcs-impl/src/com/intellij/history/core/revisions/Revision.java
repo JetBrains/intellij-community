@@ -56,6 +56,6 @@ public abstract class Revision {
   public abstract Entry findEntry();
 
   public List<Difference> getDifferencesWith(Revision right) {
-    return Entry.getDifferencesBetween(findEntry(), right.findEntry());
+    return Entry.getDifferencesBetween(findEntry(), right.findEntry(), right instanceof CurrentRevision);
   }
 }

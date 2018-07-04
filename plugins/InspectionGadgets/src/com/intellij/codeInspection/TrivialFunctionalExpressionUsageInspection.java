@@ -203,7 +203,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     inlineCallArguments(callExpression, element, ct);
     // body could be invalidated after inlining
     expression = LambdaUtil.extractSingleExpressionFromBody(element.getBody());
-    ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(expression));
+    ct.replaceAndRestoreComments(callExpression, expression);
   }
 
   private static void replaceCodeBlock(PsiLambdaExpression element) {
@@ -233,7 +233,7 @@ public class TrivialFunctionalExpressionUsageInspection extends AbstractBaseJava
     }
     final PsiExpression returnValue = statement == null ? null : statement.getReturnValue();
     if (returnValue != null) {
-      ct.replaceAndRestoreComments(callExpression, ct.markUnchanged(returnValue));
+      ct.replaceAndRestoreComments(callExpression, returnValue);
     }
     else {
       ct.deleteAndRestoreComments(callExpression);
