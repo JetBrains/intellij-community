@@ -56,11 +56,11 @@ public class VcsProjectLog implements Disposable {
 
   public VcsProjectLog(@NotNull Project project,
                        @NotNull MessageBus messageBus,
-                       @NotNull VcsLogTabsProperties uiProperties) {
+                       @NotNull VcsLogProjectTabsProperties uiProperties) {
     myProject = project;
     myMessageBus = messageBus;
     myUiProperties = uiProperties;
-    myTabsManager = new VcsLogTabsManager(project, messageBus, this);
+    myTabsManager = new VcsLogTabsManager(project, messageBus, uiProperties, this);
   }
 
   @Nullable

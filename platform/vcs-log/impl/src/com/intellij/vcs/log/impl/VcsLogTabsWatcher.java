@@ -109,7 +109,7 @@ public class VcsLogTabsWatcher implements Disposable {
     return StreamEx.of(myRefresher.getLogWindows())
                    .select(VcsLogTab.class)
                    .map(VcsLogTab::getTabId)
-                   .filter(tabId -> !VcsLogTabsProperties.MAIN_LOG_ID.equals(tabId))
+                   .filter(tabId -> !VcsLogProjectTabsProperties.MAIN_LOG_ID.equals(tabId))
                    .toList();
   }
 

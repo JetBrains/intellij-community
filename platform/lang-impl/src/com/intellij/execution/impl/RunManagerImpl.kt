@@ -187,7 +187,10 @@ open class RunManagerImpl(internal val project: Project) : RunManagerEx(), Persi
   }
 
   override fun dispose() {
-    lock.write { templateIdToConfiguration.clear() }
+    lock.write {
+      iconCache.clear()
+      templateIdToConfiguration.clear()
+    }
   }
 
   override fun getConfig(): RunManagerConfig = _config

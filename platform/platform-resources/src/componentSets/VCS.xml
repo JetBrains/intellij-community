@@ -7,9 +7,6 @@
       <implementation-class>com.intellij.lifecycle.PeriodicalTasksCloser</implementation-class>
     </component>
     <component>
-      <implementation-class>com.intellij.openapi.vcs.changes.actions.migrate.MigrateDiffApplicationComponent</implementation-class>
-    </component>
-    <component>
       <implementation-class>com.intellij.openapi.vcs.changes.patch.PatchClipboardTracker</implementation-class>
     </component>
   </application-components>

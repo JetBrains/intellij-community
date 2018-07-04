@@ -38,16 +38,16 @@ import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.InputEvent;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
 public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponent<VcsLogBranchFilter> {
+  public static final String BRANCH_FILTER_NAME = "Branch";
   private final VcsLogClassicFilterUi.BranchFilterModel myBranchFilterModel;
 
   public BranchFilterPopupComponent(@NotNull MainVcsLogUiProperties uiProperties,
                                     @NotNull VcsLogClassicFilterUi.BranchFilterModel filterModel) {
-    super("Branch", uiProperties, filterModel);
+    super(BRANCH_FILTER_NAME, uiProperties, filterModel);
     myBranchFilterModel = filterModel;
   }
 
@@ -88,17 +88,6 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
   @NotNull
   @Override
-  protected List<List<String>> getRecentValuesFromSettings() {
-    return myUiProperties.getRecentlyFilteredBranchGroups();
-  }
-
-  @Override
-  protected void rememberValuesInSettings(@NotNull Collection<String> values) {
-    myUiProperties.addRecentlyFilteredBranchGroup(new ArrayList<>(values));
-  }
-
-  @NotNull
-  @Override
   protected List<String> getAllValues() {
     return ContainerUtil.map(myFilterModel.getDataPack().getRefs().getBranches(), VcsRef::getName);
   }
@@ -129,7 +118,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
 
     @Override
     protected void createFavoritesAction(@NotNull DefaultActionGroup actionGroup, @NotNull List<String> favorites) {
-      actionGroup.add(new PredefinedValueAction("Favorites", favorites));
+      actionGroup.add(new PredefinedValueAction("Favorites", favorites, false));
     }
 
     private class BranchFilterAction extends PredefinedValueAction {
@@ -139,7 +128,7 @@ public class BranchFilterPopupComponent extends MultipleValueFilterPopupComponen
       private boolean myIsFavorite;
 
       public BranchFilterAction(@NotNull String value, @NotNull Collection<VcsRef> references) {
-        super(value, true);
+        super(value);
         myReferences = references;
         myIcon = new LayeredIcon(AllIcons.Nodes.Favorite, EmptyIcon.ICON_16);
         myHoveredIcon = new LayeredIcon(AllIcons.Nodes.FavoriteOnHover, AllIcons.Nodes.NotFavoriteOnHover);

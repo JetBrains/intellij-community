@@ -85,7 +85,6 @@ public class MergePanel2 implements DiffViewer {
   private final DividersRepainter myDividersRepainter = new DividersRepainter();
   private StatusUpdater myStatusUpdater;
   private final DialogBuilder myBuilder;
-  private final MyDataProvider myProvider;
 
   public MergePanel2(DialogBuilder builder, @NotNull Disposable parent) {
     DiffUsageTriggerCollector.trigger("deprecated.MergePanel2");
@@ -121,8 +120,7 @@ public class MergePanel2 implements DiffViewer {
     FontSizeSynchronizer.attachTo(editorPlaces);
     myPanel = new DiffPanelOuterComponent(TextDiffType.MERGE_TYPES, createToolbar());
     myPanel.insertDiffComponent(new ThreePanels(myEditorsPanels, myDividers), new MyScrollingPanel());
-    myProvider = new MyDataProvider();
-    myPanel.setDataProvider(myProvider);
+    myPanel.setDataProvider(new MyDataProvider());
     myBuilder = builder;
   }
 
@@ -358,7 +356,6 @@ public class MergePanel2 implements DiffViewer {
     }
     LOG.assertTrue(!myDuringCreation);
     myDuringCreation = true;
-    myProvider.putData(data.getGenericData());
     try {
       myData = data;
       String[] titles = myData.getContentTitles();
@@ -367,7 +364,7 @@ public class MergePanel2 implements DiffViewer {
         editorsPanel.getLabel().setText(titles[i].isEmpty() ? " " : titles[i]);
       }
       createMergeList();
-      data.customizeToolbar(myPanel.resetToolbar());
+      myPanel.resetToolbar();
       myPanel.registerToolbarActions();
       if ( data instanceof MergeRequestImpl && myBuilder != null){
         Convertor<DialogWrapper, Boolean> preOkHook = dialog -> {
@@ -411,10 +408,6 @@ public class MergePanel2 implements DiffViewer {
   @Nullable
   public JComponent getPreferredFocusedComponent() {
     return getEditorPlace(1).getContentComponent();
-  }
-
-  public int getContentsNumber() {
-    return 3;
   }
 
   @Override

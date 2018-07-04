@@ -19,7 +19,6 @@ import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
-import com.intellij.testFramework.TestFrameworkUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -37,10 +36,4 @@ public abstract class IGInspectionTestCase extends InspectionTestCase {
     super.doTest(folderName, new LocalInspectionToolWrapper(tool), "java 1.5");
   }
 
-  @Override
-  public boolean isPerformanceTest() {
-    String testName = getName();
-    String className = getClass().getName().replace("com.siyeh.ig.performance.", "");
-    return TestFrameworkUtil.isPerformanceTest(testName, className);
-  }
 }

@@ -3,14 +3,14 @@ package org.jetbrains.plugins.groovy.codeInspection.bugs
 
 import com.intellij.testFramework.LightProjectDescriptor
 import groovy.transform.CompileStatic
-import org.jetbrains.plugins.groovy.GroovyLightProjectDescriptor
+import org.jetbrains.plugins.groovy.GroovyProjectDescriptors
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
 @CompileStatic
 class GrEqualsBetweenInconvertibleTypesInspectionTest extends GrHighlightingTestBase {
 
   final String basePath = super.basePath + 'bugs/'
-  final LightProjectDescriptor projectDescriptor = GroovyLightProjectDescriptor.GROOVY_LATEST
+  final LightProjectDescriptor projectDescriptor = GroovyProjectDescriptors.GROOVY_3_0
 
   void 'test equals between inconvertible types'() {
     fixture.enableInspections GrEqualsBetweenInconvertibleTypesInspection

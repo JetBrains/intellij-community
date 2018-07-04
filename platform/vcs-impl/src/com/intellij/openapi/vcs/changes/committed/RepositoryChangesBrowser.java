@@ -27,12 +27,9 @@ import com.intellij.openapi.vcs.changes.ChangeList;
 import com.intellij.openapi.vcs.changes.ChangesUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowser;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.List;
@@ -43,47 +40,25 @@ import java.util.Set;
  */
 @Deprecated
 public class RepositoryChangesBrowser extends ChangesBrowser implements DataProvider {
-
-  private CommittedChangesBrowserUseCase myUseCase;
-
-  @Deprecated
   public RepositoryChangesBrowser(final Project project, final List<CommittedChangeList> changeLists) {
-    this(project);
+    this(project, changeLists, null, null);
   }
 
-  @Deprecated
   public RepositoryChangesBrowser(final Project project, final List<? extends ChangeList> changeLists, final List<Change> changes,
                                   final ChangeList initialListSelection) {
-    this(project, initialListSelection, null);
+    super(project, null, Collections.emptyList(), initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, null);
   }
 
-
-  public RepositoryChangesBrowser(@NotNull Project project) {
-    this(project, null, null);
-  }
-
-  public RepositoryChangesBrowser(@NotNull Project project,
-                                  @Nullable ChangeList initialListSelection,
-                                  @Nullable VirtualFile toSelect) {
-    super(project, null, Collections.emptyList(), initialListSelection, false, false, null, MyUseCase.COMMITTED_CHANGES, toSelect);
-  }
-
+  @Override
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
     toolBarGroup.add(ActionManager.getInstance().getAction("Vcs.RepositoryChangesBrowserToolbar"));
   }
 
-  public void setUseCase(final CommittedChangesBrowserUseCase useCase) {
-    myUseCase = useCase;
-  }
-
+  @Override
   public Object getData(@NonNls final String dataId) {
-    if (CommittedChangesBrowserUseCase.DATA_KEY.is(dataId)) {
-      return myUseCase;
-    }
-
-    else if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
+    if (VcsDataKeys.SELECTED_CHANGES.is(dataId)) {
       final List<Change> list = myViewer.getSelectedChanges();
       return list.toArray(new Change[0]);
     }

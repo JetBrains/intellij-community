@@ -17,40 +17,172 @@ package com.intellij.openapi.vcs.ex;
 
 import com.intellij.diff.util.DiffDrawUtil;
 import com.intellij.diff.util.DiffUtil;
+import com.intellij.diff.util.IntPair;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.DiffColors;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.VisualPosition;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.impl.DocumentMarkupModel;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.*;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.JBUI;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
+import org.jetbrains.annotations.CalledInAwt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.ArrayList;
+import java.util.BitSet;
+import java.util.Collections;
 import java.util.List;
 
 import static com.intellij.diff.util.DiffDrawUtil.lineToY;
+import static com.intellij.diff.util.DiffDrawUtil.yToLine;
+import static com.intellij.diff.util.DiffUtil.getLineCount;
+import static com.intellij.openapi.diagnostic.Logger.getInstance;
+import static com.intellij.util.ui.update.MergingUpdateQueue.ANY_COMPONENT;
 
 public abstract class LineStatusMarkerRenderer {
+  private static final Logger LOG = getInstance(LineStatusMarkerRenderer.class);
+
   @NotNull protected final LineStatusTrackerBase<?> myTracker;
+  private final MarkupEditorFilter myEditorFilter;
+
+  @NotNull private final MergingUpdateQueue myUpdateQueue;
+  private boolean myDisposed = false;
+  @NotNull private final RangeHighlighter myHighlighter;
+  @NotNull private final List<RangeHighlighter> myTooltipHighlighters = new ArrayList<>();
 
   public LineStatusMarkerRenderer(@NotNull LineStatusTrackerBase<?> tracker) {
     myTracker = tracker;
+    myEditorFilter = getEditorFilter();
+
+    Document document = myTracker.getDocument();
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(document, myTracker.getProject(), true);
+    myHighlighter = markupModel.addRangeHighlighter(0, document.getTextLength(), DiffDrawUtil.LST_LINE_MARKER_LAYER, null,
+                                                    HighlighterTargetArea.LINES_IN_RANGE);
+    myHighlighter.setGreedyToLeft(true);
+    myHighlighter.setGreedyToRight(true);
+
+    myHighlighter.setLineMarkerRenderer(new MyActiveGutterRenderer());
+
+    if (myEditorFilter != null) myHighlighter.setEditorFilter(myEditorFilter);
+
+    myUpdateQueue = new MergingUpdateQueue("LineStatusMarkerRenderer", 100, true, ANY_COMPONENT, myTracker.getDisposable());
+
+    Disposer.register(myTracker.getDisposable(), new Disposable() {
+      @Override
+      public void dispose() {
+        myDisposed = true;
+        destroyHighlighters();
+      }
+    });
+
+    scheduleUpdate();
   }
 
+  public void scheduleUpdate() {
+    myUpdateQueue.queue(new Update("update") {
+      @Override
+      public void run() {
+        updateHighlighters();
+      }
+    });
+  }
 
-  protected boolean canDoAction(@NotNull Range range, MouseEvent e) {
+  @CalledInAwt
+  private void updateHighlighters() {
+    if (myDisposed) return;
+
+    for (RangeHighlighter highlighter: myTooltipHighlighters) {
+      disposeHighlighter(highlighter);
+    }
+    myTooltipHighlighters.clear();
+
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges != null) {
+      MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
+      for (Range range: ranges) {
+        RangeHighlighter highlighter = createTooltipRangeHighlighter(range, markupModel);
+        if (myEditorFilter != null) highlighter.setEditorFilter(myEditorFilter);
+        myTooltipHighlighters.add(highlighter);
+      }
+    }
+  }
+
+  private void destroyHighlighters() {
+    disposeHighlighter(myHighlighter);
+
+    for (RangeHighlighter highlighter: myTooltipHighlighters) {
+      disposeHighlighter(highlighter);
+    }
+    myTooltipHighlighters.clear();
+  }
+
+  private static void disposeHighlighter(@NotNull RangeHighlighter highlighter) {
+    try {
+      highlighter.dispose();
+    }
+    catch (Exception e) {
+      LOG.error(e);
+    }
+  }
+
+  private boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+    List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
+    return !ranges.isEmpty() && canDoAction(editor, ranges, e);
+  }
+
+  private void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+    List<? extends Range> ranges = getSelectedRanges(editor, e.getY());
+    if (!ranges.isEmpty()) {
+      doAction(editor, ranges, e);
+    }
+  }
+
+  @NotNull
+  protected List<? extends Range> getSelectedRanges(@NotNull Editor editor, int y) {
+    int visualLine = editor.xyToVisualPosition(new Point(0, y)).line;
+    int line1 = editor.visualToLogicalPosition(new VisualPosition(visualLine, 0)).line;
+    int line2 = editor.visualToLogicalPosition(new VisualPosition(visualLine + 1, 0)).line;
+    BitSet lines = new BitSet();
+    lines.set(line1, line2);
+    List<? extends Range> ranges = myTracker.getRangesForLines(lines);
+    if (!ContainerUtil.isEmpty(ranges)) return ranges;
+
+    // special handling for deletion at the end of file
+    int lineCount = getLineCount(editor.getDocument());
+    if (line2 == lineCount) {
+      Range range = myTracker.getRangeForLine(lineCount);
+      if (range != null) return Collections.singletonList(range);
+    }
+    return Collections.emptyList();
+  }
+
+  protected boolean canDoAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
     return false;
   }
 
-  protected void doAction(@NotNull Editor editor, @NotNull Range range, MouseEvent e) {
+  protected void doAction(@NotNull Editor editor, @NotNull List<? extends Range> ranges, @NotNull MouseEvent e) {
+  }
+
+  @NotNull
+  protected VisibleRangeMerger createMerger(@NotNull Editor editor) {
+    return new VisibleRangeMerger(editor);
   }
 
   @Nullable
@@ -62,24 +194,9 @@ public abstract class LineStatusMarkerRenderer {
     return 0;
   }
 
-
   @NotNull
-  RangeHighlighter createHighlighter(@NotNull Range range) {
-    MarkupModel markupModel = DocumentMarkupModel.forDocument(myTracker.getDocument(), myTracker.getProject(), true);
-    RangeHighlighter highlighter = createRangeHighlighter(range, markupModel);
-
-    MarkupEditorFilter editorFilter = getEditorFilter();
-    if (editorFilter != null) highlighter.setEditorFilter(editorFilter);
-
-    highlighter.setLineMarkerRenderer(new MyActiveGutterRenderer(range));
-
-    return highlighter;
-  }
-
-
-  @NotNull
-  public static RangeHighlighter createRangeHighlighter(@NotNull Range range,
-                                                        @NotNull MarkupModel markupModel) {
+  public static RangeHighlighter createTooltipRangeHighlighter(@NotNull Range range,
+                                                               @NotNull MarkupModel markupModel) {
     TextRange textRange = DiffUtil.getLinesRange(markupModel.getDocument(), range.getLine1(), range.getLine2(), false);
     TextAttributes attributes = getTextAttributes(range);
 
@@ -94,9 +211,8 @@ public abstract class LineStatusMarkerRenderer {
     return highlighter;
   }
 
-
   @NotNull
-  private static TextAttributes getTextAttributes(@NotNull final Range range) {
+  private static TextAttributes getTextAttributes(@NotNull Range range) {
     return new TextAttributes() {
       @Override
       public Color getErrorStripeColor() {
@@ -109,23 +225,34 @@ public abstract class LineStatusMarkerRenderer {
   // Gutter painting
   //
 
-  protected void paint(@NotNull Editor editor, @NotNull Range range, @NotNull Graphics g) {
-    paintRange(g, editor, range, getFramingBorderSize());
+  protected void paint(@NotNull Editor editor, @NotNull Graphics g) {
+    List<? extends Range> ranges = myTracker.getRanges();
+    if (ranges == null) return;
+
+    int framingBorder = getFramingBorderSize();
+
+    List<List<ChangedLines>> blocks = createMerger(editor).run(ranges);
+    for (List<ChangedLines> block: blocks) {
+      paintChangedLines(g, editor, block, framingBorder);
+    }
   }
 
-  public static void paintRange(@NotNull Graphics g,
-                                @NotNull Editor editor,
-                                @NotNull Range range,
-                                int framingBorder) {
-    Color gutterColor = getGutterColor(range, editor);
+  private static void paintChangedLines(@NotNull Graphics g, @NotNull Editor editor, @NotNull List<ChangedLines> block, int framingBorder) {
+    EditorImpl editorImpl = (EditorImpl)editor;
+
     Color borderColor = getGutterBorderColor(editor);
     Color gutterBackgroundColor = ((EditorEx)editor).getGutterComponentEx().getBackground();
 
-    Rectangle area = getMarkerArea(editor, range.getLine1(), range.getLine2());
-    final int x = area.x;
-    final int endX = area.x + area.width;
-    final int y = area.y;
-    final int endY = area.y + area.height;
+    int line1 = block.get(0).line1;
+    int line2 = block.get(block.size() - 1).line2;
+
+    IntPair area = getGutterArea(editor);
+    final int x = area.val1;
+    final int endX = area.val2;
+
+    final int y = editorImpl.visibleLineToY(line1);
+    final int endY = editorImpl.visibleLineToY(line2);
+
 
     if (framingBorder > 0) {
       if (y != endY) {
@@ -135,55 +262,56 @@ public abstract class LineStatusMarkerRenderer {
       }
     }
 
-    if (y == endY) {
-      paintTriangle(g, gutterColor, borderColor, x, endX, y);
+    for (ChangedLines change: block) {
+      if (change.line1 != change.line2 &&
+          !change.isIgnored) {
+        int start = editorImpl.visibleLineToY(change.line1);
+        int end = editorImpl.visibleLineToY(change.line2);
+
+        Color gutterColor = getGutterColor(change.type, editor);
+        paintRect(g, gutterColor, null, x, start, endX, end);
+      }
+    }
+
+    if (borderColor == null) {
+      for (ChangedLines change: block) {
+        if (change.line1 != change.line2 &&
+            change.isIgnored) {
+          int start = editorImpl.visibleLineToY(change.line1);
+          int end = editorImpl.visibleLineToY(change.line2);
+
+          Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
+          paintRect(g, null, ignoredBorderColor, x, start, endX, end);
+        }
+      }
     }
     else {
-      if (range.getInnerRanges() == null) { // Mode.DEFAULT
-        paintRect(g, gutterColor, borderColor, x, y, endX, endY);
-      }
-      else { // Mode.SMART
-        List<Range.InnerRange> innerRanges = range.getInnerRanges();
-        for (Range.InnerRange innerRange : innerRanges) {
-          if (innerRange.getType() == Range.DELETED) continue;
+      paintRect(g, null, borderColor, x, y, endX, endY);
+    }
 
-          int start = lineToY(editor, range.getLine1() + innerRange.getLine1());
-          int end = lineToY(editor, range.getLine1() + innerRange.getLine2());
+    for (ChangedLines change: block) {
+      if (change.line1 == change.line2) {
+        int start = editorImpl.visibleLineToY(change.line1);
 
-          paintRect(g, getGutterColor(innerRange, editor), null, x, start, endX, end);
+        if (!change.isIgnored) {
+          Color gutterColor = getGutterColor(change.type, editor);
+          paintTriangle(g, gutterColor, borderColor, x, endX, start);
         }
-
-        paintRect(g, null, borderColor, x, y, endX, endY);
-
-        for (Range.InnerRange innerRange : innerRanges) {
-          if (innerRange.getType() != Range.DELETED) continue;
-
-          int start = lineToY(editor, range.getLine1() + innerRange.getLine1());
-
-          paintTriangle(g, getGutterColor(innerRange, editor), borderColor, x, endX, start);
+        else {
+          Color ignoredBorderColor = getIgnoredGutterBorderColor(change.type, editor);
+          paintTriangle(g, null, ignoredBorderColor, x, endX, start);
         }
       }
     }
   }
 
-  public static void paintIgnoredRange(@NotNull Graphics g,
-                                       @NotNull Editor editor,
-                                       @NotNull Range range) {
-    Color borderColor = getGutterBorderColor(editor);
-    Color ignoredBorderColor = getIgnoredGutterBorderColor(range, editor);
-    Color color = borderColor != null ? borderColor : ignoredBorderColor;
-
-    Rectangle area = getMarkerArea(editor, range.getLine1(), range.getLine2());
-    final int x = area.x;
-    final int endX = area.x + area.width;
-    final int y = area.y;
-    final int endY = area.y + area.height;
-
-    if (area.height == 0) {
-      paintTriangle(g, null, color, x, endX, y);
-    }
-    else {
-      paintRect(g, null, color, x, y, endX, endY);
+  public static void paintRange(@NotNull Graphics g,
+                                @NotNull Editor editor,
+                                @NotNull Range range,
+                                int framingBorder) {
+    List<List<ChangedLines>> blocks = new VisibleRangeMerger(editor).run(Collections.singletonList(range));
+    for (List<ChangedLines> block: blocks) {
+      paintChangedLines(g, editor, block, framingBorder);
     }
   }
 
@@ -199,10 +327,18 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @NotNull
-  public static Rectangle getMarkerArea(@NotNull Editor editor, int line1, int line2) {
+  private static IntPair getGutterArea(@NotNull Editor editor) {
     EditorGutterComponentEx gutter = ((EditorEx)editor).getGutterComponentEx();
     int x = gutter.getLineMarkerFreePaintersAreaOffset() + 1; // leave 1px for brace highlighters
     int endX = gutter.getWhitespaceSeparatorOffset();
+    return new IntPair(x, endX);
+  }
+
+  @NotNull
+  public static Rectangle getMarkerArea(@NotNull Editor editor, int line1, int line2) {
+    IntPair horizontalArea = getGutterArea(editor);
+    int x = horizontalArea.val1;
+    int endX = horizontalArea.val2;
     int y = lineToY(editor, line1);
     int endY = lineToY(editor, line2);
     return new Rectangle(x, y, endX - x, endY - y);
@@ -245,9 +381,9 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @Nullable
-  private static Color getGutterColor(@NotNull Range.InnerRange range, @Nullable Editor editor) {
+  private static Color getGutterColor(byte type, @Nullable Editor editor) {
     final EditorColorsScheme scheme = getColorScheme(editor);
-    switch (range.getType()) {
+    switch (type) {
       case Range.INSERTED:
         return scheme.getColor(EditorColors.ADDED_LINES_COLOR);
       case Range.DELETED:
@@ -279,30 +415,18 @@ public abstract class LineStatusMarkerRenderer {
   }
 
   @Nullable
-  private static Color getGutterColor(@NotNull Range range, @Nullable Editor editor) {
-    final EditorColorsScheme scheme = getColorScheme(editor);
-    switch (range.getType()) {
-      case Range.INSERTED:
-        return scheme.getColor(EditorColors.ADDED_LINES_COLOR);
-      case Range.DELETED:
-        return scheme.getColor(EditorColors.DELETED_LINES_COLOR);
-      case Range.MODIFIED:
-        return scheme.getColor(EditorColors.MODIFIED_LINES_COLOR);
-      default:
-        assert false;
-        return null;
-    }
-  }
+  private static Color getIgnoredGutterBorderColor(byte type, @Nullable Editor editor) {
+    Color borderColor = getGutterBorderColor(editor);
+    if (borderColor != null) return borderColor;
 
-  @Nullable
-  private static Color getIgnoredGutterBorderColor(@NotNull Range range, @Nullable Editor editor) {
     final EditorColorsScheme scheme = getColorScheme(editor);
-    switch (range.getType()) {
+    switch (type) {
       case Range.INSERTED:
         return scheme.getColor(EditorColors.IGNORED_ADDED_LINES_BORDER_COLOR);
       case Range.DELETED:
         return scheme.getColor(EditorColors.IGNORED_DELETED_LINES_BORDER_COLOR);
       case Range.MODIFIED:
+      case Range.EQUAL:
         return scheme.getColor(EditorColors.IGNORED_MODIFIED_LINES_BORDER_COLOR);
       default:
         assert false;
@@ -321,26 +445,205 @@ public abstract class LineStatusMarkerRenderer {
   }
 
 
-  private class MyActiveGutterRenderer implements ActiveGutterRenderer {
-    @NotNull private final Range myRange;
+  protected static class VisibleRangeMerger {
+    @NotNull private final Editor myEditor;
 
-    public MyActiveGutterRenderer(@NotNull Range range) {
-      myRange = range;
+    @NotNull private final List<ChangedLines> myBlock = new ArrayList<>();
+
+    @NotNull private final List<List<ChangedLines>> myResult = new ArrayList<>();
+
+    public VisibleRangeMerger(@NotNull Editor editor) {
+      myEditor = editor;
     }
 
+    protected boolean isIgnored(@NotNull Range range) {
+      return false;
+    }
+
+    @NotNull
+    public List<List<ChangedLines>> run(@NotNull List<? extends Range> ranges) {
+      Rectangle area = myEditor.getScrollingModel().getVisibleArea();
+      int visibleLineStart = yToLine(myEditor, area.y);
+      int visibleLineEnd = yToLine(myEditor, area.y + area.height);
+
+      for (Range range: ranges) {
+        int line1 = range.getLine1();
+        int line2 = range.getLine2();
+
+        if (line2 < visibleLineStart) continue;
+        if (line1 > visibleLineEnd) break;
+
+        boolean isIgnored = isIgnored(range);
+        List<Range.InnerRange> innerRanges = range.getInnerRanges();
+
+        if (innerRanges == null || isIgnored) {
+          processLine(line1, line2, range.getType(), isIgnored);
+        }
+        else {
+          for (Range.InnerRange innerRange: innerRanges) {
+            int innerLine1 = line1 + innerRange.getLine1();
+            int innerLine2 = line1 + innerRange.getLine2();
+            byte innerType = innerRange.getType();
+
+            processLine(innerLine1, innerLine2, innerType, isIgnored);
+          }
+        }
+      }
+
+      finishBlock();
+      return myResult;
+    }
+
+    private void processLine(int start, int end, byte type, boolean isIgnored) {
+      EditorImpl editorImpl = (EditorImpl)myEditor;
+      Document document = myEditor.getDocument();
+      int lineCount = getLineCount(document);
+
+      int visualStart;
+      boolean startHasFolding;
+      if (start < lineCount) {
+        int startOffset = document.getLineStartOffset(start);
+        visualStart = editorImpl.offsetToVisualLine(startOffset);
+        startHasFolding = startOffset > 0 && myEditor.getFoldingModel().isOffsetCollapsed(startOffset - 1);
+      }
+      else {
+        LOG.assertTrue(start == lineCount);
+        int lastVisualLine = editorImpl.offsetToVisualLine(document.getTextLength());
+        visualStart = lastVisualLine + start - lineCount + 1;
+        startHasFolding = false;
+      }
+
+      if (start == end) {
+        if (startHasFolding) {
+          appendChange(new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
+        }
+        else {
+          appendChange(new ChangedLines(visualStart, visualStart, type, isIgnored));
+        }
+      }
+      else {
+        int visualEnd;
+        boolean endHasFolding;
+        if (end < lineCount) {
+          int endOffset = document.getLineEndOffset(end - 1);
+          visualEnd = editorImpl.offsetToVisualLine(endOffset) + 1;
+          endHasFolding = myEditor.getFoldingModel().isOffsetCollapsed(endOffset);
+        }
+        else {
+          LOG.assertTrue(end == lineCount);
+          int lastVisualLine = editorImpl.offsetToVisualLine(document.getTextLength());
+          visualEnd = lastVisualLine + end - lineCount + 1;
+          endHasFolding = false;
+        }
+
+        if (type == Range.EQUAL || type == Range.MODIFIED) {
+          appendChange(new ChangedLines(visualStart, visualEnd, type, isIgnored));
+        }
+        else {
+          if (startHasFolding && visualEnd - visualStart > 1) {
+            appendChange(new ChangedLines(visualStart, visualStart + 1, Range.MODIFIED, isIgnored));
+            startHasFolding = false;
+            visualStart++;
+          }
+          if (endHasFolding && visualEnd - visualStart > 1) {
+            appendChange(new ChangedLines(visualStart, visualEnd - 1, type, isIgnored));
+            appendChange(new ChangedLines(visualEnd - 1, visualEnd, Range.MODIFIED, isIgnored));
+          }
+          else {
+            appendChange(new ChangedLines(visualStart, visualEnd, startHasFolding || endHasFolding ? Range.MODIFIED : type, isIgnored));
+          }
+        }
+      }
+    }
+
+    private void appendChange(@NotNull ChangedLines newChange) {
+      ChangedLines lastItem = ContainerUtil.getLastItem(myBlock);
+      if (lastItem != null && lastItem.line2 < newChange.line1) {
+        finishBlock();
+      }
+
+      if (myBlock.isEmpty()) {
+        myBlock.add(newChange);
+        return;
+      }
+
+      ChangedLines lastChange = myBlock.remove(myBlock.size() - 1);
+
+      if (lastChange.line1 == lastChange.line2 &&
+          newChange.line1 == newChange.line2) {
+        assert lastChange.line1 == newChange.line1;
+        byte type = lastChange.type == newChange.type ? lastChange.type : Range.MODIFIED;
+        boolean isIgnored = lastChange.isIgnored && newChange.isIgnored;
+        myBlock.add(new ChangedLines(lastChange.line1, lastChange.line2, type, isIgnored));
+      }
+      else if (lastChange.line1 == lastChange.line2 && newChange.type == Range.EQUAL ||
+               newChange.line1 == newChange.line2 && lastChange.type == Range.EQUAL) {
+        myBlock.add(lastChange);
+        myBlock.add(newChange);
+      }
+      else if (lastChange.type == newChange.type &&
+               lastChange.isIgnored == newChange.isIgnored) {
+        int union1 = Math.min(lastChange.line1, newChange.line1);
+        int union2 = Math.max(lastChange.line2, newChange.line2);
+        myBlock.add(new ChangedLines(union1, union2, lastChange.type, lastChange.isIgnored));
+      }
+      else {
+        int intersection1 = Math.max(lastChange.line1, newChange.line1);
+        int intersection2 = Math.min(lastChange.line2, newChange.line2);
+
+        if (lastChange.line1 != intersection1) {
+          myBlock.add(new ChangedLines(lastChange.line1, intersection1, lastChange.type, lastChange.isIgnored));
+        }
+
+        if (intersection1 != intersection2) {
+          byte type = lastChange.type == newChange.type ? lastChange.type : Range.MODIFIED;
+          boolean isIgnored = lastChange.isIgnored && newChange.isIgnored;
+          myBlock.add(new ChangedLines(intersection1, intersection2, type, isIgnored));
+        }
+
+        if (newChange.line2 != intersection2) {
+          myBlock.add(new ChangedLines(intersection2, newChange.line2, newChange.type, newChange.isIgnored));
+        }
+      }
+    }
+
+    private void finishBlock() {
+      if (myBlock.isEmpty()) return;
+      myResult.add(new ArrayList<>(myBlock));
+      myBlock.clear();
+    }
+  }
+
+  private static class ChangedLines {
+    // VisualPosition.line
+    public final int line1;
+    public final int line2;
+    public final byte type;
+    private final boolean isIgnored;
+
+    public ChangedLines(int line1, int line2, byte type, boolean isIgnored) {
+      this.line1 = line1;
+      this.line2 = line2;
+      this.type = type;
+      this.isIgnored = isIgnored;
+    }
+  }
+
+
+  private class MyActiveGutterRenderer implements ActiveGutterRenderer {
     @Override
     public void paint(Editor editor, Graphics g, Rectangle r) {
-      LineStatusMarkerRenderer.this.paint(editor, myRange, g);
+      LineStatusMarkerRenderer.this.paint(editor, g);
     }
 
     @Override
-    public boolean canDoAction(MouseEvent e) {
-      return LineStatusMarkerRenderer.this.canDoAction(myRange, e);
+    public boolean canDoAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+      return LineStatusMarkerRenderer.this.canDoAction(editor, e);
     }
 
     @Override
-    public void doAction(Editor editor, MouseEvent e) {
-      LineStatusMarkerRenderer.this.doAction(editor, myRange, e);
+    public void doAction(@NotNull Editor editor, @NotNull MouseEvent e) {
+      LineStatusMarkerRenderer.this.doAction(editor, e);
     }
   }
 }

@@ -1046,6 +1046,18 @@ public class CodeStyleSettings extends LegacyCodeStyleSettings
     return getIndentOptions(lang);
   }
 
+  /**
+   * Returns language indent options or, if the language doesn't have any options of its own, indent options configured for other file
+   * types.
+   *
+   * @param language The language to get indent options for.
+   * @return Language indent options.
+   */
+  public IndentOptions getLanguageIndentOptions(@NotNull Language language) {
+    IndentOptions langOptions = getIndentOptions(language);
+    return langOptions != null ? langOptions : OTHER_INDENT_OPTIONS;
+  }
+
   @Nullable
   private IndentOptions getIndentOptions(Language lang) {
     CommonCodeStyleSettings settings = myCommonSettingsManager.getCommonSettings(lang);

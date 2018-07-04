@@ -122,6 +122,7 @@ public class WildcardMethodBreakpoint extends Breakpoint<JavaMethodBreakpointPro
       VirtualMachineProxyImpl virtualMachineProxy = debugProcess.getVirtualMachineProxy();
       if (!virtualMachineProxy.canGetBytecodes() || !virtualMachineProxy.canGetConstantPool()) {
         disableEmulation();
+        return;
       }
       debugProcess.getRequestsManager().callbackOnPrepareClasses(this, getClassPattern());
 

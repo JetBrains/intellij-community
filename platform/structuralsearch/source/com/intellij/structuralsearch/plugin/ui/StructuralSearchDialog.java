@@ -66,8 +66,6 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
@@ -390,7 +388,14 @@ public class StructuralSearchDialog extends DialogWrapper {
     myScopePanel = new ScopePanel(getProject());
     if (myShowScopePanel) {
       myScopePanel.setRecentDirectories(FindInProjectSettings.getInstance(getProject()).getRecentDirectories());
-      myScopePanel.setScopeCallback(s -> initiateValidation());
+      myScopePanel.setScopeCallback(() -> {
+        if (myScopePanel.getScope() == null) {
+          getOKAction().setEnabled(false);
+        }
+        else {
+          initiateValidation();
+        }
+      });
     }
     else {
       myScopePanel.setEnabled(false);
@@ -681,7 +686,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       startSearching();
     }
     catch (MalformedPatternException ex) {
-      reportMessage(SSRBundle.message("this.pattern.is.malformed.message", ex.getMessage()), mySearchCriteriaEdit);
+      reportMessage(SSRBundle.message("this.pattern.is.malformed.message", ex.getMessage()), true, mySearchCriteriaEdit);
     }
   }
 
@@ -706,28 +711,30 @@ public class StructuralSearchDialog extends DialogWrapper {
       final String message = StringUtil.isEmpty(matchOptions.getSearchPattern())
                              ? null
                              : SSRBundle.message("this.pattern.is.malformed.message", (e.getMessage() != null) ? e.getMessage() : "");
-      reportMessage(message, mySearchCriteriaEdit);
+      reportMessage(message, true, mySearchCriteriaEdit);
       return false;
     }
     catch (UnsupportedPatternException e) {
-      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), mySearchCriteriaEdit);
+      reportMessage(SSRBundle.message("this.pattern.is.unsupported.message", e.getMessage()), true, mySearchCriteriaEdit);
       return false;
     }
     catch (NoMatchFoundException e) {
-      reportMessage(e.getMessage(), mySearchCriteriaEdit);
+      reportMessage(e.getMessage(), false, myScopePanel);
       return false;
     }
-    reportMessage(null, mySearchCriteriaEdit);
+    reportMessage(null, false, mySearchCriteriaEdit);
     return myScopePanel.getScope() != null;
   }
 
-  protected void reportMessage(String message, JComponent component) {
+  protected void reportMessage(String message, boolean error, JComponent component) {
     com.intellij.util.ui.UIUtil.invokeLaterIfNeeded(() -> {
-      component.putClientProperty("JComponent.outline", message == null ? null : "error");
+      component.putClientProperty("JComponent.outline", (!error || message == null) ? null : "error");
       component.repaint();
 
       if (message == null) return;
-      final Balloon balloon = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, MessageType.ERROR, null).createBalloon();
+      final Balloon balloon = JBPopupFactory.getInstance()
+                                            .createHtmlTextBalloonBuilder(message, error ? MessageType.ERROR : MessageType.WARNING, null)
+                                            .createBalloon();
       if (component == mySearchCriteriaEdit) {
         balloon.show(new RelativePoint(component, new Point(component.getWidth() / 2, component.getHeight())), Balloon.Position.below);
       }
