@@ -16,14 +16,13 @@
 package org.jetbrains.plugins.gradle.execution.build;
 
 import com.intellij.codeInsight.daemon.impl.analysis.JavaModuleGraphUtil;
-import com.intellij.execution.CantRunException;
-import com.intellij.execution.ExecutionBundle;
-import com.intellij.execution.Executor;
-import com.intellij.execution.RunnerAndConfigurationSettings;
+import com.intellij.compiler.options.CompileStepBeforeRun;
+import com.intellij.execution.*;
 import com.intellij.execution.application.ApplicationConfiguration;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.JavaRunConfigurationModule;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.impl.RunManagerImpl;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.util.ExecutionErrorDialog;
 import com.intellij.execution.util.JavaParametersUtil;
@@ -59,6 +58,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collections;
 import java.util.List;
+import java.util.stream.Collectors;
 
 /**
  * TODO take into account applied 'application' gradle plugins or existing JavaExec tasks
@@ -122,7 +122,7 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
     if (environment != null) {
       RunnerAndConfigurationSettings runnerAndConfigurationSettings = environment.getRunnerAndConfigurationSettings();
       assert runnerAndConfigurationSettings != null;
-      ExternalSystemRunConfiguration runConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
+      ExternalSystemRunConfiguration gradleRunConfiguration = (ExternalSystemRunConfiguration)runnerAndConfigurationSettings.getConfiguration();
 
       final String gradlePath = GradleProjectResolverUtil.getGradlePath(module);
       if (gradlePath == null) return null;
@@ -171,7 +171,13 @@ public class GradleApplicationEnvironmentProvider implements GradleExecutionEnvi
                           "}\n";
       // @formatter:on
 
-      runConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+      gradleRunConfiguration.putUserData(GradleTaskManager.INIT_SCRIPT_KEY, initScript);
+
+      // reuse all before tasks except 'Make' as it doesn't make sense for delegated run
+      List<BeforeRunTask<?>> tasks = RunManagerImpl.getInstanceImpl(project).getBeforeRunTasks(applicationConfiguration).stream()
+                                                   .filter(task -> task.getProviderId() != CompileStepBeforeRun.ID)
+                                                   .collect(Collectors.toList());
+      RunManagerImpl.getInstanceImpl(project).setBeforeRunTasks(gradleRunConfiguration,tasks);
       return environment;
     }
     else {
