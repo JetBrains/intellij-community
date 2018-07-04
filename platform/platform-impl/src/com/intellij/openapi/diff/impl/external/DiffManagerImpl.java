@@ -20,18 +20,14 @@ import com.intellij.openapi.editor.markup.MarkupEditorFilter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.vcs.changes.actions.migrate.MigrateDiffTool;
-import com.intellij.util.SmartList;
 import com.intellij.util.config.*;
-import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.List;
 
 @State(
   name = "DiffManager",
@@ -75,7 +71,6 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
   public static final BooleanProperty ENABLE_MERGE = new BooleanProperty("enableMerge", false);
 
   private final ExternalizablePropertyContainer myProperties;
-  private final List<DiffTool> myAdditionTools = new SmartList<>();
   public static final DiffTool INTERNAL_DIFF = new FrameDiffTool();
 
   private static final MarkupEditorFilter DIFF_EDITOR_FILTER = new MarkupEditorFilter() {
@@ -139,34 +134,7 @@ public class DiffManagerImpl extends DiffManager implements PersistentStateCompo
         BinaryDiffTool.INSTANCE
       };
     }
-    if (myAdditionTools.isEmpty()) {
-      return new CompositeDiffTool(standardTools);
-    }
-    else {
-      List<DiffTool> allTools = new ArrayList<>(myAdditionTools);
-      ContainerUtil.addAll(allTools, standardTools);
-      return new CompositeDiffTool(allTools);
-    }
-  }
-
-  @Override
-  public boolean registerDiffTool(@NotNull DiffTool tool) throws NullPointerException {
-    if (myAdditionTools.contains(tool)) {
-      return false;
-    }
-
-    myAdditionTools.add(tool);
-    return true;
-  }
-
-  @Override
-  public void unregisterDiffTool(DiffTool tool) {
-    myAdditionTools.remove(tool);
-    LOG.assertTrue(!myAdditionTools.contains(tool));
-  }
-
-  public List<DiffTool> getAdditionTools() {
-    return myAdditionTools;
+    return new CompositeDiffTool(standardTools);
   }
 
   @Override
