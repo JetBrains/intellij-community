@@ -398,8 +398,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
       @Override
       public Double initialize() {
         Dimension size = imageComponent.getCanvasSize();
-        BufferedImage image = imageComponent.getDocument().getValue();
-        return image != null ? size.getWidth() / (double)image.getWidth() : 1.0d;
+        Rectangle bounds = imageComponent.getDocument().getBounds();
+        return bounds != null ? size.getWidth() / (double)bounds.width : 1.0d;
       }
     };
 
@@ -424,8 +424,8 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     }
 
     private double getMinimumZoomFactor() {
-      BufferedImage image = imageComponent.getDocument().getValue();
-      return image != null ? 1.0d / image.getWidth() : 0.0d;
+      Rectangle bounds = imageComponent.getDocument().getBounds();
+      return bounds != null ? 1.0d / bounds.getWidth() : 0.0d;
     }
 
     public void fitZoomToWindow() {
@@ -504,15 +504,17 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
 
   @Nullable
   private Double getSmartZoomFactor(@NotNull ZoomOptions zoomOptions) {
-    BufferedImage image = imageComponent.getDocument().getValue();
-    if (image == null) return null;
-    if (image.getWidth() == 0 || image.getHeight() == 0) return null;
+    Rectangle bounds = imageComponent.getDocument().getBounds();
+    if (bounds == null) return null;
+    if (bounds.getWidth() == 0 || bounds.getHeight() == 0) return null;
+    int width = bounds.width;
+    int height = bounds.height;
 
     Dimension preferredMinimumSize = zoomOptions.getPrefferedSize();
-    if (image.getWidth() < preferredMinimumSize.width &&
-        image.getHeight() < preferredMinimumSize.height) {
-      double factor = (preferredMinimumSize.getWidth() / (double)image.getWidth() +
-                       preferredMinimumSize.getHeight() / (double)image.getHeight()) / 2.0d;
+    if (width < preferredMinimumSize.width &&
+        height < preferredMinimumSize.height) {
+      double factor = (preferredMinimumSize.getWidth() / (double)width +
+                       preferredMinimumSize.getHeight() / (double)height) / 2.0d;
       return Math.ceil(factor);
     }
 
@@ -521,20 +523,20 @@ final class ImageEditorUI extends JPanel implements DataProvider, CopyProvider, 
     canvasSize.width -= ImageComponent.IMAGE_INSETS * 2;
     if (canvasSize.width <= 0 || canvasSize.height <= 0) return null;
 
-    if (canvasSize.width < image.getWidth() ||
-        canvasSize.height < image.getHeight()) {
-      return Math.min((double)canvasSize.height / image.getHeight(),
-                      (double)canvasSize.width / image.getWidth());
+    if (canvasSize.width < width ||
+        canvasSize.height < height) {
+      return Math.min((double)canvasSize.height / height,
+                      (double)canvasSize.width / width);
     }
 
     return 1.0d;
   }
 
   private void updateImageComponentSize() {
-    BufferedImage image = imageComponent.getDocument().getValue();
-    if (image != null) {
+    Rectangle bounds = imageComponent.getDocument().getBounds();
+    if (bounds != null) {
       final double zoom = getZoomModel().getZoomFactor();
-      imageComponent.setCanvasSize((int)Math.ceil(image.getWidth() * zoom), (int)Math.ceil(image.getHeight() * zoom));
+      imageComponent.setCanvasSize((int)Math.ceil(bounds.width * zoom), (int)Math.ceil(bounds.height * zoom));
     }
   }
 
