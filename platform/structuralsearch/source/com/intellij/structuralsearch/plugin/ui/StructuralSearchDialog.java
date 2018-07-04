@@ -22,7 +22,6 @@ import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.fileTypes.FileType;
-import com.intellij.openapi.fileTypes.LanguageFileType;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -242,42 +241,29 @@ public class StructuralSearchDialog extends DialogWrapper {
     }
   }
 
-  private void detectFileTypeAndDialect() {
+  private void detectFileType() {
     final PsiFile file = mySearchContext.getFile();
-    if (file != null) {
-      PsiElement context = null;
+    PsiElement context = file;
 
-      if (mySearchContext.getEditor() != null) {
-        context = file.findElementAt(mySearchContext.getEditor().getCaretModel().getOffset());
-        if (context != null) {
-          context = context.getParent();
-        }
+    final Editor editor = mySearchContext.getEditor();
+    if (editor != null) {
+      context = file.findElementAt(editor.getCaretModel().getOffset());
+      if (context != null) {
+        context = context.getParent();
       }
-      if (context == null) {
-        context = file;
-      }
-
-      FileType detectedFileType = null;
-
+    }
+    if (context != null) {
       final StructuralSearchProfile profile = StructuralSearchUtil.getProfileByPsiElement(context);
       if (profile != null) {
         final FileType fileType = profile.detectFileType(context);
         if (fileType != null) {
-          detectedFileType = fileType;
+          myFileType = fileType;
+          return;
         }
       }
-
-      if (detectedFileType == null) {
-        for (FileType fileType : StructuralSearchUtil.getSuitableFileTypes()) {
-          if (fileType instanceof LanguageFileType && ((LanguageFileType)fileType).getLanguage().equals(context.getLanguage())) {
-            detectedFileType = fileType;
-            break;
-          }
-        }
-      }
-
-      myFileType = (detectedFileType != null) ? detectedFileType : StructuralSearchUtil.getDefaultFileType();
     }
+
+    myFileType = StructuralSearchUtil.getDefaultFileType();
   }
 
   protected boolean isRecursiveSearchEnabled() {
@@ -482,6 +468,7 @@ public class StructuralSearchDialog extends DialogWrapper {
       }
     }
     Collections.sort(types, (o1, o2) -> o1.getName().compareToIgnoreCase(o2.getName()));
+    detectFileType();
     myFileTypesComboBox = new FileTypeSelector(types);
     myFileTypesComboBox.setMinimumAndPreferredWidth(200);
     myFileTypesComboBox.setSelectedItem(myFileType, myDialect, myContext);
@@ -580,7 +567,6 @@ public class StructuralSearchDialog extends DialogWrapper {
             .addComponent(optionsToolbar)
     );
 
-    detectFileTypeAndDialect();
     return northPanel;
   }
 
