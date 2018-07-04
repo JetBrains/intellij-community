@@ -120,7 +120,7 @@ class Operators {
       "a.leftShift(b)"         : "a << b",
       "a.rightShift(b)"        : "a >> b",
       "a.rightShiftUnsigned(b)": "a >>> b",
-      "a.plus({ b })"            : "a + { b }",
+      "a.plus({ b })"          : "a + { b }",
     ].each {
       doTest it.key, it.value
     }
@@ -254,10 +254,10 @@ class Operators {
     doTest "a.put<caret>At(b) { 1 }", "a[b] = { 1 }"
 
     doTest(
-''' a.put<caret>At(b) { 
+      ''' a.put<caret>At(b) { 
     return 1 
 };''',
-'''a[b] = {
+      '''a[b] = {
     return 1
 };''')
   }
@@ -279,9 +279,6 @@ class Operators {
 
     doTest "a.g<caret>etAt(b).field", "a[b].field"
     doTest "a.p<caret>utAt(b, 1).field"
-
-    doTest "a.ne<caret>xt().bytes"
-    doTest "a.ne<caret>xt() + 1", "++a + 1"
 
     doTest "[1, 2, 3].is<caret>Case(2-1)", "2 - 1 in [1, 2, 3]"
     doTest "![1, 2, 3].is<caret>Case(2-1)"
@@ -338,7 +335,7 @@ class Inheritor extends Operators {
   final String DECLARATIONS = 'def (Operators a, Operators b) = [null, null]\n'
 
   private void doTest(String before, String after = null) {
-    Closeable closeCaret =  {fixture.editor.caretModel.moveToOffset(0)}
+    Closeable closeCaret = { fixture.editor.caretModel.moveToOffset(0) }
 
     closeCaret.withCloseable {
       fixture.with {
