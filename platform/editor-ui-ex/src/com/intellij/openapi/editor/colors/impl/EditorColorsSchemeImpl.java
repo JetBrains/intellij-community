@@ -59,7 +59,7 @@ public class EditorColorsSchemeImpl extends AbstractColorsScheme implements Exte
 
   @Override
   public void setColor(ColorKey key, Color color) {
-    if (color == INHERITED_COLOR_MARKER || !Comparing.equal(color, getDirectlyDefinedColor(key))) {
+    if (color == INHERITED_COLOR_MARKER || !colorsEqual(color, getDirectlyDefinedColor(key))) {
       myColorsMap.put(key, ObjectUtils.notNull(color, NULL_COLOR_MARKER));
     }
   }
