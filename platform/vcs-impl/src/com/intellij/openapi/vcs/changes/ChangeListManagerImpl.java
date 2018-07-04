@@ -90,7 +90,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   private VcsException myUpdateException;
   private Factory<JComponent> myAdditionalInfo;
-  private boolean myShowLocalChangesInvalidated;
+  private volatile boolean myShowLocalChangesInvalidated;
 
   @NotNull private ProgressIndicator myUpdateChangesProgressIndicator = createProgressIndicator();
   private volatile String myFreezeName;
@@ -1093,9 +1093,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
 
   @Override
   public boolean isInUpdate() {
-    synchronized (myDataLock) {
-      return myModifier.isInsideUpdate() || myShowLocalChangesInvalidated;
-    }
+    return myModifier.isInsideUpdate() || myShowLocalChangesInvalidated;
   }
 
   @Override
@@ -1608,9 +1606,7 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
   // for users to see changes are not valid
   // (commit -> asynch synch VFS -> asynch vcs dirty scope)
   public void showLocalChangesInvalidated() {
-    synchronized (myDataLock) {
-      myShowLocalChangesInvalidated = true;
-    }
+    myShowLocalChangesInvalidated = true;
   }
 
   public ChangelistConflictTracker getConflictTracker() {
