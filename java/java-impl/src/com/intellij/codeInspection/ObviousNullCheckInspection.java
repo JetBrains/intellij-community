@@ -30,10 +30,13 @@ public class ObviousNullCheckInspection extends AbstractBaseJavaLocalInspectionT
     return new JavaElementVisitor() {
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression call) {
+        PsiExpression[] args = call.getArgumentList().getExpressions();
+        // Avoid method resolve if no argument is a candidate for obvious non-null warning
+        // (checking this is easier than resolving and calls without arguments are excluded at all)
+        if (!ContainerUtil.exists(args, arg -> getObviouslyNonNullExplanation(PsiUtil.skipParenthesizedExprDown(arg)) != null)) return;
         NullCheckParameter nullCheckParameter = NullCheckParameter.fromCall(call);
         if (nullCheckParameter == null) return;
-        if (!(call.getParent() instanceof PsiExpressionStatement || nullCheckParameter.myReturnsParameter)) return;
-        PsiExpression[] args = call.getArgumentList().getExpressions();
+        if (!ExpressionUtils.isVoidContext(call) && !nullCheckParameter.myReturnsParameter) return;
         if (args.length <= nullCheckParameter.myIndex) return;
         PsiExpression nullArg = PsiUtil.skipParenthesizedExprDown(args[nullCheckParameter.myIndex]);
         String explanation = getObviouslyNonNullExplanation(nullArg);
