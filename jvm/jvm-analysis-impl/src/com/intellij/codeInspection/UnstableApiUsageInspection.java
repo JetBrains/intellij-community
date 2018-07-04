@@ -2,7 +2,9 @@
 package com.intellij.codeInspection;
 
 import com.intellij.analysis.JvmAnalysisBundle;
+import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectFileIndex;
@@ -10,15 +12,22 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.siyeh.ig.ui.ExternalizableStringSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.uast.UElement;
+import org.jetbrains.uast.UImportStatement;
+import org.jetbrains.uast.UastContextKt;
+import org.jetbrains.uast.UastUtils;
 
 import javax.swing.*;
 import java.awt.*;
 import java.util.List;
 
 public class UnstableApiUsageInspection extends LocalInspectionTool {
+  public boolean myIgnoreInsideImports = true;
+
   public final List<String> unstableApiAnnotations = new ExternalizableStringSet(
     "org.jetbrains.annotations.ApiStatus.Experimental",
     "com.google.common.annotations.Beta",
@@ -32,18 +41,16 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
   @Nullable
   @Override
   public JComponent createOptionsPanel() {
-    JPanel panel = new JPanel(new GridBagLayout());
+    SingleCheckboxOptionsPanel checkboxPanel = new SingleCheckboxOptionsPanel(
+      JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.ignore.inside.imports"), this, "myIgnoreInsideImports");
+
     //TODO in add annotation window "Include non-project items" should be enabled by default
     JPanel annotationsListControl = SpecialAnnotationsUtil.createSpecialAnnotationsListControl(
       unstableApiAnnotations, JvmAnalysisBundle.message("jvm.inspections.unstable.api.usage.annotations.list"));
-    GridBagConstraints constraints = new GridBagConstraints();
-    constraints.gridx = 0;
-    constraints.gridy = 0;
-    constraints.weighty = 1.0;
-    constraints.weightx = 1.0;
-    constraints.anchor = GridBagConstraints.CENTER;
-    constraints.fill = GridBagConstraints.BOTH;
-    panel.add(annotationsListControl, constraints);
+
+    JPanel panel = new JPanel(new BorderLayout(2, 2));
+    panel.add(checkboxPanel, BorderLayout.NORTH);
+    panel.add(annotationsListControl, BorderLayout.CENTER);
     return panel;
   }
 
@@ -58,6 +65,9 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
       @Override
       public void visitElement(PsiElement element) {
         super.visitElement(element);
+        if (myIgnoreInsideImports && isInsideImport(element)) {
+          return;
+        }
 
         // Java constructors must be handled a bit differently (works fine with Kotlin)
         PsiMethod resolvedConstructor = null;
@@ -83,6 +93,17 @@ public class UnstableApiUsageInspection extends LocalInspectionTool {
         }
       }
     };
+  }
+
+  private static boolean isInsideImport(@NotNull PsiElement element) {
+    //TODO remove once IDEA-195008 is fixed
+    if (JavaLanguage.INSTANCE == element.getLanguage()) {
+      return PsiTreeUtil.getParentOfType(element, PsiImportStatementBase.class) != null;
+    }
+
+    UElement uElement = UastContextKt.toUElement(element);
+    if (uElement == null) return false;
+    return UastUtils.getParentOfType(uElement, UImportStatement.class) != null;
   }
 
   private static boolean isLibraryElement(@NotNull PsiElement element) {

@@ -16,6 +16,12 @@ class KtUnstableApiUsageInspectionTest : UnstableApiUsageInspectionTestBase() {
   }
 
   fun testInspection() {
+    inspection.myIgnoreInsideImports = false
     myFixture.testHighlighting("UnstableElementsTest.kt")
+  }
+
+  fun testIgnoreImports() {
+    inspection.myIgnoreInsideImports = true
+    myFixture.testHighlighting("UnstableElementsIgnoreImportsTest.kt")
   }
 }
