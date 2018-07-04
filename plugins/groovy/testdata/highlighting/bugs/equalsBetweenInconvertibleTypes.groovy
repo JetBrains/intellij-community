@@ -9,6 +9,9 @@ B b = new B()
 C c = new C()
 
 a <warning descr="'==' between objects of inconvertible types 'A' and 'B'">==</warning> b
+a <warning descr="'!=' between objects of inconvertible types 'A' and 'B'">!=</warning> b
+a <warning descr="'===' between objects of inconvertible types 'A' and 'B'">===</warning> b
+a <warning descr="'!==' between objects of inconvertible types 'A' and 'B'">!==</warning> b
 b == c
 c <warning descr="'==' between objects of inconvertible types 'C' and 'A'">==</warning> a
 
