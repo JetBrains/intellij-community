@@ -41,7 +41,8 @@ public class YamlArrayAdapter implements JsonArrayValueAdapter {
 
   @Override
   public boolean isArray() {
-    return true;
+    PsiElement tag = myArray.getTag();
+    return tag == null || "!!seq".equals(tag.getText());
   }
 
   @Override
